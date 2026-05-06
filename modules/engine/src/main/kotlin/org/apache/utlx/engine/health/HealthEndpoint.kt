@@ -17,7 +17,8 @@ import java.net.BindException
 class HealthEndpoint(
     private val engine: UtlxEngine,
     private val maxRetries: Int = MAX_PORT_RETRIES,
-    private val adminKey: String = System.getenv("UTLXE_ADMIN_KEY") ?: ""
+    private val adminKey: String = System.getenv("UTLXE_ADMIN_KEY") ?: "",
+    private val dataDir: String? = null
 ) {
 
     private val logger = LoggerFactory.getLogger(HealthEndpoint::class.java)
@@ -36,7 +37,7 @@ class HealthEndpoint(
                 logger.info("Trying health endpoint on port {}", tryPort)
                 server = embeddedServer(Netty, port = tryPort, host = "0.0.0.0") {
                     configureHealth(engine)
-                    org.apache.utlx.engine.admin.configureAdmin(this, engine, adminKey)
+                    org.apache.utlx.engine.admin.configureAdmin(this, engine, adminKey, dataDir)
                 }.start(wait = false)
 
                 boundPort = tryPort

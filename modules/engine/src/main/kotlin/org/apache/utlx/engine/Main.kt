@@ -24,6 +24,7 @@ fun main(args: Array<String>) {
     var portOverride: Int? = null
     var validateOnly = false
     var mode = "stdio-json"
+    var dataDir: String? = null
     var workers: Int? = null
     var socketPath: String? = null
     var grpcAddress: String? = null
@@ -82,6 +83,11 @@ fun main(args: Array<String>) {
                 httpPort = args.getOrNull(i)?.toIntOrNull()
                     ?: exitWithError("--http-port requires a port number")
             }
+            "--data-dir" -> {
+                i++
+                dataDir = args.getOrNull(i)
+                    ?: exitWithError("--data-dir requires a path argument")
+            }
             "--validate" -> {
                 validateOnly = true
             }
@@ -128,6 +134,12 @@ fun main(args: Array<String>) {
             engine.initialize(Paths.get(bundlePath))
         } else {
             engine.initializeEmpty()
+        }
+
+        // EF03: Scan data dir for persisted transformations (from previous Admin API uploads)
+        engine.dataDir = dataDir
+        if (dataDir != null) {
+            engine.scanDataDir(Paths.get(dataDir))
         }
 
         if (validateOnly) {

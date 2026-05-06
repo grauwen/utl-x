@@ -24,6 +24,7 @@ class UtlxEngine(val config: EngineConfig) {
     val registry = TransformationRegistry()
     private var healthEndpoint: HealthEndpoint? = null
     private var transport: TransportServer? = null
+    var dataDir: String? = null
 
     val state: EngineState get() = stateRef.get()
 
@@ -91,6 +92,51 @@ class UtlxEngine(val config: EngineConfig) {
     }
 
     /**
+     * EF03: Scan a data directory for previously persisted transformations and load them.
+     * Called at startup before the transport starts. Transformations are compiled and registered.
+     * If the directory doesn't exist or is empty, nothing happens (engine starts empty).
+     */
+    fun scanDataDir(dataDirPath: java.nio.file.Path) {
+        val txDir = dataDirPath.resolve("transformations")
+        if (!java.nio.file.Files.exists(txDir) || !java.nio.file.Files.isDirectory(txDir)) {
+            logger.info("Data dir '{}' has no transformations/ — starting empty", dataDirPath)
+            return
+        }
+
+        var loaded = 0
+        java.nio.file.Files.list(txDir).use { stream ->
+            stream.filter { java.nio.file.Files.isDirectory(it) }
+                .sorted()
+                .forEach { dir ->
+                    val name = dir.fileName.toString()
+                    val utlxFile = dir.resolve("$name.utlx")
+                    if (java.nio.file.Files.exists(utlxFile)) {
+                        try {
+                            val source = java.nio.file.Files.readString(utlxFile)
+                            val transformConfig = org.apache.utlx.engine.config.TransformConfig()
+                            val strategy = createStrategy(
+                                org.apache.utlx.engine.config.TransformConfig(strategy = "COMPILED")
+                            )
+                            strategy.initialize(source, transformConfig)
+                            val instance = org.apache.utlx.engine.registry.TransformationInstance(
+                                name = name,
+                                source = source,
+                                strategy = strategy,
+                                config = transformConfig
+                            )
+                            registry.register(name, instance)
+                            loaded++
+                            logger.info("Loaded persisted transformation '{}' from {}", name, utlxFile)
+                        } catch (e: Exception) {
+                            logger.error("Failed to load persisted transformation '{}': {}", name, e.message)
+                        }
+                    }
+                }
+        }
+        logger.info("Data dir scan complete: {} transformation(s) loaded from {}", loaded, txDir)
+    }
+
+    /**
      * Start the engine with the given transport.
      * The transport's start() method blocks until shutdown.
      */
@@ -105,7 +151,7 @@ class UtlxEngine(val config: EngineConfig) {
 
         // Start health endpoint
         try {
-            healthEndpoint = HealthEndpoint(this).also { it.start() }
+            healthEndpoint = HealthEndpoint(this, dataDir = dataDir).also { it.start() }
         } catch (e: Exception) {
             logger.warn("Failed to start health endpoint: {}", e.message)
         }

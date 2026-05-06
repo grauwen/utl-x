@@ -16,7 +16,14 @@ import org.apache.utlx.engine.registry.TransformationRegistry
 import org.apache.utlx.engine.transport.TransportHandlers
 import org.apache.utlx.engine.util.UuidV7
 import org.slf4j.LoggerFactory
+import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.nio.file.Files
+import java.nio.file.Path
 import java.time.Instant
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 
 private val logger = LoggerFactory.getLogger("AdminEndpoint")
 
@@ -32,9 +39,11 @@ private val logger = LoggerFactory.getLogger("AdminEndpoint")
 fun configureAdmin(
     app: Application,
     engine: UtlxEngine,
-    adminKey: String = System.getenv("UTLXE_ADMIN_KEY") ?: ""
+    adminKey: String = System.getenv("UTLXE_ADMIN_KEY") ?: "",
+    dataDir: String? = null
 ) {
     val registry = engine.registry
+    val dataDirPath = dataDir?.let { Path.of(it) }
 
     app.routing {
 
@@ -135,11 +144,25 @@ fun configureAdmin(
 
                 val compiledMs = (System.nanoTime() - startTime) / 1_000_000
 
-                logger.info("Admin: deployed transformation '{}' in {}ms", name, compiledMs)
+                // Persist to disk (if data dir configured)
+                if (dataDirPath != null) {
+                    try {
+                        val txDir = dataDirPath.resolve("transformations").resolve(name)
+                        Files.createDirectories(txDir)
+                        Files.writeString(txDir.resolve("$name.utlx"), source)
+                        logger.debug("Admin: persisted '{}' to {}", name, txDir)
+                    } catch (e: Exception) {
+                        logger.warn("Admin: failed to persist '{}' to disk: {}", name, e.message)
+                        // Don't fail the upload — in-memory registration succeeded
+                    }
+                }
+
+                logger.info("Admin: deployed transformation '{}' in {}ms (persisted={})", name, compiledMs, dataDirPath != null)
                 call.respond(HttpStatusCode.OK, mapOf(
                     "status" to "deployed",
                     "name" to name,
                     "strategy" to "COMPILED",
+                    "config" to if (dataDirPath != null) "persisted" else "memory-only",
                     "compiled_in_ms" to compiledMs
                 ))
             }
@@ -155,6 +178,18 @@ fun configureAdmin(
                     ))
                     return@delete
                 }
+                // Remove from disk
+                if (dataDirPath != null) {
+                    try {
+                        val txDir = dataDirPath.resolve("transformations").resolve(name)
+                        if (Files.exists(txDir)) {
+                            Files.walk(txDir).sorted(Comparator.reverseOrder()).forEach { Files.deleteIfExists(it) }
+                        }
+                    } catch (e: Exception) {
+                        logger.warn("Admin: failed to delete '{}' from disk: {}", name, e.message)
+                    }
+                }
+
                 logger.info("Admin: deleted transformation '{}'", name)
                 call.respond(HttpStatusCode.OK, mapOf(
                     "success" to true,
@@ -199,6 +234,124 @@ fun configureAdmin(
                     ))
                 }
                 // Test calls are NOT counted in metrics (don't call recordExecution)
+            }
+
+            // ── Upload bundle (ZIP / .utlar) ──
+            post("/bundle") {
+                val zipBytes = call.receive<ByteArray>()
+                val startTime = System.nanoTime()
+                var loaded = 0
+                val names = mutableListOf<String>()
+                val errors = mutableListOf<String>()
+
+                try {
+                    ZipInputStream(ByteArrayInputStream(zipBytes)).use { zis ->
+                        var entry = zis.nextEntry
+                        while (entry != null) {
+                            // Look for transformations/{name}/{name}.utlx
+                            val path = entry.name
+                            if (!entry.isDirectory && path.endsWith(".utlx") && path.startsWith("transformations/")) {
+                                val parts = path.removePrefix("transformations/").split("/")
+                                if (parts.size == 2) {
+                                    val name = parts[0]
+                                    val source = zis.readBytes().toString(Charsets.UTF_8)
+
+                                    val loadReq = LoadTransformationRequest.newBuilder()
+                                        .setTransformationId(name)
+                                        .setUtlxSource(source)
+                                        .setStrategy("COMPILED")
+                                        .build()
+                                    val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine, registry)
+
+                                    if (loadResp.success) {
+                                        names.add(name)
+                                        loaded++
+                                        // Persist to disk
+                                        if (dataDirPath != null) {
+                                            val txDir = dataDirPath.resolve("transformations").resolve(name)
+                                            Files.createDirectories(txDir)
+                                            Files.writeString(txDir.resolve("$name.utlx"), source)
+                                        }
+                                    } else {
+                                        errors.add("$name: ${loadResp.error}")
+                                    }
+                                }
+                            }
+                            zis.closeEntry()
+                            entry = zis.nextEntry
+                        }
+                    }
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "rejected",
+                        "error" to "Invalid ZIP: ${e.message}",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                val compiledMs = (System.nanoTime() - startTime) / 1_000_000
+
+                if (loaded == 0 && errors.isEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "rejected",
+                        "error" to "No transformations found in ZIP. Expected: transformations/{name}/{name}.utlx",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                if (errors.isNotEmpty()) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "status" to "partial",
+                        "transformations_loaded" to loaded,
+                        "errors" to errors,
+                        "compiled_in_ms" to compiledMs
+                    ))
+                } else {
+                    logger.info("Admin: bundle deployed — {} transformation(s) in {}ms", loaded, compiledMs)
+                    call.respond(HttpStatusCode.OK, mapOf(
+                        "status" to "deployed",
+                        "transformations" to names,
+                        "compiled_in_ms" to compiledMs
+                    ))
+                }
+            }
+
+            // ── Export bundle as ZIP ──
+            get("/bundle") {
+                val baos = ByteArrayOutputStream()
+                ZipOutputStream(baos).use { zos ->
+                    for (tx in registry.list()) {
+                        val entryPath = "transformations/${tx.name}/${tx.name}.utlx"
+                        zos.putNextEntry(ZipEntry(entryPath))
+                        zos.write(tx.source.toByteArray(Charsets.UTF_8))
+                        zos.closeEntry()
+                    }
+                }
+                call.response.header("Content-Disposition", "attachment; filename=\"bundle.utlar\"")
+                call.respondBytes(baos.toByteArray(), ContentType.Application.Zip)
+            }
+
+            // ── Delete all (remove bundle) ──
+            delete("/bundle") {
+                val names = registry.list().map { it.name }
+                names.forEach { name ->
+                    registry.unload(name)
+                    if (dataDirPath != null) {
+                        try {
+                            val txDir = dataDirPath.resolve("transformations").resolve(name)
+                            if (Files.exists(txDir)) {
+                                Files.walk(txDir).sorted(Comparator.reverseOrder()).forEach { Files.deleteIfExists(it) }
+                            }
+                        } catch (_: Exception) {}
+                    }
+                }
+                logger.info("Admin: deleted all {} transformation(s)", names.size)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "success" to true,
+                    "deleted" to names
+                ))
             }
 
             // ── Engine info ──

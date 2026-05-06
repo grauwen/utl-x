@@ -11,6 +11,10 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.net.HttpURLConnection
 import java.net.URL
+import java.io.ByteArrayOutputStream
+import java.util.zip.ZipEntry
+import java.util.zip.ZipInputStream
+import java.util.zip.ZipOutputStream
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -279,5 +283,169 @@ class AdminEndpointTest {
         assertEquals(200, status)
         assertTrue(body.contains("detail-test"), "Should contain name: $body")
         assertTrue(body.contains("utlx"), "Should contain source: $body")
+    }
+
+    // ── Bundle helpers ──
+
+    private fun createBundleZip(transformations: Map<String, String>): ByteArray {
+        val baos = ByteArrayOutputStream()
+        ZipOutputStream(baos).use { zos ->
+            for ((name, source) in transformations) {
+                zos.putNextEntry(ZipEntry("transformations/$name/$name.utlx"))
+                zos.write(source.toByteArray())
+                zos.closeEntry()
+            }
+        }
+        return baos.toByteArray()
+    }
+
+    private fun adminPostZip(path: String, zipBytes: ByteArray): Pair<Int, String> {
+        val url = URL("http://localhost:$adminPort$path")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/zip")
+        conn.setRequestProperty("X-Admin-Key", adminKey)
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write(zipBytes)
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val response = try {
+            conn.inputStream.bufferedReader().readText()
+        } catch (e: Exception) {
+            conn.errorStream?.bufferedReader()?.readText() ?: ""
+        }
+        return status to response
+    }
+
+    private fun adminGetBytes(path: String): Pair<Int, ByteArray> {
+        val url = URL("http://localhost:$adminPort$path")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "GET"
+        conn.setRequestProperty("X-Admin-Key", adminKey)
+        conn.connectTimeout = 5000
+        conn.readTimeout = 5000
+        val status = conn.responseCode
+        val bytes = try {
+            conn.inputStream.readBytes()
+        } catch (e: Exception) {
+            conn.errorStream?.readBytes() ?: ByteArray(0)
+        }
+        return status to bytes
+    }
+
+    // ── Bundle tests ──
+
+    @Test
+    fun `upload ZIP bundle deploys all transformations`() {
+        val zip = createBundleZip(mapOf(
+            "greet" to """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                {hello: ${'$'}input.name}
+            """.trimIndent(),
+            "double" to """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                {result: ${'$'}input.x * 2}
+            """.trimIndent()
+        ))
+
+        val (status, body) = adminPostZip("/admin/bundle", zip)
+        assertEquals(200, status, "Bundle upload failed: $body")
+        assertTrue(body.contains("deployed"), "Should say deployed: $body")
+        assertTrue(body.contains("greet"), "Should list greet: $body")
+        assertTrue(body.contains("double"), "Should list double: $body")
+
+        // Verify both work
+        val (_, testBody) = adminPost("/admin/transformations/greet/test", """{"name":"ZIP"}""")
+        assertTrue(testBody.contains("ZIP"), "Greet should work: $testBody")
+
+        val (_, testBody2) = adminPost("/admin/transformations/double/test", """{"x":21}""")
+        assertTrue(testBody2.contains("42"), "Double should work: $testBody2")
+    }
+
+    @Test
+    fun `export bundle returns valid ZIP with all transformations`() {
+        // Upload two transformations first
+        adminPost("/admin/transformations/export-a", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent())
+        adminPost("/admin/transformations/export-b", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent())
+
+        // Export
+        val (status, zipBytes) = adminGetBytes("/admin/bundle")
+        assertEquals(200, status)
+        assertTrue(zipBytes.size > 0, "ZIP should not be empty")
+
+        // Parse ZIP and verify contents
+        val entries = mutableListOf<String>()
+        ZipInputStream(zipBytes.inputStream()).use { zis ->
+            var entry = zis.nextEntry
+            while (entry != null) {
+                entries.add(entry.name)
+                zis.closeEntry()
+                entry = zis.nextEntry
+            }
+        }
+        assertTrue(entries.any { it.contains("export-a") }, "ZIP should contain export-a: $entries")
+        assertTrue(entries.any { it.contains("export-b") }, "ZIP should contain export-b: $entries")
+    }
+
+    @Test
+    fun `delete bundle removes all transformations`() {
+        // Upload
+        adminPost("/admin/transformations/del-a", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent())
+        adminPost("/admin/transformations/del-b", """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent())
+
+        // Verify both exist
+        val (_, listBefore) = adminGet("/admin/transformations")
+        assertTrue(listBefore.contains("del-a"))
+        assertTrue(listBefore.contains("del-b"))
+
+        // Delete all
+        val (status, body) = adminDelete("/admin/bundle")
+        assertEquals(200, status)
+        assertTrue(body.contains("del-a"), "Should list deleted: $body")
+        assertTrue(body.contains("del-b"), "Should list deleted: $body")
+
+        // Verify empty
+        val (_, listAfter) = adminGet("/admin/transformations")
+        assertFalse(listAfter.contains("del-a"), "Should be gone: $listAfter")
+        assertFalse(listAfter.contains("del-b"), "Should be gone: $listAfter")
+    }
+
+    @Test
+    fun `upload invalid ZIP returns 400`() {
+        val (status, body) = adminPostZip("/admin/bundle", "not a zip".toByteArray())
+        assertEquals(400, status)
+        assertTrue(body.contains("rejected"), "Should say rejected: $body")
     }
 }
