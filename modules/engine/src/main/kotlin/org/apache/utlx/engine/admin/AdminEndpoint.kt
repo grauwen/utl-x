@@ -14,7 +14,10 @@ import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.proto.*
 import org.apache.utlx.engine.registry.TransformationRegistry
 import org.apache.utlx.engine.transport.TransportHandlers
+import org.apache.utlx.engine.registry.TransformationInstance
+import org.apache.utlx.engine.strategy.HeaderSchemaInfo
 import org.apache.utlx.engine.util.UuidV7
+import org.apache.utlx.engine.validation.SchemaValidatorFactory
 import org.slf4j.LoggerFactory
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -44,6 +47,11 @@ fun configureAdmin(
 ) {
     val registry = engine.registry
     val dataDirPath = dataDir?.let { Path.of(it) }
+    val schemaStore = SchemaStore(dataDirPath)
+    val validationOverrides = engine.validationOverrides
+
+    // Load persisted schemas from disk
+    schemaStore.scanFromDisk()
 
     app.routing {
 
@@ -140,6 +148,15 @@ fun configureAdmin(
                         "error_code" to "INPUT_PARSE_FAILED"
                     ))
                     return@post
+                }
+
+                // EF02: Resolve schema references from .utlx header against SchemaStore
+                val instance = registry.get(name)
+                if (instance != null) {
+                    val schemaInfo = instance.strategy.getHeaderSchemaInfo()
+                    if (schemaInfo != null) {
+                        resolveSchemaValidators(name, schemaInfo, instance, schemaStore)
+                    }
                 }
 
                 val compiledMs = (System.nanoTime() - startTime) / 1_000_000
@@ -494,6 +511,120 @@ fun configureAdmin(
                 ))
             }
 
+            // ── Schema endpoints ──
+
+            get("/schemas") {
+                val schemas = schemaStore.list().map { s ->
+                    mapOf(
+                        "filename" to s.filename,
+                        "size_bytes" to s.content.size,
+                        "uploaded_at" to s.uploadedAt.toString()
+                    )
+                }
+                call.respond(HttpStatusCode.OK, mapOf("schemas" to schemas))
+            }
+
+            get("/schemas/{filename}") {
+                val filename = call.parameters["filename"] ?: ""
+                val entry = schemaStore.get(filename)
+                if (entry == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Schema '$filename' not found"
+                    ))
+                    return@get
+                }
+                call.respondBytes(entry.content, ContentType.Application.OctetStream)
+            }
+
+            post("/schemas/{filename}") {
+                val filename = call.parameters["filename"] ?: ""
+                val content = call.receive<ByteArray>()
+                schemaStore.put(filename, content)
+                logger.info("Admin: uploaded schema '{}' ({} bytes)", filename, content.size)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "success" to true,
+                    "filename" to filename,
+                    "size_bytes" to content.size
+                ))
+            }
+
+            delete("/schemas/{filename}") {
+                val filename = call.parameters["filename"] ?: ""
+                val removed = schemaStore.remove(filename)
+                if (!removed) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Schema '$filename' not found"
+                    ))
+                    return@delete
+                }
+                logger.info("Admin: deleted schema '{}'", filename)
+                call.respond(HttpStatusCode.OK, mapOf("success" to true, "filename" to filename))
+            }
+
+            // ── Validation override endpoints ──
+
+            get("/transformations/{name}/validation") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found"
+                    ))
+                    return@get
+                }
+                val override = validationOverrides.get(name)
+                val effectivePolicy = validationOverrides.effectivePolicy(name, tx.config.validationPolicy)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "effective_policy" to effectivePolicy,
+                    "source" to if (override != null) "runtime-override" else "config",
+                    "config_policy" to tx.config.validationPolicy,
+                    "override_policy" to override?.policy
+                ))
+            }
+
+            post("/transformations/{name}/validation") {
+                val name = call.parameters["name"] ?: ""
+                if (registry.get(name) == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found"
+                    ))
+                    return@post
+                }
+                val body = call.receiveText()
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val policy = try {
+                    mapper.readTree(body).get("policy")?.asText() ?: "off"
+                } catch (_: Exception) { "off" }
+
+                validationOverrides.set(name, policy)
+                logger.info("Admin: validation override for '{}' set to '{}'", name, policy)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "success" to true,
+                    "name" to name,
+                    "effective_policy" to policy,
+                    "source" to "runtime-override"
+                ))
+            }
+
+            delete("/transformations/{name}/validation") {
+                val name = call.parameters["name"] ?: ""
+                if (registry.get(name) == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found"
+                    ))
+                    return@delete
+                }
+                val removed = validationOverrides.remove(name)
+                val tx = registry.get(name)!!
+                logger.info("Admin: validation override for '{}' removed", name)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "success" to true,
+                    "name" to name,
+                    "effective_policy" to tx.config.validationPolicy,
+                    "source" to "config"
+                ))
+            }
+
             // ── Engine info ──
             get("/info") {
                 call.respond(HttpStatusCode.OK, mapOf(
@@ -507,5 +638,89 @@ fun configureAdmin(
                 ))
             }
         }
+    }
+}
+
+/**
+ * EF02: Resolve schema references from the .utlx header against the SchemaStore.
+ * If a transformation declares `input xml {schema: "order.xsd"}`, look up "order.xsd"
+ * in the SchemaStore and create a validator on the TransformationInstance.
+ */
+private val formatToSchemaFormat = mapOf(
+    "xml" to "xsd",
+    "json" to "json-schema",
+    "yaml" to "yaml",
+    "csv" to "tsch",
+    "avro" to "avro",
+    "odata" to "osch",
+    "protobuf" to "protobuf"
+)
+
+private fun resolveSchemaValidators(
+    name: String,
+    schemaInfo: HeaderSchemaInfo,
+    instance: TransformationInstance,
+    schemaStore: SchemaStore
+) {
+    // Resolve input schemas — use singular for single-input, map for multi-input
+    val schemasWithRefs = schemaInfo.allInputSchemas.filter { it.value.schemaRef != null }
+
+    if (schemasWithRefs.size <= 1 && schemaInfo.inputSchemaRef != null) {
+        // Single-input: use inputValidator (singular)
+        val validator = createValidatorFromStore(schemaInfo.inputSchemaRef, schemaInfo.inputFormat, schemaStore)
+        if (validator != null) {
+            val field = TransformationInstance::class.java.getDeclaredField("inputValidator")
+            field.isAccessible = true
+            field.set(instance, validator)
+            logger.info("Schema '{}' resolved as {} validator for '{}' input",
+                schemaInfo.inputSchemaRef, formatToSchemaFormat[schemaInfo.inputFormat], name)
+        }
+    } else if (schemasWithRefs.isNotEmpty()) {
+        // Multi-input: use inputValidators (map) — each named input gets its own
+        val multiValidators = mutableMapOf<String, org.apache.utlx.engine.validation.SchemaValidator>()
+        for ((inputName, ref) in schemasWithRefs) {
+            val validator = createValidatorFromStore(ref.schemaRef!!, ref.format, schemaStore)
+            if (validator != null) {
+                multiValidators[inputName] = validator
+                logger.info("Schema '{}' resolved as {} validator for '{}' input '{}'",
+                    ref.schemaRef, formatToSchemaFormat[ref.format], name, inputName)
+            }
+        }
+        if (multiValidators.isNotEmpty()) {
+            val field = TransformationInstance::class.java.getDeclaredField("inputValidators")
+            field.isAccessible = true
+            field.set(instance, multiValidators.toMap())
+        }
+    }
+
+    // Resolve output schema
+    if (schemaInfo.outputSchemaRef != null) {
+        val validator = createValidatorFromStore(schemaInfo.outputSchemaRef, schemaInfo.outputFormat, schemaStore)
+        if (validator != null) {
+            val field = TransformationInstance::class.java.getDeclaredField("outputValidator")
+            field.isAccessible = true
+            field.set(instance, validator)
+            logger.info("Schema '{}' resolved as {} validator for '{}' output",
+                schemaInfo.outputSchemaRef, formatToSchemaFormat[schemaInfo.outputFormat], name)
+        }
+    }
+}
+
+private fun createValidatorFromStore(
+    schemaRef: String,
+    format: String,
+    schemaStore: SchemaStore
+): org.apache.utlx.engine.validation.SchemaValidator? {
+    val content = schemaStore.getContent(schemaRef)
+    if (content == null) {
+        logger.warn("Schema '{}' not found in SchemaStore", schemaRef)
+        return null
+    }
+    val schemaFormat = formatToSchemaFormat[format] ?: "json-schema"
+    return try {
+        SchemaValidatorFactory.create(String(content, Charsets.UTF_8), schemaFormat)
+    } catch (e: Exception) {
+        logger.warn("Failed to create validator from schema '{}': {}", schemaRef, e.message)
+        null
     }
 }

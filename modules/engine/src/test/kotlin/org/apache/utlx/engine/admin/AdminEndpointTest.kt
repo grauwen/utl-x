@@ -536,6 +536,81 @@ class AdminEndpointTest {
         assertTrue(body.contains("invalid"), "Should say invalid: $body")
     }
 
+    // ── Schema endpoints ──
+
+    @Test
+    fun `upload and list schema`() {
+        val schemaContent = """{"type":"object","properties":{"name":{"type":"string"}}}"""
+        val (uploadStatus, uploadBody) = adminPost("/admin/schemas/order.json", schemaContent)
+        assertEquals(200, uploadStatus, "Schema upload failed: $uploadBody")
+        assertTrue(uploadBody.contains("order.json"), "Should contain filename: $uploadBody")
+
+        val (listStatus, listBody) = adminGet("/admin/schemas")
+        assertEquals(200, listStatus)
+        assertTrue(listBody.contains("order.json"), "Should list schema: $listBody")
+    }
+
+    @Test
+    fun `delete schema`() {
+        adminPost("/admin/schemas/temp.xsd", "<xs:schema/>")
+        val (status, _) = adminDelete("/admin/schemas/temp.xsd")
+        assertEquals(200, status)
+
+        val (_, listBody) = adminGet("/admin/schemas")
+        assertFalse(listBody.contains("temp.xsd"), "Should be gone: $listBody")
+    }
+
+    @Test
+    fun `delete nonexistent schema returns 404`() {
+        val (status, _) = adminDelete("/admin/schemas/ghost.json")
+        assertEquals(404, status)
+    }
+
+    // ── Validation override endpoints ──
+
+    @Test
+    fun `set and get validation override`() {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent()
+        adminPost("/admin/transformations/val-test", source)
+
+        // Check default (no override)
+        val (getStatus, getBody) = adminGet("/admin/transformations/val-test/validation")
+        assertEquals(200, getStatus)
+        assertTrue(getBody.contains("config"), "Source should be config: $getBody")
+
+        // Set override
+        val (setStatus, setBody) = adminPost(
+            "/admin/transformations/val-test/validation",
+            """{"policy":"off"}"""
+        )
+        assertEquals(200, setStatus)
+        assertTrue(setBody.contains("runtime-override"), "Should say runtime-override: $setBody")
+        assertTrue(setBody.contains("off"), "Should be off: $setBody")
+
+        // Verify override is active
+        val (_, getBody2) = adminGet("/admin/transformations/val-test/validation")
+        assertTrue(getBody2.contains("runtime-override"), "Should be overridden: $getBody2")
+        assertTrue(getBody2.contains("\"effective_policy\":\"off\"") || getBody2.contains("\"effective_policy\" : \"off\""),
+            "Effective should be off: $getBody2")
+
+        // Remove override
+        val (delStatus, delBody) = adminDelete("/admin/transformations/val-test/validation")
+        assertEquals(200, delStatus)
+        assertTrue(delBody.contains("config"), "Should revert to config: $delBody")
+    }
+
+    @Test
+    fun `validation override on nonexistent returns 404`() {
+        val (status, _) = adminGet("/admin/transformations/ghost/validation")
+        assertEquals(404, status)
+    }
+
     // ── Dapr binding validation ──
 
     @Test

@@ -25,6 +25,7 @@ class UtlxEngine(val config: EngineConfig) {
     private var healthEndpoint: HealthEndpoint? = null
     private var transport: TransportServer? = null
     var dataDir: String? = null
+    val validationOverrides = org.apache.utlx.engine.admin.ValidationOverrideStore()
 
     val state: EngineState get() = stateRef.get()
 
@@ -56,13 +57,42 @@ class UtlxEngine(val config: EngineConfig) {
                 val strategy = createStrategy(transformConfig)
                 strategy.initialize(source, transformConfig)
 
+                // EF02: Create validators from transform.yaml schema references
+                // Single-input: first input gets inputValidator
+                val inputValidator = resolveValidatorFromConfig(
+                    transformConfig.inputs.firstOrNull()?.schema,
+                    bundlePath
+                )
+                // Multi-input: each named input gets its own validator
+                val inputValidators = transformConfig.inputs
+                    .filter { it.schema != null }
+                    .mapNotNull { slot ->
+                        val validator = resolveValidatorFromConfig(slot.schema, bundlePath)
+                        if (validator != null) slot.name to validator else null
+                    }
+                    .toMap()
+
+                val outputValidator = resolveValidatorFromConfig(
+                    transformConfig.output.schema,
+                    bundlePath
+                )
+
                 val instance = TransformationInstance(
                     name = name,
                     source = source,
                     strategy = strategy,
-                    config = transformConfig
+                    config = transformConfig,
+                    inputValidator = inputValidator,
+                    inputValidators = inputValidators,
+                    outputValidator = outputValidator
                 )
                 registry.register(name, instance)
+
+                val validatorCount = (if (inputValidator != null) 1 else 0) + inputValidators.size + (if (outputValidator != null) 1 else 0)
+                if (validatorCount > 0) {
+                    logger.info("Transformation '{}' validators: single-input={}, multi-input={}, output={}",
+                        name, inputValidator != null, inputValidators.keys, outputValidator != null)
+                }
             }
 
             stateRef.set(EngineState.READY)
@@ -209,6 +239,39 @@ class UtlxEngine(val config: EngineConfig) {
                 logger.warn("Strategy '{}' not yet implemented, falling back to TEMPLATE", config.strategy)
                 TemplateStrategy()
             }
+        }
+    }
+
+    /**
+     * EF02: Resolve a schema validator from a transform.yaml schema reference.
+     * The schema path is relative to the bundle directory.
+     * Returns null if no schema configured or file not found.
+     */
+    private fun resolveValidatorFromConfig(
+        schemaRef: String?,
+        bundlePath: java.nio.file.Path
+    ): org.apache.utlx.engine.validation.SchemaValidator? {
+        if (schemaRef.isNullOrBlank()) return null
+        try {
+            // Try relative to bundle, then absolute
+            val schemaFile = bundlePath.resolve(schemaRef)
+            if (!java.nio.file.Files.exists(schemaFile)) {
+                logger.warn("Schema file not found: {} (relative to {})", schemaRef, bundlePath)
+                return null
+            }
+            val content = java.nio.file.Files.readString(schemaFile)
+            val format = when {
+                schemaRef.endsWith(".xsd") -> "xsd"
+                schemaRef.endsWith(".json") -> "json-schema"
+                schemaRef.endsWith(".avsc") -> "avro"
+                schemaRef.endsWith(".proto") -> "protobuf"
+                schemaRef.endsWith(".yaml") || schemaRef.endsWith(".yml") -> "yaml"
+                else -> "json-schema"
+            }
+            return org.apache.utlx.engine.validation.SchemaValidatorFactory.create(content, format)
+        } catch (e: Exception) {
+            logger.warn("Failed to create validator from schema '{}': {}", schemaRef, e.message)
+            return null
         }
     }
 }

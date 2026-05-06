@@ -18,6 +18,21 @@ class TemplateStrategy : ExecutionStrategy {
     private val transformationService = TransformationService()
     override val name: String = "TEMPLATE"
 
+    override fun getHeaderSchemaInfo(): HeaderSchemaInfo? {
+        if (!::compiledProgram.isInitialized) return null
+        val header = compiledProgram.header
+        val allInputs = header.inputs.associate { (name, spec) ->
+            name to InputSchemaRef(spec.type.name.lowercase(), spec.options["schema"] as? String)
+        }
+        return HeaderSchemaInfo(
+            inputFormat = header.inputFormat.type.name.lowercase(),
+            inputSchemaRef = header.inputFormat.options["schema"] as? String,
+            outputFormat = header.outputFormat.type.name.lowercase(),
+            outputSchemaRef = header.outputFormat.options["schema"] as? String,
+            allInputSchemas = allInputs
+        )
+    }
+
     private lateinit var compiledProgram: Program
     private lateinit var utlxSource: String
     private lateinit var transformConfig: TransformConfig

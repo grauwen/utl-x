@@ -106,7 +106,8 @@ object TransportHandlers {
 
     fun handleExecute(
         req: ExecuteRequest,
-        registry: TransformationRegistry
+        registry: TransformationRegistry,
+        engine: UtlxEngine? = null
     ): ExecuteResponse {
         val startTime = System.nanoTime()
 
@@ -122,8 +123,11 @@ object TransportHandlers {
         instance.recordExecution()
         val input = req.payload.toStringUtf8()
 
+        // EF02: Resolve effective validation policy (runtime override > config > default)
+        val policyOverride = engine?.validationOverrides?.get(req.transformationId)?.policy
+
         // Use ValidationOrchestrator for pre-validate → transform → post-validate
-        val result = ValidationOrchestrator.execute(instance, input)
+        val result = ValidationOrchestrator.execute(instance, input, policyOverride)
         val durationUs = (System.nanoTime() - startTime) / 1000
 
         if (!result.success) {
@@ -164,7 +168,8 @@ object TransportHandlers {
 
     fun handleExecuteBatch(
         req: ExecuteBatchRequest,
-        registry: TransformationRegistry
+        registry: TransformationRegistry,
+        engine: UtlxEngine? = null
     ): ExecuteBatchResponse {
         val instance = registry.get(req.transformationId)
         val builder = ExecuteBatchResponse.newBuilder()
@@ -184,12 +189,14 @@ object TransportHandlers {
             return builder.build()
         }
 
+        val batchOverride = engine?.validationOverrides?.get(req.transformationId)?.policy
+
         req.itemsList.forEach { item ->
             val startTime = System.nanoTime()
             instance.recordExecution()
             val input = item.payload.toStringUtf8()
 
-            val result = ValidationOrchestrator.execute(instance, input)
+            val result = ValidationOrchestrator.execute(instance, input, batchOverride)
             val durationUs = (System.nanoTime() - startTime) / 1000
 
             if (!result.success) {
@@ -231,7 +238,8 @@ object TransportHandlers {
 
     fun handleExecutePipeline(
         req: ExecutePipelineRequest,
-        registry: TransformationRegistry
+        registry: TransformationRegistry,
+        engine: UtlxEngine? = null
     ): ExecutePipelineResponse {
         val startTime = System.nanoTime()
         val transformIds = req.transformationIdsList
@@ -287,7 +295,8 @@ object TransportHandlers {
                 currentPayload
             }
 
-            val result = ValidationOrchestrator.execute(instance, effectivePayload)
+            val pipelineOverride = engine?.validationOverrides?.get(transformId)?.policy
+            val result = ValidationOrchestrator.execute(instance, effectivePayload, pipelineOverride)
 
             if (!result.success) {
                 instance.recordError()

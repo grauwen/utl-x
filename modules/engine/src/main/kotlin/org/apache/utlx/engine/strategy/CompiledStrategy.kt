@@ -36,6 +36,26 @@ class CompiledStrategy : ExecutionStrategy {
     private val transformationService = TransformationService()
     override val name: String = "COMPILED"
 
+    override fun getHeaderSchemaInfo(): HeaderSchemaInfo? {
+        if (!::compiledProgram.isInitialized) return null
+        val header = compiledProgram.header
+        val inputSpec = header.inputFormat
+        val outputSpec = header.outputFormat
+        val allInputs = header.inputs.associate { (name, spec) ->
+            name to InputSchemaRef(
+                format = spec.type.name.lowercase(),
+                schemaRef = spec.options["schema"] as? String
+            )
+        }
+        return HeaderSchemaInfo(
+            inputFormat = inputSpec.type.name.lowercase(),
+            inputSchemaRef = inputSpec.options["schema"] as? String,
+            outputFormat = outputSpec.type.name.lowercase(),
+            outputSchemaRef = outputSpec.options["schema"] as? String,
+            allInputSchemas = allInputs
+        )
+    }
+
     private lateinit var compiledProgram: Program
     private lateinit var utlxSource: String
     private lateinit var transformConfig: TransformConfig

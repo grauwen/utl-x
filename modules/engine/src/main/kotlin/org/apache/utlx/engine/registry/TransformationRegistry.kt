@@ -86,7 +86,8 @@ data class TransformationInstance(
     val loadedAt: Instant = Instant.now(),
     val executionCount: AtomicLong = AtomicLong(0),
     val errorCount: AtomicLong = AtomicLong(0),
-    val inputValidator: SchemaValidator? = null,
+    val inputValidator: SchemaValidator? = null,          // Single-input validation (backward compat)
+    val inputValidators: Map<String, SchemaValidator> = emptyMap(), // Multi-input: name → validator
     val outputValidator: SchemaValidator? = null,
     @Volatile var paused: Boolean = false,
     val recentErrors: java.util.concurrent.ConcurrentLinkedDeque<ErrorEntry> = java.util.concurrent.ConcurrentLinkedDeque()
