@@ -706,6 +706,19 @@ A `.utlx` file can be deployed alone — the `transform.yaml` config is optional
 
 See [EF03: Bundle Management API](../../docs/features/EF03-bundle-management-api.md) for the full design.
 
+### Interface Architecture
+
+UTLXe has two interface categories. They serve different consumers and cannot be consolidated:
+
+| Interface | Proto | Consumers | Transport |
+|-----------|-------|-----------|-----------|
+| **UTLXe proto** (`utlxe.proto`) | Ours | Language wrappers (.NET, Go, Python) | gRPC (port 9090) and stdio-proto (pipe) |
+| **HTTP** | REST | Admin/ops, health probes, Prometheus, Dapr, direct clients | HTTP (ports 8085 + 8081) |
+
+Dapr communicates with UTLXe over HTTP on port 8085 (input bindings delivered to `POST /{component-name}`, output bindings called at `POST localhost:3500/v1.0/bindings/{name}`).
+
+**Future option: Dapr gRPC.** Dapr supports gRPC between the app and sidecar (port 50001). This requires implementing Dapr's own `AppCallback` proto (defined by the Dapr project, not by UTLXe). This would be a third interface — it does not replace HTTP or UTLXe gRPC. It is a performance optimization for high-throughput scenarios, documented but not implemented for go-live. See [EF05: Dapr Integration Fixes](../../docs/features/EF05-dapr-integration-fixes.md).
+
 ### Health & Metrics
 
 **Health endpoint** (HTTP `/health`):

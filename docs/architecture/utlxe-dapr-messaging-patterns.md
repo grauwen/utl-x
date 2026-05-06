@@ -30,25 +30,57 @@ UTLXe does not contain any broker SDK code. Dapr handles all broker-specific com
 
 ---
 
-## 2. Binding-to-Transformation Mapping
+## 2. Startup Handshake (EF05)
+
+Before Dapr activates an input binding, it verifies the app is listening:
+
+1. Dapr sends `OPTIONS /{component-name}` to the app port (8085).
+2. If the app returns any non-404 response, the binding is activated.
+3. If the app returns 404, the binding is NOT activated — no messages are delivered.
+
+UTLXe handles this with an OPTIONS handler on the root path:
+
+```kotlin
+options("/{bindingName}") {
+    call.respond(HttpStatusCode.OK)  // Dapr startup probe
+}
+```
+
+## 3. Binding-to-Transformation Mapping
 
 **Convention: Dapr binding name = UTLXe transformation ID.**
+
+Dapr delivers input binding messages to `POST /{component-name}` by default (the root path). UTLXe registers handlers at both paths:
+
+```
+POST /{component-name}                  ← Dapr default (recommended)
+POST /api/dapr/input/{component-name}   ← explicit path (backward compatible)
+```
 
 When Dapr receives a message from a binding named `order-queue`, it calls:
 
 ```
-POST /api/dapr/input/order-queue
+POST /order-queue
 ```
 
-UTLXe looks up transformation `order-queue` in its registry and executes it.
+UTLXe extracts the binding name from the path, looks up transformation `order-queue` in its registry, and executes it. The transformation name must match the Dapr component name.
 
-**Override via header:** If the transformation has a different name than the binding, set the `X-UTLXe-Transform` header in the Dapr component metadata:
+**Override:** If the transformation has a different name than the binding, use the `route` metadata in the Dapr component YAML to point to the transformation name:
 
-```
-X-UTLXe-Transform: normalize-order
+```yaml
+metadata:
+  - name: route
+    value: "/normalize-order"
 ```
 
 This routes messages from binding `order-queue` to transformation `normalize-order`.
+
+**Metadata headers:** Dapr forwards Service Bus message properties as HTTP headers with a `metadata.` prefix:
+- `metadata.MessageId` — the Service Bus message ID
+- `metadata.CorrelationId` — the correlation ID
+- `metadata.{custom-property}` — any custom properties set by the producer
+
+UTLXe reads these for message correlation (EF04).
 
 ---
 
