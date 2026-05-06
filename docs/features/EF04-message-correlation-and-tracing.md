@@ -149,10 +149,11 @@ val traceparent = call.request.header("traceparent")
 val tracestate = call.request.header("tracestate")
 
 // Service Bus properties forwarded by Dapr
-val incomingMessageId = call.request.header("MessageId")
-    ?: call.request.header("metadata.MessageId")
-val incomingCorrelationId = call.request.header("CorrelationId")
-    ?: call.request.header("metadata.CorrelationId")
+// Dapr forwards Service Bus properties with "metadata." prefix (EF05)
+val incomingMessageId = call.request.header("metadata.MessageId")
+    ?: call.request.header("MessageId")
+val incomingCorrelationId = call.request.header("metadata.CorrelationId")
+    ?: call.request.header("CorrelationId")
 
 // All custom properties (for pass-through)
 val customProperties = call.request.headers.entries()
