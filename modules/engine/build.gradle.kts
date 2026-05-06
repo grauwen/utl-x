@@ -112,6 +112,15 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Proto source: single source of truth at project root (proto/)
+sourceSets {
+    main {
+        proto {
+            srcDir("${rootProject.projectDir}/proto")
+        }
+    }
+}
+
 protobuf {
     protoc {
         artifact = "com.google.protobuf:protoc:3.25.3"
