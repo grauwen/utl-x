@@ -719,6 +719,23 @@ Dapr communicates with UTLXe over HTTP on port 8085 (input bindings delivered to
 
 **Future option: Dapr gRPC.** Dapr supports gRPC between the app and sidecar (port 50001). This requires implementing Dapr's own `AppCallback` proto (defined by the Dapr project, not by UTLXe). This would be a third interface — it does not replace HTTP or UTLXe gRPC. It is a performance optimization for high-throughput scenarios, documented but not implemented for go-live. See [EF05: Dapr Integration Fixes](../../docs/features/EF05-dapr-integration-fixes.md).
 
+### Wire-Protocol Parity (Architecture Principle)
+
+**The proto is the source of truth. HTTP is derived from it.**
+
+All transports — gRPC, stdio-proto, HTTP REST, and the Admin API — must produce identical response shapes for identical operations. This means:
+
+- **Same field names**: `transformation_id` in the proto = `transformation_id` in the JSON response (not `transformationId`, not `transform_id`)
+- **Same error codes**: the `ErrorCode` enum in the proto (`TRANSFORMATION_NOT_FOUND`, `BUNDLE_NOT_LOADED`, etc.) is used by all transports. HTTP responses include `"error_code": "TRANSFORMATION_NOT_FOUND"` — the enum name as a string, not a number.
+- **Same metadata semantics**: `metadata`, `parameters`, `message_id`, `correlation_id`, `causation_id` have the same meaning on all transports.
+- **Same error structure**: HTTP error responses include `error`, `error_class`, `error_phase`, `error_code`, and `validation_errors` — the same fields as `ExecuteResponse` in the proto.
+
+**Why this matters:** A customer who starts with the HTTP API (Azure Marketplace, Dapr) and later migrates to the gRPC SDK (BizTalk pipeline, Logic Apps custom function) must see the same response shape. A customer running both transports simultaneously (EF07) must see the same behavior. Wire-protocol parity is how we keep the "same engine, all transports" promise.
+
+**Enforcement:** The HTTP response DTOs should be generated from or validated against the proto definitions. At minimum, integration tests must verify that an `Execute` call with the same input produces field-identical JSON (HTTP) and proto (gRPC) responses.
+
+See: `docs/dapr/utlxe-biztalk-replacement.md` section 5.1 for the rationale from the BizTalk replacement study.
+
 ### Health & Metrics
 
 **Health endpoint** (HTTP `/health`):
