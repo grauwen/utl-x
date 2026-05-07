@@ -33,14 +33,22 @@ Developer uploads transformation "orders-in" via Admin API
 
 When the Admin API creates or deletes a transformation, UTLXe writes or removes Dapr component YAML files in the Dapr resources directory.
 
-**Flow — add transformation (queue example):**
+**Flow — interactive configuration (stage → sync):**
+
+The Admin API uses a stage-then-sync model (see EF03). Config changes are saved to disk immediately but Dapr components are only created/updated on explicit sync. This prevents churn when building up a configuration over multiple API calls.
+
 ```
-POST /admin/transformations/orders-in
-  Body: .utlx source + transform.yaml with { input: { queue: orders-in }, output: { queue: orders-out } }
-  ↓
-UTLXe compiles, registers transformation
-  ↓
-UTLXe reads transform.yaml → sees "queue: orders-in"
+# Stage 1: Upload transformation
+POST /admin/transformations/orders-in  (.utlx source)
+  → compiled, registered, sync_status: no_dapr
+
+# Stage 2: Set messaging (saved to transform.yaml, Dapr NOT touched)
+POST /admin/transformations/orders-in/messaging
+  {"input": {"queue": "orders-in"}, "output": {"queue": "orders-out"}}
+  → sync_status: draft
+
+# Stage 3: Sync — push to Dapr
+POST /admin/transformations/orders-in/sync
   ↓
 UTLXe generates /dapr/components/binding-orders-in.yaml
   (type: bindings.azure.servicebusqueues, namespaceName from --dapr-servicebus-namespace)
@@ -53,26 +61,51 @@ Dapr initializes bindings → starts listening on queue "orders-in"
   ↓
 Dapr probes OPTIONS /orders-in → UTLXe returns 200
   ↓
-Messages flow immediately — no restart, no manual YAML
+sync_status: synced — messages flow
 ```
 
-**Flow — add transformation (topic example):**
+**Flow — topic example (stage → sync):**
+
 ```
-POST /admin/transformations/invoice-normalize
-  Body: .utlx source + transform.yaml with { input: { topic: raw-invoices, subscription: utlxe }, output: { topic: normalized-invoices } }
-  ↓
-UTLXe compiles, registers transformation
-  ↓
-UTLXe reads transform.yaml → sees "topic: raw-invoices"
+POST /admin/transformations/invoice-normalize  (.utlx source)
+POST /admin/transformations/invoice-normalize/messaging
+  {"input": {"topic": "raw-invoices", "subscription": "utlxe"}, "output": {"topic": "normalized-invoices"}}
+  → sync_status: draft
+
+POST /admin/transformations/invoice-normalize/sync
   ↓
 UTLXe ensures /dapr/components/pubsub-utlxe-servicebus.yaml exists (shared, one per namespace)
   ↓
 UTLXe opens streaming subscription via gRPC: Subscribe(pubsub="utlxe-servicebus", topic="raw-invoices")
   ↓
-Dapr subscribes to Service Bus topic → messages flow immediately
+Dapr subscribes to Service Bus topic → sync_status: synced, messages flow
 ```
 
-**Flow — remove transformation:**
+**Flow — bulk configuration (multiple transformations, one sync):**
+
+```
+POST /admin/transformations/orders-in/messaging      → draft
+POST /admin/transformations/invoices-in/messaging     → draft
+POST /admin/transformations/returns-in/messaging      → draft
+
+# One sync for everything
+POST /admin/sync
+  → Generates all Dapr components at once
+  → All transformations: synced
+```
+
+**Flow — bundle upload (auto-sync):**
+
+```
+POST /admin/bundle  (ZIP with .utlx files + transform.yaml with messaging config)
+  → Compiles all transformations
+  → AUTO-SYNCS all messaging to Dapr (bundle is a coherent deployment unit)
+  → All transformations: synced
+  → No separate sync call needed
+```
+
+**Flow — remove transformation (auto-sync):**
+
 ```
 DELETE /admin/transformations/orders-in
   ↓
@@ -83,7 +116,7 @@ If topic-based: UTLXe closes the streaming subscription
   ↓
 Dapr detects change (<1 second) → tears down binding / unsubscribes
   ↓
-Clean removal, no restart needed
+Clean removal — no separate sync needed (deletion is always immediate)
 ```
 
 ### For Pub/Sub Topics (Streaming Subscriptions)
@@ -334,20 +367,25 @@ The generated YAML never contains secrets. Auth fields come from:
 
 The `utlxe.io/managed: "true"` annotation marks auto-generated components. On startup, UTLXe can clean up orphaned managed components (transformation deleted while UTLXe was down).
 
-## Startup reconciliation
+## Startup reconciliation (auto-sync)
 
-On startup in open mode, UTLXe reconciles the Dapr components directory with loaded transformations:
+On startup in open mode, UTLXe reconciles the Dapr components directory with loaded transformations. This is an **automatic sync** — transformations that were `synced` before shutdown should be `synced` again after restart without manual intervention.
 
 ```
 Startup:
-  1. Scan data dir → load transformations
+  1. Scan data dir → load transformations (including transform.yaml with messaging config)
   2. Scan Dapr components dir → find utlxe.io/managed components
-  3. For each loaded transformation:
-     - If no matching component → generate and write YAML
+  3. For each loaded transformation WITH messaging config:
+     - If no matching component → generate and write YAML (auto-sync)
+     - If matching component exists → verify it matches config (update if drifted)
   4. For each managed component:
      - If no matching transformation → delete orphaned YAML
   5. Dapr hot reload picks up all changes
+  6. All transformations with messaging: sync_status = synced
+     Transformations without messaging: sync_status = no_dapr
 ```
+
+This means: if you configured and synced a transformation, then the container restarts, everything comes back automatically. The sync state is derived from comparing config-on-disk with components-in-Dapr, not stored separately.
 
 ## Dapr capability matrix
 

@@ -358,6 +358,304 @@ POST /admin/config
 
 Only a subset of config fields are safe to change at runtime. Fields that require restart (like port numbers) are accepted but flagged in the response: `"restart_required": ["healthPort"]`.
 
+#### Messaging endpoints (Dapr-aware, with sync)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/admin/dapr` | Dapr sidecar status, loaded components, integration mode |
+| `GET` | `/admin/transformations/{name}/messaging` | Messaging config for a transformation (input/output queue/topic/eventhub) |
+| `POST` | `/admin/transformations/{name}/messaging` | Set or update messaging config (saved to disk, **not** pushed to Dapr yet) |
+| `DELETE` | `/admin/transformations/{name}/messaging` | Remove messaging config (marks as draft — sync to remove from Dapr) |
+| `POST` | `/admin/transformations/{name}/sync` | Push this transformation's config to Dapr |
+| `POST` | `/admin/sync` | Push ALL draft transformations to Dapr |
+| `GET` | `/admin/sync` | Show sync status for all transformations |
+
+**Design principle: stage then apply.**
+
+Configuration changes via the Admin API are persisted to `transform.yaml` on disk immediately (crash-safe). But Dapr components are **not** created, updated, or deleted until an explicit **sync**. This prevents wasteful churn when building up a configuration incrementally over multiple API calls.
+
+| Analogy | Stage | Apply |
+|---|---|---|
+| Git | `git add` | `git commit` |
+| Terraform | edit `.tf` files | `terraform apply` |
+| Network switch | `configure terminal` | `write memory` |
+| **UTLXe Admin API** | `POST .../messaging` | `POST .../sync` |
+
+**Sync status per transformation:**
+
+| Status | Meaning |
+|---|---|
+| `synced` | Dapr components match the current config on disk |
+| `draft` | Config changed since last sync — Dapr not yet updated |
+| `error` | Last sync attempt failed (with reason) |
+| `no_dapr` | Dapr not available or no messaging configured |
+
+**What creates draft status:**
+- `POST /admin/transformations/{name}/messaging` — messaging changed
+- `DELETE /admin/transformations/{name}/messaging` — messaging removed (pending removal from Dapr)
+
+**What auto-syncs (no draft state):**
+- `POST /admin/bundle` — complete deployment unit, always auto-syncs (the bundle is coherent by definition)
+- `DELETE /admin/transformations/{name}` — deletion is immediate (removes Dapr component + transformation in one step)
+
+**What does NOT affect sync status:**
+- `POST /admin/transformations/{name}/config` with non-messaging fields (validation policy, strategy) — these don't touch Dapr
+- `POST /admin/transformations/{name}/pause` / `resume` — operational, not config
+- `POST /admin/transformations/{name}/validation` — ephemeral override, not persisted
+
+**Dapr detection and integration modes:**
+
+The Admin API detects Dapr by probing `localhost:3500/v1.0/metadata` on startup and periodically. The response (or lack thereof) determines the integration mode:
+
+| Dapr present? | `--dapr-components-dir` set? | Mode | Sync behavior |
+|---|---|---|---|
+| No | No | **HTTP-only** | Sync is a no-op — config stored on disk only |
+| Yes | No | **Dapr static** | Sync validates bindings exist in Dapr, warns if missing (no YAML generation) |
+| Yes | Yes | **Dapr dynamic** | Sync generates/updates/deletes Dapr component YAML |
+
+```json
+GET /admin/dapr
+
+// Dapr dynamic mode
+{
+  "mode": "dynamic",
+  "sidecar_reachable": true,
+  "sidecar_version": "1.17.5",
+  "components_dir": "/dapr/components",
+  "servicebus_namespace": "mycompany.servicebus.windows.net",
+  "eventhub_namespace": "mycompany-eventhubs",
+  "loaded_components": [
+    { "name": "orders-in", "type": "bindings.azure.servicebusqueues", "managed": true },
+    { "name": "orders-out", "type": "bindings.azure.servicebusqueues", "managed": true },
+    { "name": "utlxe-servicebus", "type": "pubsub.azure.servicebus.topics", "managed": true },
+    { "name": "legacy-binding", "type": "bindings.azure.servicebusqueues", "managed": false }
+  ],
+  "managed_count": 3,
+  "external_count": 1
+}
+
+// HTTP-only mode (no Dapr)
+{
+  "mode": "http-only",
+  "sidecar_reachable": false,
+  "components_dir": null,
+  "loaded_components": []
+}
+```
+
+**Sync status overview:**
+
+```json
+GET /admin/sync
+
+{
+  "dapr_mode": "dynamic",
+  "transformations": [
+    {
+      "name": "orders-in",
+      "sync_status": "synced",
+      "last_synced": "2026-05-07T10:05:00Z",
+      "messaging": {
+        "input": { "queue": "orders-in" },
+        "output": { "queue": "orders-out" }
+      }
+    },
+    {
+      "name": "invoices-in",
+      "sync_status": "draft",
+      "pending_changes": ["messaging.input", "messaging.output"],
+      "messaging": {
+        "input": { "topic": "raw-invoices", "subscription": "utlxe" },
+        "output": { "topic": "normalized-invoices" }
+      }
+    },
+    {
+      "name": "returns-in",
+      "sync_status": "error",
+      "error": "Dapr sidecar unreachable at localhost:3500",
+      "messaging": {
+        "input": { "queue": "returns-in" },
+        "output": { "queue": "returns-out" }
+      }
+    },
+    {
+      "name": "http-only-transform",
+      "sync_status": "no_dapr",
+      "messaging": null
+    }
+  ],
+  "draft_count": 1,
+  "error_count": 1,
+  "synced_count": 1,
+  "no_dapr_count": 1
+}
+```
+
+**Messaging config per transformation:**
+
+```json
+GET /admin/transformations/orders-in/messaging
+
+{
+  "input": {
+    "queue": "orders-in",
+    "dapr_status": "active",
+    "dapr_component": "orders-in",
+    "dapr_component_type": "bindings.azure.servicebusqueues"
+  },
+  "output": {
+    "topic": "processed-orders",
+    "dapr_status": "active",
+    "dapr_component": "utlxe-servicebus",
+    "dapr_component_type": "pubsub.azure.servicebus.topics"
+  },
+  "sync_status": "synced",
+  "last_synced": "2026-05-07T10:05:00Z"
+}
+```
+
+Dapr status values per binding:
+- `active` — Dapr component exists and is loaded
+- `pending` — YAML written during sync, waiting for Dapr to pick up (~1s)
+- `missing` — Dapr sidecar present but component not loaded (static mode, manual action needed)
+- `not_configured` — no messaging declared for this transformation
+- `no_dapr` — Dapr sidecar not available (HTTP-only mode)
+- `unsynced` — config set but not yet synced (draft state)
+
+**Interactive configuration flow (stage → apply):**
+
+```bash
+# 1. Upload transformation (no messaging yet)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -F "source=@orders-in.utlx" \
+  http://admin:8081/admin/transformations/orders-in
+# → sync_status: no_dapr (no messaging configured)
+
+# 2. Set input queue
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"queue": "orders-in"}}' \
+  http://admin:8081/admin/transformations/orders-in/messaging
+# → sync_status: draft, input.dapr_status: unsynced
+
+# 3. Set output (can be different service — mix-and-match)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"queue": "orders-in"}, "output": {"topic": "processed-orders"}}' \
+  http://admin:8081/admin/transformations/orders-in/messaging
+# → sync_status: draft, both unsynced
+
+# 4. Set validation policy (doesn't affect sync)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"validationPolicy": "strict"}' \
+  http://admin:8081/admin/transformations/orders-in/config
+# → sync_status: still draft (only messaging changes matter)
+
+# 5. Done — push to Dapr
+curl -X POST -H "X-Admin-Key: $KEY" \
+  http://admin:8081/admin/transformations/orders-in/sync
+# → Generates Dapr YAML, sync_status: synced, messages flow
+```
+
+**Sync response:**
+
+```json
+POST /admin/transformations/orders-in/sync → 200
+
+{
+  "sync_status": "synced",
+  "synced_at": "2026-05-07T10:05:00Z",
+  "actions": [
+    { "action": "created", "component": "orders-in", "type": "bindings.azure.servicebusqueues" },
+    { "action": "ensured", "component": "utlxe-servicebus", "type": "pubsub.azure.servicebus.topics" }
+  ],
+  "message": "2 Dapr components synced. Bindings will activate within ~1 second."
+}
+```
+
+**Bulk sync (multiple transformations at once):**
+
+```bash
+# Configure multiple transformations
+curl -X POST ... /admin/transformations/orders-in/messaging    # → draft
+curl -X POST ... /admin/transformations/invoices-in/messaging   # → draft
+curl -X POST ... /admin/transformations/returns-in/messaging    # → draft
+
+# One sync for everything
+curl -X POST -H "X-Admin-Key: $KEY" http://admin:8081/admin/sync
+```
+
+```json
+POST /admin/sync → 200
+
+{
+  "synced": [
+    { "name": "orders-in", "actions": [{"action": "created", "component": "orders-in"}] },
+    { "name": "invoices-in", "actions": [{"action": "created", "component": "invoices-in"}] },
+    { "name": "returns-in", "actions": [{"action": "created", "component": "returns-in"}] }
+  ],
+  "errors": [],
+  "skipped": ["http-only-transform"],
+  "message": "3 transformations synced, 0 errors, 1 skipped (no messaging config)."
+}
+```
+
+**Sync in static mode (no `--dapr-components-dir`):**
+
+```json
+POST /admin/transformations/orders-in/sync → 200
+
+{
+  "sync_status": "synced",
+  "dapr_mode": "static",
+  "warnings": [
+    "Dapr component 'orders-in' not found — create binding YAML manually",
+    "Dapr component 'utlxe-servicebus' found and active ✓"
+  ],
+  "message": "Config validated against Dapr. 1 component missing — manual action required."
+}
+```
+
+**Remove messaging (stage removal → sync to apply):**
+
+```bash
+# Stage removal
+curl -X DELETE -H "X-Admin-Key: $KEY" \
+  http://admin:8081/admin/transformations/orders-in/messaging
+# → sync_status: draft (removal pending)
+
+# Apply removal
+curl -X POST -H "X-Admin-Key: $KEY" \
+  http://admin:8081/admin/transformations/orders-in/sync
+# → Deletes Dapr component YAML, sync_status: no_dapr
+```
+
+**Config is persisted to transform.yaml on disk immediately (crash-safe):**
+
+| API call | Disk effect | Dapr effect |
+|----------|-------------|-------------|
+| `POST .../messaging` | Writes `input:`/`output:` to `transform.yaml` | None (draft) |
+| `DELETE .../messaging` | Removes `input:`/`output:` from `transform.yaml` | None (draft) |
+| `POST .../sync` | No change (already on disk) | Creates/updates/deletes Dapr YAML |
+| `POST /admin/sync` | No change (already on disk) | Syncs all draft transformations |
+| `POST /admin/bundle` | Replaces all files | **Auto-syncs** (bundle is coherent) |
+| `DELETE /admin/transformations/{name}` | Deletes directory | **Auto-removes** Dapr component |
+
+This means `GET /admin/bundle` (export) includes the messaging config — the exported bundle is complete and deployable to production as-is.
+
+**Field reference:**
+
+| Field | Azure service | Dapr component type |
+|---|---|---|
+| `queue: name` | Service Bus Queue | `bindings.azure.servicebusqueues` |
+| `topic: name` | Service Bus Topic | `pubsub.azure.servicebus.topics` |
+| `eventhub: name` | Event Hub | `bindings.azure.eventhubs` or `pubsub.azure.eventhubs` |
+
+Input-only fields: `subscription` (required for topic input), `consumerGroup` (optional for eventhub, triggers pub/sub mode).
+
+Mix-and-match is allowed — input and output can use different services (e.g., queue in → topic out).
+
 #### Data plane discovery (port 8085)
 
 | Method | Path | Description |
@@ -371,14 +669,17 @@ GET /api/transformations
 
 {
   "transformations": [
-    {"name": "invoice-to-ubl", "status": "ready", "input": "json", "output": "xml"},
-    {"name": "order-enrichment", "status": "ready", "input": "json", "output": "json"},
-    {"name": "enrich-order", "status": "paused", "input": "json", "output": "json"}
+    {"name": "invoice-to-ubl", "status": "ready", "input": "json", "output": "xml",
+     "messaging": {"input": {"queue": "orders-in"}, "output": {"topic": "processed-orders"}}},
+    {"name": "order-enrichment", "status": "ready", "input": "json", "output": "json",
+     "messaging": null},
+    {"name": "enrich-order", "status": "paused", "input": "json", "output": "json",
+     "messaging": {"input": {"queue": "enrich-in"}, "output": {"queue": "enrich-out"}}}
   ]
 }
 ```
 
-This makes the data plane self-describing. A client connecting for the first time can discover available transformations without out-of-band knowledge.
+This makes the data plane self-describing. A client connecting for the first time can discover available transformations and their messaging connections without out-of-band knowledge.
 
 ### Two deployment workflows
 
@@ -523,7 +824,21 @@ See `utlxe-engine-architecture.md` "Wire-Protocol Parity" principle and `proto/u
   "name": "invoice-to-ubl",
   "strategy": "COMPILED",
   "config": "defaults",
-  "compiled_in_ms": 48
+  "compiled_in_ms": 48,
+  "messaging": null
+}
+
+// POST /admin/transformations/{name} — success (with messaging config)
+{
+  "status": "deployed",
+  "name": "orders-in",
+  "strategy": "COMPILED",
+  "config": "explicit",
+  "compiled_in_ms": 52,
+  "messaging": {
+    "input": { "queue": "orders-in", "status": "active" },
+    "output": { "queue": "orders-out", "status": "active" }
+  }
 }
 
 // GET /admin/transformations
@@ -536,7 +851,26 @@ See `utlxe-engine-architecture.md` "Wire-Protocol Parity" principle and `proto/u
       "config": "explicit",
       "deployed_at": "2026-05-05T14:30:00Z",
       "messages_processed": 12345,
-      "avg_transform_ms": 2.3
+      "avg_transform_ms": 2.3,
+      "sync_status": "synced",
+      "messaging": {
+        "input": { "queue": "orders-in", "dapr_status": "active" },
+        "output": { "topic": "processed-orders", "dapr_status": "active" }
+      }
+    },
+    {
+      "name": "returns-in",
+      "strategy": "COMPILED",
+      "status": "ready",
+      "config": "explicit",
+      "deployed_at": "2026-05-05T14:32:00Z",
+      "messages_processed": 0,
+      "avg_transform_ms": 0,
+      "sync_status": "draft",
+      "messaging": {
+        "input": { "queue": "returns-in", "dapr_status": "unsynced" },
+        "output": { "queue": "returns-out", "dapr_status": "unsynced" }
+      }
     },
     {
       "name": "order-enrichment",
@@ -545,9 +879,12 @@ See `utlxe-engine-architecture.md` "Wire-Protocol Parity" principle and `proto/u
       "config": "defaults",
       "deployed_at": "2026-05-05T14:31:00Z",
       "messages_processed": 12340,
-      "avg_transform_ms": 1.1
+      "avg_transform_ms": 1.1,
+      "sync_status": "no_dapr",
+      "messaging": null
     }
-  ]
+  ],
+  "dapr_mode": "dynamic"
 }
 
 // GET /admin/schemas
@@ -603,6 +940,10 @@ There is no "bundle file." The bundle is a **directory structure** — the on-di
 | `POST /admin/transformations/invoice-to-ubl` (single .utlx) | Creates `transformations/invoice-to-ubl/invoice-to-ubl.utlx` |
 | `POST /admin/transformations/invoice-to-ubl` (.utlx + config) | Creates `.utlx` + `transform.yaml` in that directory |
 | `POST /admin/transformations/invoice-to-ubl/config` (config only) | Creates or replaces `transform.yaml` in existing directory |
+| `POST /admin/transformations/invoice-to-ubl/messaging` | Writes `input:`/`output:` to `transform.yaml` (draft — Dapr not touched yet) |
+| `DELETE /admin/transformations/invoice-to-ubl/messaging` | Removes `input:`/`output:` from `transform.yaml` (draft — Dapr not touched yet) |
+| `POST /admin/transformations/invoice-to-ubl/sync` | No disk change — pushes current config to Dapr (generates/deletes component YAML) |
+| `POST /admin/sync` | No disk change — syncs ALL draft transformations to Dapr |
 | `POST /admin/schemas/order.xsd` | Creates `schemas/order.xsd` |
 | `POST /admin/bundle` (ZIP upload) | **Replaces** entire `/utlxe/data/` content with ZIP contents |
 | `GET /admin/bundle` (export) | Zips up `/utlxe/data/` and returns it — no disk change |
@@ -1351,5 +1692,15 @@ For GitOps/immutable-infrastructure teams, the bundle can be pre-seeded from blo
 
 ---
 
-*Feature EF03. May 2026. Design document.
-*Key insight: the engine already supports dynamic loading internally — EF03 is the REST surface that exposes it to Azure Marketplace customers.*
+## Relationship to other features
+
+- **EF02** (validation): Schema upload triggers validator creation; validation policy settable via config endpoint
+- **EF04** (message tracing): Error ring buffer includes messageId and correlationId
+- **EF05** (Dapr fixes): Admin API returns 429 for paused transformations (not 503)
+- **EF09** (locked mode): In locked mode, mutating Admin API endpoints return 403; messaging config comes from .utlar bundle
+- **EF10** (dynamic Dapr bindings): Messaging endpoints trigger Dapr component YAML generation in dynamic mode; Admin API is Dapr-aware via `GET /admin/dapr`
+
+---
+
+*Feature EF03. May 2026. Design document.*
+*Key insight: the engine already supports dynamic loading internally — EF03 is the REST surface that exposes it to Azure Marketplace customers. The messaging endpoints make it Dapr-aware — everything in the bundle (transformations, schemas, messaging config) is configurable via the Admin API.*
