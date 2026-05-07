@@ -333,7 +333,7 @@ For **queues** (bindings), steps 1-3 are different:
 
 1. **Should the Marketplace wizard default to topics or queues?** Topics are more flexible but less familiar to simple integration scenarios.
 
-2. **Can we avoid the restart for new topic subscriptions?** Dapr has experimental "hot reloading" in alpha — not production-ready. For now, restart is required.
+2. **~~Can we avoid the restart for new topic subscriptions?~~** **RESOLVED:** Yes. Dapr Component Hot Reload (`HotReload` feature gate, preview since v1.13, improved in v1.17) watches the `--resources-path` directory for file changes. UTLXe can write/delete binding YAML files at runtime → Dapr picks them up within ~1 second. For pub/sub, streaming subscriptions (v1.14+, alpha, gRPC) allow dynamic subscribe/unsubscribe from code without any YAML. See EF10 for the full design.
 
 3. **Should we support Kafka and Event Hub in the wizard too?** Or keep it Service Bus only for v1 and document others as "advanced, bring your own Dapr component"?
 

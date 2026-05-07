@@ -296,7 +296,7 @@ This means even in open mode with a .utlar, the archive is always consistent.
 | Tests | 1 day |
 | **Total** | **~5 days** |
 
-## Pause behavior in production: preventing dead-letter during maintenance
+## Pause behavior in production: two mechanisms
 
 ### The problem
 
@@ -304,9 +304,19 @@ When an operator pauses a transformation (e.g., downstream system in maintenance
 
 This is wrong for a deliberate pause. The operator wants messages to **wait in the queue**, not dead-letter.
 
-### The fix: 429 + Retry-After + Dapr Resiliency
+### Two complementary mechanisms
 
-UTLXe should return **HTTP 429 (Too Many Requests)** instead of 503 for deliberately paused transformations, with a `Retry-After` header:
+| Scenario | Mechanism | Granularity | Latency |
+|---|---|---|---|
+| Pause **one** transformation | **429 + Retry-After + Resiliency circuit breaker** | Per-transformation | Immediate (429), circuit opens after 3 failures |
+| Pause **everything** (full maintenance) | **Dapr App Health Check** (`/healthz` → 503) | Global (all bindings + subscriptions) | ~15s (3 × 5s probes, configurable) |
+| Graceful shutdown | **Dapr App Health Check** | Global | ~15s |
+
+Both mechanisms prevent dead-lettering. Use 429 for surgical per-transformation pause. Use app health for global maintenance windows.
+
+### Mechanism 1: Per-transformation — 429 + Retry-After + Dapr Resiliency
+
+UTLXe returns **HTTP 429 (Too Many Requests)** for deliberately paused transformations, with a `Retry-After` header:
 
 ```
 HTTP/1.1 429 Too Many Requests
@@ -324,7 +334,7 @@ The semantic difference matters:
 - **503 Service Unavailable** = "I'm broken, retry might help" → Dapr retries aggressively → delivery count climbs → DLQ
 - **429 Too Many Requests** = "I'm deliberately refusing, back off" → signals backpressure
 
-### Required Dapr Resiliency configuration
+**Required Dapr Resiliency configuration:**
 
 Even with 429, Dapr needs a circuit breaker to stop hammering UTLXe during a long pause. This YAML must be deployed alongside UTLXe:
 
@@ -346,7 +356,7 @@ spec:
         circuitBreaker: pauseBreaker
 ```
 
-Flow during pause:
+Flow during per-transformation pause:
 ```
 Message 1 → UTLXe returns 429 → Dapr: failure count = 1
 Message 2 → UTLXe returns 429 → Dapr: failure count = 2
@@ -364,7 +374,7 @@ All queued messages drain naturally
 No dead-lettering during maintenance window
 ```
 
-### Service Bus configuration for pause tolerance
+**Service Bus configuration for pause tolerance:**
 
 Increase `maxDeliveryCount` to tolerate the initial retries before the circuit breaker opens:
 
@@ -374,13 +384,52 @@ Increase `maxDeliveryCount` to tolerate the initial retries before the circuit b
   value: "100"              # default 10 is too low for pause scenarios
 ```
 
+### Mechanism 2: Global — Dapr App Health Check
+
+Dapr's built-in app health check feature provides a global kill switch. When enabled, Dapr probes `GET /healthz` on the app at a configurable interval. When the probe fails N consecutive times, Dapr **stops all input bindings and unsubscribes from all pub/sub topics**. When the probe succeeds again, Dapr **automatically resumes** everything.
+
+**Dapr Configuration:**
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Configuration
+metadata:
+  name: utlxe-config
+spec:
+  appHealthCheck:
+    path: "/healthz"
+    probeInterval: "5s"          # check every 5 seconds
+    probeTimeout: "500ms"        # timeout per probe
+    threshold: 3                 # 3 consecutive failures → unhealthy
+```
+
+**UTLXe implementation:**
+
+When **all** transformations are paused (or operator triggers global maintenance):
+- `/healthz` returns 503
+- Dapr marks app unhealthy after 3 probes (~15s)
+- All bindings and subscriptions stop
+- Messages stay in Service Bus
+
+When operator resumes:
+- `/healthz` returns 200
+- Dapr marks app healthy on next probe
+- All bindings and subscriptions resume
+- Queued messages drain
+
+**Key insight:** App health is **global** — it pauses ALL bindings and subscriptions, not just one. This is why it complements rather than replaces the per-transformation 429 mechanism:
+
+- **Single transformation per container** (production/locked mode): app health alone is sufficient
+- **Multiple transformations per container** (dev/test): use 429 for per-transformation, app health for global maintenance
+
 ### What changes in UTLXe
 
 | Current | Change |
 |---------|--------|
-| Paused → return 503 | Paused → return **429** with `Retry-After: 300` |
-| Log: "transformation paused" | Log: "PAUSED by operator — messages will retry. Configure Dapr Resiliency to prevent DLQ." |
-| No header | Add `Retry-After` header (seconds) |
+| Paused → return 503 | Per-transformation pause → return **429** with `Retry-After: 300` |
+| No global pause | Global maintenance → `/healthz` returns 503 → Dapr stops all delivery |
+| Log: "transformation paused" | Log: "PAUSED by operator — messages will retry via Dapr Resiliency circuit breaker" |
+| No header | Add `Retry-After` header (seconds) on 429 |
 
 The Retry-After value should match the Dapr circuit breaker timeout (default 300s / 5 minutes). It can be configurable per transformation.
 
@@ -392,21 +441,31 @@ In locked mode (production), pause/resume is the primary operational lever:
 Normal operation:
   Messages flow → transform → output → complete
 
-Operator pauses (maintenance window):
+Operator pauses ONE transformation (targeted):
   POST /admin/transformations/orders-in/pause
-  → UTLXe returns 429 to Dapr
-  → Circuit breaker opens
-  → Messages queue in Service Bus
-  → No dead-lettering
+  → UTLXe returns 429 to Dapr for orders-in messages
+  → Circuit breaker opens for that binding
+  → Other transformations continue processing
+  → Messages for orders-in queue in Service Bus
 
-Maintenance complete, operator resumes:
+Operator pauses ALL (global maintenance):
+  POST /admin/maintenance/pause
+  → /healthz returns 503
+  → Dapr stops ALL bindings after ~15s
+  → All messages queue in Service Bus
+
+Operator resumes one transformation:
   POST /admin/transformations/orders-in/resume
   → Circuit breaker half-opens on next attempt
-  → UTLXe returns 200
-  → Circuit closes
-  → Queued messages drain
+  → UTLXe returns 200 → circuit closes → messages drain
 
-Operator can also verify:
+Operator resumes all (end maintenance):
+  POST /admin/maintenance/resume
+  → /healthz returns 200
+  → Dapr resumes all bindings
+  → All queued messages drain
+
+Operator can verify:
   GET /admin/transformations
   → {"name": "orders-in", "status": "paused"}
   
@@ -416,14 +475,15 @@ Operator can also verify:
 
 ### Documentation requirement
 
-The Dapr Resiliency YAML must be included in the Azure Marketplace Bicep template as a default configuration. Customers should not need to discover this themselves — it should work out of the box.
+Both the Dapr Resiliency YAML and the App Health Check configuration must be included in the Azure Marketplace Bicep template as defaults. Customers should not need to discover these themselves — they should work out of the box.
 
 ## Relationship to other features
 
 - **EF03** (Admin API): locked mode disables mutating endpoints; pause/resume stays enabled
 - **EF02** (validation): schemas in .utlar resolved the same way as schemas in directory
-- **EF05** (Dapr fixes): 429 vs 503 distinction for pause vs not-loaded
+- **EF05** (Dapr fixes): 429 vs 503 distinction for pause vs not-loaded; app health check for global pause
 - **EF06** (Dapr pub/sub): subscriptions derived from .utlar contents
+- **EF10** (dynamic Dapr bindings): open mode writes binding YAML via HotReload; locked mode uses static CI/CD bindings
 - **EF08** (.NET SDK): `IBundleStore.EmbeddedBundleStore` can read .utlar format
 
 ---
