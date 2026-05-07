@@ -42,4 +42,7 @@ interface TransportServer {
      * stdio-proto/grpc: true (transforms loaded via LoadTransformation messages)
      */
     val supportsDynamicLoading: Boolean
+
+    /** Transport name for logging (e.g., "http", "grpc", "stdio-proto"). */
+    val name: String get() = this.javaClass.simpleName
 }

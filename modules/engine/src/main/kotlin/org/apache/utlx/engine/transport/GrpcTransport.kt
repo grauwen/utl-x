@@ -34,14 +34,19 @@ class GrpcTransport(
 
     override val supportsDynamicLoading = true
 
+    companion object {
+        const val DEFAULT_PORT = 9090
+        const val DEFAULT_ADDRESS = "0.0.0.0:$DEFAULT_PORT"
+    }
+
     override fun start(registry: TransformationRegistry) {
         val serviceImpl = UtlxeServiceImpl(engine, registry)
 
         server = if (socketPath != null) {
             buildUdsServer(serviceImpl, socketPath)
-                ?: buildTcpServer(serviceImpl, address ?: "localhost:9090")
+                ?: buildTcpServer(serviceImpl, address ?: DEFAULT_ADDRESS)
         } else {
-            buildTcpServer(serviceImpl, address ?: "localhost:9090")
+            buildTcpServer(serviceImpl, address ?: DEFAULT_ADDRESS)
         }
 
         val grpcServer = server!!

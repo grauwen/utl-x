@@ -24,6 +24,7 @@ class UtlxEngine(val config: EngineConfig) {
     val registry = TransformationRegistry()
     private var healthEndpoint: HealthEndpoint? = null
     private var transport: TransportServer? = null
+    private var allTransports: List<TransportServer> = emptyList()
     var dataDir: String? = null
     val validationOverrides = org.apache.utlx.engine.admin.ValidationOverrideStore()
     var daprIntegration: org.apache.utlx.engine.admin.DaprIntegration? = null
@@ -180,17 +181,29 @@ class UtlxEngine(val config: EngineConfig) {
     }
 
     /**
-     * Start the engine with the given transport.
+     * Start the engine with a single transport.
      * The transport's start() method blocks until shutdown.
      */
     fun start(transportServer: TransportServer) {
+        start(listOf(transportServer))
+    }
+
+    /**
+     * EF07: Start the engine with multiple transports.
+     * All transports share the same registry, metrics, and health state.
+     * The last transport blocks the main thread; others run on daemon threads.
+     */
+    fun start(transports: List<TransportServer>) {
+        require(transports.isNotEmpty()) { "At least one transport is required" }
         val current = stateRef.get()
         require(current == EngineState.READY) {
             "Cannot start engine in state $current (expected READY)"
         }
 
-        this.transport = transportServer
-        logger.info("Starting engine '{}' with transport {}", config.engine.name, transportServer.javaClass.simpleName)
+        this.transport = transports.first()
+        this.allTransports = transports
+        logger.info("Starting engine '{}' with {} transport(s): {}",
+            config.engine.name, transports.size, transports.joinToString { it.name })
 
         // Start health endpoint
         try {
@@ -202,8 +215,23 @@ class UtlxEngine(val config: EngineConfig) {
         stateRef.set(EngineState.RUNNING)
         logger.info("Engine '{}' is RUNNING", config.engine.name)
 
-        // Transport.start() blocks until shutdown
-        transportServer.start(registry)
+        // Start all transports except the last on background threads
+        for (bg in transports.dropLast(1)) {
+            Thread({
+                try {
+                    logger.info("Starting background transport: {}", bg.name)
+                    bg.start(registry)
+                } catch (e: Exception) {
+                    logger.error("Background transport {} failed: {}", bg.name, e.message, e)
+                }
+            }, "transport-${bg.name}").apply {
+                isDaemon = true
+                start()
+            }
+        }
+
+        // Last transport blocks the main thread
+        transports.last().start(registry)
     }
 
     fun stop() {
@@ -215,8 +243,14 @@ class UtlxEngine(val config: EngineConfig) {
         logger.info("Stopping engine '{}'...", config.engine.name)
         stateRef.set(EngineState.DRAINING)
 
-        // Stop transport
-        transport?.stop()
+        // Stop all transports (EF07: parallel transports)
+        allTransports.forEach { t ->
+            try { t.stop() } catch (e: Exception) {
+                logger.warn("Error stopping transport {}: {}", t.name, e.message)
+            }
+        }
+        // Fallback: stop single transport if allTransports not set
+        if (allTransports.isEmpty()) transport?.stop()
 
         // Shutdown all strategies
         registry.shutdownAll()

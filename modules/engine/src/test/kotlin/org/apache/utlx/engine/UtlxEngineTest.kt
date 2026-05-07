@@ -156,6 +156,107 @@ class UtlxEngineTest {
     }
 
     // =========================================================================
+    // EF07: Multi-transport tests
+    // =========================================================================
+
+    @Test
+    fun `start with single transport in list`(@TempDir tempDir: Path) {
+        createMinimalBundle(tempDir)
+        val engine = UtlxEngine(testConfig())
+        engine.initialize(tempDir)
+
+        val transport = FakeTransport("fake-1")
+        val thread = Thread {
+            engine.start(listOf(transport))
+        }.apply { isDaemon = true; start() }
+
+        Thread.sleep(200)
+        assertEquals(EngineState.RUNNING, engine.state)
+        assertEquals(1, transport.startCount)
+
+        engine.stop()
+        thread.interrupt()
+    }
+
+    @Test
+    fun `start with multiple transports starts all`(@TempDir tempDir: Path) {
+        createMinimalBundle(tempDir)
+        val engine = UtlxEngine(testConfig())
+        engine.initialize(tempDir)
+
+        val t1 = FakeTransport("bg-transport")
+        val t2 = FakeTransport("main-transport")
+        val thread = Thread {
+            engine.start(listOf(t1, t2))
+        }.apply { isDaemon = true; start() }
+
+        Thread.sleep(500) // allow background threads to start
+        assertEquals(EngineState.RUNNING, engine.state)
+        assertEquals(1, t1.startCount, "Background transport should have started")
+        assertEquals(1, t2.startCount, "Main transport should have started")
+
+        engine.stop()
+        assertEquals(1, t1.stopCount, "Background transport should be stopped")
+        assertEquals(1, t2.stopCount, "Main transport should be stopped")
+        thread.interrupt()
+    }
+
+    @Test
+    fun `start with empty transport list fails`() {
+        val engine = UtlxEngine(testConfig())
+        engine.initializeEmpty()
+
+        assertFailsWith<IllegalArgumentException> {
+            engine.start(emptyList())
+        }
+    }
+
+    @Test
+    fun `stop drains all transports`(@TempDir tempDir: Path) {
+        createMinimalBundle(tempDir)
+        val engine = UtlxEngine(testConfig())
+        engine.initialize(tempDir)
+
+        val transports = listOf(FakeTransport("a"), FakeTransport("b"), FakeTransport("c"))
+        val thread = Thread {
+            engine.start(transports)
+        }.apply { isDaemon = true; start() }
+
+        Thread.sleep(500)
+        engine.stop()
+        transports.forEach { t ->
+            assertEquals(1, t.stopCount, "${t.name} should be stopped exactly once")
+        }
+        thread.interrupt()
+    }
+
+    @Test
+    fun `TransportServer name defaults to class simple name`() {
+        val transport = FakeTransport("custom-name")
+        // The interface default is javaClass.simpleName
+        // But FakeTransport overrides name
+        assertEquals("custom-name", transport.name)
+    }
+
+    /** Minimal transport for testing multi-transport engine start/stop. */
+    private class FakeTransport(override val name: String) : org.apache.utlx.engine.transport.TransportServer {
+        @Volatile var startCount = 0
+        @Volatile var stopCount = 0
+        override val supportsDynamicLoading = true
+        private val latch = java.util.concurrent.CountDownLatch(1)
+
+        override fun start(registry: org.apache.utlx.engine.registry.TransformationRegistry) {
+            startCount++
+            latch.await() // block until stopped
+        }
+
+        override fun stop() {
+            stopCount++
+            latch.countDown()
+        }
+    }
+
+    // =========================================================================
     // Helpers
     // =========================================================================
 

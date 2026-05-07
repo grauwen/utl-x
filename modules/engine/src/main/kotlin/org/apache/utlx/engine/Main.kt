@@ -29,6 +29,10 @@ fun main(args: Array<String>) {
     var socketPath: String? = null
     var grpcAddress: String? = null
     var httpPort: Int = HttpTransport.DEFAULT_PORT
+    var grpcPort: Int = GrpcTransport.DEFAULT_PORT
+    var alsoHttp = false
+    var alsoGrpc = false
+    var alsoStdio = false
     var daprComponentsDir: String? = null
     var daprServicebusNamespace: String? = null
     var daprEventhubNamespace: String? = null
@@ -87,6 +91,14 @@ fun main(args: Array<String>) {
                 httpPort = args.getOrNull(i)?.toIntOrNull()
                     ?: exitWithError("--http-port requires a port number")
             }
+            "--grpc-port" -> {
+                i++
+                grpcPort = args.getOrNull(i)?.toIntOrNull()
+                    ?: exitWithError("--grpc-port requires a port number")
+            }
+            "--also-http" -> { alsoHttp = true }
+            "--also-grpc" -> { alsoGrpc = true }
+            "--also-stdio" -> { alsoStdio = true }
             "--data-dir" -> {
                 i++
                 dataDir = args.getOrNull(i)
@@ -188,14 +200,31 @@ fun main(args: Array<String>) {
             exitProcess(0)
         }
 
-        // Create transport based on --mode
-        val transport: TransportServer = when (mode) {
-            "stdio-json" -> StdioJsonTransport()
-            "stdio-proto" -> StdioProtoTransport(engine, workers = workers ?: Runtime.getRuntime().availableProcessors())
-            "grpc" -> GrpcTransport(engine, address = grpcAddress, socketPath = socketPath)
-            "http" -> HttpTransport(engine, port = httpPort)
+        // EF07: Build list of transports (primary + additional)
+        val transports = mutableListOf<TransportServer>()
+
+        // Primary transport from --mode
+        when (mode) {
+            "stdio-json" -> transports.add(StdioJsonTransport())
+            "stdio-proto" -> transports.add(StdioProtoTransport(engine, workers = workers ?: Runtime.getRuntime().availableProcessors()))
+            "grpc" -> transports.add(GrpcTransport(engine, address = grpcAddress ?: "0.0.0.0:$grpcPort", socketPath = socketPath))
+
+            "http" -> transports.add(HttpTransport(engine, port = httpPort))
             else -> exitWithError("Unknown mode: $mode")
         }
+
+        // Additional transports (--also-http, --also-grpc, --also-stdio)
+        if (alsoHttp && mode != "http") {
+            transports.add(HttpTransport(engine, port = httpPort))
+        }
+        if (alsoGrpc && mode != "grpc") {
+            transports.add(GrpcTransport(engine, address = grpcAddress ?: "0.0.0.0:$grpcPort", socketPath = socketPath))
+        }
+        if (alsoStdio && mode != "stdio-proto") {
+            transports.add(StdioProtoTransport(engine, workers = workers ?: Runtime.getRuntime().availableProcessors()))
+        }
+
+        logger.info("Configured {} transport(s): {}", transports.size, transports.joinToString { it.name })
 
         // Shutdown hook for graceful drain
         Runtime.getRuntime().addShutdownHook(Thread {
@@ -203,8 +232,8 @@ fun main(args: Array<String>) {
             engine.stop()
         })
 
-        // start() blocks until transport shuts down
-        engine.start(transport)
+        // start() blocks until last transport shuts down
+        engine.start(transports)
 
     } catch (e: Exception) {
         logger.error("Engine failed: {}", e.message, e)
@@ -218,42 +247,46 @@ private fun printUsage() {
         utlxe — UTL-X Production Runtime Engine v$VERSION
 
         Usage:
-          utlxe --bundle <path> [options]            Standalone (bundle mode)
-          utlxe --mode stdio-proto [options]          Open-M integration (dynamic loading)
-          utlxe --mode grpc --socket <path> [options] gRPC server mode
-          utlxe --mode http [options]                HTTP REST API mode
+          utlxe --mode http [options]                   Azure / Docker / HTTP clients
+          utlxe --mode http --also-grpc [options]       HTTP + gRPC SDK (hybrid)
+          utlxe --mode stdio-proto --also-http [options] Open-M + admin API
+          utlxe --bundle <path> [options]               Standalone (bundle from disk)
+
+        Primary transport (--mode):
+          http           HTTP REST API on data plane + admin/health port
+                         For Azure Container Apps, Docker, Dapr, direct HTTP clients.
+
+          stdio-proto    Protobuf over stdin/stdout (Open-M / language wrapper integration)
+                         Transforms loaded dynamically via LoadTransformation messages.
+
+          grpc           gRPC server on TCP or Unix Domain Socket
+                         Transforms loaded dynamically via RPCs.
+
+          stdio-json     JSON lines over stdin/stdout (CLI, backward compat)
+                         Requires --bundle. Transforms loaded from disk at startup.
+
+        Additional transports (run alongside primary):
+          --also-http    Also start HTTP data plane + admin API
+          --also-grpc    Also start gRPC server
+          --also-stdio   Also start stdio-proto transport
 
         Options:
-          --bundle, -b <path>    Path to .utlxp project bundle directory
+          --bundle, -b <path>    Path to bundle directory (pre-load transforms from disk)
           --config, -c <path>    Path to engine.yaml config file
-          --mode <mode>          Transport mode: stdio-json (default), stdio-proto, grpc, http
-          --admin-port <port>    Admin API + health + metrics port (default: 8081)
-          --http-port <port>     HTTP data plane port (http mode, default: 8085)
+          --admin-port <port>    Admin + health + metrics port (default: from engine.yaml, typically 8081)
+          --http-port <port>     HTTP data plane port (default: ${HttpTransport.DEFAULT_PORT})
+          --grpc-port <port>     gRPC port (default: ${GrpcTransport.DEFAULT_PORT})
+          --socket <path>        Unix Domain Socket path (gRPC, Linux/macOS only — falls back to TCP on Windows)
+          --address <host:port>  TCP address (gRPC, alternative to --grpc-port)
           --workers <n>          Worker thread pool size (default: CPU cores)
-          --socket <path>        Unix Domain Socket path (gRPC mode, Linux/macOS)
-          --address <host:port>  TCP address (gRPC mode, default: localhost:9090)
+          --data-dir <path>      Persistent storage directory for transformations
           --validate             Load and compile the bundle, then exit (no processing)
           --dapr-components-dir <path>  Directory for Dapr component YAML (enables dynamic mode)
-          --dapr-servicebus-namespace <fqdn>  Service Bus namespace (e.g. myco.servicebus.windows.net)
+          --dapr-servicebus-namespace <fqdn>  Service Bus namespace FQDN
           --dapr-eventhub-namespace <name>    Event Hub namespace name
           --dapr-storage-account <name>       Storage account for Event Hub checkpointing
           --version, -v          Print version and exit
           --help, -h             Print this help and exit
-
-        Modes:
-          stdio-json     Line-delimited JSON over stdin/stdout (default, backward compat)
-                         Requires --bundle. Transforms loaded from disk at startup.
-
-          stdio-proto    Varint-delimited protobuf over stdin/stdout (Open-M integration)
-                         --bundle optional. Transforms loaded dynamically via
-                         LoadTransformation messages from the caller.
-
-          grpc           gRPC server on Unix Domain Socket or TCP
-                         --bundle optional. Transforms loaded dynamically via RPCs.
-
-          http           HTTP REST API (for Azure Container Apps, Docker, any HTTP client)
-                         --bundle optional. Transforms loaded dynamically via REST endpoints.
-                         Default port: 8085 (override with --http-port).
     """.trimIndent())
 }
 
