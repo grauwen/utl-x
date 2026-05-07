@@ -179,6 +179,20 @@ daprd --app-id utlxe \
 
 With HotReload enabled, the Dapr Operator watches Component CRDs. UTLXe could create CRDs via the Kubernetes API — but for simplicity, the file-based approach (shared volume) is preferred.
 
+## Pre-sync testing: the HTTP sandbox
+
+A key advantage of the stage-then-sync model: **before sync, transformations are fully testable via HTTP without Dapr**.
+
+A transformation in `draft` state is compiled and registered in the engine. The HTTP data plane (`POST :8085/api/transform/{name}`) and the test endpoint (`POST /admin/transformations/{name}/test`) work normally — only the Dapr messaging connection is absent.
+
+This means:
+- **No Dapr needed for development** — upload, test via HTTP, iterate until correct
+- **No queue impact during testing** — bad transformations don't consume or dead-letter real messages
+- **Validation is testable** — schema validation, policy enforcement, multi-input all work before go-live
+- **Sync is the "go live" switch** — only when confident, push to Dapr and start processing real messages
+
+Workflow: upload → test → fix → test → sync → messages flow.
+
 ## Mode-specific behavior
 
 | Mode | Binding management | Rationale |
