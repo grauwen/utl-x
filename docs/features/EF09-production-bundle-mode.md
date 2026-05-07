@@ -296,14 +296,137 @@ This means even in open mode with a .utlar, the archive is always consistent.
 | Tests | 1 day |
 | **Total** | **~5 days** |
 
+## Pause behavior in production: preventing dead-letter during maintenance
+
+### The problem
+
+When an operator pauses a transformation (e.g., downstream system in maintenance), the current implementation returns HTTP 503. Dapr treats this as a failure → abandons the message → Service Bus increments delivery count → after `maxDeliveryCount` retries → message goes to the dead-letter queue.
+
+This is wrong for a deliberate pause. The operator wants messages to **wait in the queue**, not dead-letter.
+
+### The fix: 429 + Retry-After + Dapr Resiliency
+
+UTLXe should return **HTTP 429 (Too Many Requests)** instead of 503 for deliberately paused transformations, with a `Retry-After` header:
+
+```
+HTTP/1.1 429 Too Many Requests
+Retry-After: 300
+Content-Type: application/json
+
+{
+  "error": "Transformation 'orders-in' is paused by operator",
+  "error_code": "TRANSFORMATION_PAUSED",
+  "retry_after_seconds": 300
+}
+```
+
+The semantic difference matters:
+- **503 Service Unavailable** = "I'm broken, retry might help" → Dapr retries aggressively → delivery count climbs → DLQ
+- **429 Too Many Requests** = "I'm deliberately refusing, back off" → signals backpressure
+
+### Required Dapr Resiliency configuration
+
+Even with 429, Dapr needs a circuit breaker to stop hammering UTLXe during a long pause. This YAML must be deployed alongside UTLXe:
+
+```yaml
+apiVersion: dapr.io/v1alpha1
+kind: Resiliency
+metadata:
+  name: utlxe-resiliency
+spec:
+  policies:
+    circuitBreakers:
+      pauseBreaker:
+        maxRequests: 1
+        timeout: 300s              # stop trying for 5 minutes
+        trip: consecutiveFailures > 3
+  targets:
+    apps:
+      utlxe:
+        circuitBreaker: pauseBreaker
+```
+
+Flow during pause:
+```
+Message 1 → UTLXe returns 429 → Dapr: failure count = 1
+Message 2 → UTLXe returns 429 → Dapr: failure count = 2
+Message 3 → UTLXe returns 429 → Dapr: failure count = 3 → CIRCUIT OPENS
+  ↓
+Dapr stops calling UTLXe for 5 minutes
+Messages stay in Service Bus queue (lock expires naturally)
+Delivery count does NOT increment (Dapr isn't trying)
+  ↓
+After 5 minutes: Dapr half-opens → tries one message
+  If still paused → 429 → circuit opens again for 5 more minutes
+  If resumed → 200 → circuit closes → normal flow resumes
+  ↓
+All queued messages drain naturally
+No dead-lettering during maintenance window
+```
+
+### Service Bus configuration for pause tolerance
+
+Increase `maxDeliveryCount` to tolerate the initial retries before the circuit breaker opens:
+
+```yaml
+# Dapr component metadata
+- name: maxDeliveryCount
+  value: "100"              # default 10 is too low for pause scenarios
+```
+
+### What changes in UTLXe
+
+| Current | Change |
+|---------|--------|
+| Paused → return 503 | Paused → return **429** with `Retry-After: 300` |
+| Log: "transformation paused" | Log: "PAUSED by operator — messages will retry. Configure Dapr Resiliency to prevent DLQ." |
+| No header | Add `Retry-After` header (seconds) |
+
+The Retry-After value should match the Dapr circuit breaker timeout (default 300s / 5 minutes). It can be configurable per transformation.
+
+### Pause lifecycle in locked mode
+
+In locked mode (production), pause/resume is the primary operational lever:
+
+```
+Normal operation:
+  Messages flow → transform → output → complete
+
+Operator pauses (maintenance window):
+  POST /admin/transformations/orders-in/pause
+  → UTLXe returns 429 to Dapr
+  → Circuit breaker opens
+  → Messages queue in Service Bus
+  → No dead-lettering
+
+Maintenance complete, operator resumes:
+  POST /admin/transformations/orders-in/resume
+  → Circuit breaker half-opens on next attempt
+  → UTLXe returns 200
+  → Circuit closes
+  → Queued messages drain
+
+Operator can also verify:
+  GET /admin/transformations
+  → {"name": "orders-in", "status": "paused"}
+  
+  GET /admin/transformations/orders-in/errors
+  → (check if errors were accumulating before pause)
+```
+
+### Documentation requirement
+
+The Dapr Resiliency YAML must be included in the Azure Marketplace Bicep template as a default configuration. Customers should not need to discover this themselves — it should work out of the box.
+
 ## Relationship to other features
 
-- **EF03** (Admin API): locked mode disables mutating endpoints
+- **EF03** (Admin API): locked mode disables mutating endpoints; pause/resume stays enabled
 - **EF02** (validation): schemas in .utlar resolved the same way as schemas in directory
+- **EF05** (Dapr fixes): 429 vs 503 distinction for pause vs not-loaded
 - **EF06** (Dapr pub/sub): subscriptions derived from .utlar contents
 - **EF08** (.NET SDK): `IBundleStore.EmbeddedBundleStore` can read .utlar format
 
 ---
 
 *Feature EF09. May 2026. Design document.*
-*Key insight: the presence of bundle.utlar on the volume IS the production lock. No CLI flag, no config — just deploy the file and the engine knows it's production.*
+*Key insight: the presence of bundle.utlar on the volume IS the production lock. No CLI flag, no config — just deploy the file and the engine knows it's production. Pause uses 429 + Dapr Resiliency circuit breaker to prevent dead-lettering during maintenance.*
