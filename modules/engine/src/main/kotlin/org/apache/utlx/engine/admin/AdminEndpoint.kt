@@ -139,7 +139,7 @@ fun configureAdmin(
                     .setUtlxSource(source)
                     .setStrategy("COMPILED")
                     .build()
-                val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine, registry)
+                val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine)
 
                 if (!loadResp.success) {
                     call.respond(HttpStatusCode.BadRequest, mapOf(
@@ -235,7 +235,7 @@ fun configureAdmin(
                     .setContentType(if (contentType.contains("json")) "application/json" else contentType)
                     .setMessageId(UuidV7.generate())
                     .build()
-                val execResp = TransportHandlers.handleExecute(execReq, registry)
+                val execResp = TransportHandlers.handleExecute(execReq, engine)
 
                 if (execResp.success) {
                     call.respond(HttpStatusCode.OK, mapOf(
@@ -278,7 +278,7 @@ fun configureAdmin(
                                         .setUtlxSource(source)
                                         .setStrategy("COMPILED")
                                         .build()
-                                    val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine, registry)
+                                    val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine)
 
                                     if (loadResp.success) {
                                         names.add(name)
@@ -625,12 +625,26 @@ fun configureAdmin(
                 ))
             }
 
+            // ── Config ──
+            get("/config") {
+                val config = engine.config
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "name" to config.engine.name,
+                    "defaultStrategy" to config.engine.defaultStrategy,
+                    "sharedPoolSize" to config.engine.threads.sharedPoolSize,
+                    "healthPort" to config.engine.monitoring.health.port,
+                    "dataDir" to dataDir,
+                    "persistence" to if (dataDir != null) "disk" else "memory-only"
+                ))
+            }
+
             // ── Engine info ──
             get("/info") {
                 call.respond(HttpStatusCode.OK, mapOf(
                     "version" to "1.0.1",
                     "uptime_seconds" to engine.uptimeMs() / 1000,
                     "transformations" to registry.list().size,
+                    "schemas" to schemaStore.list().size,
                     "ready" to (engine.state == org.apache.utlx.engine.EngineState.RUNNING && registry.list().isNotEmpty()),
                     "admin_key_set" to adminKey.isNotEmpty(),
                     "data_dir" to dataDir,

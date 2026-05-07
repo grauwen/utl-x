@@ -96,7 +96,7 @@ class HttpTransport(
                         .setUtlxSource(req.utlxSource)
                         .setStrategy(req.strategy)
                         .build()
-                    val loadResp = TransportHandlers.handleLoadTransformation(loadProto, engine, registry)
+                    val loadResp = TransportHandlers.handleLoadTransformation(loadProto, engine)
 
                     if (!loadResp.success) {
                         call.respond(HttpStatusCode.BadRequest, TransformResponse(
@@ -113,7 +113,7 @@ class HttpTransport(
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
-                    val execResp = TransportHandlers.handleExecute(execProto, registry)
+                    val execResp = TransportHandlers.handleExecute(execProto, engine)
 
                     val status = if (execResp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
                     call.respond(status, TransformResponse(
@@ -137,7 +137,7 @@ class HttpTransport(
                         .setMaxConcurrent(req.maxConcurrent)
                     req.config.forEach { (k, v) -> proto.putConfig(k, v) }
 
-                    val resp = TransportHandlers.handleLoadTransformation(proto.build(), engine, registry)
+                    val resp = TransportHandlers.handleLoadTransformation(proto.build(), engine)
 
                     val status = if (resp.success) HttpStatusCode.OK else HttpStatusCode.BadRequest
                     call.respond(status, LoadResponse(
@@ -159,7 +159,7 @@ class HttpTransport(
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
-                    val resp = TransportHandlers.handleExecute(proto, registry)
+                    val resp = TransportHandlers.handleExecute(proto, engine)
 
                     val status = if (resp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
                     call.respond(status, ExecuteResponseBody(
@@ -190,7 +190,7 @@ class HttpTransport(
                             .setCorrelationId(item.correlationId ?: "")
                             .build())
                     }
-                    val resp = TransportHandlers.handleExecuteBatch(proto.build(), registry)
+                    val resp = TransportHandlers.handleExecuteBatch(proto.build(), engine)
 
                     call.respond(HttpStatusCode.OK, BatchResponse(
                         results = resp.resultsList.map { r ->
@@ -215,7 +215,7 @@ class HttpTransport(
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
-                    val resp = TransportHandlers.handleExecutePipeline(proto, registry)
+                    val resp = TransportHandlers.handleExecutePipeline(proto, engine)
 
                     val status = if (resp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
                     call.respond(status, PipelineResponse(
@@ -236,7 +236,7 @@ class HttpTransport(
                     val proto = UnloadTransformationRequest.newBuilder()
                         .setTransformationId(id)
                         .build()
-                    val resp = TransportHandlers.handleUnload(proto, registry)
+                    val resp = TransportHandlers.handleUnload(proto, engine)
 
                     call.respond(HttpStatusCode.OK, mapOf("success" to resp.success))
                 }
@@ -257,7 +257,7 @@ class HttpTransport(
 
                 // ── Health (data plane) ──
                 get("/api/health") {
-                    val resp = TransportHandlers.handleHealth(engine, registry)
+                    val resp = TransportHandlers.handleHealth(engine)
 
                     call.respond(HttpStatusCode.OK, HealthResponseDto(
                         state = resp.state,
@@ -377,7 +377,7 @@ class HttpTransport(
             .setTraceparent(traceparent)
             .setTracestate(tracestate)
             .build()
-        val execResp = TransportHandlers.handleExecute(execProto, registry)
+        val execResp = TransportHandlers.handleExecute(execProto, engine)
 
         // Generate output message ID (UUIDv7)
         val outputMessageId = UuidV7.generate()

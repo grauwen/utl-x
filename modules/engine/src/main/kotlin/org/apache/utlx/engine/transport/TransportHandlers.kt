@@ -12,8 +12,11 @@ import org.apache.utlx.engine.validation.ErrorPhase as VErrorPhase
 import org.slf4j.LoggerFactory
 
 /**
- * Shared request handler logic used by both StdioProtoTransport and GrpcTransport.
+ * Shared request handler logic used by all transports (HTTP, gRPC, stdio-proto).
  * Ensures identical behavior (including validation) across transport modes.
+ *
+ * All handlers take `engine: UtlxEngine` as the single context parameter.
+ * Registry, validation overrides, and other state are accessed via the engine.
  */
 object TransportHandlers {
 
@@ -21,9 +24,9 @@ object TransportHandlers {
 
     fun handleLoadTransformation(
         req: LoadTransformationRequest,
-        engine: UtlxEngine,
-        registry: TransformationRegistry
+        engine: UtlxEngine
     ): LoadTransformationResponse {
+        val registry = engine.registry
         val startTime = System.nanoTime()
 
         try {
@@ -106,9 +109,9 @@ object TransportHandlers {
 
     fun handleExecute(
         req: ExecuteRequest,
-        registry: TransformationRegistry,
-        engine: UtlxEngine? = null
+        engine: UtlxEngine
     ): ExecuteResponse {
+        val registry = engine.registry
         val startTime = System.nanoTime()
 
         val instance = registry.get(req.transformationId)
@@ -124,9 +127,8 @@ object TransportHandlers {
         val input = req.payload.toStringUtf8()
 
         // EF02: Resolve effective validation policy (runtime override > config > default)
-        val policyOverride = engine?.validationOverrides?.get(req.transformationId)?.policy
+        val policyOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
-        // Use ValidationOrchestrator for pre-validate → transform → post-validate
         val result = ValidationOrchestrator.execute(instance, input, policyOverride)
         val durationUs = (System.nanoTime() - startTime) / 1000
 
@@ -143,7 +145,8 @@ object TransportHandlers {
                     .build()
             )
 
-        if (result.success && result.output != null) {
+        // Include output when available — even on POST_VALIDATION failure (for debugging)
+        if (result.output != null) {
             builder.setOutput(ByteString.copyFromUtf8(result.output))
         }
 
@@ -168,9 +171,9 @@ object TransportHandlers {
 
     fun handleExecuteBatch(
         req: ExecuteBatchRequest,
-        registry: TransformationRegistry,
-        engine: UtlxEngine? = null
+        engine: UtlxEngine
     ): ExecuteBatchResponse {
+        val registry = engine.registry
         val instance = registry.get(req.transformationId)
         val builder = ExecuteBatchResponse.newBuilder()
 
@@ -189,7 +192,7 @@ object TransportHandlers {
             return builder.build()
         }
 
-        val batchOverride = engine?.validationOverrides?.get(req.transformationId)?.policy
+        val batchOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
         req.itemsList.forEach { item ->
             val startTime = System.nanoTime()
@@ -238,9 +241,9 @@ object TransportHandlers {
 
     fun handleExecutePipeline(
         req: ExecutePipelineRequest,
-        registry: TransformationRegistry,
-        engine: UtlxEngine? = null
+        engine: UtlxEngine
     ): ExecutePipelineResponse {
+        val registry = engine.registry
         val startTime = System.nanoTime()
         val transformIds = req.transformationIdsList
         var currentPayload = req.payload.toStringUtf8()
@@ -273,7 +276,6 @@ object TransportHandlers {
             // EF01: If this stage has additional inputs, construct a multi-input envelope
             val stageInputs = req.stageInputsMap[transformId]
             val effectivePayload = if (stageInputs != null && stageInputs.additionalInputsCount > 0) {
-                // Build JSON envelope: {"input": <current>, "customers": <additional>, ...}
                 val mapper = com.fasterxml.jackson.databind.ObjectMapper()
                 val envelope = mapper.createObjectNode()
                 envelope.set<com.fasterxml.jackson.databind.JsonNode>(
@@ -284,7 +286,6 @@ object TransportHandlers {
                     try {
                         envelope.set<com.fasterxml.jackson.databind.JsonNode>(name, mapper.readTree(content))
                     } catch (_: Exception) {
-                        // Non-JSON additional input (CSV, XML) — wrap as text node
                         envelope.put(name, content)
                     }
                 }
@@ -295,8 +296,9 @@ object TransportHandlers {
                 currentPayload
             }
 
-            val pipelineOverride = engine?.validationOverrides?.get(transformId)?.policy
-            val result = ValidationOrchestrator.execute(instance, effectivePayload, pipelineOverride)
+            // EF02: Resolve effective validation policy per stage
+            val stageOverride = engine.validationOverrides.get(transformId)?.policy
+            val result = ValidationOrchestrator.execute(instance, effectivePayload, stageOverride)
 
             if (!result.success) {
                 instance.recordError()
@@ -321,7 +323,6 @@ object TransportHandlers {
                 return builder.build()
             }
 
-            // Collect warnings
             result.validationErrors.forEach { err ->
                 allWarnings.add(
                     ValidationError.newBuilder()
@@ -332,7 +333,6 @@ object TransportHandlers {
                 )
             }
 
-            // Output of this stage becomes input of the next (in-process UDM hand-off)
             currentPayload = result.output ?: ""
             stagesCompleted++
         }
@@ -353,9 +353,9 @@ object TransportHandlers {
 
     fun handleUnload(
         req: UnloadTransformationRequest,
-        registry: TransformationRegistry
+        engine: UtlxEngine
     ): UnloadTransformationResponse {
-        val success = registry.unload(req.transformationId)
+        val success = engine.registry.unload(req.transformationId)
         if (success) {
             logger.info("Unloaded transformation '{}'", req.transformationId)
         } else {
@@ -367,9 +367,9 @@ object TransportHandlers {
     }
 
     fun handleHealth(
-        engine: UtlxEngine,
-        registry: TransformationRegistry
+        engine: UtlxEngine
     ): HealthResponse {
+        val registry = engine.registry
         val totalExecutions = registry.list().sumOf { it.executionCount.get() }
         val totalErrors = registry.list().sumOf { it.errorCount.get() }
 

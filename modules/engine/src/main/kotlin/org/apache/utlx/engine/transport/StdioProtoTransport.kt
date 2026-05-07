@@ -158,18 +158,18 @@ class StdioProtoTransport(
             // (sequential ordering required — Load must complete before Execute)
             MessageType.LOAD_TRANSFORMATION_REQUEST -> {
                 val req = LoadTransformationRequest.parseFrom(envelope.payload)
-                val resp = TransportHandlers.handleLoadTransformation(req, engine, registry)
+                val resp = TransportHandlers.handleLoadTransformation(req, engine)
                 responseQueue.put(wrapResponse(MessageType.LOAD_TRANSFORMATION_RESPONSE, resp))
             }
 
             MessageType.UNLOAD_TRANSFORMATION_REQUEST -> {
                 val req = UnloadTransformationRequest.parseFrom(envelope.payload)
-                val resp = TransportHandlers.handleUnload(req, registry)
+                val resp = TransportHandlers.handleUnload(req, engine)
                 responseQueue.put(wrapResponse(MessageType.UNLOAD_TRANSFORMATION_RESPONSE, resp))
             }
 
             MessageType.HEALTH_REQUEST -> {
-                val resp = TransportHandlers.handleHealth(engine, registry)
+                val resp = TransportHandlers.handleHealth(engine)
                 responseQueue.put(wrapResponse(MessageType.HEALTH_RESPONSE, resp))
             }
 
@@ -177,7 +177,7 @@ class StdioProtoTransport(
             MessageType.EXECUTE_REQUEST -> {
                 val req = ExecuteRequest.parseFrom(envelope.payload)
                 submitWork {
-                    val resp = TransportHandlers.handleExecute(req, registry)
+                    val resp = TransportHandlers.handleExecute(req, engine)
                     responseQueue.put(wrapResponse(MessageType.EXECUTE_RESPONSE, resp))
                 }
             }
@@ -185,7 +185,7 @@ class StdioProtoTransport(
             MessageType.EXECUTE_BATCH_REQUEST -> {
                 val req = ExecuteBatchRequest.parseFrom(envelope.payload)
                 submitWork {
-                    val resp = TransportHandlers.handleExecuteBatch(req, registry)
+                    val resp = TransportHandlers.handleExecuteBatch(req, engine)
                     responseQueue.put(wrapResponse(MessageType.EXECUTE_BATCH_RESPONSE, resp))
                 }
             }
@@ -193,7 +193,7 @@ class StdioProtoTransport(
             MessageType.EXECUTE_PIPELINE_REQUEST -> {
                 val req = ExecutePipelineRequest.parseFrom(envelope.payload)
                 submitWork {
-                    val resp = TransportHandlers.handleExecutePipeline(req, registry)
+                    val resp = TransportHandlers.handleExecutePipeline(req, engine)
                     responseQueue.put(wrapResponse(MessageType.EXECUTE_PIPELINE_RESPONSE, resp))
                 }
             }

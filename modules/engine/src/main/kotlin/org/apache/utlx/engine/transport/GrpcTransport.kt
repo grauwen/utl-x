@@ -143,7 +143,7 @@ class UtlxeServiceImpl(
         request: LoadTransformationRequest,
         responseObserver: StreamObserver<LoadTransformationResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleLoadTransformation(request, engine, registry))
+        responseObserver.onNext(TransportHandlers.handleLoadTransformation(request, engine))
         responseObserver.onCompleted()
     }
 
@@ -151,7 +151,7 @@ class UtlxeServiceImpl(
         request: ExecuteRequest,
         responseObserver: StreamObserver<ExecuteResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleExecute(request, registry))
+        responseObserver.onNext(TransportHandlers.handleExecute(request, engine))
         responseObserver.onCompleted()
     }
 
@@ -159,7 +159,7 @@ class UtlxeServiceImpl(
         request: ExecuteBatchRequest,
         responseObserver: StreamObserver<ExecuteBatchResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleExecuteBatch(request, registry))
+        responseObserver.onNext(TransportHandlers.handleExecuteBatch(request, engine))
         responseObserver.onCompleted()
     }
 
@@ -167,7 +167,7 @@ class UtlxeServiceImpl(
         request: ExecutePipelineRequest,
         responseObserver: StreamObserver<ExecutePipelineResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleExecutePipeline(request, registry))
+        responseObserver.onNext(TransportHandlers.handleExecutePipeline(request, engine))
         responseObserver.onCompleted()
     }
 
@@ -175,7 +175,7 @@ class UtlxeServiceImpl(
         request: UnloadTransformationRequest,
         responseObserver: StreamObserver<UnloadTransformationResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleUnload(request, registry))
+        responseObserver.onNext(TransportHandlers.handleUnload(request, engine))
         responseObserver.onCompleted()
     }
 
@@ -183,7 +183,7 @@ class UtlxeServiceImpl(
         request: HealthRequest,
         responseObserver: StreamObserver<HealthResponse>
     ) {
-        responseObserver.onNext(TransportHandlers.handleHealth(engine, registry))
+        responseObserver.onNext(TransportHandlers.handleHealth(engine))
         responseObserver.onCompleted()
     }
 }

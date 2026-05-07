@@ -220,4 +220,192 @@ class ValidationIntegrationTest {
         // The important thing is it doesn't crash the engine
         assertTrue(execResp.success || execResp.errorPhase == org.apache.utlx.engine.proto.ErrorPhase.TRANSFORMATION)
     }
+
+    // ── EF02: Validation override tests ──
+
+    @Test
+    fun `validation override OFF disables validation for invalid input`() {
+        // Load with STRICT validation
+        val loadResp = stub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("override-test")
+                .setUtlxSource("%utlx 1.0\ninput json\noutput json\n---\n\$input\n")
+                .setStrategy("TEMPLATE")
+                .setValidationPolicy("STRICT")
+                .putConfig("validate_input", "true")
+                .putConfig("input_schema", personSchema)
+                .putConfig("input_schema_format", "json-schema")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        // Without override: invalid input rejected
+        val resp1 = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("override-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "Alice"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertFalse(resp1.success, "Should fail with STRICT and missing 'age'")
+        assertTrue(resp1.validationErrorsCount > 0, "Should have validation errors")
+
+        // Set override to OFF
+        engine.validationOverrides.set("override-test", "off")
+
+        // With override: same invalid input passes
+        val resp2 = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("override-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "Alice"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertTrue(resp2.success, "Should pass with override OFF: ${resp2.error}")
+
+        // Remove override: invalid input rejected again
+        engine.validationOverrides.remove("override-test")
+
+        val resp3 = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("override-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "Alice"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertFalse(resp3.success, "Should fail again after override removed")
+    }
+
+    @Test
+    fun `STRICT validation reports ALL errors not just first`() {
+        val loadResp = stub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("all-errors-test")
+                .setUtlxSource("%utlx 1.0\ninput json\noutput json\n---\n\$input\n")
+                .setStrategy("TEMPLATE")
+                .setValidationPolicy("STRICT")
+                .putConfig("validate_input", "true")
+                .putConfig("input_schema", personSchema)
+                .putConfig("input_schema_format", "json-schema")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        // Send input missing BOTH required fields
+        val resp = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("all-errors-test")
+                .setPayload(ByteString.copyFromUtf8("""{"extra": "field"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertFalse(resp.success)
+        assertEquals(org.apache.utlx.engine.proto.ErrorPhase.PRE_VALIDATION, resp.errorPhase)
+        // Should report errors for BOTH missing 'name' AND missing 'age'
+        assertTrue(resp.validationErrorsCount >= 2,
+            "Should report at least 2 errors (name + age missing), got ${resp.validationErrorsCount}: ${resp.validationErrorsList.map { it.message }}")
+    }
+
+    @Test
+    fun `validation error details include message path and severity`() {
+        val loadResp = stub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("detail-test")
+                .setUtlxSource("%utlx 1.0\ninput json\noutput json\n---\n\$input\n")
+                .setStrategy("TEMPLATE")
+                .setValidationPolicy("STRICT")
+                .putConfig("validate_input", "true")
+                .putConfig("input_schema", personSchema)
+                .putConfig("input_schema_format", "json-schema")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        val resp = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("detail-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": 123, "age": "not a number"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertFalse(resp.success)
+        assertTrue(resp.validationErrorsCount > 0)
+
+        // Each error should have a message and severity
+        resp.validationErrorsList.forEach { err ->
+            assertTrue(err.message.isNotEmpty(), "Error message should not be empty")
+            assertTrue(err.severity.isNotEmpty(), "Error severity should not be empty")
+        }
+    }
+
+    @Test
+    fun `WARN policy passes through with warnings in response`() {
+        val loadResp = stub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("warn-detail-test")
+                .setUtlxSource("%utlx 1.0\ninput json\noutput json\n---\n\$input\n")
+                .setStrategy("TEMPLATE")
+                .setValidationPolicy("WARN")
+                .putConfig("validate_input", "true")
+                .putConfig("input_schema", personSchema)
+                .putConfig("input_schema_format", "json-schema")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        // Invalid input — should succeed but with warnings
+        val resp = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("warn-detail-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "Alice"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertTrue(resp.success, "WARN should succeed: ${resp.error}")
+        assertTrue(resp.output.toStringUtf8().contains("Alice"), "Output should be produced")
+        assertTrue(resp.validationErrorsCount > 0, "Should have warnings: ${resp.validationErrorsList}")
+    }
+
+    @Test
+    fun `output validation failure includes the output for inspection`() {
+        val outputSchema = """
+        {
+          "${'$'}schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "required": ["result", "timestamp"],
+          "properties": {
+            "result": { "type": "string" },
+            "timestamp": { "type": "string" }
+          }
+        }
+        """.trimIndent()
+
+        val loadResp = stub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("output-val-test")
+                .setUtlxSource("%utlx 1.0\ninput json\noutput json\n---\n{result: \$input.name}\n")
+                .setStrategy("TEMPLATE")
+                .setValidationPolicy("STRICT")
+                .putConfig("validate_output", "true")
+                .putConfig("output_schema", outputSchema)
+                .putConfig("output_schema_format", "json-schema")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        // Input is valid, but output missing "timestamp" required by output schema
+        val resp = stub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("output-val-test")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "Alice"}"""))
+                .setContentType("application/json")
+                .build()
+        )
+        assertFalse(resp.success)
+        assertEquals(org.apache.utlx.engine.proto.ErrorPhase.POST_VALIDATION, resp.errorPhase)
+        // Output should be included even though validation failed — for debugging
+        assertTrue(resp.output.toStringUtf8().contains("Alice"),
+            "Output should be included on POST_VALIDATION failure for inspection")
+        assertTrue(resp.validationErrorsCount > 0)
+    }
 }
