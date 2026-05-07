@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test
 import java.net.HttpURLConnection
 import java.net.URL
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 /**
@@ -291,10 +292,117 @@ class HttpTransportTest {
     }
 
     @Test
-    fun `dapr subscribe endpoint returns empty list`() {
+    fun `dapr subscribe returns empty when no topic transformations`() {
         val (status, body) = get("/dapr/subscribe")
         assertEquals(200, status)
         assertTrue(body.contains("[]"), "Should return empty subscription list: $body")
+    }
+
+    @Test
+    fun `dapr subscribe returns subscriptions for topic transformations`() {
+        // Load a transformation with topic config
+        loadTransformationWithTopicConfig("orders-in", "incoming-orders")
+
+        val (status, body) = get("/dapr/subscribe")
+        assertEquals(200, status)
+        assertTrue(body.contains("incoming-orders"), "Should contain topic name: $body")
+        assertTrue(body.contains("utlxe-servicebus"), "Should contain pubsub name: $body")
+        assertTrue(body.contains("/pubsub/orders-in"), "Should contain route: $body")
+    }
+
+    @Test
+    fun `dapr subscribe excludes queue-only transformations`() {
+        // Load a queue transformation (no topic)
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"queue-only","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        // Load a topic transformation
+        loadTransformationWithTopicConfig("topic-tx", "my-topic")
+
+        val (status, body) = get("/dapr/subscribe")
+        assertEquals(200, status)
+        assertTrue(body.contains("my-topic"), "Should contain topic: $body")
+        assertFalse(body.contains("queue-only"), "Should not contain queue transformation: $body")
+    }
+
+    // ── EF06: Pub/sub input tests ──
+
+    @Test
+    fun `pubsub input with structured CloudEvents unwraps data`() {
+        loadTransformationWithTopicConfig("orders-in", "incoming-orders")
+
+        val cloudEvent = """
+            {
+              "specversion": "1.0",
+              "type": "com.servicebus.topic",
+              "source": "/utlxe-servicebus/incoming-orders",
+              "id": "ce-msg-001",
+              "datacontenttype": "application/json",
+              "data": {"orderId": "ORD-001", "amount": 100}
+            }
+        """.trimIndent()
+
+        val (status, body) = post("/pubsub/orders-in", cloudEvent)
+        assertEquals(200, status, "Pub/sub structured CloudEvents should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `pubsub input with binary CloudEvents uses raw body`() {
+        loadTransformationWithTopicConfig("orders-in", "incoming-orders")
+
+        val payload = """{"orderId": "ORD-002", "amount": 200}"""
+
+        val url = URL("http://localhost:$port/pubsub/orders-in")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("ce-specversion", "1.0")
+        conn.setRequestProperty("ce-type", "com.servicebus.topic")
+        conn.setRequestProperty("ce-source", "/utlxe-servicebus/incoming-orders")
+        conn.setRequestProperty("ce-id", "ce-msg-002")
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write(payload.toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val body = try { conn.inputStream.bufferedReader().readText() } catch (e: Exception) { conn.errorStream?.bufferedReader()?.readText() ?: "" }
+
+        assertEquals(200, status, "Pub/sub binary CloudEvents should succeed: $body")
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `pubsub input for unknown transformation returns 404`() {
+        val (status, _) = post("/pubsub/nonexistent", """{"data": "test"}""")
+        assertEquals(404, status)
+    }
+
+    @Test
+    fun `pubsub input for paused transformation returns 429`() {
+        loadTransformationWithTopicConfig("paused-topic", "some-topic")
+        engine.registry.get("paused-topic")!!.paused = true
+
+        val (status, body) = post("/pubsub/paused-topic", """{"specversion":"1.0","data":{"x":1}}""")
+        assertEquals(429, status, "Paused pub/sub should return 429: $body")
+        assertTrue(body.contains("TRANSFORMATION_PAUSED"), "Should contain error code: $body")
+    }
+
+    /** Helper: load a transformation and set topic messaging config directly on the registry. */
+    private fun loadTransformationWithTopicConfig(name: String, topic: String) {
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"$name","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        // Set the topic config directly on the registered instance
+        val instance = engine.registry.get(name)!!
+        val updatedConfig = instance.config.copy(
+            input = org.apache.utlx.engine.config.MessagingEndpoint(topic = topic, subscription = "utlxe")
+        )
+        val updated = org.apache.utlx.engine.registry.TransformationInstance(
+            name = instance.name, source = instance.source, strategy = instance.strategy,
+            config = updatedConfig, loadedAt = instance.loadedAt,
+            executionCount = instance.executionCount, errorCount = instance.errorCount
+        )
+        engine.registry.register(name, updated)
     }
 
     // =========================================================================

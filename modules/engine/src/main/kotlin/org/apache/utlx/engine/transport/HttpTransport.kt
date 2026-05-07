@@ -288,9 +288,28 @@ class HttpTransport(
                     handleDaprInput(call, registry)
                 }
 
-                // Dapr pub/sub subscription endpoint
+                // ── EF06: Dapr pub/sub subscription endpoint ──
+                // Returns subscriptions derived from loaded transformations with topic config.
+                // Dapr calls this once at sidecar startup.
                 get("/dapr/subscribe") {
-                    call.respond(HttpStatusCode.OK, emptyList<Any>())
+                    val subscriptions = registry.list()
+                        .filter { it.config.input?.topic != null }
+                        .map { tx ->
+                            mapOf(
+                                "pubsubname" to "utlxe-servicebus",
+                                "topic" to tx.config.input!!.topic!!,
+                                "route" to "/pubsub/${tx.name}"
+                            )
+                        }
+                    logger.info("Dapr /dapr/subscribe — returning {} subscription(s)", subscriptions.size)
+                    call.respond(HttpStatusCode.OK, subscriptions)
+                }
+
+                // ── EF06: Dapr pub/sub message delivery ──
+                // Dapr delivers pub/sub messages to POST /pubsub/{name} (route from /dapr/subscribe).
+                // Messages arrive as CloudEvents (structured or binary mode).
+                post("/pubsub/{name}") {
+                    handlePubSubInput(call, registry)
                 }
             }
         }.start(wait = false)
@@ -502,6 +521,196 @@ class HttpTransport(
         ))
     }
 
+    /**
+     * EF06: Dapr pub/sub input handler.
+     * Receives CloudEvents from Dapr pub/sub delivery (POST /pubsub/{name}).
+     *
+     * Handles both CloudEvents modes:
+     * - Structured: body is CloudEvents JSON with `data` field containing the payload
+     * - Binary: body is raw payload, CloudEvents metadata in `ce-*` headers
+     *
+     * Unwraps CloudEvents, extracts correlation metadata, delegates to transformation.
+     */
+    private suspend fun handlePubSubInput(call: ApplicationCall, registry: TransformationRegistry) {
+        val transformName = call.parameters["name"] ?: "default"
+
+        val instance = registry.get(transformName)
+        if (instance == null) {
+            logger.warn("Pub/sub delivery for '{}' — no transformation loaded", transformName)
+            call.respond(HttpStatusCode.NotFound, mapOf(
+                "success" to false,
+                "error" to "No transformation loaded for '$transformName'",
+                "error_code" to "TRANSFORMATION_NOT_FOUND"
+            ))
+            return
+        }
+
+        if (instance.paused) {
+            logger.info("Pub/sub delivery for '{}' — transformation is paused", transformName)
+            call.respond(HttpStatusCode.TooManyRequests, mapOf(
+                "success" to false,
+                "error" to "Transformation '$transformName' is paused by operator",
+                "error_code" to "TRANSFORMATION_PAUSED",
+                "retry_after_seconds" to 300
+            ))
+            call.response.header("Retry-After", "300")
+            return
+        }
+
+        val rawBody = call.receiveText()
+
+        // Detect CloudEvents mode and extract payload + metadata
+        val ceSpecVersion = call.request.header("ce-specversion")
+        val (payload, ceId, ceSource, ceType) = if (ceSpecVersion != null) {
+            // Binary mode: body is raw payload, metadata in ce-* headers
+            CloudEventsData(rawBody,
+                call.request.header("ce-id"),
+                call.request.header("ce-source"),
+                call.request.header("ce-type"))
+        } else {
+            // Try structured mode: body may be CloudEvents JSON envelope
+            unwrapCloudEvents(rawBody)
+        }
+
+        // EF04: Resolve correlation metadata (CloudEvents → Dapr headers → generate)
+        val incomingMessageId = call.request.header("metadata.MessageId")
+            ?: ceId
+            ?: UuidV7.generate()
+        val incomingCorrelationId = call.request.header("metadata.CorrelationId")
+            ?: call.request.header("CorrelationId")
+            ?: ""
+        val incomingCausationId = call.request.header("metadata.CausationId")
+            ?: call.request.header("CausationId")
+            ?: ""
+        val traceparent = call.request.header("traceparent") ?: ""
+        val tracestate = call.request.header("tracestate") ?: ""
+
+        logger.info("[{}] PubSub MessageId={} CorrelationId={} ceSource={} ceType={} payload={}B",
+            transformName, incomingMessageId, incomingCorrelationId, ceSource, ceType, payload.length)
+
+        // Build execute request
+        val contentType = call.request.header("ce-datacontenttype")
+            ?: call.request.contentType().toString()
+        val execProto = ExecuteRequest.newBuilder()
+            .setTransformationId(transformName)
+            .setPayload(ByteString.copyFromUtf8(payload))
+            .setContentType(contentType)
+            .setCorrelationId(incomingCorrelationId)
+            .setMessageId(incomingMessageId)
+            .setCausationId(incomingCausationId)
+            .setTraceparent(traceparent)
+            .setTracestate(tracestate)
+            .build()
+        val execResp = TransportHandlers.handleExecute(execProto, engine)
+
+        val outputMessageId = UuidV7.generate()
+
+        if (!execResp.success) {
+            logger.error("[{}] PubSub MessageId={} FAILED: {}", transformName, incomingMessageId, execResp.error)
+            instance.recordErrorDetail(org.apache.utlx.engine.registry.ErrorEntry(
+                message = execResp.error ?: "Unknown error",
+                phase = execResp.errorPhase?.name,
+                messageId = incomingMessageId,
+                correlationId = incomingCorrelationId,
+                inputPreview = payload.take(200)
+            ))
+            call.respond(HttpStatusCode.InternalServerError, mapOf(
+                "success" to false,
+                "error" to execResp.error,
+                "error_code" to "TRANSFORMATION_FAILED"
+            ))
+            return
+        }
+
+        val output = execResp.output.toStringUtf8()
+
+        // Output routing (reuses same logic as bindings — outputMessaging handles pub/sub)
+        val messagingOutput = instance.config.outputMessaging
+        val outputBinding = messagingOutput?.resourceName ?: instance.config.outputBinding
+        val outputIsPubSub = messagingOutput?.isPubSub == true
+
+        if (outputBinding != null) {
+            try {
+                val daprUrl = if (outputIsPubSub) {
+                    "http://localhost:3500/v1.0/publish/utlxe-servicebus/$outputBinding"
+                } else {
+                    "http://localhost:3500/v1.0/bindings/$outputBinding"
+                }
+
+                val outputMetadata = mutableMapOf(
+                    "transform-id" to transformName,
+                    "MessageId" to outputMessageId,
+                    "CausationId" to incomingMessageId
+                )
+                if (incomingCorrelationId.isNotEmpty()) {
+                    outputMetadata["CorrelationId"] = incomingCorrelationId
+                }
+
+                val daprPayload = if (outputIsPubSub) output
+                else com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
+                    "operation" to "create", "data" to output, "metadata" to outputMetadata
+                ))
+
+                val url = java.net.URL(daprUrl)
+                val conn = url.openConnection() as java.net.HttpURLConnection
+                conn.requestMethod = "POST"
+                conn.setRequestProperty("Content-Type", "application/json")
+                if (traceparent.isNotEmpty()) conn.setRequestProperty("traceparent", traceparent)
+                if (tracestate.isNotEmpty()) conn.setRequestProperty("tracestate", tracestate)
+                if (outputIsPubSub) {
+                    outputMetadata.forEach { (k, v) -> conn.setRequestProperty(k, v) }
+                }
+                conn.doOutput = true
+                conn.connectTimeout = 5000
+                conn.readTimeout = 10000
+                conn.outputStream.write(daprPayload.toByteArray())
+                conn.outputStream.flush()
+                val daprStatus = conn.responseCode
+                conn.disconnect()
+
+                if (daprStatus !in 200..299) {
+                    logger.warn("Dapr output {} '{}' returned {}", if (outputIsPubSub) "topic" else "binding", outputBinding, daprStatus)
+                }
+            } catch (e: Exception) {
+                logger.error("Failed to send to Dapr output '{}': {}", outputBinding, e.message)
+            }
+        }
+
+        logger.info("[{}] PubSub MessageId={} → OutputMessageId={} in {}us",
+            transformName, incomingMessageId, outputMessageId, execResp.metrics?.executeDurationUs ?: 0)
+
+        // Return success to Dapr (acknowledges the pub/sub message)
+        call.respond(HttpStatusCode.OK, mapOf("success" to true))
+    }
+
+    /**
+     * EF06: Unwrap CloudEvents structured envelope.
+     * If the JSON body has a `specversion` field, extract `data` as the payload.
+     * Otherwise return the raw body as-is (not CloudEvents).
+     */
+    private fun unwrapCloudEvents(rawBody: String): CloudEventsData {
+        return try {
+            val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+            val tree = mapper.readTree(rawBody)
+            if (tree.has("specversion")) {
+                val dataNode = tree.get("data")
+                val data = when {
+                    dataNode == null -> rawBody
+                    dataNode.isTextual -> dataNode.asText()
+                    else -> mapper.writeValueAsString(dataNode)
+                }
+                CloudEventsData(data,
+                    tree.get("id")?.asText(),
+                    tree.get("source")?.asText(),
+                    tree.get("type")?.asText())
+            } else {
+                CloudEventsData(rawBody, null, null, null)
+            }
+        } catch (_: Exception) {
+            CloudEventsData(rawBody, null, null, null)
+        }
+    }
+
     override fun stop() {
         server?.let { s ->
             logger.info("HttpTransport: shutting down...")
@@ -510,3 +719,11 @@ class HttpTransport(
         logger.info("HttpTransport stopped")
     }
 }
+
+/** EF06: CloudEvents metadata extracted from a pub/sub message. */
+private data class CloudEventsData(
+    val payload: String,
+    val id: String?,
+    val source: String?,
+    val type: String?
+)
