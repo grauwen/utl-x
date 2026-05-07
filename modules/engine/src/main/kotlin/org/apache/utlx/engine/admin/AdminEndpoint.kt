@@ -265,7 +265,7 @@ fun configureAdmin(
                 // Test calls are NOT counted in metrics (don't call recordExecution)
             }
 
-            // ── Upload bundle (ZIP / .utlar) ──
+            // ── Upload bundle (ZIP / .utlar) — auto-syncs messaging to Dapr ──
             post("/bundle") {
                 val zipBytes = call.receive<ByteArray>()
                 val startTime = System.nanoTime()
@@ -273,36 +273,32 @@ fun configureAdmin(
                 val names = mutableListOf<String>()
                 val errors = mutableListOf<String>()
 
+                // Two-pass: first collect transform.yaml configs, then load .utlx files
+                val configMap = mutableMapOf<String, org.apache.utlx.engine.config.TransformConfig>()
+                val sourceMap = mutableMapOf<String, String>()
+
                 try {
                     ZipInputStream(ByteArrayInputStream(zipBytes)).use { zis ->
                         var entry = zis.nextEntry
                         while (entry != null) {
-                            // Look for transformations/{name}/{name}.utlx
                             val path = entry.name
-                            if (!entry.isDirectory && path.endsWith(".utlx") && path.startsWith("transformations/")) {
+                            if (!entry.isDirectory && path.startsWith("transformations/")) {
                                 val parts = path.removePrefix("transformations/").split("/")
                                 if (parts.size == 2) {
                                     val name = parts[0]
-                                    val source = zis.readBytes().toString(Charsets.UTF_8)
-
-                                    val loadReq = LoadTransformationRequest.newBuilder()
-                                        .setTransformationId(name)
-                                        .setUtlxSource(source)
-                                        .setStrategy("COMPILED")
-                                        .build()
-                                    val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine)
-
-                                    if (loadResp.success) {
-                                        names.add(name)
-                                        loaded++
-                                        // Persist to disk
-                                        if (dataDirPath != null) {
-                                            val txDir = dataDirPath.resolve("transformations").resolve(name)
-                                            Files.createDirectories(txDir)
-                                            Files.writeString(txDir.resolve("$name.utlx"), source)
+                                    when {
+                                        path.endsWith(".utlx") -> {
+                                            sourceMap[name] = zis.readBytes().toString(Charsets.UTF_8)
                                         }
-                                    } else {
-                                        errors.add("$name: ${loadResp.error}")
+                                        path.endsWith("transform.yaml") -> {
+                                            val yamlContent = zis.readBytes()
+                                            try {
+                                                val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
+                                                configMap[name] = yamlMapper.readValue(yamlContent, org.apache.utlx.engine.config.TransformConfig::class.java)
+                                            } catch (e: Exception) {
+                                                logger.warn("Bundle: failed to parse transform.yaml for '{}': {}", name, e.message)
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -319,6 +315,48 @@ fun configureAdmin(
                     return@post
                 }
 
+                // Load all .utlx sources
+                for ((name, source) in sourceMap) {
+                    val config = configMap[name]
+                    val loadReq = LoadTransformationRequest.newBuilder()
+                        .setTransformationId(name)
+                        .setUtlxSource(source)
+                        .setStrategy(config?.strategy?.ifEmpty { "COMPILED" } ?: "COMPILED")
+                        .build()
+                    val loadResp = TransportHandlers.handleLoadTransformation(loadReq, engine)
+
+                    if (loadResp.success) {
+                        // Apply transform config (including messaging) to the registered instance
+                        if (config != null) {
+                            val instance = registry.get(name)
+                            if (instance != null) {
+                                val updatedInstance = TransformationInstance(
+                                    name = instance.name, source = instance.source,
+                                    strategy = instance.strategy, config = config,
+                                    inputValidator = instance.inputValidator,
+                                    inputValidators = instance.inputValidators,
+                                    outputValidator = instance.outputValidator
+                                )
+                                registry.register(name, updatedInstance)
+                            }
+                        }
+                        names.add(name)
+                        loaded++
+                        // Persist to disk
+                        if (dataDirPath != null) {
+                            val txDir = dataDirPath.resolve("transformations").resolve(name)
+                            Files.createDirectories(txDir)
+                            Files.writeString(txDir.resolve("$name.utlx"), source)
+                            if (config != null) {
+                                val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
+                                Files.writeString(txDir.resolve("transform.yaml"), yamlMapper.writeValueAsString(config))
+                            }
+                        }
+                    } else {
+                        errors.add("$name: ${loadResp.error}")
+                    }
+                }
+
                 val compiledMs = (System.nanoTime() - startTime) / 1_000_000
 
                 if (loaded == 0 && errors.isEmpty()) {
@@ -330,6 +368,20 @@ fun configureAdmin(
                     return@post
                 }
 
+                // EF10: Auto-sync messaging to Dapr (bundle is a coherent deployment unit)
+                val syncResults = mutableListOf<Map<String, Any?>>()
+                for (name in names) {
+                    val tx = registry.get(name) ?: continue
+                    val input = tx.config.input
+                    val output = tx.config.outputMessaging
+                    if (input != null || output != null) {
+                        val syncResult = dapr.sync(name, input, output)
+                        syncResults.add(mapOf("name" to name, "synced" to syncResult.success))
+                    } else {
+                        dapr.markNoDapr(name)
+                    }
+                }
+
                 if (errors.isNotEmpty()) {
                     call.respond(HttpStatusCode.BadRequest, mapOf(
                         "status" to "partial",
@@ -338,24 +390,38 @@ fun configureAdmin(
                         "compiled_in_ms" to compiledMs
                     ))
                 } else {
-                    logger.info("Admin: bundle deployed — {} transformation(s) in {}ms", loaded, compiledMs)
+                    logger.info("Admin: bundle deployed — {} transformation(s) in {}ms, {} synced to Dapr",
+                        loaded, compiledMs, syncResults.count { it["synced"] == true })
                     call.respond(HttpStatusCode.OK, mapOf(
                         "status" to "deployed",
                         "transformations" to names,
-                        "compiled_in_ms" to compiledMs
+                        "compiled_in_ms" to compiledMs,
+                        "messaging_synced" to syncResults
                     ))
                 }
             }
 
-            // ── Export bundle as ZIP ──
+            // ── Export bundle as ZIP (includes transform.yaml with messaging config) ──
             get("/bundle") {
                 val baos = ByteArrayOutputStream()
+                val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
                 ZipOutputStream(baos).use { zos ->
                     for (tx in registry.list()) {
+                        // .utlx source
                         val entryPath = "transformations/${tx.name}/${tx.name}.utlx"
                         zos.putNextEntry(ZipEntry(entryPath))
                         zos.write(tx.source.toByteArray(Charsets.UTF_8))
                         zos.closeEntry()
+
+                        // EF10: Include transform.yaml if config has non-default values
+                        val config = tx.config
+                        if (config.input != null || config.outputMessaging != null ||
+                            config.validationPolicy != "SKIP" || config.strategy != "TEMPLATE") {
+                            val configPath = "transformations/${tx.name}/transform.yaml"
+                            zos.putNextEntry(ZipEntry(configPath))
+                            zos.write(yamlMapper.writeValueAsBytes(config))
+                            zos.closeEntry()
+                        }
                     }
                 }
                 call.response.header("Content-Disposition", "attachment; filename=\"bundle.utlar\"")

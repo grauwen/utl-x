@@ -144,9 +144,20 @@ class UtlxEngine(val config: EngineConfig) {
                     if (java.nio.file.Files.exists(utlxFile)) {
                         try {
                             val source = java.nio.file.Files.readString(utlxFile)
-                            val transformConfig = org.apache.utlx.engine.config.TransformConfig()
+                            // EF10: Load transform.yaml if present (includes messaging config)
+                            val configFile = dir.resolve("transform.yaml")
+                            val transformConfig = if (java.nio.file.Files.exists(configFile)) {
+                                try {
+                                    org.apache.utlx.engine.config.TransformConfig.load(configFile)
+                                } catch (e: Exception) {
+                                    logger.warn("Failed to load transform.yaml for '{}': {}, using defaults", name, e.message)
+                                    org.apache.utlx.engine.config.TransformConfig()
+                                }
+                            } else {
+                                org.apache.utlx.engine.config.TransformConfig()
+                            }
                             val strategy = createStrategy(
-                                org.apache.utlx.engine.config.TransformConfig(strategy = "COMPILED")
+                                org.apache.utlx.engine.config.TransformConfig(strategy = transformConfig.strategy.ifEmpty { "COMPILED" })
                             )
                             strategy.initialize(source, transformConfig)
                             val instance = org.apache.utlx.engine.registry.TransformationInstance(
@@ -157,7 +168,8 @@ class UtlxEngine(val config: EngineConfig) {
                             )
                             registry.register(name, instance)
                             loaded++
-                            logger.info("Loaded persisted transformation '{}' from {}", name, utlxFile)
+                            val hasMessaging = transformConfig.input != null || transformConfig.outputMessaging != null
+                            logger.info("Loaded persisted transformation '{}' from {} (messaging={})", name, utlxFile, hasMessaging)
                         } catch (e: Exception) {
                             logger.error("Failed to load persisted transformation '{}': {}", name, e.message)
                         }

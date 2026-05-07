@@ -339,11 +339,17 @@ class HttpTransport(
             return
         }
 
-        // Resolve output binding: env var > transform config > header > none
+        // Resolve output: env var > new messaging config > legacy outputBinding > header > none
         val envOverride = System.getenv("UTLXE_OUTPUT_BINDING_${bindingName.replace("-", "_").uppercase()}")
+        val messagingOutput = instance.config.outputMessaging
         val configBinding = instance.config.outputBinding
         val headerBinding = call.request.header("X-UTLXe-Output-Binding")
-        val outputBinding = envOverride ?: configBinding ?: headerBinding
+        // EF10: Prefer new messaging config (queue/topic/eventhub), fall back to legacy outputBinding
+        val outputBinding = envOverride
+            ?: messagingOutput?.resourceName
+            ?: configBinding
+            ?: headerBinding
+        val outputIsPubSub = messagingOutput?.isPubSub == true && envOverride == null
 
         // Dapr sends the raw message payload in the body
         val payload = call.receiveText()
@@ -407,10 +413,15 @@ class HttpTransport(
 
         val output = execResp.output.toStringUtf8()
 
-        // EF04: Forward transformed result to Dapr output binding with messaging triad
+        // EF04/EF10: Forward transformed result to Dapr (binding or pub/sub) with messaging triad
         if (outputBinding != null) {
             try {
-                val daprUrl = "http://localhost:3500/v1.0/bindings/$outputBinding"
+                // EF10: Use different Dapr endpoint for pub/sub vs binding
+                val daprUrl = if (outputIsPubSub) {
+                    "http://localhost:3500/v1.0/publish/utlxe-servicebus/$outputBinding"
+                } else {
+                    "http://localhost:3500/v1.0/bindings/$outputBinding"
+                }
 
                 // Build output metadata including messaging triad
                 val outputMetadata = mutableMapOf(
@@ -431,19 +442,30 @@ class HttpTransport(
                     }
                 }
 
-                val daprPayload = com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
-                    "operation" to "create",
-                    "data" to output,
-                    "metadata" to outputMetadata
-                ))
+                // Dapr binding vs pub/sub have different payload formats
+                val daprPayload = if (outputIsPubSub) {
+                    // Pub/sub: just the data (metadata via headers)
+                    output
+                } else {
+                    // Binding: operation + data + metadata envelope
+                    com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(mapOf(
+                        "operation" to "create",
+                        "data" to output,
+                        "metadata" to outputMetadata
+                    ))
+                }
 
                 val url = java.net.URL(daprUrl)
                 val conn = url.openConnection() as java.net.HttpURLConnection
                 conn.requestMethod = "POST"
                 conn.setRequestProperty("Content-Type", "application/json")
-                // EF04: Propagate W3C Trace Context to output binding
+                // EF04: Propagate W3C Trace Context to output
                 if (traceparent.isNotEmpty()) conn.setRequestProperty("traceparent", traceparent)
                 if (tracestate.isNotEmpty()) conn.setRequestProperty("tracestate", tracestate)
+                // EF10: For pub/sub, propagate metadata as headers
+                if (outputIsPubSub) {
+                    outputMetadata.forEach { (k, v) -> conn.setRequestProperty(k, v) }
+                }
                 conn.doOutput = true
                 conn.connectTimeout = 5000
                 conn.readTimeout = 10000
@@ -453,13 +475,14 @@ class HttpTransport(
                 conn.disconnect()
 
                 if (daprStatus !in 200..299) {
-                    logger.warn("Dapr output binding '{}' returned status {}", outputBinding, daprStatus)
+                    logger.warn("Dapr output {} '{}' returned status {}",
+                        if (outputIsPubSub) "topic" else "binding", outputBinding, daprStatus)
                 } else {
-                    logger.debug("[{}] output to binding '{}' succeeded. OutputMessageId={}",
-                        transformId, outputBinding, outputMessageId)
+                    logger.debug("[{}] output to {} '{}' succeeded. OutputMessageId={}",
+                        transformId, if (outputIsPubSub) "topic" else "binding", outputBinding, outputMessageId)
                 }
             } catch (e: Exception) {
-                logger.error("Failed to send to Dapr output binding '{}': {}", outputBinding, e.message)
+                logger.error("Failed to send to Dapr output '{}': {}", outputBinding, e.message)
             }
         }
 

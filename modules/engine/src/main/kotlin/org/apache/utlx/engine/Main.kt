@@ -175,6 +175,10 @@ fun main(args: Array<String>) {
         )
         engine.daprIntegration = daprIntegration
 
+        // EF10: Startup reconciliation — auto-sync persisted messaging configs
+        daprIntegration.probeSidecar()
+        daprIntegration.reconcileOnStartup(engine.registry)
+
         if (validateOnly) {
             val transformations = engine.registry.list()
             println("Bundle validated successfully: ${transformations.size} transformation(s)")

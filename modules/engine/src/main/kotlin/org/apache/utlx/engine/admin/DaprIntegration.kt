@@ -93,6 +93,62 @@ class DaprIntegration(
     }
 
     /**
+     * EF10: Startup reconciliation — auto-sync all persisted messaging configs.
+     * For each loaded transformation with messaging config, sync to Dapr.
+     * Also cleans up orphaned managed components in the components directory.
+     */
+    fun reconcileOnStartup(registry: org.apache.utlx.engine.registry.TransformationRegistry) {
+        val transformations = registry.list()
+        var synced = 0
+        var orphansRemoved = 0
+
+        // Sync each transformation that has messaging config
+        for (tx in transformations) {
+            val input = tx.config.input
+            val output = tx.config.outputMessaging
+            if (input != null || output != null) {
+                val result = sync(tx.name, input, output)
+                if (result.success) synced++
+                logger.info("Reconcile '{}': {} ({})", tx.name,
+                    if (result.success) "synced" else "failed", result.message)
+            } else {
+                syncStatus[tx.name] = SyncState(status = "no_dapr")
+            }
+        }
+
+        // Clean up orphaned managed components (transformation deleted while engine was down)
+        if (componentsDir != null && java.nio.file.Files.exists(componentsDir)) {
+            val loadedNames = transformations.map { it.name }.toSet()
+            try {
+                java.nio.file.Files.list(componentsDir).use { stream ->
+                    stream.filter { it.fileName.toString().endsWith(".yaml") }
+                        .forEach { file ->
+                            try {
+                                val content = java.nio.file.Files.readString(file)
+                                if (content.contains("utlxe.io/managed: \"true\"")) {
+                                    // Extract transformation name from annotation
+                                    val match = Regex("utlxe.io/transformation: \"([^\"]+)\"").find(content)
+                                    val txName = match?.groupValues?.get(1)
+                                    if (txName != null && txName !in loadedNames) {
+                                        java.nio.file.Files.delete(file)
+                                        orphansRemoved++
+                                        logger.info("Reconcile: removed orphaned component YAML '{}' (transformation '{}' no longer exists)", file.fileName, txName)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                logger.warn("Reconcile: failed to check {}: {}", file, e.message)
+                            }
+                        }
+                }
+            } catch (e: Exception) {
+                logger.warn("Reconcile: failed to scan components dir: {}", e.message)
+            }
+        }
+
+        logger.info("Startup reconciliation complete: {} synced, {} orphans removed", synced, orphansRemoved)
+    }
+
+    /**
      * Get the sync state for a transformation.
      */
     fun getSyncState(transformationName: String): SyncState {
@@ -298,6 +354,7 @@ class DaprIntegration(
         return SyncAction(if (existed) "updated" else "created", componentName, "bindings.azure.servicebusqueues")
     }
 
+    @Suppress("UNUSED_PARAMETER")
     private fun generatePubSubComponent(
         dir: Path, transformationName: String, role: String, endpoint: MessagingEndpoint
     ): SyncAction {
@@ -343,21 +400,18 @@ class DaprIntegration(
         val filename = "${if (isPubSub) "pubsub" else "binding"}-$componentName.yaml"
         val filePath = dir.resolve(filename)
         val existed = Files.exists(filePath)
+        val nsValue = eventhubNamespace ?: "CONFIGURE_ME"
+        val cgValue = endpoint.consumerGroup ?: ""
+        val saValue = storageAccount ?: "CONFIGURE_ME"
 
-        val metadataEntries = buildString {
-            appendLine("    - name: eventHubNamespace")
-            appendLine("      value: \"${eventhubNamespace ?: "CONFIGURE_ME"}\"")
-            appendLine("    - name: eventHub")
-            appendLine("      value: \"$componentName\"")
-            if (isPubSub) {
-                appendLine("    - name: consumerGroup")
-                appendLine("      value: \"${endpoint.consumerGroup}\"")
-                appendLine("    - name: storageAccountName")
-                appendLine("      value: \"${storageAccount ?: "CONFIGURE_ME"}\"")
-                appendLine("    - name: storageContainerName")
-                appendLine("      value: \"eventhub-checkpoints\"")
-            }
-        }.trimEnd()
+        val pubsubMetadata = if (isPubSub) """
+            |    - name: consumerGroup
+            |      value: "$cgValue"
+            |    - name: storageAccountName
+            |      value: "$saValue"
+            |    - name: storageContainerName
+            |      value: "eventhub-checkpoints"
+        """.trimMargin() else ""
 
         val yaml = """
             |# Auto-generated by UTLXe — do not edit manually
@@ -375,8 +429,11 @@ class DaprIntegration(
             |  type: $componentType
             |  version: v1
             |  metadata:
-            |$metadataEntries
-        """.trimMargin()
+            |    - name: eventHubNamespace
+            |      value: "$nsValue"
+            |    - name: eventHub
+            |      value: "$componentName"
+        """.trimMargin() + (if (pubsubMetadata.isNotEmpty()) "\n$pubsubMetadata" else "")
 
         Files.writeString(filePath, yaml)
         logger.info("Dapr: wrote {} Event Hub component YAML: {}", if (existed) "updated" else "new", filePath)
