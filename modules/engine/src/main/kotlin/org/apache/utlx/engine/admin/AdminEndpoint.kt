@@ -43,15 +43,20 @@ fun configureAdmin(
     app: Application,
     engine: UtlxEngine,
     adminKey: String = System.getenv("UTLXE_ADMIN_KEY") ?: "",
-    dataDir: String? = null
+    dataDir: String? = null,
+    daprIntegration: DaprIntegration? = null
 ) {
     val registry = engine.registry
     val dataDirPath = dataDir?.let { Path.of(it) }
     val schemaStore = SchemaStore(dataDirPath)
     val validationOverrides = engine.validationOverrides
+    val dapr = daprIntegration ?: DaprIntegration()
 
     // Load persisted schemas from disk
     schemaStore.scanFromDisk()
+
+    // Probe Dapr sidecar on startup
+    dapr.probeSidecar()
 
     app.routing {
 
@@ -80,17 +85,22 @@ fun configureAdmin(
             // ── List all transformations ──
             get("/transformations") {
                 val transformations = registry.list().map { tx ->
+                    val syncState = dapr.getSyncState(tx.name)
+                    val messaging = buildMessagingResponse(tx.config, syncState)
                     mapOf(
                         "name" to tx.name,
                         "strategy" to tx.strategy.name,
                         "status" to if (tx.paused) "paused" else "ready",
                         "deployed_at" to tx.loadedAt.toString(),
                         "messages_processed" to tx.executionCount.get(),
-                        "errors" to tx.errorCount.get()
+                        "errors" to tx.errorCount.get(),
+                        "sync_status" to syncState.status,
+                        "messaging" to messaging
                     )
                 }
                 call.respond(HttpStatusCode.OK, mapOf(
-                    "transformations" to transformations
+                    "transformations" to transformations,
+                    "dapr_mode" to dapr.mode
                 ))
             }
 
@@ -184,7 +194,7 @@ fun configureAdmin(
                 ))
             }
 
-            // ── Delete a transformation ──
+            // ── Delete a transformation (auto-syncs: removes Dapr components immediately) ──
             delete("/transformations/{name}") {
                 val name = call.parameters["name"] ?: ""
                 val removed = registry.unload(name)
@@ -206,8 +216,10 @@ fun configureAdmin(
                         logger.warn("Admin: failed to delete '{}' from disk: {}", name, e.message)
                     }
                 }
+                // Auto-remove Dapr components (deletion is always immediate, no draft state)
+                dapr.removeOnDelete(name)
 
-                logger.info("Admin: deleted transformation '{}'", name)
+                logger.info("Admin: deleted transformation '{}' (Dapr components removed)", name)
                 call.respond(HttpStatusCode.OK, mapOf(
                     "success" to true,
                     "name" to name
@@ -493,21 +505,247 @@ fun configureAdmin(
                 }
             }
 
-            // ── Dapr binding validation ──
-            get("/dapr/bindings") {
-                // Compare Dapr-probed bindings against loaded transformations
-                val httpTransport = engine.dataDir  // Access probed bindings via transport if available
-                // For now, list transformations and their status
+            // ── Dapr status ──
+            get("/dapr") {
+                dapr.probeSidecar()
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "mode" to dapr.mode,
+                    "sidecar_reachable" to dapr.sidecarReachable,
+                    "sidecar_version" to dapr.sidecarVersion,
+                    "components_dir" to dapr.componentsDir?.toString(),
+                    "servicebus_namespace" to dapr.servicebusNamespace,
+                    "eventhub_namespace" to dapr.eventhubNamespace,
+                    "loaded_components" to dapr.loadedComponents.map { comp ->
+                        mapOf("name" to comp.name, "type" to comp.type, "version" to comp.version)
+                    }
+                ))
+            }
+
+            // ── Messaging config per transformation ──
+            get("/transformations/{name}/messaging") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@get
+                }
+                val syncState = dapr.getSyncState(name)
+                val response = buildMessagingDetailResponse(tx.config, syncState, dapr)
+                call.respond(HttpStatusCode.OK, response)
+            }
+
+            // ── Set messaging config (draft — not synced to Dapr) ──
+            post("/transformations/{name}/messaging") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@post
+                }
+
+                val body = call.receiveText()
+                val jsonMapper = com.fasterxml.jackson.databind.ObjectMapper().apply {
+                    registerModule(kotlinModule())
+                    configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                }
+                val msgConfig = try {
+                    jsonMapper.readTree(body)
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Invalid JSON: ${e.message}",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                // Parse input and output messaging endpoints
+                val inputEndpoint = parseMessagingEndpoint(msgConfig.get("input"))
+                val outputEndpoint = parseMessagingEndpoint(msgConfig.get("output"))
+
+                if (inputEndpoint == null && outputEndpoint == null) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "At least one of 'input' or 'output' must be specified with queue, topic, or eventhub",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                // Update the config on the instance (create new config with messaging)
+                val updatedConfig = tx.config.copy(
+                    input = inputEndpoint,
+                    outputMessaging = outputEndpoint
+                )
+
+                // Re-register with updated config
+                val updatedInstance = TransformationInstance(
+                    name = tx.name,
+                    source = tx.source,
+                    strategy = tx.strategy,
+                    config = updatedConfig,
+                    loadedAt = tx.loadedAt,
+                    executionCount = tx.executionCount,
+                    errorCount = tx.errorCount,
+                    inputValidator = tx.inputValidator,
+                    inputValidators = tx.inputValidators,
+                    outputValidator = tx.outputValidator,
+                    paused = tx.paused,
+                    recentErrors = tx.recentErrors
+                )
+                registry.register(name, updatedInstance)
+
+                // Persist to transform.yaml on disk
+                if (dataDirPath != null) {
+                    persistMessagingConfig(dataDirPath, name, updatedConfig)
+                }
+
+                // Mark as draft
+                val changes = mutableListOf<String>()
+                if (inputEndpoint != null) changes.add("messaging.input")
+                if (outputEndpoint != null) changes.add("messaging.output")
+                dapr.markDraft(name, changes)
+
+                logger.info("Admin: messaging config set for '{}' (draft): input={}, output={}", name, inputEndpoint, outputEndpoint)
+                val syncState = dapr.getSyncState(name)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "name" to name,
+                    "sync_status" to syncState.status,
+                    "input" to inputEndpoint?.let { endpointToMap(it, "unsynced") },
+                    "output" to outputEndpoint?.let { endpointToMap(it, "unsynced") },
+                    "message" to "Messaging config saved (draft). Call POST /admin/transformations/$name/sync to push to Dapr."
+                ))
+            }
+
+            // ── Remove messaging config (draft removal) ──
+            delete("/transformations/{name}/messaging") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@delete
+                }
+
+                // Clear messaging from config
+                val updatedConfig = tx.config.copy(input = null, outputMessaging = null)
+                val updatedInstance = TransformationInstance(
+                    name = tx.name, source = tx.source, strategy = tx.strategy,
+                    config = updatedConfig, loadedAt = tx.loadedAt,
+                    executionCount = tx.executionCount, errorCount = tx.errorCount,
+                    inputValidator = tx.inputValidator, inputValidators = tx.inputValidators,
+                    outputValidator = tx.outputValidator, paused = tx.paused,
+                    recentErrors = tx.recentErrors
+                )
+                registry.register(name, updatedInstance)
+
+                // Persist removal to disk
+                if (dataDirPath != null) {
+                    persistMessagingConfig(dataDirPath, name, updatedConfig)
+                }
+
+                dapr.markDraft(name, listOf("messaging.removed"))
+                logger.info("Admin: messaging config removed for '{}' (draft — sync to apply)", name)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "name" to name,
+                    "sync_status" to "draft",
+                    "message" to "Messaging config removed (draft). Call POST /admin/transformations/$name/sync to remove Dapr components."
+                ))
+            }
+
+            // ── Sync single transformation to Dapr ──
+            post("/transformations/{name}/sync") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@post
+                }
+
+                val result = dapr.sync(name, tx.config.input, tx.config.outputMessaging)
+                val syncState = dapr.getSyncState(name)
+
+                call.respond(
+                    if (result.success) HttpStatusCode.OK else HttpStatusCode.InternalServerError,
+                    mapOf(
+                        "name" to name,
+                        "sync_status" to syncState.status,
+                        "synced_at" to syncState.lastSynced?.toString(),
+                        "dapr_mode" to dapr.mode,
+                        "actions" to result.actions.map { a ->
+                            mapOf("action" to a.action, "component" to a.component, "type" to a.type)
+                        },
+                        "warnings" to result.warnings,
+                        "message" to result.message
+                    )
+                )
+            }
+
+            // ── Sync all draft transformations to Dapr ──
+            post("/sync") {
+                val results = mutableListOf<Map<String, Any?>>()
+                val errors = mutableListOf<Map<String, Any?>>()
+                val skipped = mutableListOf<String>()
+
+                for (tx in registry.list()) {
+                    val syncState = dapr.getSyncState(tx.name)
+                    if (syncState.status != "draft") {
+                        if (syncState.status == "no_dapr") skipped.add(tx.name)
+                        continue
+                    }
+
+                    val result = dapr.sync(tx.name, tx.config.input, tx.config.outputMessaging)
+                    if (result.success) {
+                        results.add(mapOf(
+                            "name" to tx.name,
+                            "actions" to result.actions.map { a ->
+                                mapOf("action" to a.action, "component" to a.component)
+                            }
+                        ))
+                    } else {
+                        errors.add(mapOf("name" to tx.name, "error" to result.message))
+                    }
+                }
+
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "synced" to results,
+                    "errors" to errors,
+                    "skipped" to skipped,
+                    "message" to "${results.size} transformation(s) synced, ${errors.size} error(s), ${skipped.size} skipped (no messaging config)."
+                ))
+            }
+
+            // ── Sync status overview ──
+            get("/sync") {
                 val transformations = registry.list().map { tx ->
+                    val syncState = dapr.getSyncState(tx.name)
+                    val messaging = buildMessagingResponse(tx.config, syncState)
                     mapOf(
                         "name" to tx.name,
-                        "status" to if (tx.paused) "paused" else "ready",
-                        "messages_processed" to tx.executionCount.get(),
-                        "errors" to tx.errorCount.get()
+                        "sync_status" to syncState.status,
+                        "last_synced" to syncState.lastSynced?.toString(),
+                        "pending_changes" to syncState.pendingChanges,
+                        "error" to syncState.error,
+                        "messaging" to messaging
                     )
                 }
+                val statusCounts = transformations.groupBy { it["sync_status"] as String }
                 call.respond(HttpStatusCode.OK, mapOf(
-                    "transformations" to transformations
+                    "dapr_mode" to dapr.mode,
+                    "transformations" to transformations,
+                    "draft_count" to (statusCounts["draft"]?.size ?: 0),
+                    "error_count" to (statusCounts["error"]?.size ?: 0),
+                    "synced_count" to (statusCounts["synced"]?.size ?: 0),
+                    "no_dapr_count" to (statusCounts["no_dapr"]?.size ?: 0)
                 ))
             }
 
@@ -648,10 +886,122 @@ fun configureAdmin(
                     "ready" to (engine.state == org.apache.utlx.engine.EngineState.RUNNING && registry.list().isNotEmpty()),
                     "admin_key_set" to adminKey.isNotEmpty(),
                     "data_dir" to dataDir,
-                    "persistence" to if (dataDir != null) "disk" else "memory-only"
+                    "persistence" to if (dataDir != null) "disk" else "memory-only",
+                    "dapr_mode" to dapr.mode,
+                    "dapr_sidecar" to dapr.sidecarReachable
                 ))
             }
         }
+    }
+}
+
+// ── Messaging helper functions ──
+
+private fun parseMessagingEndpoint(node: com.fasterxml.jackson.databind.JsonNode?): org.apache.utlx.engine.config.MessagingEndpoint? {
+    if (node == null || node.isNull) return null
+    val queue = node.get("queue")?.asText()
+    val topic = node.get("topic")?.asText()
+    val eventhub = node.get("eventhub")?.asText()
+    val subscription = node.get("subscription")?.asText()
+    val consumerGroup = node.get("consumerGroup")?.asText()
+    if (queue == null && topic == null && eventhub == null) return null
+    return org.apache.utlx.engine.config.MessagingEndpoint(
+        queue = queue, topic = topic, eventhub = eventhub,
+        subscription = subscription, consumerGroup = consumerGroup
+    )
+}
+
+private fun endpointToMap(ep: org.apache.utlx.engine.config.MessagingEndpoint, daprStatus: String): Map<String, Any?> {
+    val map = mutableMapOf<String, Any?>()
+    ep.queue?.let { map["queue"] = it }
+    ep.topic?.let { map["topic"] = it }
+    ep.eventhub?.let { map["eventhub"] = it }
+    ep.subscription?.let { map["subscription"] = it }
+    ep.consumerGroup?.let { map["consumerGroup"] = it }
+    map["dapr_status"] = daprStatus
+    map["dapr_component_type"] = ep.daprComponentType
+    return map
+}
+
+private fun buildMessagingResponse(
+    config: org.apache.utlx.engine.config.TransformConfig,
+    syncState: SyncState
+): Map<String, Any?>? {
+    val input = config.input
+    val output = config.outputMessaging
+    if (input == null && output == null) return null
+
+    val daprStatus = when (syncState.status) {
+        "synced" -> "active"
+        "draft" -> "unsynced"
+        "error" -> "error"
+        else -> "not_configured"
+    }
+    val result = mutableMapOf<String, Any?>()
+    input?.let { result["input"] = endpointToMap(it, daprStatus) }
+    output?.let { result["output"] = endpointToMap(it, daprStatus) }
+    return result
+}
+
+private fun buildMessagingDetailResponse(
+    config: org.apache.utlx.engine.config.TransformConfig,
+    syncState: SyncState,
+    dapr: DaprIntegration
+): Map<String, Any?> {
+    val daprStatus = when (syncState.status) {
+        "synced" -> "active"
+        "draft" -> "unsynced"
+        "error" -> "error"
+        else -> "not_configured"
+    }
+    return mapOf(
+        "input" to config.input?.let { endpointToMap(it, daprStatus) },
+        "output" to config.outputMessaging?.let { endpointToMap(it, daprStatus) },
+        "sync_status" to syncState.status,
+        "last_synced" to syncState.lastSynced?.toString(),
+        "pending_changes" to syncState.pendingChanges,
+        "error" to syncState.error,
+        "dapr_mode" to dapr.mode
+    )
+}
+
+private fun persistMessagingConfig(
+    dataDirPath: Path,
+    name: String,
+    config: org.apache.utlx.engine.config.TransformConfig
+) {
+    try {
+        val txDir = dataDirPath.resolve("transformations").resolve(name)
+        Files.createDirectories(txDir)
+        val yamlFile = txDir.resolve("transform.yaml")
+
+        // Build YAML content from config
+        val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
+        // Write a clean representation
+        val yamlContent = mutableMapOf<String, Any?>()
+        yamlContent["strategy"] = config.strategy
+        yamlContent["validationPolicy"] = config.validationPolicy
+        yamlContent["maxConcurrent"] = config.maxConcurrent
+        config.input?.let { ep ->
+            val inputMap = mutableMapOf<String, String>()
+            ep.queue?.let { inputMap["queue"] = it }
+            ep.topic?.let { inputMap["topic"] = it }
+            ep.eventhub?.let { inputMap["eventhub"] = it }
+            ep.subscription?.let { inputMap["subscription"] = it }
+            ep.consumerGroup?.let { inputMap["consumerGroup"] = it }
+            yamlContent["input"] = inputMap
+        }
+        config.outputMessaging?.let { ep ->
+            val outputMap = mutableMapOf<String, String>()
+            ep.queue?.let { outputMap["queue"] = it }
+            ep.topic?.let { outputMap["topic"] = it }
+            ep.eventhub?.let { outputMap["eventhub"] = it }
+            yamlContent["output_messaging"] = outputMap
+        }
+        Files.writeString(yamlFile, yamlMapper.writeValueAsString(yamlContent))
+        logger.debug("Admin: persisted transform.yaml for '{}'", name)
+    } catch (e: Exception) {
+        logger.warn("Admin: failed to persist messaging config for '{}': {}", name, e.message)
     }
 }
 

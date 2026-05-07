@@ -26,6 +26,7 @@ class UtlxEngine(val config: EngineConfig) {
     private var transport: TransportServer? = null
     var dataDir: String? = null
     val validationOverrides = org.apache.utlx.engine.admin.ValidationOverrideStore()
+    var daprIntegration: org.apache.utlx.engine.admin.DaprIntegration? = null
 
     val state: EngineState get() = stateRef.get()
 

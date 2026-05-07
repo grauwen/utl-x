@@ -37,7 +37,7 @@ class HealthEndpoint(
                 logger.info("Trying health endpoint on port {}", tryPort)
                 server = embeddedServer(Netty, port = tryPort, host = "0.0.0.0") {
                     configureHealth(engine)
-                    org.apache.utlx.engine.admin.configureAdmin(this, engine, adminKey, dataDir)
+                    org.apache.utlx.engine.admin.configureAdmin(this, engine, adminKey, dataDir, engine.daprIntegration)
                 }.start(wait = false)
 
                 boundPort = tryPort

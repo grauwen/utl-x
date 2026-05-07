@@ -29,6 +29,10 @@ fun main(args: Array<String>) {
     var socketPath: String? = null
     var grpcAddress: String? = null
     var httpPort: Int = HttpTransport.DEFAULT_PORT
+    var daprComponentsDir: String? = null
+    var daprServicebusNamespace: String? = null
+    var daprEventhubNamespace: String? = null
+    var daprStorageAccount: String? = null
 
     var i = 0
     while (i < args.size) {
@@ -88,6 +92,26 @@ fun main(args: Array<String>) {
                 dataDir = args.getOrNull(i)
                     ?: exitWithError("--data-dir requires a path argument")
             }
+            "--dapr-components-dir" -> {
+                i++
+                daprComponentsDir = args.getOrNull(i)
+                    ?: exitWithError("--dapr-components-dir requires a path argument")
+            }
+            "--dapr-servicebus-namespace" -> {
+                i++
+                daprServicebusNamespace = args.getOrNull(i)
+                    ?: exitWithError("--dapr-servicebus-namespace requires a value")
+            }
+            "--dapr-eventhub-namespace" -> {
+                i++
+                daprEventhubNamespace = args.getOrNull(i)
+                    ?: exitWithError("--dapr-eventhub-namespace requires a value")
+            }
+            "--dapr-storage-account" -> {
+                i++
+                daprStorageAccount = args.getOrNull(i)
+                    ?: exitWithError("--dapr-storage-account requires a value")
+            }
             "--validate" -> {
                 validateOnly = true
             }
@@ -141,6 +165,15 @@ fun main(args: Array<String>) {
         if (dataDir != null) {
             engine.scanDataDir(Paths.get(dataDir))
         }
+
+        // EF10: Create Dapr integration (detection + dynamic component management)
+        val daprIntegration = org.apache.utlx.engine.admin.DaprIntegration(
+            componentsDir = daprComponentsDir?.let { Paths.get(it) },
+            servicebusNamespace = daprServicebusNamespace,
+            eventhubNamespace = daprEventhubNamespace,
+            storageAccount = daprStorageAccount
+        )
+        engine.daprIntegration = daprIntegration
 
         if (validateOnly) {
             val transformations = engine.registry.list()
@@ -196,6 +229,10 @@ private fun printUsage() {
           --socket <path>        Unix Domain Socket path (gRPC mode, Linux/macOS)
           --address <host:port>  TCP address (gRPC mode, default: localhost:9090)
           --validate             Load and compile the bundle, then exit (no processing)
+          --dapr-components-dir <path>  Directory for Dapr component YAML (enables dynamic mode)
+          --dapr-servicebus-namespace <fqdn>  Service Bus namespace (e.g. myco.servicebus.windows.net)
+          --dapr-eventhub-namespace <name>    Event Hub namespace name
+          --dapr-storage-account <name>       Storage account for Event Hub checkpointing
           --version, -v          Print version and exit
           --help, -h             Print this help and exit
 

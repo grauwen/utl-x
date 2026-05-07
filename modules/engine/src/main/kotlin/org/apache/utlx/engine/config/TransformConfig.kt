@@ -13,7 +13,10 @@ data class TransformConfig(
     val inputs: List<InputSlot> = emptyList(),
     val output: OutputSlot = OutputSlot(),
     val maxConcurrent: Int = 1,
-    val outputBinding: String? = null  // Dapr output binding name (optional)
+    val outputBinding: String? = null,  // Dapr output binding name (legacy, prefer messaging.output)
+    val input: MessagingEndpoint? = null,   // EF10: messaging input (queue/topic/eventhub)
+    @com.fasterxml.jackson.annotation.JsonProperty("output_messaging")
+    val outputMessaging: MessagingEndpoint? = null  // EF10: messaging output (queue/topic/eventhub)
 ) {
     companion object {
         private val yamlMapper = ObjectMapper(YAMLFactory()).apply {
@@ -24,6 +27,8 @@ data class TransformConfig(
         fun load(path: Path): TransformConfig {
             return yamlMapper.readValue(path.toFile())
         }
+
+        fun yamlMapper(): ObjectMapper = yamlMapper
     }
 }
 
@@ -35,3 +40,41 @@ data class InputSlot(
 data class OutputSlot(
     val schema: String? = null
 )
+
+/**
+ * EF10: Messaging endpoint declaration.
+ * Exactly one of queue/topic/eventhub should be set. The field name IS the discriminator.
+ */
+data class MessagingEndpoint(
+    val queue: String? = null,              // Service Bus queue → bindings.azure.servicebusqueues
+    val topic: String? = null,              // Service Bus topic → pubsub.azure.servicebus.topics
+    val eventhub: String? = null,           // Event Hub → bindings.azure.eventhubs (or pubsub if consumerGroup set)
+    val subscription: String? = null,       // Required for topic input (Service Bus subscription name)
+    val consumerGroup: String? = null       // Optional for eventhub input (triggers pub/sub mode)
+) {
+    /** The resource name (queue name, topic name, or eventhub name). */
+    val resourceName: String?
+        get() = queue ?: topic ?: eventhub
+
+    /** The Dapr component type for this endpoint. */
+    val daprComponentType: String?
+        get() = when {
+            queue != null -> "bindings.azure.servicebusqueues"
+            topic != null -> "pubsub.azure.servicebus.topics"
+            eventhub != null && consumerGroup != null -> "pubsub.azure.eventhubs"
+            eventhub != null -> "bindings.azure.eventhubs"
+            else -> null
+        }
+
+    /** Whether this is a pub/sub endpoint (vs binding). */
+    val isPubSub: Boolean
+        get() = topic != null || (eventhub != null && consumerGroup != null)
+
+    /** Short description for logging. */
+    override fun toString(): String = when {
+        queue != null -> "queue:$queue"
+        topic != null -> "topic:$topic" + (subscription?.let { " sub:$it" } ?: "")
+        eventhub != null -> "eventhub:$eventhub" + (consumerGroup?.let { " cg:$it" } ?: "")
+        else -> "none"
+    }
+}

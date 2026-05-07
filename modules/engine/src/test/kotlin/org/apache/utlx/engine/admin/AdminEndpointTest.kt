@@ -614,7 +614,7 @@ class AdminEndpointTest {
     // ── Dapr binding validation ──
 
     @Test
-    fun `dapr bindings endpoint returns transformation list`() {
+    fun `dapr status endpoint returns mode and sidecar info`() {
         val source = """
             %utlx 1.0
             input json
@@ -624,8 +624,204 @@ class AdminEndpointTest {
         """.trimIndent()
         adminPost("/admin/transformations/dapr-test", source)
 
-        val (status, body) = adminGet("/admin/dapr/bindings")
+        val (status, body) = adminGet("/admin/dapr")
         assertEquals(200, status)
-        assertTrue(body.contains("dapr-test"), "Should list dapr-test: $body")
+        assertTrue(body.contains("mode"), "Should contain mode: $body")
+        assertTrue(body.contains("sidecar_reachable"), "Should contain sidecar_reachable: $body")
+    }
+
+    // ── Messaging endpoints ──
+
+    private fun adminPostJson(path: String, json: String, key: String = adminKey): Pair<Int, String> {
+        val url = URL("http://localhost:$adminPort$path")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("X-Admin-Key", key)
+        conn.doOutput = true
+        conn.connectTimeout = 5000
+        conn.readTimeout = 10000
+        conn.outputStream.write(json.toByteArray())
+        conn.outputStream.flush()
+        val status = conn.responseCode
+        val response = try {
+            conn.inputStream.bufferedReader().readText()
+        } catch (e: Exception) {
+            conn.errorStream?.bufferedReader()?.readText() ?: ""
+        }
+        return status to response
+    }
+
+    private fun uploadTestTransformation(name: String) {
+        val source = """
+            %utlx 1.0
+            input json
+            output json
+            ---
+            ${'$'}input
+        """.trimIndent()
+        adminPost("/admin/transformations/$name", source)
+    }
+
+    @Test
+    fun `set messaging config returns draft status`() {
+        uploadTestTransformation("orders-in")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}, "output": {"queue": "orders-out"}}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("draft"), "Should be draft: $body")
+        assertTrue(body.contains("orders-in"), "Should contain queue name: $body")
+    }
+
+    @Test
+    fun `get messaging config returns endpoints and sync status`() {
+        uploadTestTransformation("orders-in")
+        adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}}"""
+        )
+
+        val (status, body) = adminGet("/admin/transformations/orders-in/messaging")
+        assertEquals(200, status)
+        assertTrue(body.contains("orders-in"), "Should contain queue name: $body")
+        assertTrue(body.contains("draft"), "Should show draft status: $body")
+        assertTrue(body.contains("unsynced"), "Should show unsynced dapr_status: $body")
+    }
+
+    @Test
+    fun `set messaging with topic and subscription`() {
+        uploadTestTransformation("invoices")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/invoices/messaging",
+            """{"input": {"topic": "raw-invoices", "subscription": "utlxe"}, "output": {"topic": "normalized"}}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("raw-invoices"), "Should contain topic: $body")
+    }
+
+    @Test
+    fun `set messaging with mixed queue and topic`() {
+        uploadTestTransformation("mixed")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/mixed/messaging",
+            """{"input": {"queue": "orders-in"}, "output": {"topic": "processed-orders"}}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("orders-in"), "Should contain queue: $body")
+        assertTrue(body.contains("processed-orders"), "Should contain topic: $body")
+    }
+
+    @Test
+    fun `set messaging on nonexistent transformation returns 404`() {
+        val (status, _) = adminPostJson(
+            "/admin/transformations/nonexistent/messaging",
+            """{"input": {"queue": "q1"}}"""
+        )
+        assertEquals(404, status)
+    }
+
+    @Test
+    fun `set messaging with empty body returns 400`() {
+        uploadTestTransformation("test")
+        val (status, _) = adminPostJson(
+            "/admin/transformations/test/messaging",
+            """{}"""
+        )
+        assertEquals(400, status)
+    }
+
+    @Test
+    fun `delete messaging config marks as draft`() {
+        uploadTestTransformation("orders-in")
+        adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}}"""
+        )
+
+        val (status, body) = adminDelete("/admin/transformations/orders-in/messaging")
+        assertEquals(200, status)
+        assertTrue(body.contains("draft"), "Should be draft after delete: $body")
+    }
+
+    // ── Sync endpoints ──
+
+    @Test
+    fun `sync single transformation in http-only mode`() {
+        uploadTestTransformation("orders-in")
+        adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}}"""
+        )
+
+        val (status, body) = adminPostJson("/admin/transformations/orders-in/sync", "")
+        assertEquals(200, status)
+        assertTrue(body.contains("synced") || body.contains("http-only"), "Should sync: $body")
+    }
+
+    @Test
+    fun `sync all draft transformations`() {
+        uploadTestTransformation("t1")
+        uploadTestTransformation("t2")
+        adminPostJson("/admin/transformations/t1/messaging", """{"input": {"queue": "q1"}}""")
+        adminPostJson("/admin/transformations/t2/messaging", """{"input": {"queue": "q2"}}""")
+
+        val (status, body) = adminPostJson("/admin/sync", "")
+        assertEquals(200, status)
+        assertTrue(body.contains("synced"), "Should report synced: $body")
+    }
+
+    @Test
+    fun `get sync status overview`() {
+        uploadTestTransformation("t1")
+        uploadTestTransformation("t2")
+        adminPostJson("/admin/transformations/t1/messaging", """{"input": {"queue": "q1"}}""")
+
+        val (status, body) = adminGet("/admin/sync")
+        assertEquals(200, status)
+        assertTrue(body.contains("draft_count"), "Should have draft_count: $body")
+        assertTrue(body.contains("dapr_mode"), "Should have dapr_mode: $body")
+    }
+
+    @Test
+    fun `transformation list includes sync_status and messaging`() {
+        uploadTestTransformation("orders-in")
+        adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}, "output": {"queue": "orders-out"}}"""
+        )
+
+        val (status, body) = adminGet("/admin/transformations")
+        assertEquals(200, status)
+        assertTrue(body.contains("sync_status"), "Should include sync_status: $body")
+        assertTrue(body.contains("dapr_mode"), "Should include dapr_mode: $body")
+        assertTrue(body.contains("messaging"), "Should include messaging: $body")
+    }
+
+    @Test
+    fun `info endpoint includes dapr_mode`() {
+        val (status, body) = adminGet("/admin/info")
+        assertEquals(200, status)
+        assertTrue(body.contains("dapr_mode"), "Should include dapr_mode: $body")
+    }
+
+    @Test
+    fun `delete transformation clears sync state`() {
+        uploadTestTransformation("orders-in")
+        adminPostJson(
+            "/admin/transformations/orders-in/messaging",
+            """{"input": {"queue": "orders-in"}}"""
+        )
+
+        adminDelete("/admin/transformations/orders-in")
+
+        // Sync status should be gone
+        val (status, body) = adminGet("/admin/sync")
+        assertEquals(200, status)
+        assertFalse(body.contains("orders-in"), "Should not contain deleted transform: $body")
     }
 }
