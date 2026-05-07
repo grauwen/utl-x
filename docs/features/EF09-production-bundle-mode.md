@@ -84,16 +84,28 @@ bundle.utlar (ZIP):
       "name": "orders-in",
       "has_config": true,
       "input_schemas": ["order.json"],
-      "output_schemas": ["invoice.xsd"]
+      "output_schemas": ["invoice.xsd"],
+      "input": { "queue": "orders-in" },
+      "output": { "queue": "orders-out" }
     },
     {
       "name": "invoice-to-ubl",
       "has_config": true,
       "input_schemas": [],
-      "output_schemas": []
+      "output_schemas": [],
+      "input": { "topic": "raw-invoices", "subscription": "utlxe-transform" },
+      "output": { "topic": "normalized-invoices" }
     }
   ],
-  "schemas": ["order.json", "invoice.xsd"]
+  "schemas": ["order.json", "invoice.xsd"],
+  "messaging": {
+    "queues": ["orders-in", "orders-out"],
+    "topics": [
+      { "name": "raw-invoices", "subscription": "utlxe-transform" },
+      { "name": "normalized-invoices" }
+    ],
+    "eventhubs": []
+  }
 }
 ```
 
@@ -101,24 +113,115 @@ The manifest enables:
 - **Fast startup**: compare manifest version to last loaded → skip reload if same
 - **Validation**: verify checksum on startup → reject tampered bundles
 - **Visibility**: `GET /admin/info` shows bundle version without unpacking
+- **Dapr component generation**: the `messaging` summary tells UTLXe (or CI/CD) exactly which Dapr components are needed — without parsing every transform.yaml
 
 ### transform.yaml per transformation
 
-Links inputs to schemas and declares operational settings:
+Links inputs to schemas, declares operational settings, and configures messaging:
 
 ```yaml
 strategy: COMPILED
 validationPolicy: strict
+maxConcurrent: 4
+
+# Schema validation (references files in schemas/ directory)
 inputs:
   - name: input
     schema: order.json
 output:
   schema: invoice.xsd
-outputBinding: orders-out
-maxConcurrent: 4
+
+# Messaging — declares WHAT to connect to (auth comes from environment)
+# The field name IS the discriminator: queue / topic / eventhub
+input:
+  queue: orders-in                      # → Service Bus queue (Dapr binding)
+output:
+  queue: orders-out                     # → Service Bus queue (Dapr binding)
+```
+
+**Messaging field reference:**
+
+| Field | Azure service | Dapr component type | Dapr building block |
+|---|---|---|---|
+| `queue: name` | Service Bus Queue | `bindings.azure.servicebusqueues` | Binding |
+| `topic: name` | Service Bus Topic | `pubsub.azure.servicebus.topics` | Pub/Sub |
+| `eventhub: name` | Event Hub | `bindings.azure.eventhubs` (default) or `pubsub.azure.eventhubs` (if `consumerGroup` set) | Binding or Pub/Sub |
+
+**Input-only fields:**
+
+| Field | When | Purpose |
+|---|---|---|
+| `subscription: name` | `topic` input | Service Bus subscription name (required for topic input) |
+| `consumerGroup: name` | `eventhub` input | Event Hub consumer group (triggers pub/sub mode, requires checkpoint storage) |
+
+**Mix-and-match is allowed.** Input and output can use different services and patterns:
+
+```yaml
+# Queue in, topic out (fan-out pattern)
+input:
+  queue: orders-in
+output:
+  topic: processed-orders
+
+# Event Hub in, queue out (stream-to-action)
+input:
+  eventhub: iot-telemetry
+  consumerGroup: utlxe               # → pub/sub mode with checkpointing
+output:
+  queue: alerts-out
+
+# Topic in, topic out (pub/sub chain)
+input:
+  topic: raw-invoices
+  subscription: utlxe-transform
+output:
+  topic: normalized-invoices
+
+# Queue in, queue out (simple point-to-point)
+input:
+  queue: orders-in
+output:
+  queue: orders-out
 ```
 
 The `schema` field references a file in the `schemas/` directory of the archive. The engine resolves it during loading.
+
+### Security: what's in the bundle vs the environment
+
+The bundle declares **what** to connect to (queue/topic/eventhub names). The environment provides **how** to authenticate. Secrets never go in the bundle — the same .utlar deploys to dev, acc, and prd.
+
+| Concern | Where | Example |
+|---|---|---|
+| Queue/topic/eventhub names | **Bundle** (transform.yaml) | `queue: orders-in` |
+| Authentication | **Environment** (Dapr config) | Managed identity or secret store ref |
+| Namespace / connection | **Environment** (Dapr config) | `namespaceName: myco.servicebus.windows.net` |
+
+**Recommended: Azure Managed Identity (secretless)**
+
+```yaml
+# Environment config — deployed by Bicep, NOT in bundle
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: utlxe-servicebus
+spec:
+  type: bindings.azure.servicebusqueues
+  metadata:
+    - name: namespaceName
+      value: "mycompany.servicebus.windows.net"    # FQDN for Service Bus
+    # No connectionString, no keys — system-assigned managed identity handles auth
+```
+
+**Supported auth methods (all Azure messaging components):**
+
+| Method | Secrets? | Fields needed |
+|---|---|---|
+| System-assigned managed identity | **No** | `namespaceName` only |
+| User-assigned managed identity | **No** | `namespaceName` + `azureClientId` |
+| Service principal | Yes | `azureTenantId` + `azureClientId` + `azureClientSecret` |
+| Connection string | Yes | `connectionString` |
+
+Note: `namespaceName` (FQDN) is for Service Bus. Event Hub uses `eventHubNamespace` (just the name, not FQDN).
 
 ## Startup sequence
 

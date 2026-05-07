@@ -33,35 +33,43 @@ Developer uploads transformation "orders-in" via Admin API
 
 When the Admin API creates or deletes a transformation, UTLXe writes or removes Dapr component YAML files in the Dapr resources directory.
 
-**Flow — add transformation:**
+**Flow — add transformation (queue example):**
 ```
-POST /admin/transformations/orders-in  (upload .utlx)
+POST /admin/transformations/orders-in
+  Body: .utlx source + transform.yaml with { input: { queue: orders-in }, output: { queue: orders-out } }
   ↓
 UTLXe compiles, registers transformation
   ↓
-UTLXe writes /dapr/components/binding-orders-in.yaml:
-  apiVersion: dapr.io/v1alpha1
-  kind: Component
-  metadata:
-    name: orders-in
-  spec:
-    type: bindings.azure.servicebusqueues
-    version: v1
-    metadata:
-      - name: connectionString
-        value: <from engine config or secret store>
-      - name: queueName
-        value: orders-in
-      - name: direction
-        value: "input, output"
+UTLXe reads transform.yaml → sees "queue: orders-in"
   ↓
-Dapr detects new file (filesystem watch, <1 second)
+UTLXe generates /dapr/components/binding-orders-in.yaml
+  (type: bindings.azure.servicebusqueues, namespaceName from --dapr-servicebus-namespace)
   ↓
-Dapr initializes binding → starts listening on queue "orders-in"
+UTLXe generates /dapr/components/binding-orders-out.yaml (output queue)
+  ↓
+Dapr detects new files (filesystem watch, <1 second)
+  ↓
+Dapr initializes bindings → starts listening on queue "orders-in"
   ↓
 Dapr probes OPTIONS /orders-in → UTLXe returns 200
   ↓
-Messages flow immediately
+Messages flow immediately — no restart, no manual YAML
+```
+
+**Flow — add transformation (topic example):**
+```
+POST /admin/transformations/invoice-normalize
+  Body: .utlx source + transform.yaml with { input: { topic: raw-invoices, subscription: utlxe }, output: { topic: normalized-invoices } }
+  ↓
+UTLXe compiles, registers transformation
+  ↓
+UTLXe reads transform.yaml → sees "topic: raw-invoices"
+  ↓
+UTLXe ensures /dapr/components/pubsub-utlxe-servicebus.yaml exists (shared, one per namespace)
+  ↓
+UTLXe opens streaming subscription via gRPC: Subscribe(pubsub="utlxe-servicebus", topic="raw-invoices")
+  ↓
+Dapr subscribes to Service Bus topic → messages flow immediately
 ```
 
 **Flow — remove transformation:**
@@ -70,11 +78,10 @@ DELETE /admin/transformations/orders-in
   ↓
 UTLXe unregisters transformation
   ↓
-UTLXe deletes /dapr/components/binding-orders-in.yaml
+If queue-based: UTLXe deletes /dapr/components/binding-orders-in.yaml
+If topic-based: UTLXe closes the streaming subscription
   ↓
-Dapr detects file deletion (<1 second)
-  ↓
-Dapr tears down binding → stops listening
+Dapr detects change (<1 second) → tears down binding / unsubscribes
   ↓
 Clean removal, no restart needed
 ```
@@ -158,43 +165,74 @@ In open mode, UTLXe manages the Dapr resources directory as part of its lifecycl
 utlxe --mode http \
       --data-dir /utlxe/data \
       --dapr-components-dir /dapr/components \
-      --dapr-default-binding-type bindings.azure.servicebusqueues \
-      --dapr-connection-string-secret "servicebus-connection"
+      --dapr-servicebus-namespace "mycompany.servicebus.windows.net" \
+      --dapr-eventhub-namespace "mycompany-eventhubs" \
+      --dapr-storage-account "mycompanystorage"
 ```
 
 | Flag | Purpose |
 |---|---|
 | `--dapr-components-dir` | Directory where UTLXe writes Dapr component YAML (watched by Dapr) |
-| `--dapr-default-binding-type` | Component type for auto-generated bindings (default: `bindings.azure.servicebusqueues`) |
-| `--dapr-connection-string-secret` | Secret store reference for the connection string |
+| `--dapr-servicebus-namespace` | Service Bus namespace FQDN (for queue and topic components) |
+| `--dapr-eventhub-namespace` | Event Hub namespace name (for eventhub components) |
+| `--dapr-storage-account` | Storage account for Event Hub pub/sub checkpointing |
 
 If `--dapr-components-dir` is not set, dynamic binding management is disabled (backward compatible).
 
-### Transform config declares binding intent
+Auth is handled by Azure Managed Identity (recommended) — no connection strings or secrets in flags. The container's managed identity must have the appropriate RBAC roles:
+- **Service Bus**: `Azure Service Bus Data Sender` + `Azure Service Bus Data Receiver`
+- **Event Hub**: `Azure Event Hubs Data Sender` + `Azure Event Hubs Data Receiver`
+- **Storage** (Event Hub checkpoints only): `Storage Blob Data Contributor`
+
+### Transform config declares messaging intent
+
+The field name is the discriminator — `queue`, `topic`, or `eventhub`:
 
 ```yaml
-# transform.yaml — binding mode
-inputBinding: "orders-in"          # queue/topic name = binding name
-outputBinding: "orders-out"
-
-# transform.yaml — pub/sub mode
+# Queue in, queue out (Service Bus binding)
 input:
-  pubsub: "utlxe-servicebus"
-  topic: "incoming-orders"
+  queue: orders-in
 output:
-  pubsub: "utlxe-servicebus"
-  topic: "processed-orders"
+  queue: orders-out
+
+# Topic in, topic out (Service Bus pub/sub)
+input:
+  topic: raw-invoices
+  subscription: utlxe-transform       # required for topic input
+output:
+  topic: normalized-invoices
+
+# Event Hub in, queue out (mixed)
+input:
+  eventhub: iot-telemetry
+  consumerGroup: utlxe                 # optional, triggers pub/sub mode
+output:
+  queue: alerts-out
+
+# Mix-and-match: input and output can use different services
+input:
+  queue: orders-in                     # Service Bus queue (binding)
+output:
+  topic: processed-orders              # Service Bus topic (pub/sub)
 ```
 
-The Admin API reads the binding/topic declaration from the transformation config and generates the appropriate Dapr component YAML or streaming subscription.
+| Field | Dapr component type | Building block |
+|---|---|---|
+| `queue` | `bindings.azure.servicebusqueues` | Binding |
+| `topic` | `pubsub.azure.servicebus.topics` | Pub/Sub |
+| `eventhub` | `bindings.azure.eventhubs` (default) or `pubsub.azure.eventhubs` (if `consumerGroup` set) | Binding or Pub/Sub |
 
-## Generated YAML template
+The Admin API reads these fields from the transformation config and generates the appropriate Dapr component YAML or streaming subscription. Auth comes from the environment (managed identity or secret store), never from the bundle.
 
-UTLXe generates binding YAML from a template:
+## Generated YAML templates
+
+UTLXe generates Dapr component YAML based on the `queue`, `topic`, or `eventhub` field in transform.yaml. All generated components are marked with `utlxe.io/managed: "true"` for reconciliation.
+
+### Queue component (Service Bus binding)
 
 ```yaml
 # Auto-generated by UTLXe — do not edit manually
-# Transformation: orders-in
+# Transformation: orders-in → input queue
 # Generated: 2026-05-07T10:00:00Z
 apiVersion: dapr.io/v1alpha1
 kind: Component
@@ -203,14 +241,13 @@ metadata:
   annotations:
     utlxe.io/managed: "true"
     utlxe.io/transformation: "orders-in"
+    utlxe.io/role: "input"
 spec:
   type: bindings.azure.servicebusqueues
   version: v1
   metadata:
-    - name: connectionString
-      secretKeyRef:
-        name: servicebus-connection
-        key: connectionString
+    - name: namespaceName                  # Managed identity (secretless)
+      value: "mycompany.servicebus.windows.net"
     - name: queueName
       value: "orders-in"
     - name: direction
@@ -218,6 +255,82 @@ spec:
     - name: maxConcurrentHandlers
       value: "1"
 ```
+
+### Topic component (Service Bus pub/sub)
+
+One pub/sub component per Service Bus namespace — shared across all topic-based transformations. UTLXe generates this once, not per transformation:
+
+```yaml
+# Auto-generated by UTLXe — do not edit manually
+# Shared Service Bus pub/sub component
+# Generated: 2026-05-07T10:00:00Z
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: utlxe-servicebus
+  annotations:
+    utlxe.io/managed: "true"
+    utlxe.io/role: "pubsub"
+spec:
+  type: pubsub.azure.servicebus.topics
+  version: v1
+  metadata:
+    - name: namespaceName
+      value: "mycompany.servicebus.windows.net"
+```
+
+Topic subscriptions are then managed via:
+- **Open mode**: Dapr streaming subscriptions (gRPC, per-topic, dynamic)
+- **Locked mode**: `GET /dapr/subscribe` response (derived from manifest at startup)
+
+### Event Hub component (binding or pub/sub)
+
+```yaml
+# Auto-generated by UTLXe — do not edit manually
+# Transformation: telemetry-in → input eventhub (binding mode)
+apiVersion: dapr.io/v1alpha1
+kind: Component
+metadata:
+  name: telemetry-in
+  annotations:
+    utlxe.io/managed: "true"
+    utlxe.io/transformation: "telemetry-in"
+    utlxe.io/role: "input"
+spec:
+  type: bindings.azure.eventhubs
+  version: v1
+  metadata:
+    - name: eventHubNamespace              # Note: NOT FQDN for Event Hub
+      value: "mycompany-eventhubs"
+    - name: eventHub
+      value: "iot-telemetry"
+```
+
+If the transform.yaml specifies `consumerGroup`, UTLXe generates a pub/sub component instead (requires checkpoint storage):
+
+```yaml
+# With consumerGroup → pub/sub mode
+spec:
+  type: pubsub.azure.eventhubs
+  metadata:
+    - name: eventHubNamespace
+      value: "mycompany-eventhubs"
+    - name: eventHub
+      value: "iot-telemetry"
+    - name: consumerGroup
+      value: "utlxe"
+    - name: storageAccountName             # Required for pub/sub checkpointing
+      value: "mycompanystorage"
+    - name: storageContainerName
+      value: "eventhub-checkpoints"
+```
+
+### Auth resolution
+
+The generated YAML never contains secrets. Auth fields come from:
+1. **Managed identity** (recommended): just `namespaceName` / `eventHubNamespace` — Dapr uses the container's identity
+2. **Secret store reference**: `secretKeyRef` pointing to a Dapr secret store component
+3. **Engine config**: `--dapr-servicebus-namespace`, `--dapr-eventhub-namespace` CLI flags provide the namespace values
 
 The `utlxe.io/managed: "true"` annotation marks auto-generated components. On startup, UTLXe can clean up orphaned managed components (transformation deleted while UTLXe was down).
 
@@ -287,4 +400,4 @@ Startup:
 ---
 
 *Feature EF10. May 2026. Design document.*
-*Key insight: Dapr Component Hot Reload (preview, `--resources-path` filesystem watch) lets UTLXe write binding YAML at runtime. Upload a transformation → binding appears in ~1 second → messages flow. No restart. The static/dynamic mismatch is eliminated for dev/test. Production stays immutable via locked mode.*
+*Key insight: The transform.yaml field name IS the discriminator — `queue`, `topic`, or `eventhub`. UTLXe reads the field, generates the correct Dapr component YAML (or streaming subscription), and Dapr Hot Reload picks it up in ~1 second. Upload a transformation → messaging flows. No restart, no manual YAML, no secrets in the bundle. Input and output can mix freely (queue in → topic out, eventhub in → queue out). Production stays immutable via locked mode.*
