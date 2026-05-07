@@ -370,9 +370,39 @@ Only a subset of config fields are safe to change at runtime. Fields that requir
 | `POST` | `/admin/sync` | Push ALL draft transformations to Dapr |
 | `GET` | `/admin/sync` | Show sync status for all transformations |
 
-**Design principle: stage then apply.**
+**Design principle: stage, test, then apply.**
 
-Configuration changes via the Admin API are persisted to `transform.yaml` on disk immediately (crash-safe). But Dapr components are **not** created, updated, or deleted until an explicit **sync**. This prevents wasteful churn when building up a configuration incrementally over multiple API calls.
+Configuration changes via the Admin API are persisted to `transform.yaml` on disk immediately (crash-safe). But Dapr components are **not** created, updated, or deleted until an explicit **sync**. This has two benefits:
+
+1. **No churn** — building up config over multiple API calls doesn't cause Dapr to initialize/teardown/reinitialize components
+2. **Safe testing** — before sync, the transformation is compiled and testable via HTTP (data plane and test endpoint), but not connected to real queues or topics. Sync is the "go live" switch.
+
+**Pre-sync testing (the sandbox):**
+
+A transformation in `draft` state is fully functional via HTTP — it just has no Dapr bindings:
+
+```
+Upload .utlx               → compiled, registered in engine
+Set messaging config        → draft (saved to disk, Dapr not touched)
+                            ↓
+Test with sample data:      POST /admin/transformations/orders-in/test
+                            → Returns output or error — safe, no queue impact
+                            ↓
+Test via HTTP data plane:   POST :8085/api/transform/orders-in
+                            → Full execution including validation — no messages consumed from queues
+                            ↓
+Fix if needed:              Re-upload .utlx, adjust config, test again
+                            → Still in draft — still no queue impact
+                            ↓
+Confident?                  POST /admin/transformations/orders-in/sync
+                            → Dapr bindings activate → real messages flow
+```
+
+This means:
+- Develop and test **without Dapr running at all** (HTTP-only mode)
+- Verify output correctness before connecting to queues (no dead-lettering of bad transformations)
+- Multiple developers can upload and test independently, then one coordinated `POST /admin/sync` brings everything live
+- Schema validation, pipeline multi-input, output metadata — all testable before go-live
 
 | Analogy | Stage | Apply |
 |---|---|---|
