@@ -419,7 +419,11 @@ defaults to validate are:
 - **Retries on output binding publish failures**: sidecar retries with exponential backoff; `publishMaxRetries` and `publishInitialRetryInterval` for Service Bus, equivalents for other brokers.
 - **Service-invocation retries**: bypassed automatically for HTTP streaming requests (chunked / unknown `Content-Length`) because the body cannot be replayed. UTLX-to-UTLX streaming therefore must implement idempotency at the application layer.
 
-A minimal Resiliency policy for UTLX:
+### Recommended Resiliency policy for UTLX
+
+This policy handles two scenarios:
+1. **Normal failures** (transformation error) — retry with backoff, then dead-letter
+2. **Deliberate pause** (operator paused via Admin API) — circuit breaker prevents dead-lettering
 
 ```yaml
 apiVersion: dapr.io/v1alpha1
@@ -436,17 +440,71 @@ spec:
         maxInterval: 30s
         maxRetries: 5
     circuitBreakers:
-      brokerBreaker:
+      # Handles deliberate pause (UTLXe returns 429) and sustained failures
+      # Opens after 3 consecutive failures → stops calling for 5 minutes
+      # Prevents messages from being dead-lettered during maintenance windows
+      pauseBreaker:
         maxRequests: 1
-        timeout: 60s
-        trip: consecutiveFailures > 5
+        timeout: 300s              # 5 minutes before half-open retry
+        trip: consecutiveFailures > 3
   targets:
+    apps:
+      utlxe:
+        # Circuit breaker on the app itself (covers all bindings)
+        circuitBreaker: pauseBreaker
     components:
       utlx-orders-queue:
         outbound:
           retry: brokerRetry
           timeout: transformTimeout
-          circuitBreaker: brokerBreaker
+```
+
+### Pause/resume and the circuit breaker
+
+When an operator pauses a transformation via the Admin API (`POST /admin/transformations/{name}/pause`), UTLXe returns HTTP 429 (Too Many Requests) instead of processing the message. The distinction from other errors:
+
+| HTTP code | Meaning | Dapr behavior | Service Bus behavior |
+|:---------:|---------|---------------|---------------------|
+| **200** | Success | Complete message (remove from queue) | Message consumed |
+| **429** | Deliberately paused | Abandon → delivery count++ → circuit breaker trips after 3 | Retries, but circuit breaker stops Dapr from trying |
+| **500** | Transformation failed | Abandon → delivery count++ | Retries up to maxDeliveryCount → dead-letter |
+| **503** | Not loaded yet | Abandon → delivery count++ | Retries until transformation uploaded |
+
+The circuit breaker is critical for 429 (pause):
+
+```
+Pause activated:
+  Message 1 → 429 → abandon → delivery count = 1
+  Message 2 → 429 → abandon → delivery count = 1 (different message)
+  Message 3 → 429 → circuit OPENS (3 consecutive failures on the app)
+      ↓
+  Dapr stops calling UTLXe for 300 seconds
+  Messages stay in Service Bus queue
+  Lock expires naturally → messages become visible again
+  Delivery count does NOT increment (Dapr isn't trying)
+      ↓
+  After 300s: Dapr half-opens → tries one message
+    If still paused → 429 → circuit opens again
+    If resumed → 200 → circuit closes → all queued messages drain
+```
+
+**Important:** The Service Bus `maxDeliveryCount` should be set high enough (e.g., 100) to tolerate the initial 3 retries before the circuit breaker opens. The default of 10 is too low for pause scenarios.
+
+### Required configuration for Azure Marketplace
+
+The Resiliency YAML above must be included in the Bicep template as a default Dapr component. Customers should not need to discover this configuration themselves — it should work out of the box with the Marketplace deployment.
+
+```bicep
+resource daprResiliency 'Microsoft.App/managedEnvironments/daprComponents@2024-03-01' = {
+  parent: env
+  name: 'utlxe-resiliency'
+  properties: {
+    componentType: 'resiliency'
+    metadata: []
+    // Note: Azure Container Apps may require resiliency policies
+    // to be defined differently — validate against ACA docs
+  }
+}
 ```
 
 ---
