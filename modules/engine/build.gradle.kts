@@ -92,8 +92,10 @@ application {
     mainClass.set("org.apache.utlx.engine.MainKt")
 
     applicationDefaultJvmArgs = listOf(
-        "-Xmx2048m",
-        "-XX:+UseG1GC"
+        "-Xmx3072m",
+        "-XX:+UseZGC",
+        "-XX:+ZGenerational",
+        "-XX:+AlwaysPreTouch"
     )
 }
 
