@@ -169,6 +169,65 @@ DEBUG: /dapr/subscribe: [{pubsubname=utlxe-servicebus, topic=incoming-orders, ro
 }
 ```
 
+## Metrics and Counters: what UTLXe provides vs what's external
+
+UTLXe provides raw counters. External monitoring infrastructure (Prometheus, Azure Monitor, Grafana) handles aggregation, rates, percentiles, and dashboards.
+
+### What UTLXe provides (built-in)
+
+| Metric | Location | Type | Reset? |
+|---|---|---|---|
+| `messages_processed` per transformation | `GET /admin/transformations` | Cumulative counter | No — resets on container restart |
+| `errors` per transformation | `GET /admin/transformations` | Cumulative counter | No |
+| Error details (last 100) | `GET /admin/transformations/{name}/errors` | Ring buffer | Auto-evicts oldest |
+| Prometheus counters | `GET /metrics` | Prometheus text format | No — Prometheus scrapes and computes rates |
+| Log entries (last 5000) | `GET /admin/logs` | Ring buffer | `DELETE /admin/logs` to clear |
+
+### What external monitoring provides (not in UTLXe)
+
+| Capability | Tool | Why not in UTLXe |
+|---|---|---|
+| Message rate (msg/sec, msg/min) | Prometheus `rate()` + Grafana | Rate calculation from counters is what Prometheus does best |
+| Latency percentiles (p50, p95, p99) | Prometheus histograms + Grafana | Histograms require significant memory; Prometheus is purpose-built for this |
+| Resettable counters | Not needed | Creates confusion ("when was it reset?"). Prometheus `rate()` over a time window is more meaningful |
+| Cross-instance aggregation | Azure Monitor / UTLXc (EF11) | Single UTLXe has no view of other instances |
+| Alerting (error rate > threshold) | Azure Monitor alerts / Grafana | UTLXe is a data plane, not an alerting system |
+| Dashboards and graphs | Grafana / Azure Monitor workbooks | Visualization is not UTLXe's responsibility |
+| Long-term metrics storage | Prometheus / Azure Monitor | UTLXe counters reset on restart; external storage is durable |
+
+### Design decision: no resettable counters
+
+Resettable counters were considered and rejected:
+- A counter that was "reset 3 hours ago" showing 500 messages tells you less than a Prometheus `rate(messages_processed[5m])` query showing 2.3 msg/sec
+- Reset timing is lost metadata — "who reset it and when?" is not tracked
+- External tools compute rates from monotonic counters automatically — reset breaks this
+- The error ring buffer (last 100 details) serves the "what happened recently?" use case better than a resettable count
+
+### Prometheus endpoint
+
+`GET /metrics` returns Prometheus text format, scraped automatically by Azure Monitor or a Prometheus instance:
+
+```
+# HELP utlxe_messages_processed_total Total messages processed per transformation
+# TYPE utlxe_messages_processed_total counter
+utlxe_messages_processed_total{transformation="orders-in"} 12345
+utlxe_messages_processed_total{transformation="invoices-in"} 8901
+
+# HELP utlxe_errors_total Total errors per transformation
+# TYPE utlxe_errors_total counter
+utlxe_errors_total{transformation="orders-in"} 2
+utlxe_errors_total{transformation="invoices-in"} 0
+```
+
+Example Grafana/PromQL queries:
+- Message rate: `rate(utlxe_messages_processed_total[5m])`
+- Error rate: `rate(utlxe_errors_total[5m])`
+- Error percentage: `rate(utlxe_errors_total[5m]) / rate(utlxe_messages_processed_total[5m]) * 100`
+
+### For UTLXc (EF11, future)
+
+The control plane aggregates counters across all UTLXe instances — providing the fleet-wide view that individual instances cannot. This is the right place for cross-instance rates, totals, and dashboards.
+
 ## Files Implemented
 
 | File | Change |
