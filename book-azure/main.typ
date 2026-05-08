@@ -121,44 +121,44 @@ Typeset with Typst in New Computer Modern.
 
 #pagebreak()
 
-// Executive Overview
-#include "chapters/ch00-business-value.typ"
+// Chapter 1: Executive Overview
+#include "chapters/ch01-business-value.typ"
 #pagebreak()
 
-// Part I: Getting Started
-#include "chapters/ch01-why-utlxe.typ"
+// Part I: Getting Started (chapters 2-6)
+#include "chapters/ch02-why-utlxe.typ"
 #pagebreak()
-#include "chapters/ch02-quick-start.typ"
+#include "chapters/ch03-quick-start.typ"
 #pagebreak()
-#include "chapters/ch03-writing-transformations.typ"
+#include "chapters/ch04-writing-transformations.typ"
 #pagebreak()
-#include "chapters/ch04-admin-api.typ"
+#include "chapters/ch05-admin-api.typ"
 #pagebreak()
-#include "chapters/ch05-azure-services.typ"
+#include "chapters/ch06-azure-services.typ"
 
-// Part II: Deployment and Automation
+// Part II: Deployment and Automation (chapters 7-9)
 #pagebreak()
-#include "chapters/ch06-dtap.typ"
+#include "chapters/ch07-dtap.typ"
 #pagebreak()
-#include "chapters/ch07-infrastructure-as-code.typ"
+#include "chapters/ch08-infrastructure-as-code.typ"
 #pagebreak()
-#include "chapters/ch08-cicd.typ"
+#include "chapters/ch09-cicd.typ"
 
-// Part III: Production
+// Part III: Production (chapters 10-14)
 #pagebreak()
-#include "chapters/ch09-persistence-and-scaling.typ"
+#include "chapters/ch10-persistence-and-scaling.typ"
 #pagebreak()
-#include "chapters/ch10-security.typ"
+#include "chapters/ch11-security.typ"
 #pagebreak()
-#include "chapters/ch11-operations.typ"
+#include "chapters/ch12-operations.typ"
 #pagebreak()
-#include "chapters/ch12-monitoring.typ"
+#include "chapters/ch13-monitoring.typ"
 #pagebreak()
-#include "chapters/ch13-troubleshooting.typ"
+#include "chapters/ch14-troubleshooting.typ"
 
-// Part IV: Future
+// Part IV: Future (chapter 15)
 #pagebreak()
-#include "chapters/ch14-roadmap.typ"
+#include "chapters/ch15-roadmap.typ"
 
 // Appendices
 #pagebreak()
