@@ -69,7 +69,7 @@ That is the entire program. JSON in, XML out. No boilerplate, no framework, no b
   columns: (auto, auto, auto, auto, auto),
   [*Aspect*], [*Custom code*], [*MuleSoft / Tibco*], [*Azure Logic Apps*], [*UTLXe*],
   [Deploy time], [Weeks], [Days--weeks], [Hours], [*Minutes*],
-  [Format support], [Whatever you code], [Broad], [JSON + XML], [*JSON, XML, CSV, YAML, Avro, Protobuf*],
+  [Format support], [Whatever you code], [Broad], [JSON + XML], [*JSON, XML, CSV, YAML, OData, Avro, Protobuf*],
   [Cost], [Developer hours], [License + infra], [Per execution], [*Per container (fixed)*],
   [Language], [Java / C\# / Python], [DataWeave / XSLT], [Visual designer], [*UTL-X (readable, auditable)*],
   [Testing], [Write your own], [Studio], [Limited], [*Built-in test endpoint*],
@@ -129,6 +129,18 @@ Sensors publish telemetry in varying formats via Event Hub. UTLXe normalizes the
 
 An e-commerce order arrives as JSON. The warehouse needs CSV. The accounting system needs XML. The shipping partner needs a specific JSON structure. UTLXe runs four transformations in parallel --- one input, four outputs.
 
+=== SAP Integration
+
+SAP comes in two flavors, and UTL-X handles both:
+
+- *SAP S/4HANA and SAP HANA* expose data via OData APIs --- a structured format based on JSON with metadata, entity types, and navigation properties. UTL-X has native OData support: it understands OData entity schemas, validates against `$metadata` definitions, and transforms OData payloads to any target format.
+
+- *SAP R/3 (ECC)* exchanges data via IDoc and BAPI --- XML dialects specific to SAP. UTL-X's XML support handles these dialects directly, mapping SAP-specific XML structures to modern JSON, UBL, or any other format.
+
+A typical flow: SAP S/4HANA publishes a business partner change via OData to Azure Service Bus. UTLXe transforms the OData entity into the JSON structure your CRM or data warehouse expects. Or: SAP R/3 sends an IDoc XML via a middleware adapter to Service Bus. UTLXe transforms the IDoc to a normalized JSON event for downstream systems.
+
+For SAP shops, this eliminates the need for SAP CPI or SAP PI/PO as a transformation layer. UTLXe handles the format translation directly, on Azure infrastructure you already manage.
+
 === API Gateway Transformation
 
 An external API returns data in a format your frontend cannot consume. UTLXe sits behind Azure API Management and transforms the response on the fly.
@@ -140,8 +152,8 @@ UTLXe runs as an Azure Container App. You pay for the container resources (CPU +
 #table(
   columns: (auto, auto, auto),
   [*Plan*], [*Container*], [*Suitable for*],
-  [Starter], [1 vCPU, 2 GB RAM], [500--1,000 msg/sec (simple transforms), 200--500 msg/sec (complex). Messages up to ~50 KB.],
-  [Professional], [2 vCPU, 4 GB RAM], [2,000--4,000 msg/sec (simple), 500--1,500 msg/sec (complex). Messages up to ~200 KB.],
+  [Starter], [1 vCPU, 4 GB RAM], [500--1,000 msg/sec (simple transforms), 200--500 msg/sec (complex). Messages up to ~100 KB.],
+  [Professional], [2 vCPU, 8 GB RAM], [2,000--4,000 msg/sec (simple), 500--1,500 msg/sec (complex). Messages up to ~500 KB.],
 )
 
 Throughput depends on transformation complexity and message size. Simple field mappings are fast; cross-format conversion with schema validation is slower. The figures above are for typical business document transformations.

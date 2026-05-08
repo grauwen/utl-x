@@ -32,6 +32,12 @@ param location string = resourceGroup().location
 @description('UTLXe container image')
 param utlxeImage string = 'ghcr.io/grauwen/utlxe:latest'
 
+@description('Plan: starter (1 vCPU, 2GB) or professional (2 vCPU, 4GB)')
+@allowed(['starter', 'professional'])
+param plan string = 'starter'
+
+var planConfig = plan == 'professional' ? { cpu: '2.0', memory: '8Gi', heap: '6144m' } : { cpu: '1.0', memory: '4Gi', heap: '3072m' }
+
 @description('UTLXe admin API key')
 @secure()
 param adminKey string
@@ -148,7 +154,7 @@ resource utlxeApp 'Microsoft.App/containerApps@2024-03-01' = {
         {
           name: 'utlxe'
           image: utlxeImage
-          resources: { cpu: json('1.0'), memory: '2Gi' }
+          resources: { cpu: json(planConfig.cpu), memory: planConfig.memory }
           env: [
             { name: 'UTLXE_ADMIN_KEY', secretRef: 'admin-key' }
           ]
@@ -260,21 +266,21 @@ output storageAccount string = storageAccount.name
 Deploy all four environments:
 
 ```bash
-# Dev
+# Dev (starter plan)
 az deployment group create -g rg-utlxe-dev \
-  -f main.bicep -p env=dev adminKey='dev-key-123'
+  -f main.bicep -p env=dev plan=starter adminKey='dev-key-123'
 
-# Test
+# Test (starter plan)
 az deployment group create -g rg-utlxe-tst \
-  -f main.bicep -p env=tst adminKey='tst-key-456'
+  -f main.bicep -p env=tst plan=starter adminKey='tst-key-456'
 
-# Acceptance
+# Acceptance (professional — matches production sizing)
 az deployment group create -g rg-utlxe-acc \
-  -f main.bicep -p env=acc adminKey='acc-key-789'
+  -f main.bicep -p env=acc plan=professional adminKey='acc-key-789'
 
-# Production
+# Production (professional — 2 vCPU, 4 GB)
 az deployment group create -g rg-utlxe-prd \
-  -f main.bicep -p env=prd adminKey='prd-key-secure'
+  -f main.bicep -p env=prd plan=professional adminKey='prd-key-secure'
 ```
 
 == Terraform: Complete Example
@@ -299,6 +305,16 @@ variable "admin_key" {
   sensitive   = true
 }
 
+variable "plan" {
+  description = "Plan: starter (1 vCPU, 2GB) or professional (2 vCPU, 4GB)"
+  type        = string
+  default     = "starter"
+  validation {
+    condition     = contains(["starter", "professional"], var.plan)
+    error_message = "Plan must be 'starter' or 'professional'."
+  }
+}
+
 variable "utlxe_image" {
   description = "UTLXe container image"
   type        = string
@@ -309,6 +325,8 @@ locals {
   prefix       = "utlxe-${var.env}"
   sb_namespace = "sb-${local.prefix}"
   storage_name = "st${replace(local.prefix, "-", "")}"
+  cpu          = var.plan == "professional" ? 2.0 : 1.0
+  memory       = var.plan == "professional" ? "8Gi" : "4Gi"
 }
 
 resource "azurerm_resource_group" "rg" {
@@ -407,8 +425,8 @@ resource "azurerm_container_app" "utlxe" {
     container {
       name   = "utlxe"
       image  = var.utlxe_image
-      cpu    = 1.0
-      memory = "2Gi"
+      cpu    = local.cpu
+      memory = local.memory
 
       env {
         name        = "UTLXE_ADMIN_KEY"

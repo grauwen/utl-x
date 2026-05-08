@@ -306,7 +306,7 @@ curl -H "X-Admin-Key: $KEY" \
   "uptime_seconds": 86400,
   "mode": "http",
   "workers": 4,
-  "heap_max_mb": 1536,
+  "heap_max_mb": 3072,
   "data_dir": "/utlxe/data",
   "persistence": "volume-backed",
   "admin_key_set": true,

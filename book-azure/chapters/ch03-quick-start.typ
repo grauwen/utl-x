@@ -15,8 +15,8 @@ The container starts empty --- no transformations are loaded. You deploy them vi
 
 + Open the Azure Portal and search for "UTLXe" in the Marketplace.
 + Select your plan:
-  - *Starter* (2 GB) --- suitable for messages up to ~50 KB, development and light production workloads.
-  - *Professional* (4 GB) --- suitable for messages up to ~200 KB, production workloads with higher throughput.
+  - *Starter* (1 vCPU, 4 GB) --- suitable for messages up to ~100 KB, development and light production workloads.
+  - *Professional* (2 vCPU, 8 GB) --- suitable for messages up to ~500 KB, production workloads with higher throughput.
 + Configure the deployment:
   - Resource group and region.
   - Container App name.

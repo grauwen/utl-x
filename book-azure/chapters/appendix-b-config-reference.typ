@@ -6,7 +6,7 @@
   columns: (auto, auto, 1fr),
   [*Variable*], [*Default*], [*Description*],
   [`UTLXE_ADMIN_KEY`], [_(none)_], [Admin API authentication key. Required --- if not set, all admin endpoints return 403.],
-  [`UTLXE_HEAP_SIZE`], [`1536m`], [JVM heap size. Starter: `1536m`. Professional: `3072m`.],
+  [`UTLXE_HEAP_SIZE`], [`3072m`], [JVM heap size. Starter: `3072m` (4 GB container). Professional: `6144m` (8 GB container).],
   [`JAVA_OPTS`], [_(see below)_], [Additional JVM options. Default includes G1GC, container support, AlwaysPreTouch.],
 )
 
@@ -95,8 +95,8 @@ output_messaging:
 #table(
   columns: (auto, auto, auto, auto, auto),
   [*Plan*], [*Container RAM*], [*Heap*], [*Max message*], [*vCPU*],
-  [Starter], [2 GB], [1536 MB], [~50 KB], [1--2],
-  [Professional], [4 GB], [3072 MB], [~200 KB], [2--4],
+  [Starter], [4 GB], [3 GB], [~100 KB], [1],
+  [Professional], [8 GB], [6 GB], [~500 KB], [2],
 )
 
 The heap is set to 75% of container memory. The remaining 25% covers JVM metaspace, thread stacks, native memory, and the operating system.

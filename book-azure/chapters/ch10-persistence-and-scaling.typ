@@ -115,8 +115,8 @@ UTLXe runs on the JVM with a configured heap size. The heap must be large enough
 #table(
   columns: (auto, auto, auto, auto),
   [*Plan*], [*Container*], [*Heap*], [*Max message*],
-  [Starter], [2 GB], [1536 MB], [~50 KB],
-  [Professional], [4 GB], [3072 MB], [~200 KB],
+  [Starter], [4 GB], [3 GB], [~100 KB],
+  [Professional], [8 GB], [6 GB], [~500 KB],
 )
 
 The heap is set to 75% of the container memory. The remaining 25% is for the JVM itself (metaspace, thread stacks, native memory) and the operating system.
@@ -144,9 +144,9 @@ In Azure Container Apps, set the memory request equal to the memory limit:
 ```yaml
 resources:
   requests:
-    memory: "2Gi"
+    memory: "4Gi"
   limits:
-    memory: "2Gi"
+    memory: "4Gi"
 ```
 
 This ensures the container gets exactly the memory it requests, with no swap. If the container exceeds its memory limit, Kubernetes kills it (OOM) --- which is faster to recover from than swap thrashing.
