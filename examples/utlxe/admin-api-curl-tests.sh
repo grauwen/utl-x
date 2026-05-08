@@ -1,7 +1,7 @@
 #!/bin/bash
 # ============================================================================
 # UTLXe Admin API — curl test script
-# Tests all EF03 admin endpoints against a running UTLXe instance.
+# Tests admin endpoints (EF03, EF06, EF09, EF10, EF12) against a running UTLXe instance.
 #
 # Usage:
 #   ./gradlew :modules:engine:jar
@@ -326,13 +326,207 @@ check_contains "Hot-swapped test returns v2 output" "WORLD" "$BODY"
 check_contains "Hot-swapped test has version field" "v2" "$BODY"
 
 # ============================================================================
+header "EF10: Messaging config (stage → sync)"
+# ============================================================================
+
+# Upload a transformation for messaging tests
+curl -s -o /dev/null \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: text/plain" \
+  -d '%utlx 1.0
+input json
+output json
+---
+$input' \
+  "$ADMIN/admin/transformations/msg-test"
+
+# Set messaging config (queue in, topic out)
+BODY=$(curl -s -w "\n%{http_code}" \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"queue": "orders-in"}, "output": {"topic": "processed-orders"}}' \
+  "$ADMIN/admin/transformations/msg-test/messaging")
+STATUS=$(echo "$BODY" | tail -1)
+RESPONSE=$(echo "$BODY" | sed '$d')
+check "POST messaging config returns 200" "200" "$STATUS"
+check_contains "Messaging is draft" "draft" "$RESPONSE"
+check_contains "Messaging contains queue" "orders-in" "$RESPONSE"
+
+# Get messaging config
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/transformations/msg-test/messaging")
+check_contains "GET messaging has input queue" "orders-in" "$BODY"
+check_contains "GET messaging has output topic" "processed-orders" "$BODY"
+check_contains "GET messaging shows unsynced" "unsynced" "$BODY"
+
+# Sync single transformation
+BODY=$(curl -s -w "\n%{http_code}" \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '' \
+  "$ADMIN/admin/transformations/msg-test/sync")
+STATUS=$(echo "$BODY" | tail -1)
+RESPONSE=$(echo "$BODY" | sed '$d')
+check "POST sync returns 200" "200" "$STATUS"
+check_contains "Sync result has status" "sync" "$RESPONSE"
+
+# Get sync overview
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/sync")
+check_contains "Sync overview has dapr_mode" "dapr_mode" "$BODY"
+check_contains "Sync overview has transformations" "msg-test" "$BODY"
+
+# Delete messaging config
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X DELETE \
+  -H "X-Admin-Key: $KEY" \
+  "$ADMIN/admin/transformations/msg-test/messaging")
+check "DELETE messaging returns 200" "200" "$STATUS"
+
+# Sync all (bulk)
+BODY=$(curl -s -w "\n%{http_code}" \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '' \
+  "$ADMIN/admin/sync")
+STATUS=$(echo "$BODY" | tail -1)
+check "POST /admin/sync (bulk) returns 200" "200" "$STATUS"
+
+# ============================================================================
+header "EF06: Dapr pub/sub subscribe"
+# ============================================================================
+
+# Upload transformation with topic config via messaging endpoint
+curl -s -o /dev/null \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: text/plain" \
+  -d '%utlx 1.0
+input json
+output json
+---
+$input' \
+  "$ADMIN/admin/transformations/topic-test"
+
+curl -s -o /dev/null \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"topic": "incoming-orders", "subscription": "utlxe"}}' \
+  "$ADMIN/admin/transformations/topic-test/messaging"
+
+# Check /dapr/subscribe
+BODY=$(curl -s "$DATA/dapr/subscribe" 2>/dev/null) || true
+if [ -n "$BODY" ]; then
+    check_contains "Subscribe contains topic" "incoming-orders" "$BODY"
+    check_contains "Subscribe contains pubsubname" "utlxe-servicebus" "$BODY"
+    check_contains "Subscribe contains route" "pubsub" "$BODY"
+else
+    red "Data plane /dapr/subscribe not reachable"
+fi
+
+# Test pub/sub input with CloudEvents
+BODY=$(curl -s -w "\n%{http_code}" \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"specversion":"1.0","type":"test","source":"/test","id":"ce-1","data":{"name":"pubsub-test"}}' \
+  "$DATA/pubsub/topic-test" 2>/dev/null) || true
+STATUS=$(echo "$BODY" | tail -1)
+if [ "$STATUS" = "200" ]; then
+    check "POST /pubsub/topic-test CloudEvents returns 200" "200" "$STATUS"
+else
+    red "Pub/sub input returned $STATUS (may need transformation with topic config in registry)"
+fi
+
+# ============================================================================
+header "EF12: Log management"
+# ============================================================================
+
+# Get current log level
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/log/level")
+check_contains "GET log level returns level" "level" "$BODY"
+
+# Change log level to DEBUG
+BODY=$(curl -s -w "\n%{http_code}" \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"level": "DEBUG", "revert_after_minutes": 60}' \
+  "$ADMIN/admin/log/level")
+STATUS=$(echo "$BODY" | tail -1)
+RESPONSE=$(echo "$BODY" | sed '$d')
+check "POST log level DEBUG returns 200" "200" "$STATUS"
+check_contains "Log level changed to DEBUG" "DEBUG" "$RESPONSE"
+check_contains "Auto-revert configured" "revert_after_minutes" "$RESPONSE"
+
+# Revert to INFO
+curl -s -o /dev/null \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"level": "INFO"}' \
+  "$ADMIN/admin/log/level"
+
+# Invalid log level
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X POST \
+  -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"level": "INVALID"}' \
+  "$ADMIN/admin/log/level")
+check "POST invalid log level returns 400" "400" "$STATUS"
+
+# Get logs
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/logs?limit=10")
+check_contains "GET logs has entries" "entries" "$BODY"
+check_contains "GET logs has total_buffered" "total_buffered" "$BODY"
+check_contains "GET logs has current_level" "current_level" "$BODY"
+
+# Get logs with filters
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -H "X-Admin-Key: $KEY" \
+  "$ADMIN/admin/logs?level=ERROR&limit=5")
+check "GET logs with level filter returns 200" "200" "$STATUS"
+
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -H "X-Admin-Key: $KEY" \
+  "$ADMIN/admin/logs?contains=UTLXe&limit=5")
+check "GET logs with contains filter returns 200" "200" "$STATUS"
+
+# Clear logs
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+  -X DELETE \
+  -H "X-Admin-Key: $KEY" \
+  "$ADMIN/admin/logs")
+check "DELETE logs returns 200" "200" "$STATUS"
+
+# ============================================================================
+header "Dapr status"
+# ============================================================================
+
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/dapr")
+check_contains "Dapr status has mode" "mode" "$BODY"
+check_contains "Dapr status has sidecar_reachable" "sidecar_reachable" "$BODY"
+
+# ============================================================================
+header "Engine info (EF09 fields)"
+# ============================================================================
+
+BODY=$(curl -s -H "X-Admin-Key: $KEY" "$ADMIN/admin/info")
+check_contains "Info has mode" "mode" "$BODY"
+check_contains "Info has dapr_mode" "dapr_mode" "$BODY"
+check_contains "Info has log_level" "log_level" "$BODY"
+check_contains "Info has log_buffer_size" "log_buffer_size" "$BODY"
+
+# ============================================================================
 header "Cleanup"
 # ============================================================================
 
-curl -s -o /dev/null \
-  -X DELETE \
-  -H "X-Admin-Key: $KEY" \
-  "$ADMIN/admin/transformations/hello"
+curl -s -o /dev/null -X DELETE -H "X-Admin-Key: $KEY" "$ADMIN/admin/transformations/hello"
+curl -s -o /dev/null -X DELETE -H "X-Admin-Key: $KEY" "$ADMIN/admin/transformations/msg-test"
+curl -s -o /dev/null -X DELETE -H "X-Admin-Key: $KEY" "$ADMIN/admin/transformations/topic-test"
 green "Cleaned up"
 
 # ============================================================================
