@@ -145,6 +145,9 @@ fun main(args: Array<String>) {
         exitWithError("--bundle <path> is required for stdio-json mode")
     }
 
+    // Install log ring buffer early (before any logging)
+    org.apache.utlx.engine.admin.LogBuffer.install()
+
     try {
         var config = if (configPath != null) {
             EngineConfig.load(Paths.get(configPath))

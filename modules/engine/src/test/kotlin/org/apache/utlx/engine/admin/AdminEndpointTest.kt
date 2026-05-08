@@ -824,4 +824,85 @@ class AdminEndpointTest {
         assertEquals(200, status)
         assertFalse(body.contains("orders-in"), "Should not contain deleted transform: $body")
     }
+
+    // ── Log management endpoints ──
+
+    @Test
+    fun `get log level returns current level`() {
+        val (status, body) = adminGet("/admin/log/level")
+        assertEquals(200, status)
+        assertTrue(body.contains("level"), "Should contain level: $body")
+    }
+
+    @Test
+    fun `set log level to DEBUG and back`() {
+        val (getStatus, getBefore) = adminGet("/admin/log/level")
+        assertEquals(200, getStatus)
+
+        val (setStatus, setBody) = adminPostJson("/admin/log/level", """{"level": "DEBUG"}""")
+        assertEquals(200, setStatus)
+        assertTrue(setBody.contains("DEBUG"), "Should confirm DEBUG: $setBody")
+
+        // Verify it changed
+        val (verifyStatus, verifyBody) = adminGet("/admin/log/level")
+        assertEquals(200, verifyStatus)
+        assertTrue(verifyBody.contains("DEBUG"), "Should be DEBUG now: $verifyBody")
+
+        // Restore to INFO
+        adminPostJson("/admin/log/level", """{"level": "INFO"}""")
+    }
+
+    @Test
+    fun `set log level with auto-revert`() {
+        val (status, body) = adminPostJson("/admin/log/level",
+            """{"level": "DEBUG", "revert_after_minutes": 60}""")
+        assertEquals(200, status)
+        assertTrue(body.contains("revert_after_minutes"), "Should confirm revert: $body")
+
+        // Restore
+        adminPostJson("/admin/log/level", """{"level": "INFO"}""")
+    }
+
+    @Test
+    fun `set invalid log level returns 400`() {
+        val (status, _) = adminPostJson("/admin/log/level", """{"level": "INVALID"}""")
+        assertEquals(400, status)
+    }
+
+    @Test
+    fun `get logs returns entries`() {
+        val (status, body) = adminGet("/admin/logs")
+        assertEquals(200, status)
+        assertTrue(body.contains("entries"), "Should contain entries: $body")
+        assertTrue(body.contains("total_buffered"), "Should contain total_buffered: $body")
+        assertTrue(body.contains("current_level"), "Should contain current_level: $body")
+    }
+
+    @Test
+    fun `get logs with level filter`() {
+        val (status, body) = adminGet("/admin/logs?level=ERROR&limit=10")
+        assertEquals(200, status)
+        assertTrue(body.contains("entries"), "Should contain entries: $body")
+    }
+
+    @Test
+    fun `get logs with contains filter`() {
+        val (status, body) = adminGet("/admin/logs?contains=Admin&limit=10")
+        assertEquals(200, status)
+        assertTrue(body.contains("entries"), "Should contain entries: $body")
+    }
+
+    @Test
+    fun `clear logs`() {
+        val (status, body) = adminDelete("/admin/logs")
+        assertEquals(200, status)
+        assertTrue(body.contains("true"), "Should succeed: $body")
+    }
+
+    @Test
+    fun `info endpoint includes log level`() {
+        val (status, body) = adminGet("/admin/info")
+        assertEquals(200, status)
+        assertTrue(body.contains("log_level"), "Should include log_level: $body")
+    }
 }

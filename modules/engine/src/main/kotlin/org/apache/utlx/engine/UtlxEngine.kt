@@ -174,7 +174,11 @@ class UtlxEngine(val config: EngineConfig) {
                             registry.register(name, instance)
                             loaded++
                             val hasMessaging = transformConfig.input != null || transformConfig.outputMessaging != null
-                            logger.info("Loaded persisted transformation '{}' from {} (messaging={})", name, utlxFile, hasMessaging)
+                            logger.info("Loaded persisted transformation '{}' [strategy={}, validation={}, messaging={}]",
+                                name, transformConfig.strategy.ifEmpty { "COMPILED" }, transformConfig.validationPolicy, hasMessaging)
+                            if (logger.isDebugEnabled && hasMessaging) {
+                                logger.debug("  '{}' input={}, output={}", name, transformConfig.input, transformConfig.outputMessaging)
+                            }
                         } catch (e: Exception) {
                             logger.error("Failed to load persisted transformation '{}': {}", name, e.message)
                         }

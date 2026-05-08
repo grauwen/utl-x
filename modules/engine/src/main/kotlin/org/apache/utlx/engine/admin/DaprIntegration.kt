@@ -80,15 +80,20 @@ class DaprIntegration(
                     ))
                 }
                 loadedComponents = components
-                logger.info("Dapr sidecar detected: v{}, {} components loaded", sidecarVersion, components.size)
+                logger.info("Dapr sidecar detected: v{}, {} component(s) loaded", sidecarVersion, components.size)
+                if (logger.isDebugEnabled) {
+                    components.forEach { c ->
+                        logger.debug("  Dapr component: name={} type={} version={}", c.name, c.type, c.version)
+                    }
+                }
             } else {
                 sidecarReachable = false
-                logger.debug("Dapr sidecar probe returned {}", conn.responseCode)
+                logger.info("Dapr sidecar probe returned {} — sidecar not ready", conn.responseCode)
             }
             conn.disconnect()
         } catch (e: Exception) {
             sidecarReachable = false
-            logger.debug("Dapr sidecar not reachable: {}", e.message)
+            logger.info("Dapr sidecar not reachable at localhost:{} — HTTP-only mode ({})", daprPort, e.message)
         }
     }
 
@@ -200,6 +205,7 @@ class DaprIntegration(
             when (mode) {
                 "http-only" -> {
                     // No Dapr — just mark as synced (config is on disk)
+                    logger.debug("Sync '{}': HTTP-only mode — no Dapr components to manage", transformationName)
                     syncStatus[transformationName] = SyncState(
                         status = if (inputEndpoint != null || outputEndpoint != null) "synced" else "no_dapr",
                         lastSynced = Instant.now()
@@ -210,6 +216,7 @@ class DaprIntegration(
 
                 "static" -> {
                     // Validate that Dapr has the expected components
+                    logger.debug("Sync '{}': static mode — validating against Dapr", transformationName)
                     probeSidecar()
                     inputEndpoint?.let { ep ->
                         val componentName = ep.resourceName ?: return@let
@@ -240,6 +247,7 @@ class DaprIntegration(
 
                 "dynamic" -> {
                     // Generate/update/delete Dapr component YAML
+                    logger.debug("Sync '{}': dynamic mode — generating Dapr YAML in {}", transformationName, componentsDir)
                     val dir = componentsDir!!
                     Files.createDirectories(dir)
 

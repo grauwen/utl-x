@@ -64,9 +64,13 @@ fun configureAdmin(
 
     app.routing {
 
-        // ── Auth check for all /admin/* routes ──
+        // ── Auth check + access logging for all /admin/* routes ──
         route("/admin") {
             intercept(ApplicationCallPipeline.Call) {
+                val method = call.request.httpMethod.value
+                val path = call.request.uri
+                logger.debug("Admin API: {} {}", method, path)
+
                 if (adminKey.isEmpty()) {
                     call.respond(HttpStatusCode.Forbidden, mapOf(
                         "error" to "UTLXE_ADMIN_KEY not set. Admin API is locked.",
@@ -994,8 +998,84 @@ fun configureAdmin(
                     "data_dir" to dataDir,
                     "persistence" to if (dataDir != null) "disk" else "memory-only",
                     "dapr_mode" to dapr.mode,
-                    "dapr_sidecar" to dapr.sidecarReachable
+                    "dapr_sidecar" to dapr.sidecarReachable,
+                    "log_level" to LogBuffer.getLevel(),
+                    "log_buffer_size" to LogBuffer.size()
                 ))
+            }
+
+            // ── Log level management (allowed in locked mode — operational) ──
+
+            get("/log/level") {
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "level" to LogBuffer.getLevel()
+                ))
+            }
+
+            post("/log/level") {
+                val body = call.receiveText()
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val tree = try { mapper.readTree(body) } catch (_: Exception) { null }
+                val level = tree?.get("level")?.asText()
+                    ?: body.trim().uppercase().ifEmpty { null }
+
+                if (level == null || level !in listOf("TRACE", "DEBUG", "INFO", "WARN", "ERROR")) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Invalid log level. Valid: TRACE, DEBUG, INFO, WARN, ERROR",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                val revertMinutes = tree?.get("revert_after_minutes")?.asInt()
+                val previousLevel = LogBuffer.getLevel()
+                LogBuffer.setLevel(level, revertMinutes)
+
+                logger.info("Admin: log level changed {} → {} {}", previousLevel, level,
+                    revertMinutes?.let { "(auto-revert in ${it}m)" } ?: "")
+
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "previous_level" to previousLevel,
+                    "level" to level,
+                    "revert_after_minutes" to revertMinutes
+                ))
+            }
+
+            // ── Log buffer download ──
+
+            get("/logs") {
+                val rawLimit = call.request.queryParameters["limit"]?.toIntOrNull()
+                val limit = when {
+                    rawLimit == null -> 100          // default: last 100
+                    rawLimit <= 0 -> Int.MAX_VALUE   // 0 or negative: all entries
+                    else -> rawLimit
+                }
+                val level = call.request.queryParameters["level"]
+                val contains = call.request.queryParameters["contains"]
+                val since = call.request.queryParameters["since"]?.let {
+                    try { java.time.Instant.parse(it) } catch (_: Exception) { null }
+                }
+
+                val entries = LogBuffer.entries(limit, level, contains, since)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "entries" to entries.map { e ->
+                        mapOf(
+                            "timestamp" to e.timestamp.toString(),
+                            "level" to e.level,
+                            "logger" to e.logger,
+                            "message" to e.message,
+                            "thread" to e.thread
+                        )
+                    },
+                    "total_buffered" to LogBuffer.size(),
+                    "showing" to entries.size,
+                    "current_level" to LogBuffer.getLevel()
+                ))
+            }
+
+            delete("/logs") {
+                LogBuffer.clear()
+                call.respond(HttpStatusCode.OK, mapOf("success" to true, "message" to "Log buffer cleared"))
             }
         }
     }

@@ -274,7 +274,9 @@ class HttpTransport(
                 options("/{bindingName}") {
                     val bindingName = call.parameters["bindingName"] ?: "unknown"
                     daprProbedBindings.add(bindingName)
-                    logger.info("Dapr OPTIONS probe for binding '{}' — accepted", bindingName)
+                    val hasTransform = registry.get(bindingName) != null
+                    logger.info("Dapr OPTIONS probe: binding='{}' — accepted (transformation loaded: {}, total probed: {})",
+                        bindingName, hasTransform, daprProbedBindings.size)
                     call.respond(HttpStatusCode.OK)
                 }
 
@@ -302,6 +304,9 @@ class HttpTransport(
                             )
                         }
                     logger.info("Dapr /dapr/subscribe — returning {} subscription(s)", subscriptions.size)
+                    if (logger.isDebugEnabled && subscriptions.isNotEmpty()) {
+                        logger.debug("/dapr/subscribe: {}", subscriptions)
+                    }
                     call.respond(HttpStatusCode.OK, subscriptions)
                 }
 
@@ -348,7 +353,8 @@ class HttpTransport(
 
         // EF03: Return 503 if transformation is paused
         if (instance.paused) {
-            logger.info("Dapr binding '{}' — transformation '{}' is paused", bindingName, transformId)
+            val rejectedMsgId = call.request.header("metadata.MessageId") ?: call.request.header("MessageId") ?: "unknown"
+            logger.info("Dapr binding '{}' — transformation '{}' PAUSED, rejecting MessageId={}", bindingName, transformId, rejectedMsgId)
             call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
                 "success" to false,
                 "error" to "Transformation '$transformId' is paused",
@@ -387,9 +393,17 @@ class HttpTransport(
         val traceparent = call.request.header("traceparent") ?: ""
         val tracestate = call.request.header("tracestate") ?: ""
 
-        logger.info("[{}] MessageId={} CorrelationId={} CausationId={} binding={} payload={}B",
-            transformId, incomingMessageId, incomingCorrelationId, incomingCausationId,
-            bindingName, payload.length)
+        logger.info("[{}] MessageId={} CorrelationId={} binding={} payload={}B",
+            transformId, incomingMessageId, incomingCorrelationId, bindingName, payload.length)
+
+        if (logger.isDebugEnabled) {
+            val headers = call.request.headers.entries()
+                .filter { it.key.startsWith("metadata.") || it.key.startsWith("ce-") || it.key == "traceparent" }
+                .joinToString { "${it.key}=${it.value.firstOrNull()}" }
+            logger.debug("[{}] Dapr input headers: {}", transformId, headers)
+            logger.debug("[{}] CausationId={} contentType={} outputBinding={} isPubSub={}",
+                transformId, incomingCausationId, contentType, outputBinding, outputIsPubSub)
+        }
 
         // Build the execute request with full messaging triad
         val execProto = ExecuteRequest.newBuilder()
@@ -474,6 +488,9 @@ class HttpTransport(
                     ))
                 }
 
+                logger.debug("[{}] Output → {} ({} bytes)", transformId, daprUrl, daprPayload.length)
+
+                val outputStart = System.nanoTime()
                 val url = java.net.URL(daprUrl)
                 val conn = url.openConnection() as java.net.HttpURLConnection
                 conn.requestMethod = "POST"
@@ -491,14 +508,17 @@ class HttpTransport(
                 conn.outputStream.write(daprPayload.toByteArray())
                 conn.outputStream.flush()
                 val daprStatus = conn.responseCode
+                val outputMs = (System.nanoTime() - outputStart) / 1_000_000
+                val daprResponseBody = try { conn.errorStream?.bufferedReader()?.readText() } catch (_: Exception) { null }
                 conn.disconnect()
 
                 if (daprStatus !in 200..299) {
-                    logger.warn("Dapr output {} '{}' returned status {}",
-                        if (outputIsPubSub) "topic" else "binding", outputBinding, daprStatus)
+                    logger.warn("Dapr output {} '{}' returned {} ({}ms) body={}",
+                        if (outputIsPubSub) "topic" else "binding", outputBinding, daprStatus, outputMs,
+                        daprResponseBody?.take(500))
                 } else {
-                    logger.debug("[{}] output to {} '{}' succeeded. OutputMessageId={}",
-                        transformId, if (outputIsPubSub) "topic" else "binding", outputBinding, outputMessageId)
+                    logger.debug("[{}] Output → {} '{}' OK ({}ms) OutputMessageId={}",
+                        transformId, if (outputIsPubSub) "topic" else "binding", outputBinding, outputMs, outputMessageId)
                 }
             } catch (e: Exception) {
                 logger.error("Failed to send to Dapr output '{}': {}", outputBinding, e.message)
@@ -562,14 +582,22 @@ class HttpTransport(
         // Detect CloudEvents mode and extract payload + metadata
         val ceSpecVersion = call.request.header("ce-specversion")
         val (payload, ceId, ceSource, ceType) = if (ceSpecVersion != null) {
-            // Binary mode: body is raw payload, metadata in ce-* headers
+            logger.debug("[{}] PubSub binary CloudEvents: ce-specversion={} ce-type={} ce-source={} ce-id={}",
+                transformName, ceSpecVersion, call.request.header("ce-type"),
+                call.request.header("ce-source"), call.request.header("ce-id"))
             CloudEventsData(rawBody,
                 call.request.header("ce-id"),
                 call.request.header("ce-source"),
                 call.request.header("ce-type"))
         } else {
-            // Try structured mode: body may be CloudEvents JSON envelope
-            unwrapCloudEvents(rawBody)
+            val result = unwrapCloudEvents(rawBody)
+            if (result.id != null) {
+                logger.debug("[{}] PubSub structured CloudEvents: id={} source={} type={} unwrapped={}B",
+                    transformName, result.id, result.source, result.type, result.payload.length)
+            } else {
+                logger.debug("[{}] PubSub raw payload (no CloudEvents envelope): {}B", transformName, rawBody.length)
+            }
+            result
         }
 
         // EF04: Resolve correlation metadata (CloudEvents → Dapr headers → generate)

@@ -127,6 +127,14 @@ fun loadUtlar(utlarPath: Path, engine: UtlxEngine): Int {
     // Load schemas into SchemaStore (if engine has one via data dir)
     // Schemas are available for validator resolution during transformation loading
 
+    logger.info("Bundle contents: {} transformation(s), {} schema(s), {} config(s)",
+        sourceMap.size, schemas.size, configMap.size)
+    if (logger.isDebugEnabled) {
+        sourceMap.keys.forEach { logger.debug("  .utlx: {}", it) }
+        schemas.keys.forEach { logger.debug("  schema: {}", it) }
+        configMap.keys.forEach { logger.debug("  transform.yaml: {}", it) }
+    }
+
     // Load transformations
     var loaded = 0
     for ((name, source) in sourceMap) {
