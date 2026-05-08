@@ -122,9 +122,9 @@ class UtlxEngine(val config: EngineConfig) {
             "Cannot initialize engine in state $current (expected CREATED)"
         }
         stateRef.set(EngineState.INITIALIZING)
-        logger.info("Initializing engine '{}' (no bundle — dynamic loading mode)", config.engine.name)
+        logger.info("Initializing engine '{}'", config.engine.name)
         stateRef.set(EngineState.READY)
-        logger.info("Engine initialized — awaiting LoadTransformation messages")
+        logger.info("Engine initialized — transformations loaded from data dir or Admin API")
     }
 
     /**
