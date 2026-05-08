@@ -119,6 +119,10 @@ class CompiledStrategy : ExecutionStrategy {
     }
 
     override fun shutdown() {
+        // Clear the reference so the classloader + generated class can be GC'd
+        // The compilationCache in ASTCompiler is a static cache — we don't clear it here
+        // because other strategies may reuse the same compiled function.
+        // The cache is bounded by unique source hashes (number of distinct transformations).
         transformFunction = null
         logger.info("COMPILED strategy shutdown (fallback={})", usingFallback)
     }
