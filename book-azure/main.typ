@@ -125,18 +125,18 @@ Typeset with Typst in New Computer Modern.
 #include "chapters/ch01-business-value.typ"
 #pagebreak()
 
-// Part I: Getting Started (chapters 2-6)
-#include "chapters/ch02-why-utlxe.typ"
+// Part I: Getting Started (chapters 2-5)
+#include "chapters/ch02-quick-start.typ"
 #pagebreak()
-#include "chapters/ch03-quick-start.typ"
+#include "chapters/ch03-writing-transformations.typ"
 #pagebreak()
-#include "chapters/ch04-writing-transformations.typ"
+#include "chapters/ch04-admin-api.typ"
 #pagebreak()
-#include "chapters/ch05-admin-api.typ"
-#pagebreak()
-#include "chapters/ch06-azure-services.typ"
+#include "chapters/ch05-azure-services.typ"
 
-// Part II: Deployment and Automation (chapters 7-9)
+// Part II: Architecture and Deployment (chapters 6-9)
+#pagebreak()
+#include "chapters/ch06-architecture.typ"
 #pagebreak()
 #include "chapters/ch07-dtap.typ"
 #pagebreak()

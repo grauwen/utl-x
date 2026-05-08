@@ -68,28 +68,61 @@ output json
 }
 ```
 
-This transformation takes a JSON object with a `name` field and produces a greeting with a timestamp.
+This transformation reads a JSON input and produces a JSON output. Here is what goes in and what comes out:
+
+*Input:*
+```json
+{"name": "World"}
+```
+
+*Output:*
+```json
+{
+  "greeting": "Hello, World!",
+  "timestamp": "2026-05-05T14:30:00Z"
+}
+```
+
+`$input.name` reads the `name` field from the input. `concat(...)` joins strings. `now()` adds the current timestamp. The header (`%utlx 1.0 / input json / output json`) tells the engine the formats. Everything after `---` is the transformation rule.
 
 == Upload It
+
+Upload the `.utlx` file to UTLXe. This does not transform any data yet --- it installs the rule so UTLXe knows how to transform messages later.
 
 ```bash
 curl -X POST \
   -H "X-Admin-Key: my-secret-key-here" \
-  -F "source=@hello.utlx" \
+  -H "Content-Type: text/plain" \
+  --data-binary @hello.utlx \
   http://<internal-ip>:8081/admin/transformations/hello
 ```
 
+UTLXe compiles the rule and confirms: `"status": "deployed"`. The transformation is now installed under the name `hello`.
+
+== Run It
+
+Now send data through the transformation. You provide the input JSON, UTLXe applies the rule, and returns the output:
+
+```bash
+curl -X POST \
+  -H "X-Admin-Key: my-secret-key-here" \
+  -H "Content-Type: application/json" \
+  -d '{"name": "interested reader"}' \
+  http://<internal-ip>:8081/admin/transformations/hello/test
+```
+
+Result:
+
 ```json
 {
-  "status": "deployed",
-  "name": "hello",
-  "strategy": "COMPILED",
-  "config": "defaults",
-  "compiled_in_ms": 48
+  "greeting": "Hello, interested reader!",
+  "timestamp": "2026-05-05T14:30:00Z"
 }
 ```
 
-The transformation was compiled in 48 milliseconds and is ready to process messages. Check the health endpoint again:
+The input `"interested reader"` flowed through `$input.name` into `concat("Hello, ", "interested reader", "!")` and produced `"Hello, interested reader!"`. Change the name to anything --- the transformation applies the same rule to whatever you send.
+
+Check the health endpoint --- the container is now ready to process traffic:
 
 ```json
 {"status": "UP", "transformations": 1, "ready": true}
@@ -97,46 +130,22 @@ The transformation was compiled in 48 milliseconds and is ready to process messa
 
 Now `ready: true` --- the container will accept traffic.
 
-== Test It
-
-Before routing real traffic, verify the transformation works with sample input:
-
-```bash
-curl -X POST \
-  -H "X-Admin-Key: my-secret-key-here" \
-  -H "Content-Type: application/json" \
-  -d '{"name": "World"}' \
-  http://<internal-ip>:8081/admin/transformations/hello/test
-```
-
-```json
-{
-  "status": "ok",
-  "output": {
-    "greeting": "Hello, World!",
-    "timestamp": "2026-05-05T14:30:00Z"
-  },
-  "duration_ms": 2
-}
-```
-
-The test endpoint executes the transformation but does not count the call in Prometheus metrics. It is a safe way to verify before going live.
-
 == Send a Real Message
 
-Now send a message through the data plane:
+Now send a message through the data plane (port 8085) --- the same port that Dapr and client applications use:
 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"name": "Azure"}' \
-  http://<ingress-url>:8085/api/transform/hello
+  http://<ingress-url>/api/execute/hello
 ```
 
 ```json
 {
-  "greeting": "Hello, Azure!",
-  "timestamp": "2026-05-05T14:30:05Z"
+  "success": true,
+  "output": "{\"greeting\":\"Hello, Azure!\",\"timestamp\":\"2026-05-05T14:30:05Z\"}",
+  "durationUs": 1850
 }
 ```
 
@@ -157,6 +166,7 @@ The Admin API and the data plane run simultaneously --- there is no "deployment 
 
 == Next Steps
 
-- *Chapter 2* explains how to write more complex transformations --- conditionals, array operations, multi-format output.
-- *Chapter 3* covers the full Admin API --- bundles, schemas, testing, and operational management.
-- *Chapter 4* shows how to connect UTLXe to Azure Service Bus and Event Hub via Dapr.
+- *Chapter 3* explains how to write more complex transformations --- conditionals, array operations, multi-format output.
+- *Chapter 4* covers the full Admin API --- bundles, schemas, testing, and operational management.
+- *Chapter 5* shows how to connect UTLXe to Azure Service Bus and Event Hub via Dapr.
+- *Chapter 6* dives into the architecture --- how Dapr, Service Bus, and UTLXe work together under the hood.

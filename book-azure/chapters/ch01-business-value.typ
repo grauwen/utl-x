@@ -168,10 +168,11 @@ No license fees. No per-message charges. No minimum commitment. On the consumpti
 
 The rest of this book is a hands-on guide for deploying and operating UTLXe on Azure:
 
-- *Chapters 2--5*: Getting started --- quick deploy, write transformations, connect to Azure services.
-- *Chapters 6--8*: Automation --- environment strategy (Dev/Test/Acc/Prd), infrastructure as code, CI/CD pipelines.
-- *Chapters 9--13*: Production --- persistence, security, operations, monitoring, troubleshooting.
-- *Chapter 14*: Roadmap --- control plane, .NET SDK, and what is coming next.
+- *Chapters 2--5*: Getting started --- quick deploy, write transformations, Admin API, connect to Azure services.
+- *Chapter 6*: Architecture deep dive --- how Dapr, Service Bus, and UTLXe work together.
+- *Chapters 7--9*: Automation --- environment strategy (Dev/Test/Acc/Prd), infrastructure as code, CI/CD pipelines.
+- *Chapters 10--14*: Production --- persistence, security, operations, monitoring, troubleshooting.
+- *Chapter 15*: Roadmap --- control plane, .NET SDK, and what is coming next.
 - *Appendices*: Complete API reference, configuration reference, UTL-X quick reference.
 
 Start with Chapter 2 (Quick Start) to see UTLXe running in five minutes.
