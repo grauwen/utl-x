@@ -160,6 +160,8 @@ Throughput depends on transformation complexity and message size. Simple field m
 
 Scale horizontally by adding more container instances. Each instance handles its own set of queues --- no shared state, no coordination overhead. Two Starter instances handle twice the throughput.
 
+*Need more?* For large-scale deployments (large SAP IDocs, high-volume streaming, dedicated infrastructure for compliance), custom plans with higher resources are available on request. UTLXe runs on Azure Container Apps workload profiles, supporting up to 16 vCPU and 128 GB RAM per container. Contact us for Enterprise sizing.
+
 No license fees. No per-message charges. No minimum commitment. Stop the container, stop paying.
 
 == What This Book Covers

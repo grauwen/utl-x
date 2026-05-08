@@ -97,7 +97,10 @@ output_messaging:
   [*Plan*], [*Container RAM*], [*Heap*], [*Max message*], [*vCPU*],
   [Starter], [4 GB], [3 GB], [~100 KB], [1],
   [Professional], [8 GB], [6 GB], [~500 KB], [2],
+  [Enterprise], [On request], [On request], [On request], [Up to 16],
 )
+
+Starter and Professional run on the consumption plan. Enterprise plans use workload profiles (dedicated VMs, up to 16 vCPU / 128 GB) --- available on request for large-scale or compliance-sensitive deployments.
 
 The heap is set to 75% of container memory. The remaining 25% covers JVM metaspace, thread stacks, native memory, and the operating system.
 

@@ -121,6 +121,8 @@ UTLXe runs on the JVM with a configured heap size. The heap must be large enough
 
 The heap is set to 75% of the container memory. The remaining 25% is for the JVM itself (metaspace, thread stacks, native memory) and the operating system.
 
+These plans run on Azure Container Apps *consumption plan* (shared infrastructure, scale to zero, max 4 vCPU / 8 GB). For larger workloads --- big SAP IDocs, high-volume streaming, or compliance requirements --- UTLXe also runs on *workload profiles* (dedicated VMs, up to 16 vCPU / 128 GB). Custom Enterprise plans are available on request.
+
 The `-XX:+AlwaysPreTouch` JVM flag allocates the entire heap at startup. If the container does not have enough RAM, the process fails immediately with a clear error --- rather than crashing hours later under load.
 
 == Horizontal Scaling
