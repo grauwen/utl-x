@@ -140,11 +140,13 @@ UTLXe runs as an Azure Container App. You pay for the container resources (CPU +
 #table(
   columns: (auto, auto, auto),
   [*Plan*], [*Container*], [*Suitable for*],
-  [Starter], [1 vCPU, 2 GB RAM], [Up to ~50 messages/sec, small payloads],
-  [Professional], [2 vCPU, 4 GB RAM], [Up to ~200 messages/sec, larger payloads],
+  [Starter], [1 vCPU, 2 GB RAM], [500--1,000 msg/sec (simple transforms), 200--500 msg/sec (complex). Messages up to ~50 KB.],
+  [Professional], [2 vCPU, 4 GB RAM], [2,000--4,000 msg/sec (simple), 500--1,500 msg/sec (complex). Messages up to ~200 KB.],
 )
 
-Scale horizontally by adding more container instances. Each instance handles its own set of queues --- no shared state, no coordination overhead.
+Throughput depends on transformation complexity and message size. Simple field mappings are fast; cross-format conversion with schema validation is slower. The figures above are for typical business document transformations.
+
+Scale horizontally by adding more container instances. Each instance handles its own set of queues --- no shared state, no coordination overhead. Two Starter instances handle twice the throughput.
 
 No license fees. No per-message charges. No minimum commitment. Stop the container, stop paying.
 
