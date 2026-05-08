@@ -1,13 +1,13 @@
 # UTLXe Engine Docker Image
-# Multi-stage build: Gradle builds the fat JAR, Alpine JRE runs it
+# Multi-stage build: Gradle builds the fat JAR, JRE 21 runs it with ZGC
 #
 # Build:   docker build -f deploy/docker/Dockerfile.engine -t utlxe .
-# Run:     docker run -p 8085:8085 -p 8081:8081 utlxe
-# Test:    curl http://localhost:8085/api/health
+# Run:     docker run -p 8085:8085 -p 8081:8081 -e UTLXE_ADMIN_KEY=mykey utlxe
+# Test:    curl http://localhost:8081/health
 #
 # Must be built from the repository root (build context needs all modules)
 
-# ── Stage 1: Build the fat JAR ──
+# ── Stage 1: Build the fat JAR (JDK 17 bytecode target) ──
 FROM gradle:8.5-jdk17 AS builder
 
 WORKDIR /build
@@ -27,8 +27,8 @@ COPY proto/ proto/
 # Build the engine fat JAR
 RUN gradle :modules:engine:jar --no-daemon --quiet
 
-# ── Stage 2: Minimal runtime ──
-FROM eclipse-temurin:17-jre-jammy
+# ── Stage 2: Minimal runtime (JDK 21 for ZGC generational) ──
+FROM eclipse-temurin:21-jre-jammy
 
 LABEL org.opencontainers.image.title="UTLXe" \
       org.opencontainers.image.description="UTL-X Production Transformation Engine" \
@@ -44,27 +44,28 @@ WORKDIR /utlxe
 # Copy the fat JAR from builder
 COPY --from=builder /build/modules/engine/build/libs/utlxe-*.jar /utlxe/utlxe.jar
 
-# Set ownership
-RUN chown -R utlxe:utlxe /utlxe
+# Create data directory (mount point for Azure Files)
+RUN mkdir -p /utlxe/data && chown -R utlxe:utlxe /utlxe
 
 USER utlxe
 
-# Port 8085: HTTP REST API (transformation data plane)
-# Port 8081: Health + Prometheus metrics (probes)
+# Port 8085: HTTP data plane (Dapr bindings + direct clients)
+# Port 8081: Admin API + health + metrics (internal to VNet)
+# Port 9090: gRPC (optional, --also-grpc)
 EXPOSE 8085 8081
 
 # JVM tuning for containerized environments:
-#   -XX:+UseContainerSupport   Respect cgroup memory limits (not host memory)
-#   -XX:+AlwaysPreTouch        Allocate heap pages at startup — fail fast if not enough RAM
-#   -XX:+UseG1GC               G1 garbage collector — good for large heaps with pause targets
-#   -XX:MaxGCPauseMillis=200   Target max GC pause
+#   -XX:+UseZGC              Z Garbage Collector — sub-millisecond pauses
+#   -XX:+ZGenerational       Generational mode — efficient for short-lived objects (JDK 21+)
+#   -XX:+UseContainerSupport Respect cgroup memory limits (not host memory)
+#   -XX:+AlwaysPreTouch      Allocate heap at startup — fail fast if not enough RAM
 #
-# Heap size is dynamic — set via UTLXE_HEAP_SIZE env var (default: 1536m for Starter 2GB container)
-#   Starter (2 GB container):      UTLXE_HEAP_SIZE=1536m  (75% of 2 GB)
-#   Professional (4 GB container):  UTLXE_HEAP_SIZE=3072m  (75% of 4 GB)
-#   Enterprise (8 GB container):    UTLXE_HEAP_SIZE=6144m  (75% of 8 GB)
-ENV UTLXE_HEAP_SIZE="1536m"
-ENV JAVA_OPTS="-XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport -XX:+AlwaysPreTouch"
+# Heap size set via UTLXE_HEAP_SIZE env var (75% of container memory):
+#   Starter     (4 GB container):  UTLXE_HEAP_SIZE=3072m
+#   Professional (8 GB container):  UTLXE_HEAP_SIZE=6144m
+#   Enterprise  (16+ GB container): UTLXE_HEAP_SIZE=12288m
+ENV UTLXE_HEAP_SIZE="3072m"
+ENV JAVA_OPTS="-XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch"
 
 ENTRYPOINT ["sh", "-c", "java -Xmx${UTLXE_HEAP_SIZE} $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
-CMD ["--mode", "http"]
+CMD ["--mode", "http", "--data-dir", "/utlxe/data"]
