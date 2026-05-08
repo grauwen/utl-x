@@ -22,6 +22,9 @@ jobs:
     permissions:
       contents: write
 
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v8
@@ -38,7 +41,7 @@ jobs:
           cp artifacts/utlx-windows-x64/utlx.exe utlx-windows-x64.exe
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.3.2
         with:
           tag_name: ${{ inputs.version }}
           name: UTL-X ${{ inputs.version }}
