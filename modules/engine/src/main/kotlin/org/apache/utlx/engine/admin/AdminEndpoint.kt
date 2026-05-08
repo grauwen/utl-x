@@ -58,6 +58,10 @@ fun configureAdmin(
     // Probe Dapr sidecar on startup
     dapr.probeSidecar()
 
+    // EF09: Locked mode response helper
+    val isLocked = engine.isLocked
+    val bundleInfo = engine.bundleInfo
+
     app.routing {
 
         // ── Auth check for all /admin/* routes ──
@@ -128,6 +132,10 @@ fun configureAdmin(
 
             // ── Upload / update a transformation ──
             post("/transformations/{name}") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@post
+                }
                 val name = call.parameters["name"] ?: ""
 
                 // Accept plain text body = .utlx source
@@ -196,6 +204,10 @@ fun configureAdmin(
 
             // ── Delete a transformation (auto-syncs: removes Dapr components immediately) ──
             delete("/transformations/{name}") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@delete
+                }
                 val name = call.parameters["name"] ?: ""
                 val removed = registry.unload(name)
                 if (!removed) {
@@ -267,6 +279,10 @@ fun configureAdmin(
 
             // ── Upload bundle (ZIP / .utlar) — auto-syncs messaging to Dapr ──
             post("/bundle") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@post
+                }
                 val zipBytes = call.receive<ByteArray>()
                 val startTime = System.nanoTime()
                 var loaded = 0
@@ -430,6 +446,10 @@ fun configureAdmin(
 
             // ── Delete all (remove bundle) ──
             delete("/bundle") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@delete
+                }
                 val names = registry.list().map { it.name }
                 names.forEach { name ->
                     registry.unload(name)
@@ -605,6 +625,10 @@ fun configureAdmin(
 
             // ── Set messaging config (draft — not synced to Dapr) ──
             post("/transformations/{name}/messaging") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@post
+                }
                 val name = call.parameters["name"] ?: ""
                 val tx = registry.get(name)
                 if (tx == null) {
@@ -689,6 +713,10 @@ fun configureAdmin(
 
             // ── Remove messaging config (draft removal) ──
             delete("/transformations/{name}/messaging") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@delete
+                }
                 val name = call.parameters["name"] ?: ""
                 val tx = registry.get(name)
                 if (tx == null) {
@@ -841,6 +869,10 @@ fun configureAdmin(
             }
 
             post("/schemas/{filename}") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@post
+                }
                 val filename = call.parameters["filename"] ?: ""
                 val content = call.receive<ByteArray>()
                 schemaStore.put(filename, content)
@@ -853,6 +885,10 @@ fun configureAdmin(
             }
 
             delete("/schemas/{filename}") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@delete
+                }
                 val filename = call.parameters["filename"] ?: ""
                 val removed = schemaStore.remove(filename)
                 if (!removed) {
@@ -946,6 +982,10 @@ fun configureAdmin(
             get("/info") {
                 call.respond(HttpStatusCode.OK, mapOf(
                     "version" to "1.0.1",
+                    "mode" to bundleInfo.mode,
+                    "bundle_version" to bundleInfo.bundleVersion,
+                    "bundle_checksum" to bundleInfo.bundleChecksum,
+                    "bundle_created" to bundleInfo.bundleCreated,
                     "uptime_seconds" to engine.uptimeMs() / 1000,
                     "transformations" to registry.list().size,
                     "schemas" to schemaStore.list().size,
@@ -960,6 +1000,15 @@ fun configureAdmin(
         }
     }
 }
+
+// ── EF09: Locked mode helper ──
+
+private fun lockedResponse(bundleInfo: BundleInfo) = mapOf(
+    "error" to "Production mode — transformations are deployed via CI/CD. Place a new bundle.utlar on the volume and restart.",
+    "error_code" to "BUNDLE_LOCKED",
+    "mode" to "locked",
+    "bundle_version" to bundleInfo.bundleVersion
+)
 
 // ── Messaging helper functions ──
 

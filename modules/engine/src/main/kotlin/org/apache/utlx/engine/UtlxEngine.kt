@@ -28,6 +28,10 @@ class UtlxEngine(val config: EngineConfig) {
     var dataDir: String? = null
     val validationOverrides = org.apache.utlx.engine.admin.ValidationOverrideStore()
     var daprIntegration: org.apache.utlx.engine.admin.DaprIntegration? = null
+    var bundleInfo: org.apache.utlx.engine.admin.BundleInfo = org.apache.utlx.engine.admin.BundleInfo(mode = "open")
+
+    /** Whether the engine is in locked (production) mode — .utlar found on disk. */
+    val isLocked: Boolean get() = bundleInfo.mode == "locked"
 
     val state: EngineState get() = stateRef.get()
 

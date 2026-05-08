@@ -172,9 +172,19 @@ fun main(args: Array<String>) {
             engine.initializeEmpty()
         }
 
-        // EF03: Scan data dir for persisted transformations (from previous Admin API uploads)
+        // EF09: Detect bundle mode (.utlar = locked, directory = open)
         engine.dataDir = dataDir
-        if (dataDir != null) {
+        val dataDirPath = dataDir?.let { Paths.get(it) }
+        engine.bundleInfo = org.apache.utlx.engine.admin.detectBundleMode(dataDirPath)
+        logger.info("Bundle mode: {} {}", engine.bundleInfo.mode,
+            engine.bundleInfo.bundleVersion?.let { "(v$it)" } ?: "")
+
+        if (engine.bundleInfo.mode == "locked" && engine.bundleInfo.utlarPath != null) {
+            // Load from .utlar archive
+            val loaded = org.apache.utlx.engine.admin.loadUtlar(engine.bundleInfo.utlarPath!!, engine)
+            logger.info("Loaded {} transformation(s) from .utlar", loaded)
+        } else if (dataDir != null) {
+            // EF03: Scan data dir for persisted transformations (open mode)
             engine.scanDataDir(Paths.get(dataDir))
         }
 
