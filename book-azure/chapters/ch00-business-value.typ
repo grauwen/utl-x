@@ -32,14 +32,24 @@ A transformation looks like this:
 input json
 output xml
 ---
-<Invoice>
-  <ID>{$input.invoiceId}</ID>
-  <BuyerName>{upperCase($input.customer.name)}</BuyerName>
-  <Total>{round($input.amount * 1.21, 2)}</Total>
-</Invoice>
+{
+  Invoice: {
+    ID: $input.invoiceId,
+    BuyerName: upperCase($input.customer.name),
+    Total: round($input.amount * 1.21, 2)
+  }
+}
 ```
 
-That is the entire program. No boilerplate. No framework. No build step. Upload it, and messages start transforming.
+That is the entire program. JSON in, XML out. No boilerplate, no framework, no build step. Upload it, and messages start transforming. The engine converts the object structure to XML automatically:
+
+```xml
+<Invoice>
+  <ID>INV-001</ID>
+  <BuyerName>ACME CORP</BuyerName>
+  <Total>121.00</Total>
+</Invoice>
+```
 
 == Who Uses UTLXe
 
