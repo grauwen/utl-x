@@ -13,7 +13,7 @@
 Default `JAVA_OPTS`:
 
 ```
--XX:+UseG1GC -XX:MaxGCPauseMillis=200 -XX:+UseContainerSupport -XX:+AlwaysPreTouch
+-XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch
 ```
 
 == Engine Configuration (engine.yaml)
@@ -83,8 +83,8 @@ output_messaging:
 #table(
   columns: (auto, 1fr),
   [*Flag*], [*Purpose*],
-  [`-XX:+UseG1GC`], [G1 garbage collector. Good for large heaps with pause-time targets.],
-  [`-XX:MaxGCPauseMillis=200`], [Target maximum GC pause. G1 adjusts its behavior to meet this target.],
+  [`-XX:+UseZGC`], [Z Garbage Collector. Sub-millisecond pauses regardless of heap size. No message processing stalls during GC.],
+  [`-XX:+ZGenerational`], [Generational mode for ZGC (JDK 21+). Optimized for short-lived objects --- ideal for request/response transformations.],
   [`-XX:+UseContainerSupport`], [Respect cgroup memory limits instead of reading host memory.],
   [`-XX:+AlwaysPreTouch`], [Allocate the entire heap at startup. Fail fast if not enough RAM.],
   [`-Xmx${UTLXE_HEAP_SIZE}`], [Maximum heap size. Set via `UTLXE_HEAP_SIZE` environment variable.],
