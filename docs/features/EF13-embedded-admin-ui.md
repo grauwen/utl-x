@@ -19,10 +19,12 @@ The web UI runs as its own container alongside UTLXe in the same Container App. 
 Azure Container Apps Pod
   ├── UTLXe container        (port 8081 admin API, port 8085 data)
   ├── Dapr sidecar           (port 3500, localhost only)
-  └── utlxe-ui container     (port 8080, external ingress → browser)
+  └── utlxe-ui container     (port 8088 default, external ingress → browser)
            │
            └── fetch() → http://localhost:8081/admin/*
 ```
+
+All ports are configurable via environment variables (`UI_PORT`, `ADMIN_PORT`). No hardcoded ports.
 
 This means:
 - **Zero changes to UTLXe** — the engine stays unchanged
@@ -292,35 +294,43 @@ One HTML file, one CSS file, one JS file. The JS uses hash-based routing (`#/tra
 
 ```dockerfile
 FROM nginx:alpine
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+ENV UI_PORT=8088
+ENV ADMIN_PORT=8081
+COPY nginx.conf /etc/nginx/templates/default.conf.template
 COPY static/ /usr/share/nginx/html/
-EXPOSE 8080
+EXPOSE ${UI_PORT}
+```
+
+The nginx `templates/` directory uses `envsubst` on startup — `${UI_PORT}` and `${ADMIN_PORT}` are replaced from environment variables. Override at deploy time:
+
+```bash
+docker run -e UI_PORT=9090 -e ADMIN_PORT=18081 -p 9090:9090 utlxe-ui
 ```
 
 ### nginx.conf
 
 ```nginx
 server {
-    listen 8080;
+    listen ${UI_PORT};
 
-    # Serve static UI files
     location / {
         root /usr/share/nginx/html;
         index index.html;
         try_files $uri $uri/ /index.html;
     }
 
-    # Proxy API calls to UTLXe admin port (same pod)
     location /admin/ {
-        proxy_pass http://localhost:8081;
+        proxy_pass http://localhost:${ADMIN_PORT};
         proxy_set_header Host $host;
     }
 
     location /health {
-        proxy_pass http://localhost:8081;
+        proxy_pass http://localhost:${ADMIN_PORT};
     }
 }
 ```
+
+All ports configurable via environment variables. Default: UI on 8088, admin proxy to 8081.
 
 The browser calls the UI container on port 8080. API calls to `/admin/*` are reverse-proxied to UTLXe on `localhost:8081`. The browser never calls UTLXe directly — no CORS issues.
 
@@ -344,7 +354,7 @@ containers: [
 // Ingress points to the UI container
 ingress: {
   external: true
-  targetPort: 8080    // UI container
+  targetPort: 8088    // UI container (configurable via UI_PORT env var)
 }
 
 // Admin port stays internal (additional port mapping)
