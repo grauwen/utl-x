@@ -82,9 +82,35 @@ All outbound HTTP connections to Dapr (`localhost:3500`) use `HttpURLConnection`
 
 The JVM's connection pooling (`Keep-Alive`) reuses TCP connections transparently. No connection leak.
 
+## Garbage Collector: ZGC Generational
+
+UTLXe uses ZGC with generational mode (`-XX:+UseZGC -XX:+ZGenerational`). Chosen for:
+
+| Aspect | G1GC (previous) | ZGC (current) |
+|---|---|---|
+| Pause time | 50-200ms | < 1ms |
+| Impact on message processing | All in-flight transforms stall | Invisible |
+| Tuning required | `MaxGCPauseMillis`, region size | None — self-tuning |
+| Throughput | Baseline | ~5% lower (irrelevant for UTLXe) |
+| JDK requirement | Any | 21+ |
+
+UTLXe's workload is ideal for generational ZGC: short-lived objects (parse → transform → serialize → discard), request/response pattern, medium heaps (3-6 GB).
+
+### JVM flags
+
+```
+-XX:+UseZGC              # Z Garbage Collector
+-XX:+ZGenerational       # Generational mode (efficient for short-lived objects)
+-XX:+AlwaysPreTouch      # Allocate heap at startup (fail fast if insufficient RAM)
+-XX:+UseContainerSupport # Respect cgroup memory limits
+-Xmx3072m               # Starter: 3 GB heap (4 GB container)
+-Xmx6144m               # Professional: 6 GB heap (8 GB container)
+```
+
 ## Recommendations
 
 1. **Monitor metaspace in dev/test** if developers hot-swap transformations frequently. Watch `jvm_memory_metaspace_bytes` in Prometheus.
 2. **No action needed for production** — locked mode has a fixed compilation cache size.
 3. **If metaspace grows past 200MB**, consider adding LRU eviction to `compilationCache`.
 4. **The `-XX:+AlwaysPreTouch` flag** ensures heap is allocated at startup. Metaspace is separate and grows on demand.
+5. **Do not switch back to G1GC** unless profiling shows ZGC throughput is a bottleneck (unlikely for UTLXe's workload).
