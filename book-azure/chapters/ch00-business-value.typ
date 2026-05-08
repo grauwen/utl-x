@@ -78,6 +78,27 @@ That is the entire program. JSON in, XML out. No boilerplate, no framework, no b
   [Lock-down], [Custom], [Platform], [None], [*Immutable .utlar bundles*],
 )
 
+== Open Source, No Vendor Lock-In
+
+UTL-X is open source under the AGPL 3.0 license. The language specification, compiler, standard library, and CLI tool are freely available. This matters for three reasons:
+
+*No vendor lock-in.* Your transformation rules are portable text files. They are not compiled into a proprietary binary, not stored in a vendor-specific format, and not locked behind a license server. If you stop using UTLXe tomorrow, your `.utlx` files remain yours --- readable, versioned in git, and executable by the open-source CLI.
+
+*Auditable.* Compliance and security teams can inspect the source code. There is no black box. The transformation language is deterministic --- the same input always produces the same output. Auditors can read a `.utlx` file and understand what it does, unlike XSLT stylesheets or Java integration code.
+
+*Community and longevity.* Open-source projects outlive vendor products. MuleSoft was acquired by Salesforce. Tibco was acquired by private equity. BizTalk was deprecated. Your investment in UTL-X transformations is protected by the open-source license --- even if the company behind it changes, the code and the language survive.
+
+The Azure Marketplace offering (UTLXe) is the *managed, production-hardened* runtime for the open-source language. You pay for the Azure container resources and the operational convenience (Dapr integration, Admin API, monitoring, CI/CD support). You do not pay for the language or the transformation engine itself.
+
+#table(
+  columns: (auto, 1fr),
+  [*Component*], [*License*],
+  [UTL-X language + CLI + stdlib], [Open source (AGPL 3.0) --- free forever],
+  [UTLXe engine], [Open source (AGPL 3.0) --- self-host or use Marketplace],
+  [Azure Marketplace offering], [Pay for Azure resources only --- no UTLXe license fee],
+  [Your `.utlx` transformations], [Yours --- not subject to any UTL-X license],
+)
+
 == Azure Marketplace: What You Get
 
 When you deploy UTLXe from the Azure Marketplace, the following is provisioned automatically:
