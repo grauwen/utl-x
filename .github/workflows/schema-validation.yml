@@ -20,6 +20,9 @@ on:
   #     - 'schemas/**'
   #     - 'modules/analysis/**'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   validate-schemas:
     name: Validate Transformation Schemas
