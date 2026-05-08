@@ -331,17 +331,114 @@ A complete end-to-end flow for European e-invoicing:
 
 The transformation, Dapr components, and Service Bus resources are configured following the same steps shown in this chapter. The only difference is the `.utlx` content --- which maps D365 fields to UBL elements.
 
+== Bindings vs. Pub/Sub: Which Pattern to Use
+
+Dapr offers two building blocks for messaging. Understanding the difference is essential for choosing the right pattern.
+
+=== Bindings (Queues --- Point-to-Point)
+
+```
+Producer → Queue → ONE Consumer
+```
+
+- One Dapr component per queue. Static --- you create the component YAML, Dapr connects.
+- The message is consumed exactly once, then removed from the queue.
+- Use case: "Process this order" --- exactly one handler.
+- Dapr component type: `bindings.azure.servicebusqueues`
+- UTLXe receives messages via `POST /{binding-name}` on port 8085.
+
+=== Pub/Sub (Topics --- Fan-out)
+
+```
+Producer → Topic → Subscription A → Consumer A
+                 → Subscription B → Consumer B
+```
+
+- *One* Dapr component per Service Bus namespace (not per topic). Dynamic --- UTLXe controls which topics it subscribes to.
+- Each subscription gets its own copy of every message.
+- Use case: "Notify everyone about this order" --- fan-out to multiple systems.
+- Dapr component type: `pubsub.azure.servicebus.topics`
+- UTLXe receives messages via `POST /pubsub/{transformation-name}` as CloudEvents.
+
+=== When to Use Which
+
+#table(
+  columns: (auto, 1fr, 1fr),
+  [*Criterion*], [*Binding (Queue)*], [*Pub/Sub (Topic)*],
+  [Consumers], [One], [Many (fan-out)],
+  [Dapr components], [One per queue], [One per namespace],
+  [Dynamic subscriptions], [No --- YAML per queue], [Yes --- UTLXe declares via `/dapr/subscribe`],
+  [Message format], [Raw payload], [CloudEvents envelope (UTLXe unwraps automatically)],
+  [Recommended for], [Simple queue-to-queue], [Multi-subscriber, flexible routing],
+)
+
+Both patterns can be mixed: input from a queue, output to a topic (or vice versa).
+
+=== Configuring Pub/Sub via the Admin API
+
+Instead of creating Dapr component YAML manually, configure messaging through the Admin API:
+
+```bash
+# Upload transformation
+curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
+  -d @invoice-normalize.utlx \
+  http://<admin>:8081/admin/transformations/invoice-normalize
+
+# Set messaging: topic input, topic output
+curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "input": {"topic": "raw-invoices", "subscription": "utlxe"},
+    "output": {"topic": "normalized-invoices"}
+  }' \
+  http://<admin>:8081/admin/transformations/invoice-normalize/messaging
+
+# Test via HTTP first (no Dapr needed)
+curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
+  -d '{"invoiceId": "INV-001"}' \
+  http://<admin>:8081/admin/transformations/invoice-normalize/test
+
+# When ready, sync to Dapr (creates component YAML, activates subscription)
+curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
+  http://<admin>:8081/admin/transformations/invoice-normalize/sync
+```
+
+The messaging field name is the discriminator:
+
+#table(
+  columns: (auto, auto, auto),
+  [*Field*], [*Azure Service*], [*Dapr Component*],
+  [`queue: "name"`], [Service Bus Queue], [`bindings.azure.servicebusqueues`],
+  [`topic: "name"`], [Service Bus Topic], [`pubsub.azure.servicebus.topics`],
+  [`eventhub: "name"`], [Event Hub], [`bindings.azure.eventhubs`],
+)
+
+Input and output can use different services: `queue` in → `topic` out, `eventhub` in → `queue` out, etc.
+
+=== Authentication: Managed Identity (Recommended)
+
+For production, use Azure Managed Identity instead of connection strings. No secrets to manage --- the container's identity authenticates directly with Service Bus or Event Hub.
+
+#table(
+  columns: (auto, 1fr),
+  [*Auth method*], [*How*],
+  [Managed Identity (secretless)], [Set `namespaceName` in Dapr component. No `connectionString` needed. Assign `Azure Service Bus Data Sender` + `Azure Service Bus Data Receiver` RBAC roles to the Container App identity.],
+  [Connection string], [Store as Container App secret. Reference via `secretRef` in Dapr component YAML.],
+)
+
+The bundle (`.utlar`) never contains credentials. It declares _what_ to connect to (queue/topic names). The _how_ (auth) comes from the environment.
+
 == Summary: What You Configure Where
 
 #table(
   columns: (auto, auto, 1fr),
   [*What*], [*Where*], [*How*],
   [Service Bus / Event Hub], [Azure Portal or CLI], [`az servicebus` / `az eventhubs` commands],
-  [Connection string], [Container App secrets], [`az containerapp secret set`],
-  [Dapr input binding], [Container App Environment], [Dapr component YAML via CLI or Portal],
-  [Dapr output binding], [Container App Environment], [Dapr component YAML via CLI or Portal],
-  [Transformation], [UTLXe Admin API], [`POST /admin/transformations/{name}`],
-  [Output binding reference], [UTLXe Admin API], [`POST /admin/transformations/{name}/config`],
+  [Connection string or MI], [Container App Environment], [Secret or Managed Identity RBAC],
+  [Dapr binding (queue)], [Container App Environment], [Dapr component YAML --- or auto-generated by UTLXe via sync],
+  [Dapr pub/sub (topic)], [Container App Environment], [Dapr component YAML --- or auto-generated by UTLXe via sync],
+  [Transformation], [UTLXe Admin API or `.utlar`], [`POST /admin/transformations/{name}` or CI/CD bundle],
+  [Messaging config], [UTLXe Admin API or `transform.yaml`], [`POST .../messaging` + `POST .../sync`],
 )
 
-The Azure resources and Dapr components are configured once. The transformations can be updated at any time without changing the infrastructure.
+The Azure resources and Dapr components are configured once. The transformations can be updated at any time without changing the infrastructure. In dev/test (open mode), the Admin API configures everything dynamically. In production (locked mode), the `.utlar` bundle contains all configuration and is deployed via CI/CD.

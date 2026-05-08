@@ -143,6 +143,12 @@ Typeset with Typst in New Computer Modern.
 #pagebreak()
 #include "chapters/ch10-troubleshooting.typ"
 #pagebreak()
+#include "chapters/ch11-dtap.typ"
+#pagebreak()
+#include "chapters/ch12-infrastructure-as-code.typ"
+#pagebreak()
+#include "chapters/ch13-roadmap.typ"
+#pagebreak()
 #include "chapters/appendix-a-api-reference.typ"
 #pagebreak()
 #include "chapters/appendix-b-config-reference.typ"

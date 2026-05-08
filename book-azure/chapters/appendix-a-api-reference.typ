@@ -75,12 +75,51 @@ The `/health`, `/metrics`, and `/api/*` endpoints do not require authentication.
   [`DELETE`], [`/admin/schemas/{filename}`], [Remove a schema.],
 )
 
+=== Messaging Endpoints (EF10)
+
+Configure Dapr messaging (queues, topics, Event Hubs) per transformation. Changes are staged as drafts and pushed to Dapr via sync.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/dapr`], [Dapr sidecar status, integration mode (http-only/static/dynamic), loaded components.],
+  [`GET`], [`/admin/transformations/{name}/messaging`], [Messaging config with sync status and Dapr binding state.],
+  [`POST`], [`/admin/transformations/{name}/messaging`], [Set input/output messaging (queue/topic/eventhub). Saved as draft.],
+  [`DELETE`], [`/admin/transformations/{name}/messaging`], [Remove messaging config. Saved as draft.],
+  [`POST`], [`/admin/transformations/{name}/sync`], [Push this transformation's messaging to Dapr.],
+  [`POST`], [`/admin/sync`], [Push all draft transformations to Dapr.],
+  [`GET`], [`/admin/sync`], [Sync status overview for all transformations.],
+)
+
+Messaging body uses the field name as discriminator --- `queue`, `topic`, or `eventhub`:
+
+```json
+{"input": {"queue": "orders-in"}, "output": {"topic": "processed-orders"}}
+{"input": {"topic": "raw-invoices", "subscription": "utlxe"}, "output": {"queue": "alerts"}}
+{"input": {"eventhub": "telemetry", "consumerGroup": "utlxe"}, "output": {"queue": "alerts"}}
+```
+
+=== Log Management Endpoints (EF12)
+
+Runtime log level changes and in-memory log access. Allowed in locked mode.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/log/level`], [Current root log level.],
+  [`POST`], [`/admin/log/level`], [Change log level. Body: `{"level":"DEBUG","revert_after_minutes":30}`.],
+  [`GET`], [`/admin/logs`], [Recent log entries from memory buffer. Params: `?limit=N&level=ERROR&contains=text&since=ISO8601`.],
+  [`DELETE`], [`/admin/logs`], [Clear the log buffer.],
+)
+
 === Health Endpoints (no authentication)
 
 #table(
   columns: (auto, auto, 1fr),
   [*Method*], [*Path*], [*Description*],
   [`GET`], [`/health`], [Returns status, transformation count, and ready flag.],
+  [`GET`], [`/health/ready`], [Readiness probe. Returns 200 when RUNNING with at least one transformation.],
+  [`GET`], [`/health/live`], [Liveness probe. Always returns 200.],
   [`GET`], [`/metrics`], [Prometheus metrics in text exposition format.],
 )
 
@@ -90,7 +129,29 @@ The `/health`, `/metrics`, and `/api/*` endpoints do not require authentication.
   columns: (auto, auto, 1fr),
   [*Method*], [*Path*], [*Description*],
   [`GET`], [`/api/transformations`], [List available transformations (discovery). No authentication.],
-  [`POST`], [`/api/transform/{name}`], [Execute a transformation. Body is the input message. Content-Type header determines format.],
+  [`POST`], [`/api/execute/{id}`], [Execute a transformation. Body: `{"payload":"...","contentType":"application/json"}`.],
+  [`OPTIONS`], [`/{bindingName}`], [Dapr binding probe. Always returns 200.],
+  [`POST`], [`/{bindingName}`], [Dapr input binding delivery. Routes to transformation by binding name.],
+  [`GET`], [`/dapr/subscribe`], [Dapr pub/sub subscription list. Derived from loaded transformations with topic config.],
+  [`POST`], [`/pubsub/{name}`], [Dapr pub/sub delivery. Accepts CloudEvents (structured or binary mode).],
+)
+
+== Production Locked Mode (EF09)
+
+When `bundle.utlar` is found on the data volume, UTLXe enters locked mode. Mutating endpoints return 403:
+
+#table(
+  columns: (auto, auto, auto),
+  [*Endpoint category*], [*Open mode*], [*Locked mode*],
+  [Upload/delete transformations], [Allowed], [*403 BUNDLE_LOCKED*],
+  [Upload/delete bundle], [Allowed], [*403 BUNDLE_LOCKED*],
+  [Upload/delete schemas], [Allowed], [*403 BUNDLE_LOCKED*],
+  [Set/delete messaging], [Allowed], [*403 BUNDLE_LOCKED*],
+  [Pause/resume], [Allowed], [Allowed --- operational],
+  [Validation override], [Allowed], [Allowed --- operational],
+  [Test transformation], [Allowed], [Allowed --- read-only],
+  [All GET endpoints], [Allowed], [Allowed --- read-only],
+  [Log level / logs], [Allowed], [Allowed --- diagnostic],
 )
 
 == Response Status Codes
@@ -100,9 +161,10 @@ The `/health`, `/metrics`, and `/api/*` endpoints do not require authentication.
   [*Code*], [*Meaning*],
   [200], [Success.],
   [400], [Bad request --- compilation error, invalid input, malformed ZIP.],
-  [403], [Forbidden --- missing or wrong `X-Admin-Key`, or key not configured.],
+  [403], [Forbidden --- missing or wrong `X-Admin-Key`, key not configured, or locked mode.],
   [404], [Transformation not found.],
   [413], [Message too large --- exceeds `maxInputSize`.],
+  [429], [Transformation paused --- back off (pub/sub input). Includes `Retry-After` header.],
   [500], [Transformation runtime error (null reference, type mismatch, etc.).],
-  [503], [Transformation is paused.],
+  [503], [Transformation not loaded or paused (binding input).],
 )

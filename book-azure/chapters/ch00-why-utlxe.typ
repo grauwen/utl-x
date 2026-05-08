@@ -114,11 +114,13 @@ Before any messages flow, the Dapr sidecar and UTLXe go through a startup handsh
   caption: [Startup sequence: Dapr probe, Admin API upload, then ready for messages],
 )}
 
+This diagram shows *open mode* (dev/test) --- where transformations are uploaded via the Admin API after startup.
+
 Step by step:
 
 + Azure Container Apps starts both containers in the same pod (UTLXe and Dapr sidecar).
 + UTLXe starts the admin API on port 8081 --- health checks, metrics, and bundle management are immediately available.
-+ UTLXe scans `/utlxe/data/` --- if Azure Files is mounted with transformations from a previous session, they are compiled now.
++ UTLXe scans `/utlxe/data/` --- if Azure Files is mounted with transformations from a previous session, they are compiled now. If a `bundle.utlar` file is found, UTLXe enters *locked mode* instead (see below).
 + UTLXe starts the data plane on port 8085.
 + Dapr sends an `OPTIONS /orders-in` probe to port 8085. This is Dapr asking: "Do you handle bindings?" The `OPTIONS` method is an HTTP verb (like GET or POST) used to check capabilities.
 + UTLXe responds 200 OK --- *always*, regardless of whether the `orders-in` transformation exists yet. This tells Dapr "yes, I handle bindings." The actual transformation check happens when the first message arrives.
@@ -126,7 +128,38 @@ Step by step:
 + The operator (or CI/CD pipeline) uploads the transformation via the Admin API: `POST :8081/admin/transformations/orders-in`.
 + UTLXe compiles the transformation and reports `ready: true`.
 
-*Why does UTLXe always respond 200 to the OPTIONS probe?* Because the Admin API upload (step 10) may happen after Dapr's probe (step 6). If UTLXe returned 404 for a not-yet-uploaded transformation, the binding would never activate --- and the operator couldn't fix it without restarting the container. By responding 200 always, Dapr activates the binding immediately. Messages that arrive before the transformation is uploaded get a 500 response, which triggers Service Bus retry. Once the transformation is uploaded, the next retry succeeds.
+*Why does UTLXe always respond 200 to the OPTIONS probe?* Because the Admin API upload (step 10) may happen after Dapr's probe (step 6). If UTLXe returned 404 for a not-yet-uploaded transformation, the binding would never activate --- and the operator couldn't fix it without restarting the container. By responding 200 always, Dapr activates the binding immediately. Messages that arrive before the transformation is uploaded get a 503 response, which triggers Service Bus retry. Once the transformation is uploaded, the next retry succeeds.
+
+=== Startup: Locked Mode (Production with `.utlar`)
+
+In production, transformations are deployed via CI/CD as an immutable `.utlar` archive. When UTLXe finds `bundle.utlar` on the data volume, the startup sequence is different:
+
+#{set text(size: 6pt); figure(
+  chronos.diagram({
+    import chronos: *
+    _par("Azure", display-name: "Azure Container Apps")
+    _par("Dapr", display-name: "Dapr Sidecar\nlocalhost:3500")
+    _par("UTLXe", display-name: "UTLXe\n:8081 admin + :8085 data")
+    _par("SB", display-name: "Service Bus")
+
+    _seq("Azure", "Dapr", comment: "1. Start sidecar", enable-dst: true)
+    _seq("Azure", "UTLXe", comment: "2. Start UTLXe", enable-dst: true)
+    _seq("UTLXe", "UTLXe", comment: "3. Start :8081\n(admin + health)")
+    _seq("UTLXe", "UTLXe", comment: "4. Detect bundle.utlar\n→ LOCKED mode")
+    _seq("UTLXe", "UTLXe", comment: "5. Read manifest.json\n(version, checksum)")
+    _seq("UTLXe", "UTLXe", comment: "6. Unpack + compile\nall transformations")
+    _note("right", pos: "UTLXe", "Admin API: read-only\n(403 on mutations)")
+    _seq("UTLXe", "UTLXe", comment: "7. Start :8085\n(data plane)")
+    _seq("Dapr", "UTLXe", comment: "8. OPTIONS /orders-in\n(binding probe)")
+    _seq("UTLXe", "Dapr", comment: "9. 200 OK", dashed: true)
+    _seq("Dapr", "SB", comment: "10. AMQP 1.0 / TLS :5671\nconnect to queue", enable-dst: true)
+    _seq("SB", "Dapr", comment: "11. Connected", dashed: true, disable-src: true)
+    _note("right", pos: "UTLXe", "Health: ready=true\nmode=locked\nNo upload needed —\nbundle is pre-loaded.")
+  }),
+  caption: [Locked mode startup: `.utlar` pre-loaded by CI/CD, no Admin API upload needed],
+)}
+
+The key difference: in locked mode, transformations are already compiled before Dapr probes. The Admin API never receives an upload --- changes go through CI/CD. Operational endpoints (pause, resume, validation override, log management) remain available for incident response.
 
 ==== Multiple queues, multiple bindings
 

@@ -46,16 +46,34 @@ The bundle lives in the CI/CD system (a git repository or artifact store). The c
 
 == Startup Sequence
 
-Regardless of persistence mode, the startup sequence is:
+The startup sequence depends on what is found on disk:
+
+=== Open Mode (no `.utlar` file)
 
 + Start the HTTP server on port 8081 (health, metrics, admin API).
-+ Scan `/utlxe/data/` for existing transformations and schemas.
-  - If found (volume mount from previous session): compile and register them.
++ Scan `/utlxe/data/` for existing transformations and schemas (directory structure).
+  - If found (volume mount from previous session): compile and register them. Load `transform.yaml` with messaging config.
   - If empty: wait for API uploads.
++ Reconcile Dapr components (if `--dapr-components-dir` is set): sync messaging config to Dapr.
 + Start the data plane on port 8085.
 + The readiness probe checks `ready == true` before Kubernetes routes traffic.
++ Admin API: *full access* --- upload, delete, configure, sync.
 
-The admin API is available from step 1 --- you can upload transformations while the startup scan is still running.
+=== Locked Mode (`bundle.utlar` found)
+
++ Start the HTTP server on port 8081 (health, metrics, admin API).
++ Detect `bundle.utlar` in `/utlxe/data/` --- enter *locked mode*.
++ Read manifest from `.utlar`: version, checksum, created timestamp.
++ Unpack `.utlar` (ZIP): load all transformations, schemas, and `transform.yaml` configs.
++ Compile all transformations. Create validators from schema references.
++ Reconcile Dapr components from messaging config in the bundle.
++ Start the data plane on port 8085.
++ Health: `ready: true`, `mode: locked`.
++ Admin API: *read-only* --- mutating endpoints return 403 `BUNDLE_LOCKED`. Operational endpoints (pause, resume, validation override, log management) remain available.
+
+The mode is determined automatically by the presence of `bundle.utlar` on disk. No CLI flag needed --- if CI/CD placed a `.utlar`, it is production.
+
+The admin API is available from step 1 in both modes --- health probes work before transformations are loaded.
 
 == Memory Sizing
 

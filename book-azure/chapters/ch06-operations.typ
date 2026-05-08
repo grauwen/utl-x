@@ -36,10 +36,13 @@ curl -X POST \
 
 While paused:
 
-- The data plane returns 503 for that transformation. Other transformations continue normally.
-- Dapr receives the 503 and does not acknowledge the message. Service Bus retries it later (or moves it to the dead-letter queue after max retries).
+- Binding input: the data plane returns 503 for that transformation. Other transformations continue normally.
+- Pub/sub input: the data plane returns 429 with a `Retry-After` header. Combined with a Dapr Resiliency circuit breaker, this prevents dead-lettering during maintenance windows.
+- Messages stay in Service Bus until the transformation is resumed --- they are not consumed or dead-lettered.
 - The transformation stays compiled in memory and on disk --- resume is instant.
 - The listing shows `"status": "paused"`.
+
+For global maintenance (pause everything), UTLXe can return 503 from `/healthz`, which causes Dapr to stop all bindings and subscriptions. See the Dapr Resiliency section in the architecture documentation.
 
 Resume:
 
@@ -199,3 +202,76 @@ Fields that require a restart (like port numbers) are accepted but flagged in th
 ```json
 {"updated": ["maxInputSize"], "restart_required": []}
 ```
+
+== Production Locked Mode
+
+When CI/CD deploys a `bundle.utlar` file to the data volume, UTLXe enters *locked mode*. The Admin API becomes read-only for all mutating endpoints --- transformations, schemas, messaging config, and bundle uploads all return 403 with `BUNDLE_LOCKED`.
+
+Operational endpoints continue to work: pause/resume, validation override, test, log management, and all GET endpoints.
+
+This matches enterprise expectations: production deployments are immutable. Changes go through CI/CD, not the Admin API.
+
+Detection is automatic --- if `/utlxe/data/bundle.utlar` exists, UTLXe is locked. No CLI flag needed.
+
+```bash
+# Check the mode
+curl -H "X-Admin-Key: $KEY" http://<admin>:8081/admin/info
+```
+
+```json
+{
+  "mode": "locked",
+  "bundle_version": "v3.2.1",
+  "bundle_checksum": "sha256:a1b2c3..."
+}
+```
+
+== Runtime Log Management
+
+During an incident, switch to DEBUG logging without restarting the container:
+
+```bash
+# Switch to DEBUG with auto-revert after 30 minutes
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"level": "DEBUG", "revert_after_minutes": 30}' \
+  http://<admin>:8081/admin/log/level
+```
+
+View recent log entries directly via the Admin API --- no need to open the Azure portal:
+
+```bash
+# Last 50 entries
+curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?limit=50"
+
+# Only errors
+curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?level=ERROR"
+
+# Search for a specific MessageId
+curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?contains=msg-abc-123"
+```
+
+The log buffer holds the last 5000 entries in memory. Zero disk I/O. The auto-revert feature ensures DEBUG does not stay on accidentally --- the level reverts to the previous value after the specified time.
+
+== Messaging Configuration
+
+Configure Dapr queues, topics, and Event Hubs per transformation via the Admin API. Changes are staged as drafts and pushed to Dapr via explicit sync:
+
+```bash
+# 1. Set messaging (staged as draft --- Dapr not touched)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -H "Content-Type: application/json" \
+  -d '{"input": {"queue": "orders-in"}, "output": {"topic": "processed"}}' \
+  http://<admin>:8081/admin/transformations/orders-in/messaging
+
+# 2. Test via HTTP (no Dapr needed --- the transformation works via HTTP)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -d '{"orderId": "123"}' \
+  http://<admin>:8081/admin/transformations/orders-in/test
+
+# 3. Sync to Dapr (creates binding YAML, messages start flowing)
+curl -X POST -H "X-Admin-Key: $KEY" \
+  http://<admin>:8081/admin/transformations/orders-in/sync
+```
+
+The stage-then-sync model lets you test transformations via HTTP before connecting them to real queues. Sync is the "go live" switch.
