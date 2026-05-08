@@ -121,33 +121,42 @@ Typeset with Typst in New Computer Modern.
 
 #pagebreak()
 
-#include "chapters/ch00-why-utlxe.typ"
+// Part I: Getting Started
+#include "chapters/ch01-why-utlxe.typ"
 #pagebreak()
-#include "chapters/ch01-quick-start.typ"
+#include "chapters/ch02-quick-start.typ"
 #pagebreak()
-#include "chapters/ch02-writing-transformations.typ"
+#include "chapters/ch03-writing-transformations.typ"
 #pagebreak()
-#include "chapters/ch03-admin-api.typ"
+#include "chapters/ch04-admin-api.typ"
 #pagebreak()
-#include "chapters/ch04-azure-services.typ"
+#include "chapters/ch05-azure-services.typ"
+
+// Part II: Deployment and Automation
 #pagebreak()
-#include "chapters/ch05-monitoring.typ"
+#include "chapters/ch06-dtap.typ"
 #pagebreak()
-#include "chapters/ch06-operations.typ"
+#include "chapters/ch07-infrastructure-as-code.typ"
 #pagebreak()
-#include "chapters/ch07-persistence-and-scaling.typ"
+#include "chapters/ch08-cicd.typ"
+
+// Part III: Production
 #pagebreak()
-#include "chapters/ch08-security.typ"
+#include "chapters/ch09-persistence-and-scaling.typ"
 #pagebreak()
-#include "chapters/ch09-cicd.typ"
+#include "chapters/ch10-security.typ"
 #pagebreak()
-#include "chapters/ch10-troubleshooting.typ"
+#include "chapters/ch11-operations.typ"
 #pagebreak()
-#include "chapters/ch11-dtap.typ"
+#include "chapters/ch12-monitoring.typ"
 #pagebreak()
-#include "chapters/ch12-infrastructure-as-code.typ"
+#include "chapters/ch13-troubleshooting.typ"
+
+// Part IV: Future
 #pagebreak()
-#include "chapters/ch13-roadmap.typ"
+#include "chapters/ch14-roadmap.typ"
+
+// Appendices
 #pagebreak()
 #include "chapters/appendix-a-api-reference.typ"
 #pagebreak()
