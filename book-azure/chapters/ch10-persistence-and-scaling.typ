@@ -31,6 +31,39 @@ On restart, UTLXe scans `/utlxe/data/`, finds the transformations from the previ
 
 To enable persistent storage, check the "Enable persistent transformation storage" option during Marketplace deployment. This creates an Azure Storage Account and File Share, and configures the volume mount in the Container App.
 
+== Crash Safety: What Survives a Restart
+
+In open mode, UTLXe writes to disk *synchronously inside every API call* --- the file is written before the HTTP 200 is returned to the caller. There is no write buffer, no deferred flush, no background writer. If you received a 200, the data is on disk.
+
+In locked mode, UTLXe does not write to disk at all --- the `.utlar` bundle is read-only. All state comes from the archive deployed by CI/CD.
+
+In both modes, *no graceful shutdown is needed for persistence*. An abrupt kill (`kill -9`, container crash, node failure, scale-to-zero) loses nothing that was confirmed to the caller.
+
+What is persisted to disk (survives any restart):
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*State*], [*Persisted?*], [*On restart*],
+  [`.utlx` source], [Yes --- written on upload], [Reloaded and recompiled from disk],
+  [`transform.yaml` (messaging config)], [Yes --- written on POST .../messaging], [Reloaded, Dapr reconciled automatically],
+  [Schemas], [Yes --- written on upload], [Reloaded from disk],
+  [`.utlar` bundle (locked mode)], [Yes --- deployed by CI/CD], [Loaded, mode set to locked],
+)
+
+What is ephemeral (lost on restart, by design):
+
+#table(
+  columns: (auto, 1fr),
+  [*State*], [*Why ephemeral*],
+  [Paused state], [Operational override. On restart, transformations resume. If you need persistent pause, remove the transformation from the bundle.],
+  [Validation overrides], [Emergency override. Should not survive a restart --- the fix should go into `transform.yaml` or the `.utlx` header.],
+  [Error ring buffer], [Diagnostic. Recent errors are gone, but Prometheus counters and Azure Monitor logs are durable.],
+  [Log buffer], [Diagnostic. Last 5000 entries in memory. Azure Monitor captures all logs durably.],
+  [Sync state (draft/synced)], [Reconstructed on startup. `reconcileOnStartup()` compares disk config with Dapr components and syncs automatically.],
+)
+
+The key insight: everything the operator *configured* is on disk. Everything the operator *overrode temporarily* is in memory. This is intentional --- temporary overrides should not persist across deployments.
+
 == CI/CD Re-Deploy Pattern
 
 An alternative to persistent storage: let the CI/CD pipeline re-deploy transformations after every container start.
