@@ -15,7 +15,35 @@ UTLXe exposes two HTTP servers on separate ports:
 
 This separation allows network isolation. The data plane is accessible to client applications and Dapr sidecars. The admin port is restricted to operators and CI/CD pipelines within the VNet.
 
-Both ports are always active. There is no mode switch --- you can upload transformations while the data plane processes messages. See the architecture decision in the design document for the rationale.
+Both ports are always active. There is no mode switch --- you can upload transformations while the data plane processes messages.
+
+== The Admin Web UI (Optional)
+
+UTLXe ships with an optional web UI --- a separate lightweight container (nginx, ~5MB) in the same pod. It provides a browser-based interface for all Admin API operations.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Container*], [*Port*], [*Purpose*],
+  [utlxe], [8081 + 8085], [Engine --- admin API + data plane],
+  [dapr], [3500], [Sidecar --- localhost only],
+  [utlxe-ui], [8088 (default)], [Web UI --- browser access, proxies `/admin/*` to UTLXe],
+)
+
+Open the UI in your browser at the Container App's external URL. The UI provides:
+
+- *Dashboard* --- all transformations at a glance with message count, error rate, sync status
+- *Transformation detail* --- source code view, test panel (run with sample input), error history
+- *Upload* --- paste `.utlx` source directly or upload a `.zip` / `.utlar` bundle
+- *Messaging* --- configure queues, topics, Event Hubs per transformation, then sync to Dapr
+- *Logs* --- view recent log entries, change log level to DEBUG with auto-revert
+- *Schemas* --- upload, list, delete shared validation schemas
+- *Sync overview* --- Dapr integration status, loaded components, sync all drafts
+
+In locked mode (production), the UI shows a read-only view. Upload and delete buttons are disabled. Operational actions (pause, resume, test, log level, validation override) remain available.
+
+The UI is *optional*. Customers who manage UTLXe via CI/CD and scripts can omit the `utlxe-ui` container entirely. All functionality is available via the REST API --- the UI calls the same endpoints.
+
+All ports are configurable via environment variables (`UI_PORT`, `ADMIN_PORT`). The UI makes zero changes to UTLXe --- it is a pure API consumer.
 
 == Authentication
 

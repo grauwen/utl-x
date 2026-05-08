@@ -10,7 +10,7 @@ A production UTLXe deployment consists of:
   columns: (auto, 1fr),
   [*Resource*], [*Purpose*],
   [Container App Environment], [Hosting environment with VNet integration],
-  [Container App (UTLXe)], [The engine --- runs the UTLXe container image with Dapr sidecar],
+  [Container App (UTLXe)], [The engine --- runs the UTLXe container image with Dapr sidecar + optional UI container],
   [Azure Files share], [Persistent storage for transformations (or `.utlar` in locked mode)],
   [Service Bus namespace], [Message queues and/or topics],
   [Dapr components], [Binding and pub/sub configuration connecting UTLXe to Service Bus],
@@ -132,10 +132,11 @@ resource utlxeApp 'Microsoft.App/containerApps@2024-03-01' = {
       }
       ingress: {
         external: true
-        targetPort: 8085
+        targetPort: 8088        // UI container (browser access)
         transport: 'http'
         additionalPortMappings: [
-          { targetPort: 8081, exposedPort: 8081, external: false }
+          { targetPort: 8081, exposedPort: 8081, external: false }  // admin API (VNet only)
+          { targetPort: 8085, exposedPort: 8085, external: true }   // data plane
         ]
       }
       secrets: [
@@ -160,6 +161,16 @@ resource utlxeApp 'Microsoft.App/containerApps@2024-03-01' = {
           ]
           volumeMounts: [
             { volumeName: 'data', mountPath: '/utlxe/data' }
+          ]
+        }
+        // Optional: Admin Web UI container (remove if not needed)
+        {
+          name: 'utlxe-ui'
+          image: 'ghcr.io/grauwen/utlxe-ui:latest'
+          resources: { cpu: json('0.25'), memory: '0.5Gi' }
+          env: [
+            { name: 'UI_PORT', value: '8088' }
+            { name: 'ADMIN_PORT', value: '8081' }
           ]
         }
       ]
@@ -383,7 +394,7 @@ resource "azurerm_container_app" "utlxe" {
 
   ingress {
     external_enabled = true
-    target_port      = 8085
+    target_port      = 8088     # UI container (browser access)
     transport        = "http"
   }
 
@@ -415,6 +426,23 @@ resource "azurerm_container_app" "utlxe" {
       volume_mounts {
         name = "data"
         path = "/utlxe/data"
+      }
+    }
+
+    # Optional: Admin Web UI container
+    container {
+      name   = "utlxe-ui"
+      image  = "ghcr.io/grauwen/utlxe-ui:latest"
+      cpu    = 0.25
+      memory = "0.5Gi"
+
+      env {
+        name  = "UI_PORT"
+        value = "8088"
+      }
+      env {
+        name  = "ADMIN_PORT"
+        value = "8081"
       }
     }
 

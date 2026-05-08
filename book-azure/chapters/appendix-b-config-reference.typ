@@ -27,7 +27,22 @@ The engine configuration file is optional. If present in the bundle, it override
   [`workers`], [CPU cores], [Worker thread pool size.],
   [`healthPort`], [`8081`], [Health + admin API port.],
   [`dataPort`], [`8085`], [Data plane port.],
+  [`grpcPort`], [`9090`], [gRPC port (when `--also-grpc` is used).],
 )
+
+== Port Map
+
+#table(
+  columns: (auto, auto, auto, 1fr),
+  [*Port*], [*Container*], [*Default*], [*Purpose*],
+  [8081], [utlxe], [configurable], [Admin API + health + metrics (internal to VNet)],
+  [8085], [utlxe], [configurable], [Data plane --- Dapr bindings + direct HTTP],
+  [9090], [utlxe], [configurable], [gRPC (optional, `--also-grpc`)],
+  [8088], [utlxe-ui], [configurable via `UI_PORT`], [Admin Web UI (browser access)],
+  [3500], [dapr], [fixed], [Dapr sidecar HTTP API (localhost only)],
+)
+
+All UTLXe ports are configurable via CLI flags. The UI port is configurable via the `UI_PORT` environment variable. The Dapr sidecar port is fixed at 3500 by Dapr.
 
 == Transformation Configuration (transform.yaml)
 
@@ -48,12 +63,19 @@ Inputs and schemas:
 strategy: COMPILED
 validationPolicy: strict
 maxConcurrent: 4
-outputBinding: orders-out
 inputs:
   - name: input
     schema: order.xsd
 output:
   schema: invoice.xsd
+
+# Messaging (EF10) — field name is the discriminator
+input:
+  queue: orders-in              # or topic: / eventhub:
+  # subscription: utlxe         # required for topic input
+  # consumerGroup: utlxe        # optional for eventhub (triggers pub/sub mode)
+output_messaging:
+  queue: orders-out             # or topic: / eventhub:
 ```
 
 == JVM Tuning Reference
