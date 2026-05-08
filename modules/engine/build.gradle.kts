@@ -76,6 +76,7 @@ dependencies {
     implementation("io.ktor:ktor-server-netty:2.3.7")
     implementation("io.ktor:ktor-server-content-negotiation:2.3.7")
     implementation("io.ktor:ktor-serialization-jackson:2.3.7")
+    implementation("io.ktor:ktor-server-cors:2.3.7")
 
     // Testing
     testImplementation(kotlin("test"))

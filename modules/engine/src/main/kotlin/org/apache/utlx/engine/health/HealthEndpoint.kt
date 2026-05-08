@@ -92,6 +92,15 @@ fun Application.configureHealth(engine: UtlxEngine) {
             registerModule(kotlinModule())
         }
     }
+    // CORS for Admin Web UI (EF13) — allows browser-based UI on a different port
+    install(io.ktor.server.plugins.cors.routing.CORS) {
+        anyHost()
+        allowHeader("X-Admin-Key")
+        allowHeader("Content-Type")
+        allowMethod(io.ktor.http.HttpMethod.Post)
+        allowMethod(io.ktor.http.HttpMethod.Delete)
+        allowMethod(io.ktor.http.HttpMethod.Put)
+    }
     routing {
         get("/health") {
             val transformations = engine.registry.list().associate { tx ->

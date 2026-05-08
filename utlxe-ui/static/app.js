@@ -1,9 +1,16 @@
 // UTLXe Admin UI — vanilla JS SPA
 // All communication via REST API (fetch)
+//
+// API base URL: in production (nginx proxy), calls go to /admin/* on the same origin.
+// For local dev, set ?api=http://localhost:8081 in the URL to point directly at UTLXe.
 
 const app = document.getElementById('app');
 let adminKey = sessionStorage.getItem('utlxe-admin-key') || '';
 let engineInfo = {};
+
+// Detect API base from URL parameter or default to same-origin proxy
+const urlParams = new URLSearchParams(window.location.search);
+const API_BASE = urlParams.get('api') || '';  // e.g., "http://localhost:8081" or "" for proxy
 
 // ── API helpers ──
 
@@ -21,7 +28,7 @@ async function api(method, path, body) {
       opts.body = JSON.stringify(body);
     }
   }
-  const resp = await fetch('/admin' + path, opts);
+  const resp = await fetch(API_BASE + '/admin' + path, opts);
   const text = await resp.text();
   try { return { status: resp.status, data: JSON.parse(text) }; }
   catch { return { status: resp.status, data: text }; }
@@ -408,7 +415,7 @@ async function doUploadBundle() {
   const file = document.getElementById('bundle-file').files[0];
   if (!file) { alert('Select a file'); return; }
   const bytes = await file.arrayBuffer();
-  const resp = await fetch('/admin/bundle', {
+  const resp = await fetch(API_BASE + '/admin/bundle', {
     method: 'POST',
     headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/zip' },
     body: bytes
@@ -426,7 +433,7 @@ async function doValidateBundle() {
   const file = document.getElementById('bundle-file').files[0];
   if (!file) { alert('Select a file'); return; }
   const bytes = await file.arrayBuffer();
-  const resp = await fetch('/admin/bundle/validate', {
+  const resp = await fetch(API_BASE + '/admin/bundle/validate', {
     method: 'POST',
     headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/zip' },
     body: bytes
@@ -441,7 +448,7 @@ async function doValidateBundle() {
 }
 
 async function exportBundle() {
-  const resp = await fetch('/admin/bundle', { headers: { 'X-Admin-Key': adminKey } });
+  const resp = await fetch(API_BASE + '/admin/bundle', { headers: { 'X-Admin-Key': adminKey } });
   const blob = await resp.blob();
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -690,7 +697,7 @@ async function doUploadSchema() {
   const filename = document.getElementById('schema-filename').value.trim();
   const content = document.getElementById('schema-content').value;
   if (!filename || !content) { alert('Filename and content required'); return; }
-  const resp = await fetch(`/admin/schemas/${filename}`, {
+  const resp = await fetch(`${API_BASE}/admin/schemas/${filename}`, {
     method: 'POST',
     headers: { 'X-Admin-Key': adminKey, 'Content-Type': 'application/octet-stream' },
     body: content
