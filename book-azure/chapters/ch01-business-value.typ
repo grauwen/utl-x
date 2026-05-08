@@ -162,7 +162,7 @@ Scale horizontally by adding more container instances. Each instance handles its
 
 *Need more?* For large-scale deployments (large SAP IDocs, high-volume streaming, dedicated infrastructure for compliance), custom plans with higher resources are available on request. UTLXe runs on Azure Container Apps workload profiles, supporting up to 16 vCPU and 128 GB RAM per container. Contact us for Enterprise sizing.
 
-No license fees. No per-message charges. No minimum commitment. Stop the container, stop paying.
+No license fees. No per-message charges. No minimum commitment. On the consumption plan, containers can scale to zero --- when no messages are flowing, compute costs stop. You only pay for Azure infrastructure (container resources when running, storage for persistence).
 
 == What This Book Covers
 
