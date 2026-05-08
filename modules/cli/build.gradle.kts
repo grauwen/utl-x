@@ -91,7 +91,7 @@ graalvmNative {
                 "-H:+AddAllCharsets",
                 "--enable-url-protocols=http,https",
                 "--allow-incomplete-classpath",
-                "-march=native",
+                "-march=compatibility",
                 "-R:MaxHeapSize=256m"
             )
             
