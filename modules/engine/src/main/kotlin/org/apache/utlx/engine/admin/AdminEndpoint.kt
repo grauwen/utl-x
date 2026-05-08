@@ -958,7 +958,7 @@ fun configureAdmin(
                     ))
                     return@delete
                 }
-                val removed = validationOverrides.remove(name)
+                validationOverrides.remove(name)
                 val tx = registry.get(name)!!
                 logger.info("Admin: validation override for '{}' removed", name)
                 call.respond(HttpStatusCode.OK, mapOf(
