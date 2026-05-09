@@ -905,4 +905,86 @@ class AdminEndpointTest {
         assertEquals(200, status)
         assertTrue(body.contains("log_level"), "Should include log_level: $body")
     }
+
+    // ── Transformation config endpoints ──
+
+    @Test
+    fun `get transformation config returns defaults`() {
+        uploadTestTransformation("cfg-test")
+
+        val (status, body) = adminGet("/admin/transformations/cfg-test/config")
+        assertEquals(200, status)
+        assertTrue(body.contains("strategy"), "Should contain strategy: $body")
+        assertTrue(body.contains("validationPolicy"), "Should contain validationPolicy: $body")
+        assertTrue(body.contains("maxConcurrent"), "Should contain maxConcurrent: $body")
+    }
+
+    @Test
+    fun `get config for nonexistent transformation returns 404`() {
+        val (status, _) = adminGet("/admin/transformations/nonexistent/config")
+        assertEquals(404, status)
+    }
+
+    @Test
+    fun `update transformation config changes strategy and policy`() {
+        uploadTestTransformation("cfg-test")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/cfg-test/config",
+            """{"strategy": "TEMPLATE", "validationPolicy": "strict", "maxConcurrent": 8}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("TEMPLATE"), "Should contain new strategy: $body")
+        assertTrue(body.contains("strict"), "Should contain new policy: $body")
+        assertTrue(body.contains("8"), "Should contain new maxConcurrent: $body")
+
+        // Verify it persisted
+        val (getStatus, getBody) = adminGet("/admin/transformations/cfg-test/config")
+        assertEquals(200, getStatus)
+        assertTrue(getBody.contains("TEMPLATE"), "GET should reflect update: $getBody")
+        assertTrue(getBody.contains("strict"), "GET should reflect policy: $getBody")
+    }
+
+    @Test
+    fun `update config with schema bindings`() {
+        uploadTestTransformation("cfg-schema")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/cfg-schema/config",
+            """{"inputs": [{"name": "input", "schema": "order.xsd"}], "output_schema": "invoice.xsd"}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("order.xsd"), "Should contain input schema: $body")
+        assertTrue(body.contains("invoice.xsd"), "Should contain output schema: $body")
+    }
+
+    @Test
+    fun `update config partial update preserves other fields`() {
+        uploadTestTransformation("cfg-partial")
+
+        // Set initial config
+        adminPostJson(
+            "/admin/transformations/cfg-partial/config",
+            """{"strategy": "TEMPLATE", "validationPolicy": "warn"}"""
+        )
+
+        // Partial update — only maxConcurrent
+        val (status, body) = adminPostJson(
+            "/admin/transformations/cfg-partial/config",
+            """{"maxConcurrent": 16}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("TEMPLATE"), "Strategy should be preserved: $body")
+        assertTrue(body.contains("warn"), "Policy should be preserved: $body")
+        assertTrue(body.contains("16"), "MaxConcurrent should be updated: $body")
+    }
+
+    @Test
+    fun `update config for nonexistent transformation returns 404`() {
+        val (status, _) = adminPostJson(
+            "/admin/transformations/nonexistent/config",
+            """{"strategy": "COMPILED"}"""
+        )
+        assertEquals(404, status)
+    }
 }

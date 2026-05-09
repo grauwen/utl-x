@@ -71,6 +71,8 @@ function route() {
     renderSchemas();
   } else if (parts[0] === 'sync') {
     renderSync();
+  } else if (parts[0] === 'config') {
+    renderConfig();
   } else {
     renderDashboard();
   }
@@ -137,6 +139,7 @@ function layout(activeNav, content) {
       <a href="#/schemas" class="${activeNav === 'schemas' ? 'active' : ''}">Schemas</a>
       <a href="#/sync" class="${activeNav === 'sync' ? 'active' : ''}">Sync</a>
       <a href="#/logs" class="${activeNav === 'logs' ? 'active' : ''}">Logs</a>
+      <a href="#/config" class="${activeNav === 'config' ? 'active' : ''}">Config</a>
     </nav>
     <main>
       ${locked ? '<div class="banner banner-locked">Production mode (locked) — transformations deployed via CI/CD. Operational endpoints available.</div>' : ''}
@@ -212,10 +215,13 @@ function describeMessaging(msg) {
 async function renderTransformationDetail(name) {
   layout('dashboard', '<div class="card"><h2>Loading...</h2></div>');
 
-  const [detailResp, errorsResp, msgResp] = await Promise.all([
+  const [detailResp, errorsResp, msgResp, valResp, cfgResp, schemasResp] = await Promise.all([
     apiGet(`/transformations/${name}`),
     apiGet(`/transformations/${name}/errors?limit=10`),
-    apiGet(`/transformations/${name}/messaging`)
+    apiGet(`/transformations/${name}/messaging`),
+    apiGet(`/transformations/${name}/validation`),
+    apiGet(`/transformations/${name}/config`),
+    apiGet('/schemas')
   ]);
 
   if (detailResp.status === 404) {
@@ -226,6 +232,9 @@ async function renderTransformationDetail(name) {
   const tx = detailResp.data;
   const errors = errorsResp.data.errors || [];
   const msg = msgResp.data;
+  const val = valResp.data || {};
+  const cfg = cfgResp.data || {};
+  const availableSchemas = (schemasResp.data.schemas || []).map(s => s.filename);
   const locked = engineInfo.mode === 'locked';
 
   const errorRows = errors.map(e => `
@@ -269,6 +278,69 @@ async function renderTransformationDetail(name) {
             <tr><td><strong>Sync</strong></td><td class="status-${msg.sync_status || 'no_dapr'}">${msg.sync_status || 'no_dapr'}</td></tr>
            </table>`
         : '<p style="color:#aaa">No messaging configured</p>'}
+    </div>
+
+    <div class="card">
+      <h2>Configuration</h2>
+      ${locked ? `
+      <table>
+        <tr><td style="width:150px"><strong>Strategy</strong></td><td>${cfg.strategy || 'COMPILED'}</td></tr>
+        <tr><td><strong>Validation</strong></td><td>${cfg.validationPolicy || 'SKIP'}</td></tr>
+        <tr><td><strong>Max concurrent</strong></td><td>${cfg.maxConcurrent || 1}</td></tr>
+        <tr><td><strong>Input schema</strong></td><td>${(cfg.inputs || []).map(i => i.schema || 'none').join(', ')}</td></tr>
+        <tr><td><strong>Output schema</strong></td><td>${cfg.output_schema || 'none'}</td></tr>
+      </table>
+      <p style="color:#856404;margin-top:8px">Read-only in locked mode</p>
+      ` : `
+      <label>Strategy</label>
+      <select id="cfg-strategy" style="width:auto">
+        ${['COMPILED','TEMPLATE','COPY','AUTO'].map(s => `<option ${s === cfg.strategy ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+
+      <label>Validation policy</label>
+      <select id="cfg-validation" style="width:auto">
+        ${['strict','warn','SKIP'].map(s => `<option ${s === cfg.validationPolicy ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+
+      <label>Max concurrent</label>
+      <input type="text" id="cfg-maxconcurrent" value="${cfg.maxConcurrent || 1}" style="width:80px">
+
+      <label>Input schema</label>
+      <select id="cfg-input-schema" style="width:auto">
+        <option value="">none</option>
+        ${availableSchemas.map(s => `<option ${(cfg.inputs || []).some(i => i.schema === s) ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+
+      <label>Output schema</label>
+      <select id="cfg-output-schema" style="width:auto">
+        <option value="">none</option>
+        ${availableSchemas.map(s => `<option ${s === cfg.output_schema ? 'selected' : ''}>${s}</option>`).join('')}
+      </select>
+
+      <div class="btn-group">
+        <button class="btn btn-primary btn-sm" onclick="doSaveConfig('${name}')">Save Config</button>
+      </div>
+      <div id="cfg-result"></div>
+      `}
+    </div>
+
+    <div class="card">
+      <h2>Validation</h2>
+      <table>
+        <tr><td style="width:150px"><strong>Effective policy</strong></td><td>${val.effective_policy || 'n/a'}</td></tr>
+        <tr><td><strong>Source</strong></td><td>${val.source || 'default'}</td></tr>
+        <tr><td><strong>Config policy</strong></td><td>${val.config_policy || 'n/a'}</td></tr>
+        ${val.override_policy ? `<tr><td><strong>Override</strong></td><td>${val.override_policy} <button class="btn btn-danger btn-sm" onclick="doRemoveValidationOverride('${name}')">Remove</button></td></tr>` : ''}
+      </table>
+      <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+        <select id="val-policy" style="width:auto">
+          <option value="strict" ${val.effective_policy === 'strict' ? 'selected' : ''}>strict</option>
+          <option value="warn" ${val.effective_policy === 'warn' ? 'selected' : ''}>warn</option>
+          <option value="off" ${val.effective_policy === 'off' ? 'selected' : ''}>off</option>
+        </select>
+        <button class="btn btn-sm" onclick="doSetValidationOverride('${name}')">Set Override</button>
+      </div>
+      <div id="val-result"></div>
     </div>
 
     <div class="card">
@@ -323,6 +395,47 @@ async function doDelete(name) {
   if (!confirm(`Delete transformation '${name}'?`)) return;
   await apiDelete(`/transformations/${name}`);
   navigate('#/');
+}
+
+async function doSaveConfig(name) {
+  const strategy = document.getElementById('cfg-strategy').value;
+  const validationPolicy = document.getElementById('cfg-validation').value;
+  const maxConcurrent = parseInt(document.getElementById('cfg-maxconcurrent').value) || 1;
+  const inputSchema = document.getElementById('cfg-input-schema').value || null;
+  const outputSchema = document.getElementById('cfg-output-schema').value || null;
+
+  const body = {
+    strategy,
+    validationPolicy,
+    maxConcurrent,
+    inputs: inputSchema ? [{ name: 'input', schema: inputSchema }] : [],
+    output_schema: outputSchema
+  };
+
+  const resp = await apiPost(`/transformations/${name}/config`, body);
+  const div = document.getElementById('cfg-result');
+  if (resp.status === 200) {
+    div.innerHTML = `<div class="banner banner-success" style="margin-top:8px">Config saved (strategy=${strategy}, validation=${validationPolicy})</div>`;
+  } else {
+    div.innerHTML = `<div class="banner banner-error" style="margin-top:8px">${escapeHtml(resp.data.error || 'Failed')}</div>`;
+  }
+}
+
+async function doSetValidationOverride(name) {
+  const policy = document.getElementById('val-policy').value;
+  const resp = await apiPost(`/transformations/${name}/validation`, { policy });
+  const div = document.getElementById('val-result');
+  if (resp.status === 200) {
+    div.innerHTML = `<div class="banner banner-success" style="margin-top:8px">Override set to '${policy}'</div>`;
+    setTimeout(() => renderTransformationDetail(name), 1000);
+  } else {
+    div.innerHTML = `<div class="banner banner-error" style="margin-top:8px">${escapeHtml(resp.data.error || 'Failed')}</div>`;
+  }
+}
+
+async function doRemoveValidationOverride(name) {
+  await apiDelete(`/transformations/${name}/validation`);
+  renderTransformationDetail(name);
 }
 
 async function doTest(name) {
@@ -388,6 +501,17 @@ output json
            onclick="event.preventDefault(); exportBundle()">Export Bundle</a>
       </div>
     </div>
+
+    ${locked ? '' : `
+    <div class="card">
+      <h2>Delete All</h2>
+      <p>Remove all transformations and schemas. Returns the engine to an empty state.</p>
+      <div class="btn-group">
+        <button class="btn btn-danger" onclick="doDeleteBundle()">Delete All Transformations</button>
+      </div>
+      <div id="delete-bundle-result"></div>
+    </div>
+    `}
   `);
 }
 
@@ -454,6 +578,18 @@ async function exportBundle() {
   a.href = URL.createObjectURL(blob);
   a.download = 'bundle.utlar';
   a.click();
+}
+
+async function doDeleteBundle() {
+  if (!confirm('Delete ALL transformations and schemas? This cannot be undone.')) return;
+  const resp = await apiDelete('/bundle');
+  const div = document.getElementById('delete-bundle-result');
+  if (resp.status === 200) {
+    div.innerHTML = `<div class="banner banner-success" style="margin-top:8px">All transformations deleted</div>`;
+    setTimeout(() => navigate('#/'), 1000);
+  } else {
+    div.innerHTML = `<div class="banner banner-error" style="margin-top:8px">${escapeHtml(resp.data.error || 'Failed')}</div>`;
+  }
 }
 
 // ── Messaging ──
@@ -616,6 +752,7 @@ async function renderLogs() {
         </select>
         <button class="btn btn-sm" onclick="doFilterLogs()">Filter</button>
         <button class="btn btn-sm" onclick="renderLogs()">Refresh</button>
+        <button class="btn btn-danger btn-sm" onclick="doClearLogs()">Clear</button>
       </div>
       <div id="log-entries" style="max-height:500px;overflow-y:auto;background:#fafafa;padding:8px;border:1px solid #eee;border-radius:4px">
         ${logLines || '<p style="color:#aaa">No log entries</p>'}
@@ -654,6 +791,12 @@ async function doFilterLogs() {
   document.getElementById('log-entries').innerHTML = logLines || '<p style="color:#aaa">No entries match</p>';
 }
 
+async function doClearLogs() {
+  if (!confirm('Clear all buffered log entries?')) return;
+  await apiDelete('/logs');
+  renderLogs();
+}
+
 // ── Schemas ──
 
 async function renderSchemas() {
@@ -667,7 +810,10 @@ async function renderSchemas() {
       <td><strong>${s.filename}</strong></td>
       <td>${s.size_bytes} B</td>
       <td>${s.uploaded_at || ''}</td>
-      <td>${!locked ? `<button class="btn btn-danger btn-sm" onclick="doDeleteSchema('${s.filename}')">Delete</button>` : ''}</td>
+      <td>
+        <button class="btn btn-sm" onclick="doDownloadSchema('${s.filename}')">Download</button>
+        ${!locked ? `<button class="btn btn-danger btn-sm" onclick="doDeleteSchema('${s.filename}')">Delete</button>` : ''}
+      </td>
     </tr>`).join('');
 
   layout('schemas', `
@@ -715,6 +861,15 @@ async function doDeleteSchema(filename) {
   if (!confirm(`Delete schema '${filename}'?`)) return;
   await apiDelete(`/schemas/${filename}`);
   renderSchemas();
+}
+
+async function doDownloadSchema(filename) {
+  const resp = await fetch(`${API_BASE}/admin/schemas/${filename}`, { headers: { 'X-Admin-Key': adminKey } });
+  const blob = await resp.blob();
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
 }
 
 // ── Sync Overview ──
@@ -784,6 +939,35 @@ async function doSyncAll() {
     div.innerHTML = `<div class="banner banner-success" style="margin-top:8px">${resp.data.message || 'Synced'}</div>`;
     setTimeout(() => renderSync(), 500);
   }
+}
+
+// ── Config ──
+
+async function renderConfig() {
+  layout('config', '<div class="card"><h2>Loading...</h2></div>');
+  const [configResp, infoResp] = await Promise.all([apiGet('/config'), apiGet('/info')]);
+  const config = configResp.data;
+  const info = infoResp.data;
+
+  layout('config', `
+    <div class="card">
+      <h2>Engine Configuration</h2>
+      <table>
+        ${Object.entries(config).map(([k, v]) =>
+          `<tr><td style="width:200px"><strong>${k}</strong></td><td>${v ?? '<span style="color:#aaa">not set</span>'}</td></tr>`
+        ).join('')}
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Engine Info</h2>
+      <table>
+        ${Object.entries(info).map(([k, v]) =>
+          `<tr><td style="width:200px"><strong>${k}</strong></td><td>${typeof v === 'object' ? JSON.stringify(v) : v ?? '<span style="color:#aaa">null</span>'}</td></tr>`
+        ).join('')}
+      </table>
+    </div>
+  `);
 }
 
 // ── Utilities ──

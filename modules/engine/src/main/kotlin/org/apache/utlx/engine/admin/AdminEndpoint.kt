@@ -757,6 +757,116 @@ fun configureAdmin(
                 ))
             }
 
+            // ── Get transformation config ──
+            get("/transformations/{name}/config") {
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@get
+                }
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "name" to name,
+                    "strategy" to tx.config.strategy,
+                    "validationPolicy" to tx.config.validationPolicy,
+                    "maxConcurrent" to tx.config.maxConcurrent,
+                    "inputs" to tx.config.inputs.map { mapOf("name" to it.name, "schema" to it.schema) },
+                    "output_schema" to tx.config.output.schema
+                ))
+            }
+
+            // ── Update transformation config (persisted to transform.yaml) ──
+            post("/transformations/{name}/config") {
+                if (isLocked) {
+                    call.respond(HttpStatusCode.Forbidden, lockedResponse(bundleInfo))
+                    return@post
+                }
+                val name = call.parameters["name"] ?: ""
+                val tx = registry.get(name)
+                if (tx == null) {
+                    call.respond(HttpStatusCode.NotFound, mapOf(
+                        "error" to "Transformation '$name' not found",
+                        "error_code" to "TRANSFORMATION_NOT_FOUND"
+                    ))
+                    return@post
+                }
+
+                val body = call.receiveText()
+                val jsonMapper = com.fasterxml.jackson.databind.ObjectMapper().apply {
+                    registerModule(com.fasterxml.jackson.module.kotlin.kotlinModule())
+                    configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                }
+                val tree = try {
+                    jsonMapper.readTree(body)
+                } catch (e: Exception) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Invalid JSON: ${e.message}",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                // Build updated config from current + overrides
+                val newStrategy = tree.get("strategy")?.asText() ?: tx.config.strategy
+                val newValidationPolicy = tree.get("validationPolicy")?.asText() ?: tx.config.validationPolicy
+                val newMaxConcurrent = tree.get("maxConcurrent")?.asInt() ?: tx.config.maxConcurrent
+
+                // Schema bindings: input schema(s) and output schema
+                val newInputs = if (tree.has("inputs")) {
+                    tree.get("inputs").map { node ->
+                        org.apache.utlx.engine.config.InputSlot(
+                            name = node.get("name")?.asText() ?: "input",
+                            schema = node.get("schema")?.asText()
+                        )
+                    }
+                } else {
+                    tx.config.inputs
+                }
+                val newOutputSchema = if (tree.has("output_schema")) {
+                    tree.get("output_schema")?.asText()
+                } else {
+                    tx.config.output.schema
+                }
+
+                val updatedConfig = tx.config.copy(
+                    strategy = newStrategy,
+                    validationPolicy = newValidationPolicy,
+                    maxConcurrent = newMaxConcurrent,
+                    inputs = newInputs,
+                    output = org.apache.utlx.engine.config.OutputSlot(schema = newOutputSchema)
+                )
+
+                // Re-register with updated config
+                val updatedInstance = TransformationInstance(
+                    name = tx.name, source = tx.source, strategy = tx.strategy,
+                    config = updatedConfig, loadedAt = tx.loadedAt,
+                    executionCount = tx.executionCount, errorCount = tx.errorCount,
+                    inputValidator = tx.inputValidator, inputValidators = tx.inputValidators,
+                    outputValidator = tx.outputValidator, paused = tx.paused,
+                    recentErrors = tx.recentErrors
+                )
+                registry.register(name, updatedInstance)
+
+                // Persist to disk
+                if (dataDirPath != null) {
+                    persistMessagingConfig(dataDirPath, name, updatedConfig)
+                }
+
+                logger.info("Admin: config updated for '{}' (strategy={}, validation={}, maxConcurrent={})",
+                    name, newStrategy, newValidationPolicy, newMaxConcurrent)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "name" to name,
+                    "strategy" to newStrategy,
+                    "validationPolicy" to newValidationPolicy,
+                    "maxConcurrent" to newMaxConcurrent,
+                    "inputs" to newInputs.map { mapOf("name" to it.name, "schema" to it.schema) },
+                    "output_schema" to newOutputSchema
+                ))
+            }
+
             // ── Sync single transformation to Dapr ──
             post("/transformations/{name}/sync") {
                 val name = call.parameters["name"] ?: ""

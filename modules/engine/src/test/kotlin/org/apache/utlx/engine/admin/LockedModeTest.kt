@@ -260,4 +260,26 @@ class LockedModeTest {
         conn.outputStream.flush()
         assertEquals(200, conn.responseCode)
     }
+
+    // ── Config endpoints in locked mode ──
+
+    @Test
+    fun `get config allowed in locked mode`() {
+        val (status, body) = adminGet("/admin/transformations/locked-tx/config")
+        assertEquals(200, status)
+        assertTrue(body.contains("strategy"), "Should contain strategy: $body")
+    }
+
+    @Test
+    fun `update config blocked in locked mode`() {
+        val url = URL("http://localhost:$adminPort/admin/transformations/locked-tx/config")
+        val conn = url.openConnection() as HttpURLConnection
+        conn.requestMethod = "POST"
+        conn.setRequestProperty("Content-Type", "application/json")
+        conn.setRequestProperty("X-Admin-Key", adminKey)
+        conn.doOutput = true
+        conn.outputStream.write("""{"strategy":"TEMPLATE"}""".toByteArray())
+        conn.outputStream.flush()
+        assertEquals(403, conn.responseCode)
+    }
 }
