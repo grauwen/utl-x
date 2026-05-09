@@ -67,6 +67,22 @@ View Dapr integration status: sidecar version, loaded components, and per-transf
   caption: [Sync page --- Dapr sidecar status and per-transformation sync state],
 )
 
+=== Transformation Detail
+
+Click a transformation name to see its details: status, strategy, message count, errors. Pause, resume, or delete from here. The messaging button opens the queue/topic configuration.
+
+#figure(
+  image("../pictures/webadmin/webadmin-6.png", width: 100%),
+  caption: [Transformation detail --- status, configuration with strategy and schema dropdowns],
+)
+
+Scroll down for the validation override, test panel (send sample input and see the output), recent errors, and the transformation source code.
+
+#figure(
+  image("../pictures/webadmin/webadmin-7.png", width: 100%),
+  caption: [Transformation detail (continued) --- validation override, test panel, errors, and source],
+)
+
 === Logs
 
 View recent log entries, filter by level or text, and change the log level at runtime with auto-revert. Essential for production debugging without opening the Azure portal.
@@ -74,6 +90,15 @@ View recent log entries, filter by level or text, and change the log level at ru
 #figure(
   image("../pictures/webadmin/webadmin-5.png", width: 100%),
   caption: [Logs page --- runtime log access with level change and filtering],
+)
+
+=== Config
+
+View the engine configuration and runtime info: version, mode (open/locked), bundle version, uptime, Dapr status, and all configuration values.
+
+#figure(
+  image("../pictures/webadmin/webadmin-8.png", width: 100%),
+  caption: [Config page --- engine configuration and runtime info],
 )
 
 In locked mode (production), the UI shows a read-only view. Upload and delete buttons are disabled. Operational actions (pause, resume, test, log level, validation override) remain available.
