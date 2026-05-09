@@ -29,15 +29,52 @@ UTLXe ships with an optional web UI --- a separate lightweight container (nginx,
   [utlxe-ui], [8088 (default)], [Web UI --- browser access, proxies `/admin/*` to UTLXe],
 )
 
-Open the UI in your browser at the Container App's external URL. The UI provides:
+Open the UI in your browser at the Container App's external URL.
 
-- *Dashboard* --- all transformations at a glance with message count, error rate, sync status
-- *Transformation detail* --- source code view, test panel (run with sample input), error history
-- *Upload* --- paste `.utlx` source directly or upload a `.zip` / `.utlar` bundle
-- *Messaging* --- configure queues, topics, Event Hubs per transformation, then sync to Dapr
-- *Logs* --- view recent log entries, change log level to DEBUG with auto-revert
-- *Schemas* --- upload, list, delete shared validation schemas
-- *Sync overview* --- Dapr integration status, loaded components, sync all drafts
+=== Dashboard
+
+The dashboard shows all loaded transformations with status, message count, error rate, and messaging configuration at a glance.
+
+#figure(
+  image("../pictures/webadmin/webadmin-1.png", width: 100%),
+  caption: [Dashboard --- transformation overview with status, messaging, and sync state],
+)
+
+=== Upload
+
+Paste `.utlx` source directly, upload a `.zip` / `.utlar` bundle, validate before deploying, or export the current state as an archive.
+
+#figure(
+  image("../pictures/webadmin/webadmin-2.png", width: 100%),
+  caption: [Upload page --- paste source, upload bundle, or export],
+)
+
+=== Schemas
+
+Upload, list, and manage shared validation schemas (XSD, JSON Schema, Avro, etc.) used by transformations.
+
+#figure(
+  image("../pictures/webadmin/webadmin-3.png", width: 100%),
+  caption: [Schemas page --- upload and manage validation schemas],
+)
+
+=== Sync
+
+View Dapr integration status: sidecar version, loaded components, and per-transformation sync state. Sync individual transformations or all drafts at once.
+
+#figure(
+  image("../pictures/webadmin/webadmin-4.png", width: 100%),
+  caption: [Sync page --- Dapr sidecar status and per-transformation sync state],
+)
+
+=== Logs
+
+View recent log entries, filter by level or text, and change the log level at runtime with auto-revert. Essential for production debugging without opening the Azure portal.
+
+#figure(
+  image("../pictures/webadmin/webadmin-5.png", width: 100%),
+  caption: [Logs page --- runtime log access with level change and filtering],
+)
 
 In locked mode (production), the UI shows a read-only view. Upload and delete buttons are disabled. Operational actions (pause, resume, test, log level, validation override) remain available.
 
