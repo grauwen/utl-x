@@ -108,6 +108,7 @@ When you deploy UTLXe from the Azure Marketplace, the following is provisioned a
 + *Admin Web UI* (optional) --- browser-based interface for uploading transformations, testing, and monitoring.
 + *Persistent storage* (optional) --- Azure Files mount so transformations survive container restarts.
 + *Health and metrics* --- Prometheus endpoint for Grafana or Azure Monitor.
++ *Distributed tracing* (optional) --- Azure Monitor OpenTelemetry agent built into the container. Set one environment variable to enable full end-to-end tracing across Service Bus, Dapr, and UTLXe in Application Insights.
 
 The deployment wizard asks for a resource group, region, and an *admin key* --- the key protects the Web UI and Admin API. Save it securely; you need it to log in after deployment. Five minutes later, you have a running transformation engine. Open the URL in your browser, enter the admin key, and the dashboard loads.
 

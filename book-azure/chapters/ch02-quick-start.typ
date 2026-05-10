@@ -20,10 +20,11 @@ The container starts empty --- no transformations are loaded. You deploy them vi
 + Configure the deployment:
   - Resource group and region.
   - Container App name.
+  - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 8 characters), but a UUID is recommended for security.
   - Persistent storage toggle --- enable this if you want transformations to survive container restarts.
 + Click *Create*. The deployment takes approximately two minutes.
 
-Once complete, note the admin key you entered during deployment --- you need it to log in to the Web UI.
+Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment.
 
 == Running Azure CLI Commands
 

@@ -211,8 +211,8 @@ Recommended alert rules:
   [Error rate], [> 1% for 5 min], [Warning], [Notify on-call --- check error ring buffer],
   [p99 latency], [> 500ms for 5 min], [Warning], [Investigate --- GC pressure or large messages],
   [Heap usage], [> 80%], [Warning], [Consider scaling up or increasing heap],
-  [Backpressure active], [`utlxe_heap_pressure == 1`], [Critical], [UTLXe is rejecting messages --- messages queue in Service Bus. Lower threshold or scale up.],
-  [Zero transforms], [== 0 for 2 min], [Critical], [Bundle not loaded --- check persistence/CI/CD],
+  [Backpressure active], [`utlxe_heap_pressure` `==` `1`], [Critical], [UTLXe is rejecting messages --- messages queue in Service Bus. Lower threshold or scale up.],
+  [Zero transforms], [count `==` 0 for 10 min], [Warning], [Bundle may not be loaded --- check persistence, CI/CD pipeline, or deployment logs],
   [Container restart], [uptime drops], [Info], [Expected during deployment, investigate if unexpected],
 )
 

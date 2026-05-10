@@ -5,9 +5,10 @@
 #table(
   columns: (auto, auto, 1fr),
   [*Variable*], [*Default*], [*Description*],
-  [`UTLXE_ADMIN_KEY`], [_(none)_], [Admin API authentication key. Required --- if not set, all admin endpoints return 403.],
+  [`UTLXE_ADMIN_KEY`], [_(none)_], [Admin API authentication key. Required --- if not set, all admin endpoints return 403. The deployment wizard generates a UUID for you.],
   [`UTLXE_HEAP_SIZE`], [`3072m`], [JVM heap size. Starter: `3072m` (4 GB container). Professional: `6144m` (8 GB container).],
-  [`JAVA_OPTS`], [_(see below)_], [Additional JVM options. Default includes G1GC, container support, AlwaysPreTouch.],
+  [`JAVA_OPTS`], [_(see below)_], [Additional JVM options. Default includes ZGC, container support, AlwaysPreTouch.],
+  [`APPLICATIONINSIGHTS_CONNECTION_STRING`], [_(none)_], [Set to enable distributed tracing. The Azure Monitor OpenTelemetry agent loads automatically. When not set, no tracing overhead.],
 )
 
 Default `JAVA_OPTS`:
@@ -23,7 +24,7 @@ The engine configuration file is optional. If present in the bundle, it override
 #table(
   columns: (auto, auto, 1fr),
   [*Field*], [*Default*], [*Description*],
-  [`maxInputSize`], [`5MB`], [Maximum message size before rejection. Messages larger than this are rejected with 413.],
+  [`maxInputSize`], [`5MB`], [Engine-level maximum message size. Messages larger than this are rejected with 413. Can also be set per transformation.],
   [`workers`], [CPU cores], [Worker thread pool size.],
   [`healthPort`], [`8081`], [Health + admin API port.],
   [`dataPort`], [`8085`], [Data plane port.],
@@ -54,7 +55,18 @@ Per-transformation configuration. Optional --- if absent, defaults apply.
   [`strategy`], [`COMPILED`], [Execution strategy: `TEMPLATE`, `COPY`, `COMPILED`, `AUTO`.],
   [`validationPolicy`], [`strict`], [Input validation: `strict` (reject), `warn` (log), `off` (skip).],
   [`maxConcurrent`], [_(unlimited)_], [Maximum concurrent executions for this transformation.],
+  [`maxInputSize`], [_(engine default)_], [Per-transformation max input size: `10KB`, `100KB`, `500KB`, `1MB`, `5MB`, `10MB`, `25MB`, `50MB`.],
   [`outputBinding`], [_(none)_], [Dapr output binding name for sending transformed messages.],
+)
+
+== Runtime Settings (changeable via Admin API, no restart)
+
+#table(
+  columns: (auto, auto, auto, 1fr),
+  [*Setting*], [*Default*], [*Endpoint*], [*Description*],
+  [Log level], [`INFO`], [`POST /admin/log/level`], [Change to `DEBUG` for Dapr traffic tracing. Auto-revert option.],
+  [Backpressure threshold], [85%], [`POST /admin/backpressure`], [Heap usage percentage that triggers 503 rejection. Range: 50--99%.],
+  [Validation override], [_(from config)_], [`POST /admin/transformations/{name}/validation`], [Ephemeral policy override (`strict`, `warn`, `off`). Resets on restart.],
 )
 
 Inputs and schemas:
