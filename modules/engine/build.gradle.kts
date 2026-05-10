@@ -71,6 +71,9 @@ dependencies {
     implementation("org.slf4j:slf4j-api:2.0.9")
     implementation("ch.qos.logback:logback-classic:1.4.14")
 
+    // EF14: OpenTelemetry API (agent provides the SDK implementation at runtime)
+    implementation("io.opentelemetry:opentelemetry-api:1.40.0")
+
     // Ktor for health endpoint
     implementation("io.ktor:ktor-server-core:2.3.7")
     implementation("io.ktor:ktor-server-netty:2.3.7")

@@ -44,6 +44,9 @@ WORKDIR /utlxe
 # Copy the fat JAR from builder
 COPY --from=builder /build/modules/engine/build/libs/utlxe-*.jar /utlxe/utlxe.jar
 
+# EF14: Download Azure Monitor OpenTelemetry agent (~30MB, optional at runtime)
+ADD https://github.com/microsoft/ApplicationInsights-Java/releases/download/3.6.2/applicationinsights-agent-3.6.2.jar /utlxe/applicationinsights-agent.jar
+
 # Create data directory (mount point for Azure Files)
 RUN mkdir -p /utlxe/data && chown -R utlxe:utlxe /utlxe
 
@@ -67,5 +70,9 @@ EXPOSE 8085 8081
 ENV UTLXE_HEAP_SIZE="3072m"
 ENV JAVA_OPTS="-XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch"
 
-ENTRYPOINT ["sh", "-c", "java -Xmx${UTLXE_HEAP_SIZE} $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
+# EF14: OpenTelemetry agent — enabled when APPLICATIONINSIGHTS_CONNECTION_STRING is set
+# When not set, the agent is not loaded — zero overhead
+ENV OTEL_AGENT=""
+
+ENTRYPOINT ["sh", "-c", "AGENT_FLAG=''; if [ -n \"$APPLICATIONINSIGHTS_CONNECTION_STRING\" ]; then AGENT_FLAG='-javaagent:/utlxe/applicationinsights-agent.jar'; fi; java $AGENT_FLAG -Xmx${UTLXE_HEAP_SIZE} $JAVA_OPTS -jar /utlxe/utlxe.jar $@", "--"]
 CMD ["--mode", "http", "--data-dir", "/utlxe/data"]

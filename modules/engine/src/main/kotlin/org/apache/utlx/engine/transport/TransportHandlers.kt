@@ -126,11 +126,22 @@ object TransportHandlers {
         instance.recordExecution()
         val input = req.payload.toStringUtf8()
 
+        // EF14: Add UTLXe-specific attributes to the current span (created by the OTel agent)
+        org.apache.utlx.engine.telemetry.Tracing.addTransformAttributes(
+            req.transformationId, instance.strategy.name, input.length,
+            req.messageId, req.correlationId
+        )
+
         // EF02: Resolve effective validation policy (runtime override > config > default)
         val policyOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
         val result = ValidationOrchestrator.execute(instance, input, policyOverride)
         val durationUs = (System.nanoTime() - startTime) / 1000
+
+        // EF14: Record result attributes on the agent-created span
+        org.apache.utlx.engine.telemetry.Tracing.recordResult(
+            result.output?.length, durationUs, if (result.success) null else result.error
+        )
 
         if (!result.success) {
             instance.recordError()
