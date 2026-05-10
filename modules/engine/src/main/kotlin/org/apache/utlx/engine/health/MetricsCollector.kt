@@ -70,6 +70,15 @@ object MetricsCollector {
         sb.appendMetric("utlxe_jvm_threads", "gauge", "Number of active JVM threads",
             Thread.activeCount().toLong())
 
+        sb.appendMetric("utlxe_heap_usage_percent", "gauge", "Heap usage as percentage (0-100)",
+            engine.heapUsagePercent().toLong())
+
+        sb.appendMetric("utlxe_heap_backpressure_threshold", "gauge", "Heap backpressure threshold (0-100)",
+            (engine.heapBackpressureThreshold * 100).toLong())
+
+        sb.appendMetric("utlxe_heap_pressure", "gauge", "Heap backpressure active (1=rejecting, 0=normal)",
+            if (engine.isHeapPressure()) 1L else 0L)
+
         return sb.toString()
     }
 

@@ -1056,4 +1056,49 @@ class AdminEndpointTest {
         assertEquals(200, status)
         assertTrue(body.contains("ok"), "Should accept without limit: $body")
     }
+
+    // ── Heap backpressure tests ──
+
+    @Test
+    fun `get backpressure returns current status`() {
+        val (status, body) = adminGet("/admin/backpressure")
+        assertEquals(200, status)
+        assertTrue(body.contains("threshold"), "Should contain threshold: $body")
+        assertTrue(body.contains("heap_used_mb"), "Should contain heap_used_mb: $body")
+        assertTrue(body.contains("heap_max_mb"), "Should contain heap_max_mb: $body")
+        assertTrue(body.contains("pressure"), "Should contain pressure: $body")
+    }
+
+    @Test
+    fun `set backpressure threshold`() {
+        val (status, body) = adminPostJson("/admin/backpressure", """{"threshold": 90}""")
+        assertEquals(200, status)
+        assertTrue(body.contains("90%"), "Should confirm new threshold: $body")
+
+        // Verify via GET
+        val (getStatus, getBody) = adminGet("/admin/backpressure")
+        assertEquals(200, getStatus)
+        assertTrue(getBody.contains("90%"), "GET should reflect new threshold: $getBody")
+
+        // Reset to default
+        adminPostJson("/admin/backpressure", """{"threshold": 85}""")
+    }
+
+    @Test
+    fun `set invalid backpressure threshold returns 400`() {
+        val (status1, _) = adminPostJson("/admin/backpressure", """{"threshold": 30}""")
+        assertEquals(400, status1)
+
+        val (status2, _) = adminPostJson("/admin/backpressure", """{"threshold": 100}""")
+        assertEquals(400, status2)
+    }
+
+    @Test
+    fun `info endpoint includes heap backpressure`() {
+        val (status, body) = adminGet("/admin/info")
+        assertEquals(200, status)
+        assertTrue(body.contains("heap_backpressure_threshold"), "Should include threshold: $body")
+        assertTrue(body.contains("heap_usage"), "Should include heap_usage: $body")
+        assertTrue(body.contains("heap_pressure"), "Should include pressure: $body")
+    }
 }

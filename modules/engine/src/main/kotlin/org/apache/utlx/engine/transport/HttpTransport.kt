@@ -335,6 +335,17 @@ class HttpTransport(
      * forwards messaging triad and custom properties to output (EF04).
      */
     private suspend fun handleDaprInput(call: ApplicationCall, registry: TransformationRegistry) {
+        // Heap backpressure — reject before processing to prevent OOM
+        if (engine.isHeapPressure()) {
+            logger.warn("Heap backpressure — rejecting request (threshold: {}%)", (engine.heapBackpressureThreshold * 100).toInt())
+            call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                "success" to false,
+                "error" to "Heap memory pressure — message will be retried",
+                "error_code" to "HEAP_PRESSURE"
+            ))
+            return
+        }
+
         val bindingName = call.parameters["bindingName"] ?: "default"
         val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
 
@@ -552,6 +563,17 @@ class HttpTransport(
      * Unwraps CloudEvents, extracts correlation metadata, delegates to transformation.
      */
     private suspend fun handlePubSubInput(call: ApplicationCall, registry: TransformationRegistry) {
+        // Heap backpressure — reject before processing to prevent OOM
+        if (engine.isHeapPressure()) {
+            logger.warn("Heap backpressure — rejecting pub/sub request (threshold: {}%)", (engine.heapBackpressureThreshold * 100).toInt())
+            call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                "success" to false,
+                "error" to "Heap memory pressure — message will be retried",
+                "error_code" to "HEAP_PRESSURE"
+            ))
+            return
+        }
+
         val transformName = call.parameters["name"] ?: "default"
 
         val instance = registry.get(transformName)

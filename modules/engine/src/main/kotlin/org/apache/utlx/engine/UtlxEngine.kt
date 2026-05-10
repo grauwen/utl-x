@@ -33,6 +33,37 @@ class UtlxEngine(val config: EngineConfig) {
     /** Whether the engine is in locked (production) mode — .utlar found on disk. */
     val isLocked: Boolean get() = bundleInfo.mode == "locked"
 
+    /** Heap backpressure threshold (0.0-1.0). When heap usage exceeds this, return 503 to Dapr. */
+    @Volatile var heapBackpressureThreshold: Double = 0.85
+
+    /** Cached heap usage (0.0-1.0) — updated every 100ms by background thread. */
+    @Volatile var heapUsage: Double = 0.0
+        private set
+
+    /** Check if heap is under pressure (compares cached number against threshold — one comparison). */
+    fun isHeapPressure(): Boolean = heapUsage > heapBackpressureThreshold
+
+    /** Current heap usage as percentage (for Admin API display). */
+    fun heapUsagePercent(): Int = (heapUsage * 100).toInt()
+
+    // Background thread updates heap usage every 100ms
+    private val heapMonitor = Thread({
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                val rt = Runtime.getRuntime()
+                val used = rt.totalMemory() - rt.freeMemory()
+                val max = rt.maxMemory()
+                heapUsage = used.toDouble() / max
+                Thread.sleep(100)
+            } catch (_: InterruptedException) {
+                break
+            }
+        }
+    }, "heap-monitor").apply {
+        isDaemon = true
+        start()
+    }
+
     val state: EngineState get() = stateRef.get()
 
     /**

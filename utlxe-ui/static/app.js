@@ -961,11 +961,49 @@ async function doSyncAll() {
 
 async function renderConfig() {
   layout('config', '<div class="card"><h2>Loading...</h2></div>');
-  const [configResp, infoResp] = await Promise.all([apiGet('/config'), apiGet('/info')]);
+  const [configResp, infoResp, bpResp] = await Promise.all([
+    apiGet('/config'), apiGet('/info'), apiGet('/backpressure')
+  ]);
   const config = configResp.data;
   const info = infoResp.data;
+  const bp = bpResp.data;
+
+  const pressureColor = bp.pressure ? 'status-error' : 'status-synced';
+  const pressureText = bp.pressure ? 'REJECTING — heap pressure active' : 'normal';
+  const usagePercent = parseInt(bp.heap_usage) || 0;
+  const barColor = usagePercent > 85 ? '#dc3545' : usagePercent > 70 ? '#ffc107' : '#28a745';
 
   layout('config', `
+    <div class="card">
+      <h2>Heap Backpressure</h2>
+      <div style="display:flex;gap:24px;align-items:center;margin-bottom:12px">
+        <div>
+          <div style="font-size:28px;font-weight:700">${bp.heap_usage}</div>
+          <div style="font-size:11px;color:#888">HEAP USED</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:700">${bp.heap_used_mb} MB</div>
+          <div style="font-size:11px;color:#888">OF ${bp.heap_max_mb} MB</div>
+        </div>
+        <div>
+          <div style="font-size:28px;font-weight:700" class="${pressureColor}">${pressureText}</div>
+          <div style="font-size:11px;color:#888">STATUS</div>
+        </div>
+      </div>
+      <div style="background:#eee;border-radius:4px;height:20px;margin-bottom:12px">
+        <div style="background:${barColor};height:100%;border-radius:4px;width:${usagePercent}%;transition:width 0.3s"></div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <label style="margin:0">Threshold:</label>
+        <select id="bp-threshold" style="width:auto">
+          ${[50,60,70,75,80,85,90,95].map(v => `<option ${parseInt(bp.threshold) === v ? 'selected' : ''}>${v}%</option>`).join('')}
+        </select>
+        <button class="btn btn-primary btn-sm" onclick="doSetBackpressure()">Apply</button>
+        <button class="btn btn-sm" onclick="renderConfig()">Refresh</button>
+      </div>
+      <div id="bp-result"></div>
+    </div>
+
     <div class="card">
       <h2>Engine Configuration</h2>
       <table>
@@ -984,6 +1022,18 @@ async function renderConfig() {
       </table>
     </div>
   `);
+}
+
+async function doSetBackpressure() {
+  const threshold = parseInt(document.getElementById('bp-threshold').value);
+  const resp = await apiPost('/backpressure', { threshold });
+  const div = document.getElementById('bp-result');
+  if (resp.status === 200) {
+    div.innerHTML = `<div class="banner banner-success" style="margin-top:8px">Threshold set to ${threshold}%</div>`;
+    setTimeout(() => renderConfig(), 1000);
+  } else {
+    div.innerHTML = `<div class="banner banner-error" style="margin-top:8px">${escapeHtml(resp.data.error || 'Failed')}</div>`;
+  }
 }
 
 // ── Utilities ──

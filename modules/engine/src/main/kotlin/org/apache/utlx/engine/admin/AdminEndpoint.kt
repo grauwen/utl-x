@@ -1150,7 +1150,10 @@ fun configureAdmin(
                     "log_level" to LogBuffer.getLevel(),
                     "log_buffer_size" to LogBuffer.size(),
                     "tracing" to org.apache.utlx.engine.telemetry.Tracing.isActive,
-                    "tracing_agent" to if (org.apache.utlx.engine.telemetry.Tracing.isActive) "Azure Monitor agent loaded" else "disabled (set APPLICATIONINSIGHTS_CONNECTION_STRING to enable)"
+                    "tracing_agent" to if (org.apache.utlx.engine.telemetry.Tracing.isActive) "Azure Monitor agent loaded" else "disabled (set APPLICATIONINSIGHTS_CONNECTION_STRING to enable)",
+                    "heap_backpressure_threshold" to "${(engine.heapBackpressureThreshold * 100).toInt()}%",
+                    "heap_usage" to "${engine.heapUsagePercent()}%",
+                    "heap_pressure" to engine.isHeapPressure()
                 ))
             }
 
@@ -1226,6 +1229,42 @@ fun configureAdmin(
             delete("/logs") {
                 LogBuffer.clear()
                 call.respond(HttpStatusCode.OK, mapOf("success" to true, "message" to "Log buffer cleared"))
+            }
+
+            // ── Heap backpressure (allowed in locked mode — operational) ──
+
+            get("/backpressure") {
+                val rt = Runtime.getRuntime()
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "threshold" to "${(engine.heapBackpressureThreshold * 100).toInt()}%",
+                    "heap_used_mb" to (rt.totalMemory() - rt.freeMemory()) / (1024 * 1024),
+                    "heap_max_mb" to rt.maxMemory() / (1024 * 1024),
+                    "heap_usage" to "${engine.heapUsagePercent()}%",
+                    "pressure" to engine.isHeapPressure()
+                ))
+            }
+
+            post("/backpressure") {
+                val body = call.receiveText()
+                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+                val tree = try { mapper.readTree(body) } catch (_: Exception) { null }
+                val threshold = tree?.get("threshold")?.asInt()
+
+                if (threshold == null || threshold < 50 || threshold > 99) {
+                    call.respond(HttpStatusCode.BadRequest, mapOf(
+                        "error" to "Invalid threshold. Must be 50-99 (percent).",
+                        "error_code" to "INPUT_PARSE_FAILED"
+                    ))
+                    return@post
+                }
+
+                val previous = (engine.heapBackpressureThreshold * 100).toInt()
+                engine.heapBackpressureThreshold = threshold / 100.0
+                logger.info("Admin: heap backpressure threshold changed {}% → {}%", previous, threshold)
+                call.respond(HttpStatusCode.OK, mapOf(
+                    "previous_threshold" to "$previous%",
+                    "threshold" to "$threshold%"
+                ))
             }
         }
     }
