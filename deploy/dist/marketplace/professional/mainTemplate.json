@@ -1,0 +1,741 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.42.1.51946",
+      "templateHash": "4032873987562165820"
+    }
+  },
+  "parameters": {
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]",
+      "metadata": {
+        "description": "Azure region for all resources"
+      }
+    },
+    "containerImage": {
+      "type": "string",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.1.0",
+      "metadata": {
+        "description": "Docker image to deploy"
+      }
+    },
+    "cpuCores": {
+      "type": "string",
+      "defaultValue": "2.0",
+      "allowedValues": [
+        "0.5",
+        "1.0",
+        "2.0",
+        "4.0"
+      ],
+      "metadata": {
+        "description": "CPU cores per instance (0.25, 0.5, 1.0, 2.0, 4.0)"
+      }
+    },
+    "memoryGi": {
+      "type": "string",
+      "defaultValue": "8.0",
+      "allowedValues": [
+        "1.0",
+        "2.0",
+        "4.0",
+        "8.0"
+      ],
+      "metadata": {
+        "description": "Memory per instance in Gi (0.5, 1.0, 2.0, 4.0, 8.0)"
+      }
+    },
+    "minReplicas": {
+      "type": "int",
+      "defaultValue": 1,
+      "minValue": 0,
+      "maxValue": 10,
+      "metadata": {
+        "description": "Minimum instances (0 = scale to zero when idle, 1 = always on)"
+      }
+    },
+    "maxReplicas": {
+      "type": "int",
+      "defaultValue": 5,
+      "minValue": 1,
+      "maxValue": 30,
+      "metadata": {
+        "description": "Maximum instances for auto-scaling"
+      }
+    },
+    "namePrefix": {
+      "type": "string",
+      "defaultValue": "utlxe",
+      "metadata": {
+        "description": "Resource name prefix"
+      }
+    },
+    "enableDapr": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Enable Dapr sidecar for Service Bus / Event Hub messaging"
+      }
+    },
+    "serviceBusConnection": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Service Bus connection string (required when enableDapr is true)"
+      }
+    },
+    "inputQueueName": {
+      "type": "string",
+      "defaultValue": "utlx-input",
+      "metadata": {
+        "description": "Input queue name for Service Bus"
+      }
+    },
+    "outputTopicName": {
+      "type": "string",
+      "defaultValue": "utlx-output",
+      "metadata": {
+        "description": "Output topic name for Service Bus"
+      }
+    },
+    "scalingMode": {
+      "type": "string",
+      "defaultValue": "http",
+      "allowedValues": [
+        "http",
+        "servicebus",
+        "both"
+      ],
+      "metadata": {
+        "description": "Scaling mode: http (default), servicebus, or both"
+      }
+    },
+    "workers": {
+      "type": "int",
+      "defaultValue": 8,
+      "allowedValues": [
+        8,
+        32,
+        64,
+        128
+      ],
+      "metadata": {
+        "description": "Worker threads for transformation processing (determines tier: Starter=8, Professional=32, Enterprise=64+)"
+      }
+    },
+    "adminKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "Admin API key for the Web UI and REST API. Required to manage transformations."
+      }
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "environment",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.42.1.51946",
+              "templateHash": "8891418230098640361"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region for all resources"
+              }
+            },
+            "namePrefix": {
+              "type": "string",
+              "defaultValue": "utlxe",
+              "metadata": {
+                "description": "Name prefix for resources"
+              }
+            }
+          },
+          "resources": [
+            {
+              "type": "Microsoft.OperationalInsights/workspaces",
+              "apiVersion": "2022-10-01",
+              "name": "[format('{0}-logs', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "sku": {
+                  "name": "PerGB2018"
+                },
+                "retentionInDays": 30
+              }
+            },
+            {
+              "type": "Microsoft.App/managedEnvironments",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}-env', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "appLogsConfiguration": {
+                  "destination": "log-analytics",
+                  "logAnalyticsConfiguration": {
+                    "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2022-10-01').customerId]",
+                    "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2022-10-01').primarySharedKey]"
+                  }
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix')))]"
+              ]
+            }
+          ],
+          "outputs": {
+            "environmentId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.App/managedEnvironments', format('{0}-env', parameters('namePrefix')))]"
+            },
+            "environmentName": {
+              "type": "string",
+              "value": "[format('{0}-env', parameters('namePrefix'))]"
+            },
+            "logAnalyticsId": {
+              "type": "string",
+              "value": "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix')))]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "container-app",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "location": {
+            "value": "[parameters('location')]"
+          },
+          "environmentId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2025-04-01').outputs.environmentId.value]"
+          },
+          "containerImage": {
+            "value": "[parameters('containerImage')]"
+          },
+          "cpuCores": {
+            "value": "[parameters('cpuCores')]"
+          },
+          "memoryGi": {
+            "value": "[parameters('memoryGi')]"
+          },
+          "minReplicas": {
+            "value": "[parameters('minReplicas')]"
+          },
+          "maxReplicas": {
+            "value": "[parameters('maxReplicas')]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "enableDapr": {
+            "value": "[parameters('enableDapr')]"
+          },
+          "serviceBusConnection": {
+            "value": "[parameters('serviceBusConnection')]"
+          },
+          "inputQueueName": {
+            "value": "[parameters('inputQueueName')]"
+          },
+          "scalingMode": {
+            "value": "[parameters('scalingMode')]"
+          },
+          "workers": {
+            "value": "[parameters('workers')]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.42.1.51946",
+              "templateHash": "8394179817986720864"
+            }
+          },
+          "parameters": {
+            "location": {
+              "type": "string",
+              "metadata": {
+                "description": "Azure region"
+              }
+            },
+            "environmentId": {
+              "type": "string",
+              "metadata": {
+                "description": "Container Apps Environment ID"
+              }
+            },
+            "containerImage": {
+              "type": "string",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.1.0",
+              "metadata": {
+                "description": "Docker image to deploy"
+              }
+            },
+            "cpuCores": {
+              "type": "string",
+              "defaultValue": "1.0",
+              "metadata": {
+                "description": "CPU cores per instance"
+              }
+            },
+            "memoryGi": {
+              "type": "string",
+              "defaultValue": "4.0",
+              "metadata": {
+                "description": "Memory per instance (Gi)"
+              }
+            },
+            "minReplicas": {
+              "type": "int",
+              "defaultValue": 1,
+              "metadata": {
+                "description": "Minimum number of instances (0 = scale to zero)"
+              }
+            },
+            "maxReplicas": {
+              "type": "int",
+              "defaultValue": 5,
+              "metadata": {
+                "description": "Maximum number of instances"
+              }
+            },
+            "namePrefix": {
+              "type": "string",
+              "defaultValue": "utlxe",
+              "metadata": {
+                "description": "Name prefix for resources"
+              }
+            },
+            "enableDapr": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable Dapr sidecar for messaging integration (Service Bus, Event Hub, etc.)"
+              }
+            },
+            "serviceBusConnection": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Service Bus connection string (required when enableDapr + Service Bus scaler)"
+              }
+            },
+            "inputQueueName": {
+              "type": "string",
+              "defaultValue": "utlx-input",
+              "metadata": {
+                "description": "Service Bus input queue name (for KEDA scaling)"
+              }
+            },
+            "scalingMode": {
+              "type": "string",
+              "defaultValue": "http",
+              "allowedValues": [
+                "http",
+                "servicebus",
+                "both"
+              ],
+              "metadata": {
+                "description": "Scaling mode: http, servicebus, or both"
+              }
+            },
+            "workers": {
+              "type": "int",
+              "defaultValue": 8,
+              "allowedValues": [
+                8,
+                32,
+                64,
+                128
+              ],
+              "metadata": {
+                "description": "Worker threads for transformation processing (Starter: 8, Professional: 32, Enterprise: 64+)"
+              }
+            }
+          },
+          "variables": {
+            "jvmHeapMb": {
+              "1.0": "768",
+              "2.0": "1536",
+              "4.0": "3072",
+              "8.0": "6144"
+            },
+            "javaOpts": "[format('-Xmx{0}m -XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch', variables('jvmHeapMb')[parameters('memoryGi')])]",
+            "serviceBusScaleRule": {
+              "name": "servicebus-scale",
+              "custom": {
+                "type": "azure-servicebus",
+                "metadata": {
+                  "queueName": "[parameters('inputQueueName')]",
+                  "messageCount": "5",
+                  "activationMessageCount": "1"
+                },
+                "auth": [
+                  {
+                    "secretRef": "servicebus-connection",
+                    "triggerParameter": "connection"
+                  }
+                ]
+              }
+            },
+            "httpScaleRule": {
+              "name": "http-scale",
+              "http": {
+                "metadata": {
+                  "concurrentRequests": "10"
+                }
+              }
+            },
+            "scaleRules": "[if(equals(parameters('scalingMode'), 'http'), createArray(variables('httpScaleRule')), if(equals(parameters('scalingMode'), 'servicebus'), createArray(variables('serviceBusScaleRule')), createArray(variables('httpScaleRule'), variables('serviceBusScaleRule'))))]"
+          },
+          "resources": [
+            {
+              "type": "Microsoft.App/containerApps",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}-app', parameters('namePrefix'))]",
+              "location": "[parameters('location')]",
+              "properties": {
+                "managedEnvironmentId": "[parameters('environmentId')]",
+                "configuration": {
+                  "dapr": "[if(parameters('enableDapr'), createObject('enabled', true(), 'appId', format('{0}-app', parameters('namePrefix')), 'appPort', 8085, 'appProtocol', 'http'), createObject('enabled', false()))]",
+                  "ingress": {
+                    "external": true,
+                    "targetPort": 8088,
+                    "transport": "http",
+                    "allowInsecure": false
+                  },
+                  "secrets": "[if(and(parameters('enableDapr'), not(empty(parameters('serviceBusConnection')))), createArray(createObject('name', 'servicebus-connection', 'value', parameters('serviceBusConnection'))), createArray())]"
+                },
+                "template": {
+                  "containers": [
+                    {
+                      "name": "utlxe",
+                      "image": "[parameters('containerImage')]",
+                      "resources": {
+                        "cpu": "[json(parameters('cpuCores'))]",
+                        "memory": "[format('{0}Gi', parameters('memoryGi'))]"
+                      },
+                      "args": [
+                        "--mode",
+                        "http",
+                        "--workers",
+                        "[string(parameters('workers'))]"
+                      ],
+                      "env": [
+                        {
+                          "name": "JAVA_OPTS",
+                          "value": "[variables('javaOpts')]"
+                        },
+                        {
+                          "name": "UTLXE_ADMIN_KEY",
+                          "value": "[parameters('adminKey')]"
+                        }
+                      ],
+                      "probes": [
+                        {
+                          "type": "Liveness",
+                          "httpGet": {
+                            "port": 8081,
+                            "path": "/health/live"
+                          },
+                          "initialDelaySeconds": 15,
+                          "periodSeconds": 10,
+                          "failureThreshold": 3
+                        },
+                        {
+                          "type": "Readiness",
+                          "httpGet": {
+                            "port": 8081,
+                            "path": "/health/ready"
+                          },
+                          "initialDelaySeconds": 10,
+                          "periodSeconds": 5,
+                          "failureThreshold": 3
+                        },
+                        {
+                          "type": "Startup",
+                          "httpGet": {
+                            "port": 8081,
+                            "path": "/health/live"
+                          },
+                          "initialDelaySeconds": 5,
+                          "periodSeconds": 3,
+                          "failureThreshold": 10
+                        }
+                      ]
+                    },
+                    {
+                      "name": "utlxe-ui",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.0.0",
+                      "resources": {
+                        "cpu": "[json('0.25')]",
+                        "memory": "0.5Gi"
+                      },
+                      "env": [
+                        {
+                          "name": "UI_PORT",
+                          "value": "8088"
+                        },
+                        {
+                          "name": "ADMIN_PORT",
+                          "value": "8081"
+                        }
+                      ]
+                    }
+                  ],
+                  "scale": {
+                    "minReplicas": "[parameters('minReplicas')]",
+                    "maxReplicas": "[parameters('maxReplicas')]",
+                    "rules": "[variables('scaleRules')]"
+                  }
+                }
+              }
+            }
+          ],
+          "outputs": {
+            "containerAppUrl": {
+              "type": "string",
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('{0}-app', parameters('namePrefix'))), '2024-03-01').configuration.ingress.fqdn)]"
+            },
+            "containerAppName": {
+              "type": "string",
+              "value": "[format('{0}-app', parameters('namePrefix'))]"
+            }
+          }
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'environment')]"
+      ]
+    },
+    {
+      "condition": "[parameters('enableDapr')]",
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2025-04-01",
+      "name": "dapr-components",
+      "properties": {
+        "expressionEvaluationOptions": {
+          "scope": "inner"
+        },
+        "mode": "Incremental",
+        "parameters": {
+          "environmentId": {
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2025-04-01').outputs.environmentId.value]"
+          },
+          "serviceBusConnection": {
+            "value": "[parameters('serviceBusConnection')]"
+          },
+          "inputQueueName": {
+            "value": "[parameters('inputQueueName')]"
+          },
+          "outputTopicName": {
+            "value": "[parameters('outputTopicName')]"
+          },
+          "enableServiceBus": {
+            "value": "[and(parameters('enableDapr'), not(equals(parameters('scalingMode'), 'http')))]"
+          }
+        },
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "metadata": {
+            "_generator": {
+              "name": "bicep",
+              "version": "0.42.1.51946",
+              "templateHash": "7230717486376036499"
+            }
+          },
+          "parameters": {
+            "environmentId": {
+              "type": "string",
+              "metadata": {
+                "description": "Container Apps Environment ID"
+              }
+            },
+            "serviceBusConnection": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Service Bus connection string"
+              }
+            },
+            "inputQueueName": {
+              "type": "string",
+              "defaultValue": "utlx-input",
+              "metadata": {
+                "description": "Input queue name for Service Bus"
+              }
+            },
+            "outputTopicName": {
+              "type": "string",
+              "defaultValue": "utlx-output",
+              "metadata": {
+                "description": "Output topic name for Service Bus"
+              }
+            },
+            "enableServiceBus": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Enable Service Bus bindings"
+              }
+            }
+          },
+          "resources": [
+            {
+              "condition": "[parameters('enableServiceBus')]",
+              "type": "Microsoft.App/managedEnvironments/daprComponents",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'servicebus-input')]",
+              "properties": {
+                "componentType": "bindings.azure.servicebus.queues",
+                "version": "v1",
+                "metadata": [
+                  {
+                    "name": "connectionString",
+                    "secretRef": "servicebus-connection"
+                  },
+                  {
+                    "name": "queueName",
+                    "value": "[parameters('inputQueueName')]"
+                  },
+                  {
+                    "name": "direction",
+                    "value": "input"
+                  },
+                  {
+                    "name": "maxConcurrentHandlers",
+                    "value": "8"
+                  }
+                ],
+                "secrets": [
+                  {
+                    "name": "servicebus-connection",
+                    "value": "[parameters('serviceBusConnection')]"
+                  }
+                ],
+                "scopes": [
+                  "utlxe-app"
+                ]
+              }
+            },
+            {
+              "condition": "[parameters('enableServiceBus')]",
+              "type": "Microsoft.App/managedEnvironments/daprComponents",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'servicebus-output')]",
+              "properties": {
+                "componentType": "bindings.azure.servicebus.topics",
+                "version": "v1",
+                "metadata": [
+                  {
+                    "name": "connectionString",
+                    "secretRef": "servicebus-connection-out"
+                  },
+                  {
+                    "name": "topicName",
+                    "value": "[parameters('outputTopicName')]"
+                  },
+                  {
+                    "name": "direction",
+                    "value": "output"
+                  }
+                ],
+                "secrets": [
+                  {
+                    "name": "servicebus-connection-out",
+                    "value": "[parameters('serviceBusConnection')]"
+                  }
+                ],
+                "scopes": [
+                  "utlxe-app"
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Resources/deployments', 'environment')]"
+      ]
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2021-04-01",
+      "name": "pid-44ab35db-fe99-48ef-b182-ffe9d0c919e3-partnercenter",
+      "properties": {
+        "mode": "Incremental",
+        "template": {
+          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "contentVersion": "1.0.0.0",
+          "resources": []
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "utlxeUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "UTL-X API endpoint URL"
+      },
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value]"
+    },
+    "containerAppName": {
+      "type": "string",
+      "metadata": {
+        "description": "Container App name (for CLI management)"
+      },
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppName.value]"
+    },
+    "healthUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Health check URL"
+      },
+      "value": "[format('{0}/api/health', reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value)]"
+    },
+    "metricsNote": {
+      "type": "string",
+      "metadata": {
+        "description": "Prometheus metrics URL (internal only \u2014 use port-forward or VNet)"
+      },
+      "value": "Prometheus metrics available at port 8081 inside the container (not exposed via ingress)"
+    }
+  }
+}
