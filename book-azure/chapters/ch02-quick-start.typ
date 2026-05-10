@@ -64,17 +64,16 @@ If you can't find the URL, open the Azure Portal > your resource group > the Con
 
 == Verify the Deployment
 
-Check that the container is running:
+If the Web UI dashboard loaded in the previous step, the deployment is working. The dashboard shows `Transformations: 0` and `ready: false` --- the engine is alive but has no transformations yet.
+
+You can also verify from Azure Cloud Shell (or any terminal with `az` installed):
 
 ```bash
-curl -s http://<internal-ip>:8081/health
+# Check the health endpoint (use the FQDN from the previous step)
+curl -s https://<your-fqdn>/health
 ```
 
-```json
-{"status": "UP", "transformations": 0, "ready": false}
-```
-
-The engine is alive but has no transformations yet. The `ready: false` flag tells Kubernetes not to route traffic to this container.
+Or via the Azure Portal: open the Container App > *Log stream* to see UTLXe startup logs in real time.
 
 == Write Your First Transformation
 
