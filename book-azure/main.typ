@@ -156,7 +156,9 @@ Typeset with Typst in New Computer Modern.
 #pagebreak()
 #include "chapters/ch14-troubleshooting.typ"
 
-// Part IV: Future (chapter 15)
+// Part IV: Advanced and Future (chapters 16-17)
+#pagebreak()
+#include "chapters/ch16-advanced-patterns.typ"
 #pagebreak()
 #include "chapters/ch15-roadmap.typ"
 
