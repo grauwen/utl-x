@@ -107,6 +107,58 @@ The UI is *optional*. Customers who manage UTLXe via CI/CD and scripts can omit 
 
 All ports are configurable via environment variables (`UI_PORT`, `ADMIN_PORT`). The UI makes zero changes to UTLXe --- it is a pure API consumer.
 
+=== Reaching the Web UI After Deployment
+
+When you deploy from the Marketplace, Azure Container Apps gives you a public HTTPS URL automatically. No VPN, no port-forwarding, no jumpbox needed.
+
+To find the URL:
+
+```bash
+az containerapp show \
+  --name <your-app-name> \
+  --resource-group <your-rg> \
+  --query "properties.configuration.ingress.fqdn" -o tsv
+```
+
+Open `https://<fqdn>` in your browser, enter the admin key you set during deployment, and the dashboard loads.
+
+If the URL is not reachable:
+
+#table(
+  columns: (auto, 1fr),
+  [*Symptom*], [*Fix*],
+  [Browser times out], [Ingress may be set to internal. Run: `az containerapp ingress update --name <app> -g <rg> --type external`],
+  [Shows nginx 404], [`targetPort` points at the wrong container. Should be `8088` (UI), not `8085` (data plane).],
+  [Login rejects the key], [Check that `UTLXE_ADMIN_KEY` is set: `az containerapp show --name <app> -g <rg> --query "properties.template.containers[0].env"`],
+  [Dashboard loads but empty], [No transformations uploaded yet. Upload one via the Upload tab.],
+)
+
+=== Switching Between Public and Private Access
+
+You can flip the Web UI between public and private access at any time --- no redeployment needed:
+
+```bash
+# Make public (dev/test — reachable from any browser)
+az containerapp ingress update \
+  --name <app> --resource-group <rg> \
+  --type external
+
+# Make private (production — reachable only inside the VNet)
+az containerapp ingress update \
+  --name <app> --resource-group <rg> \
+  --type internal
+```
+
+The change takes effect within 30--120 seconds. The admin key remains the authentication boundary in both modes.
+
+For production environments with private access, operators reach the Web UI via:
+- An existing jumpbox VM in the same VNet (most common --- enterprises already have one)
+- Azure Bastion
+- VPN or ExpressRoute connecting the corporate network to the Azure VNet
+- `az containerapp exec` for terminal-only access (zero infrastructure)
+
+*Note:* VNet integration must be chosen at deployment time --- it cannot be added to an existing Container Apps environment. If you anticipate needing private network access in the future, select VNet integration during deployment.
+
 == Authentication
 
 Every request to `/admin/*` endpoints must include the `X-Admin-Key` header:

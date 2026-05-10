@@ -23,21 +23,44 @@ The container starts empty --- no transformations are loaded. You deploy them vi
   - Persistent storage toggle --- enable this if you want transformations to survive container restarts.
 + Click *Create*. The deployment takes approximately two minutes.
 
-Once complete, note the Container App's internal IP (for the admin port) and the ingress URL (for the data plane).
+Once complete, note the admin key you entered during deployment --- you need it to log in to the Web UI.
 
-== Set the Admin Key
+== Running Azure CLI Commands
 
-Before you can manage transformations, set the admin API key. This key protects the management endpoints from unauthorized access.
+Several steps in this book use `az` commands (the Azure CLI). There are three ways to run them:
+
+*Option 1 --- Azure Cloud Shell (easiest, no install):*
+
+Open #link("https://shell.azure.com")[shell.azure.com] in your browser. Azure Cloud Shell runs in the Azure Portal --- it has `az` pre-installed, already authenticated with your account. Choose *Bash* when prompted. Paste commands directly.
+
+You can also open it from the Azure Portal: click the `>_` icon in the top menu bar.
+
+*Option 2 --- Azure CLI on your laptop:*
+
+Install from #link("https://docs.microsoft.com/en-us/cli/azure/install-azure-cli")[docs.microsoft.com/cli/azure]. Then authenticate:
 
 ```bash
-az containerapp secret set \
-  -n utlxe -g myResourceGroup \
-  --secrets admin-key=my-secret-key-here
-
-az containerapp update \
-  -n utlxe -g myResourceGroup \
-  --set-env-vars UTLXE_ADMIN_KEY=secretref:admin-key
+az login
+az account set --subscription <your-subscription-id>
 ```
+
+*Option 3 --- Azure Portal UI:*
+
+Most operations have a Portal equivalent. Where applicable, this book notes the Portal path alongside the CLI command.
+
+== Open the Web UI
+
+After deployment, find your UTLXe URL:
+
+```bash
+az containerapp show \
+  --name utlxe --resource-group myResourceGroup \
+  --query "properties.configuration.ingress.fqdn" -o tsv
+```
+
+Open `https://<the-fqdn>` in your browser. Enter the admin key you set during deployment. The dashboard loads.
+
+If you can't find the URL, open the Azure Portal > your resource group > the Container App > *Overview* > look for the *Application URL*.
 
 == Verify the Deployment
 

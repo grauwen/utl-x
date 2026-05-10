@@ -275,3 +275,53 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 ```
 
 The stage-then-sync model lets you test transformations via HTTP before connecting them to real queues. Sync is the "go live" switch.
+
+== Resetting the Admin Key
+
+The admin key (`UTLXE_ADMIN_KEY`) protects the Admin API and the Web UI. It is set during deployment and stored as a Container App secret. It *cannot be retrieved* from Azure after deployment --- only reset.
+
+=== If You Lost the Key
+
+Reset it with the Azure CLI:
+
+```bash
+# Set a new admin key
+az containerapp secret set \
+  --name <your-app-name> \
+  --resource-group <your-rg> \
+  --secrets admin-key=<your-new-key>
+
+# Update the environment variable to reference the new secret
+az containerapp update \
+  --name <your-app-name> \
+  --resource-group <your-rg> \
+  --set-env-vars UTLXE_ADMIN_KEY=secretref:admin-key
+
+# Restart to pick up the new key
+az containerapp revision restart \
+  --name <your-app-name> \
+  --resource-group <your-rg>
+```
+
+After the restart (~30 seconds), the new key is active. Log into the Web UI with the new key.
+
+=== If You Want to Rotate the Key
+
+The same procedure as above. Rotation is recommended:
+- After a team member with access leaves the organization
+- After the key was shared over an insecure channel
+- Periodically as part of security hygiene (e.g., every 90 days)
+
+=== What Happens During a Key Reset
+
+- The container restarts (~30 seconds of downtime for the Admin API)
+- The data plane (port 8085) continues processing messages during the restart --- Dapr queues messages that arrive during the restart window
+- Transformations, schemas, and bundles on Azure Files are not affected
+- Active Web UI sessions are invalidated --- users must re-enter the new key
+
+=== Preventing Key Loss
+
+Store the admin key in:
+- A password manager (1Password, Bitwarden, Azure Key Vault)
+- Your CI/CD secrets (GitHub Secrets, Azure DevOps variable groups)
+- *Not* in email, chat, or source code
