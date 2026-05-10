@@ -1094,7 +1094,7 @@ fun configureAdmin(
 
             // ── Engine info ──
             get("/info") {
-                call.respond(HttpStatusCode.OK, mapOf(
+                call.respond(HttpStatusCode.OK, mapOf<String, Any?>(
                     "version" to "1.0.1",
                     "mode" to bundleInfo.mode,
                     "bundle_version" to bundleInfo.bundleVersion,
@@ -1110,7 +1110,9 @@ fun configureAdmin(
                     "dapr_mode" to dapr.mode,
                     "dapr_sidecar" to dapr.sidecarReachable,
                     "log_level" to LogBuffer.getLevel(),
-                    "log_buffer_size" to LogBuffer.size()
+                    "log_buffer_size" to LogBuffer.size(),
+                    "tracing" to org.apache.utlx.engine.telemetry.Tracing.isActive,
+                    "tracing_agent" to if (org.apache.utlx.engine.telemetry.Tracing.isActive) "Azure Monitor agent loaded" else "disabled (set APPLICATIONINSIGHTS_CONNECTION_STRING to enable)"
                 ))
             }
 

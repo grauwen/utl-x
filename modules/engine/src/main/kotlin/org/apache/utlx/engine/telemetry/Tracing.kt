@@ -46,6 +46,12 @@ object Tracing {
     }
 
     /**
+     * Check if the Azure Monitor agent is configured (connection string set).
+     */
+    val isActive: Boolean
+        get() = System.getenv("APPLICATIONINSIGHTS_CONNECTION_STRING") != null
+
+    /**
      * Record transformation result on the current span.
      * Called after execution completes.
      */
