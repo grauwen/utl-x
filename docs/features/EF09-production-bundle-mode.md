@@ -18,9 +18,9 @@ This matches enterprise expectations: MuleSoft, Tibco, SAP CPI, and Azure Logic 
 | What's on disk | Mode | How determined |
 |---|---|---|
 | Directory structure (no .utlar) | **Open** (dev/test) | Automatic — no .utlar found |
-| `bundle.utlar` file | **Locked** (acc/prd) | Automatic — .utlar found on volume |
+| Any `.utlar` file (e.g., `sales.utlar`, `orders.utlar`) | **Locked** (acc/prd) | Automatic — any `.utlar` file found on volume |
 
-No CLI flag needed — the mode is determined by what's on the mounted volume. If CI/CD placed a `.utlar`, it's production. If there's a directory tree (or nothing), it's development.
+No CLI flag needed — the mode is determined by what's on the mounted volume. If CI/CD placed a `.utlar` file (any name), it's production. If there's a directory tree (or nothing), it's development. Name the file after the business flow: `sales.utlar`, `orders.utlar`, `website.utlar`.
 
 ## Locked mode: Admin API restrictions
 
