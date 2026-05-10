@@ -15,11 +15,14 @@
 # Build directories
 build/
 bin/
-# dist/ everywhere except marketplace ZIPs
+# dist/ everywhere except marketplace artifacts
 **/dist/
 !deploy/dist/
 deploy/dist/**
 !deploy/dist/utlxe-*.zip
+!deploy/dist/marketplace/
+!deploy/dist/marketplace/*/
+!deploy/dist/marketplace/*/*.json
 target/
 out/
 *.egg-info/
