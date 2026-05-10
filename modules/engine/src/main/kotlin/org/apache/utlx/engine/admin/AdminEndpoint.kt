@@ -293,9 +293,10 @@ fun configureAdmin(
                 val names = mutableListOf<String>()
                 val errors = mutableListOf<String>()
 
-                // Two-pass: first collect transform.yaml configs, then load .utlx files
+                // Two-pass: first collect transform.yaml configs + schemas, then load .utlx files
                 val configMap = mutableMapOf<String, org.apache.utlx.engine.config.TransformConfig>()
                 val sourceMap = mutableMapOf<String, String>()
+                val schemaMap = mutableMapOf<String, ByteArray>()
 
                 try {
                     ZipInputStream(ByteArrayInputStream(zipBytes)).use { zis ->
@@ -321,10 +322,21 @@ fun configureAdmin(
                                         }
                                     }
                                 }
+                            } else if (!entry.isDirectory && path.startsWith("schemas/")) {
+                                val filename = path.removePrefix("schemas/")
+                                if (filename.isNotEmpty() && !filename.contains("/")) {
+                                    schemaMap[filename] = zis.readBytes()
+                                }
                             }
                             zis.closeEntry()
                             entry = zis.nextEntry
                         }
+                    }
+
+                    // Load schemas from bundle into SchemaStore
+                    for ((filename, content) in schemaMap) {
+                        schemaStore.put(filename, content)
+                        logger.info("Bundle: loaded schema '{}'", filename)
                     }
                 } catch (e: Exception) {
                     call.respond(HttpStatusCode.BadRequest, mapOf(
@@ -421,29 +433,51 @@ fun configureAdmin(
                 }
             }
 
-            // ── Export bundle as ZIP (includes transform.yaml with messaging config) ──
+            // ── Export bundle as ZIP (zips the entire data directory tree) ──
             get("/bundle") {
                 val baos = ByteArrayOutputStream()
-                val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
-                ZipOutputStream(baos).use { zos ->
-                    for (tx in registry.list()) {
-                        // .utlx source
-                        val entryPath = "transformations/${tx.name}/${tx.name}.utlx"
-                        zos.putNextEntry(ZipEntry(entryPath))
-                        zos.write(tx.source.toByteArray(Charsets.UTF_8))
-                        zos.closeEntry()
 
-                        // EF10: Include transform.yaml if config has non-default values
-                        val config = tx.config
-                        if (config.input != null || config.outputMessaging != null ||
-                            config.validationPolicy != "SKIP" || config.strategy != "TEMPLATE") {
-                            val configPath = "transformations/${tx.name}/transform.yaml"
-                            zos.putNextEntry(ZipEntry(configPath))
-                            zos.write(yamlMapper.writeValueAsBytes(config))
+                if (dataDirPath != null && Files.exists(dataDirPath)) {
+                    // Zip the entire data directory tree — includes .utlx, transform.yaml, schemas, everything
+                    ZipOutputStream(baos).use { zos ->
+                        Files.walk(dataDirPath).use { stream ->
+                            stream.filter { Files.isRegularFile(it) }
+                                .filter { !it.fileName.toString().equals("bundle.utlar") } // don't include the .utlar itself
+                                .forEach { file ->
+                                    val relativePath = dataDirPath.relativize(file).toString()
+                                    zos.putNextEntry(ZipEntry(relativePath))
+                                    Files.copy(file, zos)
+                                    zos.closeEntry()
+                                }
+                        }
+                    }
+                } else {
+                    // No data dir — export from memory (transformations + schemas)
+                    val yamlMapper = org.apache.utlx.engine.config.TransformConfig.yamlMapper()
+                    ZipOutputStream(baos).use { zos ->
+                        for (schema in schemaStore.list()) {
+                            val content = schemaStore.getContent(schema.filename)
+                            if (content != null) {
+                                zos.putNextEntry(ZipEntry("schemas/${schema.filename}"))
+                                zos.write(content)
+                                zos.closeEntry()
+                            }
+                        }
+                        for (tx in registry.list()) {
+                            zos.putNextEntry(ZipEntry("transformations/${tx.name}/${tx.name}.utlx"))
+                            zos.write(tx.source.toByteArray(Charsets.UTF_8))
                             zos.closeEntry()
+                            val config = tx.config
+                            if (config.input != null || config.outputMessaging != null ||
+                                config.validationPolicy != "SKIP" || config.strategy != "TEMPLATE") {
+                                zos.putNextEntry(ZipEntry("transformations/${tx.name}/transform.yaml"))
+                                zos.write(yamlMapper.writeValueAsBytes(config))
+                                zos.closeEntry()
+                            }
                         }
                     }
                 }
+
                 call.response.header("Content-Disposition", "attachment; filename=\"bundle.utlar\"")
                 call.respondBytes(baos.toByteArray(), ContentType.Application.Zip)
             }

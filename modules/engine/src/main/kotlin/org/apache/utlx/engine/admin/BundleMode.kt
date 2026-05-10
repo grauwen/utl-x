@@ -36,19 +36,36 @@ data class BundleInfo(
 )
 
 /**
- * Scan the data directory for a .utlar file.
- * Returns BundleInfo with mode and manifest data.
+ * Scan the data directory for any .utlar file.
+ * The filename can be anything (e.g., sales.utlar, website.utlar, bundle.utlar).
+ * If exactly one .utlar file is found → locked mode.
+ * If multiple .utlar files are found → error (ambiguous).
+ * If none → open mode.
  */
 fun detectBundleMode(dataDirPath: Path?): BundleInfo {
     if (dataDirPath == null) return BundleInfo(mode = "open")
 
-    val utlarFile = dataDirPath.resolve("bundle.utlar")
-    if (!Files.exists(utlarFile)) {
-        logger.info("No bundle.utlar found in {} — open mode", dataDirPath)
+    val utlarFiles = try {
+        Files.list(dataDirPath).use { stream ->
+            stream.filter { it.fileName.toString().endsWith(".utlar") }
+                .toList()
+        }
+    } catch (e: Exception) {
+        emptyList()
+    }
+
+    if (utlarFiles.isEmpty()) {
+        logger.info("No .utlar file found in {} — open mode", dataDirPath)
         return BundleInfo(mode = "open")
     }
 
-    logger.info("Found bundle.utlar in {} — locked mode", dataDirPath)
+    if (utlarFiles.size > 1) {
+        val names = utlarFiles.map { it.fileName.toString() }
+        logger.error("Multiple .utlar files found in {}: {} — ambiguous, using first", dataDirPath, names)
+    }
+
+    val utlarFile = utlarFiles.first()
+    logger.info("Found {} in {} — locked mode", utlarFile.fileName, dataDirPath)
 
     // Read manifest from the .utlar ZIP
     try {
