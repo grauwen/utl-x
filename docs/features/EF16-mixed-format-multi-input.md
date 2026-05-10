@@ -425,5 +425,48 @@ The step window is not carried in the Azure envelope because there is no pipelin
 
 ---
 
+## UTLXe: One Engine, Two Worlds
+
+UTLXe runs in both Open-M and Azure today. EF16 closes the remaining capability gap:
+
+| Capability | Before EF16 | After EF16 Solution A | After EF16 Solution B |
+|---|---|---|---|
+| JSON multi-input | Both | Both | Both |
+| Mixed format (JSON+XML) | Open-M only | Both | Both |
+| Binary inputs (Avro, Protobuf) | Open-M only | No | Both |
+| Step window (upstream history) | Open-M only | No | No (Durable Functions can emulate) |
+
+The transformation file is **identical** in both worlds:
+
+```
+%utlx 1.0
+input: order json, shipment xml
+output json
+---
+{
+  orderId: $order.orderId,
+  carrier: $shipment.Carrier
+}
+```
+
+No `#ifdef`, no platform flags, no conditional logic. Write once, deploy to Open-M or Azure.
+
+### What each world provides around UTLXe
+
+| Aspect | Open-M | Azure |
+|---|---|---|
+| Transport | stdio-proto (pipe to Go wrapper) | HTTP (Dapr) or gRPC (Dapr with `appProtocol: grpc`) |
+| Multi-input delivery | `named_inputs` as `map<string, bytes>` via proto | JSON envelope (Solution A) or protobuf via gRPC (Solution B) |
+| Three IDs | Wrapper manages in MPPM envelope | Dapr headers + UTLXe code |
+| Tracing | Wrapper creates OTel spans | Azure Monitor agent creates spans |
+| Step window | Go wrapper maintains sliding history in MPPM | Not available (Durable Functions can emulate by storing previous outputs in entity state) |
+| Message broker | Pulsar or Kafka | Azure Service Bus or Event Hub |
+| Orchestration | Pipeline descriptor (YAML) | Durable Functions or Logic Apps |
+| Same `.utlx` file | Yes | Yes |
+
+The only thing Azure cannot do that Open-M can: the **step window** (sliding history of upstream outputs). That is an MPPM concept managed by the Go wrapper — UTLXe does not implement it, it just receives the inputs. On Azure, if a customer needs upstream outputs, they build it in Durable Functions (storing previous outputs in entity state and including them in the envelope).
+
+---
+
 *Feature EF16. May 2026. Design document.*
 *Key insight: the `ExecuteRequest.named_inputs` field (map\<string, bytes\>) already exists in the proto — it was designed for multi-input. Solution A (format-aware JSON parser) is a quick fix for the common case. Solution B (protobuf via Dapr gRPC) is the right architecture — it aligns UTLXe's Azure deployment with Open-M's MPPM design, uses the same bytes-per-input model, and avoids JSON escaping for non-JSON formats.*
