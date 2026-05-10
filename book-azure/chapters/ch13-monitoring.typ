@@ -165,7 +165,8 @@ Open Managed Grafana (URL from `az grafana show`) and import the following dashb
   columns: (auto, auto, 1fr),
   [*Panel*], [*PromQL / Source*], [*Description*],
   [Transformations loaded], [`utlxe_transformations_loaded`], [Should be > 0 always],
-  [Heap usage], [`utlxe_heap_used_bytes / utlxe_heap_max_bytes * 100`], [JVM heap percentage],
+  [Heap usage], [`utlxe_heap_usage_percent`], [JVM heap percentage (cached, updated every 100ms)],
+  [Backpressure], [`utlxe_heap_pressure`], [1 = rejecting messages, 0 = normal],
   [Uptime], [`utlxe_uptime_seconds`], [Time since last restart --- drops indicate restarts],
   [Container CPU], [Azure Monitor (Container Insights)], [CPU usage from the platform],
   [Container Memory], [Azure Monitor (Container Insights)], [Memory from the platform],
@@ -210,6 +211,7 @@ Recommended alert rules:
   [Error rate], [> 1% for 5 min], [Warning], [Notify on-call --- check error ring buffer],
   [p99 latency], [> 500ms for 5 min], [Warning], [Investigate --- GC pressure or large messages],
   [Heap usage], [> 80%], [Warning], [Consider scaling up or increasing heap],
+  [Backpressure active], [`utlxe_heap_pressure == 1`], [Critical], [UTLXe is rejecting messages --- messages queue in Service Bus. Lower threshold or scale up.],
   [Zero transforms], [== 0 for 2 min], [Critical], [Bundle not loaded --- check persistence/CI/CD],
   [Container restart], [uptime drops], [Info], [Expected during deployment, investigate if unexpected],
 )
@@ -371,3 +373,64 @@ UTLXe provides raw counters (messages processed, errors) per transformation. Ext
 )
 
 Resettable counters were considered and not implemented. Prometheus computes rates from monotonic counters automatically --- a `rate()` query over a time window is more meaningful than a counter that was "reset 3 hours ago."
+
+== Distributed Tracing with Azure Monitor
+
+UTLXe includes the Azure Monitor OpenTelemetry agent. When enabled, every message is traced end-to-end across the full Azure messaging chain:
+
+```
+Service Bus → Dapr → UTLXe transform (2ms) → Dapr → Service Bus
+```
+
+Every hop is a span in Azure Monitor. Click any span to see the transformation details and related log entries.
+
+=== Enabling
+
+Set the Application Insights connection string as an environment variable:
+
+```bash
+az containerapp update --name utlxe -g <rg> \
+  --set-env-vars \
+    APPLICATIONINSIGHTS_CONNECTION_STRING="InstrumentationKey=..."
+```
+
+When not set, the agent is not loaded --- zero overhead.
+
+=== What you see in Azure Monitor
+
+Open *Application Insights* → *Transaction search* → click a trace:
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Span*], [*Duration*], [*Created by*],
+  [Service Bus delivery], [—], [Azure / Dapr],
+  [HTTP POST /orders-in], [2.1ms], [Agent (auto)],
+  [HTTP POST localhost:3500 /v1.0/bindings/orders-out], [5ms], [Agent (auto)],
+  [Service Bus send], [—], [Azure / Dapr],
+)
+
+The UTLXe span includes custom attributes:
+
+#table(
+  columns: (auto, 1fr),
+  [*Attribute*], [*Example*],
+  [`utlxe.transformation`], [`orders-in`],
+  [`utlxe.strategy`], [`COMPILED`],
+  [`utlxe.input.size`], [`1234`],
+  [`utlxe.output.size`], [`567`],
+  [`utlxe.message_id`], [`019e-...`],
+  [`utlxe.correlation_id`], [`abc-...`],
+  [`utlxe.duration_us`], [`2100`],
+)
+
+=== Log-trace correlation
+
+Every log entry is automatically tagged with the trace ID and span ID. In Azure Monitor, click a span → *Logs* tab → see exactly what happened during that transformation. Click a log entry → see the full distributed trace it belongs to.
+
+=== Memory impact
+
+The agent adds ~30--50 MB of heap (~1--2% of Starter plan). Spans are exported asynchronously --- no impact on transformation throughput.
+
+=== Application Map
+
+Azure Monitor's Application Map shows the topology automatically: Service Bus → UTLXe → Service Bus, with average latency and error rates per connection. No configuration needed --- the agent discovers the topology from the traced HTTP calls.

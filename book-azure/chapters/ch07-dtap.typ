@@ -8,10 +8,10 @@ Enterprise deployments follow a promotion path: Development → Test → Accepta
   columns: (auto, auto, 1fr),
   [*What's on disk*], [*Mode*], [*Behavior*],
   [Directory structure (no `.utlar`)], [*Open* (Dev/Test)], [Full Admin API. Upload, edit, delete, test interactively.],
-  [`bundle.utlar` file], [*Locked* (Acc/Prd)], [Admin API read-only. Changes via CI/CD only. Operational endpoints (pause, resume, logs) remain available.],
+  [Any `.utlar` file (e.g., `sales.utlar`)], [*Locked* (Acc/Prd)], [Admin API read-only. Changes via CI/CD only. Operational endpoints (pause, resume, logs) remain available.],
 )
 
-The mode is determined automatically by the presence of `bundle.utlar` on the data volume. No CLI flag, no environment variable --- just the file.
+The mode is determined automatically by the presence of any `.utlar` file on the data volume. Name it after the business flow it serves --- `sales.utlar`, `orders.utlar`, `website.utlar`. No CLI flag, no environment variable --- just the file.
 
 == Environment Layout
 
@@ -60,10 +60,10 @@ When the transformation works correctly, export the full bundle:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://utlxe-dev:8081/admin/bundle -o bundle.utlar
+  https://<your-fqdn>/admin/bundle -o orders.utlar
 ```
 
-This `.utlar` file contains everything: transformations, schemas, transform.yaml with messaging config. It is the artifact that moves through the promotion pipeline.
+This `.utlar` file contains everything: transformations, schemas, transform.yaml with messaging config. Name it after the business flow (`orders.utlar`, `sales.utlar`) --- not `orders.utlar`. It is the artifact that moves through the promotion pipeline.
 
 == Promotion Pipeline
 
@@ -71,7 +71,7 @@ This `.utlar` file contains everything: transformations, schemas, transform.yaml
 Development (open)         Test (open)           Acceptance (locked)     Production (locked)
      │                         │                       │                       │
      │  developer exports      │                       │                       │
-     │  bundle.utlar           │                       │                       │
+     │  orders.utlar           │                       │                       │
      └────────┬────────────────┘                       │                       │
               │                                        │                       │
               ▼                                        │                       │
@@ -84,7 +84,7 @@ Development (open)         Test (open)           Acceptance (locked)     Product
              ├─────────────────────────────────────────┤                       │
              │                                         │                       │
              ▼                                         ▼                       │
-    Upload bundle.utlar                      Upload bundle.utlar               │
+    Upload orders.utlar                      Upload orders.utlar               │
     to test Azure Files                      to acc Azure Files                │
     Restart container                        Restart container                 │
              │                                         │                       │
@@ -95,7 +95,7 @@ Development (open)         Test (open)           Acceptance (locked)     Product
              │                                         ├───────────────────────┘
              │                                         │
              │                                         ▼
-             │                               Upload bundle.utlar
+             │                               Upload orders.utlar
              │                               to prd Azure Files
              │                               Restart container
 ```
@@ -120,8 +120,8 @@ jobs:
           az storage file upload \
             --share-name utlxe-data \
             --account-name ${{ secrets.TEST_STORAGE }} \
-            --source bundles/bundle.utlar \
-            --path bundle.utlar
+            --source bundles/orders.utlar \
+            --path orders.utlar
           az containerapp revision restart \
             -n utlxe -g rg-utlxe-tst
 
@@ -147,8 +147,8 @@ jobs:
           az storage file upload \
             --share-name utlxe-data \
             --account-name ${{ secrets.ACC_STORAGE }} \
-            --source bundles/bundle.utlar \
-            --path bundle.utlar
+            --source bundles/orders.utlar \
+            --path orders.utlar
           az containerapp revision restart \
             -n utlxe -g rg-utlxe-acc
 
@@ -163,13 +163,13 @@ jobs:
           az storage file upload \
             --share-name utlxe-data \
             --account-name ${{ secrets.PRD_STORAGE }} \
-            --source bundles/bundle.utlar \
-            --path bundle.utlar
+            --source bundles/orders.utlar \
+            --path orders.utlar
           az containerapp revision restart \
             -n utlxe -g rg-utlxe-prd
 ```
 
-The key: the *same* `bundle.utlar` file moves from Test → Acceptance → Production. Only the Azure infrastructure (Service Bus namespace, connection strings, managed identity) differs per environment.
+The key: the *same* `orders.utlar` file moves from Test → Acceptance → Production. Only the Azure infrastructure (Service Bus namespace, connection strings, managed identity) differs per environment.
 
 == What Differs Per Environment
 
@@ -226,7 +226,7 @@ What is *not* available: uploading, deleting, or modifying transformations, sche
 
 To rollback in production:
 
-+ Deploy the previous version's `bundle.utlar` to Azure Files (from git history or artifact store).
++ Deploy the previous version's `orders.utlar` to Azure Files (from git history or artifact store).
 + Restart the container: `az containerapp revision restart -n utlxe -g rg-utlxe-prd`.
 + UTLXe loads the previous bundle. Done.
 

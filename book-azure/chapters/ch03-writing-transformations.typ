@@ -230,10 +230,10 @@ map($input, (row) -> {
 
 == User-Defined Functions
 
-Define reusable logic with `function`:
+Define reusable logic with `function`. User-defined function names must start with an uppercase letter --- this distinguishes them from built-in functions like `round`, `concat`, `map`:
 
 ```
-function discount(amount, tier) {
+function Discount(amount, tier) {
   match tier {
     "gold" -> amount * 0.10,
     "silver" -> amount * 0.05,
@@ -242,13 +242,15 @@ function discount(amount, tier) {
 }
 
 {
-  let disc = discount($input.total, $input.customerTier)
+  let disc = Discount($input.total, $input.customerTier)
   orderId: $input.id,
   subtotal: $input.total,
   discount: round(disc, 2),
   total: round($input.total - disc, 2)
 }
 ```
+
+`Discount` starts with uppercase (user-defined). `round` starts with lowercase (built-in). This convention makes it immediately clear which functions are yours and which come from the standard library.
 
 Functions are defined before the main expression. They can call other functions and use all standard library functions.
 

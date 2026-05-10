@@ -12,22 +12,34 @@ This is a fundamental container property, not something UTLXe can fix internally
 
 The recommended approach for the Azure Marketplace is an Azure File Share mounted at `/utlxe/data/`. The mount is configured by the platform at the infrastructure level --- before the container starts. UTLXe uses standard Java file I/O to read and write the directory. It has no knowledge that the directory is backed by a network file share.
 
-```
-Container filesystem (ephemeral):
-  /utlxe/utlxe.jar             from Docker image, rebuilt on restart
+*Open mode (dev/test) --- directory tree on disk:*
 
-Mount point (persistent):
-  /utlxe/data/                  Azure File Share — survives restarts
-    schemas/
-      order.xsd
-    transformations/
-      invoice-to-ubl/
-        invoice-to-ubl.utlx
-      order-enrichment/
-        order-enrichment.utlx
+```
+/utlxe/data/                              Azure File Share
+  schemas/
+    order.xsd
+    invoice.json
+  transformations/
+    invoice-to-ubl/
+      invoice-to-ubl.utlx                 transformation source
+      transform.yaml                       config: strategy, validation, messaging
+    order-enrichment/
+      order-enrichment.utlx
+      transform.yaml
 ```
 
-On restart, UTLXe scans `/utlxe/data/`, finds the transformations from the previous session, compiles them, and becomes ready. Zero manual intervention.
+On restart, UTLXe scans `/utlxe/data/`, finds the transformations and their `transform.yaml` configs, compiles them, and becomes ready. Zero manual intervention.
+
+*Locked mode (acc/prd) --- single .utlar file on disk:*
+
+```
+/utlxe/data/                              Azure File Share
+  orders.utlar                             deployed by CI/CD
+```
+
+On restart, UTLXe finds the `.utlar` file, unpacks it in memory, compiles all transformations, and enters locked mode. The Admin API becomes read-only. Name the `.utlar` after the business flow it serves.
+
+If both a `.utlar` file and a directory tree exist on disk, the `.utlar` wins --- the directory is ignored. The `.utlar` is the single source of truth in locked mode.
 
 To enable persistent storage, check the "Enable persistent transformation storage" option during Marketplace deployment. This creates an Azure Storage Account and File Share, and configures the volume mount in the Container App.
 

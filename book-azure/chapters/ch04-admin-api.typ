@@ -220,32 +220,46 @@ inputs:
 maxConcurrent: 4
 ```
 
-=== ZIP Bundle
+=== ZIP Bundle (or .utlar)
 
-For batch deployment, upload a ZIP containing all transformations and schemas at once. This replaces the entire bundle atomically.
+For batch deployment, upload a ZIP (or `.utlar`) containing all transformations and schemas at once. The file name does not matter --- the Admin API reads the ZIP contents regardless of the filename.
 
 ```bash
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
-  -F "file=@bundle.zip" \
+  -F "file=@mybundle.zip" \
   https://<your-fqdn>/admin/bundle
 ```
 
 The ZIP follows this structure:
 
 ```
-bundle.zip
-  schemas/
+mybundle.zip (or .utlar)
+  schemas/                          (optional)
     order.xsd
     invoice.json
   transformations/
     invoice-to-ubl/
-      invoice-to-ubl.utlx
+      invoice-to-ubl.utlx          (required)
+      transform.yaml                (optional — strategy, validation, messaging)
     order-enrichment/
       order-enrichment.utlx
 ```
 
-The `schemas/` directory is optional. Each transformation directory requires only the `.utlx` source file. A `transform.yaml` can be added alongside the `.utlx` to override defaults (strategy, validation policy, output binding) --- but it is not required.
+*What happens on upload:*
+
++ UTLXe unpacks the ZIP, compiles all `.utlx` files, loads schemas into the schema store.
++ The contents are saved as a *directory tree* on disk (not as a ZIP file). Each transformation gets its own directory under `/utlxe/data/transformations/`.
++ On restart, UTLXe scans the directory tree → *open mode*. The Admin API remains fully accessible.
+
+*This is different from locked mode.* Locked mode is triggered when CI/CD places any `.utlar` file on the Azure Files volume (e.g., `sales.utlar`, `website.utlar`, `orders.utlar`). The filename can be anything --- name it after the business flow it serves. Uploading via the Admin API never creates a `.utlar` file --- it always unpacks to a directory tree.
+
+#table(
+  columns: (auto, 1fr, auto),
+  [*How deployed*], [*What's on disk*], [*Mode on restart*],
+  [Admin API upload (`POST /admin/bundle`)], [Directory tree: `transformations/{name}/{name}.utlx`], [Open],
+  [CI/CD places a `.utlar` file on Azure Files], [Single file: e.g., `sales.utlar`], [Locked],
+)
 
 == Managing Schemas
 

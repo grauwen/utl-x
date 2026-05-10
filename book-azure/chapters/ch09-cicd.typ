@@ -25,8 +25,10 @@ my-transformations/
   transformations/
     invoice-to-ubl/
       invoice-to-ubl.utlx
+      transform.yaml            (strategy, validation, schema bindings, messaging)
     order-enrichment/
       order-enrichment.utlx
+      transform.yaml
   test-data/
     invoice-to-ubl/
       input.json
@@ -35,6 +37,8 @@ my-transformations/
     build-bundle.sh
     deploy.sh
 ```
+
+The `transform.yaml` is optional per transformation. It configures strategy, validation policy, schema bindings, and messaging (queue/topic). If absent, defaults apply (COMPILED strategy, no validation, no messaging).
 
 The `test-data/` directory contains sample inputs and expected outputs for each transformation. The pipeline uses these for post-deployment verification.
 

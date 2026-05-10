@@ -112,6 +112,28 @@ Runtime log level changes and in-memory log access. Allowed in locked mode.
   [`DELETE`], [`/admin/logs`], [Clear the log buffer.],
 )
 
+=== Backpressure Endpoints (EF15)
+
+Monitor and control heap-based message rejection. Allowed in locked mode.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/backpressure`], [Current heap usage, threshold, pressure status, used/max MB.],
+  [`POST`], [`/admin/backpressure`], [Set threshold (50--99%). Body: `{"threshold": 85}`. Takes effect immediately.],
+)
+
+=== Transformation Config Endpoints (EF03)
+
+Per-transformation configuration: strategy, validation, schemas, message size limits.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Method*], [*Path*], [*Description*],
+  [`GET`], [`/admin/transformations/{name}/config`], [Current config: strategy, validation, maxConcurrent, maxInputSize, schemas.],
+  [`POST`], [`/admin/transformations/{name}/config`], [Update config. Body: `{"maxInputSize":"100KB","validationPolicy":"strict"}`. Persisted to transform.yaml.],
+)
+
 === Health Endpoints (no authentication)
 
 #table(
@@ -138,7 +160,7 @@ Runtime log level changes and in-memory log access. Allowed in locked mode.
 
 == Production Locked Mode (EF09)
 
-When `bundle.utlar` is found on the data volume, UTLXe enters locked mode. Mutating endpoints return 403:
+When any `.utlar` file is found on the data volume (e.g., `sales.utlar`, `orders.utlar`), UTLXe enters locked mode. Mutating endpoints return 403:
 
 #table(
   columns: (auto, auto, auto),

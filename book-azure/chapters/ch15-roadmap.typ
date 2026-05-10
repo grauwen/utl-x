@@ -78,27 +78,8 @@ UTLXe currently processes messages as UTF-8 strings. For BizTalk and SAP integra
 
 This is required before BizTalk and SAP CPI integrations can handle non-UTF-8 data correctly.
 
-== OpenTelemetry Distributed Tracing
-
-UTLXe currently forwards W3C Trace Context headers (`traceparent`, `tracestate`) from input to output --- the trace chain is preserved, but UTLXe itself is invisible in the distributed trace. Planned OpenTelemetry support (EF14) will add:
-
-*Span creation* --- each transformation execution becomes a span in the distributed trace. Azure Application Insights, Jaeger, or any OpenTelemetry-compatible backend shows UTLXe alongside Dapr and Service Bus:
-
-```
-Service Bus → Dapr input → UTLXe transform (2ms) → Dapr output → Service Bus
-                              ├── validate input (0.3ms)
-                              ├── transform (1.2ms)
-                              └── validate output (0.5ms)
-```
-
-*Log-trace correlation* --- every log entry is tagged with the trace ID and span ID. Click a span in the trace view to see the corresponding log entries. Click a log entry to see the full trace.
-
-*No metric changes* --- Prometheus metrics stay as they are. OpenTelemetry handles traces and log correlation only. No migration, no disruption.
-
-*Zero overhead when disabled* --- if the `OTEL_EXPORTER_OTLP_ENDPOINT` environment variable is not set, no tracing overhead is added. UTLXe continues to forward traceparent/tracestate headers regardless.
-
-*No proto changes required* --- the `traceparent` and `tracestate` fields already exist in the protobuf definition. Spans are created server-side and exported to the collector, not returned to the caller.
-
 == What You Can Do Today
+
+Distributed tracing with Azure Monitor is already implemented and documented in Chapter 13 (Monitoring). Set one environment variable and the full Service Bus → Dapr → UTLXe → Dapr → Service Bus chain is traced end-to-end.
 
 Everything described in this book --- from deployment to monitoring to CI/CD --- works today. The features above are planned extensions. Your investment in UTL-X transformations, Dapr configuration, and CI/CD pipelines carries forward --- nothing changes when these capabilities are added.

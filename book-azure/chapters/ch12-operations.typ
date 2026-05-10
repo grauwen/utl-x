@@ -205,13 +205,107 @@ Fields that require a restart (like port numbers) are accepted but flagged in th
 
 == Production Locked Mode
 
-When CI/CD deploys a `bundle.utlar` file to the data volume, UTLXe enters *locked mode*. The Admin API becomes read-only for all mutating endpoints --- transformations, schemas, messaging config, and bundle uploads all return 403 with `BUNDLE_LOCKED`.
+When any `.utlar` file is present on the data volume, UTLXe enters *locked mode*. Name it after the business flow: `sales.utlar`, `orders.utlar`, `website.utlar`. The Admin API becomes read-only for all mutating endpoints --- transformations, schemas, messaging config, and bundle uploads all return 403 with `BUNDLE_LOCKED`.
 
 Operational endpoints continue to work: pause/resume, validation override, test, log management, and all GET endpoints.
 
 This matches enterprise expectations: production deployments are immutable. Changes go through CI/CD, not the Admin API.
 
-Detection is automatic --- if `/utlxe/data/bundle.utlar` exists, UTLXe is locked. No CLI flag needed.
+Detection is automatic --- if any `.utlar` file exists in `/utlxe/data/`, UTLXe is locked. No CLI flag needed.
+
+=== Deploying a .utlar to Production
+
+To deploy or update a `.utlar` bundle, upload it to the Azure Files share and restart the container. Run these commands from Azure Cloud Shell or any terminal with `az` installed:
+
+```bash
+# Step 1: Find your storage account name
+az containerapp show --name utlxe --resource-group <your-rg> \
+  --query "properties.template.volumes[0].storageName" -o tsv
+
+# Step 2: Upload the .utlar to Azure Files
+az storage file upload \
+  --account-name <your-storage-account> \
+  --share-name utlxe-data \
+  --source orders.utlar \
+  --path orders.utlar
+
+# Step 3: Restart the container to pick up the new bundle
+az containerapp revision restart \
+  --name utlxe \
+  --resource-group <your-rg>
+```
+
+After the restart (~30 seconds):
+- UTLXe detects `orders.utlar` on disk → enters locked mode
+- All transformations, schemas, and messaging config from the bundle are loaded
+- The Admin API becomes read-only
+- The Web UI shows the mode as "locked" with the bundle version
+
+To verify:
+
+```bash
+curl -H "X-Admin-Key: <your-key>" \
+  https://<your-fqdn>/admin/info
+```
+
+```json
+{
+  "mode": "locked",
+  "bundle_version": "v3.2.1",
+  "transformations": 4,
+  "ready": true
+}
+```
+
+=== Updating a Production Bundle
+
+Same procedure --- upload the new `.utlar` with the same filename and restart:
+
+```bash
+az storage file upload \
+  --account-name <your-storage-account> \
+  --share-name utlxe-data \
+  --source orders-v2.utlar \
+  --path orders.utlar \
+  --overwrite
+
+az containerapp revision restart \
+  --name utlxe --resource-group <your-rg>
+```
+
+Note: `--path orders.utlar` keeps the same filename on Azure Files even if the local file is named differently. This ensures only one `.utlar` file is on disk.
+
+=== Reverting to a Previous Version
+
+Upload the previous `.utlar` from your git repository or artifact store and restart:
+
+```bash
+az storage file upload \
+  --account-name <your-storage-account> \
+  --share-name utlxe-data \
+  --source orders-v1.utlar \
+  --path orders.utlar \
+  --overwrite
+
+az containerapp revision restart \
+  --name utlxe --resource-group <your-rg>
+```
+
+=== Switching Back to Open Mode
+
+To switch from locked back to open mode (e.g., for debugging), delete the `.utlar` file and restart:
+
+```bash
+az storage file delete \
+  --account-name <your-storage-account> \
+  --share-name utlxe-data \
+  --path orders.utlar
+
+az containerapp revision restart \
+  --name utlxe --resource-group <your-rg>
+```
+
+After restart, UTLXe finds no `.utlar` file → open mode. The Admin API is fully accessible again.
 
 ```bash
 # Check the mode
@@ -275,6 +369,65 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 ```
 
 The stage-then-sync model lets you test transformations via HTTP before connecting them to real queues. Sync is the "go live" switch.
+
+== Heap Backpressure
+
+UTLXe monitors heap usage and automatically rejects incoming Dapr messages when heap usage exceeds the backpressure threshold (default: 85%). Messages stay in Service Bus and are retried when pressure drops. This prevents OOM crashes without operator intervention.
+
+View current status:
+
+```bash
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/backpressure
+```
+
+```json
+{
+  "threshold": "85%",
+  "heap_used_mb": 1247,
+  "heap_max_mb": 3072,
+  "heap_usage": "40%",
+  "pressure": false
+}
+```
+
+Adjust the threshold at runtime (no restart needed):
+
+```bash
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -d '{"threshold": 80}' \
+  https://<your-fqdn>/admin/backpressure
+```
+
+The Web UI shows the heap status visually on the *Config* tab --- a color-coded bar (green/yellow/red) with the threshold dropdown.
+
+What happens during pressure:
+- Dapr binding and pub/sub messages → 503 (retried by Dapr, messages stay in Service Bus)
+- Direct HTTP calls → still accepted (client controls retry)
+- Admin API → always available (operators can always manage the engine)
+- After GC reduces heap below threshold → messages accepted again automatically
+
+The backpressure check adds zero overhead to message processing --- the heap percentage is cached by a background thread (updated every 100ms) and the hot path reads a single cached number.
+
+== Per-Transformation Message Size Limits
+
+Each transformation can set a maximum input size. Messages exceeding the limit are rejected before processing:
+
+```bash
+curl -X POST -H "X-Admin-Key: $KEY" \
+  -d '{"maxInputSize": "100KB"}' \
+  https://<your-fqdn>/admin/transformations/sensor-events/config
+```
+
+Available sizes: 10KB, 100KB, 500KB, 1MB, 5MB (default), 10MB, 25MB, 50MB. A transformation handling small sensor events can set 100KB --- large EDI batches can set 25MB. This catches bad data early and protects heap for other transformations.
+
+The limit can also be set in `transform.yaml` inside the `.utlar` bundle:
+
+```yaml
+strategy: COMPILED
+maxInputSize: 100KB
+input:
+  queue: sensor-events
+```
 
 == Resetting the Admin Key
 

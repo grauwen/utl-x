@@ -109,7 +109,7 @@ When you deploy UTLXe from the Azure Marketplace, the following is provisioned a
 + *Persistent storage* (optional) --- Azure Files mount so transformations survive container restarts.
 + *Health and metrics* --- Prometheus endpoint for Grafana or Azure Monitor.
 
-The wizard asks three questions: resource group, Service Bus connection, and an admin password. Five minutes later, you have a running transformation engine.
+The deployment wizard asks for a resource group, region, and an *admin key* --- the key protects the Web UI and Admin API. Save it securely; you need it to log in after deployment. Five minutes later, you have a running transformation engine. Open the URL in your browser, enter the admin key, and the dashboard loads.
 
 == Business Scenarios
 
