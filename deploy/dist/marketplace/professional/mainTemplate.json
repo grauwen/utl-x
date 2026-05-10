@@ -736,6 +736,20 @@
         "description": "Prometheus metrics URL (internal only \u2014 use port-forward or VNet)"
       },
       "value": "Prometheus metrics available at port 8081 inside the container (not exposed via ingress)"
+    },
+    "adminUiUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "Open this URL in your browser to access the UTLXe Admin UI"
+      },
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value]"
+    },
+    "adminKeyNote": {
+      "type": "string",
+      "metadata": {
+        "description": "Admin key — use this to log in to the Web UI"
+      },
+      "value": "The admin key you entered during deployment. If you lost it, reset with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>"
     }
   }
 }

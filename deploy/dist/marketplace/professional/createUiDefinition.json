@@ -35,13 +35,32 @@
         "bladeTitle": "Engine Settings",
         "elements": [
           {
+            "name": "adminKeySuggestionInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "A unique key has been generated for you below. Select it, copy it (Ctrl+C), paste it into the Admin API Key field, and save it in a password manager. You need this key to log in to the Web UI after deployment. This key is generated once — refreshing the page creates a new one. You can also choose your own key, but a generated UUID is recommended for better security.",
+              "style": "Info"
+            }
+          },
+          {
+            "name": "adminKeySuggestion",
+            "type": "Microsoft.Common.TextBox",
+            "label": "Generated key (select and copy)",
+            "defaultValue": "[newGuid()]",
+            "constraints": {
+              "required": false
+            },
+            "visible": true
+          },
+          {
             "name": "adminKey",
             "type": "Microsoft.Common.PasswordBox",
             "label": {
               "password": "Admin API Key",
               "confirmPassword": "Confirm Admin Key"
             },
-            "toolTip": "Protects the Admin API and Web UI. Without this key you cannot access the dashboard or manage transformations. Save it securely — it cannot be retrieved after deployment. You can reset it later with: az containerapp secret set.",
+            "toolTip": "Protects the Admin API and Web UI. Use the suggested UUID above, or enter your own (minimum 8 characters). Save it securely — it cannot be retrieved after deployment.",
             "constraints": {
               "required": true,
               "regex": "^.{8,}$",
