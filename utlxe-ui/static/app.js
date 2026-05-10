@@ -287,6 +287,7 @@ async function renderTransformationDetail(name) {
         <tr><td style="width:150px"><strong>Strategy</strong></td><td>${cfg.strategy || 'COMPILED'}</td></tr>
         <tr><td><strong>Validation</strong></td><td>${cfg.validationPolicy || 'SKIP'}</td></tr>
         <tr><td><strong>Max concurrent</strong></td><td>${cfg.maxConcurrent || 1}</td></tr>
+        <tr><td><strong>Max input size</strong></td><td>${cfg.maxInputSize || 'default (5MB)'}</td></tr>
         <tr><td><strong>Input schema</strong></td><td>${(cfg.inputs || []).map(i => i.schema || 'none').join(', ')}</td></tr>
         <tr><td><strong>Output schema</strong></td><td>${cfg.output_schema || 'none'}</td></tr>
       </table>
@@ -304,6 +305,19 @@ async function renderTransformationDetail(name) {
 
       <label>Max concurrent</label>
       <input type="text" id="cfg-maxconcurrent" value="${cfg.maxConcurrent || 1}" style="width:80px">
+
+      <label>Max input size</label>
+      <select id="cfg-maxinputsize" style="width:auto">
+        <option value="" ${!cfg.maxInputSize ? 'selected' : ''}>default (5MB)</option>
+        <option value="10KB" ${cfg.maxInputSize === '10KB' ? 'selected' : ''}>10 KB</option>
+        <option value="100KB" ${cfg.maxInputSize === '100KB' ? 'selected' : ''}>100 KB</option>
+        <option value="500KB" ${cfg.maxInputSize === '500KB' ? 'selected' : ''}>500 KB</option>
+        <option value="1MB" ${cfg.maxInputSize === '1MB' ? 'selected' : ''}>1 MB</option>
+        <option value="5MB" ${cfg.maxInputSize === '5MB' ? 'selected' : ''}>5 MB</option>
+        <option value="10MB" ${cfg.maxInputSize === '10MB' ? 'selected' : ''}>10 MB</option>
+        <option value="25MB" ${cfg.maxInputSize === '25MB' ? 'selected' : ''}>25 MB</option>
+        <option value="50MB" ${cfg.maxInputSize === '50MB' ? 'selected' : ''}>50 MB</option>
+      </select>
 
       <label>Input schema</label>
       <select id="cfg-input-schema" style="width:auto">
@@ -401,6 +415,7 @@ async function doSaveConfig(name) {
   const strategy = document.getElementById('cfg-strategy').value;
   const validationPolicy = document.getElementById('cfg-validation').value;
   const maxConcurrent = parseInt(document.getElementById('cfg-maxconcurrent').value) || 1;
+  const maxInputSize = document.getElementById('cfg-maxinputsize').value || null;
   const inputSchema = document.getElementById('cfg-input-schema').value || null;
   const outputSchema = document.getElementById('cfg-output-schema').value || null;
 
@@ -408,6 +423,7 @@ async function doSaveConfig(name) {
     strategy,
     validationPolicy,
     maxConcurrent,
+    maxInputSize,
     inputs: inputSchema ? [{ name: 'input', schema: inputSchema }] : [],
     output_schema: outputSchema
   };
