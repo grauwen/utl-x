@@ -987,4 +987,73 @@ class AdminEndpointTest {
         )
         assertEquals(404, status)
     }
+
+    // ── maxInputSize tests ──
+
+    @Test
+    fun `set maxInputSize via config`() {
+        uploadTestTransformation("size-test")
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/size-test/config",
+            """{"maxInputSize": "100KB"}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("100KB"), "Should contain maxInputSize: $body")
+
+        // Verify it's in GET config
+        val (getStatus, getBody) = adminGet("/admin/transformations/size-test/config")
+        assertEquals(200, getStatus)
+        assertTrue(getBody.contains("100KB"), "GET should show maxInputSize: $getBody")
+    }
+
+    @Test
+    fun `maxInputSize rejects oversized input`() {
+        uploadTestTransformation("size-limit")
+
+        // Set a tiny limit
+        adminPostJson(
+            "/admin/transformations/size-limit/config",
+            """{"maxInputSize": "10B"}"""
+        )
+
+        // Test with input larger than 10 bytes
+        val (status, body) = adminPostJson(
+            "/admin/transformations/size-limit/test",
+            """{"name": "this is definitely more than 10 bytes of input data"}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("too large") || body.contains("Input too large"),
+            "Should reject oversized input: $body")
+    }
+
+    @Test
+    fun `maxInputSize allows input within limit`() {
+        uploadTestTransformation("size-ok")
+
+        adminPostJson(
+            "/admin/transformations/size-ok/config",
+            """{"maxInputSize": "1MB"}"""
+        )
+
+        val (status, body) = adminPostJson(
+            "/admin/transformations/size-ok/test",
+            """{"name": "small"}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("ok"), "Should accept small input: $body")
+    }
+
+    @Test
+    fun `no maxInputSize means no per-transformation limit`() {
+        uploadTestTransformation("no-limit")
+
+        // Don't set maxInputSize — should accept any size (up to engine max)
+        val (status, body) = adminPostJson(
+            "/admin/transformations/no-limit/test",
+            """{"data": "${"x".repeat(10000)}"}"""
+        )
+        assertEquals(200, status)
+        assertTrue(body.contains("ok"), "Should accept without limit: $body")
+    }
 }

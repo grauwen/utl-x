@@ -807,6 +807,7 @@ fun configureAdmin(
                     "strategy" to tx.config.strategy,
                     "validationPolicy" to tx.config.validationPolicy,
                     "maxConcurrent" to tx.config.maxConcurrent,
+                    "maxInputSize" to tx.config.maxInputSize,
                     "inputs" to tx.config.inputs.map { mapOf("name" to it.name, "schema" to it.schema) },
                     "output_schema" to tx.config.output.schema
                 ))
@@ -847,6 +848,7 @@ fun configureAdmin(
                 val newStrategy = tree.get("strategy")?.asText() ?: tx.config.strategy
                 val newValidationPolicy = tree.get("validationPolicy")?.asText() ?: tx.config.validationPolicy
                 val newMaxConcurrent = tree.get("maxConcurrent")?.asInt() ?: tx.config.maxConcurrent
+                val newMaxInputSize = if (tree.has("maxInputSize")) tree.get("maxInputSize")?.asText() else tx.config.maxInputSize
 
                 // Schema bindings: input schema(s) and output schema
                 val newInputs = if (tree.has("inputs")) {
@@ -869,6 +871,7 @@ fun configureAdmin(
                     strategy = newStrategy,
                     validationPolicy = newValidationPolicy,
                     maxConcurrent = newMaxConcurrent,
+                    maxInputSize = newMaxInputSize,
                     inputs = newInputs,
                     output = org.apache.utlx.engine.config.OutputSlot(schema = newOutputSchema)
                 )
@@ -889,13 +892,14 @@ fun configureAdmin(
                     persistMessagingConfig(dataDirPath, name, updatedConfig)
                 }
 
-                logger.info("Admin: config updated for '{}' (strategy={}, validation={}, maxConcurrent={})",
-                    name, newStrategy, newValidationPolicy, newMaxConcurrent)
-                call.respond(HttpStatusCode.OK, mapOf(
+                logger.info("Admin: config updated for '{}' (strategy={}, validation={}, maxConcurrent={}, maxInputSize={})",
+                    name, newStrategy, newValidationPolicy, newMaxConcurrent, newMaxInputSize)
+                call.respond(HttpStatusCode.OK, mapOf<String, Any?>(
                     "name" to name,
                     "strategy" to newStrategy,
                     "validationPolicy" to newValidationPolicy,
                     "maxConcurrent" to newMaxConcurrent,
+                    "maxInputSize" to newMaxInputSize,
                     "inputs" to newInputs.map { mapOf("name" to it.name, "schema" to it.schema) },
                     "output_schema" to newOutputSchema
                 ))
@@ -1323,6 +1327,7 @@ private fun persistMessagingConfig(
         yamlContent["strategy"] = config.strategy
         yamlContent["validationPolicy"] = config.validationPolicy
         yamlContent["maxConcurrent"] = config.maxConcurrent
+        config.maxInputSize?.let { yamlContent["maxInputSize"] = it }
         config.input?.let { ep ->
             val inputMap = mutableMapOf<String, String>()
             ep.queue?.let { inputMap["queue"] = it }

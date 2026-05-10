@@ -126,6 +126,19 @@ object TransportHandlers {
         instance.recordExecution()
         val input = req.payload.toStringUtf8()
 
+        // EF03: Per-transformation maxInputSize check
+        val maxInputBytes = org.apache.utlx.engine.config.parseSizeToBytes(instance.config.maxInputSize)
+        if (maxInputBytes != null && input.length > maxInputBytes) {
+            instance.recordError()
+            return ExecuteResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Input too large for '${req.transformationId}': ${input.length} bytes (max: ${instance.config.maxInputSize})")
+                .setErrorClass(ErrorClass.PERMANENT)
+                .setErrorPhase(ErrorPhase.PRE_VALIDATION)
+                .setCorrelationId(req.correlationId)
+                .build()
+        }
+
         // EF14: Add UTLXe-specific attributes to the current span (created by the OTel agent)
         org.apache.utlx.engine.telemetry.Tracing.addTransformAttributes(
             req.transformationId, instance.strategy.name, input.length,

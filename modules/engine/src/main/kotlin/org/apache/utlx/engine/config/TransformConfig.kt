@@ -13,6 +13,7 @@ data class TransformConfig(
     val inputs: List<InputSlot> = emptyList(),
     val output: OutputSlot = OutputSlot(),
     val maxConcurrent: Int = 1,
+    val maxInputSize: String? = null,   // Per-transformation max input size (e.g., "100KB", "25MB"). Null = use engine default.
     val outputBinding: String? = null,  // Dapr output binding name (legacy, prefer messaging.output)
     val input: MessagingEndpoint? = null,   // EF10: messaging input (queue/topic/eventhub)
     @com.fasterxml.jackson.annotation.JsonProperty("output_messaging")
@@ -40,6 +41,24 @@ data class InputSlot(
 data class OutputSlot(
     val schema: String? = null
 )
+
+/**
+ * Parse a human-readable size string to bytes.
+ * Supports: "100KB", "5MB", "1GB", "1024", "5mb", "100 KB"
+ */
+fun parseSizeToBytes(size: String?): Long? {
+    if (size.isNullOrBlank()) return null
+    val trimmed = size.trim().uppercase()
+    val match = Regex("^(\\d+)\\s*(KB|MB|GB|B)?$").matchEntire(trimmed) ?: return null
+    val value = match.groupValues[1].toLong()
+    return when (match.groupValues[2]) {
+        "KB" -> value * 1024
+        "MB" -> value * 1024 * 1024
+        "GB" -> value * 1024 * 1024 * 1024
+        "B", "" -> value
+        else -> value
+    }
+}
 
 /**
  * EF10: Messaging endpoint declaration.
