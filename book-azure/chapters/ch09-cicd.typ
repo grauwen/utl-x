@@ -162,7 +162,7 @@ Rollback is straightforward: re-deploy a previous bundle. Keep previous bundles 
 # Re-deploy it
 curl -X POST -H "X-Admin-Key: $KEY" \
   -F "file=@bundle-v1.2.3.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 The bundle upload is atomic --- the old transformations are replaced in one operation. There is no partial state.
@@ -172,17 +172,17 @@ Alternatively, use the export endpoint to create a backup before deploying:
 ```bash
 # Backup current state
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/bundle -o backup-before-deploy.zip
+  https://<your-fqdn>/admin/bundle -o backup-before-deploy.zip
 
 # Deploy new version
 curl -X POST -H "X-Admin-Key: $KEY" \
   -F "file=@new-bundle.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 
 # If something goes wrong, rollback
 curl -X POST -H "X-Admin-Key: $KEY" \
   -F "file=@backup-before-deploy.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 == Multi-Environment Promotion

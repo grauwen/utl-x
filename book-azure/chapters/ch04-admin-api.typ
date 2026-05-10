@@ -165,7 +165,7 @@ Every request to `/admin/*` endpoints must include the `X-Admin-Key` header:
 
 ```bash
 curl -H "X-Admin-Key: my-secret-key-here" \
-  http://<internal-ip>:8081/admin/transformations
+  https://<your-fqdn>/admin/transformations
 ```
 
 The key is set via the `UTLXE_ADMIN_KEY` environment variable. If this variable is not set, all admin endpoints return 403 --- the API is locked by default.
@@ -182,7 +182,7 @@ The simplest deployment: upload just the `.utlx` source file. UTLXe applies sens
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "source=@invoice-to-ubl.utlx" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl
 ```
 
 Response:
@@ -206,7 +206,7 @@ curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "source=@invoice-to-ubl.utlx" \
   -F "config=@transform.yaml" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl
 ```
 
 A typical `transform.yaml`:
@@ -228,7 +228,7 @@ For batch deployment, upload a ZIP containing all transformations and schemas at
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "file=@bundle.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 The ZIP follows this structure:
@@ -257,14 +257,14 @@ Upload a schema:
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "file=@order.xsd" \
-  http://<admin>:8081/admin/schemas/order.xsd
+  https://<your-fqdn>/admin/schemas/order.xsd
 ```
 
 List all schemas:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/schemas
+  https://<your-fqdn>/admin/schemas
 ```
 
 ```json
@@ -287,7 +287,7 @@ curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderId": "12345", "amount": 250.00, "currency": "EUR"}' \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/test
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/test
 ```
 
 On success:
@@ -319,7 +319,7 @@ List all deployed transformations:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations
+  https://<your-fqdn>/admin/transformations
 ```
 
 ```json
@@ -342,7 +342,7 @@ Get details for a specific transformation, including the source code:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl
 ```
 
 == Updating Transformations
@@ -364,7 +364,7 @@ Remove a single transformation:
 ```bash
 curl -X DELETE \
   -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl
 ```
 
 Remove everything and start fresh:
@@ -372,7 +372,7 @@ Remove everything and start fresh:
 ```bash
 curl -X DELETE \
   -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 == Exporting the Bundle
@@ -381,7 +381,7 @@ Download the current state as a ZIP file:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/bundle -o bundle-backup.zip
+  https://<your-fqdn>/admin/bundle -o bundle-backup.zip
 ```
 
 This is useful for version control, backup, or migrating transformations to another container. The exported ZIP has the same format as the upload --- you can re-import it with `POST /admin/bundle`.
@@ -411,7 +411,7 @@ Get basic operational information:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/info
+  https://<your-fqdn>/admin/info
 ```
 
 ```json
@@ -439,7 +439,7 @@ The Admin API supports two workflows. Use whichever fits your process.
 ```bash
 curl -X POST -H "X-Admin-Key: $KEY" \
   -F "file=@bundle.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 *Incremental workflow* --- upload resources one at a time:

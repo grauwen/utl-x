@@ -159,14 +159,14 @@ Upload it with the output binding configured:
 curl -X POST \
   -H "X-Admin-Key: $ADMIN_KEY" \
   -F "source=@orders-in.utlx" \
-  http://<admin-ip>:8081/admin/transformations/orders-in
+  https://<your-fqdn>/admin/transformations/orders-in
 
 # Optionally set the output binding via config
 curl -X POST \
   -H "X-Admin-Key: $ADMIN_KEY" \
   -H "Content-Type: application/json" \
   -d '{"outputBinding": "orders-out"}' \
-  http://<admin-ip>:8081/admin/transformations/orders-in/config
+  https://<your-fqdn>/admin/transformations/orders-in/config
 ```
 
 === Step 7: Test the Transformation
@@ -178,7 +178,7 @@ curl -X POST \
   -H "X-Admin-Key: $ADMIN_KEY" \
   -H "Content-Type: application/json" \
   -d '{"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}' \
-  http://<admin-ip>:8081/admin/transformations/orders-in/test
+  https://<your-fqdn>/admin/transformations/orders-in/test
 ```
 
 Expected response:
@@ -240,7 +240,7 @@ Check recent errors:
 
 ```bash
 curl -H "X-Admin-Key: $ADMIN_KEY" \
-  http://<admin-ip>:8081/admin/transformations/orders-in/errors
+  https://<your-fqdn>/admin/transformations/orders-in/errors
 ```
 
 == Walkthrough: Event Hub
@@ -302,22 +302,34 @@ The transformation is identical to the Service Bus example --- UTLXe does not kn
 
 == Direct HTTP (No Dapr)
 
-For synchronous request/response patterns, clients call UTLXe directly on port 8085. No Dapr configuration is needed.
+For synchronous request/response patterns, clients call UTLXe directly without Dapr or Service Bus. This is the simplest way to use UTLXe --- just HTTP in, HTTP out.
+
+From Azure Cloud Shell, your laptop, or any HTTP client:
 
 ```bash
 curl -X POST \
   -H "Content-Type: application/json" \
   -d '{"orderId":"ORD-001","customerName":"Acme Corp","quantity":5,"unitPrice":24.50}' \
-  http://<ingress-url>:8085/api/transform/orders-in
+  https://<your-fqdn>/api/execute/orders-in
 ```
 
-The response is the transformed message, returned synchronously. This is suitable for:
+The response is the transformed message, returned synchronously:
+
+```json
+{
+  "success": true,
+  "output": "{\"processedOrderId\":\"PROC-ORD-001\",\"customer\":\"ACME CORP\",\"total\":122.5}",
+  "durationUs": 1850
+}
+```
+
+This is suitable for:
 
 - API gateway integration --- transform requests or responses inline.
 - Batch processing --- send messages from a script or pipeline.
-- Testing and development.
+- Testing and development --- send test messages without configuring queues.
 
-No Dapr component, no Service Bus, no queue configuration. Just HTTP in, HTTP out.
+No Dapr component, no Service Bus, no queue configuration. Upload a transformation, call the URL, get the result.
 
 == Worked Example: Dynamics 365 to Peppol
 
@@ -382,7 +394,7 @@ Instead of creating Dapr component YAML manually, configure messaging through th
 # Upload transformation
 curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
   -d @invoice-normalize.utlx \
-  http://<admin>:8081/admin/transformations/invoice-normalize
+  https://<your-fqdn>/admin/transformations/invoice-normalize
 
 # Set messaging: topic input, topic output
 curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
@@ -391,16 +403,16 @@ curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
     "input": {"topic": "raw-invoices", "subscription": "utlxe"},
     "output": {"topic": "normalized-invoices"}
   }' \
-  http://<admin>:8081/admin/transformations/invoice-normalize/messaging
+  https://<your-fqdn>/admin/transformations/invoice-normalize/messaging
 
 # Test via HTTP first (no Dapr needed)
 curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
   -d '{"invoiceId": "INV-001"}' \
-  http://<admin>:8081/admin/transformations/invoice-normalize/test
+  https://<your-fqdn>/admin/transformations/invoice-normalize/test
 
 # When ready, sync to Dapr (creates component YAML, activates subscription)
 curl -X POST -H "X-Admin-Key: $ADMIN_KEY" \
-  http://<admin>:8081/admin/transformations/invoice-normalize/sync
+  https://<your-fqdn>/admin/transformations/invoice-normalize/sync
 ```
 
 The messaging field name is the discriminator:

@@ -111,26 +111,40 @@ This transformation reads a JSON input and produces a JSON output. Here is what 
 
 Upload the `.utlx` file to UTLXe. This does not transform any data yet --- it installs the rule so UTLXe knows how to transform messages later.
 
+*Option A --- via the Web UI (easiest):*
+
+Open the Web UI in your browser (section 2.3). Click *Upload* in the navigation. Paste the `hello.utlx` source into the text area, enter `hello` as the name, click *Upload*. UTLXe confirms: deployed.
+
+*Option B --- via curl (from Azure Cloud Shell or your laptop):*
+
 ```bash
 curl -X POST \
-  -H "X-Admin-Key: my-secret-key-here" \
+  -H "X-Admin-Key: <your-admin-key>" \
   -H "Content-Type: text/plain" \
   --data-binary @hello.utlx \
-  http://<internal-ip>:8081/admin/transformations/hello
+  https://<your-fqdn>/admin/transformations/hello
 ```
+
+Replace `<your-fqdn>` with the URL from section 2.3. Replace `<your-admin-key>` with the key you set during deployment.
 
 UTLXe compiles the rule and confirms: `"status": "deployed"`. The transformation is now installed under the name `hello`.
 
 == Run It
 
-Now send data through the transformation. You provide the input JSON, UTLXe applies the rule, and returns the output:
+Now send data through the transformation. You provide the input JSON, UTLXe applies the rule, and returns the output.
+
+*Option A --- via the Web UI:*
+
+Click `hello` in the dashboard. In the *Test* panel, paste `{"name": "interested reader"}` and click *Run Test*. The result appears below.
+
+*Option B --- via curl (from Azure Cloud Shell or your laptop):*
 
 ```bash
 curl -X POST \
-  -H "X-Admin-Key: my-secret-key-here" \
+  -H "X-Admin-Key: <your-admin-key>" \
   -H "Content-Type: application/json" \
   -d '{"name": "interested reader"}' \
-  http://<internal-ip>:8081/admin/transformations/hello/test
+  https://<your-fqdn>/admin/transformations/hello/test
 ```
 
 Result:
@@ -152,39 +166,14 @@ Check the health endpoint --- the container is now ready to process traffic:
 
 Now `ready: true` --- the container will accept traffic.
 
-== Send a Real Message
-
-Now send a message through the data plane (port 8085) --- the same port that Dapr and client applications use:
-
-```bash
-curl -X POST \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Azure"}' \
-  http://<ingress-url>/api/execute/hello
-```
-
-```json
-{
-  "success": true,
-  "output": "{\"greeting\":\"Hello, Azure!\",\"timestamp\":\"2026-05-05T14:30:05Z\"}",
-  "durationUs": 1850
-}
-```
-
-That is it. The transformation was compiled once at upload time. Every subsequent message executes the compiled version --- typically one to five milliseconds per message.
-
 == What Just Happened
 
-The following sequence describes the complete flow:
++ You deployed UTLXe from the Azure Marketplace --- Azure created the container, the Web UI, and the Dapr sidecar.
++ You opened the Web UI in your browser and logged in with the admin key.
++ You uploaded `hello.utlx` --- UTLXe compiled it into an optimized in-memory representation.
++ You tested it with sample input --- the transformation produced the expected output.
 
-+ You uploaded `hello.utlx` to the Admin API on port 8081.
-+ UTLXe parsed and compiled the transformation into an optimized in-memory representation.
-+ The compiled transformation was registered in the engine and written to `/utlxe/data/transformations/hello/`.
-+ The health endpoint switched to `ready: true`.
-+ Your client sent a JSON message to the data plane on port 8085.
-+ UTLXe looked up the compiled `hello` transformation, executed it, and returned the result.
-
-The Admin API and the data plane run simultaneously --- there is no "deployment mode" or downtime window.
+The transformation is now ready for real traffic. When you connect Azure Service Bus (Chapter 5), Dapr delivers messages to UTLXe automatically, and the same compiled transformation processes them at 500--4,000 messages per second.
 
 == Next Steps
 

@@ -49,37 +49,73 @@ Port 8085 is the data plane --- messages in, results out. Port 8081 is the admin
 
 The following sections show each connection scenario with a concrete example.
 
-Before showing the scenarios, it helps to understand what runs where. Azure Container Apps deploys UTLXe and Dapr as *two separate containers in the same pod*. They share a `localhost` network --- they can call each other on `localhost` without any network traversal or firewall rules.
+Before showing the scenarios, it helps to understand what runs where. Azure Container Apps deploys three containers in the same pod. They share a `localhost` network --- they can call each other without any network traversal or firewall rules.
 
 ```
-┌─── Azure Container App (one pod) ──────────────────┐
-│                                                      │
+                    Browser
+                      │
+                      │ https://<fqdn> (port 443)
+                      ▼
+              Azure Ingress (TLS termination)
+                      │
+                      │ port 8088
+                      ▼
+┌─── Azure Container App (one pod) ───────────────────┐
+│                                                     │
+│  ┌──────────────────┐                               │
+│  │ utlxe-ui (nginx) │ ← browser traffic lands here  │
+│  │ port 8088        │                               │
+│  │                  │                               │
+│  │ /admin/* ────────────► proxy to localhost:8081   │
+│  │ /* (static HTML) │                               │
+│  └──────────────────┘                               │
+│                                                     │
 │  ┌──────────────────┐    ┌───────────────────────┐  │
-│  │ UTLXe container   │    │ Dapr sidecar container│  │
-│  │                   │    │ (managed by Azure)    │  │
-│  │ localhost:8085 <──────── calls UTLXe here      │  │
-│  │ (data plane)      │    │                       │  │
-│  │ localhost:8081    │    │ localhost:3500         │  │
-│  │ (admin + health)  │    │ (Dapr HTTP API) <──────── │
-│  │                   │    │                       │  │ UTLXe
-│  │                   │    │ Connects to:          │  │ calls
-│  │                   │    │  Service Bus          │  │ here
-│  │                   │    │  Event Hub            │  │
-│  │                   │    │  (via Azure identity) │  │
+│  │ UTLXe engine     │    │ Dapr sidecar          │  │
+│  │                  │    │ (managed by Azure)    │  │
+│  │ localhost:8085 <──────── calls UTLXe here     │  │
+│  │ (data plane)     │    │                       │  │
+│  │ localhost:8081   │    │ localhost:3500        │  │
+│  │ (admin + health) │    │ (Dapr HTTP API) ◄──── │  │
+│  │                  │    │                       │  │
+│  │                  │    │ Connects to:          │  │
+│  │                  │    │  Service Bus          │  │
+│  │                  │    │  Event Hub            │  │
+│  │                  │    │ (via Managed Identity)│  │
 │  └──────────────────┘    └───────────────────────┘  │
-│                                                      │
-│  Only port 8085 exposed via ingress (HTTPS)          │
-│  Port 8081: internal VNet only                       │
-│  Port 3500: localhost only (never exposed)           │
-└──────────────────────────────────────────────────────┘
+└─────────────────────────────────────────────────────┘
 ```
+
+=== How the URL reaches the right container
+
+When you open `https://<your-fqdn>/admin/transformations` in your browser, the request travels through four layers:
+
++ *Your browser* sends HTTPS to `<fqdn>` on port 443 (standard HTTPS --- no port number in the URL).
++ *Azure Container Apps ingress* terminates TLS and forwards to the pod's `targetPort` --- port 8088, the Web UI container.
++ *nginx (utlxe-ui)* serves the HTML/JS dashboard for `/`, and *reverse-proxies* `/admin/*` requests to `localhost:8081` (the UTLXe engine inside the same pod).
++ *UTLXe* handles the Admin API request and returns the response back through the same chain.
+
+The customer never types a port number. Azure ingress maps 443 → 8088. nginx maps `/admin/*` → 8081. All invisible.
+
+=== Port map
+
+#table(
+  columns: (auto, auto, auto, 1fr),
+  [*Port*], [*Container*], [*Reachable from*], [*Purpose*],
+  [443], [Azure ingress], [Public internet], [HTTPS entry point --- no port in URL],
+  [8088], [utlxe-ui (nginx)], [Azure ingress only], [Web UI + reverse proxy for `/admin/*`],
+  [8081], [utlxe engine], [localhost only], [Admin API + health + metrics],
+  [8085], [utlxe engine], [Dapr sidecar (localhost)], [Data plane --- message processing],
+  [3500], [dapr sidecar], [localhost only], [Dapr HTTP API --- UTLXe calls it for output],
+)
 
 Key points:
 
-- *Port 8085* (UTLXe data plane): exposed via Container App ingress with HTTPS. Dapr calls it on `localhost:8085` from inside the pod. External clients reach it via the ingress URL.
-- *Port 8081* (UTLXe admin): internal to the VNet. Not exposed via ingress. Used by operators and CI/CD.
-- *Port 3500* (Dapr HTTP API): localhost only, never leaves the pod. UTLXe calls it to send output messages. No firewall rule needed --- it is pod-internal.
-- Dapr connects to Service Bus and Event Hub using Azure Managed Identity or connection strings stored as Container App secrets. UTLXe never sees these credentials.
+- *The browser talks only to port 443* --- Azure ingress handles TLS and routing. No port-forwarding, no VPN, no jumpbox needed.
+- *nginx proxies `/admin/*` to the engine* --- the Admin API is never directly internet-reachable. It only accepts requests from nginx on localhost.
+- *The data plane (8085) is called by Dapr* --- not by the browser. Dapr delivers messages from Service Bus/Event Hub to UTLXe on localhost:8085.
+- *Port 3500 (Dapr)* is localhost only --- UTLXe calls it to send output messages. Never exposed outside the pod.
+- Dapr connects to Service Bus and Event Hub using Azure Managed Identity. UTLXe never sees these credentials.
 
 #import "@preview/chronos:0.3.0"
 
@@ -366,7 +402,7 @@ UTLXe implements the standard messaging triad:
   [`MessageId`], [No], [New UUID generated for each output message.],
   [`CorrelationId`], [Yes], [Preserved from input. Links all messages in the same business process.],
   [`CausationId`], [No], [Set to the input's `MessageId`. Links each output to its immediate cause.],
-  [`traceparent`], [—], [W3C Trace Context forwarded. Azure Monitor shows the full distributed trace.],
+  [`traceparent`], [—], [W3C Trace Context forwarded from input to output. UTLXe preserves the trace chain but does not yet create its own span (see Roadmap, Ch 15).],
 )
 
 In a multi-step chain, the `CorrelationId` stays constant while the `CausationId` traces the parent:

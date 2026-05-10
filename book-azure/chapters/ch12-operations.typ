@@ -10,7 +10,7 @@ Upload a new version of the same transformation name. The update is atomic and z
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "source=@invoice-to-ubl-v2.utlx" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl
 ```
 
 What happens internally:
@@ -31,7 +31,7 @@ Pause:
 ```bash
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/pause
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/pause
 ```
 
 While paused:
@@ -49,7 +49,7 @@ Resume:
 ```bash
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/resume
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/resume
 ```
 
 Processing resumes immediately. Queued messages on Service Bus are delivered again.
@@ -101,14 +101,14 @@ curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"policy": "off"}' \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/validation
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/validation
 ```
 
 Check the effective state:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/validation
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/validation
 ```
 
 ```json
@@ -125,7 +125,7 @@ Remove the override to revert to the configured policy:
 ```bash
 curl -X DELETE \
   -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/validation
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/validation
 ```
 
 The override is ephemeral --- it is not written to disk and disappears on container restart. The precedence chain is:
@@ -149,7 +149,7 @@ Replace a schema without recompiling transformations:
 curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -F "file=@order-v2.xsd" \
-  http://<admin>:8081/admin/schemas/order.xsd
+  https://<your-fqdn>/admin/schemas/order.xsd
 ```
 
 The new schema takes effect on the next message. Transformations that reference `order.xsd` do not need to be re-uploaded --- schema resolution happens at validation time, not compile time.
@@ -161,21 +161,21 @@ Replace everything at once (atomic):
 ```bash
 curl -X POST -H "X-Admin-Key: $KEY" \
   -F "file=@new-bundle.zip" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 Remove everything and start fresh:
 
 ```bash
 curl -X DELETE -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/bundle
+  https://<your-fqdn>/admin/bundle
 ```
 
 Export the current state as a backup:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/bundle -o backup.zip
+  https://<your-fqdn>/admin/bundle -o backup.zip
 ```
 
 == Engine Configuration
@@ -184,7 +184,7 @@ View the current engine configuration:
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/config
+  https://<your-fqdn>/admin/config
 ```
 
 Update a runtime-safe field:
@@ -194,7 +194,7 @@ curl -X POST \
   -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"maxInputSize": "10MB"}' \
-  http://<admin>:8081/admin/config
+  https://<your-fqdn>/admin/config
 ```
 
 Fields that require a restart (like port numbers) are accepted but flagged in the response:
@@ -215,7 +215,7 @@ Detection is automatic --- if `/utlxe/data/bundle.utlar` exists, UTLXe is locked
 
 ```bash
 # Check the mode
-curl -H "X-Admin-Key: $KEY" http://<admin>:8081/admin/info
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/info
 ```
 
 ```json
@@ -235,20 +235,20 @@ During an incident, switch to DEBUG logging without restarting the container:
 curl -X POST -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"level": "DEBUG", "revert_after_minutes": 30}' \
-  http://<admin>:8081/admin/log/level
+  https://<your-fqdn>/admin/log/level
 ```
 
 View recent log entries directly via the Admin API --- no need to open the Azure portal:
 
 ```bash
 # Last 50 entries
-curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?limit=50"
+curl -H "X-Admin-Key: $KEY" "https://<your-fqdn>/admin/logs?limit=50"
 
 # Only errors
-curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?level=ERROR"
+curl -H "X-Admin-Key: $KEY" "https://<your-fqdn>/admin/logs?level=ERROR"
 
 # Search for a specific MessageId
-curl -H "X-Admin-Key: $KEY" "http://<admin>:8081/admin/logs?contains=msg-abc-123"
+curl -H "X-Admin-Key: $KEY" "https://<your-fqdn>/admin/logs?contains=msg-abc-123"
 ```
 
 The log buffer holds the last 5000 entries in memory. Zero disk I/O. The auto-revert feature ensures DEBUG does not stay on accidentally --- the level reverts to the previous value after the specified time.
@@ -262,16 +262,16 @@ Configure Dapr queues, topics, and Event Hubs per transformation via the Admin A
 curl -X POST -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"input": {"queue": "orders-in"}, "output": {"topic": "processed"}}' \
-  http://<admin>:8081/admin/transformations/orders-in/messaging
+  https://<your-fqdn>/admin/transformations/orders-in/messaging
 
 # 2. Test via HTTP (no Dapr needed --- the transformation works via HTTP)
 curl -X POST -H "X-Admin-Key: $KEY" \
   -d '{"orderId": "123"}' \
-  http://<admin>:8081/admin/transformations/orders-in/test
+  https://<your-fqdn>/admin/transformations/orders-in/test
 
 # 3. Sync to Dapr (creates binding YAML, messages start flowing)
 curl -X POST -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/orders-in/sync
+  https://<your-fqdn>/admin/transformations/orders-in/sync
 ```
 
 The stage-then-sync model lets you test transformations via HTTP before connecting them to real queues. Sync is the "go live" switch.

@@ -7,7 +7,7 @@ Production deployments need visibility into what UTLXe is doing. This chapter co
 The health endpoint runs on port 8081 and serves two purposes: Kubernetes probes and operational status checks.
 
 ```bash
-curl http://<internal-ip>:8081/health
+curl https://<your-fqdn>/health
 ```
 
 ```json
@@ -43,7 +43,7 @@ A container that just started but has not received its bundle yet is *alive but 
 UTLXe exposes Prometheus metrics on the same port:
 
 ```bash
-curl http://<internal-ip>:8081/metrics
+curl https://<your-fqdn>/metrics
 ```
 
 === Per-Transformation Metrics
@@ -258,22 +258,22 @@ For small deployments or quick checks, the Admin API provides everything without
 
 ```bash
 # Health check
-curl http://<admin>:8081/health
+curl https://<your-fqdn>/health
 
 # Transformation metrics
-curl -H "X-Admin-Key: $KEY" http://<admin>:8081/admin/transformations
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/transformations
 # → messages_processed, errors per transformation
 
 # Recent errors
 curl -H "X-Admin-Key: $KEY" \
-  "http://<admin>:8081/admin/transformations/orders-in/errors?limit=10"
+  "https://<your-fqdn>/admin/transformations/orders-in/errors?limit=10"
 
 # Log entries
 curl -H "X-Admin-Key: $KEY" \
-  "http://<admin>:8081/admin/logs?level=ERROR&limit=20"
+  "https://<your-fqdn>/admin/logs?level=ERROR&limit=20"
 
 # Engine info (mode, uptime, bundle version)
-curl -H "X-Admin-Key: $KEY" http://<admin>:8081/admin/info
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/info
 ```
 
 This is sufficient for a single UTLXe instance in development. For production with multiple instances, use Option 1 or 2 for aggregate views and alerting.
@@ -294,7 +294,7 @@ Prometheus gives you counters, but not the actual error messages. For quick diag
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/errors?limit=10
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/errors?limit=10
 ```
 
 ```json
@@ -331,15 +331,15 @@ For deeper investigation, access log entries directly via the Admin API without 
 ```bash
 # Last 50 log entries
 curl -H "X-Admin-Key: $KEY" \
-  "http://<admin>:8081/admin/logs?limit=50"
+  "https://<your-fqdn>/admin/logs?limit=50"
 
 # Only errors
 curl -H "X-Admin-Key: $KEY" \
-  "http://<admin>:8081/admin/logs?level=ERROR"
+  "https://<your-fqdn>/admin/logs?level=ERROR"
 
 # Search for a specific message
 curl -H "X-Admin-Key: $KEY" \
-  "http://<admin>:8081/admin/logs?contains=orders-in"
+  "https://<your-fqdn>/admin/logs?contains=orders-in"
 ```
 
 For Dapr traffic tracing, switch to DEBUG level at runtime:
@@ -349,7 +349,7 @@ For Dapr traffic tracing, switch to DEBUG level at runtime:
 curl -X POST -H "X-Admin-Key: $KEY" \
   -H "Content-Type: application/json" \
   -d '{"level": "DEBUG", "revert_after_minutes": 30}' \
-  http://<admin>:8081/admin/log/level
+  https://<your-fqdn>/admin/log/level
 ```
 
 At DEBUG level, UTLXe logs the full request/response flow for every Dapr message: input headers, CloudEvents metadata, output URL, response timing, and Dapr response body on failure. This is the primary tool for diagnosing message routing issues.

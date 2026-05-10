@@ -42,7 +42,7 @@ Test locally before uploading: `echo '{}' | utlx -e 'your expression'` catches s
 
 ```bash
 curl -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/errors
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/errors
 ```
 
 This shows the last 100 errors with the input that caused each failure.
@@ -52,7 +52,7 @@ This shows the last 100 errors with the input that caused each failure.
 ```bash
 curl -X POST -H "X-Admin-Key: $KEY" \
   -d '{"the":"failing input"}' \
-  http://<admin>:8081/admin/transformations/invoice-to-ubl/test
+  https://<your-fqdn>/admin/transformations/invoice-to-ubl/test
 ```
 
 == High Latency
@@ -126,7 +126,7 @@ az containerapp show -n utlxe -g myResourceGroup \
 
 ```bash
 curl -X POST -H "X-Admin-Key: $KEY" \
-  http://<admin>:8081/admin/transformations/{name}/resume
+  https://<your-fqdn>/admin/transformations/{name}/resume
 ```
 
 == Schema Validation Failing Unexpectedly
@@ -140,7 +140,7 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 ```bash
 curl -X POST -H "X-Admin-Key: $KEY" \
   -d '{"policy":"off"}' \
-  http://<admin>:8081/admin/transformations/{name}/validation
+  https://<your-fqdn>/admin/transformations/{name}/validation
 ```
 
 *Proper fix:* Update the transformation to handle both the old and new message formats, or coordinate the schema change with the message producer.
@@ -149,26 +149,26 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 
 ```bash
 # Health and readiness
-curl http://<internal>:8081/health
+curl https://<your-fqdn>/health
 
 # Engine info (version, uptime, config)
-curl -H "X-Admin-Key: $KEY" http://<internal>:8081/admin/info
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/info
 
 # List transformations with status
-curl -H "X-Admin-Key: $KEY" http://<internal>:8081/admin/transformations
+curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/transformations
 
 # Recent errors for a transformation
 curl -H "X-Admin-Key: $KEY" \
-  http://<internal>:8081/admin/transformations/{name}/errors
+  https://<your-fqdn>/admin/transformations/{name}/errors
 
 # Test a transformation
 curl -X POST -H "X-Admin-Key: $KEY" \
   -d '{"test":"data"}' \
-  http://<internal>:8081/admin/transformations/{name}/test
+  https://<your-fqdn>/admin/transformations/{name}/test
 
 # Effective validation state
 curl -H "X-Admin-Key: $KEY" \
-  http://<internal>:8081/admin/transformations/{name}/validation
+  https://<your-fqdn>/admin/transformations/{name}/validation
 
 # Container logs
 az containerapp logs show -n utlxe -g myResourceGroup --follow
