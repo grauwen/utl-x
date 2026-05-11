@@ -19,7 +19,6 @@ bin/
 **/dist/
 !deploy/dist/
 deploy/dist/**
-!deploy/dist/utlxe-*.zip
 !deploy/dist/marketplace/
 !deploy/dist/marketplace/*/
 !deploy/dist/marketplace/*/*.json
@@ -66,6 +65,7 @@ htmlcov/
 # Package files
 *.tgz
 *.zip
+!deploy/dist/marketplace/zips/*.zip
 *.tar.gz
 *.jar
 *.war
@@ -73,7 +73,6 @@ htmlcov/
 *.ear
 *.rar
 # Exception: keep marketplace deployment ZIPs
-!deploy/dist/utlxe-*.zip
 
 # Environment files
 .env

@@ -47,7 +47,7 @@
             "name": "adminKeySuggestion",
             "type": "Microsoft.Common.TextBox",
             "label": "Generated key (select and copy)",
-            "defaultValue": "[newGuid()]",
+            "defaultValue": "[guid()]",
             "constraints": {
               "required": false
             },
