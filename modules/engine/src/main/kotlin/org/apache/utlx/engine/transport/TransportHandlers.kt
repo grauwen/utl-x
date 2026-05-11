@@ -2,6 +2,8 @@ package org.apache.utlx.engine.transport
 
 import com.google.protobuf.ByteString
 import org.apache.utlx.engine.UtlxEngine
+import org.apache.utlx.engine.config.InputSlot
+import org.apache.utlx.engine.config.OutputSlot
 import org.apache.utlx.engine.config.TransformConfig
 import org.apache.utlx.engine.proto.*
 import org.apache.utlx.engine.registry.TransformationInstance
@@ -38,10 +40,24 @@ object TransportHandlers {
 
             logger.info("Loading transformation '{}' [strategy={}, validation={}]", id, strategyName, validationPolicy)
 
+            // Build input slots with per-input schemas from proto (N-input support)
+            val inputSchemas = req.inputSchemasMap       // map<string, bytes>
+            val inputSchemaFmts = req.inputSchemaFormatsMap // map<string, string>
+            val inputs = if (inputSchemas.isNotEmpty()) {
+                inputSchemas.map { (name, schemaBytes) ->
+                    InputSlot(name = name, schema = schemaBytes.toStringUtf8())
+                }
+            } else emptyList()
+
+            val outputSchemaStr = if (!req.outputSchema.isEmpty) req.outputSchema.toStringUtf8() else null
+            val output = if (outputSchemaStr != null) OutputSlot(schema = outputSchemaStr) else OutputSlot()
+
             val config = TransformConfig(
                 strategy = strategyName,
                 validationPolicy = validationPolicy,
-                maxConcurrent = maxConcurrent
+                maxConcurrent = maxConcurrent,
+                inputs = inputs,
+                output = output
             )
 
             val strategy = engine.createStrategy(config)
@@ -49,29 +65,47 @@ object TransportHandlers {
             strategy.initialize(source, config)
             val parseEnd = System.nanoTime()
 
-            // Compile schema validators from config map (if provided)
+            // Compile schema validators.
+            // Priority: dedicated proto fields (input_schemas/output_schema) > config map fallback
             val configMap = req.configMap
-            val inputValidator = if (configMap["validate_input"] == "true") {
-                val schemaSource = configMap["input_schema"]
-                val schemaFormat = configMap["input_schema_format"]
-                if (schemaSource != null && schemaFormat != null) {
-                    SchemaValidatorFactory.create(schemaSource, schemaFormat)
-                } else {
-                    logger.warn("validate_input=true but input_schema or input_schema_format missing for '{}'", id)
-                    null
-                }
-            } else null
 
-            val outputValidator = if (configMap["validate_output"] == "true") {
-                val schemaSource = configMap["output_schema"]
-                val schemaFormat = configMap["output_schema_format"]
-                if (schemaSource != null && schemaFormat != null) {
-                    SchemaValidatorFactory.create(schemaSource, schemaFormat)
-                } else {
-                    logger.warn("validate_output=true but output_schema or output_schema_format missing for '{}'", id)
-                    null
-                }
-            } else null
+            // For input validation, use the "current" (primary) input schema if available
+            val inputValidator = run {
+                val primaryName = inputSchemas.keys.firstOrNull()
+                val schemaBytes = if (primaryName != null) inputSchemas[primaryName] else null
+                val schemaFormat = if (primaryName != null) inputSchemaFmts[primaryName] else null
+                if (schemaBytes != null && !schemaBytes.isEmpty && !schemaFormat.isNullOrEmpty()) {
+                    logger.info("Using input_schema '{}' ({}) for input validation on '{}'", primaryName, schemaFormat, id)
+                    SchemaValidatorFactory.create(schemaBytes.toStringUtf8(), schemaFormat)
+                } else if (configMap["validate_input"] == "true") {
+                    // Fallback: config map (existing behaviour)
+                    val src = configMap["input_schema"]
+                    val fmt = configMap["input_schema_format"]
+                    if (src != null && fmt != null) {
+                        SchemaValidatorFactory.create(src, fmt)
+                    } else {
+                        logger.warn("validate_input=true but input_schema or input_schema_format missing for '{}'", id)
+                        null
+                    }
+                } else null
+            }
+
+            val outputValidator = run {
+                val schemaFormat = req.outputSchemaFormat
+                if (outputSchemaStr != null && schemaFormat.isNotEmpty()) {
+                    logger.info("Using output_schema ({}) for output validation on '{}'", schemaFormat, id)
+                    SchemaValidatorFactory.create(outputSchemaStr, schemaFormat)
+                } else if (configMap["validate_output"] == "true") {
+                    val src = configMap["output_schema"]
+                    val fmt = configMap["output_schema_format"]
+                    if (src != null && fmt != null) {
+                        SchemaValidatorFactory.create(src, fmt)
+                    } else {
+                        logger.warn("validate_output=true but output_schema or output_schema_format missing for '{}'", id)
+                        null
+                    }
+                } else null
+            }
 
             val instance = TransformationInstance(
                 name = id,
