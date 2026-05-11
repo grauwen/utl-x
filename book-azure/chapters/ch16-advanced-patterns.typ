@@ -2,39 +2,43 @@
 
 This chapter covers patterns that go beyond simple queue-to-queue transformation: multi-input aggregation, mixed-format inputs, and combining UTLXe with Azure Durable Functions.
 
-== Multi-Input Transformations Same Format
+== Multi-Input Transformations
 
-UTL-X supports transformations with multiple named inputs. Each input can have its own definition but are both json format:
+UTL-X supports transformations with any number of named inputs, each with its own format. The language is format-agnostic --- JSON, XML, CSV, YAML, or any supported format can be combined freely:
 
 ```
 %utlx 1.0
-input: order json, customer json
+input: order json, shipment xml, priceList csv
 output json
 ---
 {
   invoiceId: concat("INV-", $order.orderId),
-  buyer: $customer.name,
-  discount: if $customer.tier == "gold" then $order.amount * 0.10 else 0,
-  total: $order.amount - (if $customer.tier == "gold" then $order.amount * 0.10 else 0)
+  carrier: $shipment.Carrier,
+  trackingId: $shipment.TrackingId,
+  unitPrice: $priceList[0].price,
+  total: $order.quantity * $priceList[0].price
 }
 ```
 
-This transformation needs two inputs simultaneously: an order and a customer record. But Azure Service Bus delivers one message at a time. How do you provide both?
+This transformation needs three inputs simultaneously: a JSON order, an XML shipping manifest, and a CSV price list. Azure Service Bus delivers one message at a time. How do you provide all three?
 
 === The Envelope Pattern
 
-The sender combines all inputs into a single JSON envelope before sending to Service Bus:
+The sender combines all inputs into a single JSON envelope before sending to Service Bus. The key names must match the input names in the header:
 
 ```json
 {
-  "order": {"orderId": "ORD-001", "amount": 499.95, "items": 3},
-  "customer": {"name": "Contoso Ltd", "tier": "gold", "country": "NL"}
+  "order": {"orderId": "ORD-001", "quantity": 5},
+  "shipment": "<Shipment><Carrier>DHL</Carrier><TrackingId>DHL-123</TrackingId></Shipment>",
+  "priceList": "product,price\nWidget-A,24.50"
 }
 ```
 
-UTLXe's multi-input parser splits the envelope by key name. The key names must match the input names in the header (`order`, `customer`). Each input is parsed according to its declared format.
+Non-JSON inputs (XML, CSV) are string values inside the JSON envelope. UTLXe parses each according to its declared format: `$order` as JSON, `$shipment` as XML, `$priceList` as CSV.
 
-The `transform.yaml` is standard --- no special multi-input configuration:
+*Current limitation:* the format-aware re-parsing of non-JSON string values is planned (EF16). Today, all inputs in the envelope must be JSON objects. See the "Mixed Formats" section below for details and workarounds.
+
+The pattern works with any number of inputs --- 2, 3, 5, or more. Each input is a key in the envelope. The `transform.yaml` is standard:
 
 ```yaml
 strategy: COMPILED
@@ -101,19 +105,25 @@ Azure Durable Functions is Microsoft's solution for message aggregation. It is s
 The architecture:
 
 ```
-Queue "orders"    → Azure Function trigger → Durable Entity "ORD-001"
-                                               ├── stores order data
-                                               └── both inputs? No → wait
+Queue "orders"     → Function trigger → Durable Entity "ORD-001"
+                                                ├── stores order (JSON)
+                                                └── all 3 inputs? No → wait
 
-Queue "customers" → Azure Function trigger → Durable Entity "ORD-001"
-                                               ├── stores customer data
-                                               └── both inputs? Yes → combine
-                                                      ↓
-                                               Send envelope to queue "enriched-orders"
-                                                      ↓
-                                               Dapr → UTLXe (multi-input transformation)
-                                                      ↓
-                                               Output to queue "invoices-out"
+Queue "shipments"  → Function trigger → Durable Entity "ORD-001"
+                                                ├── stores shipment (XML)
+                                                └── all 3 inputs? No → wait
+
+Queue "pricelists" → Function trigger → Durable Entity "ORD-001"
+                                                ├── stores priceList (CSV)
+                                                └── all 3 inputs? Yes → combine
+                                                       ↓
+                                                Build envelope (JSON wrapper)
+                                                       ↓
+                                                Queue "enriched-orders"
+                                                       ↓
+                                                Dapr → UTLXe (multi-input transformation)
+                                                       ↓
+                                                Output to queue "invoices-out"
 ```
 
 === What each system does
@@ -133,59 +143,208 @@ From Dapr's perspective: *nothing changes*. One queue binding (`enriched-orders`
 
 === The Durable Functions code
 
-The aggregator is a Durable Entity --- a stateful actor keyed by the business ID (e.g., `orderId`). It accumulates inputs until all are present, then emits the envelope.
+The aggregator is a *Durable Entity* --- a stateful actor keyed by the business ID (e.g., `orderId`). Its state is automatically persisted in Azure Table Storage. When a message arrives, the entity's state is loaded by key, updated, and saved. No manual database code.
+
+==== How state and correlation work
+
+```
+09:00:01  Message arrives on queue "orders":
+          {"orderId": "ORD-001", "amount": 499.95}
+            ↓
+          Trigger extracts orderId = "ORD-001"
+          Signals entity "ORD-001" → AddOrder(json)
+            ↓
+          Entity state (Table Storage, key="ORD-001"):
+            Order:    '{"orderId":"ORD-001","amount":499.95}'
+            Customer: null
+            → not complete, wait
+
+09:00:03  Message arrives on queue "customers":
+          {"orderId": "ORD-001", "name": "Contoso", "tier": "gold"}
+            ↓
+          Trigger extracts orderId = "ORD-001"
+          Signals entity "ORD-001" → AddCustomer(json)
+            ↓
+          Entity state (Table Storage, key="ORD-001"):
+            Order:    '{"orderId":"ORD-001","amount":499.95}'
+            Customer: '{"orderId":"ORD-001","name":"Contoso","tier":"gold"}'
+            → COMPLETE! Combine and send envelope
+            → Delete entity state (cleanup)
+```
+
+The entity ID (`"ORD-001"`) IS the correlation key. Azure Table Storage loads the entity by partition key in O(1) --- no scanning, no index needed. If 10,000 orders are in progress simultaneously, each is a separate entity with its own state.
+
+Messages can arrive in any order. If the customer arrives before the order, the entity stores the customer data and waits. When the order arrives, both are present and the envelope is sent.
+
+==== Complete C\# implementation (generic N-input aggregator)
+
+This aggregator handles any number of input queues. Each input is stored by name. When all expected inputs have arrived, the envelope is sent. The format of each input does not matter --- the aggregator stores raw message strings and lets UTLXe handle parsing.
 
 ```csharp
-// C# — Durable Entity aggregator (~30 lines)
+// ── Entity: generic N-input aggregator ──
 
-public class OrderAggregator
+public class MessageAggregator
 {
-    public string Order { get; set; }
-    public string Customer { get; set; }
+    // State — persisted automatically in Azure Table Storage
+    public Dictionary<string, string> Inputs { get; set; } = new();
+    public HashSet<string> ExpectedInputs { get; set; } = new();
+    public DateTime FirstSeen { get; set; }
 
-    public void AddOrder(string data) => Order = data;
-    public void AddCustomer(string data) => Customer = data;
+    // Called from any queue trigger — stores one named input
+    public void AddInput((string name, string data) input)
+    {
+        Inputs[input.name] = input.data;
+        if (FirstSeen == default) FirstSeen = DateTime.UtcNow;
+    }
 
-    public bool IsComplete => Order != null && Customer != null;
+    // Configure which inputs are needed (set once on first signal)
+    public void SetExpected(HashSet<string> expected)
+    {
+        if (ExpectedInputs.Count == 0) ExpectedInputs = expected;
+    }
 
-    [FunctionName("OrderAggregator")]
+    // Complete when all expected inputs have arrived
+    public bool IsComplete =>
+        ExpectedInputs.Count > 0 &&
+        ExpectedInputs.All(name => Inputs.ContainsKey(name));
+
+    // Build UTLXe envelope — each input as a key in the JSON object
+    public string BuildEnvelope()
+    {
+        var parts = Inputs.Select(kv =>
+        {
+            // If the value looks like JSON object/array, embed directly
+            var v = kv.Value.TrimStart();
+            if (v.StartsWith("{") || v.StartsWith("["))
+                return $"\"{kv.Key}\":{kv.Value}";
+            // Otherwise (XML, CSV, etc.) — embed as JSON string
+            return $"\"{kv.Key}\":{JsonConvert.SerializeObject(kv.Value)}";
+        });
+        return "{" + string.Join(",", parts) + "}";
+    }
+
+    [FunctionName("MessageAggregator")]
     public static Task Run(
         [EntityTrigger] IDurableEntityContext ctx)
-        => ctx.DispatchAsync<OrderAggregator>();
+        => ctx.DispatchAsync<MessageAggregator>();
 }
 
-// Trigger: listens on "orders" queue
+// ── Generic queue trigger factory ──
+// Create one trigger per input queue. Each extracts the correlation key
+// and signals the entity with its input name.
+
 [FunctionName("OrderTrigger")]
-public static async Task OrderTrigger(
-    [ServiceBusTrigger("orders")] string message,
-    [DurableClient] IDurableEntityClient client)
+public static Task OrderTrigger(
+    [ServiceBusTrigger("orders", Connection = "SB")] string msg,
+    [DurableClient] IDurableEntityClient client,
+    [ServiceBus("enriched-orders", Connection = "SB")]
+        IAsyncCollector<ServiceBusMessage> output,
+    ILogger log)
+    => HandleInput("order", msg, client, output, log);
+
+[FunctionName("ShipmentTrigger")]
+public static Task ShipmentTrigger(
+    [ServiceBusTrigger("shipments", Connection = "SB")] string msg,
+    [DurableClient] IDurableEntityClient client,
+    [ServiceBus("enriched-orders", Connection = "SB")]
+        IAsyncCollector<ServiceBusMessage> output,
+    ILogger log)
+    => HandleInput("shipment", msg, client, output, log);
+
+[FunctionName("PriceListTrigger")]
+public static Task PriceListTrigger(
+    [ServiceBusTrigger("pricelists", Connection = "SB")] string msg,
+    [DurableClient] IDurableEntityClient client,
+    [ServiceBus("enriched-orders", Connection = "SB")]
+        IAsyncCollector<ServiceBusMessage> output,
+    ILogger log)
+    => HandleInput("priceList", msg, client, output, log);
+
+// ── Shared handler — works for any input ──
+
+private static readonly HashSet<string> Required =
+    new() { "order", "shipment", "priceList" };
+
+private static async Task HandleInput(
+    string inputName, string message,
+    IDurableEntityClient client,
+    IAsyncCollector<ServiceBusMessage> output,
+    ILogger log)
 {
-    var order = JObject.Parse(message);
-    var entityId = new EntityId("OrderAggregator", order["orderId"].ToString());
-    await client.SignalEntityAsync(entityId, "AddOrder", message);
+    // Extract correlation key from the message
+    // Convention: every message has an "orderId" field (JSON) or
+    // an <OrderId> element (XML). Adapt extraction per format.
+    var correlationKey = ExtractCorrelationKey(message);
+    if (correlationKey == null)
+    {
+        log.LogWarning("{Input} message without correlation key, skipping", inputName);
+        return;
+    }
+
+    var entityId = new EntityId("MessageAggregator", correlationKey);
+
+    // Tell the entity which inputs are expected (idempotent)
+    await client.SignalEntityAsync(entityId, "SetExpected", Required);
+
+    // Add this input
+    await client.SignalEntityAsync(entityId, "AddInput", (inputName, message));
+
+    // Check if all inputs arrived
+    await Task.Delay(500);  // eventual consistency
+    var state = await client.ReadEntityStateAsync<MessageAggregator>(entityId);
+    if (state.EntityState?.IsComplete != true) return;
+
+    // All inputs arrived — send envelope to UTLXe
+    var envelope = state.EntityState.BuildEnvelope();
+    await output.AddAsync(new ServiceBusMessage(envelope)
+    {
+        CorrelationId = correlationKey,
+        ContentType = "application/json"
+    });
+
+    log.LogInformation("Aggregated {Key} ({Count} inputs) — sent to enriched-orders",
+        correlationKey, Required.Count);
+
+    await client.SignalEntityAsync(entityId, "Delete");
 }
 
-// Trigger: listens on "customers" queue
-[FunctionName("CustomerTrigger")]
-public static async Task CustomerTrigger(
-    [ServiceBusTrigger("customers")] string message,
-    [DurableClient] IDurableEntityClient client)
+// Extract orderId from JSON or XML message
+private static string ExtractCorrelationKey(string message)
 {
-    var customer = JObject.Parse(message);
-    var entityId = new EntityId("OrderAggregator", customer["orderId"].ToString());
-    await client.SignalEntityAsync(entityId, "AddCustomer", message);
-
-    // Check if complete — if so, send envelope
-    var state = await client.ReadEntityStateAsync<OrderAggregator>(entityId);
-    if (state.EntityState?.IsComplete == true)
+    var trimmed = message.TrimStart();
+    if (trimmed.StartsWith("{"))
     {
-        var envelope = $"{{\"order\":{state.EntityState.Order},\"customer\":{state.EntityState.Customer}}}";
-        // Send to Service Bus queue "enriched-orders"
-        await serviceBusClient.SendMessageAsync(new ServiceBusMessage(envelope));
-        await client.SignalEntityAsync(entityId, "Delete");
+        // JSON — look for orderId field
+        var json = JObject.Parse(message);
+        return json["orderId"]?.ToString();
     }
+    if (trimmed.StartsWith("<"))
+    {
+        // XML — look for <OrderId> element
+        var doc = System.Xml.Linq.XDocument.Parse(message);
+        return doc.Descendants("OrderId").FirstOrDefault()?.Value
+            ?? doc.Root?.Attribute("orderId")?.Value;
+    }
+    // CSV or other — first field might be the key
+    return message.Split(',').FirstOrDefault()?.Trim();
 }
 ```
+
+==== Key design decisions
+
+#table(
+  columns: (auto, 1fr),
+  [*Decision*], [*Why*],
+  [Entity ID = correlation key (orderId)], [Table Storage loads it in O(1). 10,000 concurrent orders = 10,000 independent entities. No scanning, no manual index.],
+  [Generic N-input], [`ExpectedInputs` is a set of names. Add a queue + trigger for each new input. The entity and envelope builder don't change.],
+  [Format-agnostic storage], [Entity stores raw message strings. JSON, XML, CSV --- the entity does not parse. UTLXe handles format parsing.],
+  [Smart envelope builder], [JSON objects/arrays embedded directly. XML/CSV strings escaped as JSON strings. UTLXe re-parses per declared format (when EF16 ships).],
+  [Correlation key extraction], [`ExtractCorrelationKey` handles JSON (field lookup), XML (element search), and CSV (first field). Adapt per your message structure.],
+  [State persists automatically], [Durable Entities store in Azure Table Storage. Survives restarts, crashes, and scale events.],
+  [Any arrival order], [First input stored, entity waits. Second stored, waits. Nth completes — envelope sent. Order doesn't matter.],
+  [Delete after send], [Cleanup prevents stale state. Reprocessing creates a fresh entity.],
+  [CorrelationId on output], [Service Bus message carries the orderId. UTLXe preserves it for end-to-end tracing.],
+)
 
 === Setup effort
 
@@ -203,11 +362,13 @@ Cost: consumption plan --- pay per execution. 10,000 message pairs per day costs
 
 === Timeout and error handling
 
-What if one input never arrives?
+What if one input never arrives? The entity has a `FirstSeen` timestamp. A separate timer function can scan for stale entities:
 
-- *Durable Entity timeout:* configure a timer that fires after N minutes. If the entity is still incomplete, send the partial data to a dead-letter queue or log a warning.
-- *Service Bus message lock:* if the aggregator crashes mid-processing, Service Bus retries delivery. Durable Entities are persistent --- state survives restarts.
-- *Duplicate detection:* Service Bus has built-in duplicate detection. If the same message is delivered twice, the entity ignores the duplicate (idempotent `Add` operations).
+- *Timeout:* a scheduled Function runs every 5 minutes, queries entities older than 30 minutes that are still incomplete. It sends the partial data to a dead-letter queue and deletes the entity. The operator investigates why the matching message never arrived.
+- *Crash recovery:* if the aggregator crashes mid-processing, Service Bus retries delivery (the message wasn't acknowledged). Durable Entity state survives --- the entity resumes where it left off.
+- *Duplicate messages:* if Service Bus delivers the same message twice (at-least-once), the entity's `AddOrder` overwrites the same data. The `IsComplete` check and `Delete` after send ensure the envelope is sent exactly once.
+- *Out-of-order:* customer arrives before order? Works --- the entity stores whichever comes first.
+- *10,000 concurrent orders:* each is a separate entity with its own state. No contention, no shared locks. Azure Table Storage handles the scale.
 
 == When to Use Each Pattern
 
