@@ -139,12 +139,61 @@ class StrategyParityTest {
                 "Format conversion JSON to XML"
             ),
         )
+
+        @JvmStatic
+        fun multiInputCases() = listOf(
+            MultiInputParityCase(
+                "multi_json_2_inputs",
+                "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{orderId: @order.id, name: @customer.name, total: @order.amount}\n",
+                """{"order": {"id": "ORD-001", "amount": 250}, "customer": {"name": "Jan de Vries"}}""",
+                listOf(InputSlot(name = "order"), InputSlot(name = "customer")),
+                "Two JSON inputs"
+            ),
+            MultiInputParityCase(
+                "multi_json_3_inputs",
+                "%utlx 1.0\ninput: order json, customer json, inventory json\noutput json\n---\n{orderId: @order.id, customer: @customer.name, inStock: @inventory.available}\n",
+                """{"order": {"id": "ORD-042"}, "customer": {"name": "TechCorp"}, "inventory": {"available": true}}""",
+                listOf(InputSlot(name = "order"), InputSlot(name = "customer"), InputSlot(name = "inventory")),
+                "Three JSON inputs"
+            ),
+            MultiInputParityCase(
+                "multi_json_to_xml",
+                "%utlx 1.0\ninput: order json, customer json\noutput xml\n---\n{invoice: {orderId: @order.id, customer: @customer.name}}\n",
+                """{"order": {"id": "ORD-500"}, "customer": {"name": "Contoso"}}""",
+                listOf(InputSlot(name = "order"), InputSlot(name = "customer")),
+                "Two JSON inputs to XML output"
+            ),
+            MultiInputParityCase(
+                "multi_mixed_json_xml",
+                "%utlx 1.0\ninput: order json, catalog xml\noutput json\n---\n{orderId: @order.id, product: @catalog.catalog.product.name}\n",
+                """{"order": {"id": "ORD-777"}, "catalog": "<catalog><product><name>Widget</name></product></catalog>"}""",
+                listOf(InputSlot(name = "order"), InputSlot(name = "catalog")),
+                "Mixed format: JSON + XML"
+            ),
+            MultiInputParityCase(
+                "multi_computation_across_inputs",
+                "%utlx 1.0\ninput: order json, pricing json\noutput json\n---\n{orderId: @order.id, total: @order.amount * (1 - @pricing.discountPct / 100)}\n",
+                """{"order": {"id": "ORD-100", "amount": 1000}, "pricing": {"discountPct": 10}}""",
+                listOf(InputSlot(name = "order"), InputSlot(name = "pricing")),
+                "Cross-input computation"
+            ),
+        )
     }
 
     data class ParityCase(
         val name: String,
         val source: String,
         val input: String,
+        val description: String
+    ) {
+        override fun toString() = name
+    }
+
+    data class MultiInputParityCase(
+        val name: String,
+        val source: String,
+        val input: String,
+        val inputSlots: List<InputSlot>,
         val description: String
     ) {
         override fun toString() = name
@@ -171,6 +220,33 @@ class StrategyParityTest {
         val copyOutput = copy.execute(case.input).output
 
         // All three must match
+        assertEquals(templateOutput, compiledOutput,
+            "${case.name}: COMPILED output differs from TEMPLATE\n  TEMPLATE: $templateOutput\n  COMPILED: $compiledOutput")
+        assertEquals(templateOutput, copyOutput,
+            "${case.name}: COPY output differs from TEMPLATE\n  TEMPLATE: $templateOutput\n  COPY:     $copyOutput")
+    }
+
+    // =========================================================================
+    // Multi-input parity: all three strategies must produce identical output
+    // =========================================================================
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("multiInputCases")
+    fun `all strategies produce identical output for multi-input`(case: MultiInputParityCase) {
+        val config = TransformConfig(inputs = case.inputSlots)
+
+        val template = TemplateStrategy()
+        template.initialize(case.source, config.copy(strategy = "TEMPLATE"))
+        val templateOutput = template.execute(case.input).output
+
+        val compiled = CompiledStrategy()
+        compiled.initialize(case.source, config.copy(strategy = "COMPILED"))
+        val compiledOutput = compiled.execute(case.input).output
+
+        val copy = CopyStrategy()
+        copy.initialize(case.source, config.copy(strategy = "COPY"))
+        val copyOutput = copy.execute(case.input).output
+
         assertEquals(templateOutput, compiledOutput,
             "${case.name}: COMPILED output differs from TEMPLATE\n  TEMPLATE: $templateOutput\n  COMPILED: $compiledOutput")
         assertEquals(templateOutput, copyOutput,

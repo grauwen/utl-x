@@ -249,6 +249,227 @@ class GrpcTransportTest {
     // Full Lifecycle Test
     // =========================================================================
 
+    // =========================================================================
+    // COMPILED Strategy Tests
+    // =========================================================================
+
+    @Test
+    fun `compiled strategy - load and execute single input`() {
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{name: upperCase(\$input.name), done: true}\n"
+
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-single")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success, "Load COMPILED should succeed: ${loadResp.error}")
+
+        val execResp = blockingStub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-single")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "alice"}"""))
+                .setContentType("application/json")
+                .setCorrelationId("comp-1")
+                .build()
+        )
+
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        assertEquals("comp-1", execResp.correlationId)
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ALICE"), "upperCase should work: $output")
+        assertTrue(output.contains("true"), "done field: $output")
+    }
+
+    @Test
+    fun `compiled strategy - multi-input JSON envelope`() {
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{orderId: @order.id, name: @customer.name}\n"
+
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-multi")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success, "Load should succeed: ${loadResp.error}")
+
+        val envelope = """{"order": {"id": "ORD-G01"}, "customer": {"name": "TechCorp"}}"""
+        val execResp = blockingStub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-multi")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("comp-multi-1")
+                .build()
+        )
+
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-G01"), "Order ID: $output")
+        assertTrue(output.contains("TechCorp"), "Customer name: $output")
+    }
+
+    @Test
+    fun `compiled strategy - batch execute`() {
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{id: \$input.id, processed: true}\n"
+
+        blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-batch")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+
+        val batchResp = blockingStub.executeBatch(
+            ExecuteBatchRequest.newBuilder()
+                .setTransformationId("compiled-batch")
+                .addItems(BatchItem.newBuilder().setPayload(ByteString.copyFromUtf8("""{"id": "A"}""")).setCorrelationId("cb-1").build())
+                .addItems(BatchItem.newBuilder().setPayload(ByteString.copyFromUtf8("""{"id": "B"}""")).setCorrelationId("cb-2").build())
+                .addItems(BatchItem.newBuilder().setPayload(ByteString.copyFromUtf8("""{"id": "C"}""")).setCorrelationId("cb-3").build())
+                .build()
+        )
+
+        assertEquals(3, batchResp.resultsCount)
+        assertTrue(batchResp.resultsList.all { it.success }, "All batch items should succeed")
+        assertTrue(batchResp.getResults(0).output.toStringUtf8().contains("A"))
+        assertTrue(batchResp.getResults(2).output.toStringUtf8().contains("C"))
+    }
+
+    @Test
+    fun `compiled strategy - mixed format JSON and XML inputs`() {
+        val source = "%utlx 1.0\ninput: order json, product xml\noutput json\n---\n{orderId: @order.id, productName: @product.item.name}\n"
+
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-mixed-xml")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success, "Load should succeed: ${loadResp.error}")
+
+        val envelope = """{"order": {"id": "ORD-MX1"}, "product": "<item><name>Sensor Pro</name><price>89.50</price></item>"}"""
+        val execResp = blockingStub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-mixed-xml")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("mx-1")
+                .build()
+        )
+
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-MX1"), "Order ID: $output")
+        assertTrue(output.contains("Sensor Pro"), "Product from XML: $output")
+    }
+
+    @Test
+    fun `compiled strategy - mixed format JSON and YAML inputs`() {
+        val source = "%utlx 1.0\ninput: order json, config yaml\noutput json\n---\n{orderId: @order.id, region: @config.shipping.region}\n"
+
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-mixed-yaml")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success, "Load should succeed: ${loadResp.error}")
+
+        val envelope = """{"order": {"id": "ORD-MY1"}, "config": "shipping:\n  region: EU-WEST\n  warehouse: Rotterdam"}"""
+        val execResp = blockingStub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-mixed-yaml")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("my-1")
+                .build()
+        )
+
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-MY1"), "Order ID: $output")
+        assertTrue(output.contains("EU-WEST"), "Region from YAML: $output")
+    }
+
+    @Test
+    fun `compiled strategy - three formats JSON XML YAML`() {
+        val source = "%utlx 1.0\ninput: order json, catalog xml, settings yaml\noutput json\n---\n{orderId: @order.id, product: @catalog.item.name, warehouse: @settings.fulfillment.warehouse}\n"
+
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-3fmt")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success, "Load should succeed: ${loadResp.error}")
+
+        val envelope = """{"order": {"id": "ORD-3F1", "qty": 2}, "catalog": "<item><name>Widget X</name><sku>WX-100</sku></item>", "settings": "fulfillment:\n  warehouse: Amsterdam\n  carrier: DHL"}"""
+        val execResp = blockingStub.execute(
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-3fmt")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("3f-1")
+                .build()
+        )
+
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-3F1"), "Order ID (JSON): $output")
+        assertTrue(output.contains("Widget X"), "Product (XML): $output")
+        assertTrue(output.contains("Amsterdam"), "Warehouse (YAML): $output")
+    }
+
+    @Test
+    fun `compiled strategy - full lifecycle`() {
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{greeting: concat(\"Hello \", \$input.name)}\n"
+
+        // Load
+        val loadResp = blockingStub.loadTransformation(
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-lc")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(loadResp.success)
+
+        // Execute 3 times
+        for (i in 1..3) {
+            val resp = blockingStub.execute(
+                ExecuteRequest.newBuilder()
+                    .setTransformationId("compiled-lc")
+                    .setPayload(ByteString.copyFromUtf8("""{"name": "User$i"}"""))
+                    .setCorrelationId("clc-$i")
+                    .build()
+            )
+            assertTrue(resp.success)
+            assertTrue(resp.output.toStringUtf8().contains("Hello User$i"))
+        }
+
+        // Health
+        val health = blockingStub.health(HealthRequest.getDefaultInstance())
+        assertEquals(1, health.loadedTransformations)
+        assertEquals(3, health.totalExecutions)
+
+        // Unload
+        val unloadResp = blockingStub.unloadTransformation(
+            UnloadTransformationRequest.newBuilder().setTransformationId("compiled-lc").build()
+        )
+        assertTrue(unloadResp.success)
+        assertEquals(0, engine.registry.size())
+    }
+
+    // =========================================================================
+    // Full Lifecycle Test
+    // =========================================================================
+
     @Test
     fun `full gRPC lifecycle - load, execute, health, unload`() {
         // 1. Load

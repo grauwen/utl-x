@@ -371,6 +371,226 @@ class StdioProtoTransportTest {
     }
 
     // =========================================================================
+    // COMPILED Strategy Tests
+    // =========================================================================
+
+    @Test
+    fun `compiled strategy - load and execute single input`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{name: upperCase(\$input.name), done: true}\n"
+        val loadReq = LoadTransformationRequest.newBuilder()
+            .setTransformationId("compiled-tx")
+            .setUtlxSource(source)
+            .setStrategy("COMPILED")
+            .build()
+        sendEnvelope(MessageType.LOAD_TRANSFORMATION_REQUEST, loadReq)
+
+        val loadResp = LoadTransformationResponse.parseFrom(readEnvelope().payload)
+        assertTrue(loadResp.success, "Load COMPILED should succeed: ${loadResp.error}")
+
+        val execReq = ExecuteRequest.newBuilder()
+            .setTransformationId("compiled-tx")
+            .setPayload(ByteString.copyFromUtf8("""{"name": "alice"}"""))
+            .setContentType("application/json")
+            .setCorrelationId("comp-1")
+            .build()
+        sendEnvelope(MessageType.EXECUTE_REQUEST, execReq)
+        toTransportOut.close()
+
+        val execResp = ExecuteResponse.parseFrom(readEnvelope().payload)
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        assertEquals("comp-1", execResp.correlationId)
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ALICE"), "upperCase should work: $output")
+        assertTrue(output.contains("true"), "done field: $output")
+    }
+
+    @Test
+    fun `compiled strategy - multi-input JSON envelope`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{orderId: @order.id, name: @customer.name}\n"
+        val loadReq = LoadTransformationRequest.newBuilder()
+            .setTransformationId("compiled-multi")
+            .setUtlxSource(source)
+            .setStrategy("COMPILED")
+            .build()
+        sendEnvelope(MessageType.LOAD_TRANSFORMATION_REQUEST, loadReq)
+
+        val loadResp = LoadTransformationResponse.parseFrom(readEnvelope().payload)
+        assertTrue(loadResp.success, "Load should succeed: ${loadResp.error}")
+
+        val envelope = """{"order": {"id": "ORD-P01"}, "customer": {"name": "Contoso"}}"""
+        val execReq = ExecuteRequest.newBuilder()
+            .setTransformationId("compiled-multi")
+            .setPayload(ByteString.copyFromUtf8(envelope))
+            .setContentType("application/json")
+            .setCorrelationId("comp-multi-1")
+            .build()
+        sendEnvelope(MessageType.EXECUTE_REQUEST, execReq)
+        toTransportOut.close()
+
+        val execResp = ExecuteResponse.parseFrom(readEnvelope().payload)
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-P01"), "Order ID: $output")
+        assertTrue(output.contains("Contoso"), "Customer name: $output")
+    }
+
+    @Test
+    fun `compiled strategy - batch execute`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{id: \$input.id, processed: true}\n"
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-batch")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(LoadTransformationResponse.parseFrom(readEnvelope().payload).success)
+
+        val batchReq = ExecuteBatchRequest.newBuilder()
+            .setTransformationId("compiled-batch")
+            .addItems(BatchItem.newBuilder().setPayload(ByteString.copyFromUtf8("""{"id": "A"}""")).setContentType("application/json").setCorrelationId("cb-1").build())
+            .addItems(BatchItem.newBuilder().setPayload(ByteString.copyFromUtf8("""{"id": "B"}""")).setContentType("application/json").setCorrelationId("cb-2").build())
+            .build()
+        sendEnvelope(MessageType.EXECUTE_BATCH_REQUEST, batchReq)
+        toTransportOut.close()
+
+        val batchResp = ExecuteBatchResponse.parseFrom(readEnvelope().payload)
+        assertEquals(2, batchResp.resultsCount)
+        assertTrue(batchResp.getResults(0).success)
+        assertTrue(batchResp.getResults(1).success)
+        assertTrue(batchResp.getResults(0).output.toStringUtf8().contains("A"))
+        assertTrue(batchResp.getResults(1).output.toStringUtf8().contains("B"))
+    }
+
+    @Test
+    fun `compiled strategy - mixed format JSON and XML inputs`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput: order json, product xml\noutput json\n---\n{orderId: @order.id, productName: @product.item.name}\n"
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-mixed-xml")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(LoadTransformationResponse.parseFrom(readEnvelope().payload).success)
+
+        val envelope = """{"order": {"id": "ORD-PX1"}, "product": "<item><name>Valve Pro</name><price>120</price></item>"}"""
+        sendEnvelope(
+            MessageType.EXECUTE_REQUEST,
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-mixed-xml")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("px-1")
+                .build()
+        )
+        toTransportOut.close()
+
+        val execResp = ExecuteResponse.parseFrom(readEnvelope().payload)
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-PX1"), "Order ID: $output")
+        assertTrue(output.contains("Valve Pro"), "Product from XML: $output")
+    }
+
+    @Test
+    fun `compiled strategy - three formats JSON XML YAML`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput: order json, catalog xml, settings yaml\noutput json\n---\n{orderId: @order.id, product: @catalog.item.name, warehouse: @settings.fulfillment.warehouse}\n"
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-3fmt")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(LoadTransformationResponse.parseFrom(readEnvelope().payload).success)
+
+        val envelope = """{"order": {"id": "ORD-3P1"}, "catalog": "<item><name>Pump X</name><sku>PX-50</sku></item>", "settings": "fulfillment:\n  warehouse: Rotterdam\n  carrier: PostNL"}"""
+        sendEnvelope(
+            MessageType.EXECUTE_REQUEST,
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-3fmt")
+                .setPayload(ByteString.copyFromUtf8(envelope))
+                .setContentType("application/json")
+                .setCorrelationId("3p-1")
+                .build()
+        )
+        toTransportOut.close()
+
+        val execResp = ExecuteResponse.parseFrom(readEnvelope().payload)
+        assertTrue(execResp.success, "Execute should succeed: ${execResp.error}")
+        val output = execResp.output.toStringUtf8()
+        assertTrue(output.contains("ORD-3P1"), "Order ID (JSON): $output")
+        assertTrue(output.contains("Pump X"), "Product (XML): $output")
+        assertTrue(output.contains("Rotterdam"), "Warehouse (YAML): $output")
+    }
+
+    @Test
+    fun `compiled strategy - full lifecycle`() {
+        startTransport()
+
+        val source = "%utlx 1.0\ninput json\noutput json\n---\n{greeting: concat(\"Hello \", \$input.name)}\n"
+
+        // Load
+        sendEnvelope(
+            MessageType.LOAD_TRANSFORMATION_REQUEST,
+            LoadTransformationRequest.newBuilder()
+                .setTransformationId("compiled-lc")
+                .setUtlxSource(source)
+                .setStrategy("COMPILED")
+                .build()
+        )
+        assertTrue(LoadTransformationResponse.parseFrom(readEnvelope().payload).success)
+
+        // Execute
+        sendEnvelope(
+            MessageType.EXECUTE_REQUEST,
+            ExecuteRequest.newBuilder()
+                .setTransformationId("compiled-lc")
+                .setPayload(ByteString.copyFromUtf8("""{"name": "World"}"""))
+                .setContentType("application/json")
+                .setCorrelationId("clc-1")
+                .build()
+        )
+        val execResp = ExecuteResponse.parseFrom(readEnvelope().payload)
+        assertTrue(execResp.success)
+        assertTrue(execResp.output.toStringUtf8().contains("Hello World"))
+
+        // Health
+        sendEnvelope(MessageType.HEALTH_REQUEST, HealthRequest.getDefaultInstance())
+        val health = HealthResponse.parseFrom(readEnvelope().payload)
+        assertEquals(1, health.loadedTransformations)
+        assertEquals(1, health.totalExecutions)
+
+        // Unload
+        sendEnvelope(
+            MessageType.UNLOAD_TRANSFORMATION_REQUEST,
+            UnloadTransformationRequest.newBuilder().setTransformationId("compiled-lc").build()
+        )
+        val unloadResp = UnloadTransformationResponse.parseFrom(readEnvelope().payload)
+        assertTrue(unloadResp.success)
+
+        // Verify unloaded
+        sendEnvelope(MessageType.HEALTH_REQUEST, HealthRequest.getDefaultInstance())
+        toTransportOut.close()
+        val health2 = HealthResponse.parseFrom(readEnvelope().payload)
+        assertEquals(0, health2.loadedTransformations)
+    }
+
+    // =========================================================================
     // Concurrent Execution Tests (workers > 1)
     // =========================================================================
 

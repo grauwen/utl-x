@@ -46,7 +46,7 @@ run_engine_test() {
     NEXT_PORT=$((NEXT_PORT + 1))
     TOTAL=$((TOTAL + 1))
 
-    OUTPUT=$(jq -c . "$input" | java -jar "$ENGINE_JAR" --bundle "$bundle" --port $port 2>/dev/null)
+    OUTPUT=$(jq -c . "$input" | java -jar "$ENGINE_JAR" --bundle "$bundle" --admin-port $port 2>/dev/null)
 
     if [ -n "$OUTPUT" ] && echo "$OUTPUT" | jq . > /dev/null 2>&1; then
         PASSED=$((PASSED + 1))

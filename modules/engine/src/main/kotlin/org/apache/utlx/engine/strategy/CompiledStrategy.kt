@@ -91,6 +91,11 @@ class CompiledStrategy : ExecutionStrategy {
 
     override fun execute(input: String): ExecutionResult {
         val declaredInputs = compiledProgram.header.inputs
+
+        if (declaredInputs.size > 1) {
+            return executeMultiInput(input)
+        }
+
         val inputName = transformConfig.inputs.firstOrNull()?.name
             ?: declaredInputs.firstOrNull()?.first
             ?: "input"
@@ -113,6 +118,63 @@ class CompiledStrategy : ExecutionStrategy {
             val inputs = mapOf(
                 inputName to TransformationService.InputData(content = input, format = declaredFormat)
             )
+            val (output, _) = transformationService.transform(utlxSource, inputs)
+            return ExecutionResult(output = output)
+        }
+    }
+
+    /**
+     * Multi-input: payload is a JSON envelope where each key maps to a declared input name.
+     * Non-JSON values are stored as JSON strings in the envelope and extracted as raw text.
+     */
+    private fun executeMultiInput(input: String): ExecutionResult {
+        val declaredInputs = compiledProgram.header.inputs
+        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+        val envelope = mapper.readTree(input)
+
+        if (transformFunction != null && !usingFallback) {
+            // ── Compiled path: parse each input per declared format, call compiled function ──
+            val inputUDMs = declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope.get(name)
+                    ?: throw IllegalArgumentException(
+                        "Envelope missing required input '$name'. " +
+                        "Expected keys: ${declaredInputs.map { it.first }}"
+                    )
+                val declaredFormat = formatSpec.type.name.lowercase()
+                val content = if (declaredFormat != "json" && node.isTextual) {
+                    node.asText()
+                } else {
+                    mapper.writeValueAsString(node)
+                }
+                name to transformationService.parseInputPublic(content, declaredFormat)
+            }
+
+            logger.debug("Envelope split into {} named inputs: {}", inputUDMs.size, inputUDMs.keys)
+            val outputUDM = transformFunction!!.execute(inputUDMs)
+
+            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
+            val outputData = transformationService.serializeOutputPublic(
+                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
+            )
+            return ExecutionResult(output = outputData)
+        } else {
+            // ── Fallback: interpreter via TransformationService.transform() ──
+            val inputs = declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope.get(name)
+                    ?: throw IllegalArgumentException(
+                        "Envelope missing required input '$name'. " +
+                        "Expected keys: ${declaredInputs.map { it.first }}"
+                    )
+                val declaredFormat = formatSpec.type.name.lowercase()
+                val content = if (declaredFormat != "json" && node.isTextual) {
+                    node.asText()
+                } else {
+                    mapper.writeValueAsString(node)
+                }
+                name to TransformationService.InputData(content = content, format = declaredFormat)
+            }
+
+            logger.debug("Envelope split into {} named inputs (fallback): {}", inputs.size, inputs.keys)
             val (output, _) = transformationService.transform(utlxSource, inputs)
             return ExecutionResult(output = output)
         }

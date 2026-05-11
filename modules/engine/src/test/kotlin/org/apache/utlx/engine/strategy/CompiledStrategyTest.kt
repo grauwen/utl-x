@@ -544,4 +544,192 @@ class CompiledStrategyTest {
             strategy.execute("not valid json {{{")
         }
     }
+
+    // =========================================================================
+    // Multi-input: JSON envelope with multiple JSON inputs
+    // =========================================================================
+
+    @Test
+    fun `multi-input JSON envelope with two JSON inputs`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{orderId: @order.id, customerName: @customer.name, total: @order.amount}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "customer"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-001", "amount": 250.00}, "customer": {"name": "Jan de Vries", "tier": "Gold"}}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("ORD-001"), "Order ID: ${result.output}")
+        assertTrue(result.output.contains("Jan de Vries"), "Customer name: ${result.output}")
+        assertTrue(result.output.contains("250"), "Amount: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input with three JSON inputs`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, customer json, inventory json\noutput json\n---\n{orderId: @order.id, customer: @customer.name, inStock: @inventory.available}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(
+                InputSlot(name = "order"),
+                InputSlot(name = "customer"),
+                InputSlot(name = "inventory")
+            )
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-042"}, "customer": {"name": "TechCorp GmbH"}, "inventory": {"available": true, "qty": 15}}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("ORD-042"), "Output: ${result.output}")
+        assertTrue(result.output.contains("TechCorp GmbH"), "Output: ${result.output}")
+        assertTrue(result.output.contains("true"), "Output: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input with computation across inputs`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, pricing json\noutput json\n---\n{orderId: @order.id, subtotal: @order.amount, discount: @pricing.discountPct, total: @order.amount * (1 - @pricing.discountPct / 100)}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "pricing"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-100", "amount": 1000}, "pricing": {"discountPct": 10}}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("ORD-100"), "Output: ${result.output}")
+        assertTrue(result.output.contains("900"), "1000 * 0.9 = 900: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input missing key throws exception`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{orderId: @order.id, name: @customer.name}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "customer"))
+        )
+        strategy.initialize(source, config)
+
+        // Envelope is missing the "customer" key
+        assertFailsWith<IllegalArgumentException> {
+            strategy.execute("""{"order": {"id": "ORD-001"}}""")
+        }
+    }
+
+    @Test
+    fun `multi-input with nested objects across inputs`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: shipment json, address json\noutput json\n---\n{trackingId: @shipment.trackingId, carrier: @shipment.carrier, destination: {street: @address.street, city: @address.city, country: @address.country}}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "shipment"), InputSlot(name = "address"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"shipment": {"trackingId": "TRK-789", "carrier": "DHL"}, "address": {"street": "Keizersgracht 123", "city": "Amsterdam", "country": "NL"}}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("TRK-789"), "Output: ${result.output}")
+        assertTrue(result.output.contains("DHL"), "Output: ${result.output}")
+        assertTrue(result.output.contains("Amsterdam"), "Output: ${result.output}")
+        assertTrue(result.output.contains("NL"), "Output: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input JSON to XML output`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput xml\n---\n{invoice: {orderId: @order.id, customer: @customer.name, total: @order.amount}}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "customer"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-500", "amount": 1250}, "customer": {"name": "Contoso"}}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("<orderId>ORD-500</orderId>"), "XML output: ${result.output}")
+        assertTrue(result.output.contains("<customer>Contoso</customer>"), "XML output: ${result.output}")
+    }
+
+    // =========================================================================
+    // Multi-input: mixed formats (JSON + XML in JSON envelope)
+    // =========================================================================
+
+    @Test
+    fun `multi-input mixed format JSON and XML`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, catalog xml\noutput json\n---\n{orderId: @order.id, productName: @catalog.catalog.product.name, productPrice: @catalog.catalog.product.price}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "catalog"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-777", "qty": 3}, "catalog": "<catalog><product><name>Widget Pro</name><price>49.95</price></product></catalog>"}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("ORD-777"), "Order ID: ${result.output}")
+        assertTrue(result.output.contains("Widget Pro"), "Product name from XML: ${result.output}")
+        assertTrue(result.output.contains("49.95"), "Price from XML: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input mixed format JSON and CSV`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: meta json, data csv\noutput json\n---\n{batchId: @meta.batchId, recordCount: size(@data), firstRecord: @data[0]}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "meta"), InputSlot(name = "data"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"meta": {"batchId": "BATCH-001", "source": "ERP"}, "data": "name,age\nAlice,30\nBob,25"}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("BATCH-001"), "Batch ID: ${result.output}")
+        assertTrue(result.output.contains("Alice"), "First CSV record: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input mixed format JSON and YAML`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, config yaml\noutput json\n---\n{orderId: @order.id, region: @config.shipping.region, warehouse: @config.shipping.warehouse}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "config"))
+        )
+        strategy.initialize(source, config)
+
+        val envelope = """{"order": {"id": "ORD-999"}, "config": "shipping:\n  region: EU-WEST\n  warehouse: Amsterdam"}"""
+
+        val result = strategy.execute(envelope)
+        assertTrue(result.output.contains("ORD-999"), "Order ID: ${result.output}")
+        assertTrue(result.output.contains("EU-WEST"), "YAML region: ${result.output}")
+        assertTrue(result.output.contains("Amsterdam"), "YAML warehouse: ${result.output}")
+    }
+
+    @Test
+    fun `multi-input repeated execution reuses compiled function`() {
+        val strategy = CompiledStrategy()
+        val source = "%utlx 1.0\ninput: order json, customer json\noutput json\n---\n{id: @order.id, name: @customer.name}\n"
+        val config = TransformConfig(
+            strategy = "COMPILED",
+            inputs = listOf(InputSlot(name = "order"), InputSlot(name = "customer"))
+        )
+        strategy.initialize(source, config)
+
+        for (i in 1..5) {
+            val envelope = """{"order": {"id": "ORD-$i"}, "customer": {"name": "Customer-$i"}}"""
+            val result = strategy.execute(envelope)
+            assertTrue(result.output.contains("ORD-$i"), "Iteration $i: ${result.output}")
+            assertTrue(result.output.contains("Customer-$i"), "Iteration $i: ${result.output}")
+        }
+    }
 }
