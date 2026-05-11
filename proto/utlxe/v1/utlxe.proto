@@ -79,7 +79,7 @@ message ExecuteRequest {
   bytes payload = 2;               // The current_payload from MPPM envelope
   string content_type = 3;         // "application/json", "application/xml", "text/csv", etc.
   map<string, bytes> named_inputs = 4; // For N-input mappings: named payloads from step window
-  string correlation_id = 5;       // Business correlation ID — preserved across the entire chain
+  string correlation_id = 5;       // MPPM transaction grouping UUID — same for all messages in one pipeline execution
   string message_id = 6;           // UUIDv7 — unique ID for this message (caller sets, or engine generates)
   string causation_id = 7;         // UUIDv7 — MessageId of the message that caused this one
   map<string, string> metadata = 8; // Custom properties to forward (e.g., Service Bus, CPI exchange, Kafka headers)
@@ -87,6 +87,9 @@ message ExecuteRequest {
   map<string, string> parameters = 10; // Transformation input parameters (accessible as $params.key in .utlx)
   MetadataForwarding metadata_forwarding = 11; // Controls which metadata keys pass through to output
   string tracestate = 12;          // W3C Trace Context tracestate header (vendor extensions)
+  string request_id = 13;          // Pipe-level matching: unique per call, echoed back on response.
+                                    // Used by wrapper for multiplexed dispatch on stdin/stdout pipe.
+                                    // Distinct from correlation_id (which is MPPM transaction grouping).
 }
 
 message ExecuteResponse {
@@ -98,12 +101,13 @@ message ExecuteResponse {
   repeated ValidationError validation_errors = 6;
   ExecuteMetrics metrics = 7;
   ErrorPhase error_phase = 8;              // WHERE the error occurred
-  string correlation_id = 9;              // Echoed from request (for multiplexed matching)
+  string correlation_id = 9;              // MPPM correlation_id echoed (for logging/tracing context)
   string message_id = 10;                 // New UUID for this output message
   string causation_id = 11;              // Set to input's message_id (immediate parent)
   map<string, string> metadata = 12;     // Forwarded custom properties (controlled by metadata_forwarding)
   ErrorCode error_code = 13;             // Specific, actionable error code
   OutputMetadata output_metadata = 14;   // Rule-emitted business metadata (typed, host-neutral)
+  string request_id = 15;               // Echoed from request — wrapper uses for pipe-level response dispatch
 }
 
 // Rule-emitted output metadata. Distinct from the flat `metadata` map (which is
@@ -179,13 +183,14 @@ message BatchItem {
   bytes payload = 1;
   string content_type = 2;
   map<string, bytes> named_inputs = 3;
-  string correlation_id = 4;
+  string correlation_id = 4;           // MPPM transaction grouping UUID
   string message_id = 5;
   string causation_id = 6;
   map<string, string> metadata = 7;
   map<string, string> parameters = 8;
   string traceparent = 9;             // W3C Trace Context per batch item (each item = own span)
   string tracestate = 10;             // W3C Trace Context vendor extensions
+  string request_id = 11;            // Pipe-level matching per batch item (echoed on corresponding ExecuteResponse)
 }
 
 message ExecuteBatchResponse {
@@ -203,7 +208,7 @@ message ExecutePipelineRequest {
   repeated string transformation_ids = 1;  // Ordered list: output of [0] feeds input of [1], etc.
   bytes payload = 2;                       // Initial input payload
   string content_type = 3;
-  string correlation_id = 4;
+  string correlation_id = 4;               // MPPM transaction grouping UUID
   string message_id = 5;                   // UUIDv7 — unique for this pipeline invocation
   string causation_id = 6;                 // UUIDv7 — parent's MessageId
   map<string, string> metadata = 7;        // Custom properties to forward
@@ -211,6 +216,7 @@ message ExecutePipelineRequest {
   map<string, PipelineStageInputs> stage_inputs = 9; // EF01: additional inputs per stage, keyed by transformation_id
   map<string, string> parameters = 10; // Transformation input parameters (shared across all stages)
   string tracestate = 11;             // W3C Trace Context vendor extensions
+  string request_id = 12;             // Pipe-level matching (echoed on response)
 }
 
 message ExecutePipelineResponse {
@@ -229,6 +235,7 @@ message ExecutePipelineResponse {
   map<string, string> metadata = 13;     // Forwarded custom properties
   ErrorCode error_code = 14;             // Specific error code (if failed)
   OutputMetadata output_metadata = 15;   // Rule-emitted business metadata (from last pipeline stage)
+  string request_id = 16;               // Echoed from request — pipe-level response dispatch
 }
 
 // ─── Lifecycle messages ───
