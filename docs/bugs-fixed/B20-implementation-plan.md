@@ -45,6 +45,8 @@ All parsers currently accept `String` or `Reader`. Add `ByteArray`/`InputStream`
 | **CSVParser** | `formats/csv/.../csv_parser.kt` (line 47) | `CSVParser(csv: String, dialect)` | `CSVParser(bytes: ByteArray, charset: Charset?, dialect)` — use provided charset or default UTF-8 |
 | **YAMLParser** | `formats/yaml/.../YAMLParser.kt` (line 56) | `parse(yamlString: String)` already has `parse(input: InputStream)` | Already has InputStream overload — just needs BOM-aware charset detection before creating reader |
 
+| **ODataJSONParser** | `formats/odata/.../ODataJSONParser.kt` (line 22) | `ODataJSONParser(content: String, options)` | `ODataJSONParser(bytes: ByteArray, options)` — JSON-based, always UTF-8 |
+
 Schema parsers (XSD, JSON Schema, Avro, Protobuf) delegate to XML/JSON parsers — they'll get ByteArray support for free.
 
 **Key insight for XML:** Java's SAX/DOM parser auto-detects UTF-8, UTF-16LE, UTF-16BE from BOM and `<?xml encoding="...">` when given a `ByteArrayInputStream`. This is the whole point — pass raw bytes, let the XML parser do what it's done for 25 years.
@@ -57,6 +59,7 @@ Schema parsers (XSD, JSON Schema, Avro, Protobuf) delegate to XML/JSON parsers �
 | **XMLSerializer** | `formats/xml/.../xml_serializer.kt` | `serialize(udm): String`, already has `outputEncoding` constructor param | `serializeToBytes(udm): ByteArray` — use `outputEncoding` (from `{encoding: "UTF-16"}` format option) to encode |
 | **CSVSerializer** | `formats/csv/.../csv_serializer.kt` | `serialize(udm): String` | `serializeToBytes(udm, charset): ByteArray` — use charset or default UTF-8 |
 | **YAMLSerializer** | `formats/yaml/.../YAMLSerializer.kt` | Already has `serialize(udm, output: OutputStream)` | Already supports OutputStream — add charset-aware wrapper |
+| **ODataJSONSerializer** | `formats/odata/.../ODataJSONSerializer.kt` | `serialize(udm): String` | `serializeToBytes(udm): ByteArray` — always UTF-8 |
 
 ### Phase 4: TransformationService — wire ByteArray through
 
@@ -91,6 +94,8 @@ Changes:
 | `formats/xml/.../xml_serializer.kt` | Add `serializeToBytes()` using `outputEncoding` |
 | `formats/csv/.../csv_serializer.kt` | Add `serializeToBytes()` with charset |
 | `formats/yaml/.../YAMLSerializer.kt` | Add charset-aware `serializeToBytes()` |
+| `formats/odata/.../ODataJSONParser.kt` | Add `ByteArray` constructor |
+| `formats/odata/.../ODataJSONSerializer.kt` | Add `serializeToBytes()` |
 | `modules/cli/.../service/TransformationService.kt` | `InputData` gets `bytes` field, `parseInput` uses ByteArray path, `serializeOutputToBytes()` added |
 | `modules/cli/.../commands/TransformCommand.kt` | `readBytes()` option, `--charset` flag |
 
