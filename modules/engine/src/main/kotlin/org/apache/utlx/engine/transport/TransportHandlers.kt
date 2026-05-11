@@ -155,6 +155,7 @@ object TransportHandlers {
                 .setErrorClass(ErrorClass.PERMANENT)
                 .setErrorPhase(ErrorPhase.INTERNAL)
                 .setCorrelationId(req.correlationId)
+                .setRequestId(req.requestId)
                 .build()
 
         instance.recordExecution()
@@ -170,6 +171,7 @@ object TransportHandlers {
                 .setErrorClass(ErrorClass.PERMANENT)
                 .setErrorPhase(ErrorPhase.PRE_VALIDATION)
                 .setCorrelationId(req.correlationId)
+                .setRequestId(req.requestId)
                 .build()
         }
 
@@ -197,6 +199,7 @@ object TransportHandlers {
         val builder = ExecuteResponse.newBuilder()
             .setSuccess(result.success)
             .setCorrelationId(req.correlationId)
+            .setRequestId(req.requestId)
             .setMetrics(
                 ExecuteMetrics.newBuilder()
                     .setExecuteDurationUs(durationUs)
@@ -244,6 +247,7 @@ object TransportHandlers {
                         .setErrorClass(ErrorClass.PERMANENT)
                         .setErrorPhase(ErrorPhase.INTERNAL)
                         .setCorrelationId(item.correlationId)
+                        .setRequestId(item.requestId)
                         .build()
                 )
             }
@@ -267,6 +271,7 @@ object TransportHandlers {
             val respBuilder = ExecuteResponse.newBuilder()
                 .setSuccess(result.success)
                 .setCorrelationId(item.correlationId)
+                .setRequestId(item.requestId)
                 .setMetrics(
                     ExecuteMetrics.newBuilder()
                         .setExecuteDurationUs(durationUs)
@@ -315,6 +320,7 @@ object TransportHandlers {
                 .setErrorClass(ErrorClass.PERMANENT)
                 .setErrorPhase(ErrorPhase.INTERNAL)
                 .setCorrelationId(req.correlationId)
+                .setRequestId(req.requestId)
                 .build()
         }
 
@@ -326,6 +332,7 @@ object TransportHandlers {
                     .setErrorClass(ErrorClass.PERMANENT)
                     .setErrorPhase(ErrorPhase.INTERNAL)
                     .setCorrelationId(req.correlationId)
+                    .setRequestId(req.requestId)
                     .setStagesCompleted(stagesCompleted)
                     .build()
 
@@ -367,6 +374,7 @@ object TransportHandlers {
                     .setErrorClass(ErrorClass.PERMANENT)
                     .setErrorPhase(mapErrorPhase(result.phase))
                     .setCorrelationId(req.correlationId)
+                    .setRequestId(req.requestId)
                     .setStagesCompleted(stagesCompleted)
                     .setTotalDurationUs(durationUs)
                 result.validationErrors.forEach { err ->
@@ -401,6 +409,7 @@ object TransportHandlers {
             .setSuccess(true)
             .setOutput(ByteString.copyFromUtf8(currentPayload))
             .setCorrelationId(req.correlationId)
+            .setRequestId(req.requestId)
             .setStagesCompleted(stagesCompleted)
             .setTotalDurationUs(durationUs)
 
