@@ -27,6 +27,11 @@ class JSONSerializer(
         serialize(udm, writer)
         return writer.toString()
     }
+
+    /**
+     * B20: Serialize UDM to JSON bytes (always UTF-8 per RFC 8259).
+     */
+    fun serializeToBytes(udm: UDM): ByteArray = serialize(udm).toByteArray(Charsets.UTF_8)
     
     /**
      * Serialize RuntimeValue to JSON string

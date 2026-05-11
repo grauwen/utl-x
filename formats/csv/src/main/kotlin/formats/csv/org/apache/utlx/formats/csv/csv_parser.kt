@@ -1,8 +1,10 @@
 package org.apache.utlx.formats.csv
 
 import org.apache.utlx.core.udm.UDM
+import java.io.InputStreamReader
 import java.io.Reader
 import java.io.StringReader
+import java.nio.charset.Charset
 
 /**
  * CSV Parser - Converts CSV to UDM
@@ -44,8 +46,16 @@ class CSVParser(
         }
     }
     
-    constructor(csv: String, dialect: CSVDialect = CSVDialect.DEFAULT) : 
+    constructor(csv: String, dialect: CSVDialect = CSVDialect.DEFAULT) :
         this(StringReader(csv), dialect)
+
+    /**
+     * B20: Construct from raw bytes with explicit or detected charset.
+     * CSV has no self-describing encoding — charset must come from Content-Type or caller hint.
+     * Defaults to UTF-8 if no charset provided.
+     */
+    constructor(bytes: ByteArray, charset: Charset? = null, dialect: CSVDialect = CSVDialect.DEFAULT) :
+        this(InputStreamReader(java.io.ByteArrayInputStream(bytes), charset ?: Charsets.UTF_8), dialect)
     
     /**
      * Parse CSV to UDM

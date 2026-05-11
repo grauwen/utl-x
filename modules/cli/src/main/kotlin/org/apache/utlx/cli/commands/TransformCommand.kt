@@ -36,7 +36,8 @@ object TransformCommand {
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
         val strictTypes: Boolean = false,  // Enforce type checking (fail on type errors)
-        val identityMode: Boolean = false  // true = no script, passthrough with smart format flip
+        val identityMode: Boolean = false,  // true = no script, passthrough with smart format flip
+        val charset: String? = null  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -206,19 +207,29 @@ object TransformCommand {
             val inputs = if (options.namedInputs.isNotEmpty()) {
                 // Named inputs from --input flags
                 options.namedInputs.mapValues { (name, file) ->
-                    val inputData = file.readText()
-                    // Only use detectFormat if user explicitly didn't specify format
-                    // Otherwise let TransformationService auto-detect from header
                     val inputFormat = options.inputFormat
+                    val charsetHint = options.charset?.let {
+                        try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
+                    }
 
                     if (options.verbose && inputFormat != null) {
                         println("Input '$name' format: $inputFormat (from CLI option)")
                     }
 
-                    TransformationService.InputData(
-                        content = inputData,
-                        format = inputFormat  // null = auto-detect from header in TransformationService
-                    )
+                    // B20: read raw bytes when charset is specified (non-UTF-8 safe)
+                    if (charsetHint != null) {
+                        TransformationService.InputData(
+                            content = file.readText(charsetHint),  // String fallback for backward compat
+                            format = inputFormat,
+                            bytes = file.readBytes(),
+                            charset = charsetHint
+                        )
+                    } else {
+                        TransformationService.InputData(
+                            content = file.readText(),
+                            format = inputFormat
+                        )
+                    }
                 }
             } else {
                 // No named inputs - read from stdin (backward compat)
@@ -452,6 +463,7 @@ ${"$"}input"""
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
         var strictTypes = false
+        var charset: String? = null
 
         var i = 0
         while (i < args.size) {
@@ -493,6 +505,9 @@ ${"$"}input"""
                 }
                 "--no-pretty" -> {
                     pretty = false
+                }
+                "--charset" -> {
+                    charset = args[++i]
                 }
                 "--strict-types" -> {
                     strictTypes = true
@@ -568,7 +583,8 @@ ${"$"}input"""
                 captureEnabled = captureEnabled,
                 debugLevel = debugLevel,
                 debugComponents = debugComponents,
-                strictTypes = strictTypes
+                strictTypes = strictTypes,
+                charset = charset
             )
         }
 
@@ -588,6 +604,7 @@ ${"$"}input"""
                     debugLevel = debugLevel,
                     debugComponents = debugComponents,
                     strictTypes = strictTypes,
+                    charset = charset,
                     identityMode = true
                 )
             }
@@ -621,7 +638,8 @@ ${"$"}input"""
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
             debugComponents = debugComponents,
-            strictTypes = strictTypes
+            strictTypes = strictTypes,
+            charset = charset
         )
     }
     

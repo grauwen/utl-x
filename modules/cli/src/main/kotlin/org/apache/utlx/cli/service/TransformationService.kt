@@ -75,7 +75,9 @@ class TransformationService {
      */
     data class InputData(
         val content: String,
-        val format: String?  // null = auto-detect from header
+        val format: String?,  // null = auto-detect from header
+        val bytes: ByteArray? = null,  // B20: raw bytes (when available, preferred over content for non-UTF-8)
+        val charset: java.nio.charset.Charset? = null  // B20: explicit charset hint (from Content-Type or caller)
     )
 
     /**
@@ -116,7 +118,12 @@ class TransformationService {
                 println("[TransformationService] Parsing input '$name' as $format")
             }
 
-            parseInput(inputData.content, format, formatOptions)
+            // B20: prefer raw bytes (non-UTF-8 safe) over pre-decoded String
+            if (inputData.bytes != null) {
+                parseInputBytes(inputData.bytes, format, inputData.charset, formatOptions)
+            } else {
+                parseInput(inputData.content, format, formatOptions)
+            }
         }
 
         // Step 3: Execute transformation
@@ -288,6 +295,33 @@ class TransformationService {
     }
 
     /**
+     * B20: Parse input from raw bytes. Uses format-specific encoding detection.
+     * Falls back to String-based parsing if ByteArray constructor is not available for the format.
+     */
+    private fun parseInputBytes(bytes: ByteArray, format: String, charset: java.nio.charset.Charset? = null, options: Map<String, Any> = emptyMap()): UDM {
+        return when (format.lowercase()) {
+            "xml" -> {
+                val arrayHints = (options["arrays"] as? List<*>)?.mapNotNull { it as? String }?.toSet() ?: emptySet()
+                XMLParser(bytes, arrayHints).parse()
+            }
+            "json" -> JSONParser(bytes).parse()
+            "csv" -> {
+                val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
+                val headers = (options["headers"] as? Boolean) ?: true
+                val dialect = CSVDialect(delimiter = delimiter)
+                CSVParser(bytes, charset, dialect).parse(hasHeaders = headers)
+            }
+            "yaml", "yml" -> YAMLParser().parse(bytes, charset)
+            "odata" -> ODataJSONParser(bytes, options).parse()
+            else -> {
+                // Formats without ByteArray constructors — decode and use String path
+                val text = String(bytes, charset ?: Charsets.UTF_8)
+                parseInput(text, format, options)
+            }
+        }
+    }
+
+    /**
      * Serialize output - extracted from CLI's serializeOutput (EXACT copy to maintain 100% compatibility)
      */
     private fun serializeOutput(udm: UDM, format: String, formatSpec: org.apache.utlx.core.ast.FormatSpec, pretty: Boolean): String {
@@ -404,6 +438,45 @@ class TransformationService {
         } catch (e: Exception) {
             System.err.println("Error serializing output: ${e.message}")
             throw e
+        }
+    }
+
+    /**
+     * B20: Serialize output to bytes with format-specific encoding.
+     * Uses {encoding: "UTF-16"} from format spec for XML, defaults to UTF-8 for all others.
+     */
+    fun serializeOutputToBytes(udm: UDM, format: String, formatSpec: org.apache.utlx.core.ast.FormatSpec, pretty: Boolean): ByteArray {
+        return when (format.lowercase()) {
+            "xml" -> {
+                val encoding = formatSpec.options["encoding"] as? String
+                XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serializeToBytes(udm)
+            }
+            "json" -> {
+                val writeAttrs = formatSpec.options["writeAttributes"] as? Boolean ?: false
+                JSONSerializer(prettyPrint = pretty, writeAttributes = writeAttrs).serializeToBytes(udm)
+            }
+            "csv" -> {
+                val delimiter = (formatSpec.options["delimiter"] as? String)?.firstOrNull() ?: ','
+                val headers = (formatSpec.options["headers"] as? Boolean) ?: true
+                val bom = (formatSpec.options["bom"] as? Boolean) ?: false
+                val encoding = formatSpec.options["encoding"] as? String
+                val charset = if (encoding != null) {
+                    try { java.nio.charset.Charset.forName(encoding) } catch (_: Exception) { Charsets.UTF_8 }
+                } else Charsets.UTF_8
+                val dialect = CSVDialect(delimiter = delimiter)
+                CSVSerializer(dialect = dialect, includeHeaders = headers, includeBOM = bom).serializeToBytes(udm, charset)
+            }
+            "yaml", "yml" -> {
+                val encoding = formatSpec.options["encoding"] as? String
+                val charset = if (encoding != null) {
+                    try { java.nio.charset.Charset.forName(encoding) } catch (_: Exception) { Charsets.UTF_8 }
+                } else Charsets.UTF_8
+                YAMLSerializer().serializeToBytes(udm, charset)
+            }
+            else -> {
+                // All other formats: serialize to String, encode as UTF-8
+                serializeOutput(udm, format, formatSpec, pretty).toByteArray(Charsets.UTF_8)
+            }
         }
     }
 }

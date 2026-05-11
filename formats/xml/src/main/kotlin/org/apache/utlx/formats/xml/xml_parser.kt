@@ -1,8 +1,11 @@
 package org.apache.utlx.formats.xml
 
 import org.apache.utlx.core.udm.UDM
+import java.io.ByteArrayInputStream
+import java.io.InputStreamReader
 import java.io.Reader
 import java.io.StringReader
+import java.nio.charset.Charset
 
 /**
  * XML Parser - Converts XML to UDM
@@ -42,11 +45,23 @@ class XMLParser(
 
     constructor(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
         this(StringReader(xml), arrayHints, inheritNamespaces)
+
+    /**
+     * B20: Construct from raw bytes. Detects encoding from BOM and XML declaration.
+     * UTF-16LE (FF FE), UTF-16BE (FE FF), UTF-8 BOM (EF BB BF), or XML encoding="..." declaration.
+     * Falls back to UTF-8 if no encoding is detected.
+     */
+    constructor(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
+        this(InputStreamReader(ByteArrayInputStream(bytes), detectXmlCharset(bytes)), arrayHints, inheritNamespaces)
     
     /**
      * Parse XML to UDM
      */
     fun parse(): UDM {
+        // B20: Strip BOM (U+FEFF) if present — may appear when reading from ByteArray with BOM
+        if (!isAtEnd() && peek() == '\uFEFF') {
+            advance()
+        }
         skipWhitespace()
 
         // Extract encoding from XML declaration if present
@@ -470,4 +485,35 @@ object XML {
     fun parse(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false): UDM {
         return XMLParser(xml, arrayHints, inheritNamespaces).parse()
     }
+
+    fun parse(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false): UDM {
+        return XMLParser(bytes, arrayHints, inheritNamespaces).parse()
+    }
+}
+
+/**
+ * B20: Detect XML charset from BOM or encoding declaration in raw bytes.
+ * - FF FE → UTF-16LE
+ * - FE FF → UTF-16BE
+ * - EF BB BF → UTF-8 (explicit BOM)
+ * - No BOM → peek at encoding="..." in XML declaration, default UTF-8
+ */
+internal fun detectXmlCharset(bytes: ByteArray): Charset {
+    if (bytes.size >= 2) {
+        // UTF-16LE BOM
+        if (bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte()) return Charsets.UTF_16LE
+        // UTF-16BE BOM
+        if (bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte()) return Charsets.UTF_16BE
+    }
+    if (bytes.size >= 3) {
+        // UTF-8 BOM
+        if (bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()) return Charsets.UTF_8
+    }
+    // No BOM — try to find encoding="..." in XML declaration (ASCII-safe peek)
+    val head = String(bytes, 0, minOf(bytes.size, 200), Charsets.US_ASCII)
+    val match = Regex("""encoding\s*=\s*["']([^"']+)["']""", RegexOption.IGNORE_CASE).find(head)
+    if (match != null) {
+        return try { Charset.forName(match.groupValues[1]) } catch (_: Exception) { Charsets.UTF_8 }
+    }
+    return Charsets.UTF_8
 }

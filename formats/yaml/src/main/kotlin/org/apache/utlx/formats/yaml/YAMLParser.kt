@@ -76,6 +76,15 @@ class YAMLParser {
         }
         return parse(StringReader(cleanText), options)
     }
+
+    /**
+     * B20: Parse YAML from raw bytes with optional charset.
+     * YAML is typically UTF-8; charset can be provided from Content-Type or BOM detection.
+     */
+    fun parse(bytes: ByteArray, charset: java.nio.charset.Charset? = null, options: ParseOptions = ParseOptions()): UDM {
+        val effectiveCharset = charset ?: detectYamlCharset(bytes)
+        return parse(java.io.ByteArrayInputStream(bytes).reader(effectiveCharset).readText(), options)
+    }
     
     /**
      * Parse YAML from a Reader
@@ -197,4 +206,16 @@ fun String.parseAsYAML(): UDM = YAMLParser.parseYAML(this)
  */
 fun InputStream.parseAsYAML(options: YAMLParser.ParseOptions = YAMLParser.ParseOptions()): UDM {
     return YAMLParser().parse(this, options)
+}
+
+/**
+ * B20: Detect YAML charset from BOM. Defaults to UTF-8.
+ */
+internal fun detectYamlCharset(bytes: ByteArray): java.nio.charset.Charset {
+    if (bytes.size >= 2) {
+        if (bytes[0] == 0xFF.toByte() && bytes[1] == 0xFE.toByte()) return Charsets.UTF_16LE
+        if (bytes[0] == 0xFE.toByte() && bytes[1] == 0xFF.toByte()) return Charsets.UTF_16BE
+    }
+    // UTF-8 BOM or no BOM → UTF-8
+    return Charsets.UTF_8
 }
