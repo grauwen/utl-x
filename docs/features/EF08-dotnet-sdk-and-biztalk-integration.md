@@ -1,16 +1,22 @@
 # EF08: .NET SDK, BizTalk Shim, and Logic Apps Integration
 
-**Status:** Design (SDK phase — after Marketplace go-live)  
+**Status:** SDK core + BizTalk shim + Logic Apps helpers implemented  
 **Priority:** High (BizTalk SBMP deadline September 30, 2026)  
 **Created:** May 2026  
-**Depends on:** EF03 (Admin API), EF04 (tracing), EF07 (parallel transports)  
+**Depends on:** EF03 (Admin API), EF04 (tracing), EF07 (parallel transports), EF17 (schema pass-through), EF18 (request_id)  
 **Source:** `docs/dapr/utlxe-biztalk-replacement.md`
 
 ---
 
 ## Summary
 
-UTLXe already has a C# SDK that spawns `utlxe` as a subprocess and communicates via stdin/stdout protobuf. This feature packages that SDK for two specific Microsoft hosts — BizTalk Server pipelines and Logic Apps Standard custom functions — and addresses the gaps identified in the BizTalk replacement study.
+UTLXe has a layered .NET SDK:
+- **UtlxClient** — low-level wire client (proto over stdin/stdout). Updated for EF17 (per-input schemas) and EF18 (`request_id` pipe dispatch).
+- **UtlxEngine.Sdk** — enterprise SDK: `IUtlxEngine`, `IBundleStore`, `TransformResult`, OpenTelemetry spans.
+- **UtlxEngine.BizTalk** — BizTalk pipeline component: `UtlxTransformComponent` (IComponent pattern), `UtlxEngineHost` (process-wide singleton).
+- **UtlxEngine.LogicApps** — Logic Apps Standard: DI registration, `WorkflowActionResult`, sample custom functions.
+
+This feature packages the SDK for two specific Microsoft hosts — BizTalk Server pipelines and Logic Apps Standard custom functions — and addresses the gaps identified in the BizTalk replacement study.
 
 ## Timeline driver
 
@@ -53,7 +59,7 @@ var utlxePath = Path.Combine(
 
 ### 2. Subprocess pool (not per-call spawn)
 
-The SDK spawns `utlxe` once and multiplexes requests via correlation IDs. The proto already supports this (`correlation_id` on `ExecuteRequest`/`ExecuteResponse`).
+The SDK spawns `utlxe` once and multiplexes requests via `request_id` (EF18). Each call gets a unique `request_id` for pipe-level response dispatch — safe under fan-out where multiple messages share the same `correlation_id`.
 
 ```csharp
 public class UtlxEngine : IUtlxEngine, IDisposable
@@ -120,7 +126,7 @@ public class UtlxEngine : IUtlxEngine, IDisposable
 
 Key properties:
 - One subprocess per `UtlxEngine` instance (typically one per application)
-- Multiplexed via `correlation_id` — thousands of concurrent requests on one pipe
+- Multiplexed via `request_id` (EF18) — thousands of concurrent requests on one pipe, fan-out safe
 - Automatic respawn on subprocess death, with bundle reload
 - Write lock prevents interleaved frames on stdout
 
@@ -444,7 +450,68 @@ See [Proto Reference](../../docs/sdk/proto-reference.md) for the complete proto 
 - **EF07** (parallel transports): if the customer runs UTLXe as a shared service (not subprocess), the SDK can switch from stdio-proto to gRPC as the transport
 - **Proto changes**: `parameters` (field 10), `ErrorCode` enum, `LoadBundle`/`UnloadBundle` RPCs — all added in this session, ready for SDK consumption
 
+## Implementation status
+
+### Layered architecture (implemented)
+
+The SDK is split into four NuGet-ready projects layered on top of the existing low-level client:
+
+```
+wrappers/dotnet/src/
+  UtlxClient/                          ← low-level wire client (pre-existing, updated for EF17+EF18)
+  UtlxEngine.Sdk/                      ← enterprise SDK (NEW)
+  UtlxEngine.BizTalk/                  ← BizTalk pipeline shim (NEW)
+  UtlxEngine.LogicApps/                ← Logic Apps Standard helpers (NEW)
+```
+
+**UtlxClient** (low-level, pre-existing) — direct proto access, subprocess management, varint framing. Updated for EF17 (schema pass-through on `LoadTransformationAsync`) and EF18 (`request_id` for pipe dispatch instead of `correlation_id` — fixes fan-out bug).
+
+**UtlxEngine.Sdk** (enterprise, new) — wraps UtlxClient:
+- `IUtlxEngine` interface: `TransformAsync`, `TransformMultiAsync`, `LoadBundleAsync`, `HealthAsync`
+- `TransformResult` / `OutputMetadataResult` / `HealthResult` — plain .NET types, no proto leakage
+- `IBundleStore` abstraction with 3 implementations:
+  - `FileBundleStore` — local filesystem (dev/test)
+  - `HttpBundleStore` — UTLXe Admin API (sidecar pattern)
+  - `EmbeddedBundleStore` — assembly resources or relative path (BizTalk MSI, Logic Apps zip)
+- OpenTelemetry `Activity` spans on every transform call
+- JSON envelope builder for multi-input (`TransformMultiAsync`)
+- Auto-bundle-load on startup
+
+**UtlxEngine.BizTalk** (host shim, new):
+- `UtlxEngineHost` — process-wide singleton, auto-init from env vars (`UTLXE_JAR_PATH`, `UTLXE_BUNDLE_PATH`, `UTLXE_BUNDLE_ID`), `AppDomain.DomainUnload` shutdown
+- `UtlxTransformComponent` — BizTalk `IComponent` pattern: design-time properties (`BundleId`, `TransformationId`, `ContentType`, `PassContextAsParameters`), context→parameters mapping, output→properties mapping
+
+**UtlxEngine.LogicApps** (host helpers, new):
+- `AddUtlxEngine()` — DI registration extension method
+- `WorkflowActionResult` — flat JSON result type for Logic Apps designer (no proto, no binary)
+- `UtlxWorkflowFunctions` — sample custom functions: `TransformJsonAsync`, `TransformXmlAsync`, `TransformAsync`
+
+### What changed from the original design
+
+| Aspect | Original design | Implementation | Why |
+|---|---|---|---|
+| Target frameworks | net472 + net8.0 | net9.0 + net10.0 | net472 support requires netstandard2.0 on SDK — deferred to NuGet packaging step |
+| Subprocess pool | ConcurrentDictionary + correlation dispatch | UtlxeClient already does this | EF18 switched dispatch from `correlationId` to `request_id` — fan-out safe |
+| IBundleStore | 5 implementations | 3 implemented (File, Http, Embedded) | BlobBundleStore and DaprBundleStore deferred — need Azure.Storage.Blobs and Dapr.Client dependencies |
+| NuGet native binary | GraalVM native binary per RID | Deferred | Requires GraalVM native-image build pipeline for utlxe |
+| BizTalk IComponent | Full BizTalk SDK interfaces | Pattern class (no BizTalk SDK dependency) | BizTalk SDK references added at customer's build time from their BizTalk installation |
+
+### Remaining work
+
+| Task | Status | Notes |
+|---|---|---|
+| SDK core (`UtlxEngine.Sdk`) | **Done** | IUtlxEngine, TransformResult, IBundleStore, OTel |
+| BizTalk shim (`UtlxEngine.BizTalk`) | **Done** | UtlxEngineHost, UtlxTransformComponent |
+| Logic Apps helpers (`UtlxEngine.LogicApps`) | **Done** | DI, WorkflowActionResult, sample functions |
+| `BlobBundleStore` | Pending | Needs `Azure.Storage.Blobs` dependency |
+| `DaprBundleStore` | Pending | Needs `Dapr.Client` dependency |
+| GraalVM native binary build | Pending | `.github/workflows/native-build.yml` for 5 RIDs |
+| NuGet runtime packages | Pending | Per-RID native binary packaging |
+| net472 dual-target | Pending | Add `netstandard2.0` to SDK, test on .NET Framework |
+| Integration tests | Pending | End-to-end: SDK → subprocess → transform → result |
+| NuGet publish pipeline | Pending | `.github/workflows/nuget-publish.yml` |
+
 ---
 
-*Feature EF08. May 2026. Design document.*
+*Feature EF08. May 2026. SDK core, BizTalk shim, and Logic Apps helpers implemented.*
 *Key insight: the SDK already exists. The work is packaging it for two specific Microsoft hosts (BizTalk pipelines and Logic Apps Standard) and making the install experience zero-friction (NuGet + native binary, no JRE).*
