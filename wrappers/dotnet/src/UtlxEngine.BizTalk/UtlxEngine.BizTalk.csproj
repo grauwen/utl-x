@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- net472 support requires netstandard2.0 target on UtlxEngine.Sdk (future: NuGet packaging step) -->
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>Glomidco.Utlx.BizTalk</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <!-- NuGet packaging -->
+    <PackageId>UtlxEngine.BizTalk</PackageId>
+    <Version>1.0.0</Version>
+    <Description>BizTalk pipeline component for UTL-X Engine (UTLXe). Drop-in XSLT map replacement.</Description>
+    <Authors>Glomidco</Authors>
+    <PackageTags>utlx;biztalk;mapping;transformation;pipeline;xslt-replacement</PackageTags>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../UtlxEngine.Sdk/UtlxEngine.Sdk.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- BizTalk pipeline interfaces — provided by the BizTalk runtime at deploy time.
+         Customers add these references from their BizTalk installation. -->
+    <!-- <Reference Include="Microsoft.BizTalk.Pipeline" /> -->
+    <!-- <Reference Include="Microsoft.BizTalk.Messaging" /> -->
+  </ItemGroup>
+
+</Project>

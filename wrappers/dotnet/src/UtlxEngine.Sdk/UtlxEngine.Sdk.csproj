@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Glomidco.Utlx.Engine</RootNamespace>
+    <LangVersion>latest</LangVersion>
+
+    <!-- NuGet packaging -->
+    <PackageId>UtlxEngine.Sdk</PackageId>
+    <Version>1.0.0</Version>
+    <Description>Enterprise SDK for UTL-X Engine (UTLXe) — bundle management, OpenTelemetry tracing, native binary resolution. Wraps UtlxClient for production use.</Description>
+    <Authors>Glomidco</Authors>
+    <PackageTags>utlx;mapping;transformation;etl;enterprise;biztalk;logic-apps</PackageTags>
+    <IsPackable>true</IsPackable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>CS1591</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../UtlxClient/UtlxClient.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" />
+  </ItemGroup>
+
+</Project>
