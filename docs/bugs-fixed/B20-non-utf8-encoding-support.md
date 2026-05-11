@@ -1,8 +1,8 @@
 # B20: Non-UTF-8 Encoding Support (Core + Formats)
 
-**Status:** Open (must-fix before SAP integration)  
+**Status:** Implemented (core + formats) on branch `uat/B20-binary`  
 **Severity:** High (blocks SAP/BizTalk integration — SAP uses UTF-16 natively)  
-**Scope:** Core parser interface, format parsers (XML, CSV, YAML), serializers  
+**Scope:** Core parser interface, format parsers (XML, JSON, CSV, YAML, OData), serializers  
 **Companion:** EB01 (engine-side changes — transports, validation, CLI)  
 **Created:** May 2026  
 **Discovered during:** EF02 validation wiring  
@@ -126,15 +126,22 @@ data class PayloadBytes(
 ```
 
 ### B20 scope (core + formats only):
-- `PayloadBytes` data class in core
-- Format parsers (XML, CSV, YAML, JSON) accept `ByteArray` instead of `String`
-- XML parser: pass `ByteArrayInputStream` to SAX/DOM (auto-detects encoding from BOM/declaration)
-- JSON parser: verify UTF-8, reject non-UTF-8 per RFC 8259
-- CSV parser: use charset from `PayloadBytes.detectedCharset` or default UTF-8
-- YAML parser: BOM detection or default UTF-8
-- Serializers produce `ByteArray` with declared output encoding (default UTF-8)
-- `{encoding: "UTF-16"}` format option parsed from .utlx header, passed to serializer
-- Interpreter interface: accept `PayloadBytes` for input, produce `PayloadBytes` for output
+- `PayloadBytes` data class in core (`modules/core/.../udm/udm_core.kt`)
+- Format parsers accept `ByteArray` in addition to `String` (additive, backward compatible):
+  - XML parser: `ByteArray` constructor passes `ByteArrayInputStream` to SAX (auto-detects encoding from BOM/declaration)
+  - JSON parser: `ByteArray` constructor strips UTF-8 BOM, decodes as UTF-8 per RFC 8259
+  - CSV parser: `ByteArray` + `Charset` constructor for explicit charset (ISO-8859-1, etc.)
+  - YAML parser: `ByteArray` + `Charset` method with BOM detection
+  - OData parser: `ByteArray` constructor (JSON-based, always UTF-8)
+- Serializers produce `ByteArray` via `serializeToBytes()` methods (additive):
+  - XML: uses `outputEncoding` from `{encoding: "UTF-16"}` format option
+  - JSON: always UTF-8 per RFC 8259
+  - CSV: configurable charset
+  - YAML: configurable charset
+  - OData: always UTF-8
+- TransformationService: `InputData` gains `bytes: ByteArray?` + `charset: Charset?` fields; `parseInputBytes()` + `serializeOutputToBytes()` added
+- CLI: `--charset` flag for explicit input charset override
+- `{encoding: "UTF-16"}` format option already parsed from .utlx header, now used by serializers
 
 ### Engine-side changes → see EB01:
 - `ExecutionStrategy.execute()` accepts `PayloadBytes`
