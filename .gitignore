@@ -114,3 +114,7 @@ conformance-suite/theia-extension/
 
 # Playwright MCP server (development only)
 playwright-mcp-server/
+
+# Development-only directories (tracked on development branch, not on main/uat)
+book-azure/
+wrappers/
