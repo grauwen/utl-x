@@ -14,6 +14,21 @@ message LoadTransformationRequest {
   string validation_policy = 4;   // "STRICT", "WARN", "SKIP" (default: "SKIP")
   int32 max_concurrent = 5;       // Per-transformation concurrency limit (0 = use engine default)
   map<string, string> config = 6; // Additional configuration (validation settings, format hints, etc.)
+
+  // Schema pass-through: lets the caller (e.g., Open-M wrapper) provide schemas
+  // from the control plane's schema store. UTLXe uses them for:
+  //   - PRE_VALIDATION  (input against schema)
+  //   - POST_VALIDATION (output against output_schema)
+  //   - COPY strategy skeleton building (type-aware UDM construction)
+  // When empty, UTLXe falls back to schemas from the bundle or no validation.
+  //
+  // Input schemas are maps because N-input mappings have one schema per named input.
+  // Keys match the named_inputs keys in ExecuteRequest.
+  // "current" (or the primary input name) = main payload input.
+  map<string, bytes> input_schemas = 7;          // name → schema content (native format)
+  map<string, string> input_schema_formats = 8;  // name → "xsd" / "json-schema" / "avro"
+  bytes output_schema = 9;                       // Schema of the output (downstream component's expected input)
+  string output_schema_format = 10;              // "xsd", "json-schema", "avro"
 }
 
 message LoadTransformationResponse {
