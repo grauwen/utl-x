@@ -103,7 +103,7 @@ object Main {
                     }
                     // Check if first arg is a flag for identity mode (--to, --from, etc.)
                     else if (command in listOf("--to", "--from", "--output-format", "--input-format",
-                                               "--no-pretty", "--verbose", "-v", "-r", "--raw-output")) {
+                                               "--no-pretty", "--verbose", "-v", "-r", "--raw-output", "--charset")) {
                         TransformCommand.execute(args, identityMode = true)
                     }
                     else {

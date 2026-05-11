@@ -6,7 +6,7 @@ import java.io.StringReader
 
 /**
  * JSON Parser - Converts JSON strings to UDM
- * 
+ *
  * Supports all JSON types:
  * - null → UDM.Scalar(null)
  * - boolean → UDM.Scalar(boolean)
@@ -20,8 +20,14 @@ class JSONParser(private val source: Reader) {
     private var line = 1
     private var column = 1
     private val text = source.readText()
-    
+
     constructor(json: String) : this(StringReader(json))
+
+    /**
+     * B20: Construct from raw bytes. JSON MUST be UTF-8 per RFC 8259.
+     * Strips UTF-8 BOM (EF BB BF) if present.
+     */
+    constructor(bytes: ByteArray) : this(StringReader(decodeJsonBytes(bytes)))
     
     /**
      * Parse JSON to UDM
@@ -328,4 +334,12 @@ interface JSONStreamHandler {
     fun onArrayEnd()
     fun onKey(key: String)
     fun onValue(value: UDM)
+}
+
+/** B20: Decode JSON bytes to String, stripping UTF-8 BOM if present. */
+private fun decodeJsonBytes(bytes: ByteArray): String {
+    val offset = if (bytes.size >= 3 &&
+        bytes[0] == 0xEF.toByte() && bytes[1] == 0xBB.toByte() && bytes[2] == 0xBF.toByte()
+    ) 3 else 0
+    return String(bytes, offset, bytes.size - offset, Charsets.UTF_8)
 }

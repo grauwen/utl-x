@@ -59,6 +59,13 @@ class CSVSerializer(
     /**
      * Serialize UDM to CSV string
      */
+    /**
+     * B20: Serialize UDM to CSV bytes with optional charset.
+     * Defaults to UTF-8. For ISO-8859-1 or other legacy encodings, pass the charset.
+     */
+    fun serializeToBytes(udm: UDM, charset: java.nio.charset.Charset = Charsets.UTF_8): ByteArray =
+        serialize(udm).toByteArray(charset)
+
     fun serialize(udm: UDM): String {
         val writer = StringWriter()
         // Add BOM if requested (useful for Excel UTF-8 compatibility)

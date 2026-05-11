@@ -24,6 +24,9 @@ class ODataJSONSerializer(
     private val wrapCollection: Boolean = (options["wrapCollection"] as? Boolean) ?: true
     private val prettyPrint: Boolean = (options["prettyPrint"] as? Boolean) ?: true
 
+    /** B20: Serialize to bytes (always UTF-8 — OData is JSON-based). */
+    fun serializeToBytes(udm: UDM): ByteArray = serialize(udm).toByteArray(Charsets.UTF_8)
+
     fun serialize(udm: UDM): String {
         // If metadata=none, serialize as plain JSON
         if (metadataLevel == "none") {

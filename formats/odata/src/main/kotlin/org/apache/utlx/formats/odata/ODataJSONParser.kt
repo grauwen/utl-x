@@ -23,6 +23,10 @@ class ODataJSONParser(
     private val content: String,
     private val options: Map<String, Any> = emptyMap()
 ) {
+    /** B20: Construct from raw bytes. OData is JSON-based (always UTF-8). */
+    constructor(bytes: ByteArray, options: Map<String, Any> = emptyMap()) :
+        this(String(bytes, Charsets.UTF_8), options)
+
     fun parse(): UDM {
         // Step 1: Parse as standard JSON
         val udm = JSONParser(content).parse()

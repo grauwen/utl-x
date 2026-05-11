@@ -34,6 +34,25 @@ class XMLSerializer(
         serialize(udm, writer, rootName)
         return writer.toString()
     }
+
+    /**
+     * B20: Serialize UDM to XML bytes using the configured output encoding.
+     * Defaults to UTF-8. If outputEncoding is "UTF-16", produces UTF-16 bytes with BOM.
+     */
+    fun serializeToBytes(udm: UDM, rootName: String = "root"): ByteArray {
+        val xmlString = serialize(udm, rootName)
+        val charset = resolveOutputCharset(udm)
+        return xmlString.toByteArray(charset)
+    }
+
+    private fun resolveOutputCharset(udm: UDM): java.nio.charset.Charset {
+        val enc = when {
+            outputEncoding != null && outputEncoding.uppercase() == "NONE" -> "UTF-8"
+            outputEncoding != null -> outputEncoding
+            else -> (udm as? UDM.Object)?.getMetadata("xmlEncoding") ?: "UTF-8"
+        }
+        return try { java.nio.charset.Charset.forName(enc) } catch (_: Exception) { Charsets.UTF_8 }
+    }
     
     /**
      * Serialize RuntimeValue to XML string

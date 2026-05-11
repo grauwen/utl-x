@@ -51,6 +51,12 @@ class YAMLSerializer {
         serialize(udm, writer, options)
         return writer.toString()
     }
+
+    /**
+     * B20: Serialize UDM to YAML bytes with optional charset. Defaults to UTF-8.
+     */
+    fun serializeToBytes(udm: UDM, charset: java.nio.charset.Charset = Charsets.UTF_8, options: SerializeOptions = SerializeOptions()): ByteArray =
+        serialize(udm, options).toByteArray(charset)
     
     /**
      * Serialize UDM to OutputStream

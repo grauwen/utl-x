@@ -1,9 +1,47 @@
 package org.apache.utlx.core.udm
 
+import java.nio.charset.Charset
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime as JavaLocalDateTime
 import java.time.LocalTime
+
+/**
+ * Raw payload bytes with optional charset information.
+ * Carries the original bytes through the pipeline without encoding loss.
+ * Format parsers receive this instead of pre-decoded String, enabling
+ * auto-detection of encoding from BOM, XML declaration, or Content-Type.
+ */
+data class PayloadBytes(
+    val bytes: ByteArray,
+    val detectedCharset: Charset? = null,  // from Content-Type, BOM, or format-specific detection
+    val contentType: String = ""           // "application/xml", "application/json", etc.
+) {
+    /** Decode to String using detected charset or UTF-8 fallback. */
+    fun decodeToString(): String = String(bytes, detectedCharset ?: Charsets.UTF_8)
+
+    /** Size in bytes. */
+    val size: Int get() = bytes.size
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other !is PayloadBytes) return false
+        return bytes.contentEquals(other.bytes) && detectedCharset == other.detectedCharset && contentType == other.contentType
+    }
+
+    override fun hashCode(): Int {
+        var result = bytes.contentHashCode()
+        result = 31 * result + (detectedCharset?.hashCode() ?: 0)
+        result = 31 * result + contentType.hashCode()
+        return result
+    }
+
+    companion object {
+        /** Create from a UTF-8 String (convenience for backward compat). */
+        fun fromString(s: String, contentType: String = ""): PayloadBytes =
+            PayloadBytes(s.toByteArray(Charsets.UTF_8), Charsets.UTF_8, contentType)
+    }
+}
 
 /**
  * Universal Data Model (UDM) - Format-agnostic internal representation
