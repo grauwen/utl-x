@@ -68,10 +68,25 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     /// <summary>
     /// Load (compile) a UTL-X transformation. Call once per transformation at init time.
     /// </summary>
-    public async Task<LoadTransformationResponse> LoadTransformationAsync(
+    public Task<LoadTransformationResponse> LoadTransformationAsync(
         string transformationId,
         string utlxSource,
         string strategy = "TEMPLATE",
+        CancellationToken ct = default)
+        => LoadTransformationAsync(transformationId, utlxSource, strategy, null, null, null, null, ct);
+
+    /// <summary>
+    /// Load a transformation with per-input schemas and an output schema for validation.
+    /// inputSchemas and inputSchemaFormats are keyed by input name (e.g., "current", "pricing").
+    /// </summary>
+    public async Task<LoadTransformationResponse> LoadTransformationAsync(
+        string transformationId,
+        string utlxSource,
+        string strategy,
+        IDictionary<string, ByteString>? inputSchemas,
+        IDictionary<string, string>? inputSchemaFormats,
+        ByteString? outputSchema,
+        string? outputSchemaFormat,
         CancellationToken ct = default)
     {
         var req = new LoadTransformationRequest
@@ -80,6 +95,12 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             UtlxSource = utlxSource,
             Strategy = strategy
         };
+        if (inputSchemas != null)
+            foreach (var kv in inputSchemas) req.InputSchemas.Add(kv.Key, kv.Value);
+        if (inputSchemaFormats != null)
+            foreach (var kv in inputSchemaFormats) req.InputSchemaFormats.Add(kv.Key, kv.Value);
+        if (outputSchema != null) req.OutputSchema = outputSchema;
+        if (outputSchemaFormat != null) req.OutputSchemaFormat = outputSchemaFormat;
 
         var resp = await SendSequentialAsync(
             MessageType.LoadTransformationRequest, req,
@@ -91,7 +112,8 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     /// <summary>
     /// Execute a pre-loaded transformation against a payload.
     /// Thread-safe — multiple calls can be in flight concurrently when workers &gt; 1.
-    /// Responses are matched by correlation ID for out-of-order delivery.
+    /// Responses are matched by request_id (unique per call) for out-of-order delivery.
+    /// The correlationId is the MPPM transaction grouping UUID — passed through but NOT used for dispatch.
     /// </summary>
     public async Task<ExecuteResponse> ExecuteAsync(
         string transformationId,
@@ -100,17 +122,18 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
         string? correlationId = null,
         CancellationToken ct = default)
     {
-        var corrId = correlationId ?? GenerateCorrelationId();
+        var reqId = GenerateRequestId();
         var req = new ExecuteRequest
         {
             TransformationId = transformationId,
             Payload = ByteString.CopyFrom(payload),
             ContentType = contentType,
-            CorrelationId = corrId
+            CorrelationId = correlationId ?? "",
+            RequestId = reqId
         };
 
         var resp = await SendCorrelatedAsync(
-            MessageType.ExecuteRequest, req, corrId, ct);
+            MessageType.ExecuteRequest, req, reqId, ct);
 
         return ExecuteResponse.Parser.ParseFrom(resp.Payload);
     }
@@ -124,7 +147,7 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
         IReadOnlyList<(byte[] Payload, string ContentType, string CorrelationId)> items,
         CancellationToken ct = default)
     {
-        var batchCorrId = GenerateCorrelationId();
+        var batchReqId = GenerateRequestId();
         var req = new ExecuteBatchRequest { TransformationId = transformationId };
         foreach (var (payload, contentType, correlationId) in items)
         {
@@ -132,12 +155,13 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             {
                 Payload = ByteString.CopyFrom(payload),
                 ContentType = contentType,
-                CorrelationId = correlationId
+                CorrelationId = correlationId,
+                RequestId = batchReqId
             });
         }
 
         var resp = await SendCorrelatedAsync(
-            MessageType.ExecuteBatchRequest, req, batchCorrId, ct);
+            MessageType.ExecuteBatchRequest, req, batchReqId, ct);
 
         return ExecuteBatchResponse.Parser.ParseFrom(resp.Payload);
     }
@@ -176,7 +200,7 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     // Internal: Send/Receive
     // =========================================================================
 
-    private string GenerateCorrelationId() =>
+    private string GenerateRequestId() =>
         $"utlx-{Interlocked.Increment(ref _correlationCounter)}";
 
     /// <summary>
@@ -263,15 +287,18 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
-    /// Extract correlation ID from an ExecuteResponse or ExecuteBatchResponse payload.
+    /// Extract request_id from an ExecuteResponse payload for pipe-level dispatch.
+    /// Falls back to correlation_id for backward compatibility with older UTLXe versions.
     /// </summary>
-    private string? ExtractCorrelationId(StdioEnvelope envelope)
+    private string? ExtractRequestId(StdioEnvelope envelope)
     {
         try
         {
             if (envelope.Type == MessageType.ExecuteResponse)
             {
                 var resp = ExecuteResponse.Parser.ParseFrom(envelope.Payload);
+                // Prefer request_id (EF18), fall back to correlation_id (pre-EF18)
+                if (!string.IsNullOrEmpty(resp.RequestId)) return resp.RequestId;
                 return string.IsNullOrEmpty(resp.CorrelationId) ? null : resp.CorrelationId;
             }
         }
@@ -309,8 +336,8 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
                 if (envelope.Type == MessageType.ExecuteResponse ||
                     envelope.Type == MessageType.ExecuteBatchResponse)
                 {
-                    var corrId = ExtractCorrelationId(envelope);
-                    if (corrId != null && _pendingRequests.TryRemove(corrId, out var tcs))
+                    var reqId = ExtractRequestId(envelope);
+                    if (reqId != null && _pendingRequests.TryRemove(reqId, out var tcs))
                     {
                         tcs.TrySetResult(envelope);
                     }

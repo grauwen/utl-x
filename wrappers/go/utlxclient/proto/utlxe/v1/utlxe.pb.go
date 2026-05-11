@@ -21,6 +21,59 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// Controls which input metadata keys pass through to the output.
+type MetadataForwarding int32
+
+const (
+	MetadataForwarding_METADATA_FORWARDING_UNSPECIFIED MetadataForwarding = 0 // Engine default (forward all)
+	MetadataForwarding_METADATA_FORWARD_ALL            MetadataForwarding = 1 // Forward all input metadata to output
+	MetadataForwarding_METADATA_FORWARD_NONE           MetadataForwarding = 2 // Drop all input metadata (only output_metadata survives)
+	MetadataForwarding_METADATA_FORWARD_CORRELATION    MetadataForwarding = 3 // Forward only correlation/message/causation IDs, drop rest
+)
+
+// Enum value maps for MetadataForwarding.
+var (
+	MetadataForwarding_name = map[int32]string{
+		0: "METADATA_FORWARDING_UNSPECIFIED",
+		1: "METADATA_FORWARD_ALL",
+		2: "METADATA_FORWARD_NONE",
+		3: "METADATA_FORWARD_CORRELATION",
+	}
+	MetadataForwarding_value = map[string]int32{
+		"METADATA_FORWARDING_UNSPECIFIED": 0,
+		"METADATA_FORWARD_ALL":            1,
+		"METADATA_FORWARD_NONE":           2,
+		"METADATA_FORWARD_CORRELATION":    3,
+	}
+)
+
+func (x MetadataForwarding) Enum() *MetadataForwarding {
+	p := new(MetadataForwarding)
+	*p = x
+	return p
+}
+
+func (x MetadataForwarding) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (MetadataForwarding) Descriptor() protoreflect.EnumDescriptor {
+	return file_utlxe_v1_utlxe_proto_enumTypes[0].Descriptor()
+}
+
+func (MetadataForwarding) Type() protoreflect.EnumType {
+	return &file_utlxe_v1_utlxe_proto_enumTypes[0]
+}
+
+func (x MetadataForwarding) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use MetadataForwarding.Descriptor instead.
+func (MetadataForwarding) EnumDescriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{0}
+}
+
 type ErrorClass int32
 
 const (
@@ -54,11 +107,11 @@ func (x ErrorClass) String() string {
 }
 
 func (ErrorClass) Descriptor() protoreflect.EnumDescriptor {
-	return file_utlxe_v1_utlxe_proto_enumTypes[0].Descriptor()
+	return file_utlxe_v1_utlxe_proto_enumTypes[1].Descriptor()
 }
 
 func (ErrorClass) Type() protoreflect.EnumType {
-	return &file_utlxe_v1_utlxe_proto_enumTypes[0]
+	return &file_utlxe_v1_utlxe_proto_enumTypes[1]
 }
 
 func (x ErrorClass) Number() protoreflect.EnumNumber {
@@ -67,7 +120,7 @@ func (x ErrorClass) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ErrorClass.Descriptor instead.
 func (ErrorClass) EnumDescriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{0}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{1}
 }
 
 type ErrorPhase int32
@@ -109,11 +162,11 @@ func (x ErrorPhase) String() string {
 }
 
 func (ErrorPhase) Descriptor() protoreflect.EnumDescriptor {
-	return file_utlxe_v1_utlxe_proto_enumTypes[1].Descriptor()
+	return file_utlxe_v1_utlxe_proto_enumTypes[2].Descriptor()
 }
 
 func (ErrorPhase) Type() protoreflect.EnumType {
-	return &file_utlxe_v1_utlxe_proto_enumTypes[1]
+	return &file_utlxe_v1_utlxe_proto_enumTypes[2]
 }
 
 func (x ErrorPhase) Number() protoreflect.EnumNumber {
@@ -122,7 +175,80 @@ func (x ErrorPhase) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ErrorPhase.Descriptor instead.
 func (ErrorPhase) EnumDescriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{1}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{2}
+}
+
+type ErrorCode int32
+
+const (
+	ErrorCode_ERROR_CODE_UNSPECIFIED      ErrorCode = 0
+	ErrorCode_TRANSFORMATION_NOT_FOUND    ErrorCode = 1  // transformation_id doesn't exist in the registry
+	ErrorCode_BUNDLE_NOT_LOADED           ErrorCode = 2  // bundle_id not loaded
+	ErrorCode_INPUT_PARSE_FAILED          ErrorCode = 3  // payload can't be parsed (bad JSON/XML/CSV)
+	ErrorCode_INPUT_VALIDATION_FAILED     ErrorCode = 4  // input doesn't match schema (pre-validation)
+	ErrorCode_TRANSFORMATION_FAILED       ErrorCode = 5  // runtime error in .utlx (null ref, type mismatch, etc.)
+	ErrorCode_OUTPUT_VALIDATION_FAILED    ErrorCode = 6  // output doesn't match schema (post-validation)
+	ErrorCode_OUTPUT_SERIALIZATION_FAILED ErrorCode = 7  // output can't be serialized to target format
+	ErrorCode_MAX_CONCURRENT_EXCEEDED     ErrorCode = 8  // maxConcurrent limit reached, request rejected
+	ErrorCode_MAX_INPUT_SIZE_EXCEEDED     ErrorCode = 9  // payload exceeds maxInputSize
+	ErrorCode_INTERNAL_ERROR              ErrorCode = 10 // engine-internal error (not payload-related)
+)
+
+// Enum value maps for ErrorCode.
+var (
+	ErrorCode_name = map[int32]string{
+		0:  "ERROR_CODE_UNSPECIFIED",
+		1:  "TRANSFORMATION_NOT_FOUND",
+		2:  "BUNDLE_NOT_LOADED",
+		3:  "INPUT_PARSE_FAILED",
+		4:  "INPUT_VALIDATION_FAILED",
+		5:  "TRANSFORMATION_FAILED",
+		6:  "OUTPUT_VALIDATION_FAILED",
+		7:  "OUTPUT_SERIALIZATION_FAILED",
+		8:  "MAX_CONCURRENT_EXCEEDED",
+		9:  "MAX_INPUT_SIZE_EXCEEDED",
+		10: "INTERNAL_ERROR",
+	}
+	ErrorCode_value = map[string]int32{
+		"ERROR_CODE_UNSPECIFIED":      0,
+		"TRANSFORMATION_NOT_FOUND":    1,
+		"BUNDLE_NOT_LOADED":           2,
+		"INPUT_PARSE_FAILED":          3,
+		"INPUT_VALIDATION_FAILED":     4,
+		"TRANSFORMATION_FAILED":       5,
+		"OUTPUT_VALIDATION_FAILED":    6,
+		"OUTPUT_SERIALIZATION_FAILED": 7,
+		"MAX_CONCURRENT_EXCEEDED":     8,
+		"MAX_INPUT_SIZE_EXCEEDED":     9,
+		"INTERNAL_ERROR":              10,
+	}
+)
+
+func (x ErrorCode) Enum() *ErrorCode {
+	p := new(ErrorCode)
+	*p = x
+	return p
+}
+
+func (x ErrorCode) String() string {
+	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
+}
+
+func (ErrorCode) Descriptor() protoreflect.EnumDescriptor {
+	return file_utlxe_v1_utlxe_proto_enumTypes[3].Descriptor()
+}
+
+func (ErrorCode) Type() protoreflect.EnumType {
+	return &file_utlxe_v1_utlxe_proto_enumTypes[3]
+}
+
+func (x ErrorCode) Number() protoreflect.EnumNumber {
+	return protoreflect.EnumNumber(x)
+}
+
+// Deprecated: Use ErrorCode.Descriptor instead.
+func (ErrorCode) EnumDescriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{3}
 }
 
 type MessageType int32
@@ -136,6 +262,8 @@ const (
 	MessageType_UNLOAD_TRANSFORMATION_REQUEST MessageType = 4
 	MessageType_HEALTH_REQUEST                MessageType = 5
 	MessageType_EXECUTE_PIPELINE_REQUEST      MessageType = 6
+	MessageType_LOAD_BUNDLE_REQUEST           MessageType = 7
+	MessageType_UNLOAD_BUNDLE_REQUEST         MessageType = 8
 	// Responses (UTLXe → wrapper)
 	MessageType_LOAD_TRANSFORMATION_RESPONSE   MessageType = 11
 	MessageType_EXECUTE_RESPONSE               MessageType = 12
@@ -143,6 +271,8 @@ const (
 	MessageType_UNLOAD_TRANSFORMATION_RESPONSE MessageType = 14
 	MessageType_HEALTH_RESPONSE                MessageType = 15
 	MessageType_EXECUTE_PIPELINE_RESPONSE      MessageType = 16
+	MessageType_LOAD_BUNDLE_RESPONSE           MessageType = 17
+	MessageType_UNLOAD_BUNDLE_RESPONSE         MessageType = 18
 )
 
 // Enum value maps for MessageType.
@@ -155,12 +285,16 @@ var (
 		4:  "UNLOAD_TRANSFORMATION_REQUEST",
 		5:  "HEALTH_REQUEST",
 		6:  "EXECUTE_PIPELINE_REQUEST",
+		7:  "LOAD_BUNDLE_REQUEST",
+		8:  "UNLOAD_BUNDLE_REQUEST",
 		11: "LOAD_TRANSFORMATION_RESPONSE",
 		12: "EXECUTE_RESPONSE",
 		13: "EXECUTE_BATCH_RESPONSE",
 		14: "UNLOAD_TRANSFORMATION_RESPONSE",
 		15: "HEALTH_RESPONSE",
 		16: "EXECUTE_PIPELINE_RESPONSE",
+		17: "LOAD_BUNDLE_RESPONSE",
+		18: "UNLOAD_BUNDLE_RESPONSE",
 	}
 	MessageType_value = map[string]int32{
 		"MESSAGE_TYPE_UNSPECIFIED":       0,
@@ -170,12 +304,16 @@ var (
 		"UNLOAD_TRANSFORMATION_REQUEST":  4,
 		"HEALTH_REQUEST":                 5,
 		"EXECUTE_PIPELINE_REQUEST":       6,
+		"LOAD_BUNDLE_REQUEST":            7,
+		"UNLOAD_BUNDLE_REQUEST":          8,
 		"LOAD_TRANSFORMATION_RESPONSE":   11,
 		"EXECUTE_RESPONSE":               12,
 		"EXECUTE_BATCH_RESPONSE":         13,
 		"UNLOAD_TRANSFORMATION_RESPONSE": 14,
 		"HEALTH_RESPONSE":                15,
 		"EXECUTE_PIPELINE_RESPONSE":      16,
+		"LOAD_BUNDLE_RESPONSE":           17,
+		"UNLOAD_BUNDLE_RESPONSE":         18,
 	}
 )
 
@@ -190,11 +328,11 @@ func (x MessageType) String() string {
 }
 
 func (MessageType) Descriptor() protoreflect.EnumDescriptor {
-	return file_utlxe_v1_utlxe_proto_enumTypes[2].Descriptor()
+	return file_utlxe_v1_utlxe_proto_enumTypes[4].Descriptor()
 }
 
 func (MessageType) Type() protoreflect.EnumType {
-	return &file_utlxe_v1_utlxe_proto_enumTypes[2]
+	return &file_utlxe_v1_utlxe_proto_enumTypes[4]
 }
 
 func (x MessageType) Number() protoreflect.EnumNumber {
@@ -203,7 +341,7 @@ func (x MessageType) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use MessageType.Descriptor instead.
 func (MessageType) EnumDescriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{2}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{4}
 }
 
 type LoadTransformationRequest struct {
@@ -214,8 +352,23 @@ type LoadTransformationRequest struct {
 	ValidationPolicy string                 `protobuf:"bytes,4,opt,name=validation_policy,json=validationPolicy,proto3" json:"validation_policy,omitempty"`                               // "STRICT", "WARN", "SKIP" (default: "SKIP")
 	MaxConcurrent    int32                  `protobuf:"varint,5,opt,name=max_concurrent,json=maxConcurrent,proto3" json:"max_concurrent,omitempty"`                                       // Per-transformation concurrency limit (0 = use engine default)
 	Config           map[string]string      `protobuf:"bytes,6,rep,name=config,proto3" json:"config,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional configuration (validation settings, format hints, etc.)
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	// Schema pass-through: lets the caller (e.g., Open-M wrapper) provide schemas
+	// from the control plane's schema store. UTLXe uses them for:
+	//   - PRE_VALIDATION  (input against schema)
+	//   - POST_VALIDATION (output against output_schema)
+	//   - COPY strategy skeleton building (type-aware UDM construction)
+	//
+	// When empty, UTLXe falls back to schemas from the bundle or no validation.
+	//
+	// Input schemas are maps because N-input mappings have one schema per named input.
+	// Keys match the named_inputs keys in ExecuteRequest.
+	// "current" (or the primary input name) = main payload input.
+	InputSchemas       map[string][]byte `protobuf:"bytes,7,rep,name=input_schemas,json=inputSchemas,proto3" json:"input_schemas,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`                     // name → schema content (native format)
+	InputSchemaFormats map[string]string `protobuf:"bytes,8,rep,name=input_schema_formats,json=inputSchemaFormats,proto3" json:"input_schema_formats,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // name → "xsd" / "json-schema" / "avro"
+	OutputSchema       []byte            `protobuf:"bytes,9,opt,name=output_schema,json=outputSchema,proto3" json:"output_schema,omitempty"`                                                                                               // Schema of the output (downstream component's expected input)
+	OutputSchemaFormat string            `protobuf:"bytes,10,opt,name=output_schema_format,json=outputSchemaFormat,proto3" json:"output_schema_format,omitempty"`                                                                          // "xsd", "json-schema", "avro"
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *LoadTransformationRequest) Reset() {
@@ -288,6 +441,34 @@ func (x *LoadTransformationRequest) GetConfig() map[string]string {
 		return x.Config
 	}
 	return nil
+}
+
+func (x *LoadTransformationRequest) GetInputSchemas() map[string][]byte {
+	if x != nil {
+		return x.InputSchemas
+	}
+	return nil
+}
+
+func (x *LoadTransformationRequest) GetInputSchemaFormats() map[string]string {
+	if x != nil {
+		return x.InputSchemaFormats
+	}
+	return nil
+}
+
+func (x *LoadTransformationRequest) GetOutputSchema() []byte {
+	if x != nil {
+		return x.OutputSchema
+	}
+	return nil
+}
+
+func (x *LoadTransformationRequest) GetOutputSchemaFormat() string {
+	if x != nil {
+		return x.OutputSchemaFormat
+	}
+	return ""
 }
 
 type LoadTransformationResponse struct {
@@ -418,20 +599,284 @@ func (x *LoadMetrics) GetTotalDurationUs() int64 {
 	return 0
 }
 
+type LoadBundleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BundleId      string                 `protobuf:"bytes,1,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`       // Bundle identifier (e.g., "orders-v3")
+	BundleData    []byte                 `protobuf:"bytes,2,opt,name=bundle_data,json=bundleData,proto3" json:"bundle_data,omitempty"` // ZIP contents (inline upload)
+	BundleUri     string                 `protobuf:"bytes,3,opt,name=bundle_uri,json=bundleUri,proto3" json:"bundle_uri,omitempty"`    // URI to fetch from (alternative to inline: blob://, file://)
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LoadBundleRequest) Reset() {
+	*x = LoadBundleRequest{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoadBundleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadBundleRequest) ProtoMessage() {}
+
+func (x *LoadBundleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadBundleRequest.ProtoReflect.Descriptor instead.
+func (*LoadBundleRequest) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *LoadBundleRequest) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+func (x *LoadBundleRequest) GetBundleData() []byte {
+	if x != nil {
+		return x.BundleData
+	}
+	return nil
+}
+
+func (x *LoadBundleRequest) GetBundleUri() string {
+	if x != nil {
+		return x.BundleUri
+	}
+	return ""
+}
+
+type LoadBundleResponse struct {
+	state                 protoimpl.MessageState `protogen:"open.v1"`
+	Success               bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error                 string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	Version               string                 `protobuf:"bytes,3,opt,name=version,proto3" json:"version,omitempty"`   // Bundle version (from engine.yaml or auto-generated)
+	Checksum              string                 `protobuf:"bytes,4,opt,name=checksum,proto3" json:"checksum,omitempty"` // SHA-256 of the bundle
+	TransformationsLoaded int32                  `protobuf:"varint,5,opt,name=transformations_loaded,json=transformationsLoaded,proto3" json:"transformations_loaded,omitempty"`
+	TransformationIds     []string               `protobuf:"bytes,6,rep,name=transformation_ids,json=transformationIds,proto3" json:"transformation_ids,omitempty"` // Names of transformations in the bundle
+	Metrics               *LoadMetrics           `protobuf:"bytes,7,opt,name=metrics,proto3" json:"metrics,omitempty"`
+	unknownFields         protoimpl.UnknownFields
+	sizeCache             protoimpl.SizeCache
+}
+
+func (x *LoadBundleResponse) Reset() {
+	*x = LoadBundleResponse{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LoadBundleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LoadBundleResponse) ProtoMessage() {}
+
+func (x *LoadBundleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LoadBundleResponse.ProtoReflect.Descriptor instead.
+func (*LoadBundleResponse) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *LoadBundleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *LoadBundleResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *LoadBundleResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *LoadBundleResponse) GetChecksum() string {
+	if x != nil {
+		return x.Checksum
+	}
+	return ""
+}
+
+func (x *LoadBundleResponse) GetTransformationsLoaded() int32 {
+	if x != nil {
+		return x.TransformationsLoaded
+	}
+	return 0
+}
+
+func (x *LoadBundleResponse) GetTransformationIds() []string {
+	if x != nil {
+		return x.TransformationIds
+	}
+	return nil
+}
+
+func (x *LoadBundleResponse) GetMetrics() *LoadMetrics {
+	if x != nil {
+		return x.Metrics
+	}
+	return nil
+}
+
+type UnloadBundleRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BundleId      string                 `protobuf:"bytes,1,opt,name=bundle_id,json=bundleId,proto3" json:"bundle_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UnloadBundleRequest) Reset() {
+	*x = UnloadBundleRequest{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnloadBundleRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnloadBundleRequest) ProtoMessage() {}
+
+func (x *UnloadBundleRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnloadBundleRequest.ProtoReflect.Descriptor instead.
+func (*UnloadBundleRequest) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *UnloadBundleRequest) GetBundleId() string {
+	if x != nil {
+		return x.BundleId
+	}
+	return ""
+}
+
+type UnloadBundleResponse struct {
+	state                   protoimpl.MessageState `protogen:"open.v1"`
+	Success                 bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Error                   string                 `protobuf:"bytes,2,opt,name=error,proto3" json:"error,omitempty"`
+	TransformationsUnloaded int32                  `protobuf:"varint,3,opt,name=transformations_unloaded,json=transformationsUnloaded,proto3" json:"transformations_unloaded,omitempty"`
+	unknownFields           protoimpl.UnknownFields
+	sizeCache               protoimpl.SizeCache
+}
+
+func (x *UnloadBundleResponse) Reset() {
+	*x = UnloadBundleResponse{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UnloadBundleResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UnloadBundleResponse) ProtoMessage() {}
+
+func (x *UnloadBundleResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UnloadBundleResponse.ProtoReflect.Descriptor instead.
+func (*UnloadBundleResponse) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *UnloadBundleResponse) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *UnloadBundleResponse) GetError() string {
+	if x != nil {
+		return x.Error
+	}
+	return ""
+}
+
+func (x *UnloadBundleResponse) GetTransformationsUnloaded() int32 {
+	if x != nil {
+		return x.TransformationsUnloaded
+	}
+	return 0
+}
+
 type ExecuteRequest struct {
-	state            protoimpl.MessageState `protogen:"open.v1"`
-	TransformationId string                 `protobuf:"bytes,1,opt,name=transformation_id,json=transformationId,proto3" json:"transformation_id,omitempty"`                                                            // Which pre-loaded transformation to execute
-	Payload          []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`                                                                                                      // The current_payload from MPPM envelope
-	ContentType      string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`                                                                           // "application/json", "application/xml", "text/csv", etc.
-	NamedInputs      map[string][]byte      `protobuf:"bytes,4,rep,name=named_inputs,json=namedInputs,proto3" json:"named_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // For N-input mappings: named payloads from step window
-	CorrelationId    string                 `protobuf:"bytes,5,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`                                                                     // For tracing/debugging and multiplexed response matching
-	unknownFields    protoimpl.UnknownFields
-	sizeCache        protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	TransformationId   string                 `protobuf:"bytes,1,opt,name=transformation_id,json=transformationId,proto3" json:"transformation_id,omitempty"`                                                            // Which pre-loaded transformation to execute
+	Payload            []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`                                                                                                      // The current_payload from MPPM envelope
+	ContentType        string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`                                                                           // "application/json", "application/xml", "text/csv", etc.
+	NamedInputs        map[string][]byte      `protobuf:"bytes,4,rep,name=named_inputs,json=namedInputs,proto3" json:"named_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // For N-input mappings: named payloads from step window
+	CorrelationId      string                 `protobuf:"bytes,5,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`                                                                     // MPPM transaction grouping UUID — same for all messages in one pipeline execution
+	MessageId          string                 `protobuf:"bytes,6,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`                                                                                 // UUIDv7 — unique ID for this message (caller sets, or engine generates)
+	CausationId        string                 `protobuf:"bytes,7,opt,name=causation_id,json=causationId,proto3" json:"causation_id,omitempty"`                                                                           // UUIDv7 — MessageId of the message that caused this one
+	Metadata           map[string]string      `protobuf:"bytes,8,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`                          // Custom properties to forward (e.g., Service Bus, CPI exchange, Kafka headers)
+	Traceparent        string                 `protobuf:"bytes,9,opt,name=traceparent,proto3" json:"traceparent,omitempty"`                                                                                              // W3C Trace Context traceparent header
+	Parameters         map[string]string      `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`                     // Transformation input parameters (accessible as $params.key in .utlx)
+	MetadataForwarding MetadataForwarding     `protobuf:"varint,11,opt,name=metadata_forwarding,json=metadataForwarding,proto3,enum=utlxe.v1.MetadataForwarding" json:"metadata_forwarding,omitempty"`                   // Controls which metadata keys pass through to output
+	Tracestate         string                 `protobuf:"bytes,12,opt,name=tracestate,proto3" json:"tracestate,omitempty"`                                                                                               // W3C Trace Context tracestate header (vendor extensions)
+	RequestId          string                 `protobuf:"bytes,13,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`                                                                                // Pipe-level matching: unique per call, echoed back on response.
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *ExecuteRequest) Reset() {
 	*x = ExecuteRequest{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[3]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -443,7 +888,7 @@ func (x *ExecuteRequest) String() string {
 func (*ExecuteRequest) ProtoMessage() {}
 
 func (x *ExecuteRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[3]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -456,7 +901,7 @@ func (x *ExecuteRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteRequest) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{3}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ExecuteRequest) GetTransformationId() string {
@@ -494,6 +939,62 @@ func (x *ExecuteRequest) GetCorrelationId() string {
 	return ""
 }
 
+func (x *ExecuteRequest) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ExecuteRequest) GetCausationId() string {
+	if x != nil {
+		return x.CausationId
+	}
+	return ""
+}
+
+func (x *ExecuteRequest) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *ExecuteRequest) GetTraceparent() string {
+	if x != nil {
+		return x.Traceparent
+	}
+	return ""
+}
+
+func (x *ExecuteRequest) GetParameters() map[string]string {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *ExecuteRequest) GetMetadataForwarding() MetadataForwarding {
+	if x != nil {
+		return x.MetadataForwarding
+	}
+	return MetadataForwarding_METADATA_FORWARDING_UNSPECIFIED
+}
+
+func (x *ExecuteRequest) GetTracestate() string {
+	if x != nil {
+		return x.Tracestate
+	}
+	return ""
+}
+
+func (x *ExecuteRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
 type ExecuteResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Success           bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -503,15 +1004,21 @@ type ExecuteResponse struct {
 	ErrorClass        ErrorClass             `protobuf:"varint,5,opt,name=error_class,json=errorClass,proto3,enum=utlxe.v1.ErrorClass" json:"error_class,omitempty"` // PERMANENT or TRANSIENT
 	ValidationErrors  []*ValidationError     `protobuf:"bytes,6,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 	Metrics           *ExecuteMetrics        `protobuf:"bytes,7,opt,name=metrics,proto3" json:"metrics,omitempty"`
-	ErrorPhase        ErrorPhase             `protobuf:"varint,8,opt,name=error_phase,json=errorPhase,proto3,enum=utlxe.v1.ErrorPhase" json:"error_phase,omitempty"` // WHERE the error occurred
-	CorrelationId     string                 `protobuf:"bytes,9,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`                  // Echoed from request (for multiplexed matching)
+	ErrorPhase        ErrorPhase             `protobuf:"varint,8,opt,name=error_phase,json=errorPhase,proto3,enum=utlxe.v1.ErrorPhase" json:"error_phase,omitempty"`                            // WHERE the error occurred
+	CorrelationId     string                 `protobuf:"bytes,9,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`                                             // MPPM correlation_id echoed (for logging/tracing context)
+	MessageId         string                 `protobuf:"bytes,10,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`                                                        // New UUID for this output message
+	CausationId       string                 `protobuf:"bytes,11,opt,name=causation_id,json=causationId,proto3" json:"causation_id,omitempty"`                                                  // Set to input's message_id (immediate parent)
+	Metadata          map[string]string      `protobuf:"bytes,12,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Forwarded custom properties (controlled by metadata_forwarding)
+	ErrorCode         ErrorCode              `protobuf:"varint,13,opt,name=error_code,json=errorCode,proto3,enum=utlxe.v1.ErrorCode" json:"error_code,omitempty"`                               // Specific, actionable error code
+	OutputMetadata    *OutputMetadata        `protobuf:"bytes,14,opt,name=output_metadata,json=outputMetadata,proto3" json:"output_metadata,omitempty"`                                         // Rule-emitted business metadata (typed, host-neutral)
+	RequestId         string                 `protobuf:"bytes,15,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`                                                        // Echoed from request — wrapper uses for pipe-level response dispatch
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ExecuteResponse) Reset() {
 	*x = ExecuteResponse{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[4]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -523,7 +1030,7 @@ func (x *ExecuteResponse) String() string {
 func (*ExecuteResponse) ProtoMessage() {}
 
 func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[4]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -536,7 +1043,7 @@ func (x *ExecuteResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteResponse) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{4}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *ExecuteResponse) GetSuccess() bool {
@@ -602,6 +1109,140 @@ func (x *ExecuteResponse) GetCorrelationId() string {
 	return ""
 }
 
+func (x *ExecuteResponse) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ExecuteResponse) GetCausationId() string {
+	if x != nil {
+		return x.CausationId
+	}
+	return ""
+}
+
+func (x *ExecuteResponse) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *ExecuteResponse) GetErrorCode() ErrorCode {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ErrorCode_ERROR_CODE_UNSPECIFIED
+}
+
+func (x *ExecuteResponse) GetOutputMetadata() *OutputMetadata {
+	if x != nil {
+		return x.OutputMetadata
+	}
+	return nil
+}
+
+func (x *ExecuteResponse) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
+// Rule-emitted output metadata. Distinct from the flat `metadata` map (which is
+// pass-through of input properties). This shape carries business-meaningful
+// identifiers that host adapters map to host-specific scopes:
+//
+//	CPI:       application_id → SAP_ApplicationID, message_type → SAP_MessageType
+//	BizTalk:   application_id → promoted property, custom_identifiers → context
+//	Dapr:      application_id → CloudEvents ce-subject, message_type → ce-type
+//	Kafka:     custom_identifiers → message headers
+type OutputMetadata struct {
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	ApplicationId     string                 `protobuf:"bytes,1,opt,name=application_id,json=applicationId,proto3" json:"application_id,omitempty"`                                                                                       // Business document ID (PO number, IDoc number, invoice ID)
+	MessageType       string                 `protobuf:"bytes,2,opt,name=message_type,json=messageType,proto3" json:"message_type,omitempty"`                                                                                             // Logical type the rule produced ("CanonicalOrder.v3", "DEBMAS05")
+	CustomStatus      string                 `protobuf:"bytes,3,opt,name=custom_status,json=customStatus,proto3" json:"custom_status,omitempty"`                                                                                          // Non-fatal status ("FALLBACK_RULE_USED", "PARTIAL_MATCH")
+	CustomIdentifiers map[string]string      `protobuf:"bytes,4,rep,name=custom_identifiers,json=customIdentifiers,proto3" json:"custom_identifiers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Additional searchable IDs (DeliveryNumber, CustomerNumber)
+	Sender            string                 `protobuf:"bytes,5,opt,name=sender,proto3" json:"sender,omitempty"`                                                                                                                          // Logical sender (resolved from payload, e.g., EDI ISA06)
+	Receiver          string                 `protobuf:"bytes,6,opt,name=receiver,proto3" json:"receiver,omitempty"`                                                                                                                      // Logical receiver (resolved from payload, e.g., EDI ISA08)
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
+}
+
+func (x *OutputMetadata) Reset() {
+	*x = OutputMetadata{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[9]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OutputMetadata) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OutputMetadata) ProtoMessage() {}
+
+func (x *OutputMetadata) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[9]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OutputMetadata.ProtoReflect.Descriptor instead.
+func (*OutputMetadata) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *OutputMetadata) GetApplicationId() string {
+	if x != nil {
+		return x.ApplicationId
+	}
+	return ""
+}
+
+func (x *OutputMetadata) GetMessageType() string {
+	if x != nil {
+		return x.MessageType
+	}
+	return ""
+}
+
+func (x *OutputMetadata) GetCustomStatus() string {
+	if x != nil {
+		return x.CustomStatus
+	}
+	return ""
+}
+
+func (x *OutputMetadata) GetCustomIdentifiers() map[string]string {
+	if x != nil {
+		return x.CustomIdentifiers
+	}
+	return nil
+}
+
+func (x *OutputMetadata) GetSender() string {
+	if x != nil {
+		return x.Sender
+	}
+	return ""
+}
+
+func (x *OutputMetadata) GetReceiver() string {
+	if x != nil {
+		return x.Receiver
+	}
+	return ""
+}
+
 type ValidationError struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Message       string                 `protobuf:"bytes,1,opt,name=message,proto3" json:"message,omitempty"`
@@ -613,7 +1254,7 @@ type ValidationError struct {
 
 func (x *ValidationError) Reset() {
 	*x = ValidationError{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[5]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -625,7 +1266,7 @@ func (x *ValidationError) String() string {
 func (*ValidationError) ProtoMessage() {}
 
 func (x *ValidationError) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[5]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -638,7 +1279,7 @@ func (x *ValidationError) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidationError.ProtoReflect.Descriptor instead.
 func (*ValidationError) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{5}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *ValidationError) GetMessage() string {
@@ -671,7 +1312,7 @@ type ExecuteMetrics struct {
 
 func (x *ExecuteMetrics) Reset() {
 	*x = ExecuteMetrics{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[6]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -683,7 +1324,7 @@ func (x *ExecuteMetrics) String() string {
 func (*ExecuteMetrics) ProtoMessage() {}
 
 func (x *ExecuteMetrics) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[6]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -696,7 +1337,7 @@ func (x *ExecuteMetrics) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteMetrics.ProtoReflect.Descriptor instead.
 func (*ExecuteMetrics) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{6}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{11}
 }
 
 func (x *ExecuteMetrics) GetExecuteDurationUs() int64 {
@@ -716,7 +1357,7 @@ type ExecuteBatchRequest struct {
 
 func (x *ExecuteBatchRequest) Reset() {
 	*x = ExecuteBatchRequest{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[7]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -728,7 +1369,7 @@ func (x *ExecuteBatchRequest) String() string {
 func (*ExecuteBatchRequest) ProtoMessage() {}
 
 func (x *ExecuteBatchRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[7]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -741,7 +1382,7 @@ func (x *ExecuteBatchRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteBatchRequest.ProtoReflect.Descriptor instead.
 func (*ExecuteBatchRequest) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{7}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *ExecuteBatchRequest) GetTransformationId() string {
@@ -763,14 +1404,21 @@ type BatchItem struct {
 	Payload       []byte                 `protobuf:"bytes,1,opt,name=payload,proto3" json:"payload,omitempty"`
 	ContentType   string                 `protobuf:"bytes,2,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	NamedInputs   map[string][]byte      `protobuf:"bytes,3,rep,name=named_inputs,json=namedInputs,proto3" json:"named_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	CorrelationId string                 `protobuf:"bytes,4,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
+	CorrelationId string                 `protobuf:"bytes,4,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"` // MPPM transaction grouping UUID
+	MessageId     string                 `protobuf:"bytes,5,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`
+	CausationId   string                 `protobuf:"bytes,6,opt,name=causation_id,json=causationId,proto3" json:"causation_id,omitempty"`
+	Metadata      map[string]string      `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Parameters    map[string]string      `protobuf:"bytes,8,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Traceparent   string                 `protobuf:"bytes,9,opt,name=traceparent,proto3" json:"traceparent,omitempty"`               // W3C Trace Context per batch item (each item = own span)
+	Tracestate    string                 `protobuf:"bytes,10,opt,name=tracestate,proto3" json:"tracestate,omitempty"`                // W3C Trace Context vendor extensions
+	RequestId     string                 `protobuf:"bytes,11,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"` // Pipe-level matching per batch item (echoed on corresponding ExecuteResponse)
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *BatchItem) Reset() {
 	*x = BatchItem{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[8]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -782,7 +1430,7 @@ func (x *BatchItem) String() string {
 func (*BatchItem) ProtoMessage() {}
 
 func (x *BatchItem) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[8]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -795,7 +1443,7 @@ func (x *BatchItem) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BatchItem.ProtoReflect.Descriptor instead.
 func (*BatchItem) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{8}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *BatchItem) GetPayload() []byte {
@@ -826,6 +1474,55 @@ func (x *BatchItem) GetCorrelationId() string {
 	return ""
 }
 
+func (x *BatchItem) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *BatchItem) GetCausationId() string {
+	if x != nil {
+		return x.CausationId
+	}
+	return ""
+}
+
+func (x *BatchItem) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *BatchItem) GetParameters() map[string]string {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *BatchItem) GetTraceparent() string {
+	if x != nil {
+		return x.Traceparent
+	}
+	return ""
+}
+
+func (x *BatchItem) GetTracestate() string {
+	if x != nil {
+		return x.Tracestate
+	}
+	return ""
+}
+
+func (x *BatchItem) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
 type ExecuteBatchResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Results       []*ExecuteResponse     `protobuf:"bytes,1,rep,name=results,proto3" json:"results,omitempty"`
@@ -835,7 +1532,7 @@ type ExecuteBatchResponse struct {
 
 func (x *ExecuteBatchResponse) Reset() {
 	*x = ExecuteBatchResponse{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[9]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -847,7 +1544,7 @@ func (x *ExecuteBatchResponse) String() string {
 func (*ExecuteBatchResponse) ProtoMessage() {}
 
 func (x *ExecuteBatchResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[9]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +1557,7 @@ func (x *ExecuteBatchResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecuteBatchResponse.ProtoReflect.Descriptor instead.
 func (*ExecuteBatchResponse) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{9}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ExecuteBatchResponse) GetResults() []*ExecuteResponse {
@@ -870,19 +1567,72 @@ func (x *ExecuteBatchResponse) GetResults() []*ExecuteResponse {
 	return nil
 }
 
+// Additional inputs for a specific pipeline stage (keyed by transformation_id in the request)
+type PipelineStageInputs struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	AdditionalInputs map[string][]byte      `protobuf:"bytes,1,rep,name=additional_inputs,json=additionalInputs,proto3" json:"additional_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Named inputs for this stage (e.g., "customers" → JSON, "pricelist" → CSV)
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *PipelineStageInputs) Reset() {
+	*x = PipelineStageInputs{}
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[15]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PipelineStageInputs) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PipelineStageInputs) ProtoMessage() {}
+
+func (x *PipelineStageInputs) ProtoReflect() protoreflect.Message {
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[15]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PipelineStageInputs.ProtoReflect.Descriptor instead.
+func (*PipelineStageInputs) Descriptor() ([]byte, []int) {
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{15}
+}
+
+func (x *PipelineStageInputs) GetAdditionalInputs() map[string][]byte {
+	if x != nil {
+		return x.AdditionalInputs
+	}
+	return nil
+}
+
 type ExecutePipelineRequest struct {
-	state             protoimpl.MessageState `protogen:"open.v1"`
-	TransformationIds []string               `protobuf:"bytes,1,rep,name=transformation_ids,json=transformationIds,proto3" json:"transformation_ids,omitempty"` // Ordered list: output of [0] feeds input of [1], etc.
-	Payload           []byte                 `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`                                              // Initial input payload
-	ContentType       string                 `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
-	CorrelationId     string                 `protobuf:"bytes,4,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
+	state             protoimpl.MessageState          `protogen:"open.v1"`
+	TransformationIds []string                        `protobuf:"bytes,1,rep,name=transformation_ids,json=transformationIds,proto3" json:"transformation_ids,omitempty"` // Ordered list: output of [0] feeds input of [1], etc.
+	Payload           []byte                          `protobuf:"bytes,2,opt,name=payload,proto3" json:"payload,omitempty"`                                              // Initial input payload
+	ContentType       string                          `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
+	CorrelationId     string                          `protobuf:"bytes,4,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`                                                                     // MPPM transaction grouping UUID
+	MessageId         string                          `protobuf:"bytes,5,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`                                                                                 // UUIDv7 — unique for this pipeline invocation
+	CausationId       string                          `protobuf:"bytes,6,opt,name=causation_id,json=causationId,proto3" json:"causation_id,omitempty"`                                                                           // UUIDv7 — parent's MessageId
+	Metadata          map[string]string               `protobuf:"bytes,7,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`                          // Custom properties to forward
+	Traceparent       string                          `protobuf:"bytes,8,opt,name=traceparent,proto3" json:"traceparent,omitempty"`                                                                                              // W3C Trace Context
+	StageInputs       map[string]*PipelineStageInputs `protobuf:"bytes,9,rep,name=stage_inputs,json=stageInputs,proto3" json:"stage_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // EF01: additional inputs per stage, keyed by transformation_id
+	Parameters        map[string]string               `protobuf:"bytes,10,rep,name=parameters,proto3" json:"parameters,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`                     // Transformation input parameters (shared across all stages)
+	Tracestate        string                          `protobuf:"bytes,11,opt,name=tracestate,proto3" json:"tracestate,omitempty"`                                                                                               // W3C Trace Context vendor extensions
+	RequestId         string                          `protobuf:"bytes,12,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`                                                                                // Pipe-level matching (echoed on response)
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ExecutePipelineRequest) Reset() {
 	*x = ExecutePipelineRequest{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[10]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -894,7 +1644,7 @@ func (x *ExecutePipelineRequest) String() string {
 func (*ExecutePipelineRequest) ProtoMessage() {}
 
 func (x *ExecutePipelineRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[10]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -907,7 +1657,7 @@ func (x *ExecutePipelineRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutePipelineRequest.ProtoReflect.Descriptor instead.
 func (*ExecutePipelineRequest) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{10}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *ExecutePipelineRequest) GetTransformationIds() []string {
@@ -938,6 +1688,62 @@ func (x *ExecutePipelineRequest) GetCorrelationId() string {
 	return ""
 }
 
+func (x *ExecutePipelineRequest) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ExecutePipelineRequest) GetCausationId() string {
+	if x != nil {
+		return x.CausationId
+	}
+	return ""
+}
+
+func (x *ExecutePipelineRequest) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *ExecutePipelineRequest) GetTraceparent() string {
+	if x != nil {
+		return x.Traceparent
+	}
+	return ""
+}
+
+func (x *ExecutePipelineRequest) GetStageInputs() map[string]*PipelineStageInputs {
+	if x != nil {
+		return x.StageInputs
+	}
+	return nil
+}
+
+func (x *ExecutePipelineRequest) GetParameters() map[string]string {
+	if x != nil {
+		return x.Parameters
+	}
+	return nil
+}
+
+func (x *ExecutePipelineRequest) GetTracestate() string {
+	if x != nil {
+		return x.Tracestate
+	}
+	return ""
+}
+
+func (x *ExecutePipelineRequest) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
 type ExecutePipelineResponse struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Success           bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -948,15 +1754,21 @@ type ExecutePipelineResponse struct {
 	ErrorPhase        ErrorPhase             `protobuf:"varint,6,opt,name=error_phase,json=errorPhase,proto3,enum=utlxe.v1.ErrorPhase" json:"error_phase,omitempty"`
 	ValidationErrors  []*ValidationError     `protobuf:"bytes,7,rep,name=validation_errors,json=validationErrors,proto3" json:"validation_errors,omitempty"`
 	CorrelationId     string                 `protobuf:"bytes,8,opt,name=correlation_id,json=correlationId,proto3" json:"correlation_id,omitempty"`
-	StagesCompleted   int32                  `protobuf:"varint,9,opt,name=stages_completed,json=stagesCompleted,proto3" json:"stages_completed,omitempty"`    // How many transforms completed before error (or total)
-	TotalDurationUs   int64                  `protobuf:"varint,10,opt,name=total_duration_us,json=totalDurationUs,proto3" json:"total_duration_us,omitempty"` // Wall clock for entire pipeline
+	StagesCompleted   int32                  `protobuf:"varint,9,opt,name=stages_completed,json=stagesCompleted,proto3" json:"stages_completed,omitempty"`                                      // How many transforms completed before error (or total)
+	TotalDurationUs   int64                  `protobuf:"varint,10,opt,name=total_duration_us,json=totalDurationUs,proto3" json:"total_duration_us,omitempty"`                                   // Wall clock for entire pipeline
+	MessageId         string                 `protobuf:"bytes,11,opt,name=message_id,json=messageId,proto3" json:"message_id,omitempty"`                                                        // New UUID for the final output
+	CausationId       string                 `protobuf:"bytes,12,opt,name=causation_id,json=causationId,proto3" json:"causation_id,omitempty"`                                                  // MessageId of the last stage's input
+	Metadata          map[string]string      `protobuf:"bytes,13,rep,name=metadata,proto3" json:"metadata,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"` // Forwarded custom properties
+	ErrorCode         ErrorCode              `protobuf:"varint,14,opt,name=error_code,json=errorCode,proto3,enum=utlxe.v1.ErrorCode" json:"error_code,omitempty"`                               // Specific error code (if failed)
+	OutputMetadata    *OutputMetadata        `protobuf:"bytes,15,opt,name=output_metadata,json=outputMetadata,proto3" json:"output_metadata,omitempty"`                                         // Rule-emitted business metadata (from last pipeline stage)
+	RequestId         string                 `protobuf:"bytes,16,opt,name=request_id,json=requestId,proto3" json:"request_id,omitempty"`                                                        // Echoed from request — pipe-level response dispatch
 	unknownFields     protoimpl.UnknownFields
 	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ExecutePipelineResponse) Reset() {
 	*x = ExecutePipelineResponse{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[11]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -968,7 +1780,7 @@ func (x *ExecutePipelineResponse) String() string {
 func (*ExecutePipelineResponse) ProtoMessage() {}
 
 func (x *ExecutePipelineResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[11]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -981,7 +1793,7 @@ func (x *ExecutePipelineResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ExecutePipelineResponse.ProtoReflect.Descriptor instead.
 func (*ExecutePipelineResponse) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{11}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *ExecutePipelineResponse) GetSuccess() bool {
@@ -1054,6 +1866,48 @@ func (x *ExecutePipelineResponse) GetTotalDurationUs() int64 {
 	return 0
 }
 
+func (x *ExecutePipelineResponse) GetMessageId() string {
+	if x != nil {
+		return x.MessageId
+	}
+	return ""
+}
+
+func (x *ExecutePipelineResponse) GetCausationId() string {
+	if x != nil {
+		return x.CausationId
+	}
+	return ""
+}
+
+func (x *ExecutePipelineResponse) GetMetadata() map[string]string {
+	if x != nil {
+		return x.Metadata
+	}
+	return nil
+}
+
+func (x *ExecutePipelineResponse) GetErrorCode() ErrorCode {
+	if x != nil {
+		return x.ErrorCode
+	}
+	return ErrorCode_ERROR_CODE_UNSPECIFIED
+}
+
+func (x *ExecutePipelineResponse) GetOutputMetadata() *OutputMetadata {
+	if x != nil {
+		return x.OutputMetadata
+	}
+	return nil
+}
+
+func (x *ExecutePipelineResponse) GetRequestId() string {
+	if x != nil {
+		return x.RequestId
+	}
+	return ""
+}
+
 type UnloadTransformationRequest struct {
 	state            protoimpl.MessageState `protogen:"open.v1"`
 	TransformationId string                 `protobuf:"bytes,1,opt,name=transformation_id,json=transformationId,proto3" json:"transformation_id,omitempty"`
@@ -1063,7 +1917,7 @@ type UnloadTransformationRequest struct {
 
 func (x *UnloadTransformationRequest) Reset() {
 	*x = UnloadTransformationRequest{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[12]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1075,7 +1929,7 @@ func (x *UnloadTransformationRequest) String() string {
 func (*UnloadTransformationRequest) ProtoMessage() {}
 
 func (x *UnloadTransformationRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[12]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1088,7 +1942,7 @@ func (x *UnloadTransformationRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnloadTransformationRequest.ProtoReflect.Descriptor instead.
 func (*UnloadTransformationRequest) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{12}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UnloadTransformationRequest) GetTransformationId() string {
@@ -1107,7 +1961,7 @@ type UnloadTransformationResponse struct {
 
 func (x *UnloadTransformationResponse) Reset() {
 	*x = UnloadTransformationResponse{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[13]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1119,7 +1973,7 @@ func (x *UnloadTransformationResponse) String() string {
 func (*UnloadTransformationResponse) ProtoMessage() {}
 
 func (x *UnloadTransformationResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[13]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1132,7 +1986,7 @@ func (x *UnloadTransformationResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnloadTransformationResponse.ProtoReflect.Descriptor instead.
 func (*UnloadTransformationResponse) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{13}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UnloadTransformationResponse) GetSuccess() bool {
@@ -1150,7 +2004,7 @@ type HealthRequest struct {
 
 func (x *HealthRequest) Reset() {
 	*x = HealthRequest{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[14]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1162,7 +2016,7 @@ func (x *HealthRequest) String() string {
 func (*HealthRequest) ProtoMessage() {}
 
 func (x *HealthRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[14]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1175,7 +2029,7 @@ func (x *HealthRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthRequest.ProtoReflect.Descriptor instead.
 func (*HealthRequest) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{14}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{20}
 }
 
 type HealthResponse struct {
@@ -1191,7 +2045,7 @@ type HealthResponse struct {
 
 func (x *HealthResponse) Reset() {
 	*x = HealthResponse{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[15]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1203,7 +2057,7 @@ func (x *HealthResponse) String() string {
 func (*HealthResponse) ProtoMessage() {}
 
 func (x *HealthResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[15]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1216,7 +2070,7 @@ func (x *HealthResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthResponse.ProtoReflect.Descriptor instead.
 func (*HealthResponse) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{15}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{21}
 }
 
 func (x *HealthResponse) GetState() string {
@@ -1264,7 +2118,7 @@ type StdioEnvelope struct {
 
 func (x *StdioEnvelope) Reset() {
 	*x = StdioEnvelope{}
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[16]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1276,7 +2130,7 @@ func (x *StdioEnvelope) String() string {
 func (*StdioEnvelope) ProtoMessage() {}
 
 func (x *StdioEnvelope) ProtoReflect() protoreflect.Message {
-	mi := &file_utlxe_v1_utlxe_proto_msgTypes[16]
+	mi := &file_utlxe_v1_utlxe_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1289,7 +2143,7 @@ func (x *StdioEnvelope) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StdioEnvelope.ProtoReflect.Descriptor instead.
 func (*StdioEnvelope) Descriptor() ([]byte, []int) {
-	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{16}
+	return file_utlxe_v1_utlxe_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *StdioEnvelope) GetType() MessageType {
@@ -1310,7 +2164,7 @@ var File_utlxe_v1_utlxe_proto protoreflect.FileDescriptor
 
 const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\n" +
-	"\x14utlxe/v1/utlxe.proto\x12\butlxe.v1\"\xdd\x02\n" +
+	"\x14utlxe/v1/utlxe.proto\x12\butlxe.v1\"\x87\x06\n" +
 	"\x19LoadTransformationRequest\x12+\n" +
 	"\x11transformation_id\x18\x01 \x01(\tR\x10transformationId\x12\x1f\n" +
 	"\vutlx_source\x18\x02 \x01(\tR\n" +
@@ -1318,8 +2172,19 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\bstrategy\x18\x03 \x01(\tR\bstrategy\x12+\n" +
 	"\x11validation_policy\x18\x04 \x01(\tR\x10validationPolicy\x12%\n" +
 	"\x0emax_concurrent\x18\x05 \x01(\x05R\rmaxConcurrent\x12G\n" +
-	"\x06config\x18\x06 \x03(\v2/.utlxe.v1.LoadTransformationRequest.ConfigEntryR\x06config\x1a9\n" +
+	"\x06config\x18\x06 \x03(\v2/.utlxe.v1.LoadTransformationRequest.ConfigEntryR\x06config\x12Z\n" +
+	"\rinput_schemas\x18\a \x03(\v25.utlxe.v1.LoadTransformationRequest.InputSchemasEntryR\finputSchemas\x12m\n" +
+	"\x14input_schema_formats\x18\b \x03(\v2;.utlxe.v1.LoadTransformationRequest.InputSchemaFormatsEntryR\x12inputSchemaFormats\x12#\n" +
+	"\routput_schema\x18\t \x01(\fR\foutputSchema\x120\n" +
+	"\x14output_schema_format\x18\n" +
+	" \x01(\tR\x12outputSchemaFormat\x1a9\n" +
 	"\vConfigEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a?\n" +
+	"\x11InputSchemasEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\x1aE\n" +
+	"\x17InputSchemaFormatsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xb4\x01\n" +
 	"\x1aLoadTransformationResponse\x12\x18\n" +
@@ -1330,16 +2195,57 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\vLoadMetrics\x12*\n" +
 	"\x11parse_duration_us\x18\x01 \x01(\x03R\x0fparseDurationUs\x122\n" +
 	"\x15typecheck_duration_us\x18\x02 \x01(\x03R\x13typecheckDurationUs\x12*\n" +
-	"\x11total_duration_us\x18\x03 \x01(\x03R\x0ftotalDurationUs\"\xaf\x02\n" +
+	"\x11total_duration_us\x18\x03 \x01(\x03R\x0ftotalDurationUs\"p\n" +
+	"\x11LoadBundleRequest\x12\x1b\n" +
+	"\tbundle_id\x18\x01 \x01(\tR\bbundleId\x12\x1f\n" +
+	"\vbundle_data\x18\x02 \x01(\fR\n" +
+	"bundleData\x12\x1d\n" +
+	"\n" +
+	"bundle_uri\x18\x03 \x01(\tR\tbundleUri\"\x91\x02\n" +
+	"\x12LoadBundleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\x12\x18\n" +
+	"\aversion\x18\x03 \x01(\tR\aversion\x12\x1a\n" +
+	"\bchecksum\x18\x04 \x01(\tR\bchecksum\x125\n" +
+	"\x16transformations_loaded\x18\x05 \x01(\x05R\x15transformationsLoaded\x12-\n" +
+	"\x12transformation_ids\x18\x06 \x03(\tR\x11transformationIds\x12/\n" +
+	"\ametrics\x18\a \x01(\v2\x15.utlxe.v1.LoadMetricsR\ametrics\"2\n" +
+	"\x13UnloadBundleRequest\x12\x1b\n" +
+	"\tbundle_id\x18\x01 \x01(\tR\bbundleId\"\x81\x01\n" +
+	"\x14UnloadBundleResponse\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x14\n" +
+	"\x05error\x18\x02 \x01(\tR\x05error\x129\n" +
+	"\x18transformations_unloaded\x18\x03 \x01(\x05R\x17transformationsUnloaded\"\xab\x06\n" +
 	"\x0eExecuteRequest\x12+\n" +
 	"\x11transformation_id\x18\x01 \x01(\tR\x10transformationId\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12!\n" +
 	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12L\n" +
 	"\fnamed_inputs\x18\x04 \x03(\v2).utlxe.v1.ExecuteRequest.NamedInputsEntryR\vnamedInputs\x12%\n" +
-	"\x0ecorrelation_id\x18\x05 \x01(\tR\rcorrelationId\x1a>\n" +
+	"\x0ecorrelation_id\x18\x05 \x01(\tR\rcorrelationId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x06 \x01(\tR\tmessageId\x12!\n" +
+	"\fcausation_id\x18\a \x01(\tR\vcausationId\x12B\n" +
+	"\bmetadata\x18\b \x03(\v2&.utlxe.v1.ExecuteRequest.MetadataEntryR\bmetadata\x12 \n" +
+	"\vtraceparent\x18\t \x01(\tR\vtraceparent\x12H\n" +
+	"\n" +
+	"parameters\x18\n" +
+	" \x03(\v2(.utlxe.v1.ExecuteRequest.ParametersEntryR\n" +
+	"parameters\x12M\n" +
+	"\x13metadata_forwarding\x18\v \x01(\x0e2\x1c.utlxe.v1.MetadataForwardingR\x12metadataForwarding\x12\x1e\n" +
+	"\n" +
+	"tracestate\x18\f \x01(\tR\n" +
+	"tracestate\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\r \x01(\tR\trequestId\x1a>\n" +
 	"\x10NamedInputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"\x9a\x03\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
+	"\x0fParametersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xf4\x05\n" +
 	"\x0fExecuteResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\fR\x06output\x12.\n" +
@@ -1351,7 +2257,30 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\ametrics\x18\a \x01(\v2\x18.utlxe.v1.ExecuteMetricsR\ametrics\x125\n" +
 	"\verror_phase\x18\b \x01(\x0e2\x14.utlxe.v1.ErrorPhaseR\n" +
 	"errorPhase\x12%\n" +
-	"\x0ecorrelation_id\x18\t \x01(\tR\rcorrelationId\"[\n" +
+	"\x0ecorrelation_id\x18\t \x01(\tR\rcorrelationId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\n" +
+	" \x01(\tR\tmessageId\x12!\n" +
+	"\fcausation_id\x18\v \x01(\tR\vcausationId\x12C\n" +
+	"\bmetadata\x18\f \x03(\v2'.utlxe.v1.ExecuteResponse.MetadataEntryR\bmetadata\x122\n" +
+	"\n" +
+	"error_code\x18\r \x01(\x0e2\x13.utlxe.v1.ErrorCodeR\terrorCode\x12A\n" +
+	"\x0foutput_metadata\x18\x0e \x01(\v2\x18.utlxe.v1.OutputMetadataR\x0eoutputMetadata\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x0f \x01(\tR\trequestId\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xd9\x02\n" +
+	"\x0eOutputMetadata\x12%\n" +
+	"\x0eapplication_id\x18\x01 \x01(\tR\rapplicationId\x12!\n" +
+	"\fmessage_type\x18\x02 \x01(\tR\vmessageType\x12#\n" +
+	"\rcustom_status\x18\x03 \x01(\tR\fcustomStatus\x12^\n" +
+	"\x12custom_identifiers\x18\x04 \x03(\v2/.utlxe.v1.OutputMetadata.CustomIdentifiersEntryR\x11customIdentifiers\x12\x16\n" +
+	"\x06sender\x18\x05 \x01(\tR\x06sender\x12\x1a\n" +
+	"\breceiver\x18\x06 \x01(\tR\breceiver\x1aD\n" +
+	"\x16CustomIdentifiersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"[\n" +
 	"\x0fValidationError\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12\x12\n" +
 	"\x04path\x18\x02 \x01(\tR\x04path\x12\x1a\n" +
@@ -1360,22 +2289,71 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x13execute_duration_us\x18\x01 \x01(\x03R\x11executeDurationUs\"m\n" +
 	"\x13ExecuteBatchRequest\x12+\n" +
 	"\x11transformation_id\x18\x01 \x01(\tR\x10transformationId\x12)\n" +
-	"\x05items\x18\x02 \x03(\v2\x13.utlxe.v1.BatchItemR\x05items\"\xf8\x01\n" +
+	"\x05items\x18\x02 \x03(\v2\x13.utlxe.v1.BatchItemR\x05items\"\x9b\x05\n" +
 	"\tBatchItem\x12\x18\n" +
 	"\apayload\x18\x01 \x01(\fR\apayload\x12!\n" +
 	"\fcontent_type\x18\x02 \x01(\tR\vcontentType\x12G\n" +
 	"\fnamed_inputs\x18\x03 \x03(\v2$.utlxe.v1.BatchItem.NamedInputsEntryR\vnamedInputs\x12%\n" +
-	"\x0ecorrelation_id\x18\x04 \x01(\tR\rcorrelationId\x1a>\n" +
+	"\x0ecorrelation_id\x18\x04 \x01(\tR\rcorrelationId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x05 \x01(\tR\tmessageId\x12!\n" +
+	"\fcausation_id\x18\x06 \x01(\tR\vcausationId\x12=\n" +
+	"\bmetadata\x18\a \x03(\v2!.utlxe.v1.BatchItem.MetadataEntryR\bmetadata\x12C\n" +
+	"\n" +
+	"parameters\x18\b \x03(\v2#.utlxe.v1.BatchItem.ParametersEntryR\n" +
+	"parameters\x12 \n" +
+	"\vtraceparent\x18\t \x01(\tR\vtraceparent\x12\x1e\n" +
+	"\n" +
+	"tracestate\x18\n" +
+	" \x01(\tR\n" +
+	"tracestate\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\v \x01(\tR\trequestId\x1a>\n" +
 	"\x10NamedInputsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"K\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a=\n" +
+	"\x0fParametersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"K\n" +
 	"\x14ExecuteBatchResponse\x123\n" +
-	"\aresults\x18\x01 \x03(\v2\x19.utlxe.v1.ExecuteResponseR\aresults\"\xab\x01\n" +
+	"\aresults\x18\x01 \x03(\v2\x19.utlxe.v1.ExecuteResponseR\aresults\"\xbc\x01\n" +
+	"\x13PipelineStageInputs\x12`\n" +
+	"\x11additional_inputs\x18\x01 \x03(\v23.utlxe.v1.PipelineStageInputs.AdditionalInputsEntryR\x10additionalInputs\x1aC\n" +
+	"\x15AdditionalInputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"\x9d\x06\n" +
 	"\x16ExecutePipelineRequest\x12-\n" +
 	"\x12transformation_ids\x18\x01 \x03(\tR\x11transformationIds\x12\x18\n" +
 	"\apayload\x18\x02 \x01(\fR\apayload\x12!\n" +
 	"\fcontent_type\x18\x03 \x01(\tR\vcontentType\x12%\n" +
-	"\x0ecorrelation_id\x18\x04 \x01(\tR\rcorrelationId\"\xc5\x03\n" +
+	"\x0ecorrelation_id\x18\x04 \x01(\tR\rcorrelationId\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\x05 \x01(\tR\tmessageId\x12!\n" +
+	"\fcausation_id\x18\x06 \x01(\tR\vcausationId\x12J\n" +
+	"\bmetadata\x18\a \x03(\v2..utlxe.v1.ExecutePipelineRequest.MetadataEntryR\bmetadata\x12 \n" +
+	"\vtraceparent\x18\b \x01(\tR\vtraceparent\x12T\n" +
+	"\fstage_inputs\x18\t \x03(\v21.utlxe.v1.ExecutePipelineRequest.StageInputsEntryR\vstageInputs\x12P\n" +
+	"\n" +
+	"parameters\x18\n" +
+	" \x03(\v20.utlxe.v1.ExecutePipelineRequest.ParametersEntryR\n" +
+	"parameters\x12\x1e\n" +
+	"\n" +
+	"tracestate\x18\v \x01(\tR\n" +
+	"tracestate\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\f \x01(\tR\trequestId\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a]\n" +
+	"\x10StageInputsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x123\n" +
+	"\x05value\x18\x02 \x01(\v2\x1d.utlxe.v1.PipelineStageInputsR\x05value:\x028\x01\x1a=\n" +
+	"\x0fParametersEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"\xa7\x06\n" +
 	"\x17ExecutePipelineResponse\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x16\n" +
 	"\x06output\x18\x02 \x01(\fR\x06output\x12.\n" +
@@ -1389,7 +2367,19 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x0ecorrelation_id\x18\b \x01(\tR\rcorrelationId\x12)\n" +
 	"\x10stages_completed\x18\t \x01(\x05R\x0fstagesCompleted\x12*\n" +
 	"\x11total_duration_us\x18\n" +
-	" \x01(\x03R\x0ftotalDurationUs\"J\n" +
+	" \x01(\x03R\x0ftotalDurationUs\x12\x1d\n" +
+	"\n" +
+	"message_id\x18\v \x01(\tR\tmessageId\x12!\n" +
+	"\fcausation_id\x18\f \x01(\tR\vcausationId\x12K\n" +
+	"\bmetadata\x18\r \x03(\v2/.utlxe.v1.ExecutePipelineResponse.MetadataEntryR\bmetadata\x122\n" +
+	"\n" +
+	"error_code\x18\x0e \x01(\x0e2\x13.utlxe.v1.ErrorCodeR\terrorCode\x12A\n" +
+	"\x0foutput_metadata\x18\x0f \x01(\v2\x18.utlxe.v1.OutputMetadataR\x0eoutputMetadata\x12\x1d\n" +
+	"\n" +
+	"request_id\x18\x10 \x01(\tR\trequestId\x1a;\n" +
+	"\rMetadataEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\"J\n" +
 	"\x1bUnloadTransformationRequest\x12+\n" +
 	"\x11transformation_id\x18\x01 \x01(\tR\x10transformationId\"8\n" +
 	"\x1cUnloadTransformationResponse\x12\x18\n" +
@@ -1403,7 +2393,12 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\ftotal_errors\x18\x05 \x01(\x03R\vtotalErrors\"T\n" +
 	"\rStdioEnvelope\x12)\n" +
 	"\x04type\x18\x01 \x01(\x0e2\x15.utlxe.v1.MessageTypeR\x04type\x12\x18\n" +
-	"\apayload\x18\x02 \x01(\fR\apayload*G\n" +
+	"\apayload\x18\x02 \x01(\fR\apayload*\x90\x01\n" +
+	"\x12MetadataForwarding\x12#\n" +
+	"\x1fMETADATA_FORWARDING_UNSPECIFIED\x10\x00\x12\x18\n" +
+	"\x14METADATA_FORWARD_ALL\x10\x01\x12\x19\n" +
+	"\x15METADATA_FORWARD_NONE\x10\x02\x12 \n" +
+	"\x1cMETADATA_FORWARD_CORRELATION\x10\x03*G\n" +
 	"\n" +
 	"ErrorClass\x12\x1b\n" +
 	"\x17ERROR_CLASS_UNSPECIFIED\x10\x00\x12\r\n" +
@@ -1415,7 +2410,20 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x0ePRE_VALIDATION\x10\x01\x12\x12\n" +
 	"\x0eTRANSFORMATION\x10\x02\x12\x13\n" +
 	"\x0fPOST_VALIDATION\x10\x03\x12\f\n" +
-	"\bINTERNAL\x10\x04*\xfd\x02\n" +
+	"\bINTERNAL\x10\x04*\xb9\x02\n" +
+	"\tErrorCode\x12\x1a\n" +
+	"\x16ERROR_CODE_UNSPECIFIED\x10\x00\x12\x1c\n" +
+	"\x18TRANSFORMATION_NOT_FOUND\x10\x01\x12\x15\n" +
+	"\x11BUNDLE_NOT_LOADED\x10\x02\x12\x16\n" +
+	"\x12INPUT_PARSE_FAILED\x10\x03\x12\x1b\n" +
+	"\x17INPUT_VALIDATION_FAILED\x10\x04\x12\x19\n" +
+	"\x15TRANSFORMATION_FAILED\x10\x05\x12\x1c\n" +
+	"\x18OUTPUT_VALIDATION_FAILED\x10\x06\x12\x1f\n" +
+	"\x1bOUTPUT_SERIALIZATION_FAILED\x10\a\x12\x1b\n" +
+	"\x17MAX_CONCURRENT_EXCEEDED\x10\b\x12\x1b\n" +
+	"\x17MAX_INPUT_SIZE_EXCEEDED\x10\t\x12\x12\n" +
+	"\x0eINTERNAL_ERROR\x10\n" +
+	"*\xe7\x03\n" +
 	"\vMessageType\x12\x1c\n" +
 	"\x18MESSAGE_TYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bLOAD_TRANSFORMATION_REQUEST\x10\x01\x12\x13\n" +
@@ -1423,18 +2431,25 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x15EXECUTE_BATCH_REQUEST\x10\x03\x12!\n" +
 	"\x1dUNLOAD_TRANSFORMATION_REQUEST\x10\x04\x12\x12\n" +
 	"\x0eHEALTH_REQUEST\x10\x05\x12\x1c\n" +
-	"\x18EXECUTE_PIPELINE_REQUEST\x10\x06\x12 \n" +
+	"\x18EXECUTE_PIPELINE_REQUEST\x10\x06\x12\x17\n" +
+	"\x13LOAD_BUNDLE_REQUEST\x10\a\x12\x19\n" +
+	"\x15UNLOAD_BUNDLE_REQUEST\x10\b\x12 \n" +
 	"\x1cLOAD_TRANSFORMATION_RESPONSE\x10\v\x12\x14\n" +
 	"\x10EXECUTE_RESPONSE\x10\f\x12\x1a\n" +
 	"\x16EXECUTE_BATCH_RESPONSE\x10\r\x12\"\n" +
 	"\x1eUNLOAD_TRANSFORMATION_RESPONSE\x10\x0e\x12\x13\n" +
 	"\x0fHEALTH_RESPONSE\x10\x0f\x12\x1d\n" +
-	"\x19EXECUTE_PIPELINE_RESPONSE\x10\x102\xfa\x03\n" +
+	"\x19EXECUTE_PIPELINE_RESPONSE\x10\x10\x12\x18\n" +
+	"\x14LOAD_BUNDLE_RESPONSE\x10\x11\x12\x1a\n" +
+	"\x16UNLOAD_BUNDLE_RESPONSE\x10\x122\x92\x05\n" +
 	"\fUtlxeService\x12_\n" +
-	"\x12LoadTransformation\x12#.utlxe.v1.LoadTransformationRequest\x1a$.utlxe.v1.LoadTransformationResponse\x12>\n" +
+	"\x12LoadTransformation\x12#.utlxe.v1.LoadTransformationRequest\x1a$.utlxe.v1.LoadTransformationResponse\x12e\n" +
+	"\x14UnloadTransformation\x12%.utlxe.v1.UnloadTransformationRequest\x1a&.utlxe.v1.UnloadTransformationResponse\x12G\n" +
+	"\n" +
+	"LoadBundle\x12\x1b.utlxe.v1.LoadBundleRequest\x1a\x1c.utlxe.v1.LoadBundleResponse\x12M\n" +
+	"\fUnloadBundle\x12\x1d.utlxe.v1.UnloadBundleRequest\x1a\x1e.utlxe.v1.UnloadBundleResponse\x12>\n" +
 	"\aExecute\x12\x18.utlxe.v1.ExecuteRequest\x1a\x19.utlxe.v1.ExecuteResponse\x12M\n" +
-	"\fExecuteBatch\x12\x1d.utlxe.v1.ExecuteBatchRequest\x1a\x1e.utlxe.v1.ExecuteBatchResponse\x12e\n" +
-	"\x14UnloadTransformation\x12%.utlxe.v1.UnloadTransformationRequest\x1a&.utlxe.v1.UnloadTransformationResponse\x12V\n" +
+	"\fExecuteBatch\x12\x1d.utlxe.v1.ExecuteBatchRequest\x1a\x1e.utlxe.v1.ExecuteBatchResponse\x12V\n" +
 	"\x0fExecutePipeline\x12 .utlxe.v1.ExecutePipelineRequest\x1a!.utlxe.v1.ExecutePipelineResponse\x12;\n" +
 	"\x06Health\x12\x17.utlxe.v1.HealthRequest\x1a\x18.utlxe.v1.HealthResponseB,\n" +
 	"\x1corg.apache.utlx.engine.protoB\n" +
@@ -1452,66 +2467,111 @@ func file_utlxe_v1_utlxe_proto_rawDescGZIP() []byte {
 	return file_utlxe_v1_utlxe_proto_rawDescData
 }
 
-var file_utlxe_v1_utlxe_proto_enumTypes = make([]protoimpl.EnumInfo, 3)
-var file_utlxe_v1_utlxe_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_utlxe_v1_utlxe_proto_enumTypes = make([]protoimpl.EnumInfo, 5)
+var file_utlxe_v1_utlxe_proto_msgTypes = make([]protoimpl.MessageInfo, 39)
 var file_utlxe_v1_utlxe_proto_goTypes = []any{
-	(ErrorClass)(0),                      // 0: utlxe.v1.ErrorClass
-	(ErrorPhase)(0),                      // 1: utlxe.v1.ErrorPhase
-	(MessageType)(0),                     // 2: utlxe.v1.MessageType
-	(*LoadTransformationRequest)(nil),    // 3: utlxe.v1.LoadTransformationRequest
-	(*LoadTransformationResponse)(nil),   // 4: utlxe.v1.LoadTransformationResponse
-	(*LoadMetrics)(nil),                  // 5: utlxe.v1.LoadMetrics
-	(*ExecuteRequest)(nil),               // 6: utlxe.v1.ExecuteRequest
-	(*ExecuteResponse)(nil),              // 7: utlxe.v1.ExecuteResponse
-	(*ValidationError)(nil),              // 8: utlxe.v1.ValidationError
-	(*ExecuteMetrics)(nil),               // 9: utlxe.v1.ExecuteMetrics
-	(*ExecuteBatchRequest)(nil),          // 10: utlxe.v1.ExecuteBatchRequest
-	(*BatchItem)(nil),                    // 11: utlxe.v1.BatchItem
-	(*ExecuteBatchResponse)(nil),         // 12: utlxe.v1.ExecuteBatchResponse
-	(*ExecutePipelineRequest)(nil),       // 13: utlxe.v1.ExecutePipelineRequest
-	(*ExecutePipelineResponse)(nil),      // 14: utlxe.v1.ExecutePipelineResponse
-	(*UnloadTransformationRequest)(nil),  // 15: utlxe.v1.UnloadTransformationRequest
-	(*UnloadTransformationResponse)(nil), // 16: utlxe.v1.UnloadTransformationResponse
-	(*HealthRequest)(nil),                // 17: utlxe.v1.HealthRequest
-	(*HealthResponse)(nil),               // 18: utlxe.v1.HealthResponse
-	(*StdioEnvelope)(nil),                // 19: utlxe.v1.StdioEnvelope
-	nil,                                  // 20: utlxe.v1.LoadTransformationRequest.ConfigEntry
-	nil,                                  // 21: utlxe.v1.ExecuteRequest.NamedInputsEntry
-	nil,                                  // 22: utlxe.v1.BatchItem.NamedInputsEntry
+	(MetadataForwarding)(0),              // 0: utlxe.v1.MetadataForwarding
+	(ErrorClass)(0),                      // 1: utlxe.v1.ErrorClass
+	(ErrorPhase)(0),                      // 2: utlxe.v1.ErrorPhase
+	(ErrorCode)(0),                       // 3: utlxe.v1.ErrorCode
+	(MessageType)(0),                     // 4: utlxe.v1.MessageType
+	(*LoadTransformationRequest)(nil),    // 5: utlxe.v1.LoadTransformationRequest
+	(*LoadTransformationResponse)(nil),   // 6: utlxe.v1.LoadTransformationResponse
+	(*LoadMetrics)(nil),                  // 7: utlxe.v1.LoadMetrics
+	(*LoadBundleRequest)(nil),            // 8: utlxe.v1.LoadBundleRequest
+	(*LoadBundleResponse)(nil),           // 9: utlxe.v1.LoadBundleResponse
+	(*UnloadBundleRequest)(nil),          // 10: utlxe.v1.UnloadBundleRequest
+	(*UnloadBundleResponse)(nil),         // 11: utlxe.v1.UnloadBundleResponse
+	(*ExecuteRequest)(nil),               // 12: utlxe.v1.ExecuteRequest
+	(*ExecuteResponse)(nil),              // 13: utlxe.v1.ExecuteResponse
+	(*OutputMetadata)(nil),               // 14: utlxe.v1.OutputMetadata
+	(*ValidationError)(nil),              // 15: utlxe.v1.ValidationError
+	(*ExecuteMetrics)(nil),               // 16: utlxe.v1.ExecuteMetrics
+	(*ExecuteBatchRequest)(nil),          // 17: utlxe.v1.ExecuteBatchRequest
+	(*BatchItem)(nil),                    // 18: utlxe.v1.BatchItem
+	(*ExecuteBatchResponse)(nil),         // 19: utlxe.v1.ExecuteBatchResponse
+	(*PipelineStageInputs)(nil),          // 20: utlxe.v1.PipelineStageInputs
+	(*ExecutePipelineRequest)(nil),       // 21: utlxe.v1.ExecutePipelineRequest
+	(*ExecutePipelineResponse)(nil),      // 22: utlxe.v1.ExecutePipelineResponse
+	(*UnloadTransformationRequest)(nil),  // 23: utlxe.v1.UnloadTransformationRequest
+	(*UnloadTransformationResponse)(nil), // 24: utlxe.v1.UnloadTransformationResponse
+	(*HealthRequest)(nil),                // 25: utlxe.v1.HealthRequest
+	(*HealthResponse)(nil),               // 26: utlxe.v1.HealthResponse
+	(*StdioEnvelope)(nil),                // 27: utlxe.v1.StdioEnvelope
+	nil,                                  // 28: utlxe.v1.LoadTransformationRequest.ConfigEntry
+	nil,                                  // 29: utlxe.v1.LoadTransformationRequest.InputSchemasEntry
+	nil,                                  // 30: utlxe.v1.LoadTransformationRequest.InputSchemaFormatsEntry
+	nil,                                  // 31: utlxe.v1.ExecuteRequest.NamedInputsEntry
+	nil,                                  // 32: utlxe.v1.ExecuteRequest.MetadataEntry
+	nil,                                  // 33: utlxe.v1.ExecuteRequest.ParametersEntry
+	nil,                                  // 34: utlxe.v1.ExecuteResponse.MetadataEntry
+	nil,                                  // 35: utlxe.v1.OutputMetadata.CustomIdentifiersEntry
+	nil,                                  // 36: utlxe.v1.BatchItem.NamedInputsEntry
+	nil,                                  // 37: utlxe.v1.BatchItem.MetadataEntry
+	nil,                                  // 38: utlxe.v1.BatchItem.ParametersEntry
+	nil,                                  // 39: utlxe.v1.PipelineStageInputs.AdditionalInputsEntry
+	nil,                                  // 40: utlxe.v1.ExecutePipelineRequest.MetadataEntry
+	nil,                                  // 41: utlxe.v1.ExecutePipelineRequest.StageInputsEntry
+	nil,                                  // 42: utlxe.v1.ExecutePipelineRequest.ParametersEntry
+	nil,                                  // 43: utlxe.v1.ExecutePipelineResponse.MetadataEntry
 }
 var file_utlxe_v1_utlxe_proto_depIdxs = []int32{
-	20, // 0: utlxe.v1.LoadTransformationRequest.config:type_name -> utlxe.v1.LoadTransformationRequest.ConfigEntry
-	8,  // 1: utlxe.v1.LoadTransformationResponse.warnings:type_name -> utlxe.v1.ValidationError
-	5,  // 2: utlxe.v1.LoadTransformationResponse.metrics:type_name -> utlxe.v1.LoadMetrics
-	21, // 3: utlxe.v1.ExecuteRequest.named_inputs:type_name -> utlxe.v1.ExecuteRequest.NamedInputsEntry
-	0,  // 4: utlxe.v1.ExecuteResponse.error_class:type_name -> utlxe.v1.ErrorClass
-	8,  // 5: utlxe.v1.ExecuteResponse.validation_errors:type_name -> utlxe.v1.ValidationError
-	9,  // 6: utlxe.v1.ExecuteResponse.metrics:type_name -> utlxe.v1.ExecuteMetrics
-	1,  // 7: utlxe.v1.ExecuteResponse.error_phase:type_name -> utlxe.v1.ErrorPhase
-	11, // 8: utlxe.v1.ExecuteBatchRequest.items:type_name -> utlxe.v1.BatchItem
-	22, // 9: utlxe.v1.BatchItem.named_inputs:type_name -> utlxe.v1.BatchItem.NamedInputsEntry
-	7,  // 10: utlxe.v1.ExecuteBatchResponse.results:type_name -> utlxe.v1.ExecuteResponse
-	0,  // 11: utlxe.v1.ExecutePipelineResponse.error_class:type_name -> utlxe.v1.ErrorClass
-	1,  // 12: utlxe.v1.ExecutePipelineResponse.error_phase:type_name -> utlxe.v1.ErrorPhase
-	8,  // 13: utlxe.v1.ExecutePipelineResponse.validation_errors:type_name -> utlxe.v1.ValidationError
-	2,  // 14: utlxe.v1.StdioEnvelope.type:type_name -> utlxe.v1.MessageType
-	3,  // 15: utlxe.v1.UtlxeService.LoadTransformation:input_type -> utlxe.v1.LoadTransformationRequest
-	6,  // 16: utlxe.v1.UtlxeService.Execute:input_type -> utlxe.v1.ExecuteRequest
-	10, // 17: utlxe.v1.UtlxeService.ExecuteBatch:input_type -> utlxe.v1.ExecuteBatchRequest
-	15, // 18: utlxe.v1.UtlxeService.UnloadTransformation:input_type -> utlxe.v1.UnloadTransformationRequest
-	13, // 19: utlxe.v1.UtlxeService.ExecutePipeline:input_type -> utlxe.v1.ExecutePipelineRequest
-	17, // 20: utlxe.v1.UtlxeService.Health:input_type -> utlxe.v1.HealthRequest
-	4,  // 21: utlxe.v1.UtlxeService.LoadTransformation:output_type -> utlxe.v1.LoadTransformationResponse
-	7,  // 22: utlxe.v1.UtlxeService.Execute:output_type -> utlxe.v1.ExecuteResponse
-	12, // 23: utlxe.v1.UtlxeService.ExecuteBatch:output_type -> utlxe.v1.ExecuteBatchResponse
-	16, // 24: utlxe.v1.UtlxeService.UnloadTransformation:output_type -> utlxe.v1.UnloadTransformationResponse
-	14, // 25: utlxe.v1.UtlxeService.ExecutePipeline:output_type -> utlxe.v1.ExecutePipelineResponse
-	18, // 26: utlxe.v1.UtlxeService.Health:output_type -> utlxe.v1.HealthResponse
-	21, // [21:27] is the sub-list for method output_type
-	15, // [15:21] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	28, // 0: utlxe.v1.LoadTransformationRequest.config:type_name -> utlxe.v1.LoadTransformationRequest.ConfigEntry
+	29, // 1: utlxe.v1.LoadTransformationRequest.input_schemas:type_name -> utlxe.v1.LoadTransformationRequest.InputSchemasEntry
+	30, // 2: utlxe.v1.LoadTransformationRequest.input_schema_formats:type_name -> utlxe.v1.LoadTransformationRequest.InputSchemaFormatsEntry
+	15, // 3: utlxe.v1.LoadTransformationResponse.warnings:type_name -> utlxe.v1.ValidationError
+	7,  // 4: utlxe.v1.LoadTransformationResponse.metrics:type_name -> utlxe.v1.LoadMetrics
+	7,  // 5: utlxe.v1.LoadBundleResponse.metrics:type_name -> utlxe.v1.LoadMetrics
+	31, // 6: utlxe.v1.ExecuteRequest.named_inputs:type_name -> utlxe.v1.ExecuteRequest.NamedInputsEntry
+	32, // 7: utlxe.v1.ExecuteRequest.metadata:type_name -> utlxe.v1.ExecuteRequest.MetadataEntry
+	33, // 8: utlxe.v1.ExecuteRequest.parameters:type_name -> utlxe.v1.ExecuteRequest.ParametersEntry
+	0,  // 9: utlxe.v1.ExecuteRequest.metadata_forwarding:type_name -> utlxe.v1.MetadataForwarding
+	1,  // 10: utlxe.v1.ExecuteResponse.error_class:type_name -> utlxe.v1.ErrorClass
+	15, // 11: utlxe.v1.ExecuteResponse.validation_errors:type_name -> utlxe.v1.ValidationError
+	16, // 12: utlxe.v1.ExecuteResponse.metrics:type_name -> utlxe.v1.ExecuteMetrics
+	2,  // 13: utlxe.v1.ExecuteResponse.error_phase:type_name -> utlxe.v1.ErrorPhase
+	34, // 14: utlxe.v1.ExecuteResponse.metadata:type_name -> utlxe.v1.ExecuteResponse.MetadataEntry
+	3,  // 15: utlxe.v1.ExecuteResponse.error_code:type_name -> utlxe.v1.ErrorCode
+	14, // 16: utlxe.v1.ExecuteResponse.output_metadata:type_name -> utlxe.v1.OutputMetadata
+	35, // 17: utlxe.v1.OutputMetadata.custom_identifiers:type_name -> utlxe.v1.OutputMetadata.CustomIdentifiersEntry
+	18, // 18: utlxe.v1.ExecuteBatchRequest.items:type_name -> utlxe.v1.BatchItem
+	36, // 19: utlxe.v1.BatchItem.named_inputs:type_name -> utlxe.v1.BatchItem.NamedInputsEntry
+	37, // 20: utlxe.v1.BatchItem.metadata:type_name -> utlxe.v1.BatchItem.MetadataEntry
+	38, // 21: utlxe.v1.BatchItem.parameters:type_name -> utlxe.v1.BatchItem.ParametersEntry
+	13, // 22: utlxe.v1.ExecuteBatchResponse.results:type_name -> utlxe.v1.ExecuteResponse
+	39, // 23: utlxe.v1.PipelineStageInputs.additional_inputs:type_name -> utlxe.v1.PipelineStageInputs.AdditionalInputsEntry
+	40, // 24: utlxe.v1.ExecutePipelineRequest.metadata:type_name -> utlxe.v1.ExecutePipelineRequest.MetadataEntry
+	41, // 25: utlxe.v1.ExecutePipelineRequest.stage_inputs:type_name -> utlxe.v1.ExecutePipelineRequest.StageInputsEntry
+	42, // 26: utlxe.v1.ExecutePipelineRequest.parameters:type_name -> utlxe.v1.ExecutePipelineRequest.ParametersEntry
+	1,  // 27: utlxe.v1.ExecutePipelineResponse.error_class:type_name -> utlxe.v1.ErrorClass
+	2,  // 28: utlxe.v1.ExecutePipelineResponse.error_phase:type_name -> utlxe.v1.ErrorPhase
+	15, // 29: utlxe.v1.ExecutePipelineResponse.validation_errors:type_name -> utlxe.v1.ValidationError
+	43, // 30: utlxe.v1.ExecutePipelineResponse.metadata:type_name -> utlxe.v1.ExecutePipelineResponse.MetadataEntry
+	3,  // 31: utlxe.v1.ExecutePipelineResponse.error_code:type_name -> utlxe.v1.ErrorCode
+	14, // 32: utlxe.v1.ExecutePipelineResponse.output_metadata:type_name -> utlxe.v1.OutputMetadata
+	4,  // 33: utlxe.v1.StdioEnvelope.type:type_name -> utlxe.v1.MessageType
+	20, // 34: utlxe.v1.ExecutePipelineRequest.StageInputsEntry.value:type_name -> utlxe.v1.PipelineStageInputs
+	5,  // 35: utlxe.v1.UtlxeService.LoadTransformation:input_type -> utlxe.v1.LoadTransformationRequest
+	23, // 36: utlxe.v1.UtlxeService.UnloadTransformation:input_type -> utlxe.v1.UnloadTransformationRequest
+	8,  // 37: utlxe.v1.UtlxeService.LoadBundle:input_type -> utlxe.v1.LoadBundleRequest
+	10, // 38: utlxe.v1.UtlxeService.UnloadBundle:input_type -> utlxe.v1.UnloadBundleRequest
+	12, // 39: utlxe.v1.UtlxeService.Execute:input_type -> utlxe.v1.ExecuteRequest
+	17, // 40: utlxe.v1.UtlxeService.ExecuteBatch:input_type -> utlxe.v1.ExecuteBatchRequest
+	21, // 41: utlxe.v1.UtlxeService.ExecutePipeline:input_type -> utlxe.v1.ExecutePipelineRequest
+	25, // 42: utlxe.v1.UtlxeService.Health:input_type -> utlxe.v1.HealthRequest
+	6,  // 43: utlxe.v1.UtlxeService.LoadTransformation:output_type -> utlxe.v1.LoadTransformationResponse
+	24, // 44: utlxe.v1.UtlxeService.UnloadTransformation:output_type -> utlxe.v1.UnloadTransformationResponse
+	9,  // 45: utlxe.v1.UtlxeService.LoadBundle:output_type -> utlxe.v1.LoadBundleResponse
+	11, // 46: utlxe.v1.UtlxeService.UnloadBundle:output_type -> utlxe.v1.UnloadBundleResponse
+	13, // 47: utlxe.v1.UtlxeService.Execute:output_type -> utlxe.v1.ExecuteResponse
+	19, // 48: utlxe.v1.UtlxeService.ExecuteBatch:output_type -> utlxe.v1.ExecuteBatchResponse
+	22, // 49: utlxe.v1.UtlxeService.ExecutePipeline:output_type -> utlxe.v1.ExecutePipelineResponse
+	26, // 50: utlxe.v1.UtlxeService.Health:output_type -> utlxe.v1.HealthResponse
+	43, // [43:51] is the sub-list for method output_type
+	35, // [35:43] is the sub-list for method input_type
+	35, // [35:35] is the sub-list for extension type_name
+	35, // [35:35] is the sub-list for extension extendee
+	0,  // [0:35] is the sub-list for field type_name
 }
 
 func init() { file_utlxe_v1_utlxe_proto_init() }
@@ -1524,8 +2584,8 @@ func file_utlxe_v1_utlxe_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_utlxe_v1_utlxe_proto_rawDesc), len(file_utlxe_v1_utlxe_proto_rawDesc)),
-			NumEnums:      3,
-			NumMessages:   20,
+			NumEnums:      5,
+			NumMessages:   39,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

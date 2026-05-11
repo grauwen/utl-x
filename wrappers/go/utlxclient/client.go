@@ -121,12 +121,29 @@ func (c *Client) Close() error {
 }
 
 // LoadTransformation compiles a .utlx source and registers it under the given ID.
-// Strategy: "TEMPLATE", "COPY", or "AUTO".
+// Strategy: "TEMPLATE", "COPY", "COMPILED", or "AUTO".
 func (c *Client) LoadTransformation(id, utlxSource, strategy string) (*pb.LoadTransformationResponse, error) {
+	return c.LoadTransformationWithSchemas(id, utlxSource, strategy, nil, nil, nil, "")
+}
+
+// LoadTransformationWithSchemas compiles a .utlx source with per-input schemas and an output schema.
+// inputSchemas and inputSchemaFormats are keyed by input name (e.g., "current", "pricing").
+// Pass nil for any schema parameter to skip schema-based validation.
+func (c *Client) LoadTransformationWithSchemas(
+	id, utlxSource, strategy string,
+	inputSchemas map[string][]byte,
+	inputSchemaFormats map[string]string,
+	outputSchema []byte,
+	outputSchemaFormat string,
+) (*pb.LoadTransformationResponse, error) {
 	req := &pb.LoadTransformationRequest{
-		TransformationId: id,
-		UtlxSource:       utlxSource,
-		Strategy:         strategy,
+		TransformationId:   id,
+		UtlxSource:         utlxSource,
+		Strategy:           strategy,
+		InputSchemas:       inputSchemas,
+		InputSchemaFormats: inputSchemaFormats,
+		OutputSchema:       outputSchema,
+		OutputSchemaFormat: outputSchemaFormat,
 	}
 	data, err := proto.Marshal(req)
 	if err != nil {
@@ -147,16 +164,25 @@ func (c *Client) LoadTransformation(id, utlxSource, strategy string) (*pb.LoadTr
 
 // Execute runs a pre-loaded transformation against a payload.
 func (c *Client) Execute(transformationID string, payload []byte, contentType string) (*pb.ExecuteResponse, error) {
-	return c.ExecuteWithCorrelation(transformationID, payload, contentType, "")
+	return c.ExecuteFull(transformationID, payload, contentType, "", "")
 }
 
-// ExecuteWithCorrelation runs a transformation with an explicit correlation ID for response matching.
+// ExecuteWithCorrelation runs a transformation with an explicit MPPM correlation ID.
+// For pipe-level response matching, use ExecuteFull with a requestID.
 func (c *Client) ExecuteWithCorrelation(transformationID string, payload []byte, contentType, correlationID string) (*pb.ExecuteResponse, error) {
+	return c.ExecuteFull(transformationID, payload, contentType, correlationID, "")
+}
+
+// ExecuteFull runs a transformation with explicit correlation ID and request ID.
+// correlationID is the MPPM transaction grouping UUID (shared across fan-out messages).
+// requestID is a unique-per-call pipe-level identifier for multiplexed response dispatch.
+func (c *Client) ExecuteFull(transformationID string, payload []byte, contentType, correlationID, requestID string) (*pb.ExecuteResponse, error) {
 	req := &pb.ExecuteRequest{
 		TransformationId: transformationID,
 		Payload:          payload,
 		ContentType:      contentType,
 		CorrelationId:    correlationID,
+		RequestId:        requestID,
 	}
 	data, err := proto.Marshal(req)
 	if err != nil {
@@ -200,11 +226,17 @@ func (c *Client) ExecuteBatch(transformationID string, items []*pb.BatchItem) (*
 
 // ExecutePipeline runs a chain of transformations. Output of each stage feeds the next.
 func (c *Client) ExecutePipeline(transformationIDs []string, payload []byte, contentType, correlationID string) (*pb.ExecutePipelineResponse, error) {
+	return c.ExecutePipelineFull(transformationIDs, payload, contentType, correlationID, "")
+}
+
+// ExecutePipelineFull runs a pipeline with explicit correlation ID and request ID.
+func (c *Client) ExecutePipelineFull(transformationIDs []string, payload []byte, contentType, correlationID, requestID string) (*pb.ExecutePipelineResponse, error) {
 	req := &pb.ExecutePipelineRequest{
 		TransformationIds: transformationIDs,
 		Payload:           payload,
 		ContentType:       contentType,
 		CorrelationId:     correlationID,
+		RequestId:         requestID,
 	}
 	data, err := proto.Marshal(req)
 	if err != nil {
