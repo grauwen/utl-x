@@ -139,26 +139,29 @@ for ((name, spec) in declaredInputs) {
 }
 ```
 
-### Example
+### Example (3 inputs, mixed formats)
 
 Transformation:
 ```
 %utlx 1.0
-input: order json, shipment xml
+input: order json, shipment xml, priceList csv
 output json
 ---
 {
   orderId: $order.orderId,
   carrier: $shipment.Carrier,
-  tracking: $shipment.TrackingId
+  tracking: $shipment.TrackingId,
+  unitPrice: $priceList[0].price,
+  total: $order.quantity * $priceList[0].price
 }
 ```
 
 Envelope (JSON, sent via Service Bus / Dapr HTTP):
 ```json
 {
-  "order": {"orderId": "ORD-001", "amount": 499.95},
-  "shipment": "<Shipment><Carrier>DHL</Carrier><TrackingId>DHL-123</TrackingId></Shipment>"
+  "order": {"orderId": "ORD-001", "quantity": 5},
+  "shipment": "<Shipment><Carrier>DHL</Carrier><TrackingId>DHL-123</TrackingId></Shipment>",
+  "priceList": "product,price\nWidget-A,24.50"
 }
 ```
 
@@ -295,34 +298,109 @@ message ExecuteRequest {
 
 The `named_inputs` field is already in the proto — it was designed for exactly this use case. Each value is raw bytes, parsed by the strategy according to the declared format.
 
-### Durable Functions Producer (C#)
+### Durable Functions Aggregator + Producer (C#)
 
-The customer's Durable Functions writes the protobuf:
+The customer's Durable Functions aggregates messages from N queues, correlates by business ID, and produces a protobuf envelope with raw bytes per input. The aggregator is format-agnostic — it stores raw message strings regardless of format (JSON, XML, CSV).
 
 ```csharp
-// C# — serialize multi-input envelope
-var request = new ExecuteRequest
+// ── Generic N-input aggregator entity ──
+
+public class MessageAggregator
 {
-    TransformationId = "order-enrichment",
-    CorrelationId = orderId,
-    MessageId = Guid.NewGuid().ToString()
-};
+    public Dictionary<string, string> Inputs { get; set; } = new();
+    public HashSet<string> ExpectedInputs { get; set; } = new();
+    public DateTime FirstSeen { get; set; }
 
-// Add JSON input as raw bytes
-request.NamedInputs["order"] = ByteString.CopyFromUtf8(orderJson);
+    public void AddInput((string name, string data) input)
+    {
+        Inputs[input.name] = input.data;
+        if (FirstSeen == default) FirstSeen = DateTime.UtcNow;
+    }
 
-// Add XML input as raw bytes  
-request.NamedInputs["shipment"] = ByteString.CopyFromUtf8(shipmentXml);
+    public void SetExpected(HashSet<string> expected)
+    {
+        if (ExpectedInputs.Count == 0) ExpectedInputs = expected;
+    }
 
-// Serialize and send to Service Bus
-var bytes = request.ToByteArray();
-await serviceBusClient.SendMessageAsync(new ServiceBusMessage(bytes)
+    public bool IsComplete =>
+        ExpectedInputs.Count > 0 &&
+        ExpectedInputs.All(name => Inputs.ContainsKey(name));
+
+    [FunctionName("MessageAggregator")]
+    public static Task Run([EntityTrigger] IDurableEntityContext ctx)
+        => ctx.DispatchAsync<MessageAggregator>();
+}
+
+// ── One trigger per input queue ──
+
+[FunctionName("OrderTrigger")]
+public static Task OrderTrigger(
+    [ServiceBusTrigger("orders")] string msg,
+    [DurableClient] IDurableEntityClient client, ILogger log)
+    => HandleInput("order", msg, client, log);
+
+[FunctionName("ShipmentTrigger")]
+public static Task ShipmentTrigger(
+    [ServiceBusTrigger("shipments")] string msg,
+    [DurableClient] IDurableEntityClient client, ILogger log)
+    => HandleInput("shipment", msg, client, log);
+
+[FunctionName("PriceListTrigger")]
+public static Task PriceListTrigger(
+    [ServiceBusTrigger("pricelists")] string msg,
+    [DurableClient] IDurableEntityClient client, ILogger log)
+    => HandleInput("priceList", msg, client, log);
+
+// ── Shared handler + protobuf envelope producer ──
+
+private static readonly HashSet<string> Required = new() { "order", "shipment", "priceList" };
+
+private static async Task HandleInput(
+    string inputName, string message,
+    IDurableEntityClient client, ILogger log)
 {
-    ContentType = "application/protobuf"
-});
+    var correlationKey = ExtractCorrelationKey(message);
+    if (correlationKey == null) return;
+
+    var entityId = new EntityId("MessageAggregator", correlationKey);
+    await client.SignalEntityAsync(entityId, "SetExpected", Required);
+    await client.SignalEntityAsync(entityId, "AddInput", (inputName, message));
+
+    await Task.Delay(500); // eventual consistency
+    var state = await client.ReadEntityStateAsync<MessageAggregator>(entityId);
+    if (state.EntityState?.IsComplete != true) return;
+
+    // All inputs arrived — build protobuf ExecuteRequest with raw bytes per input
+    var request = new ExecuteRequest
+    {
+        TransformationId = "order-enrichment",
+        CorrelationId = correlationKey,
+        MessageId = Guid.NewGuid().ToString()
+    };
+
+    foreach (var (name, data) in state.EntityState.Inputs)
+    {
+        request.NamedInputs[name] = ByteString.CopyFromUtf8(data);
+    }
+
+    // Send protobuf to Service Bus — Dapr gRPC delivers to UTLXe
+    await serviceBusClient.SendMessageAsync(new ServiceBusMessage(request.ToByteArray())
+    {
+        CorrelationId = correlationKey,
+        ContentType = "application/protobuf"
+    });
+
+    log.LogInformation("Aggregated {Key} ({Count} inputs) — protobuf sent", correlationKey, Required.Count);
+    await client.SignalEntityAsync(entityId, "Delete");
+}
 ```
 
-The C# producer uses the generated proto classes (from our `utlxe.proto`). Each input is raw bytes — no JSON escaping, no size inflation. The XML stays as XML. The JSON stays as JSON.
+Key points:
+- **N inputs**: `Required` set defines which inputs must arrive. Add more by adding to the set + adding a trigger.
+- **Format-agnostic**: entity stores raw strings. JSON, XML, CSV — the entity doesn't parse. UTLXe handles format parsing via `named_inputs` raw bytes.
+- **Correlation**: entity ID = business key (orderId). Table Storage loads in O(1). 10,000 concurrent orders = 10,000 independent entities.
+- **Any arrival order**: first input stored, entity waits. Nth input completes — protobuf sent.
+- **Protobuf output**: each input is `ByteString` in `ExecuteRequest.NamedInputs`. No JSON escaping. XML stays as XML bytes.
 
 ### UTLXe Implementation
 
@@ -440,16 +518,18 @@ The transformation file is **identical** in both worlds:
 
 ```
 %utlx 1.0
-input: order json, shipment xml
+input: order json, shipment xml, priceList csv
 output json
 ---
 {
   orderId: $order.orderId,
-  carrier: $shipment.Carrier
+  carrier: $shipment.Carrier,
+  unitPrice: $priceList[0].price,
+  total: $order.quantity * $priceList[0].price
 }
 ```
 
-No `#ifdef`, no platform flags, no conditional logic. Write once, deploy to Open-M or Azure.
+No `#ifdef`, no platform flags, no conditional logic. Any number of inputs, any format combination. Write once, deploy to Open-M or Azure.
 
 ### What each world provides around UTLXe
 
