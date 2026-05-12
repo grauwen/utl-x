@@ -110,6 +110,33 @@ Same pattern as CLI — the LSP/REST interface receives file content. If the fil
 | `modules/cli/.../` | Raw stdin reading with charset detection |
 | All transport tests | Update to use `PayloadBytes` |
 
+## Implementation progress
+
+### Done
+| Input path | Location | What was done |
+|---|---|---|
+| Single execute (proto/gRPC) | `TransportHandlers.kt:handleExecute` | `req.payload.toByteArray()` → `PayloadBytes` with charset from Content-Type. Passed to `ValidationOrchestrator.execute(PayloadBytes)` |
+| `ExecutionStrategy` interface | `ExecutionStrategy.kt` | Added `execute(input: PayloadBytes)` with default delegation to `execute(String)` |
+| `ValidationOrchestrator` | `ValidationOrchestrator.kt` | Added `execute(instance, PayloadBytes, ...)` overload — passes raw bytes to validators |
+| CLI stdin | `TransformCommand.kt` | B20: `System.in.readBytes()` when `--charset` is set |
+| CLI file input | `TransformCommand.kt` | B20: `file.readBytes()` when `--charset` is set |
+| Validate schema | `ValidateCommand.kt` | B20: `readText(charset)` when `--charset` is set |
+
+### Also done (second pass)
+| Input path | Location | What was done |
+|---|---|---|
+| Batch execute | `TransportHandlers.kt:handleExecuteBatch` | `item.payload.toByteArray()` → `PayloadBytes` with charset from Content-Type |
+| Pipeline execute | `TransportHandlers.kt:handleExecutePipeline` | Initial payload: `req.payload.toByteArray()` → `PayloadBytes`. Stage inputs: decoded with pipe charset |
+| Dapr binding input | `HttpTransport.kt` | `call.receive<ByteArray>()` instead of `call.receiveText()` |
+| Dapr pub/sub input | `HttpTransport.kt` | `call.receive<ByteArray>()` instead of `call.receiveText()` |
+| Admin API test execute | `AdminEndpoint.kt` | `call.receive<ByteArray>()` + `ByteString.copyFrom()` instead of `receiveText()` + `copyFromUtf8()` |
+
+### Remaining (not in scope — always UTF-8 by design)
+| Input path | Why not changed |
+|---|---|
+| Admin API config/load/schema endpoints | JSON API bodies — always UTF-8 |
+| StdioJsonTransport | Legacy line-based JSON — always UTF-8 |
+
 ## Effort
 
 2-3 days (after B20 is complete).
