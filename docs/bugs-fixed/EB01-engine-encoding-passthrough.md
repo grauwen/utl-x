@@ -1,6 +1,6 @@
 # EB01: Engine Encoding Passthrough
 
-**Status:** Open (depends on B20)  
+**Status:** Implemented on branch `feature/EB01-binary`  
 **Severity:** High (blocks SAP/BizTalk integration)  
 **Scope:** Engine transports, ValidationOrchestrator, CLI, utlxd  
 **Depends on:** B20 (core `PayloadBytes` type must exist first)  
