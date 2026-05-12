@@ -1,6 +1,7 @@
 package org.apache.utlx.engine.transport
 
 import com.google.protobuf.ByteString
+import org.apache.utlx.core.udm.PayloadBytes
 import org.apache.utlx.engine.UtlxEngine
 import org.apache.utlx.engine.config.InputSlot
 import org.apache.utlx.engine.config.OutputSlot
@@ -159,15 +160,20 @@ object TransportHandlers {
                 .build()
 
         instance.recordExecution()
-        val input = req.payload.toStringUtf8()
+        // EB01: Use raw bytes from proto payload — preserves original encoding
+        val rawBytes = req.payload.toByteArray()
+        val contentType = req.contentType.ifEmpty { "application/json" }
+        val charset = parseCharsetFromContentType(contentType)
+        val payloadBytes = PayloadBytes(rawBytes, charset, contentType)
+        val input = payloadBytes.decodeToString()  // String fallback for existing code paths
 
-        // EF03: Per-transformation maxInputSize check
+        // EF03: Per-transformation maxInputSize check (use byte length, not char length)
         val maxInputBytes = org.apache.utlx.engine.config.parseSizeToBytes(instance.config.maxInputSize)
-        if (maxInputBytes != null && input.length > maxInputBytes) {
+        if (maxInputBytes != null && rawBytes.size > maxInputBytes) {
             instance.recordError()
             return ExecuteResponse.newBuilder()
                 .setSuccess(false)
-                .setError("Input too large for '${req.transformationId}': ${input.length} bytes (max: ${instance.config.maxInputSize})")
+                .setError("Input too large for '${req.transformationId}': ${rawBytes.size} bytes (max: ${instance.config.maxInputSize})")
                 .setErrorClass(ErrorClass.PERMANENT)
                 .setErrorPhase(ErrorPhase.PRE_VALIDATION)
                 .setCorrelationId(req.correlationId)
@@ -177,14 +183,15 @@ object TransportHandlers {
 
         // EF14: Add UTLXe-specific attributes to the current span (created by the OTel agent)
         org.apache.utlx.engine.telemetry.Tracing.addTransformAttributes(
-            req.transformationId, instance.strategy.name, input.length,
+            req.transformationId, instance.strategy.name, rawBytes.size,
             req.messageId, req.correlationId
         )
 
         // EF02: Resolve effective validation policy (runtime override > config > default)
         val policyOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
-        val result = ValidationOrchestrator.execute(instance, input, policyOverride)
+        // EB01: Use PayloadBytes overload — passes raw bytes to strategy + validators
+        val result = ValidationOrchestrator.execute(instance, payloadBytes, policyOverride)
         val durationUs = (System.nanoTime() - startTime) / 1000
 
         // EF14: Record result attributes on the agent-created span
@@ -456,6 +463,17 @@ object TransportHandlers {
             VErrorPhase.POST_VALIDATION -> ErrorPhase.POST_VALIDATION
             VErrorPhase.INTERNAL -> ErrorPhase.INTERNAL
             VErrorPhase.UNSPECIFIED -> ErrorPhase.ERROR_PHASE_UNSPECIFIED
+        }
+    }
+
+    /**
+     * EB01: Extract charset from Content-Type header value.
+     * Example: "application/xml; charset=UTF-16" → Charset.UTF_16
+     */
+    private fun parseCharsetFromContentType(contentType: String): java.nio.charset.Charset? {
+        val match = Regex("""charset\s*=\s*["']?([^"';\s]+)""", RegexOption.IGNORE_CASE).find(contentType)
+        return match?.groupValues?.get(1)?.let {
+            try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
         }
     }
 }

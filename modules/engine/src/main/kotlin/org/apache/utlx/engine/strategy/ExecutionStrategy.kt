@@ -1,5 +1,6 @@
 package org.apache.utlx.engine.strategy
 
+import org.apache.utlx.core.udm.PayloadBytes
 import org.apache.utlx.engine.config.TransformConfig
 
 interface ExecutionStrategy {
@@ -11,6 +12,16 @@ interface ExecutionStrategy {
 
     /** Schema info extracted from the .utlx header after compilation. Null if not parsed yet. */
     fun getHeaderSchemaInfo(): HeaderSchemaInfo? = null
+
+    /**
+     * EB01: Execute with raw bytes — preserves original encoding for non-UTF-8 content.
+     * Default implementation decodes to String (backward compat). Strategies can override
+     * to pass raw bytes directly to format parsers for encoding-aware parsing.
+     */
+    fun execute(input: PayloadBytes): ExecutionResult = execute(input.decodeToString())
+
+    /** EB01: Batch execute with raw bytes. */
+    fun executeBatchBytes(inputs: List<PayloadBytes>): List<ExecutionResult> = inputs.map { execute(it) }
 }
 
 /**

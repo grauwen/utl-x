@@ -1,5 +1,6 @@
 package org.apache.utlx.engine.validation
 
+import org.apache.utlx.core.udm.PayloadBytes
 import org.apache.utlx.engine.registry.TransformationInstance
 import org.slf4j.LoggerFactory
 
@@ -122,6 +123,75 @@ object ValidationOrchestrator {
                         logger.warn("Output validation warnings for '{}': {}", instance.name, outputErrors.size)
                         allWarnings.addAll(outputErrors)
                     }
+                }
+            }
+        }
+
+        return ValidationResult(
+            success = true,
+            output = output,
+            validationErrors = allWarnings
+        )
+    }
+
+    /**
+     * EB01: Execute with raw bytes — passes original bytes to validators and strategy
+     * without re-encoding. For non-UTF-8 content (UTF-16 XML, ISO-8859-1 CSV).
+     */
+    fun execute(
+        instance: TransformationInstance,
+        input: PayloadBytes,
+        policyOverride: String? = null
+    ): ValidationResult {
+        val allWarnings = mutableListOf<SchemaValidationError>()
+        val effectivePolicy = (policyOverride ?: instance.config.validationPolicy).uppercase()
+
+        // ── PRE-VALIDATION (uses original bytes — no re-encoding) ──
+        if (effectivePolicy != "OFF" && effectivePolicy != "SKIP") {
+            if (instance.inputValidator != null) {
+                val errors = instance.inputValidator.validate(input.bytes, input.contentType)
+                if (errors.isNotEmpty()) {
+                    when (effectivePolicy) {
+                        "STRICT" -> return ValidationResult(
+                            success = false,
+                            phase = ErrorPhase.PRE_VALIDATION,
+                            validationErrors = errors,
+                            error = "Input validation failed: ${errors.size} error(s)"
+                        )
+                        "WARN" -> allWarnings.addAll(errors)
+                    }
+                }
+            }
+        }
+
+        // ── TRANSFORMATION (raw bytes to strategy) ──
+        val output = try {
+            instance.strategy.execute(input).output
+        } catch (e: Exception) {
+            return ValidationResult(
+                success = false,
+                phase = ErrorPhase.TRANSFORMATION,
+                validationErrors = allWarnings,
+                error = e.message ?: "${e::class.simpleName}: ${e.stackTrace.firstOrNull()}"
+            )
+        }
+
+        // ── POST-VALIDATION ──
+        if (instance.outputValidator != null && effectivePolicy != "OFF" && effectivePolicy != "SKIP") {
+            val outputErrors = instance.outputValidator.validate(
+                output.toByteArray(Charsets.UTF_8),
+                "application/octet-stream"
+            )
+            if (outputErrors.isNotEmpty()) {
+                when (effectivePolicy) {
+                    "STRICT" -> return ValidationResult(
+                        success = false,
+                        output = output,
+                        phase = ErrorPhase.POST_VALIDATION,
+                        validationErrors = allWarnings + outputErrors,
+                        error = "Output validation failed: ${outputErrors.size} error(s)"
+                    )
+                    "WARN" -> allWarnings.addAll(outputErrors)
                 }
             }
         }
