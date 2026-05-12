@@ -1,6 +1,6 @@
 # B20: Non-UTF-8 Encoding Support (Core + Formats)
 
-**Status:** Implemented (core + formats) on branch `uat/B20-binary`  
+**Status:** Implemented and tested on branch `uat/B20-binary`  
 **Severity:** High (blocks SAP/BizTalk integration — SAP uses UTF-16 natively)  
 **Scope:** Core parser interface, format parsers (XML, JSON, CSV, YAML, OData), serializers  
 **Companion:** EB01 (engine-side changes — transports, validation, CLI)  
@@ -140,8 +140,21 @@ data class PayloadBytes(
   - YAML: configurable charset
   - OData: always UTF-8
 - TransformationService: `InputData` gains `bytes: ByteArray?` + `charset: Charset?` fields; `parseInputBytes()` + `serializeOutputToBytes()` added
-- CLI: `--charset` flag for explicit input charset override
+- CLI: `--charset` flag for explicit input charset override (both file input and stdin pipe)
 - `{encoding: "UTF-16"}` format option already parsed from .utlx header, now used by serializers
+
+### Tested encodings (end-to-end via CLI):
+
+| Encoding | Test file | Characters verified |
+|---|---|---|
+| UTF-16LE + BOM | `examples/xml/28-sap-order-utf16.xml` | Müller, ü, ß, Düsseldorf (SAP scenario) |
+| UTF-16BE + BOM | `examples/xml/29-invoice-utf16be.xml` | Schröder, Söhne, Königstraße, Nürnberg |
+| ISO-8859-1 | `examples/xml/30-order-iso8859-1.xml` | Müller, Gießerei, über, Straße (European legacy) |
+| Windows-1252 | `examples/xml/31-report-windows1252.xml` | — (em dash), " " (smart quotes), € (euro), é, ç |
+| UTF-8 + BOM | `examples/xml/32-export-utf8-bom.xml` | geïmporteerd, & (Dutch, Excel export style) |
+
+All tested via: `cat <file> | ./utlx --from xml --to json --charset <encoding>`
+And via: `./utlx transform <script> --input input=<file> --charset <encoding>`
 
 ### Engine-side changes → see EB01:
 - `ExecutionStrategy.execute()` accepts `PayloadBytes`
@@ -189,3 +202,4 @@ For customers with non-UTF-8 content:
 ---
 
 *Bug B20. May 2026. Discovered during EF02 validation wiring. Elevated to High after SAP encoding analysis.*
+*Implemented May 2026 on branch `uat/B20-binary`. Includes core PayloadBytes, format parsers (XML, JSON, CSV, YAML, OData), serializers, TransformationService, CLI --charset flag (file + stdin), and 5 encoding test files + 30 Kotlin encoding tests.*
