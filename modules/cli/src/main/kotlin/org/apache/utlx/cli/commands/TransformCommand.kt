@@ -233,17 +233,31 @@ object TransformCommand {
                 }
             } else {
                 // No named inputs - read from stdin (backward compat)
-                val inputData = readStdin()
                 val inputFormat = options.inputFormat
+                val charsetHint = options.charset?.let {
+                    try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
+                }
 
                 if (options.verbose && inputFormat != null) {
                     println("Input format: $inputFormat (from CLI option)")
                 }
 
-                mapOf("input" to TransformationService.InputData(
-                    content = inputData,
-                    format = inputFormat  // null = auto-detect from header in TransformationService
-                ))
+                // B20: read raw bytes from stdin when --charset is set (non-UTF-8 safe)
+                if (charsetHint != null) {
+                    val stdinBytes = System.`in`.readBytes()
+                    mapOf("input" to TransformationService.InputData(
+                        content = String(stdinBytes, charsetHint),
+                        format = inputFormat,
+                        bytes = stdinBytes,
+                        charset = charsetHint
+                    ))
+                } else {
+                    val inputData = readStdin()
+                    mapOf("input" to TransformationService.InputData(
+                        content = inputData,
+                        format = inputFormat
+                    ))
+                }
             }
 
             // Step 1: Determine script content (file, expression, or identity)

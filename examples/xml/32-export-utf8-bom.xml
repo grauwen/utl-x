@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+<Export>
+  <Bron>SAP CPI</Bron>
+  <Klant>Van der Berg &amp; Zonen B.V.</Klant>
+  <Stad>Eindhoven</Stad>
+  <Bedrag>9.876,54</Bedrag>
+  <Opmerking>BTW-aangifte geïmporteerd via Dapr</Opmerking>
+</Export>
