@@ -254,12 +254,13 @@ fun configureAdmin(
                     return@post
                 }
 
-                val input = call.receiveText()
+                // EB01: Read raw bytes for test execute — supports non-UTF-8 payloads
+                val inputBytes = call.receive<ByteArray>()
                 val contentType = call.request.contentType().toString()
 
                 val execReq = ExecuteRequest.newBuilder()
                     .setTransformationId(name)
-                    .setPayload(ByteString.copyFromUtf8(input))
+                    .setPayload(ByteString.copyFrom(inputBytes))
                     .setContentType(if (contentType.contains("json")) "application/json" else contentType)
                     .setMessageId(UuidV7.generate())
                     .build()

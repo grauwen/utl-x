@@ -266,9 +266,13 @@ object TransportHandlers {
         req.itemsList.forEach { item ->
             val startTime = System.nanoTime()
             instance.recordExecution()
-            val input = item.payload.toStringUtf8()
+            // EB01: Use raw bytes from proto payload
+            val itemBytes = item.payload.toByteArray()
+            val itemContentType = item.contentType.ifEmpty { "application/json" }
+            val itemCharset = parseCharsetFromContentType(itemContentType)
+            val itemPayload = PayloadBytes(itemBytes, itemCharset, itemContentType)
 
-            val result = ValidationOrchestrator.execute(instance, input, batchOverride)
+            val result = ValidationOrchestrator.execute(instance, itemPayload, batchOverride)
             val durationUs = (System.nanoTime() - startTime) / 1000
 
             if (!result.success) {
@@ -316,7 +320,11 @@ object TransportHandlers {
         val registry = engine.registry
         val startTime = System.nanoTime()
         val transformIds = req.transformationIdsList
-        var currentPayload = req.payload.toStringUtf8()
+        // EB01: Use raw bytes for initial payload (first stage may be non-UTF-8)
+        val initialBytes = req.payload.toByteArray()
+        val pipeContentType = req.contentType.ifEmpty { "application/json" }
+        val pipeCharset = parseCharsetFromContentType(pipeContentType)
+        var currentPayload = PayloadBytes(initialBytes, pipeCharset, pipeContentType).decodeToString()
         var stagesCompleted = 0
         val allWarnings = mutableListOf<ValidationError>()
 
@@ -353,8 +361,8 @@ object TransportHandlers {
                 envelope.set<com.fasterxml.jackson.databind.JsonNode>(
                     "input", mapper.readTree(currentPayload)
                 )
-                stageInputs.additionalInputsMap.forEach { (name, bytes) ->
-                    val content = bytes.toStringUtf8()
+                stageInputs.additionalInputsMap.forEach { (name, stageBytes) ->
+                    val content = String(stageBytes.toByteArray(), pipeCharset ?: Charsets.UTF_8)
                     try {
                         envelope.set<com.fasterxml.jackson.databind.JsonNode>(name, mapper.readTree(content))
                     } catch (_: Exception) {

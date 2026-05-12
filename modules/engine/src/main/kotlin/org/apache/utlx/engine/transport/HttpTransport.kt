@@ -387,9 +387,10 @@ class HttpTransport(
             ?: headerBinding
         val outputIsPubSub = messagingOutput?.isPubSub == true && envOverride == null
 
-        // Dapr sends the raw message payload in the body
-        val payload = call.receiveText()
+        // EB01: Read raw bytes from Dapr — preserves encoding for non-UTF-8 payloads
+        val payloadBytes = call.receive<ByteArray>()
         val contentType = call.request.contentType().toString()
+        val payload = String(payloadBytes, Charsets.UTF_8)  // String fallback for logging/existing code
 
         // EF04: Read correlation metadata from Dapr headers (metadata.* prefix per Dapr convention)
         val incomingMessageId = call.request.header("metadata.MessageId")
@@ -599,7 +600,9 @@ class HttpTransport(
             return
         }
 
-        val rawBody = call.receiveText()
+        // EB01: Read raw bytes — preserves encoding for non-UTF-8 payloads
+        val rawBodyBytes = call.receive<ByteArray>()
+        val rawBody = String(rawBodyBytes, Charsets.UTF_8)  // String for CloudEvents parsing
 
         // Detect CloudEvents mode and extract payload + metadata
         val ceSpecVersion = call.request.header("ce-specversion")
