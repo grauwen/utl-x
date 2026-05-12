@@ -34,7 +34,8 @@ object ValidateCommand {
         val strict: Boolean = false,
         val verbose: Boolean = false,
         val format: ValidationFormat = ValidationFormat.HUMAN,
-        val noTypeCheck: Boolean = false
+        val noTypeCheck: Boolean = false,
+        val charset: String? = null  // B20: explicit charset for schema file (e.g., "UTF-16" for SAP XSD)
     )
 
     enum class ValidationFormat {
@@ -218,7 +219,13 @@ object ValidateCommand {
             }
 
             try {
-                val schemaContent = options.schemaFile.readText()
+                // B20: read schema file with explicit charset if provided (e.g., UTF-16 XSD from SAP)
+                val schemaContent = if (options.charset != null) {
+                    val cs = java.nio.charset.Charset.forName(options.charset)
+                    options.schemaFile.readText(cs)
+                } else {
+                    options.schemaFile.readText()
+                }
                 val schemaFormat = detectSchemaFormat(options.schemaFile.absolutePath, schemaContent)
 
                 if (options.verbose) {
@@ -292,6 +299,7 @@ object ValidateCommand {
         var verbose = false
         var format = ValidationFormat.HUMAN
         var noTypeCheck = false
+        var charset: String? = null
 
         var i = 0
         while (i < args.size) {
@@ -328,6 +336,9 @@ object ValidateCommand {
                 }
                 "--no-typecheck" -> {
                     noTypeCheck = true
+                }
+                "--charset" -> {
+                    charset = args[++i]
                 }
                 "-h", "--help" -> {
                     printUsage()
@@ -374,7 +385,8 @@ object ValidateCommand {
             strict = strict,
             verbose = verbose,
             format = format,
-            noTypeCheck = noTypeCheck
+            noTypeCheck = noTypeCheck,
+            charset = charset
         )
     }
 

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<Bestellung>
+  <Nummer>BST-2026-042</Nummer>
+  <Kunde>Müller Gießerei AG</Kunde>
+  <Artikel>
+    <Position>
+      <Name>Dichtungsring für Hydraulikpresse</Name>
+      <Menge>250</Menge>
+      <Preis>4.50</Preis>
+    </Position>
+    <Position>
+      <Name>Kupplungsstück für Druckluftanlage</Name>
+      <Menge>50</Menge>
+      <Preis>18.90</Preis>
+    </Position>
+  </Artikel>
+  <Kommentar>Lieferung über Straße, nicht über See</Kommentar>
+</Bestellung>
