@@ -194,6 +194,19 @@ class UDMObjectWrapper : ObjectWrapper {
 
 FreeMarker complements UTL-X mapping — it does not replace it. Use UTL-X for data transformation, FreeMarker for presentation/rendering.
 
+## Template Engine Decision Matrix
+
+UTL-X offers four template engine integrations, each with a clear use case:
+
+| Need | Recommendation |
+|------|---------------|
+| Simple string building | UTL-X native (`+`, `formatString`) |
+| **New complex templates** with macros, i18n, formatting | **F14 — FreeMarker** (power) |
+| Portable templates shared across JS/Python/Go/Java | [F16 — Mustache](F16-mustache-template-rendering.md) (simplicity) |
+| **Code generation** with auto-indentation | [F17 — StringTemplate](F17-stringtemplate-rendering.md) (auto-indent) |
+| Reuse legacy `.vm` files from ESB/Atlassian/Maven | [F18 — Velocity](F18-velocity-template-rendering.md) (migration) |
+| Structured data -> structured data | UTL-X native mapping |
+
 ## Effort Estimate
 
 | Task | Effort |
@@ -211,6 +224,9 @@ FreeMarker complements UTL-X mapping — it does not replace it. Use UTL-X for d
 - [Apache FreeMarker Documentation](https://freemarker.apache.org/docs/)
 - [stdlib function reference](../reference/stdlib-reference.md)
 - [F12: XSLT to UTL-X Migration](F12-xslt-to-utlx-migration.md) — related: XSLT also generates text output from XML
+- [F16: Mustache Template Rendering](F16-mustache-template-rendering.md) — logic-less, portable alternative
+- [F17: StringTemplate Rendering](F17-stringtemplate-rendering.md) — code generation focus
+- [F18: Velocity Template Rendering](F18-velocity-template-rendering.md) — legacy template reuse
 
 ---
 
