@@ -5,6 +5,7 @@
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
 [![Version](https://img.shields.io/badge/version-1.1.0-green)](https://github.com/grauwen/utl-x/releases)
 [![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
+[![GitHub stars](https://img.shields.io/github/stars/grauwen/utl-x?style=social)](https://github.com/grauwen/utl-x)
 
 ## Overview
 
@@ -570,7 +571,7 @@ Quick ways to contribute:
 - 💡 Suggest new features
 - 📖 Improve documentation
 - 💻 Submit pull requests
-- ⭐ Star the repository
+- ⭐ [Star the repository](https://github.com/grauwen/utl-x)
 
 All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
@@ -651,11 +652,11 @@ Special thanks to the open-source community for inspiration and support.
 
 ## Star History
 
-If you find UTL-X useful, please consider starring the repository! ⭐
+If you find UTL-X useful, please consider [starring the repository](https://github.com/grauwen/utl-x)! ⭐
 
 ## Support the Project
 
-- ⭐ **Star the repository** on GitHub
+- ⭐ **[Star the repository](https://github.com/grauwen/utl-x)** on GitHub
 - 📢 **Share** UTL-X with your network
 - 📝 **Write** blog posts or tutorials
 - 💰 **Sponsor** development: [sponsor@glomidco.com](mailto:sponsor@glomidco.com)
