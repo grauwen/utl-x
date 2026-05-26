@@ -961,6 +961,8 @@ object StandardLibrary {
         register("renderYaml", SerializationFunctions::renderYaml)
         register("parseCsv", SerializationFunctions::parseCsv)
         register("renderCsv", SerializationFunctions::renderCsv)
+        register("parseOdata", SerializationFunctions::parseOdata)
+        register("renderOdata", SerializationFunctions::renderOdata)
         register("parse", SerializationFunctions::parse)
         register("render", SerializationFunctions::render)
 

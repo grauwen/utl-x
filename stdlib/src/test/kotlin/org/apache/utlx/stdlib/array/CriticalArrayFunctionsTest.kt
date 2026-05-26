@@ -54,59 +54,38 @@ class CriticalArrayFunctionsTest {
 
     @Test
     fun testFindIndex() {
-        val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
-        ))
-        
-        val predicate = UDM.Scalar("placeholder") // In real implementation, this would be a function
-        
+        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4)))
+        val predicate = UDM.Lambda { args -> UDM.Scalar(args[0].asNumber() > 2) }
+
         val result = CriticalArrayFunctions.findIndex(listOf(array, predicate))
-        
         assertTrue(result is UDM.Scalar)
-        assertEquals(0.0, (result as UDM.Scalar).value) // First element since placeholder always returns true
+        assertEquals(2.0, (result as UDM.Scalar).value) // index of 3 (first > 2)
     }
 
     @Test
     fun testFindLastIndex() {
-        val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
-        ))
-        
-        val predicate = UDM.Scalar("placeholder")
-        
+        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4)))
+        val predicate = UDM.Lambda { args -> UDM.Scalar(args[0].asNumber() > 2) }
+
         val result = CriticalArrayFunctions.findLastIndex(listOf(array, predicate))
-        
         assertTrue(result is UDM.Scalar)
-        assertEquals(3.0, (result as UDM.Scalar).value) // Last element since placeholder always returns true
+        assertEquals(3.0, (result as UDM.Scalar).value) // index of 4 (last > 2)
     }
 
     @Test
     fun testScan() {
-        val array = UDM.Array(listOf(
-            UDM.Scalar(1),
-            UDM.Scalar(2),
-            UDM.Scalar(3),
-            UDM.Scalar(4)
-        ))
-        
-        val reducer = UDM.Scalar("add") // In real implementation, this would be a function
+        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4)))
+        val reducer = UDM.Lambda { args -> UDM.Scalar(args[0].asNumber() + args[1].asNumber()) }
         val initial = UDM.Scalar(0)
-        
+
         val result = CriticalArrayFunctions.scan(listOf(array, reducer, initial))
-        
         assertTrue(result is UDM.Array)
         val scanResults = (result as UDM.Array).elements
         assertEquals(4, scanResults.size)
-        // Each element should be the initial value since we're using placeholder logic
-        scanResults.forEach { 
-            assertEquals(0, (it as UDM.Scalar).value)
-        }
+        assertEquals(1.0, (scanResults[0] as UDM.Scalar).value)   // 0+1
+        assertEquals(3.0, (scanResults[1] as UDM.Scalar).value)   // 1+2
+        assertEquals(6.0, (scanResults[2] as UDM.Scalar).value)   // 3+3
+        assertEquals(10.0, (scanResults[3] as UDM.Scalar).value)  // 6+4
     }
 
     @Test

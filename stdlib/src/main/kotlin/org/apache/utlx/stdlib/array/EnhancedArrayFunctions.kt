@@ -73,22 +73,18 @@ object EnhancedArrayFunctions {
             throw IllegalArgumentException("partition() first argument must be an array")
         }
         
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        
-        // Placeholder implementation
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("partition() second argument must be a function")
+
         val matching = mutableListOf<UDM>()
         val nonMatching = mutableListOf<UDM>()
-        
+
         array.elements.forEach { element ->
-            // if (predicate(element).asBoolean()) {
-            //     matching.add(element)
-            // } else {
-            //     nonMatching.add(element)
-            // }
-            
-            // Temporary: put all in matching
-            matching.add(element)
+            if (predicate.apply(listOf(element)).asBoolean()) {
+                matching.add(element)
+            } else {
+                nonMatching.add(element)
+            }
         }
         
         return UDM.Object(mutableMapOf(
@@ -144,12 +140,11 @@ object EnhancedArrayFunctions {
             throw IllegalArgumentException("countBy() first argument must be an array")
         }
         
-        val predicateArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("countBy() second argument must be a function")
+
         val count = array.elements.count { element ->
-            // predicate(element).asBoolean()
-            true // Placeholder
+            predicate.apply(listOf(element)).asBoolean()
         }
         
         return UDM.Scalar(count)
@@ -202,18 +197,17 @@ object EnhancedArrayFunctions {
             throw IllegalArgumentException("sumBy() first argument must be an array")
         }
         
-        val mapperArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+        val mapper = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("sumBy() second argument must be a function")
+
         var sum = 0.0
         array.elements.forEach { element ->
-            // val value = mapper(element).asNumber()
-            // sum += value
+            sum += mapper.apply(listOf(element)).asNumber()
         }
-        
+
         return UDM.Scalar(sum)
     }
-    
+
     @UTLXFunction(
         description = "Finds the element with the maximum value according to a comparator function.",
         minArgs = 2,
@@ -268,19 +262,14 @@ object EnhancedArrayFunctions {
             return UDM.Scalar.nullValue()
         }
         
-        val comparatorArg = args[1]
-        // TODO: Implement function calling mechanism
-        
-        // Placeholder: return first element
-        return array.elements.firstOrNull() ?: UDM.Scalar.nullValue()
-        
-        /* Actual implementation would be:
+        val comparator = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("maxBy() second argument must be a function")
+
         return array.elements.maxByOrNull { element ->
-            comparator(element).asNumber()
+            comparator.apply(listOf(element)).asNumber()
         } ?: UDM.Scalar.nullValue()
-        */
     }
-    
+
     @UTLXFunction(
         description = "Finds the element with the minimum value according to a comparator function.",
         minArgs = 2,
@@ -335,17 +324,12 @@ object EnhancedArrayFunctions {
             return UDM.Scalar.nullValue()
         }
         
-        val comparatorArg = args[1]
-        // TODO: Implement function calling mechanism
-        
-        // Placeholder: return first element
-        return array.elements.firstOrNull() ?: UDM.Scalar.nullValue()
-        
-        /* Actual implementation would be:
+        val comparator = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("minBy() second argument must be a function")
+
         return array.elements.minByOrNull { element ->
-            comparator(element).asNumber()
+            comparator.apply(listOf(element)).asNumber()
         } ?: UDM.Scalar.nullValue()
-        */
     }
     
     // groupBy, mapGroups, lookupBy moved to restructuring/DataRestructuringFunctions.kt
@@ -400,21 +384,18 @@ object EnhancedArrayFunctions {
             throw IllegalArgumentException("distinctBy() first argument must be an array")
         }
         
-        val keyFunctionArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+        val keyFunction = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("distinctBy() second argument must be a function")
+
         val seen = mutableSetOf<String>()
         val result = mutableListOf<UDM>()
-        
+
         array.elements.forEach { element ->
-            // val key = keyFunction(element).asString()
-            // if (key !in seen) {
-            //     seen.add(key)
-            //     result.add(element)
-            // }
-            
-            // Placeholder: keep all
-            result.add(element)
+            val key = keyFunction.apply(listOf(element)).asString()
+            if (key !in seen) {
+                seen.add(key)
+                result.add(element)
+            }
         }
         
         return UDM.Array(result)
@@ -471,12 +452,12 @@ object EnhancedArrayFunctions {
             return UDM.Scalar.nullValue()
         }
         
-        val mapperArg = args[1]
-        // TODO: Implement function calling mechanism
-        
+        val mapper = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("avgBy() second argument must be a function")
+
         var sum = 0.0
         array.elements.forEach { element ->
-            // sum += mapper(element).asNumber()
+            sum += mapper.apply(listOf(element)).asNumber()
         }
         
         val avg = sum / array.elements.size

@@ -427,12 +427,12 @@ joinWith(customers, orders,
                 val rightKey = evaluateKeyFunction(rightKeyFn, rightItem)
                 
                 if (keysMatch(leftKey, rightKey)) {
-                    // Apply combiner function
-                    // TODO: Implement function calling mechanism
-                    val combined = UDM.Object(mutableMapOf(
-                        "l" to leftItem,
-                        "r" to rightItem
-                    ))
+                    val combined = if (combinerFn is UDM.Lambda) {
+                        combinerFn.apply(listOf(leftItem, rightItem))
+                    } else {
+                        // Default: merge left + right into {l, r}
+                        UDM.Object(mutableMapOf("l" to leftItem, "r" to rightItem))
+                    }
                     result.add(combined.toNative())
                 }
             }
@@ -451,9 +451,7 @@ joinWith(customers, orders,
     private fun evaluateKeyFunction(keyFn: UDM, item: UDM): Any? {
         return when (keyFn) {
             is UDM.Lambda -> {
-                // TODO: Implement function calling mechanism
-                // For now, return the item itself as key
-                item.toNative()
+                keyFn.apply(listOf(item)).toNative()
             }
             is UDM.Scalar -> {
                 // It's a property name

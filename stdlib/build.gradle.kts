@@ -19,8 +19,10 @@ dependencies {
     implementation(project(":formats:jsch"))
     implementation(project(":formats:protobuf"))
     implementation(project(":formats:xml"))
+    implementation(project(":formats:json"))
     implementation(project(":formats:yaml"))
     implementation(project(":formats:csv"))
+    implementation(project(":formats:odata"))
 
     // Kotlin standard library
     implementation(kotlin("stdlib"))

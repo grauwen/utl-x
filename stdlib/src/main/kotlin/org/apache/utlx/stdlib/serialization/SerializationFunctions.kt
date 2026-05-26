@@ -7,9 +7,15 @@ import org.apache.utlx.stdlib.annotations.UTLXFunction
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.SerializationFeature
 import org.apache.utlx.formats.xml.XMLParser
+import org.apache.utlx.formats.xml.XMLSerializer
 import org.apache.utlx.formats.yaml.YAMLParser
+import org.apache.utlx.formats.yaml.YAMLSerializer
 import org.apache.utlx.formats.csv.CSVParser
 import org.apache.utlx.formats.csv.CSVDialect
+import org.apache.utlx.formats.csv.CSVSerializer
+import org.apache.utlx.formats.json.JSONSerializer as FormatJSONSerializer
+import org.apache.utlx.formats.odata.ODataJSONParser
+import org.apache.utlx.formats.odata.ODataJSONSerializer
 
 /**
  * Serialization Functions for UTL-X Standard Library
@@ -263,10 +269,10 @@ object SerializationFunctions {
         requireArgs(args, 1..2, "renderXml")
         val obj = args[0]
         val pretty = if (args.size > 1) args[1].asBoolean() else false
-        
+
         return try {
-            // Simple XML rendering - in real implementation would use XMLSerializer
-            UDM.Scalar(obj.toString()) // Placeholder implementation
+            val xmlString = XMLSerializer(prettyPrint = pretty).serialize(obj)
+            UDM.Scalar(xmlString)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "renderXml failed to serialize to XML: ${e.message}. " +
@@ -334,10 +340,10 @@ object SerializationFunctions {
     fun renderYaml(args: List<UDM>): UDM {
         requireArgs(args, 1, "renderYaml")
         val obj = args[0]
-        
+
         return try {
-            // Simple YAML rendering - in real implementation would use YAMLSerializer
-            UDM.Scalar(obj.toString()) // Placeholder implementation
+            val yamlString = YAMLSerializer().serialize(obj)
+            UDM.Scalar(yamlString)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "renderYaml failed to serialize to YAML: ${e.message}. " +
@@ -432,10 +438,10 @@ object SerializationFunctions {
         requireArgs(args, 1..2, "renderCsv")
         val obj = args[0]
         val includeHeaders = if (args.size > 1) args[1].asBoolean() else true
-        
+
         return try {
-            // Simple CSV rendering - in real implementation would use CSVSerializer
-            UDM.Scalar(obj.toString()) // Placeholder implementation
+            val csvString = CSVSerializer(includeHeaders = includeHeaders).serialize(obj)
+            UDM.Scalar(csvString)
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "renderCsv failed to serialize to CSV: ${e.message}. " +
@@ -444,6 +450,85 @@ object SerializationFunctions {
         }
     }
     
+    @UTLXFunction(
+        description = "Parse an OData JSON string into a UDM object with @odata annotations extracted as attributes",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Serialization",
+        parameters = ["odataJson: OData JSON string to parse"],
+        returns = "UDM object with OData annotations as attributes",
+        example = "parseOdata('{\"@odata.context\":\"...\",\"value\":[...]}')",
+        tags = ["odata", "parse", "serialization"],
+        since = "1.2"
+    )
+    /**
+     * Parse an OData JSON string into a UDM object.
+     * OData annotations (@odata.context, @odata.type, etc.) are extracted as UDM attributes.
+     * Usage: parseOdata(odataJsonString)
+     */
+    fun parseOdata(args: List<UDM>): UDM {
+        requireArgs(args, 1, "parseOdata")
+        val input = args[0]
+
+        return try {
+            when (input) {
+                is UDM.Scalar -> {
+                    // String input: parse raw OData JSON string
+                    val jsonString = input.value?.toString()
+                        ?: throw FunctionArgumentException("parseOdata cannot parse null")
+                    if (jsonString.isBlank()) throw FunctionArgumentException("parseOdata cannot parse empty string")
+                    ODataJSONParser(jsonString).parse()
+                }
+                is UDM.Object, is UDM.Array -> {
+                    // UDM input from pipeline: re-process for OData annotation extraction
+                    val jsonString = FormatJSONSerializer(prettyPrint = false).serialize(input)
+                    ODataJSONParser(jsonString).parse()
+                }
+                else -> throw FunctionArgumentException("parseOdata expects a JSON string or object")
+            }
+        } catch (e: FunctionArgumentException) {
+            throw e
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "parseOdata failed to parse OData JSON: ${e.message}. " +
+                "Hint: Ensure the input is valid OData JSON."
+            )
+        }
+    }
+
+    @UTLXFunction(
+        description = "Render a UDM object as an OData JSON string with @odata annotations",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Serialization",
+        parameters = ["data: UDM object to serialize as OData JSON"],
+        returns = "OData JSON string with @odata annotations restored from UDM attributes",
+        example = "renderOdata(data)",
+        tags = ["odata", "render", "serialization"],
+        since = "1.2"
+    )
+    /**
+     * Render a UDM object as an OData JSON string.
+     * UDM attributes are converted back to @odata annotations in the output.
+     * Usage: renderOdata(data)
+     *
+     * Middleware pattern: embed OData JSON inside a field of another document.
+     */
+    fun renderOdata(args: List<UDM>): UDM {
+        requireArgs(args, 1, "renderOdata")
+        val obj = args[0]
+
+        return try {
+            val odataString = ODataJSONSerializer().serialize(obj)
+            UDM.Scalar(odataString)
+        } catch (e: Exception) {
+            throw FunctionArgumentException(
+                "renderOdata failed to serialize to OData JSON: ${e.message}. " +
+                "Hint: Ensure the data structure can be represented as OData JSON."
+            )
+        }
+    }
+
     @UTLXFunction(
         description = "Auto-detect format and parse",
         minArgs = 1,
@@ -472,6 +557,7 @@ object SerializationFunctions {
             "xml" -> parseXml(listOf(args[0]))
             "yaml", "yml" -> parseYaml(listOf(args[0]))
             "csv" -> parseCsv(listOf(args[0]))
+            "odata" -> parseOdata(listOf(args[0]))
             "auto" -> {
                 // Simple auto-detection based on first character
                 when {
@@ -519,9 +605,10 @@ object SerializationFunctions {
             "xml" -> renderXml(listOf(obj, UDM.Scalar(pretty)))
             "yaml", "yml" -> renderYaml(listOf(obj))
             "csv" -> renderCsv(listOf(obj))
+            "odata" -> renderOdata(listOf(obj))
             else -> throw FunctionArgumentException(
                 "render does not support format '$format'. " +
-                "Hint: Supported formats are: json, xml, yaml, yml, csv."
+                "Hint: Supported formats are: json, xml, yaml, yml, csv, odata."
             )
         }
     }

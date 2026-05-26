@@ -492,18 +492,17 @@ object AdvancedRegexFunctions {
         
         val text = args[0].asString()
         val pattern = args[1].asString()
-        val functionArg = args[2]
-        
+        val fn = args[2] as? UDM.Lambda
+            ?: throw IllegalArgumentException("replaceWithFunction() third argument must be a function")
+
         try {
             val regex = Regex(pattern)
-            
-            // TODO: Implement function calling mechanism
-            // For now, placeholder implementation
+
             val result = regex.replace(text) { matchResult ->
-                // Would call: function(matchObject).asString()
-                matchResult.value // Placeholder
+                // Call the lambda with the match string
+                fn.apply(listOf(UDM.Scalar(matchResult.value))).asString()
             }
-            
+
             return UDM.Scalar(result)
         } catch (e: Exception) {
             throw IllegalArgumentException("Invalid regex pattern: $pattern", e)
