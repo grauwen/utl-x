@@ -2,6 +2,7 @@ package org.apache.utlx.stdlib.crypto
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -31,6 +32,13 @@ object JWSSigningFunctions {
      * Note: Named createJWTSigned to avoid collision with JWTVerification.createJWT
      * which only supports HS256 but adds iat/exp automatically.
      */
+    @UTLXFunction(
+        description = "Create a signed JWT token with multi-algorithm support (HS256/HS384/HS512).",
+        minArgs = 2, maxArgs = 3, category = "Security",
+        returns = "String - Signed JWT token (header.payload.signature)",
+        example = "createJWTSigned({sub: 'user1'}, 'secret', 'HS256') => 'eyJ...'",
+        tags = ["jwt", "jws", "signing", "security"], since = "1.2"
+    )
     fun createJWTSigned(args: List<UDM>): UDM {
         if (args.size < 2) throw FunctionArgumentException("createJWTSigned expects 2-3 arguments (claims, secret, algorithm?), got ${args.size}")
 
@@ -71,6 +79,13 @@ object JWSSigningFunctions {
      * Note: Named verifyJWTSignature to avoid collision with JWTVerification.verifyJWT.
      * This version supports HS384/HS512 in addition to HS256.
      */
+    @UTLXFunction(
+        description = "Verify a JWT token's HMAC signature (HS256/HS384/HS512) and return claims if valid.",
+        minArgs = 2, maxArgs = 3, category = "Security",
+        returns = "Object - {valid: boolean, claims?: {...}, header?: {...}, error?: string}",
+        example = "verifyJWTSignature(\$token, 'secret') => {valid: true, claims: {...}}",
+        tags = ["jwt", "jws", "verification", "security"], since = "1.2"
+    )
     fun verifyJWTSignature(args: List<UDM>): UDM {
         if (args.size < 2) throw FunctionArgumentException("verifyJWTSignature expects 2-3 arguments (token, secret, algorithm?), got ${args.size}")
 
@@ -135,6 +150,13 @@ object JWSSigningFunctions {
      * Sign arbitrary data as a JWS compact serialization.
      * Returns the complete JWS token (header.payload.signature).
      */
+    @UTLXFunction(
+        description = "Sign arbitrary data as a JWS compact serialization (header.payload.signature).",
+        minArgs = 2, maxArgs = 3, category = "Security",
+        returns = "String - JWS compact token",
+        example = "signJWS('payload data', 'secret', 'HS256') => 'eyJ...'",
+        tags = ["jws", "signing", "security"], since = "1.2"
+    )
     fun signJWS(args: List<UDM>): UDM {
         if (args.size < 2) throw FunctionArgumentException("signJWS expects 2-3 arguments (payload, secret, algorithm?), got ${args.size}")
 

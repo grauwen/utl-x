@@ -2,6 +2,7 @@ package org.apache.utlx.stdlib.crypto
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.core.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 import java.util.Base64
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
@@ -34,6 +35,13 @@ object JWTVerification {
      * // }
      * ```
      */
+    @UTLXFunction(
+        description = "Verify a JWT token's HMAC-SHA256 signature and return claims if valid.",
+        minArgs = 2, maxArgs = 3, category = "Security",
+        returns = "Object - {verified: boolean, claims?: {...}, header?: {...}, error?: string}",
+        example = "verifyJWT(\$token, 'secret') => {verified: true, claims: {sub: 'user1'}}",
+        tags = ["jwt", "verification", "security"], since = "1.2"
+    )
     fun verifyJWT(args: List<UDM>): UDM {
         if (args.size < 2 || args.size > 3) {
             throw FunctionArgumentException("verifyJWT expects 2 or 3 arguments (token, secret, algorithm?), got ${args.size}")
@@ -79,6 +87,13 @@ object JWTVerification {
      * @param args List containing: [token, jwksUrl]
      * @return UDM Object indicating this feature is not implemented
      */
+    @UTLXFunction(
+        description = "Verify JWT with JWKS (JSON Web Key Set). Placeholder — not yet implemented.",
+        minArgs = 2, maxArgs = 2, category = "Security",
+        returns = "Object - {verified: false, error: 'not implemented', jwksUrl: '...'}",
+        example = "verifyJWTWithJWKS(\$token, 'https://example.com/.well-known/jwks.json')",
+        tags = ["jwt", "jwks", "verification", "security"], since = "1.2"
+    )
     fun verifyJWTWithJWKS(args: List<UDM>): UDM {
         requireArgs(args, 2, "verifyJWTWithJWKS")
         val jwksUrl = args[1].asString()
@@ -104,6 +119,13 @@ object JWTVerification {
      * // Returns: "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9..."
      * ```
      */
+    @UTLXFunction(
+        description = "Create a signed JWT token (HS256). Automatically adds iat claim and optional exp.",
+        minArgs = 2, maxArgs = 4, category = "Security",
+        returns = "String - Signed JWT token (header.payload.signature)",
+        example = "createJWT({sub: 'user1', name: 'John'}, 'secret') => 'eyJ...'",
+        tags = ["jwt", "creation", "security"], since = "1.2"
+    )
     fun createJWT(args: List<UDM>): UDM {
         if (args.size < 2 || args.size > 4) {
             throw FunctionArgumentException("createJWT expects 2-4 arguments (payload, secret, algorithm?, expiresIn?), got ${args.size}")
@@ -162,6 +184,13 @@ object JWTVerification {
      * @param args List containing: [token]
      * @return UDM Object with validation result and basic info
      */
+    @UTLXFunction(
+        description = "Validate JWT structure without signature verification. Returns header, payload, and signature presence.",
+        minArgs = 1, maxArgs = 1, category = "Security",
+        returns = "Object - {valid: boolean, header?: {...}, payload?: {...}, hasSignature?: boolean, error?: string}",
+        example = "validateJWTStructure(\$token) => {valid: true, header: {alg: 'HS256'}, ...}",
+        tags = ["jwt", "validation", "security"], since = "1.2"
+    )
     fun validateJWTStructure(args: List<UDM>): UDM {
         requireArgs(args, 1, "validateJWTStructure")
         val token = args[0].asString()
