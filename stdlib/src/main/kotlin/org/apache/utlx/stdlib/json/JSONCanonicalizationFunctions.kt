@@ -400,28 +400,37 @@ private fun hashString(input: String, algorithm: String): String {
      */
     fun isCanonicalJSON(args: List<UDM>): UDM {
         requireArgs(args, 1, "isCanonicalJSON")
-        val canonicalJSON = args[0].asString()
-        
+
         return try {
-            // Check no leading/trailing whitespace
-            if (canonicalJSON != canonicalJSON.trim()) {
-                return UDM.Scalar(false)
-            }
-            
-            // Check no whitespace inside (except in strings)
-            var inString = false
-            var escape = false
-            
-            for (char in canonicalJSON) {
-                when {
-                    escape -> escape = false
-                    char == '\\' && inString -> escape = true
-                    char == '"' -> inString = !inString
-                    char.isWhitespace() && !inString -> return UDM.Scalar(false)
+            val input = args[0]
+            when {
+                // String input: check if the raw JSON string is already in canonical form
+                input is UDM.Scalar && input.value is String -> {
+                    val jsonString = input.value as String
+
+                    // Check no leading/trailing whitespace
+                    if (jsonString != jsonString.trim()) return UDM.Scalar(false)
+
+                    // Check no insignificant whitespace outside strings
+                    var inString = false
+                    var escape = false
+                    for (char in jsonString) {
+                        when {
+                            escape -> escape = false
+                            char == '\\' && inString -> escape = true
+                            char == '"' -> inString = !inString
+                            char.isWhitespace() && !inString -> return UDM.Scalar(false)
+                        }
+                    }
+                    UDM.Scalar(true)
                 }
+                // B22 fix: UDM.Object/Array input from pipeline — canonicalize and verify valid
+                input is UDM.Object || input is UDM.Array -> {
+                    val canonical = canonicalizeJSONInternal(input)
+                    UDM.Scalar(canonical.isNotEmpty())
+                }
+                else -> UDM.Scalar(false)
             }
-            
-            UDM.Scalar(true)
         } catch (e: Exception) {
             UDM.Scalar(false)
         }

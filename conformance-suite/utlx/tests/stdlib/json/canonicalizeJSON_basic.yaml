@@ -1,0 +1,31 @@
+name: "canonicalizeJSON_basic"
+category: "stdlib/json"
+description: "JSON canonicalization (RFC 8785) with key sorting"
+tags: ["json", "canonical", "rfc8785"]
+
+input:
+  format: json
+  data: |
+    {"z": 3, "a": 1, "m": 2}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    canonical: canonicalizeJSON($input),
+    isCanonical: isCanonicalJSON($input)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "canonical": "{\"a\":1,\"m\":2,\"z\":3}",
+      "isCanonical": true
+    }
+
+performance_limits:
+  max_duration_ms: 100
+  max_memory_mb: 10
