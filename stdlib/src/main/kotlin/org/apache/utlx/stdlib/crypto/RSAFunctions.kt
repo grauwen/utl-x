@@ -2,6 +2,7 @@ package org.apache.utlx.stdlib.crypto
 
 import org.apache.utlx.core.udm.UDM
 import org.apache.utlx.stdlib.FunctionArgumentException
+import org.apache.utlx.stdlib.annotations.UTLXFunction
 import java.security.*
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
@@ -24,6 +25,13 @@ object RSAFunctions {
      * generateRSAKeyPair(keySize?) -> {publicKey, privateKey}
      * keySize defaults to 2048 bits.
      */
+    @UTLXFunction(
+        description = "Generate an RSA key pair (public + private). Default 2048-bit.",
+        minArgs = 0, maxArgs = 1, category = "Security",
+        returns = "Object - {publicKey, privateKey, algorithm, keySize}",
+        example = "generateRSAKeyPair() => {publicKey: 'MII...', privateKey: 'MII...', algorithm: 'RSA', keySize: 2048}",
+        tags = ["rsa", "keypair", "security", "crypto"], since = "1.2"
+    )
     fun generateRSAKeyPair(args: List<UDM>): UDM {
         val keySize = if (args.isNotEmpty()) args[0].asNumber().toInt() else 2048
         if (keySize !in listOf(1024, 2048, 4096)) {
@@ -50,6 +58,13 @@ object RSAFunctions {
      * rsaSign(data, privateKeyBase64, algorithm?) -> signature (Base64)
      * algorithm defaults to "SHA256withRSA"
      */
+    @UTLXFunction(
+        description = "Sign data with an RSA private key. Returns Base64-encoded signature.",
+        minArgs = 2, maxArgs = 3, category = "Security",
+        returns = "String - Base64-encoded RSA signature",
+        example = "rsaSign('hello', \$privateKey) => 'a1b2c3...'",
+        tags = ["rsa", "signing", "security", "crypto"], since = "1.2"
+    )
     fun rsaSign(args: List<UDM>): UDM {
         if (args.size < 2) throw FunctionArgumentException("rsaSign expects 2-3 arguments (data, privateKey, algorithm?), got ${args.size}")
 
@@ -77,6 +92,13 @@ object RSAFunctions {
     /**
      * rsaVerify(data, signatureBase64, publicKeyBase64, algorithm?) -> boolean
      */
+    @UTLXFunction(
+        description = "Verify an RSA signature against data and public key.",
+        minArgs = 3, maxArgs = 4, category = "Security",
+        returns = "Boolean - true if signature is valid",
+        example = "rsaVerify('hello', \$signature, \$publicKey) => true",
+        tags = ["rsa", "verification", "security", "crypto"], since = "1.2"
+    )
     fun rsaVerify(args: List<UDM>): UDM {
         if (args.size < 3) throw FunctionArgumentException("rsaVerify expects 3-4 arguments (data, signature, publicKey, algorithm?), got ${args.size}")
 
@@ -112,6 +134,13 @@ object RSAFunctions {
      * Note: RSA encryption is limited to small data (keySize/8 - 11 bytes for PKCS1).
      * For large data, use AES with RSA-encrypted key (hybrid encryption).
      */
+    @UTLXFunction(
+        description = "Encrypt data with RSA public key. Limited to small data (245 bytes for 2048-bit key).",
+        minArgs = 2, maxArgs = 2, category = "Security",
+        returns = "String - Base64-encoded encrypted data",
+        example = "rsaEncrypt('secret', \$publicKey) => 'encrypted...'",
+        tags = ["rsa", "encryption", "security", "crypto"], since = "1.2"
+    )
     fun rsaEncrypt(args: List<UDM>): UDM {
         if (args.size != 2) throw FunctionArgumentException("rsaEncrypt expects 2 arguments (data, publicKey), got ${args.size}")
 
@@ -138,6 +167,13 @@ object RSAFunctions {
     /**
      * rsaDecrypt(encryptedBase64, privateKeyBase64) -> decrypted string
      */
+    @UTLXFunction(
+        description = "Decrypt RSA-encrypted data with private key.",
+        minArgs = 2, maxArgs = 2, category = "Security",
+        returns = "String - Decrypted plaintext",
+        example = "rsaDecrypt(\$encrypted, \$privateKey) => 'secret'",
+        tags = ["rsa", "decryption", "security", "crypto"], since = "1.2"
+    )
     fun rsaDecrypt(args: List<UDM>): UDM {
         if (args.size != 2) throw FunctionArgumentException("rsaDecrypt expects 2 arguments (encrypted, privateKey), got ${args.size}")
 

@@ -191,6 +191,9 @@ object StandardLibrary {
        // F11: JWS signing (signJWS)
        registerJWSSigningFunctions()
 
+       // F11: XMLDSig verification (Peppol/WS-Security)
+       registerXMLDSigFunctions()
+
     }
 
     private fun registerAdvancedRegexFunctions() {
@@ -1414,7 +1417,22 @@ object StandardLibrary {
             org.apache.utlx.stdlib.csv.CSVFunctions::class,
 
             // YAML functions
-            org.apache.utlx.stdlib.yaml.YAMLFunctions::class
+            org.apache.utlx.stdlib.yaml.YAMLFunctions::class,
+
+            // Regional functions
+            org.apache.utlx.stdlib.regional.RegionalNumberFunctions::class,
+
+            // Schema serialization functions
+            org.apache.utlx.stdlib.schema.SchemaSerializationFunctions::class,
+
+            // JSON Patch functions (F15)
+            org.apache.utlx.stdlib.json.JsonPatchFunctions::class,
+
+            // Crypto functions (F11)
+            org.apache.utlx.stdlib.crypto.RSAFunctions::class,
+            org.apache.utlx.stdlib.crypto.JWSSigningFunctions::class,
+            org.apache.utlx.stdlib.crypto.JWTVerification::class,
+            org.apache.utlx.stdlib.crypto.XMLDSigFunctions::class
         )
 
         // Scan each class for @UTLXFunction annotations
@@ -1654,6 +1672,17 @@ object StandardLibrary {
      */
     private fun registerJWSSigningFunctions() {
         register("signJWS", JWSSigningFunctions::signJWS)
+    }
+
+    /**
+     * F11: XMLDSig Verification Functions
+     * Verify XML digital signatures (Peppol, WS-Security, SAML).
+     */
+    private fun registerXMLDSigFunctions() {
+        register("signXML", XMLDSigFunctions::signXML)
+        register("verifyXMLSignature", XMLDSigFunctions::verifyXMLSignature)
+        register("getXMLSignatureInfo", XMLDSigFunctions::getXMLSignatureInfo)
+        register("verifyXMLSignatureWithCert", XMLDSigFunctions::verifyXMLSignatureWithCert)
     }
 }
 
