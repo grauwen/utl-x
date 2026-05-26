@@ -1,10 +1,11 @@
 # B23: Stdlib Functions with Placeholder Implementations — Lambda/Logic Never Invoked
 
-**Status:** Open  
-**Severity:** High (15+ registered stdlib functions produce wrong results silently)  
+**Status:** Fixed (categories 1-6). JWT verification deferred to F11.  
+**Severity:** High (15+ registered stdlib functions produced wrong results silently)  
 **Scope:** Multiple stdlib files — array, utility, serialization, regex, join functions  
 **Affects:** JVM and native binary  
 **Created:** May 2026  
+**Fixed:** May 2026  
 **Discovered during:** Systematic TODO/placeholder audit after B21/B22
 
 ---
@@ -127,27 +128,53 @@ All these tests must be rewritten to pass actual `UDM.Lambda` arguments and asse
 
 | Category | Priority | Rationale |
 |---|---|---|
-| 1. EnhancedArrayFunctions (7) | **High** | Commonly used array operations, produce silently wrong results |
-| 2. CriticalArrayFunctions (scan) | **High** | `scan` is broken visibly (returns `<function>` strings) |
-| 3. Tree operations (2) | **Medium** | Less commonly used, but silently wrong |
-| 4. Serialization (3) | **Low** | Not registered — dead code |
-| 5. Regex (1) | **Low** | Not registered — dead code |
-| 6. Join functions (2) | **Medium** | Lambda key functions broken, but string keys work |
-| 7. JWT verify | **Low** | Marked as placeholder in docs |
+| 1. EnhancedArrayFunctions (7) | **High** | **FIXED** — 57 tests |
+| 2. CriticalArrayFunctions (3) | **High** | **FIXED** — 18 tests |
+| 3. Tree operations (2) | **Medium** | **FIXED** — 17 tests |
+| 4. Join functions (2) | **Medium** | **FIXED** — 6 tests |
+| 5. Regex replaceWithFunction (1) | **Medium** | **FIXED** — 9 new + 2 updated tests |
+| 6. Serialization renderXml/Yaml/Csv (3) | **High** | **FIXED** — 19 tests. Also added `parseOdata`/`renderOdata` (new) |
+| 7. JWT verify | **Low** | **Deferred to F11** — lives in `stdlib-security`, not `stdlib`. Requires crypto work (F11: Advanced Security Functions) |
 
-## Files to modify
+## What was fixed
+
+### Source code changes
 
 | File | Change |
 |---|---|
-| `stdlib/.../array/EnhancedArrayFunctions.kt` | Fix 7 functions: invoke `(args[n] as UDM.Lambda).apply()` |
-| `stdlib/.../array/CriticalArrayFunctions.kt` | Fix `scan` and verify `findIndex`/`findLastIndex` |
-| `stdlib/.../array/JoinFunctions.kt` | Fix `evaluateKeyFunction` Lambda case + join combiner |
-| `stdlib/.../util/UtilityFunctions.kt` | Fix `treeMap` and `treeFilter` |
-| `stdlib/.../string/AdvancedRegexFunctions.kt` | Fix or remove `regexReplaceWith` |
-| `stdlib/.../serialization/SerializationFunctions.kt` | Fix or remove `renderXML/YAML/CSV` |
-| All corresponding test files | Rewrite to use real lambdas and assert correct results |
-| Add conformance suite tests | For all fixed functions |
+| `stdlib/.../array/EnhancedArrayFunctions.kt` | 7 functions: `(args[n] as UDM.Lambda).apply()` replaces placeholder |
+| `stdlib/.../array/CriticalArrayFunctions.kt` | `findIndex`, `findLastIndex`, `scan`: lambda invocation added |
+| `stdlib/.../array/JoinFunctions.kt` | `evaluateKeyFunction` Lambda case + join combiner invoke lambda |
+| `stdlib/.../util/UtilityFunctions.kt` | `treeMap` and `treeFilter`: traverse tree, apply lambda to leaf nodes |
+| `stdlib/.../string/AdvancedRegexFunctions.kt` | `replaceWithFunction`: invoke lambda per regex match |
+| `stdlib/.../serialization/SerializationFunctions.kt` | `renderXml` uses `XMLSerializer`, `renderYaml` uses `YAMLSerializer`, `renderCsv` uses `CSVSerializer`. Added `parseOdata`/`renderOdata` pair. |
+| `stdlib/build.gradle.kts` | Added `formats:json` and `formats:odata` dependencies |
+| `stdlib/.../Functions.kt` | Registered `parseOdata` and `renderOdata` |
+
+### Test files
+
+| Test file | Tests | Covers |
+|---|---|---|
+| `EnhancedArrayFunctionsTest.kt` | 57 | Rewritten: all 7 functions with real lambdas, edge cases, error handling |
+| `CriticalArrayFunctionsB23Test.kt` | 18 | findIndex, findLastIndex, scan with real lambdas |
+| `CriticalArrayFunctionsTest.kt` | 3 updated | Old tests rewritten to use real lambdas |
+| `TreeFunctionsB23Test.kt` | 17 | treeMap, treeFilter with real lambdas |
+| `JoinFunctionsB23Test.kt` | 6 | joinWith with lambda key functions and combiners |
+| `ReplaceWithFunctionB23Test.kt` | 9 | replaceWithFunction with real lambdas |
+| `AdvancedRegexFunctionsTest.kt` | 2 updated | Old placeholder tests rewritten |
+| `RenderFunctionsB23Test.kt` | 19 | renderXml/Yaml/Csv proper format output validation |
+
+### Parse/Render symmetry (complete set)
+
+| Parse | Render | Status |
+|---|---|---|
+| `parseJson` | `renderJson` | Works (was already correct) |
+| `parseXml` | `renderXml` | **Fixed** — was returning Kotlin `toString()` |
+| `parseYaml` | `renderYaml` | **Fixed** — was returning Kotlin `toString()` |
+| `parseCsv` | `renderCsv` | **Fixed** — was returning Kotlin `toString()` |
+| `parseOdata` | `renderOdata` | **New** — OData JSON with annotation handling |
+| `parse(data, "format")` | `render(data, "format")` | Works — supports all 5 formats including "odata" |
 
 ---
 
-*Bug B23. May 2026. Discovered during systematic TODO audit. 15+ stdlib functions with placeholder implementations that silently produce wrong results or are dead code.*
+*Bug B23. May 2026. Discovered during systematic TODO audit. 15+ stdlib functions fixed with 128 new/updated tests. JWT verification deferred to F11 (stdlib-security module, requires crypto implementation).*
