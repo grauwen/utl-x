@@ -159,5 +159,95 @@
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.Canonicalizer",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315OmitComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315WithComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315ExclOmitComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315ExclWithComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer11_OmitComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer11_WithComments",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.CanonicalizerPhysical",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.CanonicalizerBase",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.xml.security.c14n.implementations.Canonicalizer20010315Excl",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.xml.security.Init",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "org.apache.xml.security.utils.XMLUtils",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true
+  },
+  {
+    "name": "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "com.sun.org.apache.xpath.internal.jaxp.XPathFactoryImpl",
+    "allDeclaredConstructors": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.FunctionRegistry",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.FunctionInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.ParameterInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
+  },
+  {
+    "name": "org.apache.utlx.stdlib.ReturnInfo",
+    "allDeclaredConstructors": true,
+    "allDeclaredMethods": true,
+    "allDeclaredFields": true
   }
 ]
