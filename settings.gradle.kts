@@ -54,7 +54,7 @@ include("formats:tsch")
 
 // Standard library
 include("stdlib")
-include("stdlib-security")
+// stdlib-security merged into stdlib/crypto/ (F11 — May 2026)
 
 // Schema utilities (USDL implementation)
 include("schema")

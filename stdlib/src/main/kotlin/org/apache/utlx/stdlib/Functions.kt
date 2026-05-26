@@ -27,6 +27,7 @@ import org.apache.utlx.stdlib.csv.*
 import org.apache.utlx.stdlib.yaml.*
 import org.apache.utlx.stdlib.regional.*
 import org.apache.utlx.stdlib.schema.*
+import org.apache.utlx.stdlib.crypto.*
 
 
 
@@ -184,6 +185,12 @@ object StandardLibrary {
        // YAML functions
        registerYAMLFunctions()
 
+       // F11: RSA cryptographic functions
+       registerRSAFunctions()
+
+       // F11: JWS signing (signJWS)
+       registerJWSSigningFunctions()
+
     }
 
     private fun registerAdvancedRegexFunctions() {
@@ -266,8 +273,7 @@ object StandardLibrary {
         // CoreFunctions already use List<UDM> signature, so these work directly
         register("if", CoreFunctions::ifThenElse)
         register("coalesce", CoreFunctions::coalesce)
-        // register("generate-uuid", CoreFunctions::generateUuid)//alias
-        register("generateUuid", CoreFunctions::generateUuid)
+        // generateUuid moved to registerUUIDFunctions (was duplicate of generateUuidV4)
         register("default", CoreFunctions::default)
         register("isEmpty", CoreFunctions::isEmpty)
         register("isNotEmpty", CoreFunctions::isNotEmpty)
@@ -838,12 +844,15 @@ object StandardLibrary {
         register("getJWTIssuer", JWTFunctions::getJWTIssuer)
         register("getJWTAudience", JWTFunctions::getJWTAudience)
         
-        // JWT verification and creation functions
-        // moved them out of stlib to stdlib-security to keep the footprint of the stloib small
-        //register("verifyJWT", JWTVerification::verifyJWT)
-        //register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
-        //register("createJWT", JWTVerification::createJWT)
-        //register("validateJWTStructure", JWTVerification::validateJWTStructure)
+        // JWT verification and creation functions (F11 — merged from stdlib-security)
+        register("createJWT", JWTVerification::createJWT)
+        register("verifyJWT", JWTVerification::verifyJWT)
+        register("validateJWTStructure", JWTVerification::validateJWTStructure)
+        register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
+
+        // Multi-algorithm JWT signing (HS256/384/512) via JWSSigningFunctions
+        register("createJWTSigned", JWSSigningFunctions::createJWTSigned)
+        register("verifyJWTSignature", JWSSigningFunctions::verifyJWTSignature)
     }
 
       private fun registerTreeFunctions() {
@@ -1075,8 +1084,9 @@ object StandardLibrary {
         register("getUuidVersion", UUIDFunctions::getUuidVersion)
         register("isValidUuid", UUIDFunctions::isValidUuid)
         
-        // Alternative: also provide v4 explicitly
-        register("generateUuidV4", UUIDFunctions::generateUuidV4) // might be a duplication
+        // UUID v4 generation (random) — canonical name + alias
+        register("generateUuidV4", UUIDFunctions::generateUuidV4)
+        register("generateUuid", UUIDFunctions::generateUuidV4) // alias — backwards compatible
     }
 
     private fun registerCompressionFunctions() {
@@ -1624,6 +1634,26 @@ object StandardLibrary {
         register("yamlValidate", YAMLFunctions::yamlValidate)
         register("yamlValidateKeyPattern", YAMLFunctions::yamlValidateKeyPattern)
         register("yamlHasRequiredFields", YAMLFunctions::yamlHasRequiredFields)
+    }
+
+    /**
+     * F11: RSA Cryptographic Functions
+     * Sign, verify, encrypt, decrypt, key generation — all JDK built-in.
+     */
+    private fun registerRSAFunctions() {
+        register("generateRSAKeyPair", RSAFunctions::generateRSAKeyPair)
+        register("rsaSign", RSAFunctions::rsaSign)
+        register("rsaVerify", RSAFunctions::rsaVerify)
+        register("rsaEncrypt", RSAFunctions::rsaEncrypt)
+        register("rsaDecrypt", RSAFunctions::rsaDecrypt)
+    }
+
+    /**
+     * F11: JWS Signing Functions
+     * Sign arbitrary data as JWS compact serialization (HS256/384/512).
+     */
+    private fun registerJWSSigningFunctions() {
+        register("signJWS", JWSSigningFunctions::signJWS)
     }
 }
 

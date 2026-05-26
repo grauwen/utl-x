@@ -12,7 +12,7 @@ import org.apache.utlx.stdlib.annotations.UTLXFunction
  * These functions decode JWS tokens but DO NOT VERIFY SIGNATURES.
  * Use only with trusted tokens or for inspection purposes.
  * 
- * For signature verification and token creation, use the stdlib-security module.
+ * For signature verification and token creation, use the crypto package (JWTVerification, JWSSigningFunctions).
  * 
  * @see <a href="https://www.rfc-editor.org/rfc/rfc7515">RFC 7515 - JSON Web Signature</a>
  */
