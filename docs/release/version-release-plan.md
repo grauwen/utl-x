@@ -439,44 +439,59 @@ brew install utlx
 
 ## Step 13: Update Chocolatey (Windows)
 
-The Chocolatey package needs the SHA256 hash for the **Windows** binary (computed in Step 11).
+The Chocolatey package repo is at `github.com/grauwen/chocolatey-utlx`.
+It contains a GitHub Actions workflow that packs and pushes to Chocolatey.org automatically.
 
-### If package exists:
+### 13a. Update two files in the Chocolatey repo
 
-1. Update `utlx.nuspec` version
-2. Update `tools/chocolateyinstall.ps1` with new download URL and `<HASH_WINDOWS>` from Step 11
-3. Pack and push:
-```powershell
-choco pack
-choco push utlx.X.Y.Z.nupkg --source https://push.chocolatey.org/ --api-key <KEY>
-```
-
-### If package does NOT exist:
-
-Create `utlx.nuspec`:
+**`utlx.nuspec`** — update version and release notes:
 ```xml
-<?xml version="1.0" encoding="utf-8"?>
-<package xmlns="http://schemas.chocolatey.org/2010/06/nuspec">
-  <metadata>
-    <id>utlx</id>
-    <version>X.Y.Z</version>
-    <title>UTL-X</title>
-    <authors>Marcel Grauwen</authors>
-    <projectUrl>https://github.com/grauwen/utl-x</projectUrl>
-    <description>Format-agnostic data transformation language — JSON, XML, CSV, YAML, OData</description>
-    <tags>transformation json xml csv yaml data-mapping etl</tags>
-  </metadata>
-  <files>
-    <file src="tools\**" target="tools" />
-  </files>
-</package>
+<version>X.Y.Z</version>
+<releaseNotes>https://github.com/grauwen/utl-x/releases/tag/vX.Y.Z</releaseNotes>
 ```
 
-With `tools/chocolateyinstall.ps1` (use `<HASH_WINDOWS>` from Step 11):
+**`tools/chocolateyinstall.ps1`** — update URL, checksum, and version message:
 ```powershell
-$url = "https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-windows-x64.exe"
-$checksum = "<HASH_WINDOWS>"
-Install-ChocolateyPackage 'utlx' 'exe' '/S' $url -Checksum $checksum -ChecksumType 'sha256'
+$url = 'https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-windows-x64.exe'
+$checksum = '<HASH_WINDOWS>'   # SHA256 from Step 11
+...
+Write-Host "UTL-X vX.Y.Z installed successfully!"
+```
+
+Both files can be updated via the GitHub API (no need to clone):
+```bash
+# Update nuspec
+SHA=$(gh api repos/grauwen/chocolatey-utlx/contents/utlx.nuspec --jq '.sha')
+gh api repos/grauwen/chocolatey-utlx/contents/utlx.nuspec \
+  -X PUT -f message="Update to vX.Y.Z" -f content="$(base64 < nuspec.xml)" -f sha="$SHA"
+
+# Update install script
+SHA=$(gh api repos/grauwen/chocolatey-utlx/contents/tools/chocolateyinstall.ps1 --jq '.sha')
+gh api repos/grauwen/chocolatey-utlx/contents/tools/chocolateyinstall.ps1 \
+  -X PUT -f message="Update install script to vX.Y.Z" -f content="$(base64 < install.ps1)" -f sha="$SHA"
+```
+
+### 13b. Trigger the publish workflow
+
+```bash
+gh workflow run publish.yml --repo grauwen/chocolatey-utlx
+```
+
+This runs on `windows-latest` and:
+1. `choco pack utlx.nuspec` → creates `utlx.X.Y.Z.nupkg`
+2. `choco push` → uploads to chocolatey.org using `CHOCOLATEY_API_KEY` secret
+
+### 13c. Verify
+
+The Chocolatey moderation is automated for existing packages (~1 hour). Check status at:
+- https://community.chocolatey.org/packages/utlx
+- Or: `gh run list --repo grauwen/chocolatey-utlx --limit 3`
+
+After approval:
+```powershell
+choco upgrade utlx
+utlx --version
+# Expected: UTL-X CLI vX.Y.Z
 ```
 
 ### SHA256 usage summary
