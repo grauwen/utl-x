@@ -382,4 +382,30 @@ class ExtendedStringFunctionsTest {
         val baseName = ExtendedStringFunctions.substringBeforeLast(listOf(fileName, UDM.Scalar(".")))
         assertEquals("file", (baseName as UDM.Scalar).value)
     }
+
+    // ========== F19: extractBetween ==========
+
+    @Test fun `extractBetween - basic`() {
+        val result = ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("Hello [World] Foo"), UDM.Scalar("["), UDM.Scalar("]")))
+        assertEquals("World", (result as UDM.Scalar).value)
+    }
+    @Test fun `extractBetween - XML tags`() {
+        val result = ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("<name>Alice</name>"), UDM.Scalar("<name>"), UDM.Scalar("</name>")))
+        assertEquals("Alice", (result as UDM.Scalar).value)
+    }
+    @Test fun `extractBetween - no start match returns empty`() {
+        val result = ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("hello world"), UDM.Scalar("["), UDM.Scalar("]")))
+        assertEquals("", (result as UDM.Scalar).value)
+    }
+    @Test fun `extractBetween - no end match returns empty`() {
+        val result = ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("Hello [World"), UDM.Scalar("["), UDM.Scalar("]")))
+        assertEquals("", (result as UDM.Scalar).value)
+    }
+    @Test fun `extractBetween - empty between`() {
+        val result = ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("[]"), UDM.Scalar("["), UDM.Scalar("]")))
+        assertEquals("", (result as UDM.Scalar).value)
+    }
+    @Test fun `extractBetween - wrong arg count throws`() {
+        assertThrows<Exception> { ExtendedStringFunctions.extractBetween(listOf(UDM.Scalar("x"), UDM.Scalar("y"))) }
+    }
 }

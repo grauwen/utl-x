@@ -195,4 +195,34 @@ class XMLEncodingBomFunctionsTest {
             XMLEncodingBomFunctions.convertXMLEncoding(listOf(UDM.Scalar("xml")))
         }
     }
+
+    // ========== F19: normalizeXMLEncoding ==========
+
+    @Test fun `normalizeXMLEncoding - changes encoding declaration`() {
+        val xml = """<?xml version="1.0" encoding="ISO-8859-1"?><root/>"""
+        val result = XMLEncodingBomFunctions.normalizeXMLEncoding(listOf(UDM.Scalar(xml), UDM.Scalar("UTF-8")))
+        val output = (result as UDM.Scalar).value as String
+        assertTrue(output.contains("UTF-8"), "Should have UTF-8 encoding: $output")
+    }
+    @Test fun `normalizeXMLEncoding - same encoding unchanged`() {
+        val xml = """<?xml version="1.0" encoding="UTF-8"?><root/>"""
+        val result = XMLEncodingBomFunctions.normalizeXMLEncoding(listOf(UDM.Scalar(xml), UDM.Scalar("UTF-8")))
+        assertEquals(xml, (result as UDM.Scalar).value)
+    }
+
+    // ========== F19: normalizeBOM ==========
+
+    @Test fun `normalizeBOM - strip BOM from UTF-8 data`() {
+        val bom = byteArrayOf(0xEF.toByte(), 0xBB.toByte(), 0xBF.toByte())
+        val text = "Hello".toByteArray(Charsets.UTF_8)
+        val result = XMLEncodingBomFunctions.normalizeBOM(listOf(UDM.Binary(bom + text), UDM.Scalar("UTF-8"), UDM.Scalar(false)))
+        assertTrue(result is UDM.Binary)
+        assertEquals("Hello", String((result as UDM.Binary).data, Charsets.UTF_8))
+    }
+    @Test fun `normalizeBOM - add BOM to data`() {
+        val text = "Hello".toByteArray(Charsets.UTF_8)
+        val result = XMLEncodingBomFunctions.normalizeBOM(listOf(UDM.Binary(text), UDM.Scalar("UTF-8"), UDM.Scalar(true)))
+        assertTrue(result is UDM.Binary)
+        assertEquals(8, (result as UDM.Binary).data.size) // 3 BOM + 5 text
+    }
 }

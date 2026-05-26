@@ -232,4 +232,19 @@ class XmlUtilityFunctionsTest {
             XmlUtilityFunctions.attribute(listOf(UDM.Object(mutableMapOf())))
         }
     }
+
+    // ========== F19: hasContent ==========
+
+    @Test fun `hasContent - element with text`() {
+        val xml = UDM.Object.of("_text" to UDM.Scalar("hello"))
+        assertEquals(true, (XmlUtilityFunctions.hasContent(listOf(xml)) as UDM.Scalar).value)
+    }
+    @Test fun `hasContent - empty element`() {
+        val xml = UDM.Object(emptyMap())
+        assertEquals(false, (XmlUtilityFunctions.hasContent(listOf(xml)) as UDM.Scalar).value)
+    }
+    @Test fun `hasContent - element with children`() {
+        val xml = UDM.Object.of("child" to UDM.Scalar("value"))
+        assertEquals(true, (XmlUtilityFunctions.hasContent(listOf(xml)) as UDM.Scalar).value)
+    }
 }
