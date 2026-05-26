@@ -1,8 +1,10 @@
 # F12: XSLT-to-UTL-X Migration Tool
 
-**Status:** Discussion  
+**Status:** Parked — implement after EF08 (BizTalk SDK) ships  
 **Priority:** High (competitive differentiator for Tibco/MuleSoft migration)  
-**Created:** May 2026
+**Created:** May 2026  
+**Reassessed:** May 2026  
+**IDE integration:** [IF02: IDE XSLT Migration Assistant](IF02-ide-xslt-migration-assistant.md)
 
 ---
 
@@ -187,5 +189,68 @@ No other transformation tool offers automated XSLT migration:
 
 ---
 
-*Feature F12. May 2026. Discussion document.*
-*Key insight: XSLT is XML — UTL-X already parses it. The transpiler is a tree walker that emits UTL-X code, not a new parser.*
+## Assessment: Design-Time Tool, Not Runtime Function (May 2026)
+
+### Where it belongs
+
+XSLT migration is a **design-time activity**, not a runtime transformation:
+
+| Aspect | Detail |
+|---|---|
+| **Who** | Developer migrating legacy maps |
+| **When** | Once per transformation during migration project |
+| **How** | IDE right-click → "Convert to UTL-X", or `utlx migrate file.xsl` |
+| **Not** | A stdlib function called at runtime per message |
+
+The tool belongs in:
+- **`utlx migrate` CLI subcommand** — already has a placeholder in `Main.kt`
+- **`utlxd` design command** — IDE daemon for VS Code / Theia integration
+- **NOT** in stdlib — no `xsltToUtlx()` runtime function
+
+### Implementation sequence
+
+1. **EF08 first** — ship the .NET SDK and BizTalk pipeline component. This gives BizTalk customers a runtime path: use UTLXe from existing BizTalk pipelines with their current XSLT maps still in place.
+2. **F12 second** — once customers have committed to the platform and have UTLXe running, offer the migration tool to convert their XSLT maps to `.utlx`. This is when demand peaks.
+
+Doing F12 before EF08 is premature — customers won't migrate XSLT maps to a format they can't run yet.
+
+### The hard part
+
+The XSLT-to-UTL-X translation is a **compiler**, not a simple converter:
+
+| XSLT Construct | UTL-X Equivalent | Complexity |
+|---|---|---|
+| `xsl:template match="/"` | Root expression | Simple |
+| `xsl:value-of select="xpath"` | `$input.path` | Simple — XPath 1.0 to UTL-X path |
+| `xsl:for-each select="xpath"` | `map(arr, (item) -> ...)` | Medium |
+| `xsl:choose/when/otherwise` | `if/else if/else` | Medium |
+| `xsl:apply-templates` | Recursive function calls | Hard — UTL-X doesn't have template matching |
+| `xsl:key` / `key()` | `lookupBy()` | Medium |
+| `xsl:sort` | `sort()` with comparator | Medium |
+| `xsl:variable` | `let` binding | Simple |
+| `xsl:import` / `xsl:include` | No direct equivalent — inline or multi-input | Hard |
+| Named templates with params | `function` definitions | Medium |
+| Extension functions | Stdlib mapping | Case-by-case |
+
+Target: 85-90% coverage of XSLT 1.0. Remaining 10-15% gets `// TODO: manual conversion needed` comments.
+
+### BizTalk SBMP timeline
+
+- **Sep 30, 2026** — Azure Service Bus SBMP protocol retires. BizTalk deployments using default adapter break.
+- **Apr 2030** — BizTalk 2020 extended support ends.
+
+EF08 (.NET SDK/BizTalk shim) is the urgent deliverable. F12 (migration tool) follows after customers are on the platform.
+
+### Competitive landscape
+
+No competitor offers automated XSLT migration:
+- Tibco → manual rewrite
+- MuleSoft → manual rewrite from XSLT to DataWeave
+- Azure Logic Apps → manual rewrite to Liquid templates
+- Informatica → no XSLT migration path
+
+`utlx migrate` would be the first automated XSLT-to-modern-transformation converter — a significant selling point.
+
+---
+
+*Feature F12. May 2026. Parked — implement after EF08 ships. Design-time tool (`utlx migrate` CLI + `utlxd` IDE command), not a runtime stdlib function.*
