@@ -1,9 +1,10 @@
 # F18: Velocity Template Rendering
 
-**Status:** Future Enhancement
-**Priority:** Low (legacy — FreeMarker is the modern successor)
-**Related:** [F14: FreeMarker](F14-freemarker-template-rendering.md), [F16: Mustache](F16-mustache-template-rendering.md), [F17: StringTemplate](F17-stringtemplate-rendering.md)
-**Created:** May 2026
+**Status:** Will not implement — `$` syntax conflict with UTL-X  
+**Priority:** ~~Low~~ N/A  
+**Related:** [F14: FreeMarker](F14-freemarker-template-rendering.md) (same conflict), [F16: Mustache](F16-mustache-template-rendering.md) (no conflict)  
+**Created:** May 2026  
+**Decision:** May 2026
 
 ---
 
@@ -340,4 +341,33 @@ This reduces migration risk — no need to rewrite all templates on day one.
 
 ---
 
-*Feature F18. May 2026.*
+## Decision: Will Not Implement
+
+**Date:** May 2026
+
+### Problem: `$` syntax conflict
+
+Velocity uses `$variableName` and `${variableName}` for variable references — the same `$` prefix that UTL-X uses. The UTL-X parser would interpret Velocity placeholders as UTL-X variable references before the string reaches the Velocity engine.
+
+This is the same conflict that blocked F14 (FreeMarker). Both FreeMarker and Velocity share the `${}` interpolation syntax.
+
+Additionally, Velocity is effectively end-of-life — Apache Velocity 2.x had its last release in 2020. FreeMarker is the recommended successor, and it has the same conflict. There is no reason to implement Velocity when FreeMarker (its modern replacement) is also blocked.
+
+### Template engine summary
+
+| Engine | Sigil | UTL-X Conflict | Status |
+|---|---|---|---|
+| FreeMarker | `${var}` | **Yes** | Will not implement (F14) |
+| **Velocity** | `$var`, `${var}` | **Yes** | **Will not implement** |
+| Mustache | `{{var}}` | **No** | Implementable (F16) |
+| StringTemplate | `<var>` | Partial | Parked (F17) |
+
+### Recommendation
+
+For customers migrating from Velocity-based systems (Atlassian, older ESB platforms):
+- Convert Velocity templates to Mustache (`{{var}}` syntax) — straightforward for simple templates
+- Or handle template rendering at the pipeline layer, outside UTL-X
+
+---
+
+*Feature F18. May 2026. Decision: will not implement — same `$` conflict as FreeMarker, plus Velocity is end-of-life.*
