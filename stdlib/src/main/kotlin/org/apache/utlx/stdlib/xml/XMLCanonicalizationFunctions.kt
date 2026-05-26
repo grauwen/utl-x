@@ -2,6 +2,7 @@
 package org.apache.utlx.stdlib.xml
 
 import org.apache.utlx.core.udm.*
+import org.apache.utlx.formats.xml.XMLSerializer
 import org.w3c.dom.*
 import java.io.ByteArrayOutputStream
 import java.io.StringWriter
@@ -816,9 +817,8 @@ object XMLCanonicalizationFunctions {
             val xmlString = when (xml) {
                 is UDM.Scalar -> xml.value?.toString() ?: ""
                 is UDM.Object -> {
-                    // Convert UDM Object to XML string
-                    // This would require XML serialization logic
-                    return null
+                    // B21 fix: serialize UDM.Object back to XML string for DOM parser
+                    XMLSerializer(prettyPrint = false, includeDeclaration = false).serialize(xml)
                 }
                 else -> return null
             }

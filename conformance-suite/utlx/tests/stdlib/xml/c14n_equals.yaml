@@ -1,0 +1,35 @@
+name: "c14n_equals"
+category: "stdlib/xml"
+description: "B21: c14nEquals compares two XML documents by canonical form"
+tags: ["xml", "c14n", "comparison", "B21"]
+
+input:
+  format: json
+  data: |
+    {
+      "xml1": "<root a=\"1\" b=\"2\"/>",
+      "xml2": "<root b=\"2\" a=\"1\"></root>",
+      "xml3": "<root><name>different</name></root>"
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    sameContent: c14nEquals($input.xml1, $input.xml2),
+    differentContent: c14nEquals($input.xml1, $input.xml3)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "sameContent": true,
+      "differentContent": false
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10

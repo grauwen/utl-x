@@ -1,0 +1,23 @@
+name: "c14n_basic"
+category: "stdlib/xml"
+description: "B21: XML canonicalization with pipeline UDM input (not raw string)"
+tags: ["xml", "c14n", "canonicalization", "B21"]
+
+input:
+  format: xml
+  data: "<doc><b/><a/></doc>"
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  c14n($input)
+
+expected:
+  format: json
+  data: "<doc><b></b><a></a></doc>"
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
