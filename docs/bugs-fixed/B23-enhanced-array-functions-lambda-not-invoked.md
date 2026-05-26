@@ -134,7 +134,8 @@ All these tests must be rewritten to pass actual `UDM.Lambda` arguments and asse
 | 4. Join functions (2) | **Medium** | **FIXED** — 6 tests |
 | 5. Regex replaceWithFunction (1) | **Medium** | **FIXED** — 9 new + 2 updated tests |
 | 6. Serialization renderXml/Yaml/Csv (3) | **High** | **FIXED** — 19 tests. Also added `parseOdata`/`renderOdata` (new) |
-| 7. JWT verify | **Low** | **Deferred to F11** — lives in `stdlib-security`, not `stdlib`. Requires crypto work (F11: Advanced Security Functions) |
+| 7. Utility measure(fn) (1) | **Medium** | **FIXED** — returned lambda object instead of executing it. Test updated. |
+| 8. JWT verify | **Low** | **Deferred to F11** — lives in `stdlib-security`, not `stdlib`. Requires crypto work (F11: Advanced Security Functions) |
 
 ## What was fixed
 
@@ -147,6 +148,7 @@ All these tests must be rewritten to pass actual `UDM.Lambda` arguments and asse
 | `stdlib/.../array/JoinFunctions.kt` | `evaluateKeyFunction` Lambda case + join combiner invoke lambda |
 | `stdlib/.../util/UtilityFunctions.kt` | `treeMap` and `treeFilter`: traverse tree, apply lambda to leaf nodes |
 | `stdlib/.../string/AdvancedRegexFunctions.kt` | `replaceWithFunction`: invoke lambda per regex match |
+| `stdlib/.../util/UtilityFunctions.kt` | `measure`: invoke lambda and return result + timing (was returning lambda object) |
 | `stdlib/.../serialization/SerializationFunctions.kt` | `renderXml` uses `XMLSerializer`, `renderYaml` uses `YAMLSerializer`, `renderCsv` uses `CSVSerializer`. Added `parseOdata`/`renderOdata` pair. |
 | `stdlib/build.gradle.kts` | Added `formats:json` and `formats:odata` dependencies |
 | `stdlib/.../Functions.kt` | Registered `parseOdata` and `renderOdata` |
@@ -162,6 +164,7 @@ All these tests must be rewritten to pass actual `UDM.Lambda` arguments and asse
 | `JoinFunctionsB23Test.kt` | 6 | joinWith with lambda key functions and combiners |
 | `ReplaceWithFunctionB23Test.kt` | 9 | replaceWithFunction with real lambdas |
 | `AdvancedRegexFunctionsTest.kt` | 2 updated | Old placeholder tests rewritten |
+| `UtilityFunctionsTest.kt` | 1 updated | `testMeasure` rewritten to assert lambda return value |
 | `RenderFunctionsB23Test.kt` | 19 | renderXml/Yaml/Csv proper format output validation |
 
 ### Parse/Render symmetry (complete set)
@@ -177,4 +180,4 @@ All these tests must be rewritten to pass actual `UDM.Lambda` arguments and asse
 
 ---
 
-*Bug B23. May 2026. Discovered during systematic TODO audit. 15+ stdlib functions fixed with 128 new/updated tests. JWT verification deferred to F11 (stdlib-security module, requires crypto implementation).*
+*Bug B23. May 2026. Discovered during systematic TODO audit. 16+ stdlib functions fixed with 129 new/updated tests. JWT verification deferred to F11 (stdlib-security module, requires crypto implementation).*
