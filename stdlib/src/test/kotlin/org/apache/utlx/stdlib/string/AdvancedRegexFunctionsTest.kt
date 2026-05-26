@@ -352,34 +352,20 @@ class AdvancedRegexFunctionsTest {
     fun `test replaceWithFunction - uppercase matches`() {
         val text = UDM.Scalar("hello world")
         val pattern = UDM.Scalar("\\w+")
-        val replacer = { match: String -> match.uppercase() }
-        
-        // Note: This test shows the intended API, actual implementation may vary
-        // depending on how function callbacks are handled in UTL-X
-        val result = AdvancedRegexFunctions.replaceWithFunction(listOf(
-            text, 
-            pattern,
-            UDM.Scalar("UPPERCASE") // Function reference placeholder
-        ))
-        
-        // Expected: "HELLO WORLD"
-        assertNotNull(result)
+        val fn = UDM.Lambda { args -> UDM.Scalar(args[0].asString().uppercase()) }
+
+        val result = AdvancedRegexFunctions.replaceWithFunction(listOf(text, pattern, fn))
+        assertEquals("HELLO WORLD", (result as UDM.Scalar).value)
     }
-    
+
     @Test
     fun `test replaceWithFunction - number doubling`() {
         val text = UDM.Scalar("I have 5 apples and 10 oranges")
         val pattern = UDM.Scalar("\\d+")
-        
-        // This test demonstrates the concept
-        // Actual implementation needs function call integration
-        val result = AdvancedRegexFunctions.replaceWithFunction(listOf(
-            text,
-            pattern,
-            UDM.Scalar("DOUBLE") // Function reference
-        ))
-        
-        assertNotNull(result)
+        val fn = UDM.Lambda { args -> UDM.Scalar((args[0].asNumber().toInt() * 2).toString()) }
+
+        val result = AdvancedRegexFunctions.replaceWithFunction(listOf(text, pattern, fn))
+        assertEquals("I have 10 apples and 20 oranges", (result as UDM.Scalar).value)
     }
 
     // ==================== Error Handling Tests ====================

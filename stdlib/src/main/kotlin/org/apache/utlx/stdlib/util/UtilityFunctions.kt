@@ -53,29 +53,29 @@ Function receives: (node, path) where path is array of keys to node.""",
         if (args.size != 2) {
             throw IllegalArgumentException("treeMap expects 2 arguments (tree, function), got ${args.size}")
         }
-        
+
         val tree = args[0]
-        // In real implementation, args[1] would be function reference
-        // For now, return tree as-is (placeholder)
-        
-        return mapTreeRecursive(tree, emptyList())
+        val fn = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("treeMap() second argument must be a function")
+
+        return mapTreeRecursive(tree, fn)
     }
-    
-    private fun mapTreeRecursive(node: UDM, path: List<String>): UDM {
+
+    private fun mapTreeRecursive(node: UDM, fn: UDM.Lambda): UDM {
         return when (node) {
             is UDM.Object -> {
-                val mappedProps = node.properties.mapValues { (key, value) ->
-                    mapTreeRecursive(value, path + key)
+                val mappedProps = node.properties.mapValues { (_, value) ->
+                    mapTreeRecursive(value, fn)
                 }
                 UDM.Object(mappedProps, node.attributes)
             }
             is UDM.Array -> {
-                val mappedElements = node.elements.mapIndexed { index, element ->
-                    mapTreeRecursive(element, path + index.toString())
+                val mappedElements = node.elements.map { element ->
+                    mapTreeRecursive(element, fn)
                 }
                 UDM.Array(mappedElements)
             }
-            else -> node
+            else -> fn.apply(listOf(node))  // Apply function to leaf nodes
         }
     }
     
@@ -105,26 +105,30 @@ Function receives: (node, path) where path is array of keys to node.""",
         if (args.size != 2) {
             throw IllegalArgumentException("treeFilter expects 2 arguments (tree, predicate), got ${args.size}")
         }
-        
+
         val tree = args[0]
-        // Placeholder - in real impl would apply predicate
-        
-        return filterTreeRecursive(tree) ?: UDM.Scalar(null)
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("treeFilter() second argument must be a function")
+
+        return filterTreeRecursive(tree, predicate) ?: UDM.Scalar(null)
     }
-    
-    private fun filterTreeRecursive(node: UDM): UDM? {
+
+    private fun filterTreeRecursive(node: UDM, predicate: UDM.Lambda): UDM? {
         return when (node) {
             is UDM.Object -> {
                 val filteredProps = node.properties.mapNotNull { (key, value) ->
-                    filterTreeRecursive(value)?.let { key to it }
+                    filterTreeRecursive(value, predicate)?.let { key to it }
                 }.toMap()
-                UDM.Object(filteredProps, node.attributes)
+                if (filteredProps.isEmpty()) null else UDM.Object(filteredProps, node.attributes)
             }
             is UDM.Array -> {
-                val filteredElements = node.elements.mapNotNull { filterTreeRecursive(it) }
+                val filteredElements = node.elements.mapNotNull { filterTreeRecursive(it, predicate) }
                 UDM.Array(filteredElements)
             }
-            else -> node
+            else -> {
+                // Keep leaf node only if predicate returns true
+                if (predicate.apply(listOf(node)).asBoolean()) node else null
+            }
         }
     }
     

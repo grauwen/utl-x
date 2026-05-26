@@ -102,17 +102,13 @@ This complements `find` which returns the element itself""",
             throw IllegalArgumentException("findIndex expects array as first argument")
         }
         
-        val predicate = args[1]
-        // In real implementation, predicate would be a function reference
-        // For now, this is a placeholder showing the structure
-        
-        // Find the index of first matching element
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("findIndex() second argument must be a function")
+
         val index = array.elements.indexOfFirst { element ->
-            // Apply predicate (in real impl, would call the function)
-            // This is simplified - actual implementation needs function evaluation
-            true // Placeholder
+            predicate.apply(listOf(element)).asBoolean()
         }
-        
+
         return UDM.Scalar(index.toDouble())
     }
     
@@ -156,14 +152,13 @@ Complement to findIndex - searches from the end""",
             throw IllegalArgumentException("findLastIndex expects array as first argument")
         }
         
-        val predicate = args[1]
-        
-        // Find the index of last matching element
+        val predicate = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("findLastIndex() second argument must be a function")
+
         val index = array.elements.indexOfLast { element ->
-            // Apply predicate (simplified)
-            true // Placeholder
+            predicate.apply(listOf(element)).asBoolean()
         }
-        
+
         return UDM.Scalar(index.toDouble())
     }
     
@@ -211,20 +206,18 @@ Useful for:
             throw IllegalArgumentException("scan expects array as first argument")
         }
         
-        val reducer = args[1]  // Function
-        val initial = args[2]   // Initial value
-        
+        val reducer = args[1] as? UDM.Lambda
+            ?: throw IllegalArgumentException("scan() second argument must be a function")
+        val initial = args[2]
+
         val results = mutableListOf<UDM>()
         var accumulator = initial
-        
+
         for (element in array.elements) {
-            // Apply reducer function: accumulator = reducer(accumulator, element)
-            // In real implementation, would call the function
-            // accumulator = evaluateFunction(reducer, listOf(accumulator, element))
-            
+            accumulator = reducer.apply(listOf(accumulator, element))
             results.add(accumulator)
         }
-        
+
         return UDM.Array(results)
     }
     
