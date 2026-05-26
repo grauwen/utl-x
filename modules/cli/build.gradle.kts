@@ -25,7 +25,7 @@ dependencies {
     implementation(project(":formats:osch"))
     implementation(project(":formats:tsch"))
     implementation(project(":stdlib"))
-    // implementation(project(":stdlib-security"))  // Temporarily disabled
+    // stdlib-security merged into stdlib/crypto/ (F11 — May 2026)
     
     // Kotlin stdlib
     implementation(kotlin("stdlib"))
