@@ -966,6 +966,12 @@ object StandardLibrary {
         register("parse", SerializationFunctions::parse)
         register("render", SerializationFunctions::render)
 
+        // JSON Patch (RFC 6902), JSON Merge Patch (RFC 7396), JSON Diff
+        register("jsonPatch", org.apache.utlx.stdlib.json.JsonPatchFunctions::jsonPatch)
+        register("jsonMergePatch", org.apache.utlx.stdlib.json.JsonPatchFunctions::jsonMergePatch)
+        register("jsonDiff", org.apache.utlx.stdlib.json.JsonPatchFunctions::jsonDiff)
+        register("validateJsonPatch", org.apache.utlx.stdlib.json.JsonPatchFunctions::validateJsonPatch)
+
         // Aliases for compatibility with Tibco BW\
         register("tibco_parse", SerializationFunctions::parse)
         register("tibco_render", SerializationFunctions::render)
