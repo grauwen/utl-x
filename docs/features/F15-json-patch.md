@@ -1,6 +1,6 @@
 # F15: JSON Patch (RFC 6902)
 
-**Status:** Future Enhancement
+**Status:** Implemented
 **Priority:** Low (expressible today via UTL-X object manipulation)
 **Created:** May 2026
 
