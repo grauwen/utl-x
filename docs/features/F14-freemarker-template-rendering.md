@@ -1,8 +1,9 @@
 # F14: FreeMarker Template Rendering
 
-**Status:** Future Enhancement
-**Priority:** Medium
-**Created:** May 2026
+**Status:** Will not implement — `${}` syntax conflict with UTL-X  
+**Priority:** ~~Medium~~ N/A  
+**Created:** May 2026  
+**Decision:** May 2026
 
 ---
 
@@ -230,4 +231,44 @@ UTL-X offers four template engine integrations, each with a clear use case:
 
 ---
 
-*Feature F14. May 2026.*
+## Decision: Will Not Implement
+
+**Date:** May 2026
+
+### Problem: `${}` syntax conflict
+
+FreeMarker uses `${variableName}` for template interpolation. UTL-X uses `$input`, `$variable` for variable references. The UTL-X parser interprets `${name}` as a UTL-X expression before the string reaches the FreeMarker engine.
+
+This means:
+- Inline FreeMarker templates in `.utlx` expressions are impossible without escaping
+- The template string must always come from a file or external variable, never from the UTL-X source
+- The developer experience is confusing — two `${}` syntaxes with different meanings in the same file
+
+### Same issue affects all template engines
+
+| Engine | Sigil | Conflict with UTL-X |
+|---|---|---|
+| FreeMarker | `${var}` | **Direct conflict** — same sigil |
+| Velocity | `$var` | **Direct conflict** — same sigil |
+| Mustache | `{{var}}` | No conflict, but limited (logic-less) |
+| StringTemplate | `<var>` | Conflicts with XML in some contexts |
+
+### Recommendation
+
+Template rendering is better handled at the **engine/pipeline layer** (e.g., a Dapr output binding that applies a FreeMarker template to the transformation result) rather than inside the UTL-X expression language. UTL-X should focus on data transformation; template rendering is a presentation concern.
+
+For customers who need template rendering:
+- Use UTL-X for data transformation → produce a clean UDM/JSON model
+- Apply the FreeMarker/Mustache/Velocity template in a separate pipeline step (Azure Function, Logic Apps action, CPI iFlow step)
+
+This keeps the UTL-X language clean and avoids syntax conflicts.
+
+### Related decisions
+
+- F16 (Mustache): Could be implemented (no `$` conflict) but low demand
+- F17 (StringTemplate): Parked — niche use case
+- F18 (Velocity): Will not implement — same `$` conflict as FreeMarker
+
+---
+
+*Feature F14. May 2026. Decision: will not implement due to `${}` syntax conflict.*
