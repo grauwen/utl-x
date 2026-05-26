@@ -794,4 +794,32 @@ class ObjectFunctionsTest {
         val keys = ObjectFunctions.keys(listOf(obj)) as UDM.Array
         assertEquals(2, keys.elements.size, "Should include keys with null values")
     }
+
+    // ========== F19: fromEntries ==========
+
+    @Test fun `fromEntries - basic`() {
+        val entries = UDM.Array(listOf(
+            UDM.Array(listOf(UDM.Scalar("name"), UDM.Scalar("Alice"))),
+            UDM.Array(listOf(UDM.Scalar("age"), UDM.Scalar(30)))
+        ))
+        val result = ObjectFunctions.fromEntries(listOf(entries)) as UDM.Object
+        assertEquals("Alice", (result.get("name") as UDM.Scalar).value)
+        assertEquals(30, (result.get("age") as UDM.Scalar).value)
+    }
+    @Test fun `fromEntries - empty array`() {
+        val result = ObjectFunctions.fromEntries(listOf(UDM.Array(emptyList()))) as UDM.Object
+        assertTrue(result.properties.isEmpty())
+    }
+    @Test fun `fromEntries - single entry`() {
+        val entries = UDM.Array(listOf(UDM.Array(listOf(UDM.Scalar("key"), UDM.Scalar("value")))))
+        val result = ObjectFunctions.fromEntries(listOf(entries)) as UDM.Object
+        assertEquals("value", (result.get("key") as UDM.Scalar).value)
+    }
+    @Test fun `fromEntries - not array throws`() {
+        assertThrows<Exception> { ObjectFunctions.fromEntries(listOf(UDM.Scalar("x"))) }
+    }
+    @Test fun `fromEntries - wrong pair size throws`() {
+        val entries = UDM.Array(listOf(UDM.Array(listOf(UDM.Scalar("key")))))
+        assertThrows<Exception> { ObjectFunctions.fromEntries(listOf(entries)) }
+    }
 }

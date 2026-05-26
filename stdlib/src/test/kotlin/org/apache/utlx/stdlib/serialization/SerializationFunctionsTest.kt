@@ -786,4 +786,16 @@ John,30""")
         val text = (obj.properties["text"] as UDM.Scalar).value as String
         assertTrue(text.contains("Hello"))
     }
+
+    // ========== F19: parseOdata / renderOdata ==========
+
+    @Test fun `parseOdata - UDM Object input`() {
+        val result = SerializationFunctions.parseOdata(listOf(UDM.Object(emptyMap())))
+        assertNotNull(result)
+    }
+    @Test fun `renderOdata - simple object`() {
+        val result = SerializationFunctions.renderOdata(listOf(UDM.Object.of("id" to UDM.Scalar(1))))
+        val output = (result as UDM.Scalar).value as String
+        assertTrue(output.contains("id"), "Should contain id: $output")
+    }
 }
