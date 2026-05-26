@@ -1217,7 +1217,7 @@ object BinaryFunctions {
     
     private fun createBinaryUDM(bytes: ByteArray): UDM {
         // Store as Base64-encoded string in UDM for transport
-        // In a real implementation, UDM might have a Binary type
+        // Note: UDM.Binary exists but Base64 string is more portable for JSON/XML embedding
         val base64 = Base64.getEncoder().encodeToString(bytes)
         
         return UDM.Object(mapOf(

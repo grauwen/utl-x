@@ -1100,13 +1100,12 @@ Placeholder - requires function execution support.""",
         if (args.size != 1) {
             throw IllegalArgumentException("measure expects 1 argument (function), got ${args.size}")
         }
-        
-        // Placeholder - would need to execute function and measure time
+
+        val fn = args[0] as? UDM.Lambda
+            ?: throw IllegalArgumentException("measure() argument must be a function")
+
         val startTime = System.nanoTime()
-        
-        // In real implementation: execute args[0] as function
-        val result = args[0]
-        
+        val result = fn.apply(emptyList())
         val endTime = System.nanoTime()
         val elapsedMillis = (endTime - startTime) / 1_000_000.0
         

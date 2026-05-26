@@ -579,14 +579,14 @@ class UtilityFunctionsTest {
 
     @Test
     fun testMeasure() {
-        // Test measure function (placeholder implementation)
-        val dummyFunction = UDM.Lambda { _ -> UDM.Scalar("result") }
-        val result = TimerFunctions.measure(listOf(dummyFunction))
-        
+        val fn = UDM.Lambda { _ -> UDM.Scalar("computed result") }
+        val result = TimerFunctions.measure(listOf(fn))
+
         assertTrue(result is UDM.Object)
         val measurement = result as UDM.Object
-        
-        assertEquals(dummyFunction, measurement.properties["result"])
+
+        // Result should be the lambda's return value, not the lambda itself
+        assertEquals("computed result", (measurement.properties["result"] as UDM.Scalar).value)
         assertEquals("ms", (measurement.properties["unit"] as UDM.Scalar).value)
         assertTrue((measurement.properties["elapsed"] as UDM.Scalar).value is Double)
     }
