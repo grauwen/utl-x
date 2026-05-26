@@ -20,7 +20,6 @@ COPY gradle/ gradle/
 COPY modules/ modules/
 COPY formats/ formats/
 COPY stdlib/ stdlib/
-COPY stdlib-security/ stdlib-security/
 COPY schema/ schema/
 COPY proto/ proto/
 

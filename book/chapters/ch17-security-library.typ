@@ -2,9 +2,9 @@
 
 Security in data transformation is often an afterthought — until an audit finds credit card numbers in log files or patient data crossing a network boundary unencrypted. This chapter covers UTL-X's security functions, the practical decisions around message encryption in integration flows, and what should (and absolutely should NOT) happen with sensitive data during transformation.
 
-== The Security Library (stdlib-security)
+== The Security Library (stdlib/crypto)
 
-UTL-X's security functions live in a separate module (`stdlib-security`) from the main standard library. This separation is deliberate — not every deployment needs cryptographic functions, and keeping them separate reduces the attack surface for environments where crypto is restricted.
+UTL-X's security functions live in the `crypto` package within the standard library (`stdlib/crypto`). These include hashing, HMAC, AES encryption, RSA signing, and JWT/JWS operations — all using JDK built-in cryptography with zero external dependencies.
 
 === Available Functions
 
@@ -14,7 +14,6 @@ UTL-X's security functions live in a separate module (`stdlib-security`) from th
   [*Category*], [*Functions*], [*Use case*],
   [Hash], [md5, sha1, sha256, sha512], [Data integrity, checksums, fingerprinting],
   [HMAC], [hmacSha256, hmacSha512], [Message authentication, API signing],
-  [UUID], [uuid, uuidV4, uuidV5], [Unique identifiers, correlation IDs],
   [Base64], [base64Encode, base64Decode], [Binary-to-text encoding],
   [Hex], [hexEncode, hexDecode], [Byte representation],
   [URL], [urlEncode, urlDecode, urlEncodeComponent], [URL-safe encoding],
@@ -55,17 +54,9 @@ Common uses:
 - *Message integrity:* ensure messages haven't been modified in transit
 - *Token generation:* create short-lived authentication tokens
 
-=== UUID Generation
-
-```utlx
-uuid()        // "f47ac10b-58cc-4372-a567-0e02b2c3d479" (random v4)
-uuidV4()      // same as uuid()
-```
-
-Common uses:
-- *Correlation IDs:* trace a message through a multi-step pipeline
-- *Idempotency keys:* ensure a message is processed exactly once
-- *Unique identifiers:* generate IDs for new records created by transformation
+#block(inset: (left: 1em))[
+  _Note: UUID functions (`generateUuid`, `generateUuidV7`, etc.) are utility functions, not security functions. They live in the core/util packages — see Chapter 16._
+]
 
 == Transport Security: mTLS
 

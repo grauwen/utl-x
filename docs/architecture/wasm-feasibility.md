@@ -7,7 +7,7 @@ A WASM target would enable running UTL-X transformations outside the JVM: in bro
 ## Current Architecture
 
 - **Build:** Gradle 8.5, Kotlin 1.9.21, JVM-only (no Kotlin Multiplatform)
-- **Modules:** core, cli, daemon, analysis, stdlib, stdlib-security, schema, 12 format modules
+- **Modules:** core, cli, daemon, analysis, stdlib, schema, 12 format modules
 - **Entry points:** CLI (GraalVM native image), Daemon (Ktor REST + LSP)
 
 ## Good News: The Codebase Is More Portable Than Expected

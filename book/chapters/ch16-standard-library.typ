@@ -194,13 +194,12 @@ hexDecode("68656c6c6f")                        // "hello"
 
 == Security Functions (16 functions)
 
-Hashing and UUID generation. Part of the separate `stdlib-security` module.
+Hashing, HMAC, AES, RSA, and JWT/JWS functions. Part of the `stdlib/crypto` package.
 
 ```utlx
 md5("hello")                                   // "5d41402abc4b2a76..."
 sha256("hello")                                // "2cf24dba5fb0a30e..."
 hmacSha256("message", "secret-key")            // HMAC signature
-uuid()                                         // random UUID v4
 ```
 
 See Chapter 17 for security library details including encryption, digital signatures, and compliance considerations.
