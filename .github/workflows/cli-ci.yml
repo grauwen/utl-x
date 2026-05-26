@@ -75,7 +75,7 @@ jobs:
     
     - name: Check JAR size
       run: |
-        JAR_SIZE=$(du -h modules/cli/build/libs/cli-1.2.0.jar | cut -f1)
+        JAR_SIZE=$(du -h modules/cli/build/libs/cli-1.2.1.jar | cut -f1)
         echo "JAR size: $JAR_SIZE"
         echo "jar_size=$JAR_SIZE" >> $GITHUB_ENV
 

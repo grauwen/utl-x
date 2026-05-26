@@ -1,6 +1,6 @@
 @echo off
 set SCRIPT_DIR=%~dp0
-set JAR=%SCRIPT_DIR%..\build\libs\cli-1.2.0.jar
+set JAR=%SCRIPT_DIR%..\build\libs\cli-1.2.1.jar
 
 if not exist "%JAR%" (
     echo Error: JAR not found at %JAR%
