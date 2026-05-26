@@ -1,8 +1,9 @@
 # F11: Advanced Security Functions
 
-**Status:** Open  
+**Status:** In progress — RSA + JWS signing implemented, registration pending  
 **Priority:** High (XMLDSig needed for Peppol case study)  
-**Created:** May 2026
+**Created:** May 2026  
+**Updated:** May 2026
 
 ---
 
@@ -132,4 +133,62 @@ This prevents a repeat of B17/B19 — native binary issues are caught at build t
 
 ---
 
-*Feature F11. May 2026.*
+## Architectural Decision: Merge stdlib-security into stdlib (May 2026)
+
+### Problem
+
+`stdlib-security` is a separate Gradle module that cannot be referenced from `stdlib/Functions.kt` (no dependency). This means security functions cannot be registered in the standard function table. The CLI had `stdlib-security` disabled (`// Temporarily disabled`). The module contains only one file (`JWTVerification.kt`) with placeholder implementations that were never registered.
+
+### Decision: Merge into stdlib
+
+Move all security function code into `stdlib` under a `crypto/` package. Remove the `stdlib-security` module entirely.
+
+**Rationale:**
+- `stdlib` already contains "dangerous" functions: `encryptAES`, `decryptAES`, `hmacSHA256`, `generateKey`
+- The original security/non-security split has no practical benefit — it's a documentation concern, not an architectural one
+- One module = one registration point, no dependency wiring issues
+- The F11 functions (RSA, JWS, XMLDSig) add zero JAR size — all JDK built-in
+- `stdlib-security` has only 1 file with placeholder code — not worth a separate module
+
+### Migration plan
+
+| From (`stdlib-security`) | To (`stdlib`) | Action |
+|---|---|---|
+| `jwt/JWTVerification.kt` | **Delete** — placeholder code, never registered, replaced by new `JWSSigningFunctions` | Remove |
+| `crypto/RSAFunctions.kt` | `stdlib/crypto/RSAFunctions.kt` | Move |
+| `crypto/JWSSigningFunctions.kt` | `stdlib/crypto/JWSSigningFunctions.kt` | Move |
+| `stdlib-security/build.gradle.kts` | **Delete** | Remove module |
+| `settings.gradle.kts` | Remove `include(":stdlib-security")` | Cleanup |
+| `modules/cli/build.gradle.kts` | Remove `implementation(project(":stdlib-security"))` | Cleanup |
+
+### Backwards compatibility
+
+**Zero impact on `.utlx` transformations:**
+- No existing function is removed, renamed, or changes signature
+- Functions from `stdlib-security` were never registered — no user has called them
+- New functions (`rsaSign`, `verifyJWT`, `createJWT`, etc.) are purely additive
+- All existing stdlib functions remain in place
+
+**Build impact:**
+- `stdlib-security` module removed from `settings.gradle.kts`
+- CLI dependency on `stdlib-security` removed (was already disabled)
+- `stdlib` gains `crypto/` package with RSA + JWS functions
+
+### New function inventory (after merge)
+
+| Function | Args | Description | JDK dependency |
+|---|---|---|---|
+| `generateRSAKeyPair(keySize?)` | 0-1 | Generate RSA key pair (1024/2048/4096) | `java.security.KeyPairGenerator` |
+| `rsaSign(data, privateKey, algo?)` | 2-3 | Sign data with RSA private key | `java.security.Signature` |
+| `rsaVerify(data, sig, publicKey, algo?)` | 3-4 | Verify RSA signature | `java.security.Signature` |
+| `rsaEncrypt(data, publicKey)` | 2 | RSA encrypt (small data only) | `javax.crypto.Cipher` |
+| `rsaDecrypt(encrypted, privateKey)` | 2 | RSA decrypt | `javax.crypto.Cipher` |
+| `createJWT(claims, secret, algo?)` | 2-3 | Create signed JWT token (HS256/384/512) | `javax.crypto.Mac` |
+| `verifyJWT(token, secret, algo?)` | 2-3 | Verify JWT signature and return claims | `javax.crypto.Mac` |
+| `signJWS(payload, secret, algo?)` | 2-3 | Sign arbitrary data as JWS | `javax.crypto.Mac` |
+
+All functions use JDK built-in crypto — no external dependencies, no JAR size increase.
+
+---
+
+*Feature F11. May 2026. RSA + JWS signing implemented. stdlib-security merged into stdlib/crypto/. XMLDSig next.*

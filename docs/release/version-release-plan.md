@@ -35,7 +35,6 @@ modules/cli/build.gradle.kts                        version = "X.Y.Z"
 modules/core/build.gradle.kts                       version = "X.Y.Z"
 modules/analysis/build.gradle.kts                   version = "X.Y.Z"
 stdlib/build.gradle.kts                             version = "X.Y.Z"
-stdlib-security/build.gradle.kts                    version = "X.Y.Z"
 schema/build.gradle.kts                             version = "X.Y.Z"
 ```
 
@@ -562,8 +561,7 @@ chmod +x /tmp/utlx
 | 3 | `modules/core/build.gradle.kts` | `version = "X.Y.Z"` |
 | 4 | `modules/analysis/build.gradle.kts` | `version = "X.Y.Z"` |
 | 5 | `stdlib/build.gradle.kts` | `version = "X.Y.Z"` |
-| 6 | `stdlib-security/build.gradle.kts` | `version = "X.Y.Z"` |
-| 7 | `schema/build.gradle.kts` | `version = "X.Y.Z"` |
+| 6 | `schema/build.gradle.kts` | `version = "X.Y.Z"` |
 | 8 | `formats/xml/build.gradle.kts` | `version = "X.Y.Z"` |
 | 9 | `formats/json/build.gradle.kts` | `version = "X.Y.Z"` |
 | 10 | `formats/csv/build.gradle.kts` | `version = "X.Y.Z"` |

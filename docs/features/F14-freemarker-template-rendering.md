@@ -125,7 +125,7 @@ renderTemplate($template, mapped)
 ### Module Location
 
 **Option A:** `stdlib` — if FreeMarker is a lightweight dependency
-**Option B:** `stdlib-templates` — separate module (like `stdlib-security`) to keep core lean
+**Option B:** `stdlib-templates` — separate module to keep core lean
 
 Recommended: **Option B** (`stdlib-templates`), since FreeMarker adds ~1.7 MB and not all users need template rendering.
 

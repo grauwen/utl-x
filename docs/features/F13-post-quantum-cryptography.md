@@ -9,7 +9,7 @@
 
 ## Summary
 
-Add post-quantum cryptographic primitives to `stdlib-security`: key encapsulation (PQC-KEM) and digital signatures (PQC-Signature). These protect data transformations and integration messages against future quantum computing attacks.
+Add post-quantum cryptographic primitives to `stdlib/crypto`: key encapsulation (PQC-KEM) and digital signatures (PQC-Signature). These protect data transformations and integration messages against future quantum computing attacks.
 
 ## Background
 
@@ -92,11 +92,11 @@ Hybrid mode ensures backward compatibility during the transition period where no
 
 ## Implementation Location
 
-**Module:** `stdlib-security`
+**Module:** `stdlib` (package `org.apache.utlx.stdlib.crypto`)
 
 This follows the existing architecture:
 - Core stdlib has read-only/decode functions (JWT decode, hashing)
-- `stdlib-security` has signing, verification, and key operations
+- `stdlib/crypto/` has signing, verification, and key operations (merged from stdlib-security, F11)
 - PQC extends the same pattern
 
 ## Dependencies and Platform Constraints
@@ -160,7 +160,7 @@ Prioritize F13 when any of these occur:
 
 - [F11: Advanced Security Functions](F11-advanced-security-functions.md) — prerequisite
 - [JWS Analysis](../jws/jws_analysis.md) — JWS architecture decisions
-- [stdlib-security module](/stdlib-security/) — implementation target
+- [stdlib/crypto package](/stdlib/src/main/kotlin/org/apache/utlx/stdlib/crypto/) — implementation target
 - NIST PQC standards: [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final), [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final)
 
 ---
