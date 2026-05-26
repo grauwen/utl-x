@@ -55,3 +55,41 @@ tasks.register("aggregateTestReports", TestReport::class) {
     destinationDirectory.set(layout.buildDirectory.dir("reports/tests"))
     testResults.from(subprojects.map { it.tasks.withType<Test>() })
 }
+
+// ─── Convenience test tasks (granular test execution) ───
+
+tasks.register("testStdlib") {
+    dependsOn(":stdlib:test")
+    group = "verification"
+    description = "Run stdlib function tests only"
+}
+
+tasks.register("testCore") {
+    dependsOn(":modules:core:test")
+    group = "verification"
+    description = "Run core language/parser tests only"
+}
+
+tasks.register("testEngine") {
+    dependsOn(":modules:engine:test")
+    group = "verification"
+    description = "Run engine/transport/admin tests only"
+}
+
+tasks.register("testFormats") {
+    dependsOn(subprojects.filter { it.path.startsWith(":formats:") }.map { "${it.path}:test" })
+    group = "verification"
+    description = "Run all format tests (XML, JSON, CSV, YAML, XSD, etc.)"
+}
+
+tasks.register("testFast") {
+    dependsOn(":modules:core:test", ":stdlib:test")
+    group = "verification"
+    description = "Run core + stdlib tests (fast feedback loop)"
+}
+
+tasks.register("testModules") {
+    dependsOn(subprojects.filter { it.path.startsWith(":modules:") }.map { "${it.path}:test" })
+    group = "verification"
+    description = "Run all module tests (core, cli, daemon, engine, analysis)"
+}
