@@ -1,0 +1,28 @@
+name: "c14n_hash"
+category: "stdlib/xml"
+description: "B21: c14nHash produces consistent SHA-256 from pipeline UDM input"
+tags: ["xml", "c14n", "hash", "B21"]
+
+input:
+  format: xml
+  data: "<order><id>ORD-001</id><amount>250</amount></order>"
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    hashIs64Chars: length(c14nHash($input, "sha256", "c14n")) == 64
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "hashIs64Chars": true
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10

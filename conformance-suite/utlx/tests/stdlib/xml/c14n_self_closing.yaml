@@ -1,0 +1,30 @@
+name: "c14n_self_closing"
+category: "stdlib/xml"
+description: "B21: c14n expands self-closing tags per canonical XML spec"
+tags: ["xml", "c14n", "canonicalization", "B21"]
+
+input:
+  format: xml
+  data: "<root><empty/><data>value</data></root>"
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    canonical: c14n($input),
+    hasExpandedTag: contains(c14n($input), "<empty></empty>")
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "canonical": "<root><empty></empty><data>value</data></root>",
+      "hasExpandedTag": true
+    }
+
+performance_limits:
+  max_duration_ms: 200
+  max_memory_mb: 10
