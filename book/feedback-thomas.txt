@@ -1,0 +1,25 @@
+Chapter 8 eindigt met: "The next chapter explores the Universal Data Model" maar dat is pas chapter 10 niet 9.
+
+Operators worden zowel in hoofdstuk 9 als hoofdstuk 14 behandeld.
+
+26.6.2 misschien is t de bedoeling maar met values($input.servers) en $input.servers.* krijg je t zelfde voor elkaar.
+
+29.2 five core patterns gebruiken niet hetzelfde voorbeeld wat verwarrend kan zijn.
+
+40.1 voorbeeld is ook de widget quantity 10 x unitPrice 25 niet gelijk aan lineTotal 300.
+
+40.3.3 Een aantal van de andere approaches zijn voor mij niet duidelijk waarom ze andere approaches zijn voor semantische validatie, maar ik ben daar ook wat minder in thuis. Je zou nog eventueel wat verder kunnen uitwijden waarom het andere approaches zijn, of je kunt ervanuit gaan dat mensen die dit boek lezen het wel begrijpen.
+
+40.4.3 Zou semantische validatie niet ook mogelijk gewenst zijn tussen stap 1 de syntactische validatie van de input and stap 2 de transformatie?
+
+41.4.1 en 41.4.2 iets kort zeggen over dat datacontract.com en odcs samen verder zijn gegaan als één datacontract standaard.
+
+41.4.3 staan in de tabel in rechterkolom twee keer een "1." die weg moeten volgens mij.
+
+42.12 Format priority matrix komt de priority kolom niet overeen met de prioriteiten in voorafgaande subhoofdstukken.
+
+46.2 staat dat utlx voor java 17 begonnen is, maar dat is niet zo toch? En go heeft sinds 2022 ook generics toen was utlx ontwikkeling ook nog niet begonnen.
+
+46.3.4 staat dat door reflection issues geen utlxe graalvm cloud versie gemaakt wordt voor serverless platforms. Maar er wordt toch juist geen reflection meer gebruikt lees ik in 46.3.2? 
+
+46.5.2 staat ook weer dat reflection wordt gebruikt als tegenargument voor wasm implementatie, maar in 46.3.2 staat juist dat er geen reflection meer gebruikt wordt.
