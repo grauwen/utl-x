@@ -74,12 +74,12 @@ The Web UI Config page shows a visual heap bar with a threshold dropdown.
 
 ## Behavior
 
-| Heap usage | Binding input (Dapr) | Pub/sub input (Dapr) | Direct HTTP | Admin API |
+| Heap usage | Binding input (Dapr) | Pub/sub input (Dapr) | Direct HTTP (`/api/execute*`) | Admin API |
 |---|---|---|---|---|
 | Below threshold | Process normally | Process normally | Process normally | Always available |
-| Above threshold | **503** → Dapr retries | **503** → Dapr retries | Process normally | Always available |
+| Above threshold | **503** → Dapr retries | **503** → Dapr retries | **503** → client retries | Always available |
 
-Direct HTTP is not rejected — the client controls its own retry logic. Admin API is never rejected — operators must always be able to manage the engine.
+All execution paths (Dapr bindings, Dapr pub/sub, and direct HTTP) reject with 503 when under heap pressure. Admin API is never rejected — operators must always be able to manage the engine.
 
 Dapr receives the 503, does not acknowledge the message, and Service Bus retries delivery later. Combined with the Dapr Resiliency circuit breaker (EF09), this prevents dead-lettering during memory pressure.
 
@@ -106,11 +106,27 @@ Grafana alert: `utlxe_heap_pressure == 1` → "UTLXe is rejecting messages due t
 | File | Change |
 |---|---|
 | `UtlxEngine.kt` | `heapUsage` (volatile double), `heapBackpressureThreshold` (volatile double), background monitor thread, `isHeapPressure()`, `heapUsagePercent()` |
-| `HttpTransport.kt` | 503 rejection before `handleDaprInput()` and `handlePubSubInput()` when `isHeapPressure()` |
+| `HttpTransport.kt` | 503 rejection before `handleDaprInput()` and `handlePubSubInput()` when `isHeapPressure()`. Also on `/api/execute`, `/api/execute-batch`, `/api/execute-pipeline` (added in fix #2). |
 | `AdminEndpoint.kt` | `GET /admin/backpressure` (status + heap stats), `POST /admin/backpressure` (set threshold 50-99%), heap stats in `GET /admin/info` |
 | `MetricsCollector.kt` | Three Prometheus gauges: `heap_usage_percent`, `heap_backpressure_threshold`, `heap_pressure` |
 | `AdminEndpointTest.kt` | 4 tests: get status, set threshold, invalid threshold rejected, info includes heap |
 | `app.js` | Config page: heap usage bar (color-coded), threshold dropdown, pressure status, Apply/Refresh |
+
+## Post-Implementation Fixes
+
+### Fix 1: HTTP transport missing backpressure (commit `d4d95451`)
+
+The original implementation only added backpressure checks on the Dapr input paths (`handleDaprInput()`, `handlePubSubInput()`). The direct HTTP execution endpoints (`/api/execute`, `/api/execute-batch`, `/api/execute-pipeline`) were unprotected — they would process requests even under heap pressure, which could lead to OOM when the HTTP transport is used without Dapr.
+
+**Fix:** Added `isHeapPressure()` check at the top of all three HTTP execution endpoints, returning 503 with `error_code: "HEAP_PRESSURE"` before processing.
+
+### Fix 2: Heap monitor thread not stopped on shutdown ([EB02](../bugs-fixed/EB02-heap-monitor-thread-leak.md))
+
+The heap monitor background thread starts at `UtlxEngine` construction but `stop()` never calls `heapMonitor.interrupt()`. The thread runs until JVM exit. In tests, this causes zombie threads to accumulate across engine instances, leading to GC pressure, false backpressure triggers, and cascading test timeouts.
+
+**Fix:** Add `heapMonitor.interrupt()` to `UtlxEngine.stop()`. The thread already handles `InterruptedException` with `break` — it just never received one.
+
+**Status:** Open — see [EB02](../bugs-fixed/EB02-heap-monitor-thread-leak.md).
 
 ## Relationship to Other Features
 
