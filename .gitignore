@@ -15,13 +15,8 @@
 # Build directories
 build/
 bin/
-# dist/ everywhere except marketplace artifacts
+# dist/ everywhere
 **/dist/
-!deploy/dist/
-deploy/dist/**
-!deploy/dist/marketplace/
-!deploy/dist/marketplace/*/
-!deploy/dist/marketplace/*/*.json
 target/
 out/
 *.egg-info/
@@ -65,7 +60,7 @@ htmlcov/
 # Package files
 *.tgz
 *.zip
-!deploy/dist/marketplace/zips/*.zip
+!deploy/azure-marketplace/zips/*.zip
 *.tar.gz
 *.jar
 *.war

@@ -6,7 +6,7 @@
     "config": {
       "isWizard": true,
       "basics": {
-        "description": "Deploy **UTL-X Transformation Engine — Enterprise** into your Azure subscription.\n\n**Enterprise plan:** 64 worker threads, up to 30 auto-scaling instances. Handles 100+ integrations at ~300K+ msg/s. Unlimited scaling.\n\nBilling is handled automatically through your Azure bill.",
+        "description": "Deploy **UTL-X Transformation Engine** as a managed application in your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 652 built-in functions.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
         "subscription": {
           "resourceProviders": [
             "Microsoft.App",
@@ -19,6 +19,7 @@
         "location": {
           "label": "Region",
           "toolTip": "Azure region for all resources. Choose a region close to your workloads.",
+          "allowedValues": [],
           "visible": true
         }
       }
@@ -35,24 +36,43 @@
         "bladeTitle": "Engine Settings",
         "elements": [
           {
-            "name": "tierInfo",
+            "name": "infoBox",
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Enterprise plan: 64 concurrent worker threads, up to 30 auto-scaling instances. Full access to all features: JSON, XML, CSV, YAML, OData, 652 stdlib functions, schema validation, pipeline chaining, Dapr messaging integration. Priority support included.",
+              "text": "UTL-X transforms data between JSON, XML, CSV, YAML, and OData natively — without converting to XML first. Supports 652 stdlib functions, schema validation, and pipeline chaining.",
               "style": "Info"
             }
+          },
+          {
+            "name": "tier",
+            "type": "Microsoft.Common.DropDown",
+            "label": "Tier",
+            "toolTip": "Determines the number of concurrent worker threads per instance. In a typical integration flow, each transformation step uses one worker for the duration of the message — choose based on your expected concurrent message volume.",
+            "defaultValue": "Starter (8 workers)",
+            "constraints": {
+              "required": true,
+              "allowedValues": [
+                { "label": "Starter (8 workers) — up to 8 concurrent transformations per instance", "value": 8 },
+                { "label": "Professional (32 workers) — up to 32 concurrent transformations per instance", "value": 32 },
+                { "label": "Enterprise (64 workers) — up to 64 concurrent transformations per instance", "value": 64 },
+                { "label": "Enterprise+ (128 workers) — up to 128 concurrent transformations per instance", "value": 128 }
+              ]
+            },
+            "visible": true
           },
           {
             "name": "cpuCores",
             "type": "Microsoft.Common.DropDown",
             "label": "CPU Cores per instance",
-            "toolTip": "CPU allocation per container instance. With 64 workers, 4.0 cores is recommended.",
-            "defaultValue": "4.0 cores (high throughput)",
+            "toolTip": "CPU allocation per container instance. Higher values support more concurrent transformations.",
+            "defaultValue": "1.0",
             "constraints": {
               "required": true,
               "allowedValues": [
-                { "label": "2.0 cores (standard)", "value": "2.0" },
+                { "label": "0.5 cores (dev/test)", "value": "0.5" },
+                { "label": "1.0 core (standard)", "value": "1.0" },
+                { "label": "2.0 cores (production)", "value": "2.0" },
                 { "label": "4.0 cores (high throughput)", "value": "4.0" }
               ]
             },
@@ -62,16 +82,27 @@
             "name": "memoryGi",
             "type": "Microsoft.Common.DropDown",
             "label": "Memory per instance",
-            "toolTip": "Memory allocation per container instance. With 64 workers processing concurrently, 8 GB is recommended.",
-            "defaultValue": "8 GB — messages up to 1 MB+ (large payloads)",
+            "toolTip": "Memory allocation per container instance. XML/JSON transformation expands messages 10-50× in memory. Choose based on your largest message size.",
+            "defaultValue": "2.0",
             "constraints": {
               "required": true,
               "allowedValues": [
-                { "label": "4 GB — messages up to 500 KB", "value": "4.0" },
+                { "label": "1 GB — messages up to 50 KB (dev/test)", "value": "1.0" },
+                { "label": "2 GB — messages up to 200 KB (standard)", "value": "2.0" },
+                { "label": "4 GB — messages up to 500 KB (production)", "value": "4.0" },
                 { "label": "8 GB — messages up to 1 MB+ (large payloads)", "value": "8.0" }
               ]
             },
             "visible": true
+          },
+          {
+            "name": "memoryWarning",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "text": "XML and JSON messages expand 10-50x in memory during transformation (UDM parsing). A 100 KB XML message uses ~5-10 MB of heap. With 8 concurrent workers, choose memory accordingly. For messages over 1 MB, use 8 GB.",
+              "style": "Warning"
+            }
           },
           {
             "name": "scalingSection",
@@ -82,10 +113,10 @@
                 "name": "minReplicas",
                 "type": "Microsoft.Common.Slider",
                 "label": "Minimum instances",
-                "toolTip": "Set to 1+ for always-on (recommended for enterprise production).",
-                "min": 1,
+                "toolTip": "Set to 0 for scale-to-zero (no cost when idle, ~10s cold start). Set to 1 for always-on (recommended for production).",
+                "min": 0,
                 "max": 10,
-                "defaultValue": 2,
+                "defaultValue": 1,
                 "showStepMarkers": true,
                 "visible": true
               },
@@ -96,23 +127,8 @@
                 "toolTip": "Maximum number of instances for auto-scaling under load.",
                 "min": 1,
                 "max": 30,
-                "defaultValue": 10,
+                "defaultValue": 5,
                 "showStepMarkers": false,
-                "visible": true
-              }
-            ],
-            "visible": true
-          },
-          {
-            "name": "daprSection",
-            "type": "Microsoft.Common.Section",
-            "label": "Messaging Integration (Dapr)",
-            "elements": [
-              {
-                "name": "enableDapr",
-                "type": "Microsoft.Common.CheckBox",
-                "label": "Enable Dapr sidecar for Service Bus / Event Hub messaging",
-                "toolTip": "Enables broker-agnostic messaging via Dapr. Requires a Service Bus or Event Hub connection string.",
                 "visible": true
               }
             ],
@@ -127,9 +143,7 @@
       "memoryGi": "[steps('engineConfig').memoryGi]",
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
-      "workers": 64,
-      "trackingGuid": "REPLACE-WITH-ENTERPRISE-PLAN-GUID",
-      "enableDapr": "[steps('engineConfig').daprSection.enableDapr]",
+      "workers": "[steps('engineConfig').tier]",
       "containerImage": "ghcr.io/utlx-lang/utlxe:1.1.0",
       "namePrefix": "utlxe"
     }
