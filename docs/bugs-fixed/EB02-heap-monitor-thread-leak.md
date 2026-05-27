@@ -1,6 +1,6 @@
 # EB02: EF15 Backpressure Implementation Gaps
 
-**Status:** Open (partially fixed)
+**Status:** Fixed
 **Severity:** Medium
 **Component:** `modules/engine` — `UtlxEngine.kt`, transports
 **Found:** May 2026
@@ -269,11 +269,11 @@ This is backward compatible (proto3 — older clients preserve unknown enum valu
 
 | # | Gap | Status | Fix |
 |---|-----|--------|-----|
-| 1 | Heap monitor thread not stopped in `stop()` | Open | Add `heapMonitor.interrupt()` |
+| 1 | Heap monitor thread not stopped in `stop()` | Fixed | Added `heapMonitor.interrupt()` to `UtlxEngine.stop()` |
 | 2 | HTTP `/api/execute*` missing backpressure | Fixed (`d4d95451`) | Added `isHeapPressure()` checks |
-| 3a | StdioProtoTransport missing backpressure | Open | Return `ExecuteResponse` with `HEAP_PRESSURE` error code |
-| 3b | GrpcTransport missing backpressure | Open | Return gRPC `UNAVAILABLE` when `isHeapPressure()` |
-| 4 | Proto missing `HEAP_PRESSURE` error code | Open | Add `HEAP_PRESSURE = 11` to `ErrorCode` enum |
+| 3a | StdioProtoTransport missing backpressure | Fixed | Returns `ExecuteResponse` with `HEAP_PRESSURE` error code |
+| 3b | GrpcTransport missing backpressure | Fixed | Returns gRPC `UNAVAILABLE` when `isHeapPressure()` |
+| 4 | Proto missing `HEAP_PRESSURE` error code | Fixed | Added `HEAP_PRESSURE = 11` to `ErrorCode` enum |
 
 ## Related
 
