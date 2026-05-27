@@ -172,13 +172,45 @@ Two transports have zero backpressure checks:
 
 Used by Open-M's wrapper. When UTLXe is under heap pressure, `ExecuteRequest` messages from the pipe are processed without any check. Under a message burst, this leads to the same OOM scenario EF15 was designed to prevent.
 
-**Proposed fix:** Before processing `EXECUTE_REQUEST`, `EXECUTE_BATCH_REQUEST`, and `EXECUTE_PIPELINE_REQUEST` in the message handler, check `engine.isHeapPressure()`. If true, return an `ExecuteResponse` with:
-- `success = false`
-- `error_code = MAX_CONCURRENT_EXCEEDED` (or a new `HEAP_PRESSURE` code)
-- `error_class = TRANSIENT` (wrapper should retry)
-- `error = "Heap memory pressure — retry later"`
+#### Why stdio backpressure is different from HTTP/gRPC
 
-**Consideration:** The pipe is 1:1 with the wrapper. If UTLXe rejects, the wrapper has nowhere else to route. But rejecting early is still better than OOM crash — the wrapper can queue locally, signal Dapr to stop delivering, or wait and retry.
+The pipe is **1:1** — one wrapper, one UTLXe, one pipe. This changes the dynamics:
+
+| Transport | Topology | On rejection, caller can... |
+|-----------|----------|---------------------------|
+| HTTP (Dapr) | N:1 (Dapr routes to replicas) | Route to another instance, Service Bus retries later |
+| gRPC | N:1 (load balancer) | Retry on another instance, automatic retry policy |
+| **Stdio** | **1:1** (single pipe) | **Nothing** — no other UTLXe to route to |
+
+When UTLXe rejects via the pipe, the wrapper is stuck. It can't route to another UTLXe. It has to buffer the message in its own memory — which moves the OOM risk from UTLXe to the wrapper.
+
+#### But crashing is worse than rejecting
+
+Without backpressure, a message burst OOMs UTLXe. The JVM dies (exit 137). The pipe breaks. **All** in-flight messages are lost — not just the one that caused the OOM. The wrapper has to restart UTLXe, re-load all transformations, and replay whatever it can. That's a hard failure.
+
+With backpressure, UTLXe rejects individual messages with `TRANSIENT` errors. The pipe stays alive. All other messages continue flowing. The wrapper can:
+
+1. Hold the rejected message and retry after a short delay (heap pressure typically clears in seconds once GC runs)
+2. Signal upstream — tell Dapr/Service Bus to stop delivering via the wrapper's own backpressure
+3. Log it and let Service Bus retry via its own retry policy
+
+**Reject one message vs crash and lose everything** — rejecting is strictly better.
+
+#### The wrapper already handles this
+
+The wrapper receives `ExecuteResponse` with `success=false` for every error — parse failures, transformation errors, validation failures. A `TRANSIENT` error with `HEAP_PRESSURE` is just another error response. The wrapper doesn't need new logic to handle it. It already knows what to do with transient errors: don't ack the message, let the broker retry.
+
+#### Existing flow control doesn't cover this
+
+`StdioProtoTransport` already has implicit flow control via `CallerRunsPolicy` (line 84): when the worker pool is full, the reader thread processes the task itself, blocking stdin reads. This protects against **concurrency** overload (too many parallel messages) but not **memory** overload. A single 500MB XML message can OOM even with one worker thread. The heap check catches what flow control can't.
+
+#### Recommended behavior for stdio
+
+Softer than HTTP/gRPC — the wrapper should **wait and retry locally** rather than nacking to the broker immediately, because UTLXe will likely recover within seconds:
+
+- Return `ExecuteResponse` with `success=false`, `error_class=TRANSIENT`, `error_code=HEAP_PRESSURE`, `error_phase=INTERNAL`
+- The wrapper sees `TRANSIENT` + `HEAP_PRESSURE` → holds the message, retries after 1-2 seconds
+- Different from `PERMANENT` errors (bad payload, missing field) where retry is pointless
 
 ### GrpcTransport (gRPC mode)
 
@@ -201,6 +233,36 @@ override fun execute(request: ExecuteRequest, responseObserver: StreamObserver<E
 }
 ```
 
+### Proto change: new ErrorCode
+
+The existing `ErrorCode` enum has no value for heap pressure. `MAX_CONCURRENT_EXCEEDED` (8) is semantically wrong (concurrency, not memory). `INTERNAL_ERROR` (10) is too generic — the wrapper can't distinguish "retry soon" from "something broke."
+
+**Proposed addition to `utlxe.proto`:**
+
+```protobuf
+enum ErrorCode {
+  ERROR_CODE_UNSPECIFIED = 0;
+  TRANSFORMATION_NOT_FOUND = 1;
+  BUNDLE_NOT_LOADED = 2;
+  INPUT_PARSE_FAILED = 3;
+  INPUT_VALIDATION_FAILED = 4;
+  TRANSFORMATION_FAILED = 5;
+  OUTPUT_VALIDATION_FAILED = 6;
+  OUTPUT_SERIALIZATION_FAILED = 7;
+  MAX_CONCURRENT_EXCEEDED = 8;
+  MAX_INPUT_SIZE_EXCEEDED = 9;
+  INTERNAL_ERROR = 10;
+  HEAP_PRESSURE = 11;           // EF15/EB02: heap backpressure active, retry after short delay
+}
+```
+
+This is backward compatible (proto3 — older clients preserve unknown enum values as integers). The wrapper uses `HEAP_PRESSURE` to distinguish from other transient errors and apply the appropriate retry strategy (wait for GC, not immediate retry).
+
+**Used by:**
+- `StdioProtoTransport`: `ExecuteResponse.error_code = HEAP_PRESSURE` + `error_class = TRANSIENT`
+- `HttpTransport`: already returns JSON `"error_code": "HEAP_PRESSURE"` (commit `d4d95451`)
+- `GrpcTransport`: returns gRPC `UNAVAILABLE` status (standard gRPC, no proto error code needed in the status — but if returning `ExecuteResponse` inside a success envelope, use `HEAP_PRESSURE`)
+
 ---
 
 ## Summary of All EF15 Gaps
@@ -209,8 +271,9 @@ override fun execute(request: ExecuteRequest, responseObserver: StreamObserver<E
 |---|-----|--------|-----|
 | 1 | Heap monitor thread not stopped in `stop()` | Open | Add `heapMonitor.interrupt()` |
 | 2 | HTTP `/api/execute*` missing backpressure | Fixed (`d4d95451`) | Added `isHeapPressure()` checks |
-| 3a | StdioProtoTransport missing backpressure | Open | Return error response when `isHeapPressure()` |
-| 3b | GrpcTransport missing backpressure | Open | Return `UNAVAILABLE` when `isHeapPressure()` |
+| 3a | StdioProtoTransport missing backpressure | Open | Return `ExecuteResponse` with `HEAP_PRESSURE` error code |
+| 3b | GrpcTransport missing backpressure | Open | Return gRPC `UNAVAILABLE` when `isHeapPressure()` |
+| 4 | Proto missing `HEAP_PRESSURE` error code | Open | Add `HEAP_PRESSURE = 11` to `ErrorCode` enum |
 
 ## Related
 
