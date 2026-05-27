@@ -156,6 +156,15 @@ class UtlxeServiceImpl(
         request: ExecuteRequest,
         responseObserver: StreamObserver<ExecuteResponse>
     ) {
+        // EB02: Heap backpressure — reject before processing to prevent OOM
+        if (engine.isHeapPressure()) {
+            responseObserver.onError(
+                io.grpc.Status.UNAVAILABLE
+                    .withDescription("Heap memory pressure — retry later")
+                    .asRuntimeException()
+            )
+            return
+        }
         responseObserver.onNext(TransportHandlers.handleExecute(request, engine))
         responseObserver.onCompleted()
     }
@@ -164,6 +173,14 @@ class UtlxeServiceImpl(
         request: ExecuteBatchRequest,
         responseObserver: StreamObserver<ExecuteBatchResponse>
     ) {
+        if (engine.isHeapPressure()) {
+            responseObserver.onError(
+                io.grpc.Status.UNAVAILABLE
+                    .withDescription("Heap memory pressure — retry later")
+                    .asRuntimeException()
+            )
+            return
+        }
         responseObserver.onNext(TransportHandlers.handleExecuteBatch(request, engine))
         responseObserver.onCompleted()
     }
@@ -172,6 +189,14 @@ class UtlxeServiceImpl(
         request: ExecutePipelineRequest,
         responseObserver: StreamObserver<ExecutePipelineResponse>
     ) {
+        if (engine.isHeapPressure()) {
+            responseObserver.onError(
+                io.grpc.Status.UNAVAILABLE
+                    .withDescription("Heap memory pressure — retry later")
+                    .asRuntimeException()
+            )
+            return
+        }
         responseObserver.onNext(TransportHandlers.handleExecutePipeline(request, engine))
         responseObserver.onCompleted()
     }

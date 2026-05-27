@@ -282,6 +282,9 @@ class UtlxEngine(val config: EngineConfig) {
         logger.info("Stopping engine '{}'...", config.engine.name)
         stateRef.set(EngineState.DRAINING)
 
+        // EB02: Stop heap monitor background thread
+        heapMonitor.interrupt()
+
         // Stop all transports (EF07: parallel transports)
         allTransports.forEach { t ->
             try { t.stop() } catch (e: Exception) {

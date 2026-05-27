@@ -175,26 +175,52 @@ class StdioProtoTransport(
 
             // Runtime messages: dispatched to worker pool (or inline if workers=1)
             MessageType.EXECUTE_REQUEST -> {
-                val req = ExecuteRequest.parseFrom(envelope.payload)
-                submitWork {
-                    val resp = TransportHandlers.handleExecute(req, engine)
-                    responseQueue.put(wrapResponse(MessageType.EXECUTE_RESPONSE, resp))
+                // EB02: Heap backpressure — reject before processing to prevent OOM
+                if (engine.isHeapPressure()) {
+                    val req = ExecuteRequest.parseFrom(envelope.payload)
+                    responseQueue.put(wrapResponse(MessageType.EXECUTE_RESPONSE, heapPressureResponse(req.requestId)))
+                } else {
+                    val req = ExecuteRequest.parseFrom(envelope.payload)
+                    submitWork {
+                        val resp = TransportHandlers.handleExecute(req, engine)
+                        responseQueue.put(wrapResponse(MessageType.EXECUTE_RESPONSE, resp))
+                    }
                 }
             }
 
             MessageType.EXECUTE_BATCH_REQUEST -> {
-                val req = ExecuteBatchRequest.parseFrom(envelope.payload)
-                submitWork {
-                    val resp = TransportHandlers.handleExecuteBatch(req, engine)
-                    responseQueue.put(wrapResponse(MessageType.EXECUTE_BATCH_RESPONSE, resp))
+                if (engine.isHeapPressure()) {
+                    responseQueue.put(wrapResponse(MessageType.EXECUTE_BATCH_RESPONSE,
+                        ExecuteBatchResponse.newBuilder()
+                            .addResults(heapPressureResponse(""))
+                            .build()))
+                } else {
+                    val req = ExecuteBatchRequest.parseFrom(envelope.payload)
+                    submitWork {
+                        val resp = TransportHandlers.handleExecuteBatch(req, engine)
+                        responseQueue.put(wrapResponse(MessageType.EXECUTE_BATCH_RESPONSE, resp))
+                    }
                 }
             }
 
             MessageType.EXECUTE_PIPELINE_REQUEST -> {
-                val req = ExecutePipelineRequest.parseFrom(envelope.payload)
-                submitWork {
-                    val resp = TransportHandlers.handleExecutePipeline(req, engine)
-                    responseQueue.put(wrapResponse(MessageType.EXECUTE_PIPELINE_RESPONSE, resp))
+                if (engine.isHeapPressure()) {
+                    val req = ExecutePipelineRequest.parseFrom(envelope.payload)
+                    responseQueue.put(wrapResponse(MessageType.EXECUTE_PIPELINE_RESPONSE,
+                        ExecutePipelineResponse.newBuilder()
+                            .setSuccess(false)
+                            .setError("Heap memory pressure — retry later")
+                            .setErrorClass(ErrorClass.TRANSIENT)
+                            .setErrorPhase(ErrorPhase.INTERNAL)
+                            .setErrorCode(ErrorCode.HEAP_PRESSURE)
+                            .setRequestId(req.requestId)
+                            .build()))
+                } else {
+                    val req = ExecutePipelineRequest.parseFrom(envelope.payload)
+                    submitWork {
+                        val resp = TransportHandlers.handleExecutePipeline(req, engine)
+                        responseQueue.put(wrapResponse(MessageType.EXECUTE_PIPELINE_RESPONSE, resp))
+                    }
                 }
             }
 
@@ -231,6 +257,18 @@ class StdioProtoTransport(
         return StdioEnvelope.newBuilder()
             .setType(type)
             .setPayload(payload.toByteString())
+            .build()
+    }
+
+    // EB02: Heap backpressure rejection response
+    private fun heapPressureResponse(requestId: String): ExecuteResponse {
+        return ExecuteResponse.newBuilder()
+            .setSuccess(false)
+            .setError("Heap memory pressure — retry later")
+            .setErrorClass(ErrorClass.TRANSIENT)
+            .setErrorPhase(ErrorPhase.INTERNAL)
+            .setErrorCode(ErrorCode.HEAP_PRESSURE)
+            .setRequestId(requestId)
             .build()
     }
 
