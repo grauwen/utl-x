@@ -149,6 +149,15 @@ class HttpTransport(
 
                 // ── Execute transformation ──
                 post("/api/execute/{id}") {
+                    // EF15: Heap backpressure — reject before processing to prevent OOM
+                    if (engine.isHeapPressure()) {
+                        call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                            "success" to false,
+                            "error" to "Heap memory pressure — retry later",
+                            "error_code" to "HEAP_PRESSURE"
+                        ))
+                        return@post
+                    }
                     val id = call.parameters["id"]
                         ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing transformation ID"))
                     val req = call.receive<ExecuteRequestBody>()
@@ -177,6 +186,14 @@ class HttpTransport(
 
                 // ── Batch execute ──
                 post("/api/execute-batch/{id}") {
+                    if (engine.isHeapPressure()) {
+                        call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                            "success" to false,
+                            "error" to "Heap memory pressure — retry later",
+                            "error_code" to "HEAP_PRESSURE"
+                        ))
+                        return@post
+                    }
                     val id = call.parameters["id"]
                         ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing transformation ID"))
                     val req = call.receive<BatchRequest>()
@@ -207,6 +224,14 @@ class HttpTransport(
 
                 // ── Pipeline execute ──
                 post("/api/execute-pipeline") {
+                    if (engine.isHeapPressure()) {
+                        call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                            "success" to false,
+                            "error" to "Heap memory pressure — retry later",
+                            "error_code" to "HEAP_PRESSURE"
+                        ))
+                        return@post
+                    }
                     val req = call.receive<PipelineRequest>()
 
                     val proto = ExecutePipelineRequest.newBuilder()
