@@ -539,33 +539,40 @@ class HttpClient:
     Implements the same interface as StdioProtoClient for test compatibility.
     """
 
-    def __init__(self, jar_path, port=8085, workers=1, verbose=False):
+    def __init__(self, jar_path, port=8085, admin_port=18081, workers=1, verbose=False):
         self.jar_path = jar_path
         self.port = port
+        self.admin_port = admin_port
         self.workers = workers
         self.verbose = verbose
         self.process = None
         self.base_url = f"http://localhost:{port}"
+        self.admin_url = f"http://localhost:{admin_port}"
+        self.admin_key = "test-admin-key"
 
     def start(self):
         java = self._find_java()
         cmd = [java, "-jar", str(self.jar_path), "--mode", "http",
-               "--http-port", str(self.port), "--workers", str(self.workers)]
+               "--http-port", str(self.port), "--admin-port", str(self.admin_port),
+               "--workers", str(self.workers)]
         if self.verbose:
             print(f"  Starting (http): {' '.join(cmd)}")
+        env = os.environ.copy()
+        env["UTLXE_ADMIN_KEY"] = self.admin_key
         self.process = subprocess.Popen(
             cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            env=env
         )
-        # Wait for HTTP server to start
+        # Wait for HTTP server to start (check both data and admin ports)
         import urllib.request
         import urllib.error
         for _ in range(30):
             time.sleep(0.5)
             try:
-                req = urllib.request.Request(f"{self.base_url}/api/health")
+                req = urllib.request.Request(f"{self.admin_url}/health")
                 resp = urllib.request.urlopen(req, timeout=2)
                 if resp.status == 200:
                     return
@@ -689,18 +696,233 @@ class HttpClient:
         )
 
     def execute_concurrent_burst(self, transform_id, payloads, content_type="application/json"):
-        """HTTP doesn't support concurrent burst the same way — run sequentially."""
+        """Fire HTTP requests concurrently using a thread pool."""
+        from concurrent.futures import ThreadPoolExecutor, as_completed
         results = []
         errors_list = []
-        wall_start = time.perf_counter()
-        for i, payload in enumerate(payloads):
+        max_threads = min(len(payloads), 20)  # cap at 20 concurrent connections
+
+        def fire(i, payload):
             start = time.perf_counter()
-            success, output, error, corr = self.execute(
-                transform_id, payload, content_type, f"conc-{i+1}")
-            duration_ms = (time.perf_counter() - start) * 1000
-            results.append((success, output, error, f"conc-{i+1}", duration_ms))
+            try:
+                success, output, error, corr = self.execute(
+                    transform_id, payload, content_type, f"conc-{i+1}")
+                duration_ms = (time.perf_counter() - start) * 1000
+                return (success, output, error, f"conc-{i+1}", duration_ms)
+            except Exception as e:
+                duration_ms = (time.perf_counter() - start) * 1000
+                return (False, "", str(e), f"conc-{i+1}", duration_ms)
+
+        wall_start = time.perf_counter()
+        with ThreadPoolExecutor(max_workers=max_threads) as pool:
+            futures = {pool.submit(fire, i, p): i for i, p in enumerate(payloads)}
+            for future in as_completed(futures):
+                results.append(future.result())
         wall_ms = (time.perf_counter() - wall_start) * 1000
+        # Sort by correlation ID to match expected order
+        results.sort(key=lambda r: int(r[3].split("-")[1]))
         return results, errors_list, wall_ms
+
+    # ── Admin API helpers (for admin-api conformance tests) ──
+
+    def _admin_request(self, method, path, data=None, headers=None, expect_error=False):
+        """Send request to admin port with auth key."""
+        import urllib.request
+        import urllib.error
+        url = f"{self.admin_url}{path}"
+        hdrs = {"X-Admin-Key": self.admin_key}
+        if headers:
+            hdrs.update(headers)
+        body = None
+        if data is not None:
+            if isinstance(data, str):
+                body = data.encode("utf-8")
+                if "Content-Type" not in hdrs:
+                    hdrs["Content-Type"] = "text/plain"
+            elif isinstance(data, dict):
+                body = json.dumps(data).encode("utf-8")
+                hdrs["Content-Type"] = "application/json"
+            elif isinstance(data, bytes):
+                body = data
+        req = urllib.request.Request(url, data=body, headers=hdrs, method=method)
+        try:
+            resp = urllib.request.urlopen(req, timeout=30)
+            resp_body = resp.read().decode("utf-8")
+            try:
+                return resp.status, json.loads(resp_body) if resp_body else {}
+            except json.JSONDecodeError:
+                return resp.status, {"raw": resp_body}
+        except urllib.error.HTTPError as e:
+            body_bytes = e.read()
+            body_text = body_bytes.decode("utf-8") if body_bytes else ""
+            try:
+                return e.code, json.loads(body_text)
+            except:
+                return e.code, {"error": body_text}
+        except Exception as e:
+            if expect_error:
+                return 0, {"error": str(e)}
+            raise
+
+    def _raw_request(self, method, url, headers=None):
+        """Send request WITHOUT admin key (for auth tests)."""
+        import urllib.request
+        import urllib.error
+        req = urllib.request.Request(url, headers=headers or {}, method=method)
+        try:
+            resp = urllib.request.urlopen(req, timeout=10)
+            return resp.status, {}
+        except urllib.error.HTTPError as e:
+            return e.code, {}
+
+    def admin_upload_transformation(self, name, source, config=None):
+        """Upload a .utlx transformation via admin API."""
+        status, resp = self._admin_request("POST", f"/admin/transformations/{name}", data=source)
+        return status == 200 or status == 201, resp
+
+    def admin_list_transformations(self):
+        """List all loaded transformations."""
+        status, resp = self._admin_request("GET", "/admin/transformations")
+        # Response is {transformations: [...]} — extract the list
+        if isinstance(resp, dict) and "transformations" in resp:
+            return status == 200, resp["transformations"]
+        return status == 200, resp if isinstance(resp, list) else []
+
+    def admin_delete_transformation(self, name):
+        """Delete a transformation."""
+        status, resp = self._admin_request("DELETE", f"/admin/transformations/{name}")
+        return status == 200, resp
+
+    def admin_test_transformation(self, name, input_data, content_type="application/json"):
+        """Test a transformation via admin API test endpoint."""
+        status, resp = self._admin_request("POST", f"/admin/transformations/{name}/test",
+                                           data=input_data,
+                                           headers={"Content-Type": content_type})
+        return status == 200, resp
+
+    def admin_upload_schema(self, name, schema_data, content_type="application/xml"):
+        """Upload a schema via admin API."""
+        status, resp = self._admin_request("POST", f"/admin/schemas/{name}",
+                                           data=schema_data,
+                                           headers={"Content-Type": content_type})
+        return status == 200 or status == 201, resp
+
+    def admin_list_schemas(self):
+        """List all loaded schemas."""
+        status, resp = self._admin_request("GET", "/admin/schemas")
+        return status == 200, resp
+
+    def admin_export_bundle(self):
+        """Export bundle as ZIP."""
+        import urllib.request
+        import urllib.error
+        url = f"{self.admin_url}/admin/bundle/export"
+        req = urllib.request.Request(url, headers={"X-Admin-Key": self.admin_key})
+        try:
+            resp = urllib.request.urlopen(req, timeout=30)
+            return resp.status == 200, resp.read()
+        except urllib.error.HTTPError as e:
+            return False, e.read()
+
+    def admin_upload_bundle(self, zip_bytes):
+        """Upload a bundle ZIP."""
+        status, resp = self._admin_request("POST", "/admin/bundle/import",
+                                           data=zip_bytes,
+                                           headers={"Content-Type": "application/zip"})
+        return status == 200 or status == 201, resp
+
+    def admin_get_info(self):
+        """Get engine info."""
+        status, resp = self._admin_request("GET", "/admin/info")
+        return status == 200, resp
+
+    def admin_pause_transformation(self, name):
+        """Pause a transformation."""
+        status, resp = self._admin_request("POST", f"/admin/transformations/{name}/pause")
+        return status == 200, resp
+
+    def admin_resume_transformation(self, name):
+        """Resume a transformation."""
+        status, resp = self._admin_request("POST", f"/admin/transformations/{name}/resume")
+        return status == 200, resp
+
+    def data_discover_transformations(self):
+        """Discovery endpoint — try data port first, then admin port."""
+        import urllib.request
+        import urllib.error
+        for base in [self.base_url, self.admin_url]:
+            for path in ["/api/transformations", "/admin/transformations"]:
+                try:
+                    hdrs = {}
+                    if "/admin" in path:
+                        hdrs["X-Admin-Key"] = self.admin_key
+                    req = urllib.request.Request(f"{base}{path}", headers=hdrs)
+                    resp = urllib.request.urlopen(req, timeout=10)
+                    data = json.loads(resp.read().decode("utf-8"))
+                    # Extract list from wrapper if needed
+                    if isinstance(data, dict) and "transformations" in data:
+                        return True, data["transformations"]
+                    if isinstance(data, list):
+                        return True, data
+                except:
+                    continue
+        return False, []
+
+    def dapr_invoke_binding(self, binding_name, data, metadata=None, headers=None):
+        """Simulate Dapr binding invocation on data port: POST /{bindingName}."""
+        import urllib.request
+        import urllib.error
+        url = f"{self.base_url}/{binding_name}"
+        # Dapr sends the raw payload as POST body with content-type
+        if isinstance(data, str):
+            body = data.encode("utf-8")
+        elif isinstance(data, dict):
+            body = json.dumps(data).encode("utf-8")
+        else:
+            body = data
+        hdrs = {"Content-Type": "application/json"}
+        if metadata:
+            for k, v in metadata.items():
+                hdrs[k] = str(v)
+        if headers:
+            hdrs.update(headers)
+        req = urllib.request.Request(url, data=body, headers=hdrs, method="POST")
+        try:
+            resp = urllib.request.urlopen(req, timeout=30)
+            resp_body = resp.read().decode("utf-8")
+            try:
+                return resp.status, json.loads(resp_body) if resp_body else {}
+            except json.JSONDecodeError:
+                return resp.status, {"raw": resp_body}
+        except urllib.error.HTTPError as e:
+            body_bytes = e.read()
+            body_text = body_bytes.decode("utf-8") if body_bytes else ""
+            try:
+                return e.code, json.loads(body_text) if body_text else {}
+            except json.JSONDecodeError:
+                return e.code, {"error": body_text}
+
+    def dapr_options_probe(self, binding_name):
+        """Send OPTIONS /{bindingName} (Dapr startup probe)."""
+        import urllib.request
+        import urllib.error
+        url = f"{self.base_url}/{binding_name}"
+        req = urllib.request.Request(url, method="OPTIONS")
+        try:
+            resp = urllib.request.urlopen(req, timeout=10)
+            return resp.status, {}
+        except urllib.error.HTTPError as e:
+            return e.code, {}
+
+    def dapr_get_bindings(self):
+        """Get Dapr binding configuration."""
+        import urllib.request
+        req = urllib.request.Request(f"{self.base_url}/dapr/subscribe")
+        try:
+            resp = urllib.request.urlopen(req, timeout=10)
+            return True, json.loads(resp.read().decode("utf-8"))
+        except:
+            return False, {}
 
 
 # =========================================================================
@@ -1055,6 +1277,165 @@ def run_test(client, test_data, verbose=False, test_file_path=None):
 
         return True, f"All {len(strategies)} strategies match"
 
+    # ── Admin API multi-step test ──
+    if "admin_api" in test_data or "dapr" in test_data:
+        if not isinstance(client, HttpClient):
+            return None, "Skipped: admin_api/dapr tests require --mode http"
+        section = test_data.get("admin_api") or test_data.get("dapr") or {}
+        steps = section.get("steps", [])
+        for i, step in enumerate(steps):
+            action = step["action"]
+            step_desc = f"step {i+1}/{len(steps)} ({action})"
+            try:
+                if action == "upload_transformation":
+                    ok, resp = client.admin_upload_transformation(step["name"], step["source"])
+                    if not ok:
+                        return False, f"{step_desc}: upload failed: {resp}"
+
+                elif action == "execute":
+                    inp = step["input"]
+                    ok, out, err, _ = client.execute(step["name"], inp["data"].strip())
+                    if "expected_error" in step:
+                        # Expect failure
+                        if ok:
+                            return False, f"{step_desc}: expected error but succeeded"
+                    elif not ok:
+                        return False, f"{step_desc}: execute failed: {err}"
+                    elif "expected" in step:
+                        match, diff = compare_output(step["expected"]["data"], out, step["expected"]["format"])
+                        if not match:
+                            return False, f"{step_desc}: {diff}"
+
+                elif action == "list_transformations":
+                    ok, resp = client.admin_list_transformations()
+                    if not ok:
+                        return False, f"{step_desc}: list failed"
+                    if "expected" in step:
+                        names = [t.get("name", t.get("transformationId", "")) for t in resp] if isinstance(resp, list) else []
+                        for exp in step["expected"]:
+                            if exp["name"] not in names:
+                                return False, f"{step_desc}: expected '{exp['name']}' not found in {names}"
+
+                elif action == "delete_transformation":
+                    ok, resp = client.admin_delete_transformation(step["name"])
+                    if not ok and not step.get("expect_error"):
+                        return False, f"{step_desc}: delete failed: {resp}"
+
+                elif action == "test_transformation":
+                    inp = step.get("input", {})
+                    ok, resp = client.admin_test_transformation(
+                        step["name"], inp.get("data", "{}"), inp.get("content_type", "application/json"))
+                    if "expected" in step:
+                        if step.get("expect_error"):
+                            if ok:
+                                return False, f"{step_desc}: expected error but succeeded"
+                        elif not ok:
+                            return False, f"{step_desc}: test failed: {resp}"
+
+                elif action == "upload_schema":
+                    ok, resp = client.admin_upload_schema(
+                        step["name"], step["source"], step.get("content_type", "application/xml"))
+                    if not ok:
+                        return False, f"{step_desc}: schema upload failed: {resp}"
+
+                elif action == "list_schemas":
+                    ok, resp = client.admin_list_schemas()
+                    if not ok:
+                        return False, f"{step_desc}: list schemas failed"
+
+                elif action == "export_bundle":
+                    ok, data = client.admin_export_bundle()
+                    if not ok:
+                        return False, f"{step_desc}: export failed"
+
+                elif action == "upload_bundle":
+                    ok, resp = client.admin_upload_bundle(step.get("data", b""))
+                    if not ok:
+                        return False, f"{step_desc}: bundle upload failed: {resp}"
+
+                elif action == "discover_transformations":
+                    ok, resp = client.data_discover_transformations()
+                    if not ok:
+                        return False, f"{step_desc}: discovery failed"
+                    if "expected" in step:
+                        names = [t.get("name", t.get("transformationId", "")) for t in resp] if isinstance(resp, list) else []
+                        for exp in step["expected"]:
+                            if exp["name"] not in names:
+                                return False, f"{step_desc}: expected '{exp['name']}' not in discovery: {names}"
+
+                elif action == "get_info":
+                    ok, resp = client.admin_get_info()
+                    if not ok:
+                        return False, f"{step_desc}: get info failed"
+
+                elif action == "request_without_key":
+                    method = step.get("method", "GET")
+                    path = step.get("path", "/")
+                    # /health, /metrics, /admin/* are all on admin port
+                    port = step.get("port", client.admin_port)
+                    url = f"http://localhost:{port}{path}"
+                    status, _ = client._raw_request(method, url)
+                    if "expected_error" in step:
+                        exp_status = step["expected_error"]["status"]
+                        if status != exp_status:
+                            return False, f"{step_desc}: expected status {exp_status}, got {status}"
+                    elif "expected" in step:
+                        exp_status = step["expected"]["status"]
+                        if status != exp_status:
+                            return False, f"{step_desc}: expected status {exp_status}, got {status}"
+
+                elif action == "pause_transformation":
+                    ok, resp = client.admin_pause_transformation(step["name"])
+                    if not ok:
+                        return False, f"{step_desc}: pause failed: {resp}"
+
+                elif action == "resume_transformation":
+                    ok, resp = client.admin_resume_transformation(step["name"])
+                    if not ok:
+                        return False, f"{step_desc}: resume failed: {resp}"
+
+                elif action == "options_probe":
+                    binding = step.get("binding_name", step.get("path", "test").strip("/"))
+                    status, _ = client.dapr_options_probe(binding)
+                    exp_status = step.get("expected_status", step.get("expected", {}).get("status", 200))
+                    if status != exp_status:
+                        return False, f"{step_desc}: expected status {exp_status}, got {status}"
+
+                elif action == "dapr_invoke_binding":
+                    binding = step.get("binding_name", step.get("name", "test"))
+                    inp = step.get("input", {})
+                    data = inp.get("data", step.get("data", "{}"))
+                    if isinstance(data, str):
+                        data = data.strip()
+                    metadata = step.get("metadata", {})
+                    headers = step.get("headers", {})
+                    status, resp = client.dapr_invoke_binding(binding, data, metadata, headers)
+                    exp_status = step.get("expected", {}).get("status", step.get("expected_error", {}).get("status", 200))
+                    if "expected_error" in step:
+                        exp_status = step["expected_error"]["status"]
+                    if status != exp_status:
+                        return False, f"{step_desc}: expected status {exp_status}, got {status}"
+
+                elif action == "test_transformation":
+                    inp = step.get("input", {})
+                    ok, resp = client.admin_test_transformation(
+                        step["name"], inp.get("data", "{}"), inp.get("content_type", "application/json"))
+                    if not ok and not step.get("expect_error"):
+                        return False, f"{step_desc}: test failed: {resp}"
+
+                elif action == "get_dapr_bindings":
+                    ok, resp = client.dapr_get_bindings()
+                    if not ok:
+                        return False, f"{step_desc}: get bindings failed"
+
+                else:
+                    return False, f"{step_desc}: unknown dapr action '{action}'"
+
+            except Exception as e:
+                return False, f"{step_desc}: {e}"
+
+        return True, f"All {len(steps)} dapr steps passed"
+
     # ── Hot reload test ──
     if "hot_reload" in test_data:
         hr = test_data["hot_reload"]
@@ -1252,7 +1633,7 @@ def run_all_transports(jar_path, tests, args):
     print(f"  stdio-proto ready: state={state}, uptime={uptime}ms")
 
     print(f"Starting http engine (port {args.http_port})...")
-    http_client = HttpClient(jar_path, port=args.http_port, workers=args.workers, verbose=args.verbose)
+    http_client = HttpClient(jar_path, port=args.http_port, admin_port=args.admin_port, workers=args.workers, verbose=args.verbose)
     http_client.start()
     state, uptime, _, _, _ = http_client.health()
     print(f"  http ready: state={state}, uptime={uptime}ms")
@@ -1350,11 +1731,12 @@ def main():
     parser.add_argument("test_name", nargs="?", help="Specific test name")
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
     parser.add_argument("--jar", help="Path to UTLXe JAR")
-    parser.add_argument("--workers", type=int, default=1, help="Worker threads (default: 1)")
+    parser.add_argument("--workers", type=int, default=4, help="Worker threads (default: 4)")
     parser.add_argument("--mode", choices=["stdio-proto", "stdio-json", "http", "all"], default="stdio-proto",
                         help="Transport mode (default: stdio-proto). 'all' runs each test through all transports.")
     parser.add_argument("--bundle", help="Bundle path (required for stdio-json mode)")
     parser.add_argument("--http-port", type=int, default=18085, help="HTTP port for http mode tests (default: 18085)")
+    parser.add_argument("--admin-port", type=int, default=18081, help="Admin port for http mode tests (default: 18081)")
     args = parser.parse_args()
 
     # Find JAR
@@ -1395,7 +1777,7 @@ def main():
             print(f"Error starting UTLXe: {e}")
             sys.exit(1)
     elif args.mode == "http":
-        client = HttpClient(jar_path, port=args.http_port, workers=args.workers, verbose=args.verbose)
+        client = HttpClient(jar_path, port=args.http_port, admin_port=args.admin_port, workers=args.workers, verbose=args.verbose)
         try:
             client.start()
             state, uptime, _, _, _ = client.health()

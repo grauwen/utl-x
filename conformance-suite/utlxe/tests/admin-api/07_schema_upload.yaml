@@ -7,8 +7,8 @@ transport: http
 admin_api:
   steps:
     - action: upload_schema
-      filename: "order.json"
-      content: |
+      name: "order.json"
+      source: |
         {
           "$schema": "http://json-schema.org/draft-07/schema#",
           "type": "object",

@@ -7,8 +7,8 @@ transport: http
 admin_api:
   steps:
     - action: upload_schema
-      filename: "order.json"
-      content: |
+      name: "order.json"
+      source: |
         {"type": "object", "properties": {"id": {"type": "string"}}}
 
     - action: upload_transformation
