@@ -160,6 +160,11 @@ enum ErrorCode {
   MAX_CONCURRENT_EXCEEDED = 8;       // maxConcurrent limit reached, request rejected
   MAX_INPUT_SIZE_EXCEEDED = 9;       // payload exceeds maxInputSize
   INTERNAL_ERROR = 10;               // engine-internal error (not payload-related)
+  HEAP_PRESSURE = 11;                // EF15/EB02: heap backpressure active — retry after short delay
+                                     // error_class will be TRANSIENT. The wrapper should hold the
+                                     // message and retry after 1-2 seconds (GC typically clears
+                                     // pressure within that window). Distinct from MAX_CONCURRENT_EXCEEDED
+                                     // (concurrency limit) — this is a memory limit.
 }
 
 message ValidationError {
