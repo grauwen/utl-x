@@ -160,6 +160,7 @@ class HttpTransport(
                     }
                     val id = call.parameters["id"]
                         ?: return@post call.respond(HttpStatusCode.BadRequest, mapOf("error" to "Missing transformation ID"))
+                    // Note: paused check is in TransportHandlers.handleExecute() — covers all transports
                     val req = call.receive<ExecuteRequestBody>()
 
                     val proto = ExecuteRequest.newBuilder()
@@ -170,7 +171,11 @@ class HttpTransport(
                         .build()
                     val resp = TransportHandlers.handleExecute(proto, engine)
 
-                    val status = if (resp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
+                    val status = when {
+                        resp.success -> HttpStatusCode.OK
+                        resp.errorClass == ErrorClass.TRANSIENT -> HttpStatusCode.ServiceUnavailable
+                        else -> HttpStatusCode.UnprocessableEntity
+                    }
                     call.respond(status, ExecuteResponseBody(
                         success = resp.success,
                         output = if (resp.success) resp.output.toStringUtf8() else null,
@@ -242,7 +247,11 @@ class HttpTransport(
                         .build()
                     val resp = TransportHandlers.handleExecutePipeline(proto, engine)
 
-                    val status = if (resp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
+                    val status = when {
+                        resp.success -> HttpStatusCode.OK
+                        resp.errorClass == ErrorClass.TRANSIENT -> HttpStatusCode.ServiceUnavailable
+                        else -> HttpStatusCode.UnprocessableEntity
+                    }
                     call.respond(status, PipelineResponse(
                         success = resp.success,
                         output = if (resp.success) resp.output.toStringUtf8() else null,

@@ -159,6 +159,18 @@ object TransportHandlers {
                 .setRequestId(req.requestId)
                 .build()
 
+        // EF03: Reject if transformation is paused (applies to all transports)
+        if (instance.paused) {
+            return ExecuteResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Transformation '${req.transformationId}' is paused")
+                .setErrorClass(ErrorClass.TRANSIENT)
+                .setErrorPhase(ErrorPhase.INTERNAL)
+                .setCorrelationId(req.correlationId)
+                .setRequestId(req.requestId)
+                .build()
+        }
+
         instance.recordExecution()
         // EB01: Use raw bytes from proto payload — preserves original encoding
         val rawBytes = req.payload.toByteArray()
@@ -245,13 +257,16 @@ object TransportHandlers {
         val instance = registry.get(req.transformationId)
         val builder = ExecuteBatchResponse.newBuilder()
 
-        if (instance == null) {
+        if (instance == null || instance.paused) {
+            val error = if (instance == null) "Transformation not found: ${req.transformationId}"
+                        else "Transformation '${req.transformationId}' is paused"
+            val errorClass = if (instance == null) ErrorClass.PERMANENT else ErrorClass.TRANSIENT
             req.itemsList.forEach { item ->
                 builder.addResults(
                     ExecuteResponse.newBuilder()
                         .setSuccess(false)
-                        .setError("Transformation not found: ${req.transformationId}")
-                        .setErrorClass(ErrorClass.PERMANENT)
+                        .setError(error)
+                        .setErrorClass(errorClass)
                         .setErrorPhase(ErrorPhase.INTERNAL)
                         .setCorrelationId(item.correlationId)
                         .setRequestId(item.requestId)
@@ -350,6 +365,18 @@ object TransportHandlers {
                     .setRequestId(req.requestId)
                     .setStagesCompleted(stagesCompleted)
                     .build()
+
+            if (instance.paused) {
+                return ExecutePipelineResponse.newBuilder()
+                    .setSuccess(false)
+                    .setError("Transformation '$transformId' is paused (stage ${stagesCompleted + 1})")
+                    .setErrorClass(ErrorClass.TRANSIENT)
+                    .setErrorPhase(ErrorPhase.INTERNAL)
+                    .setCorrelationId(req.correlationId)
+                    .setRequestId(req.requestId)
+                    .setStagesCompleted(stagesCompleted)
+                    .build()
+            }
 
             instance.recordExecution()
 

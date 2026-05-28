@@ -388,6 +388,102 @@ class HttpTransportTest {
         assertTrue(body.contains("TRANSFORMATION_PAUSED"), "Should contain error code: $body")
     }
 
+    // ── Pause/Resume on data plane execute ──
+
+    @Test
+    fun `execute paused transformation returns 503`() {
+        // Load a transformation
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"pause-exec","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        // Execute succeeds before pause
+        val (okStatus, okBody) = post("/api/execute/pause-exec", """{"payload":"{\"x\":1}","contentType":"application/json"}""")
+        assertEquals(200, okStatus, "Pre-pause execute should succeed: $okBody")
+        assertTrue(okBody.contains("true"), "Should be successful: $okBody")
+
+        // Pause the transformation
+        engine.registry.get("pause-exec")!!.paused = true
+
+        // Execute should now return 503
+        val (pausedStatus, pausedBody) = post("/api/execute/pause-exec", """{"payload":"{\"x\":1}","contentType":"application/json"}""")
+        assertEquals(503, pausedStatus, "Paused execute should return 503: $pausedBody")
+        assertTrue(pausedBody.contains("paused"), "Should mention paused: $pausedBody")
+
+        // Resume the transformation
+        engine.registry.get("pause-exec")!!.paused = false
+
+        // Execute should work again
+        val (resumeStatus, resumeBody) = post("/api/execute/pause-exec", """{"payload":"{\"x\":1}","contentType":"application/json"}""")
+        assertEquals(200, resumeStatus, "Post-resume execute should succeed: $resumeBody")
+        assertTrue(resumeBody.contains("true"), "Should be successful after resume: $resumeBody")
+    }
+
+    @Test
+    fun `batch execute paused transformation returns failure for all items`() {
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"pause-batch","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        // Pause
+        engine.registry.get("pause-batch")!!.paused = true
+
+        val (status, body) = post("/api/execute-batch/pause-batch", """
+            {"items":[{"payload":"{\"x\":1}","contentType":"application/json"},{"payload":"{\"x\":2}","contentType":"application/json"}]}
+        """.trimIndent())
+        // Batch returns 200 with individual results showing failure
+        assertTrue(body.contains("paused"), "Batch should mention paused: $body")
+        assertTrue(body.contains("false"), "Batch items should fail: $body")
+
+        // Resume and verify batch works
+        engine.registry.get("pause-batch")!!.paused = false
+        val (okStatus, okBody) = post("/api/execute-batch/pause-batch", """
+            {"items":[{"payload":"{\"x\":1}","contentType":"application/json"}]}
+        """.trimIndent())
+        assertEquals(200, okStatus, "Post-resume batch should succeed: $okBody")
+        assertTrue(okBody.contains("true"), "Batch should succeed after resume: $okBody")
+    }
+
+    @Test
+    fun `pipeline execute with paused stage returns failure`() {
+        // Load two transformations
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"pipe-a","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+        post("/api/transform", """{"transformationId":"pipe-b","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        // Pause stage B
+        engine.registry.get("pipe-b")!!.paused = true
+
+        val (status, body) = post("/api/execute-pipeline", """
+            {"transformationIds":["pipe-a","pipe-b"],"payload":"{\"x\":1}","contentType":"application/json"}
+        """.trimIndent())
+        assertTrue(body.contains("paused"), "Pipeline should mention paused: $body")
+        assertFalse(body.contains("\"success\":true"), "Pipeline should fail: $body")
+
+        // Resume and verify pipeline works
+        engine.registry.get("pipe-b")!!.paused = false
+        val (okStatus, okBody) = post("/api/execute-pipeline", """
+            {"transformationIds":["pipe-a","pipe-b"],"payload":"{\"x\":1}","contentType":"application/json"}
+        """.trimIndent())
+        assertEquals(200, okStatus, "Post-resume pipeline should succeed: $okBody")
+        assertTrue(okBody.contains("true"), "Pipeline should succeed after resume: $okBody")
+    }
+
+    @Test
+    fun `dapr binding for paused transformation returns 503`() {
+        val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
+        post("/api/transform", """{"transformationId":"pause-dapr","utlxSource":"$utlx","payload":"{}","strategy":"TEMPLATE"}""")
+
+        // Pause
+        engine.registry.get("pause-dapr")!!.paused = true
+
+        val (status, body) = post("/pause-dapr", """{"x":1}""")
+        assertEquals(503, status, "Paused Dapr binding should return 503: $body")
+
+        // Resume
+        engine.registry.get("pause-dapr")!!.paused = false
+        val (okStatus, okBody) = post("/pause-dapr", """{"x":1}""")
+        assertEquals(200, okStatus, "Resumed Dapr binding should work: $okBody")
+    }
+
     /** Helper: load a transformation and set topic messaging config directly on the registry. */
     private fun loadTransformationWithTopicConfig(name: String, topic: String) {
         val utlx = "%utlx 1.0\\ninput json\\noutput json\\n---\\n\$input"
