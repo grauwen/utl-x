@@ -973,7 +973,7 @@ async function renderConfig() {
   const pressureColor = bp.pressure ? 'status-error' : 'status-synced';
   const pressureText = bp.pressure ? 'REJECTING — heap pressure active' : 'normal';
   const usagePercent = parseInt(bp.heap_usage) || 0;
-  const barColor = usagePercent > 85 ? '#dc3545' : usagePercent > 70 ? '#ffc107' : '#28a745';
+  const barColor = usagePercent > 92 ? '#dc3545' : usagePercent > 80 ? '#ffc107' : '#28a745';
 
   layout('config', `
     <div class="card">
@@ -998,7 +998,7 @@ async function renderConfig() {
       <div style="display:flex;gap:8px;align-items:center">
         <label style="margin:0">Threshold:</label>
         <select id="bp-threshold" style="width:auto">
-          ${[50,60,70,75,80,85,90,95].map(v => `<option ${parseInt(bp.threshold) === v ? 'selected' : ''}>${v}%</option>`).join('')}
+          ${[80,85,88,90,92,95,98].map(v => `<option ${parseInt(bp.threshold) === v ? 'selected' : ''}>${v}%</option>`).join('')}
         </select>
         <button class="btn btn-primary btn-sm" onclick="doSetBackpressure()">Apply</button>
         <button class="btn btn-sm" onclick="renderConfig()">Refresh</button>
@@ -1009,18 +1009,30 @@ async function renderConfig() {
     <div class="card">
       <h2>Engine Configuration</h2>
       <table>
-        ${Object.entries(config).map(([k, v]) =>
-          `<tr><td style="width:200px"><strong>${k}</strong></td><td>${v ?? '<span style="color:#aaa">not set</span>'}</td></tr>`
-        ).join('')}
+        <tr><td style="width:200px"><strong>Name</strong></td><td>${config.name || 'utlxe'}</td></tr>
+        <tr><td><strong>Default strategy</strong></td><td>${config.defaultStrategy || 'COMPILED'}</td></tr>
+        <tr><td><strong>Health port</strong></td><td>${config.healthPort || 8081}</td></tr>
+        <tr><td><strong>Data directory</strong></td><td>${config.dataDir || '<span style="color:#aaa">not set (memory-only)</span>'}</td></tr>
+        <tr><td><strong>Persistence</strong></td><td>${config.persistence || 'memory-only'}</td></tr>
       </table>
     </div>
 
     <div class="card">
       <h2>Engine Info</h2>
       <table>
-        ${Object.entries(info).map(([k, v]) =>
-          `<tr><td style="width:200px"><strong>${k}</strong></td><td>${typeof v === 'object' ? JSON.stringify(v) : v ?? '<span style="color:#aaa">null</span>'}</td></tr>`
-        ).join('')}
+        <tr><td style="width:200px"><strong>Version</strong></td><td>${info.version || 'unknown'}</td></tr>
+        <tr><td><strong>Mode</strong></td><td>${info.mode || 'open'}</td></tr>
+        <tr><td><strong>Uptime</strong></td><td>${info.uptime_seconds ? Math.round(info.uptime_seconds / 60) + ' min' : 'n/a'}</td></tr>
+        <tr><td><strong>Transformations</strong></td><td>${info.transformations ?? 0}</td></tr>
+        <tr><td><strong>Schemas</strong></td><td>${info.schemas ?? 0}</td></tr>
+        <tr><td><strong>Admin key set</strong></td><td>${info.admin_key_set ? 'Yes' : 'No'}</td></tr>
+        <tr><td><strong>Dapr mode</strong></td><td>${info.dapr_mode || 'none'}</td></tr>
+        <tr><td><strong>Dapr sidecar</strong></td><td>${info.dapr_sidecar ? 'Connected' : 'Not connected'}</td></tr>
+        <tr><td><strong>Log level</strong></td><td>${info.log_level || 'INFO'}</td></tr>
+        <tr><td><strong>Tracing</strong></td><td>${info.tracing ? 'Enabled (Azure Monitor)' : 'Disabled'}</td></tr>
+        <tr><td><strong>Heap threshold</strong></td><td>${info.heap_backpressure_threshold || '92%'} (resume at ${info.heap_backpressure_resume || '80%'})</td></tr>
+        <tr><td><strong>Heap usage</strong></td><td>${info.heap_usage || '0%'}</td></tr>
+        <tr><td><strong>Back-pressure</strong></td><td>${info.backpressure_active ? '<span class="status-error">ACTIVE — rejecting requests</span>' : '<span style="color:#28a745">Normal — accepting requests</span>'}</td></tr>
       </table>
     </div>
   `);

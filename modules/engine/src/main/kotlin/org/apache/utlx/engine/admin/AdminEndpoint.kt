@@ -102,6 +102,8 @@ fun configureAdmin(
                         "deployed_at" to tx.loadedAt.toString(),
                         "messages_processed" to tx.executionCount.get(),
                         "errors" to tx.errorCount.get(),
+                        "inFlight" to tx.inFlight.get(),
+                        "concurrencyRejections" to tx.concurrencyRejections.get(),
                         "sync_status" to syncState.status,
                         "messaging" to messaging
                     )
@@ -126,11 +128,13 @@ fun configureAdmin(
                 call.respond(HttpStatusCode.OK, mapOf(
                     "name" to tx.name,
                     "strategy" to tx.strategy.name,
-                    "status" to "ready",
+                    "status" to if (tx.paused) "paused" else "ready",
                     "source" to tx.source,
                     "deployed_at" to tx.loadedAt.toString(),
                     "messages_processed" to tx.executionCount.get(),
-                    "errors" to tx.errorCount.get()
+                    "errors" to tx.errorCount.get(),
+                    "inFlight" to tx.inFlight.get(),
+                    "concurrencyRejections" to tx.concurrencyRejections.get()
                 ))
             }
 
