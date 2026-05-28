@@ -170,7 +170,11 @@ class UtlxEngineTest {
             engine.start(listOf(transport))
         }.apply { isDaemon = true; start() }
 
-        Thread.sleep(200)
+        // Poll for state transition — avoids race condition with fixed sleep
+        val deadline = System.currentTimeMillis() + 5000
+        while (engine.state != EngineState.RUNNING && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50)
+        }
         assertEquals(EngineState.RUNNING, engine.state)
         assertEquals(1, transport.startCount)
 
@@ -190,7 +194,10 @@ class UtlxEngineTest {
             engine.start(listOf(t1, t2))
         }.apply { isDaemon = true; start() }
 
-        Thread.sleep(500) // allow background threads to start
+        val deadline = System.currentTimeMillis() + 5000
+        while (engine.state != EngineState.RUNNING && System.currentTimeMillis() < deadline) {
+            Thread.sleep(50)
+        }
         assertEquals(EngineState.RUNNING, engine.state)
         assertEquals(1, t1.startCount, "Background transport should have started")
         assertEquals(1, t2.startCount, "Main transport should have started")
