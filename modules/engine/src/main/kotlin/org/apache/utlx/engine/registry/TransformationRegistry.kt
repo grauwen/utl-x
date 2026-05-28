@@ -6,6 +6,7 @@ import org.apache.utlx.engine.validation.SchemaValidator
 import org.slf4j.LoggerFactory
 import java.time.Instant
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 class TransformationRegistry {
@@ -90,7 +91,11 @@ data class TransformationInstance(
     val inputValidators: Map<String, SchemaValidator> = emptyMap(), // Multi-input: name → validator
     val outputValidator: SchemaValidator? = null,
     @Volatile var paused: Boolean = false,
-    val recentErrors: java.util.concurrent.ConcurrentLinkedDeque<ErrorEntry> = java.util.concurrent.ConcurrentLinkedDeque()
+    val recentErrors: java.util.concurrent.ConcurrentLinkedDeque<ErrorEntry> = java.util.concurrent.ConcurrentLinkedDeque(),
+    /** EF21: Current number of in-flight executions for this transformation. */
+    val inFlight: AtomicInteger = AtomicInteger(0),
+    /** EF21: Concurrency rejections counter. */
+    val concurrencyRejections: AtomicLong = AtomicLong(0)
 ) {
     companion object {
         const val MAX_ERROR_RING_SIZE = 100

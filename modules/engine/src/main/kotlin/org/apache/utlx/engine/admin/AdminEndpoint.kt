@@ -808,6 +808,8 @@ fun configureAdmin(
                     "strategy" to tx.config.strategy,
                     "validationPolicy" to tx.config.validationPolicy,
                     "maxConcurrent" to tx.config.maxConcurrent,
+                    "inFlight" to tx.inFlight.get(),
+                    "concurrencyRejections" to tx.concurrencyRejections.get(),
                     "maxInputSize" to tx.config.maxInputSize,
                     "inputs" to tx.config.inputs.map { mapOf("name" to it.name, "schema" to it.schema) },
                     "output_schema" to tx.config.output.schema
@@ -1153,8 +1155,10 @@ fun configureAdmin(
                     "tracing" to org.apache.utlx.engine.telemetry.Tracing.isActive,
                     "tracing_agent" to if (org.apache.utlx.engine.telemetry.Tracing.isActive) "Azure Monitor agent loaded" else "disabled (set APPLICATIONINSIGHTS_CONNECTION_STRING to enable)",
                     "heap_backpressure_threshold" to "${(engine.heapBackpressureThreshold * 100).toInt()}%",
+                    "heap_backpressure_resume" to "${(engine.heapBackpressureResume * 100).toInt()}%",
                     "heap_usage" to "${engine.heapUsagePercent()}%",
-                    "heap_pressure" to engine.isHeapPressure()
+                    "heap_pressure" to engine.isHeapPressure(),
+                    "backpressure_active" to engine.backpressureActive
                 ))
             }
 

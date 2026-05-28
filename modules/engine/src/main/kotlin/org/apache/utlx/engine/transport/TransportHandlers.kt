@@ -37,7 +37,7 @@ object TransportHandlers {
             val source = req.utlxSource
             val strategyName = req.strategy.ifEmpty { "TEMPLATE" }
             val validationPolicy = req.validationPolicy.ifEmpty { "SKIP" }
-            val maxConcurrent = if (req.maxConcurrent > 0) req.maxConcurrent else 1
+            val maxConcurrent = if (req.maxConcurrent > 0) req.maxConcurrent else 0  // 0 = unlimited
 
             logger.info("Loading transformation '{}' [strategy={}, validation={}]", id, strategyName, validationPolicy)
 
@@ -171,6 +171,23 @@ object TransportHandlers {
                 .build()
         }
 
+        // EF21: Per-transformation concurrency limit (0 = unlimited)
+        val maxConcurrent = instance.config.maxConcurrent
+        if (maxConcurrent > 0 && instance.inFlight.get() >= maxConcurrent) {
+            instance.concurrencyRejections.incrementAndGet()
+            return ExecuteResponse.newBuilder()
+                .setSuccess(false)
+                .setError("Transformation '${req.transformationId}' at concurrency limit (${instance.inFlight.get()}/$maxConcurrent)")
+                .setErrorClass(ErrorClass.TRANSIENT)
+                .setErrorPhase(ErrorPhase.INTERNAL)
+                .setCorrelationId(req.correlationId)
+                .setRequestId(req.requestId)
+                .build()
+        }
+
+        instance.inFlight.incrementAndGet()
+        try {
+
         instance.recordExecution()
         // EB01: Use raw bytes from proto payload — preserves original encoding
         val rawBytes = req.payload.toByteArray()
@@ -247,6 +264,10 @@ object TransportHandlers {
         }
 
         return builder.build()
+
+        } finally {
+            instance.inFlight.decrementAndGet()
+        }
     }
 
     fun handleExecuteBatch(
@@ -275,6 +296,29 @@ object TransportHandlers {
             }
             return builder.build()
         }
+
+        // EF21: Per-transformation concurrency limit for batch
+        val maxConcurrent = instance.config.maxConcurrent
+        val batchSize = req.itemsList.size
+        if (maxConcurrent > 0 && instance.inFlight.get() + batchSize > maxConcurrent) {
+            instance.concurrencyRejections.incrementAndGet()
+            req.itemsList.forEach { item ->
+                builder.addResults(
+                    ExecuteResponse.newBuilder()
+                        .setSuccess(false)
+                        .setError("Transformation '${req.transformationId}' at concurrency limit (batch of $batchSize would exceed $maxConcurrent)")
+                        .setErrorClass(ErrorClass.TRANSIENT)
+                        .setErrorPhase(ErrorPhase.INTERNAL)
+                        .setCorrelationId(item.correlationId)
+                        .setRequestId(item.requestId)
+                        .build()
+                )
+            }
+            return builder.build()
+        }
+
+        instance.inFlight.addAndGet(batchSize)
+        try {
 
         val batchOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
@@ -326,6 +370,10 @@ object TransportHandlers {
         }
 
         return builder.build()
+
+        } finally {
+            instance.inFlight.addAndGet(-batchSize)
+        }
     }
 
     fun handleExecutePipeline(
@@ -377,6 +425,24 @@ object TransportHandlers {
                     .setStagesCompleted(stagesCompleted)
                     .build()
             }
+
+            // EF21: Per-transformation concurrency limit for pipeline stages
+            val stageMaxConcurrent = instance.config.maxConcurrent
+            if (stageMaxConcurrent > 0 && instance.inFlight.get() >= stageMaxConcurrent) {
+                instance.concurrencyRejections.incrementAndGet()
+                return ExecutePipelineResponse.newBuilder()
+                    .setSuccess(false)
+                    .setError("Transformation '$transformId' at concurrency limit (stage ${stagesCompleted + 1})")
+                    .setErrorClass(ErrorClass.TRANSIENT)
+                    .setErrorPhase(ErrorPhase.INTERNAL)
+                    .setCorrelationId(req.correlationId)
+                    .setRequestId(req.requestId)
+                    .setStagesCompleted(stagesCompleted)
+                    .build()
+            }
+
+            instance.inFlight.incrementAndGet()
+            try {
 
             instance.recordExecution()
 
@@ -443,6 +509,10 @@ object TransportHandlers {
 
             currentPayload = result.output ?: ""
             stagesCompleted++
+
+            } finally {
+                instance.inFlight.decrementAndGet()
+            }
         }
 
         val durationUs = (System.nanoTime() - startTime) / 1000

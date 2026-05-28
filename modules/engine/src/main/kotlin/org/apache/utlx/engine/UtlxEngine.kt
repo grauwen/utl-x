@@ -33,15 +33,43 @@ class UtlxEngine(val config: EngineConfig) {
     /** Whether the engine is in locked (production) mode — .utlar found on disk. */
     val isLocked: Boolean get() = bundleInfo.mode == "locked"
 
-    /** Heap backpressure threshold (0.0-1.0). When heap usage exceeds this, return 503 to Dapr. */
-    @Volatile var heapBackpressureThreshold: Double = 0.85
+    /** Heap backpressure high-water mark (0.0-1.0). When heap exceeds this, start rejecting.
+     *  Default 0.92 — ZGC handles high heap utilization with sub-ms pauses.
+     *  For G1GC, lower to 0.85. Configurable at runtime via admin API. */
+    @Volatile var heapBackpressureThreshold: Double = 0.92
+
+    /** Heap backpressure low-water mark (0.0-1.0). Once rejecting, only resume accepting
+     *  when heap drops below this. Prevents oscillation (accept-reject-accept sawtooth).
+     *  Default 0.80 — gives 12% recovery headroom before accepting again. */
+    @Volatile var heapBackpressureResume: Double = 0.80
+
+    /** Whether back-pressure is currently active (latched by hysteresis). */
+    @Volatile var backpressureActive: Boolean = false
+        private set
 
     /** Cached heap usage (0.0-1.0) — updated every 100ms by background thread. */
     @Volatile var heapUsage: Double = 0.0
         private set
 
-    /** Check if heap is under pressure (compares cached number against threshold — one comparison). */
-    fun isHeapPressure(): Boolean = heapUsage > heapBackpressureThreshold
+    /** Check if heap is under pressure, with hysteresis to prevent oscillation.
+     *  - Activates when heap > heapBackpressureThreshold (high-water: 92%)
+     *  - Deactivates when heap < heapBackpressureResume (low-water: 80%)
+     *  - Between 80-92% after activation: stays active (keeps rejecting) */
+    fun isHeapPressure(): Boolean {
+        val usage = heapUsage
+        if (backpressureActive) {
+            // Currently rejecting — only stop when heap drops below low-water mark
+            if (usage < heapBackpressureResume) {
+                backpressureActive = false
+            }
+        } else {
+            // Currently accepting — start rejecting when heap exceeds high-water mark
+            if (usage > heapBackpressureThreshold) {
+                backpressureActive = true
+            }
+        }
+        return backpressureActive
+    }
 
     /** Current heap usage as percentage (for Admin API display). */
     fun heapUsagePercent(): Int = (heapUsage * 100).toInt()

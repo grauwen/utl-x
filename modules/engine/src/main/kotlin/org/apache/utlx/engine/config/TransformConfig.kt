@@ -12,7 +12,7 @@ data class TransformConfig(
     val validationPolicy: String = "SKIP",
     val inputs: List<InputSlot> = emptyList(),
     val output: OutputSlot = OutputSlot(),
-    val maxConcurrent: Int = 1,
+    val maxConcurrent: Int = 0,   // EF21: 0 = unlimited, >0 = max in-flight executions before 503
     val maxInputSize: String? = null,   // Per-transformation max input size (e.g., "100KB", "25MB"). Null = use engine default.
     val outputBinding: String? = null,  // Dapr output binding name (legacy, prefer messaging.output)
     val input: MessagingEndpoint? = null,   // EF10: messaging input (queue/topic/eventhub)

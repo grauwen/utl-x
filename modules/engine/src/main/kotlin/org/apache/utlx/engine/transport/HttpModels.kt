@@ -27,7 +27,7 @@ data class LoadRequest(
     val utlxSource: String,
     val strategy: String = "TEMPLATE",
     val validationPolicy: String = "SKIP",
-    val maxConcurrent: Int = 1,
+    val maxConcurrent: Int = 0,   // 0 = unlimited
     val config: Map<String, String> = emptyMap()
 )
 

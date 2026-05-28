@@ -65,14 +65,20 @@ class HeapBackpressureTest {
 
     private fun forceHeapPressure() {
         // Set threshold just below actual usage — triggers real pressure
+        // Set resume to 0.0 so hysteresis never clears (test heap usage is ~30%, well below 80%)
         Thread.sleep(200) // wait for monitor to have a real value
+        engine.heapBackpressureResume = 0.0
         engine.heapBackpressureThreshold = engine.heapUsage - 0.01
         assertTrue(engine.isHeapPressure(), "Precondition: pressure should be active")
     }
 
     private fun clearHeapPressure() {
-        // Set threshold above any realistic usage
+        // Set threshold above any realistic usage and resume below actual usage
+        // to ensure hysteresis clears (backpressureActive = false)
         engine.heapBackpressureThreshold = 1.0
+        engine.heapBackpressureResume = 1.0  // any usage is below 1.0, so hysteresis clears
+        engine.isHeapPressure()  // trigger the hysteresis check to clear the flag
+        engine.heapBackpressureResume = 0.80  // restore default
         assertFalse(engine.isHeapPressure(), "Precondition: pressure should be cleared")
     }
 
@@ -113,8 +119,11 @@ class HeapBackpressureTest {
         assertTrue(engine.isHeapPressure(),
             "Should be under pressure when threshold (${ "%.3f".format(engine.heapBackpressureThreshold)}) < usage (${"%.3f".format(realUsage)})")
 
-        // Set threshold just above actual usage — should clear
+        // Set threshold above actual usage AND resume threshold below usage — hysteresis clears
         engine.heapBackpressureThreshold = realUsage + 0.05
+        engine.heapBackpressureResume = 1.0  // force hysteresis to clear (usage < 1.0)
+        engine.isHeapPressure()  // trigger hysteresis clear
+        engine.heapBackpressureResume = 0.80  // restore default
         assertFalse(engine.isHeapPressure(),
             "Should not be under pressure when threshold (${"%.3f".format(engine.heapBackpressureThreshold)}) > usage (${"%.3f".format(realUsage)})")
     }
