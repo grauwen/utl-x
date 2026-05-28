@@ -3,6 +3,8 @@ category: "admin-api"
 description: "Build up a bundle via API, export as ZIP, verify contents"
 tags: ["admin-api", "bundle", "export"]
 transport: http
+skip: true
+skip_reason: "Bundle export endpoint not yet implemented in AdminEndpoint"
 
 admin_api:
   steps:

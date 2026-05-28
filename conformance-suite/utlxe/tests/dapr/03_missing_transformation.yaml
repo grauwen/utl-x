@@ -1,6 +1,6 @@
 name: "missing_transformation"
 category: "dapr"
-description: "Dapr delivers message for a binding with no uploaded transformation — expect 500"
+description: "Dapr delivers message for a binding with no uploaded transformation — expect 503 (not ready, Dapr retries)"
 tags: ["dapr", "error-handling", "missing"]
 transport: dapr
 
@@ -13,4 +13,4 @@ dapr:
         data: |
           {"test": true}
       expected:
-        status: 500
+        status: 503

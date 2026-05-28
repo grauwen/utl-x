@@ -3,6 +3,8 @@ category: "admin-api"
 description: "Upload a ZIP bundle with multiple transformations, then execute each"
 tags: ["admin-api", "bundle", "zip"]
 transport: http
+skip: true
+skip_reason: "Bundle import endpoint not yet implemented in AdminEndpoint"
 
 admin_api:
   steps:

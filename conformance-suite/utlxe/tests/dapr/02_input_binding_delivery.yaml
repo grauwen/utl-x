@@ -16,7 +16,7 @@ dapr:
         {
           processedOrderId: concat("PROC-", $input.orderId),
           customer: upperCase($input.customerName),
-          total: round($input.quantity * $input.unitPrice, 2)
+          total: roundToDecimalPlaces($input.quantity * $input.unitPrice, 2)
         }
 
     - action: dapr_invoke_binding

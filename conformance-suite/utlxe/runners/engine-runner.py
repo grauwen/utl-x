@@ -869,21 +869,24 @@ class HttpClient:
         return False, []
 
     def dapr_invoke_binding(self, binding_name, data, metadata=None, headers=None):
-        """Simulate Dapr binding invocation on data port: POST /{bindingName}."""
+        """Simulate Dapr binding invocation on data port: POST /{bindingName}.
+        Dapr delivers the raw payload as the POST body — not wrapped in {data:...}."""
         import urllib.request
         import urllib.error
         url = f"{self.base_url}/{binding_name}"
-        # Dapr sends the raw payload as POST body with content-type
+        # Send raw payload directly (as Dapr does)
         if isinstance(data, str):
-            body = data.encode("utf-8")
+            body = data.strip().encode("utf-8")
         elif isinstance(data, dict):
             body = json.dumps(data).encode("utf-8")
         else:
             body = data
         hdrs = {"Content-Type": "application/json"}
+        # Dapr metadata arrives as headers with metadata.* prefix
         if metadata:
             for k, v in metadata.items():
-                hdrs[k] = str(v)
+                key = k if k.startswith("metadata.") else f"metadata.{k}"
+                hdrs[key] = str(v)
         if headers:
             hdrs.update(headers)
         req = urllib.request.Request(url, data=body, headers=hdrs, method="POST")
@@ -1349,7 +1352,17 @@ def run_test(client, test_data, verbose=False, test_file_path=None):
                         return False, f"{step_desc}: export failed"
 
                 elif action == "upload_bundle":
-                    ok, resp = client.admin_upload_bundle(step.get("data", b""))
+                    # Build ZIP from transformations defined in YAML
+                    if "transformations" in step:
+                        import io, zipfile
+                        buf = io.BytesIO()
+                        with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+                            for tx_name, tx_data in step["transformations"].items():
+                                zf.writestr(f"{tx_name}.utlx", tx_data["source"])
+                        zip_bytes = buf.getvalue()
+                    else:
+                        zip_bytes = step.get("data", b"")
+                    ok, resp = client.admin_upload_bundle(zip_bytes)
                     if not ok:
                         return False, f"{step_desc}: bundle upload failed: {resp}"
 
