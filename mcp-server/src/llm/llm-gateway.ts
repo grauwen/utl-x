@@ -2,33 +2,39 @@
  * LLM Gateway - Manages multiple LLM providers
  */
 
-import { LLMProvider, LLMProviderConfig, LLMCompletionRequest, LLMCompletionResponse } from './types.js';
-import { ClaudeProvider } from './providers/claude-provider.js';
+import {
+  LLMProvider,
+  LLMProviderConfig,
+  LLMProviderDeps,
+  LLMCompletionRequest,
+  LLMCompletionResponse,
+} from './types.js';
 import { OllamaProvider } from './providers/ollama-provider.js';
+import { ClaudeCodeProvider } from './providers/claude-code-provider.js';
 
 export class LLMGateway {
   private provider: LLMProvider | null = null;
   private config: LLMProviderConfig;
+  private deps: LLMProviderDeps;
 
-  constructor(config: LLMProviderConfig) {
+  constructor(config: LLMProviderConfig, deps: LLMProviderDeps = {}) {
     this.config = config;
+    this.deps = deps;
     this.initializeProvider();
   }
 
   private initializeProvider(): void {
     switch (this.config.type) {
-      case 'claude':
-        if (!this.config.claude) {
-          throw new Error('Claude configuration is required when type is "claude"');
-        }
-        this.provider = new ClaudeProvider(this.config.claude);
-        break;
-
       case 'ollama':
         if (!this.config.ollama) {
           throw new Error('Ollama configuration is required when type is "ollama"');
         }
         this.provider = new OllamaProvider(this.config.ollama);
+        break;
+
+      case 'claude-code':
+        // claudeCode config is optional — the provider has sensible defaults.
+        this.provider = new ClaudeCodeProvider(this.config.claudeCode ?? {}, this.deps);
         break;
 
       default:
@@ -77,12 +83,12 @@ export class LLMGateway {
       return 'None';
     }
 
-    if (this.config.type === 'claude' && this.config.claude) {
-      return this.config.claude.model;
-    }
-
     if (this.config.type === 'ollama' && this.config.ollama) {
       return this.config.ollama.model;
+    }
+
+    if (this.config.type === 'claude-code') {
+      return this.config.claudeCode?.model ?? 'default (Claude Code session)';
     }
 
     return 'Unknown';
@@ -91,8 +97,11 @@ export class LLMGateway {
   /**
    * Reload configuration and reinitialize provider
    */
-  async reload(config: LLMProviderConfig): Promise<void> {
+  async reload(config: LLMProviderConfig, deps?: LLMProviderDeps): Promise<void> {
     this.config = config;
+    if (deps) {
+      this.deps = deps;
+    }
     this.initializeProvider();
   }
 }

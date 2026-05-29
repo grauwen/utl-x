@@ -185,6 +185,10 @@ async function startMCPServer(config: ServiceConfig): Promise<void> {
                 UTLX_DAEMON_URL: `http://localhost:${config.utlxdRestPort}`,
                 UTLX_MCP_TRANSPORT: 'http',
                 UTLX_MCP_PORT: config.mcpServerPort.toString(),
+                // Default the AI assistant to the agentic Claude Code provider
+                // (auth via the user's Claude login; self-corrects against UTLXD).
+                // An explicit UTLX_LLM_PROVIDER in the environment still wins.
+                UTLX_LLM_PROVIDER: process.env.UTLX_LLM_PROVIDER || 'claude-code',
                 NODE_ENV: 'production'
             },
             detached: false

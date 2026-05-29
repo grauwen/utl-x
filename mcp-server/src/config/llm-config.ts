@@ -16,26 +16,31 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
   // Try environment variables first
   const providerType = process.env.UTLX_LLM_PROVIDER;
 
-  if (providerType === 'claude') {
-    const apiKey = process.env.ANTHROPIC_API_KEY || process.env.CLAUDE_API_KEY;
-    if (!apiKey) {
-      logger.warn('Claude provider selected but no API key found in environment (ANTHROPIC_API_KEY or CLAUDE_API_KEY)');
-      return null;
-    }
-
-    const model = process.env.UTLX_LLM_MODEL || 'claude-3-sonnet-20240229';
+  if (providerType === 'claude-code') {
+    const model = process.env.UTLX_LLM_MODEL; // optional; session default if unset
     const maxTokens = process.env.UTLX_LLM_MAX_TOKENS
       ? parseInt(process.env.UTLX_LLM_MAX_TOKENS, 10)
       : 4096;
+    // Self-correction (validate-and-fix loop) is on unless explicitly disabled.
+    const selfCorrect = process.env.UTLX_CLAUDE_CODE_SELF_CORRECT !== 'false';
+    const maxTurns = process.env.UTLX_CLAUDE_CODE_MAX_TURNS
+      ? parseInt(process.env.UTLX_CLAUDE_CODE_MAX_TURNS, 10)
+      : undefined;
+    const pathToExecutable = process.env.UTLX_CLAUDE_CODE_PATH || undefined;
 
-    logger.info('Loaded Claude configuration from environment', { model, maxTokens });
+    logger.info('Loaded Claude Code configuration from environment', {
+      model: model || 'session default',
+      selfCorrect,
+    });
 
     return {
-      type: 'claude',
-      claude: {
-        apiKey,
-        model,
+      type: 'claude-code',
+      claudeCode: {
+        ...(model ? { model } : {}),
         maxTokens,
+        ...(maxTurns ? { maxTurns } : {}),
+        selfCorrect,
+        ...(pathToExecutable ? { pathToExecutable } : {}),
       },
     };
   }
@@ -78,7 +83,7 @@ export function loadLLMConfig(logger: Logger): LLMProviderConfig | null {
 
   // No configuration found - default to Ollama with codellama-34b-16k
   logger.info('No LLM provider configured. Using default: Ollama with codellama-34b-16k (16K context)');
-  logger.info('To override, set UTLX_LLM_PROVIDER=claude or ollama with appropriate credentials.');
+  logger.info('To override, set UTLX_LLM_PROVIDER=claude-code (uses your Claude login) or ollama.');
 
   return {
     type: 'ollama',

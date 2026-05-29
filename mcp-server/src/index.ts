@@ -347,7 +347,19 @@ async function main(): Promise<void> {
 
     if (llmConfig) {
       try {
-        llmGateway = new LLMGateway(llmConfig);
+        // Inject daemon-backed validation so agentic providers (Claude Code)
+        // can validate their own output against the UTL-X engine and
+        // self-correct. Kept as a callback so providers stay host-agnostic.
+        llmGateway = new LLMGateway(llmConfig, {
+          validateUtlx: async (utlx: string) => {
+            const res = await daemonClient.validate({ utlx });
+            return {
+              valid: res.valid,
+              diagnostics: res.diagnostics,
+              error: res.error,
+            };
+          },
+        });
         const isAvailable = await llmGateway.isAvailable();
 
         if (isAvailable) {

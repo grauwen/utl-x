@@ -65,8 +65,7 @@ export async function handleCheckLlmStatus(
               error: `${providerName} is not available. Please check:
 - For Ollama: Is Ollama running on localhost:11434?
 - For Ollama: Is the model (${modelName}) downloaded? Run: ollama pull ${modelName}
-- For Claude: Is ANTHROPIC_API_KEY set correctly?
-- For Claude: Do you have API credits?`,
+- For Claude Code: Is the Claude Code CLI installed and logged in? Run: claude (then /login)`,
             }, null, 2),
           },
         ],
