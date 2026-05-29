@@ -15,6 +15,7 @@ import {
   buildUTLXGenerationUserPrompt,
   UTLXGenerationContext,
 } from '../llm/prompts/utlx-generation-prompt';
+import { buildUsdlContext } from '../llm/usdl-context';
 
 export const generateUtlxTool: Tool = {
   name: 'generate_utlx_from_prompt',
@@ -261,6 +262,23 @@ export async function handleGenerateUtlx(
       logger.warn('Could not fetch operators, proceeding without operator context', { error });
     }
 
+    // If any format (input or output) is a Tier 2 schema format, fetch USDL
+    // directive guidance so the model knows the %-directive vocabulary. Tier 1
+    // data formats skip this (buildUsdlContext returns undefined).
+    let usdlContext: string | undefined;
+    try {
+      usdlContext = await buildUsdlContext(
+        daemonClient,
+        logger,
+        [outputFormat, ...inputs.map(i => i.format)]
+      );
+      if (usdlContext) {
+        logger.info('Tier 2 schema format detected — added USDL directive context to prompt');
+      }
+    } catch (error) {
+      logger.warn('Could not build USDL context, proceeding without it', { error });
+    }
+
     // Build context for prompt
     const context: UTLXGenerationContext = {
       inputs: inputs.map(input => ({
@@ -273,6 +291,7 @@ export async function handleGenerateUtlx(
       userPrompt: prompt,
       functionsContext,
       operatorsContext,
+      usdlContext,
     };
 
     // Build prompts

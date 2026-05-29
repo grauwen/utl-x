@@ -18,6 +18,8 @@ export interface UTLXGenerationContext {
   userPrompt: string;
   functionsContext?: string;
   operatorsContext?: string;
+  // USDL directive guidance, present when a Tier 2 schema format is involved.
+  usdlContext?: string;
 }
 
 /**
@@ -76,6 +78,50 @@ Generate a transformation expression that:
 }
 
 /**
+ * Format-specific structural guidance. The model is told the target format by
+ * name, but each format imposes structural constraints it must respect up front
+ * (rather than discovering them via execution failures). Keyed off the output
+ * format; returns an empty string for unknown formats.
+ */
+export function buildOutputFormatGuidance(outputFormat: string): string {
+  const fmt = outputFormat.trim().toLowerCase();
+
+  switch (fmt) {
+    case 'csv':
+      // CSV covers tab-separated data too — TSV is just CSV with the delimiter
+      // set to "\t" in the header (which is fixed and supplied separately).
+      return (
+        `- CSV is FLAT: produce an **array of objects**, one object per row.\n` +
+        `- Every field value must be a **scalar** (string, number, or boolean).\n` +
+        `- **No nested objects or arrays** — flatten them first ` +
+        `(e.g. \`address.city\` becomes a \`city\` field, a list becomes joined text).\n` +
+        `- All row objects should share the **same keys** (they become the columns/header).\n`
+      );
+    case 'xml':
+      return (
+        `- XML needs a **single root element**. Wrap your result accordingly.\n` +
+        `- Object keys become element/attribute names — they must be valid XML names ` +
+        `(no spaces, not starting with a digit).\n` +
+        `- Arrays become repeated child elements under a parent element.\n`
+      );
+    case 'json':
+    case 'yaml':
+      return (
+        `- ${fmt.toUpperCase()} supports arbitrary nesting (objects, arrays, scalars).\n` +
+        `- Object keys must be strings; preserve the structure the user asked for.\n`
+      );
+    case 'odata':
+      return (
+        `- OData carries ENTITIES and entity collections (not a schema — that is EDMX).\n` +
+        `- A collection is an **array of entity objects**; a single entity is an object.\n` +
+        `- Property values are scalars or nested entities/collections per the entity model.\n`
+      );
+    default:
+      return '';
+  }
+}
+
+/**
  * Build the user prompt with context
  */
 export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): string {
@@ -129,6 +175,18 @@ export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): s
 
   // Target output format
   prompt += `## Target Output Format\n\n${context.outputFormat.toUpperCase()}\n\n`;
+
+  // Format-specific structural rules (steer the model before execution does).
+  const formatGuidance = buildOutputFormatGuidance(context.outputFormat);
+  if (formatGuidance) {
+    prompt += `**${context.outputFormat.toUpperCase()} structural requirements:**\n${formatGuidance}\n`;
+  }
+
+  // USDL schema directives — present only when a Tier 2 schema format is
+  // involved (as input or output). Tier 1 data formats omit this section.
+  if (context.usdlContext) {
+    prompt += `## USDL Schema Directives\n\n${context.usdlContext}\n`;
+  }
 
   // User's transformation request
   prompt += `## User Request\n\n${context.userPrompt}\n\n`;

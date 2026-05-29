@@ -127,9 +127,11 @@ export async function handleGetUsdlDirectives(
 }
 
 /**
- * Load directive registry with caching
+ * Load directive registry with caching.
+ * Exported so other consumers (e.g. the UTLX generation prompt builder) can
+ * share the same 1-minute cache instead of re-fetching from the daemon.
  */
-async function loadRegistry(daemonClient: DaemonClient, logger: Logger): Promise<DirectiveRegistry> {
+export async function loadRegistry(daemonClient: DaemonClient, logger: Logger): Promise<DirectiveRegistry> {
   const now = Date.now();
 
   // Check cache
