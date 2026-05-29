@@ -404,53 +404,34 @@ export class UTLXFrontendContribution implements
     }
 
     private async checkHealth(): Promise<void> {
-        // Check UTLXD
+        // Liveness comes from the Theia backend over JSON-RPC — the frontend
+        // never touches the daemon/MCP ports directly (would break under
+        // remote/cloud Theia).
+        let daemonOnline = false;
+        let mcpOnline = false;
         try {
-            const utlxdResponse = await fetch('http://localhost:7779/api/health');
-            if (utlxdResponse.ok) {
-                this.statusBar.setElement(this.utlxdStatusId, {
-                    text: '$(check) UTLXD',
-                    alignment: StatusBarAlignment.RIGHT,
-                    priority: 100,
-                    tooltip: 'UTLXD LSP Server: Online',
-                    color: '#50fa7b'
-                });
-            } else {
-                throw new Error('Not OK');
-            }
+            const health = await this.utlxService.getServicesHealth();
+            daemonOnline = health.daemon.online;
+            mcpOnline = health.mcp.online;
         } catch (error) {
-            this.statusBar.setElement(this.utlxdStatusId, {
-                text: '$(x) UTLXD',
-                alignment: StatusBarAlignment.RIGHT,
-                priority: 100,
-                tooltip: 'UTLXD LSP Server: Offline',
-                color: '#ff5555'
-            });
+            // Backend unreachable → both shown offline.
         }
 
-        // Check MCP
-        try {
-            const mcpResponse = await fetch('http://localhost:3001/health');
-            if (mcpResponse.ok) {
-                this.statusBar.setElement(this.mcpStatusId, {
-                    text: '$(check) MCP',
-                    alignment: StatusBarAlignment.RIGHT,
-                    priority: 99,
-                    tooltip: 'MCP Server: Online',
-                    color: '#50fa7b'
-                });
-            } else {
-                throw new Error('Not OK');
-            }
-        } catch (error) {
-            this.statusBar.setElement(this.mcpStatusId, {
-                text: '$(x) MCP',
-                alignment: StatusBarAlignment.RIGHT,
-                priority: 99,
-                tooltip: 'MCP Server: Offline',
-                color: '#ff5555'
-            });
-        }
+        this.statusBar.setElement(this.utlxdStatusId, {
+            text: daemonOnline ? '$(check) UTLXD' : '$(x) UTLXD',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 100,
+            tooltip: `UTLXD LSP Server: ${daemonOnline ? 'Online' : 'Offline'}`,
+            color: daemonOnline ? '#50fa7b' : '#ff5555'
+        });
+
+        this.statusBar.setElement(this.mcpStatusId, {
+            text: mcpOnline ? '$(check) MCP' : '$(x) MCP',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 99,
+            tooltip: `MCP Server: ${mcpOnline ? 'Online' : 'Offline'}`,
+            color: mcpOnline ? '#50fa7b' : '#ff5555'
+        });
     }
 
     private async openHealthMonitor(): Promise<void> {

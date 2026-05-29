@@ -19,7 +19,7 @@ import { loadLLMConfig } from './config/llm-config';
 // Environment configuration
 const DAEMON_URL = process.env.UTLX_DAEMON_URL || 'http://localhost:7779';
 const TRANSPORT = process.env.UTLX_MCP_TRANSPORT || 'stdio'; // 'stdio' or 'http'
-const HTTP_PORT = parseInt(process.env.UTLX_MCP_PORT || '3000', 10);
+const HTTP_PORT = parseInt(process.env.UTLX_MCP_PORT || '7780', 10);
 const LOG_LEVEL = process.env.UTLX_LOG_LEVEL || 'info';
 
 // Cached stdlib function registry for on-demand lookups by the LLM gateway.

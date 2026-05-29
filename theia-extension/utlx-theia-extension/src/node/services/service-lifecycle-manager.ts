@@ -58,7 +58,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 utlxdRestPort: 7779,
                 utlxdLogFile: '/tmp/ut lxd.log',
                 mcpServerPath: '/tmp/fake.js',
-                mcpServerPort: 3001,
+                mcpServerPort: 7780,
                 mcpServerLogFile: '/tmp/mcp.log',
                 autoStart: false,
                 shutdownTimeout: 5000
@@ -86,7 +86,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             // MCP Server defaults - projectRoot should now be the utl-x repository root
             mcpServerPath: process.env.MCP_SERVER_PATH ||
                 path.join(projectRoot, 'mcp-server/dist/index.js'),
-            mcpServerPort: parseInt(process.env.MCP_SERVER_PORT || '3001', 10),
+            mcpServerPort: parseInt(process.env.MCP_SERVER_PORT || '7780', 10),
             mcpServerLogFile: process.env.MCP_SERVER_LOG_FILE || '/tmp/mcp-server-theia.log',
 
             // General

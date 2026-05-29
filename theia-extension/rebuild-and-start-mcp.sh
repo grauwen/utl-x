@@ -63,15 +63,37 @@ echo ""
 # Step 2: Kill MCP server and Chrome browsers with remote debugging
 echo "Step 2/8: Stopping MCP server and Chrome browsers..."
 
-# Kill MCP server processes
+# Kill Playwright MCP server processes
 MCP_PIDS=$(pgrep -f "playwright-mcp-server" 2>/dev/null || true)
 if [ -n "$MCP_PIDS" ]; then
-    echo "Killing MCP server processes: $MCP_PIDS"
+    echo "Killing Playwright MCP server processes: $MCP_PIDS"
     echo "$MCP_PIDS" | xargs kill -9 2>/dev/null || true
     sleep 1
 else
-    echo "No MCP server processes found"
+    echo "No Playwright MCP server processes found"
 fi
+
+# Kill the UTL-X LLM MCP server (port 7780) — including an ORPHAN left over from
+# a previous Theia run. Without this the Theia backend's auto-start hits
+# EADDRINUSE and the stale (old-build) MCP keeps serving the AI Assist panel.
+UTLX_MCP_PORT_NUM="${UTLX_MCP_PORT:-7780}"
+UTLX_MCP_PIDS=$(lsof -ti:"$UTLX_MCP_PORT_NUM" 2>/dev/null || true)
+if [ -n "$UTLX_MCP_PIDS" ]; then
+    echo "Killing UTL-X MCP server on port $UTLX_MCP_PORT_NUM: $UTLX_MCP_PIDS"
+    echo "$UTLX_MCP_PIDS" | xargs kill -9 2>/dev/null || true
+    sleep 1
+else
+    echo "UTL-X MCP port $UTLX_MCP_PORT_NUM is clear"
+fi
+# Backstop: any lingering UTLX MCP process on ANY port. The server sets its
+# process title to "utlx-mcp-http-<port>", which replaces the node/dist cmdline,
+# so we must match the title (this also clears legacy orphans, e.g. on old 3001).
+pgrep -f "utlx-mcp-http" 2>/dev/null | xargs kill -9 2>/dev/null || true
+
+# NOTE: UTLXD is intentionally NOT killed here. It is the heavy JVM daemon and is
+# handled idempotently in the "start backend services" step below — reused if
+# already healthy, started only if down — so frequent rebuilds don't needlessly
+# restart it. (The MCP above IS killed, since it's rebuilt every cycle.)
 
 # Kill any Chrome with remote debugging port
 CDP_PIDS=$(lsof -ti:$CDP_PORT 2>/dev/null || true)
@@ -143,6 +165,62 @@ npx theia build --mode production --progress --stats verbose
 echo "✓ Browser app built at $(date '+%H:%M:%S')"
 echo ""
 
+# Step 8.5: Start backend services (utlxd + MCP) — owned by THIS script.
+# Theia's own auto-start is disabled (AUTO_START_SERVICES=false at Step 9) so
+# there is exactly one owner and no port fights.
+echo "Step 8.5/9: Starting backend services (utlxd + MCP)..."
+
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+UTLXD_API_PORT="${UTLXD_REST_PORT:-7779}"
+UTLXD_LSP_PORT="${UTLXD_LSP_PORT:-7777}"
+UTLXD_JAR="${UTLXD_JAR_PATH:-$REPO_ROOT/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar}"
+MCP_PORT="${UTLX_MCP_PORT:-7780}"
+
+# --- utlxd: ensure running (idempotent — reuse if already healthy, don't restart the heavy JVM) ---
+if curl -s "http://localhost:$UTLXD_API_PORT/api/health" > /dev/null 2>&1; then
+    echo "  ✓ UTLXD already healthy on :$UTLXD_API_PORT — reusing (no restart)"
+else
+    if [ ! -f "$UTLXD_JAR" ]; then
+        echo "  ✗ UTLXD jar not found: $UTLXD_JAR"
+        echo "    Build it first (e.g. ./gradlew :modules:daemon:build)."
+        exit 1
+    fi
+    echo "  Starting UTLXD: java -jar <jar> start --lsp --lsp-transport socket --lsp-port $UTLXD_LSP_PORT --api --api-port $UTLXD_API_PORT"
+    nohup java -jar "$UTLXD_JAR" start \
+        --lsp --lsp-transport socket --lsp-port "$UTLXD_LSP_PORT" \
+        --api --api-port "$UTLXD_API_PORT" > /tmp/utlxd-theia.log 2>&1 &
+    utlxd_ok=false
+    for i in $(seq 1 60); do
+        if curl -s "http://localhost:$UTLXD_API_PORT/api/health" > /dev/null 2>&1; then
+            utlxd_ok=true; break
+        fi
+        sleep 0.5
+    done
+    if [ "$utlxd_ok" != true ]; then
+        echo "  ✗ UTLXD did not become healthy (see /tmp/utlxd-theia.log)"
+        exit 1
+    fi
+    echo "  ✓ UTLXD healthy on :$UTLXD_API_PORT"
+fi
+
+# --- MCP: (re)start each run so it reflects the just-built dist (claude-code, :$MCP_PORT) ---
+echo "  (Re)starting UTLX MCP on :$MCP_PORT via mcp-server.sh (claude-code)..."
+"$REPO_ROOT/mcp-server/mcp-server.sh" > /tmp/mcp-server-theia.log 2>&1
+mcp_ok=false
+for i in $(seq 1 30); do
+    if curl -s "http://localhost:$MCP_PORT/health" > /dev/null 2>&1; then
+        mcp_ok=true; break
+    fi
+    sleep 0.5
+done
+if [ "$mcp_ok" = true ]; then
+    echo "  ✓ MCP healthy on :$MCP_PORT"
+else
+    echo "  ⚠ MCP not healthy yet (see /tmp/mcp-server-theia.log) — continuing"
+fi
+echo "✓ Backend services started at $(date '+%H:%M:%S')"
+echo ""
+
 # Step 9: Start Theia and launch Chrome with remote debugging
 echo "Step 9/9: Starting Theia and launching Chrome with remote debugging..."
 echo ""
@@ -155,7 +233,11 @@ echo ""
 
 set +x  # Disable command echo for cleaner output
 
-# Start Theia in background (without remote debugging - Chrome will provide it)
+# Start Theia in background (without remote debugging - Chrome will provide it).
+# AUTO_START_SERVICES=false: this script owns utlxd + MCP (Step 8.5), so Theia's
+# ServiceLifecycleManager must NOT also try to start them (avoids the Ollama MCP
+# and port fights).
+export AUTO_START_SERVICES=false
 nohup npx theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace > "$LOG_FILE" 2>&1 &
 SERVER_PID=$!
 
@@ -192,27 +274,23 @@ echo ""
 echo "Waiting 5 seconds for services to initialize..."
 sleep 5
 
-# Launch Chrome Canary with remote debugging
-echo "Launching Chrome Canary with remote debugging on port $CDP_PORT..."
+# Launch Chrome with remote debugging
+echo "Launching Chrome with remote debugging on port $CDP_PORT..."
 echo ""
 
-# Find Chrome Canary path on macOS (try Canary first, fall back to regular Chrome)
-CHROME_CANARY_PATH="/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
+# Find Chrome on macOS (prefer regular Chrome; fall back to Canary if present)
 CHROME_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
+CHROME_CANARY_PATH="/Applications/Google Chrome Canary.app/Contents/MacOS/Google Chrome Canary"
 
-if [ -f "$CHROME_CANARY_PATH" ]; then
-    BROWSER_PATH="$CHROME_CANARY_PATH"
-    BROWSER_NAME="Chrome Canary"
-elif [ -f "$CHROME_PATH" ]; then
+if [ -f "$CHROME_PATH" ]; then
     BROWSER_PATH="$CHROME_PATH"
     BROWSER_NAME="Chrome"
-    echo "⚠️  Chrome Canary not found, using regular Chrome instead"
-    echo "   To install Chrome Canary: https://www.google.com/chrome/canary/"
-    echo ""
+elif [ -f "$CHROME_CANARY_PATH" ]; then
+    BROWSER_PATH="$CHROME_CANARY_PATH"
+    BROWSER_NAME="Chrome Canary"
 else
-    echo "✗ Neither Chrome Canary nor Chrome found"
-    echo "Please install Chrome Canary: https://www.google.com/chrome/canary/"
-    echo "Or regular Chrome: https://www.google.com/chrome/"
+    echo "✗ Google Chrome not found"
+    echo "Please install Chrome: https://www.google.com/chrome/"
     exit 1
 fi
 
@@ -222,7 +300,11 @@ fi
     --user-data-dir="$HOME/.utlx-chrome-canary-profile" \
     --no-first-run \
     --no-default-browser-check \
-    http://localhost:4000 &
+    --disable-background-networking \
+    --disable-sync \
+    --disable-component-update \
+    --disable-domain-reliability \
+    http://localhost:4000 > /tmp/utlx-chrome.log 2>&1 &
 
 CHROME_PID=$!
 

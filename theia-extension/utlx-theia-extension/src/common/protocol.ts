@@ -341,6 +341,31 @@ export interface UTLXService {
      * Check if LLM provider is configured and available
      */
     checkLlmStatus(): Promise<LlmStatusResponse>;
+
+    /**
+     * Lightweight liveness check for the backing services (daemon + MCP).
+     * Runs in the backend (co-located with the services) and is cheap enough to
+     * poll frequently — it hits the plain /health endpoints, NOT the LLM.
+     * The frontend calls this over JSON-RPC instead of fetching service ports.
+     */
+    getServicesHealth(): Promise<ServicesHealth>;
+}
+
+/**
+ * Liveness of a single backing service.
+ */
+export interface ServiceHealth {
+    online: boolean;
+    responseTimeMs?: number;
+    error?: string;
+}
+
+/**
+ * Combined health of the backing services.
+ */
+export interface ServicesHealth {
+    daemon: ServiceHealth;
+    mcp: ServiceHealth;
 }
 
 /**

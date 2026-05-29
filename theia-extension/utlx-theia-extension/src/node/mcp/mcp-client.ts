@@ -42,7 +42,7 @@ export class MCPClient {
 
     constructor() {
         // MCP server runs on HTTP transport by default
-        const mcpPort = process.env.UTLX_MCP_PORT || '3001';
+        const mcpPort = process.env.UTLX_MCP_PORT || '7780';
         this.mcpServerUrl = `http://localhost:${mcpPort}`;
         this.requestTimeout = 300000; // 5 minutes for large LLM models (e.g., codellama:70b)
         console.log('[MCPClient] Initialized with URL:', this.mcpServerUrl);

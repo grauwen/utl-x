@@ -25,7 +25,9 @@ import {
     ValidateUdmResult,
     GenerateUtlxRequest,
     GenerateUtlxResponse,
-    LlmStatusResponse
+    LlmStatusResponse,
+    ServiceHealth,
+    ServicesHealth
 } from '../../common/protocol';
 import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
@@ -336,6 +338,31 @@ export class UTLXServiceImpl implements UTLXService {
                 error: error instanceof Error ? error.message : String(error),
             };
         }
+    }
+
+    /**
+     * Lightweight liveness check for daemon + MCP, run from the backend so the
+     * frontend never touches those ports directly. Cheap enough to poll: both
+     * use plain ping/health checks (no LLM, no transformation).
+     */
+    async getServicesHealth(): Promise<ServicesHealth> {
+        const timed = async (fn: () => Promise<boolean>): Promise<ServiceHealth> => {
+            const start = Date.now();
+            try {
+                const online = await fn();
+                const responseTimeMs = Date.now() - start;
+                return online
+                    ? { online: true, responseTimeMs }
+                    : { online: false, responseTimeMs, error: 'unhealthy' };
+            } catch (error) {
+                return { online: false, error: error instanceof Error ? error.message : String(error) };
+            }
+        };
+        const [daemon, mcp] = await Promise.all([
+            timed(() => this.daemonClient.ping()),
+            timed(() => this.mcpClient.ping()),
+        ]);
+        return { daemon, mcp };
     }
 
     /**

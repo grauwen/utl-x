@@ -2230,7 +2230,7 @@ output json
                 <div className='utlx-editor-footer'>
                     <span className='utlx-editor-info'>
                         {isClassic
-                            ? 'UTLX Editor | Connected to LSP on localhost:7777'
+                            ? 'UTLX Editor | Connected to LSP'
                             : 'Mapping Canvas | Draw connections between fields'}
                     </span>
                 </div>

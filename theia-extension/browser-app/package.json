@@ -32,7 +32,7 @@
     "build": "../build-vscode-extension.sh && theia build --mode production",
     "start": "theia start --hostname=0.0.0.0 --port=4000 ~/data/utlx-workspace",
     "start:debug": "theia start --hostname=0.0.0.0 --port=4000 --loglevel=debug ~/data/utlx-workspace",
-    "rebuild-and-start": "../rebuild-and-start.sh",
+    "rebuild-and-start": "../rebuild-and-start-mcp.sh",
     "watch": "theia build --watch --mode development",
     "clean": "rm -rf .theia lib node_modules",
     "clean:extension": "cd ../utlx-theia-extension && yarn clean",

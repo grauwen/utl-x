@@ -7,7 +7,7 @@
 # Options:
 #   --provider <claude-code|ollama>  LLM provider (default: claude-code)
 #   --transport <stdio|http>         Transport mode (default: http)
-#   --port <port>                    HTTP port (default: 3001)
+#   --port <port>                    HTTP port (default: 7780)
 #   --daemon-url <url>               UTLXD REST API URL (default: http://localhost:7779)
 #   --log-level <level>              Log level (default: debug)
 #   -h, --help                       Show this help message
@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # Default configuration
 PROVIDER="${UTLX_LLM_PROVIDER:-claude-code}"
 TRANSPORT="http"
-PORT="3001"
+PORT="7780"
 DAEMON_URL="http://localhost:7779"
 LOG_LEVEL="debug"
 
@@ -54,7 +54,7 @@ while [[ $# -gt 0 ]]; do
             echo "Options:"
             echo "  --provider <claude-code|ollama>  LLM provider (default: claude-code)"
             echo "  --transport <stdio|http>         Transport mode (default: http)"
-            echo "  --port <port>                    HTTP port (default: 3001)"
+            echo "  --port <port>                    HTTP port (default: 7780)"
             echo "  --daemon-url <url>               UTLXD REST API URL (default: http://localhost:7779)"
             echo "  --log-level <level>              Log level (default: debug)"
             echo "  -h, --help                       Show this help message"
@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
             echo "    export OLLAMA_MODEL=codellama-34b-16k:latest      # optional (default)"
             echo ""
             echo "Examples:"
-            echo "  $0                                          # claude-code over HTTP on :3001"
+            echo "  $0                                          # claude-code over HTTP on :7780"
             echo "  $0 --provider ollama                        # use local Ollama instead"
             echo "  $0 --transport stdio                        # stdio transport"
             echo "  $0 --port 3002                              # custom HTTP port"
@@ -101,6 +101,15 @@ if [ ! -f "$SCRIPT_DIR/dist/index.js" ]; then
     echo "ERROR: MCP server not built. dist/index.js not found."
     echo "Please run: npm run build"
     exit 1
+fi
+
+# Free the port first — kill any prior UTLX MCP instance (incl. an orphan that
+# survived a Theia restart) so we don't hit EADDRINUSE and silently keep an old build.
+EXISTING=$(lsof -ti:"$PORT" 2>/dev/null || true)
+if [ -n "$EXISTING" ]; then
+    echo "Port $PORT in use by PID(s): $EXISTING — killing before start..."
+    echo "$EXISTING" | xargs kill -9 2>/dev/null || true
+    sleep 1
 fi
 
 # Set environment variables

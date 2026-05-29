@@ -9,6 +9,7 @@ import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget } from '@theia/core/lib/browser/widgets/react-widget';
 import { MessageService } from '@theia/core';
+import { UTLXService, UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 
 interface ServerHealth {
     name: string;
@@ -30,6 +31,9 @@ export class HealthMonitorWidget extends ReactWidget {
 
     @inject(MessageService)
     protected readonly messageService!: MessageService;
+
+    @inject(UTLX_SERVICE_SYMBOL)
+    protected readonly utlxService!: UTLXService;
 
     private state: HealthState = {
         utlxd: {
@@ -127,73 +131,32 @@ export class HealthMonitorWidget extends ReactWidget {
     }
 
     private async pingServers(): Promise<void> {
-        console.log('[HealthMonitorWidget] Pinging servers...');
-        // Ping UTLXD LSP (socket-based ping)
-        this.pingUTLXD();
-
-        // Ping MCP (HTTP-based ping)
-        this.pingMCP();
-    }
-
-    private async pingUTLXD(): Promise<void> {
-        const startTime = Date.now();
-
+        // Ask the Theia backend (co-located with the services) over JSON-RPC.
+        // The frontend must never touch the daemon/MCP ports directly — that
+        // breaks under remote/cloud Theia and bypasses the service layer.
         try {
-            // Ping UTLXD API health endpoint
-            const response = await fetch('http://localhost:7779/api/health');
-
-            if (response.ok) {
-                const responseTime = Date.now() - startTime;
-                this.setState({
-                    utlxd: {
-                        name: 'UTLXD LSP',
-                        status: 'online',
-                        lastPing: Date.now(),
-                        responseTime
-                    }
-                });
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
+            const health = await this.utlxService.getServicesHealth();
             this.setState({
                 utlxd: {
                     name: 'UTLXD LSP',
-                    status: 'offline',
+                    status: health.daemon.online ? 'online' : 'offline',
                     lastPing: Date.now(),
-                    error: error instanceof Error ? error.message : 'Connection failed'
-                }
-            });
-        }
-    }
-
-    private async pingMCP(): Promise<void> {
-        const startTime = Date.now();
-
-        try {
-            const response = await fetch('http://localhost:3001/health');
-
-            if (response.ok) {
-                const responseTime = Date.now() - startTime;
-                this.setState({
-                    mcp: {
-                        name: 'MCP Server',
-                        status: 'online',
-                        lastPing: Date.now(),
-                        responseTime
-                    }
-                });
-            } else {
-                throw new Error(`HTTP ${response.status}`);
-            }
-        } catch (error) {
-            this.setState({
+                    responseTime: health.daemon.responseTimeMs,
+                    error: health.daemon.error
+                },
                 mcp: {
                     name: 'MCP Server',
-                    status: 'offline',
+                    status: health.mcp.online ? 'online' : 'offline',
                     lastPing: Date.now(),
-                    error: error instanceof Error ? error.message : 'Connection failed'
+                    responseTime: health.mcp.responseTimeMs,
+                    error: health.mcp.error
                 }
+            });
+        } catch (error) {
+            const err = error instanceof Error ? error.message : 'backend unreachable';
+            this.setState({
+                utlxd: { name: 'UTLXD LSP', status: 'offline', lastPing: Date.now(), error: err },
+                mcp: { name: 'MCP Server', status: 'offline', lastPing: Date.now(), error: err }
             });
         }
     }

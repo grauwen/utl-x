@@ -13,6 +13,7 @@ import * as fs from 'fs';
 interface ServiceConfig {
     utlxdJarPath: string;
     utlxdRestPort: number;
+    utlxdLspPort: number;
     utlxdLogFile: string;
     mcpServerPath: string;
     mcpServerPort: number;
@@ -95,10 +96,11 @@ function loadConfig(): ServiceConfig {
         utlxdJarPath: process.env.UTLXD_JAR_PATH ||
             path.join(projectRoot, 'modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
         utlxdRestPort: parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
+        utlxdLspPort: parseInt(process.env.UTLXD_LSP_PORT || '7777', 10),
         utlxdLogFile: process.env.UTLXD_LOG_FILE || '/tmp/utlxd-theia.log',
         mcpServerPath: process.env.MCP_SERVER_PATH ||
             path.join(projectRoot, 'mcp-server/dist/index.js'),
-        mcpServerPort: parseInt(process.env.MCP_SERVER_PORT || '3001', 10),
+        mcpServerPort: parseInt(process.env.MCP_SERVER_PORT || '7780', 10),
         mcpServerLogFile: process.env.MCP_SERVER_LOG_FILE || '/tmp/mcp-server-theia.log',
         autoStart: process.env.AUTO_START_SERVICES !== 'false',
         shutdownTimeout: parseInt(process.env.SERVICE_SHUTDOWN_TIMEOUT || '5000', 10)
@@ -134,7 +136,7 @@ async function startUTLXD(config: ServiceConfig): Promise<void> {
         throw new Error(`UTLXD jar not found at: ${config.utlxdJarPath}`);
     }
 
-    console.log(`[AutoStart] Spawning: java -jar ${config.utlxdJarPath}`);
+    console.log(`[AutoStart] Spawning: java -jar ${config.utlxdJarPath} start --lsp --lsp-port ${config.utlxdLspPort} --api --api-port ${config.utlxdRestPort}`);
 
     utlxdProcess = spawn('java', [
         '-jar',
@@ -142,7 +144,7 @@ async function startUTLXD(config: ServiceConfig): Promise<void> {
         'start',
         '--lsp',
         '--lsp-transport', 'socket',
-        '--lsp-port', '7777',
+        '--lsp-port', config.utlxdLspPort.toString(),
         '--api',
         '--api-port', config.utlxdRestPort.toString()
     ], {

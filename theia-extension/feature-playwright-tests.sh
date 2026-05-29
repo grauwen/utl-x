@@ -1,7 +1,10 @@
 #!/bin/bash
 
-# UTLX Theia Extension - Rebuild and Test Script
-# This script rebuilds everything and runs Playwright conformance tests
+# UTLX Theia Extension - Playwright Tests (FEATURE SCRIPT)
+# This script rebuilds everything and runs Playwright conformance tests.
+# This is the home for the growing Playwright test suite.
+#
+# NOTE: The canonical "always works" run/dev script is rebuild-and-start-mcp.sh.
 
 set -e  # Exit on any error
 set -x  # Print each command before executing (verbose mode)

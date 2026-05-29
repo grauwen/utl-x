@@ -1,7 +1,12 @@
 #!/bin/bash
 
-# UTLX Theia Extension - Rebuild and Restart Script
-# This script rebuilds everything from scratch after code changes
+# UTLX Theia Extension - Rebuild and Restart (NO MCP browser) - SECONDARY SCRIPT
+# This script rebuilds everything from scratch after code changes.
+#
+# NOTE: The canonical "always works" script is rebuild-and-start-mcp.sh.
+# This variant skips the Playwright MCP + Chrome(CDP) automation.
+# It does NOT yet free the MCP (:7780) / daemon (:7779/:7777) ports on start,
+# so it can leave orphans — prefer rebuild-and-start-mcp.sh for daily use.
 
 set -e  # Exit on any error
 set -x  # Print each command before executing (verbose mode)
