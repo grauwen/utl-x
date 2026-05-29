@@ -114,8 +114,9 @@ function extractCleanCode(response: string): string {
           line.startsWith('output ') ||
           line === '---' ||
           line === '' ||
-          // Skip single standalone words (likely fragments)
-          (line.length <= 3 && !/^[\$\{\[]/.test(line))) {
+          // Skip single standalone words (likely fragments), but NEVER a line
+          // that is/starts with a bracket — those are code.
+          (line.length <= 3 && !/^[\$\{\[\}\]\)]/.test(line))) {
         startIndex = i + 1;
         continue;
       }
@@ -127,38 +128,40 @@ function extractCleanCode(response: string): string {
     code = lines.slice(startIndex).join('\n').trim();
   }
 
-  // Step 4: Remove trailing explanations
-  // Split by newlines and find where explanation starts
+  // Step 4: Remove trailing prose the model may append AFTER the code.
+  // CRITICAL: never strip lines that are/contain code punctuation. Closing
+  // brackets ( } ] ) ) commonly sit alone on short trailing lines — stripping
+  // them silently breaks the program (missing closing brackets).
   const codeLines = code.split('\n');
   let endIndex = codeLines.length;
 
-  // Look for explanation patterns from the end
   for (let i = codeLines.length - 1; i >= 0; i--) {
     const line = codeLines[i].trim();
 
-    // Skip empty lines
+    // Skip blank trailing lines.
     if (line === '') {
       continue;
     }
 
-    // Check if this looks like an explanation or stray word
-    if (line.toLowerCase().startsWith('this is') ||
-        line.toLowerCase().startsWith('this will') ||
-        line.toLowerCase().startsWith('the ') ||
-        line.toLowerCase().startsWith('note:') ||
-        line.toLowerCase().includes('correct utlx') ||
-        /^[\d.)\-*]/.test(line) ||
-        // Skip single standalone words (likely fragments from explanations)
-        (line.length <= 3 && !/^[\$\{\[]/.test(line))) {
+    // Any bracket or code punctuation → this is code; stop trimming here.
+    if (/[{}\[\]();]/.test(line) || line.startsWith('$') || line.includes('=>')) {
+      break;
+    }
+
+    // Explicit prose markers → drop this trailing line and keep scanning up.
+    const lower = line.toLowerCase();
+    if (lower.startsWith('this is') ||
+        lower.startsWith('this will') ||
+        lower.startsWith('this transformation') ||
+        lower.startsWith('note:') ||
+        lower.startsWith('explanation') ||
+        lower.includes('correct utlx')) {
       endIndex = i;
       continue;
     }
 
-    // If we hit actual code (ends with }, ], ), or is a valid expression), stop
-    if (line.endsWith('}') || line.endsWith(']') || line.endsWith(')') ||
-        line.startsWith('$') || line.includes('=>')) {
-      break;
-    }
+    // Anything else (a bare value or identifier) is assumed to be code: stop.
+    break;
   }
 
   code = codeLines.slice(0, endIndex).join('\n').trim();
@@ -291,7 +294,13 @@ export async function handleGenerateUtlx(
     logger.debug(userPrompt);
     logger.debug('=== END PROMPTS ===');
 
-    // Iterative refinement: Try up to 3 times with validation feedback
+    // Pick a sample input to RUN the transformation against. Validation only
+    // proves the program compiles; execution catches runtime errors (e.g.
+    // accessing an object property on an array). The execute API takes a single
+    // input, so use the first one that carries sample data.
+    const sampleInput = inputs.find(i => i.originalData && i.originalData.length > 0);
+
+    // Iterative refinement: Try up to 3 times with validation + execution feedback
     const MAX_ATTEMPTS = 3;
     let generatedCode = '';
     let totalInputTokens = 0;
@@ -315,11 +324,19 @@ export async function handleGenerateUtlx(
 
       logger.info(`Generation attempt ${attempt}/${MAX_ATTEMPTS}`);
 
-      // Call LLM
+      // Call LLM. Pass the fixed header + sample input so an agentic provider
+      // (Claude Code) can reconstruct the full program and self-verify by
+      // validating AND running it — never modifying the header.
       const response = await llmGateway.generateCompletion({
         messages: conversationHistory,
         maxTokens: 4096,
         temperature: 0.3, // Lower temperature for more deterministic code generation
+        verification: {
+          header: originalHeader,
+          input: sampleInput?.originalData,
+          inputFormat: sampleInput?.format,
+          outputFormat,
+        },
       });
 
       totalInputTokens += response.usage?.inputTokens || 0;
@@ -363,34 +380,107 @@ export async function handleGenerateUtlx(
         const errorDiagnostics = (validationResult.diagnostics || []).filter((d: any) => d.severity === 'error');
 
         if (validationResult.valid && errorDiagnostics.length === 0) {
-          // Validation passed!
+          // Validation passed (it compiles). Now RUN it against the sample
+          // input — validation cannot catch runtime errors like accessing a
+          // property on an array. The header is left untouched; we execute the
+          // full reconstructed program.
           logger.info(`Attempt ${attempt}: Validation PASSED`);
 
-          if (onProgress) {
-            onProgress(0, `Code validated successfully on attempt ${attempt}!`);
+          let runtimeError: string | undefined;
+          let executedOutput: string | undefined;
+
+          if (sampleInput?.originalData) {
+            if (onProgress) {
+              onProgress(0, `Running transformation against sample input (attempt ${attempt})...`);
+            }
+            try {
+              const execResult = await daemonClient.execute({
+                utlx: fullProgram,
+                input: sampleInput.originalData,
+                inputFormat: sampleInput.format,
+                outputFormat,
+              });
+              if (execResult.success) {
+                executedOutput = execResult.output;
+                logger.info(`Attempt ${attempt}: Execution PASSED`);
+              } else {
+                runtimeError = execResult.error || 'Unknown runtime error';
+                logger.warn(`Attempt ${attempt}: Execution FAILED`, { error: runtimeError });
+              }
+            } catch (execCallError) {
+              // Execute endpoint unreachable — don't block, treat like
+              // validation-API-unavailable (ship validated code).
+              logger.error(`Attempt ${attempt}: Execute call failed`, { error: execCallError });
+            }
           }
 
-          // Success - return the body
-          return {
-            content: [
-              {
-                type: 'text',
-                text: JSON.stringify({
-                  success: true,
-                  utlx: generatedCode,
-                  validation: {
-                    valid: true,
-                    message: `Validation passed on attempt ${attempt}/${MAX_ATTEMPTS}`,
-                    attempts: attempt,
-                  },
-                  usage: {
-                    inputTokens: totalInputTokens,
-                    outputTokens: totalOutputTokens,
-                  },
-                }, null, 2),
-              },
-            ],
-          };
+          if (!runtimeError) {
+            // Validated, and executed cleanly (or no sample / execute skipped).
+            if (onProgress) {
+              onProgress(0, sampleInput?.originalData
+                ? `Code validated and executed successfully on attempt ${attempt}!`
+                : `Code validated successfully on attempt ${attempt}!`);
+            }
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    utlx: generatedCode,
+                    validation: {
+                      valid: true,
+                      executed: !!executedOutput,
+                      message: executedOutput !== undefined
+                        ? `Validated and executed on attempt ${attempt}/${MAX_ATTEMPTS}`
+                        : `Validation passed on attempt ${attempt}/${MAX_ATTEMPTS}`,
+                      attempts: attempt,
+                    },
+                    usage: {
+                      inputTokens: totalInputTokens,
+                      outputTokens: totalOutputTokens,
+                    },
+                  }, null, 2),
+                },
+              ],
+            };
+          }
+
+          // Runtime error: feed it back and refine the BODY only (header fixed).
+          if (onProgress) {
+            onProgress(0, `Execution failed: ${runtimeError}. Refining...`);
+          }
+          if (attempt < MAX_ATTEMPTS) {
+            const feedbackPrompt = `The transformation compiles but FAILS AT RUNTIME on the sample input:\n\n${runtimeError}\n\nThis usually means an expression accesses data the wrong way (e.g. treating an array as an object, or an object as an array). Fix the logic so it runs successfully on the sample input. Generate ONLY the corrected transformation body (no header, no ---, no explanations).`;
+            conversationHistory.push({ role: 'user', content: feedbackPrompt });
+            logger.info(`Attempt ${attempt}: Added execution feedback to conversation`);
+          } else {
+            // Exhausted attempts with a runtime failure — return the code but
+            // report the execution error honestly.
+            logger.warn(`All ${MAX_ATTEMPTS} attempts completed, execution still failing`);
+            return {
+              content: [
+                {
+                  type: 'text',
+                  text: JSON.stringify({
+                    success: true,
+                    utlx: generatedCode,
+                    validation: {
+                      valid: true,
+                      executed: false,
+                      message: `Code validated but FAILED AT RUNTIME after ${MAX_ATTEMPTS} attempts`,
+                      attempts: MAX_ATTEMPTS,
+                      runtimeError,
+                    },
+                    usage: {
+                      inputTokens: totalInputTokens,
+                      outputTokens: totalOutputTokens,
+                    },
+                  }, null, 2),
+                },
+              ],
+            };
+          }
         } else {
           // Validation failed - prepare feedback for next attempt
           const errors = errorDiagnostics;

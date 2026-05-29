@@ -7,11 +7,25 @@ export interface LLMMessage {
   content: string;
 }
 
+/**
+ * Per-request verification context, supplied by tools that want an agentic
+ * provider to self-verify its output. The model only ever produces the
+ * transformation BODY; `header` is the fixed editor header that must never be
+ * modified — it is reconstructed (header + '---' + body) for validate/execute.
+ */
+export interface LLMVerificationContext {
+  header: string;            // fixed UTLX header — never regenerated
+  input?: string;            // sample input data, enables execution
+  inputFormat?: string;      // e.g. xml, json, csv
+  outputFormat?: string;     // target output format
+}
+
 export interface LLMCompletionRequest {
   messages: LLMMessage[];
   maxTokens?: number;
   temperature?: number;
   stopSequences?: string[];
+  verification?: LLMVerificationContext;
 }
 
 export interface LLMCompletionResponse {
@@ -63,11 +77,31 @@ export interface UTLXValidationResult {
 }
 
 /**
+ * Result of executing a UTLX program against the engine with sample input.
+ * Mirrors the daemon's ExecutionResponse without coupling providers to it.
+ */
+export interface UTLXExecutionResult {
+  success: boolean;
+  output?: string;
+  error?: string;
+}
+
+export interface UTLXExecutionInput {
+  utlx: string;
+  input: string;
+  inputFormat?: string;
+  outputFormat?: string;
+}
+
+/**
  * Optional dependencies injected into providers by the gateway/host.
  * Used by agentic providers (e.g. Claude Code) for self-correction.
+ * Both are generic daemon accessors; per-request context (header, sample
+ * input) arrives via LLMCompletionRequest.verification.
  */
 export interface LLMProviderDeps {
   validateUtlx?: (utlx: string) => Promise<UTLXValidationResult>;
+  executeUtlx?: (req: UTLXExecutionInput) => Promise<UTLXExecutionResult>;
 }
 
 /**

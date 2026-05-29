@@ -359,6 +359,19 @@ async function main(): Promise<void> {
               error: res.error,
             };
           },
+          executeUtlx: async (req) => {
+            const res = await daemonClient.execute({
+              utlx: req.utlx,
+              input: req.input,
+              inputFormat: req.inputFormat,
+              outputFormat: req.outputFormat,
+            });
+            return {
+              success: res.success,
+              output: res.output,
+              error: res.error,
+            };
+          },
         });
         const isAvailable = await llmGateway.isAvailable();
 

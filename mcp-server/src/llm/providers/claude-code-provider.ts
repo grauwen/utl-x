@@ -27,6 +27,7 @@ import {
   LLMCompletionRequest,
   LLMCompletionResponse,
   LLMProviderDeps,
+  LLMVerificationContext,
 } from '../types.js';
 
 export interface ClaudeCodeConfig {
@@ -54,7 +55,7 @@ const DISALLOWED_BUILTIN_TOOLS = [
   'TodoWrite',
 ];
 
-const VALIDATE_TOOL = 'mcp__utlx__validate_utlx';
+const VERIFY_TOOL = 'mcp__utlx__validate_and_run';
 
 export class ClaudeCodeProvider implements LLMProvider {
   private model?: string;
@@ -62,14 +63,16 @@ export class ClaudeCodeProvider implements LLMProvider {
   private selfCorrect: boolean;
   private pathToExecutable?: string;
   private validateUtlx?: LLMProviderDeps['validateUtlx'];
+  private executeUtlx?: LLMProviderDeps['executeUtlx'];
 
   constructor(config: ClaudeCodeConfig, deps?: LLMProviderDeps) {
     this.model = config.model;
     this.selfCorrect = config.selfCorrect !== false; // default on
     this.pathToExecutable = config.pathToExecutable;
     this.validateUtlx = deps?.validateUtlx;
-    // With self-correction we need room for validate→fix cycles; otherwise a
-    // single turn is enough.
+    this.executeUtlx = deps?.executeUtlx;
+    // With self-correction we need room for validate→run→fix cycles; otherwise
+    // a single turn is enough.
     const canSelfCorrect = this.selfCorrect && !!this.validateUtlx;
     this.maxTurns = config.maxTurns ?? (canSelfCorrect ? 8 : 1);
   }
@@ -82,7 +85,7 @@ export class ClaudeCodeProvider implements LLMProvider {
         .join('\n\n');
 
       const prompt = this.foldConversation(request);
-      const options = this.buildOptions(system);
+      const options = this.buildOptions(system, request.verification);
 
       let resultText = '';
       let lastAssistantText = '';
@@ -172,11 +175,15 @@ export class ClaudeCodeProvider implements LLMProvider {
   }
 
   /**
-   * Build Agent SDK options, wiring the in-process validate tool when
-   * self-correction is enabled and a validate callback was injected.
+   * Build Agent SDK options, wiring the in-process validate_and_run tool when
+   * self-correction is enabled, a validate callback was injected, AND the
+   * request carries a verification context (the fixed header). Without the
+   * header we cannot reconstruct a complete program, so we skip the tool rather
+   * than validate a misleading headerless fragment.
    */
-  private buildOptions(system: string): Options {
-    const canSelfCorrect = this.selfCorrect && !!this.validateUtlx;
+  private buildOptions(system: string, verification?: LLMVerificationContext): Options {
+    const canSelfCorrect =
+      this.selfCorrect && !!this.validateUtlx && !!verification?.header;
 
     const options: Options = {
       ...(this.model ? { model: this.model } : {}),
@@ -186,43 +193,103 @@ export class ClaudeCodeProvider implements LLMProvider {
       ...(system ? { systemPrompt: system } : {}),
       maxTurns: this.maxTurns,
       disallowedTools: DISALLOWED_BUILTIN_TOOLS,
-      allowedTools: canSelfCorrect ? [VALIDATE_TOOL] : [],
+      allowedTools: canSelfCorrect ? [VERIFY_TOOL] : [],
       // Hermetic: don't auto-load user/project settings or CLAUDE.md.
       settingSources: [],
-      // Only our injected validate tool is reachable; everything else is on the
-      // disallow list, so 'default' mode auto-denies stray tool requests
-      // without prompting (there is no human in this loop).
+      // Only our injected tool is reachable; everything else is on the disallow
+      // list, so 'default' mode auto-denies stray tool requests without
+      // prompting (there is no human in this loop).
       permissionMode: 'default',
     };
 
-    if (canSelfCorrect) {
+    if (canSelfCorrect && verification) {
       options.mcpServers = {
         utlx: createSdkMcpServer({
           name: 'utlx',
           version: '1.0.0',
-          tools: [
-            tool(
-              'validate_utlx',
-              'Validate a complete UTLX program against the UTL-X engine. ' +
-                'Returns whether it compiles and any diagnostics. Call this ' +
-                'before finishing to confirm your transformation is valid, and ' +
-                'fix any reported errors.',
-              { utlx: z.string().describe('The complete UTLX program to validate') },
-              async (args: { utlx: string }) => {
-                const result = await this.validateUtlx!(args.utlx);
-                return {
-                  content: [
-                    { type: 'text', text: JSON.stringify(result, null, 2) },
-                  ],
-                };
-              }
-            ),
-          ],
+          tools: [this.buildVerifyTool(verification)],
         }),
       };
     }
 
     return options;
+  }
+
+  /**
+   * The validate_and_run tool. The model supplies ONLY the transformation
+   * body; this reconstructs the full program with the fixed (never-modified)
+   * header, validates it, and — if sample input is available — executes it so
+   * runtime errors (e.g. property access on an array) surface to the model.
+   */
+  private buildVerifyTool(verification: LLMVerificationContext) {
+    // Normalise the header exactly as the generate tool does.
+    const header = verification.header.endsWith('\n')
+      ? verification.header.slice(0, -1)
+      : verification.header;
+
+    return tool(
+      'validate_and_run',
+      'Verify your UTLX transformation BODY against the UTL-X engine. The ' +
+        'fixed header is supplied automatically — pass ONLY the transformation ' +
+        'body (the part after the "---"). This validates the full program and, ' +
+        'when sample input is available, RUNS it. Always call this before ' +
+        'finishing and fix any compile errors or runtime errors it reports.',
+      { body: z.string().describe('The transformation body only (no header, no ---)') },
+      async (args: { body: string }) => {
+        const fullProgram = `${header}\n---\n${args.body}`;
+
+        const validation = await this.validateUtlx!(fullProgram);
+        const errorDiags = (validation.diagnostics || []).filter(d => d.severity === 'error');
+
+        if (!validation.valid || errorDiags.length > 0) {
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                stage: 'validation',
+                valid: false,
+                diagnostics: validation.diagnostics,
+                error: validation.error,
+              }, null, 2),
+            }],
+          };
+        }
+
+        // Compiles. Run it if we have both sample input and an execute callback.
+        if (this.executeUtlx && verification.input) {
+          const exec = await this.executeUtlx({
+            utlx: fullProgram,
+            input: verification.input,
+            inputFormat: verification.inputFormat,
+            outputFormat: verification.outputFormat,
+          });
+          return {
+            content: [{
+              type: 'text',
+              text: JSON.stringify({
+                stage: 'execution',
+                valid: true,
+                executed: exec.success,
+                output: exec.success ? exec.output : undefined,
+                error: exec.success ? undefined : exec.error,
+              }, null, 2),
+            }],
+          };
+        }
+
+        return {
+          content: [{
+            type: 'text',
+            text: JSON.stringify({
+              stage: 'validation',
+              valid: true,
+              executed: false,
+              note: 'Validated. No sample input available to run against.',
+            }, null, 2),
+          }],
+        };
+      }
+    );
   }
 
   /**
