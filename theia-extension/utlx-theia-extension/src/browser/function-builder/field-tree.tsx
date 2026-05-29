@@ -256,7 +256,7 @@ export interface FieldTreeProps {
     onInsertField: (inputName: string, fieldPath: string) => void;
     onInsertValue?: (value: string) => void; // Optional callback to insert raw values into editor
     udmMap: Map<string, string>; // inputName -> UDM language string
-    isDesignTime?: boolean; // Design-Time mode flag for schema-aware rendering
+    isMessageContract?: boolean; // Message Contract mode flag for schema-aware rendering
     schemaFieldTreeMap?: Map<string, UdmField[]>; // inputName -> schema field tree (for type info)
 }
 
@@ -265,7 +265,7 @@ export interface FieldTreeProps {
  *
  * Displays all inputs with their fields in a tree structure with horizontal split
  */
-export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap, isDesignTime = false, schemaFieldTreeMap }) => {
+export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField, onInsertValue, udmMap, isMessageContract = false, schemaFieldTreeMap }) => {
     const [expandedInputs, setExpandedInputs] = React.useState<Set<string>>(new Set());
     const [selectedField, setSelectedField] = React.useState<{ inputName: string; fieldPath: string } | null>(null);
 
@@ -381,7 +381,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                             onToggle={() => toggleInput(tree.inputName)}
                             onInsertField={onInsertField}
                             onFieldSelect={setSelectedField}
-                            isDesignTime={isDesignTime}
+                            isMessageContract={isMessageContract}
                         />
                     ))}
                 </div>
@@ -416,7 +416,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                     {/* Schema Info Section (when both instance and schema exist) */}
                                     {(() => {
                                         const schemaField = findSchemaFieldInfo(selectedField.inputName, selectedField.fieldPath) as any;
-                                        if (schemaField && isDesignTime) {
+                                        if (schemaField && isMessageContract) {
                                             return (
                                                 <div style={{
                                                     padding: '10px',
@@ -673,7 +673,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                         }}>
                             <span className='codicon codicon-info' style={{ fontSize: '32px', opacity: 0.5 }}></span>
                             <span style={{ fontSize: '13px', color: 'var(--theia-descriptionForeground)' }}>
-                                {isDesignTime
+                                {isMessageContract
                                     ? 'Click on a field to see type info or available data'
                                     : 'Click on a field to see available data'}
                             </span>
@@ -694,7 +694,7 @@ interface InputNodeProps {
     onToggle: () => void;
     onInsertField: (inputName: string, fieldPath: string) => void;
     onFieldSelect: (field: { inputName: string; fieldPath: string } | null) => void;
-    isDesignTime?: boolean;
+    isMessageContract?: boolean;
 }
 
 /**
@@ -720,7 +720,7 @@ function getFormatTier(format: string): string {
  *
  * Represents a single input (root level)
  */
-const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect, isDesignTime = false }) => {
+const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onInsertField, onFieldSelect, isMessageContract = false }) => {
     const typeLabel = tree.isArray ? 'Array' : 'Object';
     const icon = tree.isArray ? 'codicon-symbol-array' : 'codicon-symbol-variable';
     const tier = getFormatTier(tree.format);
@@ -838,7 +838,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             onSelect={onFieldSelect}
                             level={1}
                             isSchemaSource={tree.isSchemaSource}
-                            isDesignTime={isDesignTime}
+                            isMessageContract={isMessageContract}
                         />
                     ))}
                 </div>
@@ -847,7 +847,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
             {isExpanded && tree.fields.length === 0 && (
                 <div className='empty-fields'>
                     <small>
-                        {isDesignTime
+                        {isMessageContract
                             ? 'No fields available (load instance data or schema to populate)'
                             : 'No fields available (paste data to populate)'}
                     </small>
@@ -885,8 +885,8 @@ interface FieldNodeProps {
     onInsert: (inputName: string, fieldPath: string) => void;
     onSelect: (field: { inputName: string; fieldPath: string } | null) => void;
     level: number;
-    isSchemaSource?: boolean;  // True if this field came from a schema (Design-Time mode)
-    isDesignTime?: boolean;    // Design-Time mode flag
+    isSchemaSource?: boolean;  // True if this field came from a schema (Message Contract mode)
+    isMessageContract?: boolean;    // Message Contract mode flag
 }
 
 /**
@@ -903,7 +903,7 @@ const FieldNode: React.FC<FieldNodeProps> = ({
     onSelect,
     level,
     isSchemaSource = false,
-    isDesignTime = false
+    isMessageContract = false
 }) => {
     const [expanded, setExpanded] = React.useState(false);
     const hasChildren = (field.type === 'object' || field.type === 'array') &&
@@ -1026,7 +1026,7 @@ const FieldNode: React.FC<FieldNodeProps> = ({
                                 onSelect={onSelect}
                                 level={level + 1}
                                 isSchemaSource={isSchemaSource}
-                                isDesignTime={isDesignTime}
+                                isMessageContract={isMessageContract}
                             />
                         );
                     })}

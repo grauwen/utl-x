@@ -68,8 +68,8 @@ export class UTLXEditorWidget extends ReactWidget {
     protected inputUdmMap: Map<string, string> = new Map(); // inputName -> UDM language
     protected inputFormatsMap: Map<string, string> = new Map(); // inputName -> format (json, csv, xml, etc.)
 
-    // Design-Time mode state for schema-aware Function Builder
-    protected currentMode: UTLXMode = UTLXMode.RUNTIME;
+    // Message Contract mode state for schema-aware Function Builder
+    protected currentMode: UTLXMode = UTLXMode.EXECUTION;
     protected schemaFieldTreeMap: Map<string, SchemaFieldInfo[]> = new Map(); // inputName -> schema field tree
 
     // Output format tracking for UDSL indicator
@@ -127,8 +127,8 @@ export class UTLXEditorWidget extends ReactWidget {
         this.eventService.onModeChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Mode changed:', event);
             this.currentMode = event.mode;
-            // Canvas is Design-Time only — switch back to classic when entering Runtime
-            if (event.mode === UTLXMode.RUNTIME && this.editorViewMode === 'canvas') {
+            // Canvas is Message Contract mode only — switch back to classic when entering Execution mode
+            if (event.mode === UTLXMode.EXECUTION && this.editorViewMode === 'canvas') {
                 this.switchViewMode('classic');
             }
             this.update();
@@ -200,7 +200,7 @@ export class UTLXEditorWidget extends ReactWidget {
             }
         });
 
-        // ===== Schema Field Tree Events (Design-Time mode) =====
+        // ===== Schema Field Tree Events (Message Contract mode) =====
         this.eventService.onInputSchemaFieldTree(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Input schema field tree:', {
                 inputId: event.inputId,
@@ -2121,8 +2121,8 @@ output json
             <div className='utlx-editor-container'>
                 <div className='utlx-editor-header'>
                     <div className='utlx-editor-title'>
-                        {/* View Mode Toggle — only in Design-Time (canvas needs schemas) */}
-                        {this.currentMode === UTLXMode.DESIGN_TIME && (
+                        {/* View Mode Toggle — only in Message Contract (canvas needs schemas) */}
+                        {this.currentMode === UTLXMode.MESSAGE_CONTRACT && (
                             <div className='mapping-view-toggle'>
                                 <button
                                     className={`mapping-view-toggle-btn ${isClassic ? 'active' : ''}`}

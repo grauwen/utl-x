@@ -16,7 +16,7 @@ import { SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { SchemaComparisonResult } from '../utils/schema-comparator';
 
 /**
- * Event fired when the mode changes between Design-Time and Runtime
+ * Event fired when the mode changes between Execution and Message Contract
  */
 export interface ModeChangedEvent {
     mode: UTLXMode;
@@ -95,7 +95,7 @@ export interface InputUdmUpdatedEvent {
 }
 
 /**
- * Event fired when a schema is parsed into a field tree (Design-Time mode)
+ * Event fired when a schema is parsed into a field tree (Message Contract mode)
  * This provides schema-aware field information without needing instance data.
  */
 export interface InputSchemaFieldTreeEvent {
@@ -235,7 +235,7 @@ export interface EditorViewModeChangedEvent {
 }
 
 /**
- * Event fired when validation result is available (Design-Time mode)
+ * Event fired when validation result is available (Message Contract mode)
  */
 export interface ValidationResultEvent {
     result: SchemaComparisonResult;
@@ -267,7 +267,7 @@ export class UTLXEventService {
 
     private readonly onModeChangedEmitter = new Emitter<ModeChangedEvent>();
     /**
-     * Event fired when the mode changes (Design-Time ↔ Runtime)
+     * Event fired when the mode changes (Execution ↔ Message Contract)
      */
     readonly onModeChanged: Event<ModeChangedEvent> = this.onModeChangedEmitter.event;
 
@@ -378,7 +378,7 @@ export class UTLXEventService {
 
     private readonly onInputSchemaFieldTreeEmitter = new Emitter<InputSchemaFieldTreeEvent>();
     /**
-     * Event fired when a schema is parsed into a field tree (Design-Time mode)
+     * Event fired when a schema is parsed into a field tree (Message Contract mode)
      */
     readonly onInputSchemaFieldTree: Event<InputSchemaFieldTreeEvent> = this.onInputSchemaFieldTreeEmitter.event;
 
@@ -660,7 +660,7 @@ export class UTLXEventService {
 
     private readonly onValidationResultEmitter = new Emitter<ValidationResultEvent>();
     /**
-     * Event fired when validation result is available (Design-Time mode)
+     * Event fired when validation result is available (Message Contract mode)
      */
     readonly onValidationResult: Event<ValidationResultEvent> = this.onValidationResultEmitter.event;
 

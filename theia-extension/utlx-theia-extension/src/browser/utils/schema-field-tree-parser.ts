@@ -2,7 +2,7 @@
  * Schema Field Tree Parser
  *
  * Parses JSON Schema and XSD documents directly into field trees
- * for use in the Function Builder when in Design-Time mode.
+ * for use in the Function Builder when in Message Contract mode.
  *
  * This provides a direct Schema → Field Tree path without going through
  * sample generation or UDM conversion, preserving schema metadata like

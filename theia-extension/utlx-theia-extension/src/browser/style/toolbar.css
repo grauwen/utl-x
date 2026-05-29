@@ -40,13 +40,13 @@
     gap: 6px;
 }
 
-.utlx-mode-badge.runtime {
+.utlx-mode-badge.execution {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
 }
 
-.utlx-mode-badge.design-time {
+.utlx-mode-badge.message-contract {
     background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
     color: white;
     box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);

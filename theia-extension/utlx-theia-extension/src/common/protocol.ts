@@ -2,7 +2,7 @@
  * UTL-X Theia Extension Protocol
  *
  * Defines the API contract between frontend and backend for UTL-X operations.
- * Supports both Design-Time and Runtime modes.
+ * Supports both Message Contract and Execution modes (the two IDE modes).
  */
 
 import { DirectiveRegistry } from './usdl-types';
@@ -14,13 +14,15 @@ export const UTLX_SERVICE_PATH = '/services/utlx';
 export const UTLX_SERVICE_SYMBOL = Symbol('UTLXService');
 
 /**
- * Execution modes
+ * IDE modes (distinct from the engine lifecycle phases design-time/init-time/runtime).
+ * See docs/architecture/ide-modes-specification.md.
  */
 export enum UTLXMode {
-    /** Design-Time: Schema-based type checking (for tier-1 formats) */
-    DESIGN_TIME = 'design-time',
-    /** Runtime: Data transformation execution */
-    RUNTIME = 'runtime'
+    /** Message Contract mode: contract-driven T1->T1 mapping against predefined
+     *  input/output schemas (scaffold + completeness + schema validation). */
+    MESSAGE_CONTRACT = 'message-contract',
+    /** Execution mode: run the transformation against real data, any tier. */
+    EXECUTION = 'execution'
 }
 
 /**
@@ -82,7 +84,7 @@ export interface InputDocument {
 }
 
 /**
- * Schema document for design-time mode
+ * Schema document for Message Contract mode
  */
 export interface SchemaDocument {
     format: SchemaFormat;
@@ -110,7 +112,7 @@ export interface ValidationResult {
 }
 
 /**
- * Execution result (runtime mode)
+ * Execution result (Execution mode)
  */
 export interface ExecutionResult {
     success: boolean;
@@ -142,7 +144,7 @@ export interface ValidateUdmResult {
 }
 
 /**
- * Schema inference result (design-time mode)
+ * Schema inference result (Message Contract mode)
  */
 export interface SchemaInferenceResult {
     success: boolean;
@@ -270,12 +272,12 @@ export interface UTLXService {
     validate(source: string): Promise<ValidationResult>;
 
     /**
-     * Execute transformation (runtime mode)
+     * Execute transformation (Execution mode)
      */
     execute(source: string, inputs: InputDocument[]): Promise<ExecutionResult>;
 
     /**
-     * Infer output schema (design-time mode)
+     * Infer output schema (Message Contract mode)
      */
     inferSchema(source: string, inputSchema?: SchemaDocument): Promise<SchemaInferenceResult>;
 

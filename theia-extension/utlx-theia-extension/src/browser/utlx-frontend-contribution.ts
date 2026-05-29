@@ -78,7 +78,7 @@ export class UTLXFrontendContribution implements
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
-    private currentMode: UTLXMode = UTLXMode.RUNTIME;
+    private currentMode: UTLXMode = UTLXMode.EXECUTION;
     private isUpdatingFromParsedHeaders: boolean = false; // Flag to prevent circular updates
     private canvasFullScreen: boolean = false;
 
@@ -128,7 +128,7 @@ export class UTLXFrontendContribution implements
         // Toggle Mode command
         commands.registerCommand({
             id: UTLXCommands.TOGGLE_MODE,
-            label: 'UTL-X: Toggle Design-Time/Runtime Mode'
+            label: 'UTL-X: Toggle Execution/Message Contract Mode'
         });
 
         // Clear Panels command
@@ -596,13 +596,13 @@ export class UTLXFrontendContribution implements
         this.eventService.onOutputSchemaFormatChanged(event => {
             console.log('[UTLXFrontendContribution] Output schema format changed:', event);
 
-            if (this.currentMode === UTLXMode.DESIGN_TIME) {
-                // In Design-Time, the schema describes the output data format.
+            if (this.currentMode === UTLXMode.MESSAGE_CONTRACT) {
+                // In Message Contract mode, the schema describes the output data format.
                 // Map schema format → instance format for the UTLX header:
                 // jsch→json, xsd→xml, osch→odata, tsch→csv
                 this.outputFormat = this.schemaFormatToInstanceFormat(event.format);
             } else {
-                // In Runtime, use the format as-is
+                // In Execution mode, use the format as-is
                 this.outputFormat = event.format;
             }
 
@@ -948,9 +948,9 @@ export class UTLXFrontendContribution implements
                 console.log('[Execute] Sending UTLX code (' + utlxCode.length + ' characters):');
                 console.log(utlxCode);
 
-                // 2a. Handle EVALUATE/VALIDATE mode (Design-Time) - validate output schema
+                // 2a. Handle EVALUATE/VALIDATE mode (Message Contract) - validate output schema
                 if (event.mode === 'evaluate') {
-                    console.log('[Validate] Design-Time mode - validating output schema');
+                    console.log('[Validate] Message Contract mode - validating output schema');
 
                     // Step 1: Get expected output schema from output panel
                     const expectedSchema = outputPanel.getExpectedSchema();
@@ -1469,7 +1469,7 @@ export class UTLXFrontendContribution implements
     /**
      * Map schema format to the instance format it describes.
      * e.g. jsch→json, xsd→xml, osch→odata, tsch→csv
-     * Used in Design-Time mode so the UTLX header shows the data output format,
+     * Used in Message Contract mode so the UTLX header shows the data output format,
      * not the schema notation format.
      */
     private schemaFormatToInstanceFormat(schemaFormat: string): string {

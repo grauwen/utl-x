@@ -2,8 +2,8 @@
  * Output Panel Widget
  *
  * Right panel for displaying:
- * - Runtime Mode: Transformation output (XML, JSON, CSV, YAML)
- * - Design-Time Mode: Inferred output schema (JSON Schema)
+ * - Execution Mode: Transformation output (XML, JSON, CSV, YAML)
+ * - Message Contract Mode: Inferred output schema (JSON Schema)
  */
 
 import * as React from 'react';
@@ -90,7 +90,7 @@ export class OutputPanelWidget extends ReactWidget {
     protected readonly fileService!: FileService;
 
     private state: OutputPanelState = {
-        mode: UTLXMode.RUNTIME,
+        mode: UTLXMode.EXECUTION,
         activeTab: 'instance',
         instanceContent: '',
         schemaContent: '',
@@ -116,7 +116,7 @@ export class OutputPanelWidget extends ReactWidget {
 
             // When entering design-time mode, link schema format to instance format
             let linkedSchemaFormat = this.state.schemaFormat;
-            if (event.mode === UTLXMode.DESIGN_TIME && this.state.instanceFormat) {
+            if (event.mode === UTLXMode.MESSAGE_CONTRACT && this.state.instanceFormat) {
                 const linked = this.getLinkedSchemaFormat(this.state.instanceFormat);
                 if (linked) {
                     linkedSchemaFormat = linked;
@@ -125,7 +125,7 @@ export class OutputPanelWidget extends ReactWidget {
 
             this.setState({
                 mode: event.mode,
-                activeTab: event.mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance',
+                activeTab: event.mode === UTLXMode.MESSAGE_CONTRACT ? 'schema' : 'instance',
                 schemaFormat: linkedSchemaFormat
             });
         });
@@ -162,7 +162,7 @@ export class OutputPanelWidget extends ReactWidget {
                     <h3>Output</h3>
                     <div className='utlx-panel-actions'>
                         {/* Infer Schema button - only in design-time mode on schema tab when instance exists */}
-                        {mode === UTLXMode.DESIGN_TIME && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && instanceContent && (
+                        {mode === UTLXMode.MESSAGE_CONTRACT && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && instanceContent && (
                             <button
                                 onClick={() => this.handleInferSchema()}
                                 title='Infer output schema from transformation'
@@ -213,8 +213,8 @@ export class OutputPanelWidget extends ReactWidget {
                     >
                         Instance
                     </button>
-                    {/* Only show Schema tab in Design-Time mode */}
-                    {mode === UTLXMode.DESIGN_TIME && (
+                    {/* Only show Schema tab in Message Contract mode */}
+                    {mode === UTLXMode.MESSAGE_CONTRACT && (
                         <button
                             className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''} ${this.isSchemaTabDisabled() ? 'disabled' : ''}`}
                             onClick={() => !this.isSchemaTabDisabled() && this.handleTabSwitch('schema')}
@@ -373,8 +373,8 @@ export class OutputPanelWidget extends ReactWidget {
                         <div className='utlx-placeholder'>
                             {activeTab === 'schema'
                                 ? this.getSchemaPlaceholder()
-                                : mode === UTLXMode.DESIGN_TIME
-                                    ? 'Load an output instance or switch to Runtime mode to execute'
+                                : mode === UTLXMode.MESSAGE_CONTRACT
+                                    ? 'Load an output instance or switch to Execution mode to execute'
                                     : '▶️ Click "Execute" to see transformation output'}
                         </div>
                     )}
@@ -869,8 +869,8 @@ export class OutputPanelWidget extends ReactWidget {
         if (this.state.activeTab === 'instance') {
             this.setState({ instanceFormat: format });
 
-            // In Design-Time mode, auto-link schema format based on instance format
-            if (this.state.mode === UTLXMode.DESIGN_TIME) {
+            // In Message Contract mode, auto-link schema format based on instance format
+            if (this.state.mode === UTLXMode.MESSAGE_CONTRACT) {
                 const linkedSchemaFormat = this.getLinkedSchemaFormat(format);
                 if (linkedSchemaFormat) {
                     this.setState({ schemaFormat: linkedSchemaFormat });
@@ -946,7 +946,7 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     /**
-     * Display execution result (runtime mode - instance output)
+     * Display execution result (Execution mode - instance output)
      * PUBLIC: Called by frontend contribution after execution
      */
     public displayExecutionResult(result: ExecutionResult): void {
@@ -1035,7 +1035,7 @@ export class OutputPanelWidget extends ReactWidget {
     setMode(mode: UTLXMode): void {
         this.setState({
             mode,
-            activeTab: mode === UTLXMode.DESIGN_TIME ? 'schema' : 'instance'
+            activeTab: mode === UTLXMode.MESSAGE_CONTRACT ? 'schema' : 'instance'
         });
     }
 
@@ -1047,7 +1047,7 @@ export class OutputPanelWidget extends ReactWidget {
     }
 
     /**
-     * Get expected output schema content and format (user-provided schema in Design-Time mode)
+     * Get expected output schema content and format (user-provided schema in Message Contract mode)
      * PUBLIC: Called by frontend contribution for validation
      */
     public getExpectedSchema(): { content: string; format: string } | null {

@@ -40,7 +40,7 @@ export class UTLXServiceImpl implements UTLXService {
     private readonly mcpClient!: MCPClient;
 
     private currentMode: ModeConfiguration = {
-        mode: UTLXMode.RUNTIME,
+        mode: UTLXMode.EXECUTION,
         autoInferSchema: false,
         enableTypeChecking: true
     };
@@ -73,7 +73,7 @@ export class UTLXServiceImpl implements UTLXService {
     }
 
     /**
-     * Execute transformation (runtime mode)
+     * Execute transformation (Execution mode)
      */
     async execute(source: string, inputs: InputDocument[]): Promise<ExecutionResult> {
         console.log('[BACKEND] ========================================');
@@ -83,11 +83,11 @@ export class UTLXServiceImpl implements UTLXService {
         console.log('[BACKEND] Input count:', inputs.length);
         console.log('[BACKEND] ========================================');
 
-        if (this.currentMode.mode !== UTLXMode.RUNTIME) {
-            console.warn('[BACKEND] Execution blocked - not in RUNTIME mode');
+        if (this.currentMode.mode !== UTLXMode.EXECUTION) {
+            console.warn('[BACKEND] Execution blocked - not in Execution mode');
             return {
                 success: false,
-                error: 'Execute is only available in Runtime mode. Switch to Runtime mode to execute transformations.'
+                error: 'Execute is only available in Execution mode. Switch to Execution mode to execute transformations.'
             };
         }
 
@@ -109,15 +109,15 @@ export class UTLXServiceImpl implements UTLXService {
     }
 
     /**
-     * Infer output schema (design-time mode)
+     * Infer output schema (Message Contract mode)
      */
     async inferSchema(source: string, inputSchema?: SchemaDocument): Promise<SchemaInferenceResult> {
-        if (this.currentMode.mode !== UTLXMode.DESIGN_TIME) {
+        if (this.currentMode.mode !== UTLXMode.MESSAGE_CONTRACT) {
             return {
                 success: false,
                 typeErrors: [{
                     severity: 1, // Error
-                    message: 'Schema inference is only available in Design-Time mode',
+                    message: 'Schema inference is only available in Message Contract mode',
                     range: { start: { line: 0, column: 0 }, end: { line: 0, column: 0 } }
                 }]
             };

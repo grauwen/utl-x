@@ -6,8 +6,8 @@
  * - Vertical tabs for multiple inputs
  * - Add/delete input functionality
  * - Format dropdowns (csv, json, xml, yaml, xsd, jsch, avro, proto)
- * - Runtime MODE: Single format per input
- * - Design Time MODE: Instance + Schema tabs with format linking
+ * - Execution MODE: Single format per input
+ * - Message Contract MODE: Instance + Schema tabs with format linking
  */
 
 import * as React from 'react';
@@ -40,14 +40,14 @@ export type InputSchemaFormatType = 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' |
 // All 8 formats (tier1 data + tier2 schema formats)
 export type AllInputFormats = InputDataFormatType | InputSchemaFormatType;
 
-// Runtime mode: All 8 formats allowed
+// Execution mode: All 8 formats allowed
 export type RuntimeInstanceFormat = AllInputFormats;
 
-// Design-Time mode: Instance tab - ALL 8 formats allowed
+// Message Contract mode: Instance tab - ALL 8 formats allowed
 // (tier2 formats like xsd/jsch/avro/proto can be inputs for schema-to-schema transformations)
 export type DesignTimeInstanceFormat = AllInputFormats;
 
-// Design-Time mode: Schema tab - linked formats based on instance selection
+// Message Contract mode: Schema tab - linked formats based on instance selection
 export type DesignTimeSchemaFormat = InputSchemaFormatType;
 
 // Combined types for state storage (backward compatibility)
@@ -81,7 +81,7 @@ export interface MultiInputPanelState {
     mode: UTLXMode;
     inputs: InputTab[];
     activeInputId: string;
-    activeSubTab: 'instance' | 'schema'; // For Design Time mode
+    activeSubTab: 'instance' | 'schema'; // For Message Contract mode
     loading: boolean;
     udmDialogOpen?: boolean;
 }
@@ -108,7 +108,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     protected readonly fileService!: FileService;
 
     private state: MultiInputPanelState = {
-        mode: UTLXMode.RUNTIME,
+        mode: UTLXMode.EXECUTION,
         inputs: [{
             id: 'input-1',
             name: 'input',
@@ -149,9 +149,9 @@ export class MultiInputPanelWidget extends ReactWidget {
         // Subscribe to mode changes
         this.eventService.onModeChanged(event => {
             console.log('[MultiInputPanelWidget] Mode changed to:', event.mode);
-            // When entering Design-Time, sync schemaFormat to match instanceFormat
+            // When entering Message Contract, sync schemaFormat to match instanceFormat
             // (the auto-linking only fires on instance format changes while already in DT mode)
-            const updatedInputs = event.mode === UTLXMode.DESIGN_TIME
+            const updatedInputs = event.mode === UTLXMode.MESSAGE_CONTRACT
                 ? this.state.inputs.map(input => ({
                     ...input,
                     schemaFormat: this.getDefaultSchemaFormat(input.instanceFormat)
@@ -191,11 +191,11 @@ export class MultiInputPanelWidget extends ReactWidget {
         }
 
         // Determine current content and format based on mode and active sub-tab
-        const isDesignTime = mode === UTLXMode.DESIGN_TIME;
-        const currentContent = isDesignTime && activeSubTab === 'schema'
+        const isMessageContract = mode === UTLXMode.MESSAGE_CONTRACT;
+        const currentContent = isMessageContract && activeSubTab === 'schema'
             ? activeInput.schemaContent
             : activeInput.instanceContent;
-        const currentFormat = isDesignTime && activeSubTab === 'schema'
+        const currentFormat = isMessageContract && activeSubTab === 'schema'
             ? activeInput.schemaFormat
             : activeInput.instanceFormat;
 
@@ -315,7 +315,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 </button>
                             )}
                             {/* Infer Schema button - only in design-time mode on schema tab with instance content */}
-                            {isDesignTime && activeSubTab === 'schema' && !this.isSchemaTabDisabled(activeInput.instanceFormat) && activeInput.instanceContent && (
+                            {isMessageContract && activeSubTab === 'schema' && !this.isSchemaTabDisabled(activeInput.instanceFormat) && activeInput.instanceContent && (
                                 <button
                                     onClick={() => this.handleInferInputSchema()}
                                     title='Infer input schema from instance data'
@@ -345,9 +345,9 @@ export class MultiInputPanelWidget extends ReactWidget {
 
                     {/* Instance/Schema Horizontal Tabs - Below header */}
                     <div className='utlx-horizontal-tabs'>
-                        {isDesignTime ? (
+                        {isMessageContract ? (
                             <>
-                                {/* Design-Time: Show both Instance and Schema tabs */}
+                                {/* Message Contract: Show both Instance and Schema tabs */}
                                 <button
                                     className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
                                     onClick={() => this.handleSubTabSwitch('instance')}
@@ -381,13 +381,13 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 onChange={(e) => this.handleFormatChange(e.target.value as any)}
                                 disabled={loading}
                             >
-                                {isDesignTime && activeSubTab === 'schema' ? (
-                                    // Design-Time Schema tab: linked formats based on instance
+                                {isMessageContract && activeSubTab === 'schema' ? (
+                                    // Message Contract Schema tab: linked formats based on instance
                                     <>
                                         {this.getSchemaFormatOptions(activeInput.instanceFormat)}
                                     </>
                                 ) : (
-                                    // Runtime mode + Design-Time Instance tab: all 8 formats
+                                    // Execution mode + Message Contract Instance tab: all 8 formats
                                     <>
                                         <option value='json'>json</option>
                                         <option value='xml'>xml</option>
@@ -632,7 +632,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     return 'Paste or load your schema here...';
             }
         } else {
-            // Instance format placeholders (including schema formats for Runtime mode)
+            // Instance format placeholders (including schema formats for Execution mode)
             switch (format) {
                 case 'xml':
                     return '<root>\n  <element>data</element>\n</root>';
@@ -791,7 +791,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
         if (!activeInput) return;
 
-        const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
 
         this.setState({
             inputs: this.state.inputs.map(input =>
@@ -809,7 +809,7 @@ export class MultiInputPanelWidget extends ReactWidget {
         console.log('[MultiInputPanel] Paste detected');
 
         // Only validate instance content, not schema content
-        const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
         if (isSchema) {
             console.log('[MultiInputPanel] Paste in schema tab - skipping UDM validation');
             return;
@@ -823,7 +823,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private handleFormatChange(format: InstanceFormat | SchemaFormatType): void {
-        const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
         const activeInput = this.state.inputs.find(input => input.id === this.state.activeInputId);
 
         console.log('[MultiInputPanel] Format changed:', { format, isSchema });
@@ -835,7 +835,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         ...input,
                         [isSchema ? 'schemaFormat' : 'instanceFormat']: format,
                         // When instance format changes, update schema format according to linking rules
-                        ...((!isSchema && this.state.mode === UTLXMode.DESIGN_TIME) ? {
+                        ...((!isSchema && this.state.mode === UTLXMode.MESSAGE_CONTRACT) ? {
                             schemaFormat: this.getDefaultSchemaFormat(format as InstanceFormat)
                         } : {})
                     }
@@ -1262,7 +1262,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     /**
-     * Parse schema content and fire schema field tree event for Design-Time mode.
+     * Parse schema content and fire schema field tree event for Message Contract mode.
      * This allows the Function Builder to display schema structure.
      *
      * @param inputId - The input ID to parse schema for
@@ -1290,10 +1290,10 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
 
         // Only process if:
-        // 1. We're in Design-Time mode
+        // 1. We're in Message Contract mode
         // 2. There's schema content
-        if (this.state.mode !== UTLXMode.DESIGN_TIME) {
-            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Not in Design-Time mode, skipping');
+        if (this.state.mode !== UTLXMode.MESSAGE_CONTRACT) {
+            console.log('[MultiInputPanel] parseAndFireSchemaFieldTree: Not in Message Contract mode, skipping');
             return;
         }
 
@@ -1510,7 +1510,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private handleClear(): void {
-        const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+        const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
         const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
         this.setState({
@@ -1766,7 +1766,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     private async handleLoadFile(): Promise<void> {
         try {
             // Determine if we're loading into schema tab in design mode
-            const isSchemaTab = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+            const isSchemaTab = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
             const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
             // Create file input element
@@ -1796,7 +1796,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     const content = await file.text();
 
                     // Determine if we're loading into instance or schema
-                    const isSchema = this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema';
+                    const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
 
                     // Auto-detect format: start with file extension, then refine with content analysis
                     let detectedFormat = this.detectFormatFromFilename(file.name);
@@ -1850,7 +1850,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                         udmError: undefined
                                     } : {}),
                                     // Clear schema content when loading a new instance (user can infer schema later)
-                                    ...(!isSchema && this.state.mode === UTLXMode.DESIGN_TIME ? {
+                                    ...(!isSchema && this.state.mode === UTLXMode.MESSAGE_CONTRACT ? {
                                         schemaContent: ''
                                     } : {})
                                 }
@@ -1888,14 +1888,14 @@ export class MultiInputPanelWidget extends ReactWidget {
                             content
                         });
 
-                        // Parse schema to field tree for Function Builder (Design-Time mode)
+                        // Parse schema to field tree for Function Builder (Message Contract mode)
                         // Wait for state to update before parsing
                         await new Promise(resolve => setTimeout(resolve, 50));
                         this.parseAndFireSchemaFieldTree(this.state.activeInputId);
                     } else {
-                        // When loading instance in Design-Time mode, notify that schema was cleared
-                        if (this.state.mode === UTLXMode.DESIGN_TIME) {
-                            console.log('[MultiInputPanel] Instance loaded in Design-Time mode - clearing schema');
+                        // When loading instance in Message Contract mode, notify that schema was cleared
+                        if (this.state.mode === UTLXMode.MESSAGE_CONTRACT) {
+                            console.log('[MultiInputPanel] Instance loaded in Message Contract mode - clearing schema');
                             this.eventService.fireInputSchemaContentChanged({
                                 inputId: this.state.activeInputId,
                                 content: ''
@@ -2104,7 +2104,7 @@ export class MultiInputPanelWidget extends ReactWidget {
     setMode(mode: UTLXMode): void {
         this.setState({
             mode,
-            activeSubTab: mode === UTLXMode.DESIGN_TIME ? 'instance' : 'instance'
+            activeSubTab: mode === UTLXMode.MESSAGE_CONTRACT ? 'instance' : 'instance'
         });
     }
 

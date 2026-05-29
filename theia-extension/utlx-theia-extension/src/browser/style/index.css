@@ -789,7 +789,7 @@
     outline: 1px solid var(--theia-focusBorder);
 }
 
-/* Horizontal Tabs for Design Time Mode */
+/* Horizontal Tabs for Message Contract Mode */
 .utlx-horizontal-tabs {
     display: flex;
     background: var(--theia-sideBar-background);

@@ -4,7 +4,7 @@
  * Compares two SchemaFieldInfo[] trees (expected vs inferred) and produces
  * a structured result showing matches, mismatches, missing, and extra fields.
  *
- * Used by the Validate button in Design-Time mode to compare the user-provided
+ * Used by the Validate button in Message Contract mode to compare the user-provided
  * output schema against the inferred output from UTLX transformation.
  */
 

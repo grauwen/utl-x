@@ -39,7 +39,7 @@ export interface FunctionBuilderDialogProps {
     directiveRegistry: DirectiveRegistry | null; // NEW: USDL directives
     cursorContext: InsertionContext | null;
     initialExpression?: string; // Pre-populate Expression Editor with value from cursor line
-    // Design-Time mode support for schema-aware field browsing
+    // Message Contract mode support for schema-aware field browsing
     mode?: UTLXMode;
     schemaFieldTreeMap?: Map<string, SchemaFieldInfo[]>; // inputName -> schema field tree
     onInsert: (code: string) => void;
@@ -70,13 +70,13 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
     directiveRegistry,
     cursorContext,
     initialExpression,
-    mode = UTLXMode.RUNTIME,
+    mode = UTLXMode.EXECUTION,
     schemaFieldTreeMap,
     onInsert,
     onClose
 }) => {
-    // Design-Time mode flag for UI changes
-    const isDesignTime = mode === UTLXMode.DESIGN_TIME;
+    // Message Contract mode flag for UI changes
+    const isMessageContract = mode === UTLXMode.MESSAGE_CONTRACT;
     const [searchQuery, setSearchQuery] = React.useState('');
     const [expandedCategories, setExpandedCategories] = React.useState<Set<string>>(new Set());
     const [selectedFunction, setSelectedFunction] = React.useState<FunctionInfo | null>(null);
@@ -260,12 +260,12 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
         return new Map([...grouped.entries()].sort((a, b) => a[0].localeCompare(b[0])));
     }, [functions, searchQuery]);
 
-    // Parse UDM into field trees (or use schema field trees in Design-Time mode)
+    // Parse UDM into field trees (or use schema field trees in Message Contract mode)
     const fieldTrees = React.useMemo(() => {
         console.log('╔' + '═'.repeat(78) + '╗');
         console.log('║ [FunctionBuilder] PARSING FIELD TREES');
         console.log('╠' + '═'.repeat(78) + '╣');
-        console.log('[FunctionBuilder] Mode:', isDesignTime ? 'Design-Time' : 'Runtime');
+        console.log('[FunctionBuilder] Mode:', isMessageContract ? 'Message Contract' : 'Execution');
         console.log('[FunctionBuilder] Available inputs count:', availableInputs.length);
         console.log('[FunctionBuilder] Available inputs:', availableInputs);
         console.log('[FunctionBuilder] UDM map size:', udmMap.size);
@@ -348,7 +348,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
 
         console.log('╚' + '═'.repeat(78) + '╝');
         return results;
-    }, [availableInputs, udmMap, inputFormatsMap, schemaFieldTreeMap, isDesignTime]);
+    }, [availableInputs, udmMap, inputFormatsMap, schemaFieldTreeMap, isMessageContract]);
 
     // Check if output format is USDL (Tier 2+ schema format)
     const isUsdlFormat = React.useMemo(() => {
@@ -921,8 +921,8 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         {/* Tab Content: Available Inputs */}
                         {activeTab === 'inputs' && (
                             <div className='inputs-tab-content' style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-                                {/* Design-Time Mode Indicator */}
-                                {isDesignTime && (
+                                {/* Message Contract Mode Indicator */}
+                                {isMessageContract && (
                                     <div className='design-time-indicator' style={{
                                         padding: '4px 8px',
                                         background: 'rgba(98, 114, 164, 0.3)',
@@ -934,7 +934,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                         gap: '6px'
                                     }}>
                                         <span className='codicon codicon-beaker' style={{ fontSize: '12px' }}></span>
-                                        Design-Time Mode
+                                        Message Contract Mode
                                     </div>
                                 )}
                                 <FieldTree
@@ -942,7 +942,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     onInsertField={handleInsertField}
                                     onInsertValue={insertIntoMonaco}
                                     udmMap={udmMap}
-                                    isDesignTime={isDesignTime}
+                                    isMessageContract={isMessageContract}
                                     schemaFieldTreeMap={schemaFieldTreeMap}
                                 />
                             </div>

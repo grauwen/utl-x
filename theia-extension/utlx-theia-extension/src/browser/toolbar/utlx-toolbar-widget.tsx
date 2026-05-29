@@ -2,7 +2,7 @@
  * UTLX Toolbar Widget
  *
  * Top toolbar for:
- * - Mode switching (Design-Time ↔ Runtime)
+ * - Mode switching (Execution ↔ Message Contract)
  * - Current mode indicator
  * - MCP prompt for AI assistance
  */
@@ -76,7 +76,7 @@ export class UTLXToolbarWidget extends ReactWidget {
     private statusCheckInterval?: NodeJS.Timeout;  // Timer for periodic status checks
 
     private state: ToolbarState = {
-        currentMode: UTLXMode.RUNTIME,
+        currentMode: UTLXMode.EXECUTION,
         showMCPDialog: false,
         mcpPrompt: '',
         mcpLoading: false,
@@ -187,8 +187,8 @@ export class UTLXToolbarWidget extends ReactWidget {
                 {/* Left section: Mode indicator and switcher */}
                 <div className='utlx-toolbar-left'>
                     <div className='utlx-mode-indicator'>
-                        <span className={`utlx-mode-badge ${currentMode === UTLXMode.RUNTIME ? 'runtime' : 'design-time'}`}>
-                            {currentMode === UTLXMode.RUNTIME ? '▶️ Runtime Mode' : '🎨 Design-Time Mode'}
+                        <span className={`utlx-mode-badge ${currentMode === UTLXMode.EXECUTION ? 'execution' : 'message-contract'}`}>
+                            {currentMode === UTLXMode.EXECUTION ? '▶️ Execution Mode' : '📋 Message Contract Mode'}
                         </span>
                     </div>
 
@@ -196,13 +196,13 @@ export class UTLXToolbarWidget extends ReactWidget {
                         <label className='utlx-toggle-switch'>
                             <input
                                 type='checkbox'
-                                checked={currentMode === UTLXMode.DESIGN_TIME}
+                                checked={currentMode === UTLXMode.MESSAGE_CONTRACT}
                                 onChange={() => this.toggleMode()}
-                                title={`Switch to ${currentMode === UTLXMode.RUNTIME ? 'Design-Time' : 'Runtime'} mode`}
+                                title={`Switch to ${currentMode === UTLXMode.EXECUTION ? 'Message Contract' : 'Execution'} mode`}
                             />
                             <span className='utlx-toggle-slider'>
-                                <span className='utlx-toggle-label-left'>Runtime</span>
-                                <span className='utlx-toggle-label-right'>Design</span>
+                                <span className='utlx-toggle-label-left'>Execution</span>
+                                <span className='utlx-toggle-label-right'>Contract</span>
                             </span>
                         </label>
                     </div>
@@ -229,9 +229,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                     <button
                         className='utlx-toolbar-button'
                         onClick={() => this.handleExecute()}
-                        title={currentMode === UTLXMode.RUNTIME ? 'Execute transformation' : 'Validate output schema'}
+                        title={currentMode === UTLXMode.EXECUTION ? 'Execute transformation' : 'Validate output schema'}
                     >
-                        {currentMode === UTLXMode.RUNTIME ? '▶️ Execute' : '✅ Validate'}
+                        {currentMode === UTLXMode.EXECUTION ? '▶️ Execute' : '✅ Validate'}
                     </button>
                 </div>
 
@@ -388,21 +388,21 @@ export class UTLXToolbarWidget extends ReactWidget {
 
     private getModeDescription(mode: UTLXMode): string {
         switch (mode) {
-            case UTLXMode.DESIGN_TIME:
-                return 'Schema validation • Type checking • No data execution';
-            case UTLXMode.RUNTIME:
+            case UTLXMode.MESSAGE_CONTRACT:
+                return 'Contract validation • Type checking • No data execution';
+            case UTLXMode.EXECUTION:
                 return 'Data transformation • Real execution • Performance metrics';
         }
     }
 
     private async toggleMode(): Promise<void> {
-        const newMode = this.state.currentMode === UTLXMode.RUNTIME
-            ? UTLXMode.DESIGN_TIME
-            : UTLXMode.RUNTIME;
+        const newMode = this.state.currentMode === UTLXMode.EXECUTION
+            ? UTLXMode.MESSAGE_CONTRACT
+            : UTLXMode.EXECUTION;
 
         this.setState({ currentMode: newMode });
 
-        const modeName = newMode === UTLXMode.RUNTIME ? 'Runtime' : 'Design-Time';
+        const modeName = newMode === UTLXMode.EXECUTION ? 'Execution' : 'Message Contract';
         this.messageService.info(`✓ Switched to ${modeName} mode`);
 
         // Update backend mode
@@ -863,8 +863,8 @@ export class UTLXToolbarWidget extends ReactWidget {
     }
 
     private async handleExecute(): Promise<void> {
-        const mode = this.state.currentMode === UTLXMode.RUNTIME ? 'execute' : 'evaluate';
-        const modeLabel = this.state.currentMode === UTLXMode.RUNTIME ? 'Executing' : 'Validating';
+        const mode = this.state.currentMode === UTLXMode.EXECUTION ? 'execute' : 'evaluate';
+        const modeLabel = this.state.currentMode === UTLXMode.EXECUTION ? 'Executing' : 'Validating';
 
         this.messageService.info(`${mode === 'execute' ? '▶️' : '✅'} ${modeLabel} transformation...`);
 

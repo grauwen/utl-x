@@ -31,7 +31,7 @@ export interface UdmInputTree {
     format: string; // json, csv, xml, yaml, xsd, jsch, avro, proto
     isArray: boolean;
     fields: UdmField[];
-    isSchemaSource?: boolean; // True if fields came from schema (Design-Time mode), not instance data
+    isSchemaSource?: boolean; // True if fields came from schema (Message Contract mode), not instance data
 }
 
 /**

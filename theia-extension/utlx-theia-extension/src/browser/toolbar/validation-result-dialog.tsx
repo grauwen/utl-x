@@ -2,7 +2,7 @@
  * Validation Result Dialog
  *
  * Displays a field-by-field comparison between expected and inferred output schemas.
- * Used by the Validate button in Design-Time mode.
+ * Used by the Validate button in Message Contract mode.
  *
  * Status indicators:
  * - ✓ green   = match
