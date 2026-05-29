@@ -7,6 +7,18 @@
 
 ---
 
+> ⚠️ **Terminology warning — this is NOT an IDE mode.**
+> This document describes an **engine-level schema-analysis capability** (given an
+> input *schema*, infer the output *schema*). The IDE's **Message Contract mode**
+> (formerly called "Design-Time mode") is a different concept: it maps
+> **Tier 1 → Tier 1 instance documents** against predefined input/output **schema
+> contracts** (with scaffolding and completeness tracking). The
+> "Runtime vs Design-Time" table below refers to engine processing, not the IDE
+> modes. For the IDE modes (Execution Mode / Message Contract Mode), see
+> [`ide-modes-specification.md`](./ide-modes-specification.md).
+
+---
+
 ## Executive Summary
 
 This document defines a **design-time type system** and **static schema analysis** capability for UTL-X that enables:
