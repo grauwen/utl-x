@@ -94,6 +94,19 @@ export interface UTLXExecutionInput {
 }
 
 /**
+ * Detail for a single stdlib function, returned on-demand when an agentic
+ * provider looks up a function it intends to use (avoids sending all 600+
+ * signatures up front).
+ */
+export interface UTLXFunctionDetail {
+  name: string;
+  signature?: string;
+  description?: string;
+  category?: string;
+  examples?: string[];
+}
+
+/**
  * Optional dependencies injected into providers by the gateway/host.
  * Used by agentic providers (e.g. Claude Code) for self-correction.
  * Both are generic daemon accessors; per-request context (header, sample
@@ -102,6 +115,10 @@ export interface UTLXExecutionInput {
 export interface LLMProviderDeps {
   validateUtlx?: (utlx: string) => Promise<UTLXValidationResult>;
   executeUtlx?: (req: UTLXExecutionInput) => Promise<UTLXExecutionResult>;
+  // Look up details (signature, description, examples) for specific stdlib
+  // functions by name — so an agentic provider can fetch usage on demand
+  // rather than receiving all signatures in the prompt.
+  lookupFunctions?: (names: string[]) => Promise<UTLXFunctionDetail[]>;
 }
 
 /**

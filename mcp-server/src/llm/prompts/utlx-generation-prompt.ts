@@ -63,6 +63,34 @@ export function buildUTLXGenerationSystemPrompt(): string {
 4. **No explanations, no markdown, no code blocks** - just valid UTLX code
 5. **Follow UTLX syntax precisely** as specified in the reference below
 6. **NO TRAILING COMMAS** - Do not add commas after the last property in objects or arrays
+7. **FORMAT FOR HUMANS** - the output must be readable, not a one-liner:
+   - Use multi-line, indented layout (2 spaces per nesting level).
+   - Put each object property and each array element on its **own line**.
+   - Put each closing bracket (\`}\`, \`]\`, \`)\`) on its **own line**, aligned with the line that opened it.
+   - Only trivial single-value expressions (e.g. \`$input.name\`) may stay on one line.
+
+Example of the expected layout:
+{
+  id: $input.orderId,
+  customer: {
+    name: $input.customer.name
+  },
+  items: $input.items |> map(item => {
+    sku: item.sku,
+    qty: item.quantity
+  })
+}
+
+# COMMON PATTERNS (use these — avoid JavaScript habits)
+
+- **Group and transform** → use \`mapGroups\`, which gives each group as an object with \`.key\` and \`.value\`:
+  \`array |> mapGroups(item => item.someField, group => { ... group.key ... group.value ... })\`
+  \`group.key\` = the group's key; \`group.value\` = the array of items in that group. Returns an array.
+  ❌ Do NOT write \`groupBy(...) |> entries() |> map(e => e.key)\`: \`groupBy\` returns an **Object** (not entries),
+  and \`entries\` yields \`[key, value]\` **arrays**, so \`e.key\`/\`e.value\` fail at runtime
+  ("Cannot access property 'key' on ArrayValue").
+- **Aggregate over an array** → \`array |> count()\`, \`array |> sumBy(x => x.amount)\`.
+- **Wrap a single object to group/iterate it** → \`[$input] |> mapGroups(...)\`.
 
 # UTLX LANGUAGE REFERENCE
 

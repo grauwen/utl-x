@@ -22,6 +22,15 @@ const TRANSPORT = process.env.UTLX_MCP_TRANSPORT || 'stdio'; // 'stdio' or 'http
 const HTTP_PORT = parseInt(process.env.UTLX_MCP_PORT || '3000', 10);
 const LOG_LEVEL = process.env.UTLX_LOG_LEVEL || 'info';
 
+// Cached stdlib function registry for on-demand lookups by the LLM gateway.
+let functionRegistryCache: Array<{
+  name: string;
+  signature?: string;
+  description?: string;
+  category?: string;
+  examples?: string[];
+}> | null = null;
+
 /**
  * Create logger instance
  */
@@ -371,6 +380,28 @@ async function main(): Promise<void> {
               output: res.output,
               error: res.error,
             };
+          },
+          lookupFunctions: async (names: string[]) => {
+            // Fetch the full registry once, cache it, then return details for
+            // the requested names (case-insensitive exact or substring match).
+            if (!functionRegistryCache) {
+              const reg = await daemonClient.getFunctions();
+              functionRegistryCache = reg?.functions ?? [];
+            }
+            const wanted = names.map(n => n.trim().toLowerCase()).filter(Boolean);
+            return functionRegistryCache
+              .filter(fn => {
+                const fnName = (fn.name || '').toLowerCase();
+                return wanted.some(w => fnName === w || fnName.includes(w));
+              })
+              .slice(0, 25) // cap to keep tool output bounded
+              .map(fn => ({
+                name: fn.name,
+                signature: fn.signature,
+                description: fn.description,
+                category: fn.category,
+                examples: fn.examples,
+              }));
           },
         });
         const isAvailable = await llmGateway.isAvailable();

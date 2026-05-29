@@ -170,6 +170,20 @@ function extractCleanCode(response: string): string {
   return code;
 }
 
+/**
+ * Count bracket pairs and report whether they balance. Heuristic (does not skip
+ * brackets inside string literals) — used only to flag likely corruption/
+ * truncation in a log warning, not for correctness decisions.
+ */
+function bracketBalance(code: string): { balanced: boolean; curly: number; square: number; round: number } {
+  const diff = (open: string, close: string) =>
+    code.split(open).length - code.split(close).length;
+  const curly = diff('{', '}');
+  const square = diff('[', ']');
+  const round = diff('(', ')');
+  return { balanced: curly === 0 && square === 0 && round === 0, curly, square, round };
+}
+
 export async function handleGenerateUtlx(
   args: Record<string, unknown>,
   daemonClient: DaemonClient,
@@ -371,6 +385,19 @@ export async function handleGenerateUtlx(
       logger.info(`Attempt ${attempt}: Generated code`, { length: generatedCode.length });
       logger.debug(`Attempt ${attempt}: Raw LLM response:\n${rawResponse}`);
       logger.debug(`Attempt ${attempt}: Extracted clean code:\n${generatedCode}`);
+
+      // Safety net: if extraction left brackets unbalanced, surface it loudly.
+      // This catches both a corrupting extractor and a truncated LLM response,
+      // and (critically) compares against the raw response so we can tell which.
+      const rawBalance = bracketBalance(rawResponse);
+      const cleanBalance = bracketBalance(generatedCode);
+      if (cleanBalance.balanced === false) {
+        logger.warn(`Attempt ${attempt}: Extracted code has UNBALANCED brackets`, {
+          extracted: cleanBalance,
+          raw: rawBalance,
+          extractionChangedBalance: rawBalance.balanced === true,
+        });
+      }
 
       // Report progress: Validating
       if (onProgress) {

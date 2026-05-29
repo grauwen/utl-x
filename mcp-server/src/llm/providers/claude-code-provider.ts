@@ -56,6 +56,7 @@ const DISALLOWED_BUILTIN_TOOLS = [
 ];
 
 const VERIFY_TOOL = 'mcp__utlx__validate_and_run';
+const LOOKUP_TOOL = 'mcp__utlx__lookup_function';
 
 export class ClaudeCodeProvider implements LLMProvider {
   private model?: string;
@@ -64,6 +65,7 @@ export class ClaudeCodeProvider implements LLMProvider {
   private pathToExecutable?: string;
   private validateUtlx?: LLMProviderDeps['validateUtlx'];
   private executeUtlx?: LLMProviderDeps['executeUtlx'];
+  private lookupFunctions?: LLMProviderDeps['lookupFunctions'];
 
   constructor(config: ClaudeCodeConfig, deps?: LLMProviderDeps) {
     this.model = config.model;
@@ -71,10 +73,11 @@ export class ClaudeCodeProvider implements LLMProvider {
     this.pathToExecutable = config.pathToExecutable;
     this.validateUtlx = deps?.validateUtlx;
     this.executeUtlx = deps?.executeUtlx;
-    // With self-correction we need room for validate→run→fix cycles; otherwise
-    // a single turn is enough.
-    const canSelfCorrect = this.selfCorrect && !!this.validateUtlx;
-    this.maxTurns = config.maxTurns ?? (canSelfCorrect ? 8 : 1);
+    this.lookupFunctions = deps?.lookupFunctions;
+    // Agentic tools (validate→run→fix cycles, or function lookups) need
+    // multiple turns; a plain single-shot completion needs only one.
+    const agentic = (this.selfCorrect && !!this.validateUtlx) || !!this.lookupFunctions;
+    this.maxTurns = config.maxTurns ?? (agentic ? 8 : 1);
   }
 
   async generateCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
@@ -184,35 +187,91 @@ export class ClaudeCodeProvider implements LLMProvider {
   private buildOptions(system: string, verification?: LLMVerificationContext): Options {
     const canSelfCorrect =
       this.selfCorrect && !!this.validateUtlx && !!verification?.header;
+    const canLookup = !!this.lookupFunctions;
+
+    // Assemble the in-process tools and the matching allowlist.
+    const tools = [];
+    const allowedTools: string[] = [];
+    if (canSelfCorrect && verification) {
+      tools.push(this.buildVerifyTool(verification));
+      allowedTools.push(VERIFY_TOOL);
+    }
+    if (canLookup) {
+      tools.push(this.buildLookupTool());
+      allowedTools.push(LOOKUP_TOOL);
+    }
+
+    // Tell the session to actually use the tools (provider-specific addendum;
+    // does not affect other providers' shared system prompt).
+    let systemPrompt = system;
+    if (allowedTools.length > 0) {
+      const hints: string[] = [];
+      if (canSelfCorrect) {
+        hints.push(
+          '- Before finishing, call validate_and_run with your transformation BODY to confirm it ' +
+            'compiles AND runs on the sample input; fix any compile or runtime errors it reports.'
+        );
+      }
+      if (canLookup) {
+        hints.push(
+          '- When unsure how a stdlib function is called, call lookup_function with the name(s) and ' +
+            'follow the returned signature/examples — do not guess arguments.'
+        );
+      }
+      systemPrompt = `${system}\n\n# TOOLS\nYou have tools available — use them:\n${hints.join('\n')}`;
+    }
 
     const options: Options = {
       ...(this.model ? { model: this.model } : {}),
       ...(this.pathToExecutable
         ? { pathToClaudeCodeExecutable: this.pathToExecutable }
         : {}),
-      ...(system ? { systemPrompt: system } : {}),
+      ...(systemPrompt ? { systemPrompt } : {}),
       maxTurns: this.maxTurns,
       disallowedTools: DISALLOWED_BUILTIN_TOOLS,
-      allowedTools: canSelfCorrect ? [VERIFY_TOOL] : [],
+      allowedTools,
       // Hermetic: don't auto-load user/project settings or CLAUDE.md.
       settingSources: [],
-      // Only our injected tool is reachable; everything else is on the disallow
-      // list, so 'default' mode auto-denies stray tool requests without
-      // prompting (there is no human in this loop).
+      // Only our injected tools are reachable; everything else is on the
+      // disallow list, so 'default' mode auto-denies stray tool requests
+      // without prompting (there is no human in this loop).
       permissionMode: 'default',
     };
 
-    if (canSelfCorrect && verification) {
+    if (tools.length > 0) {
       options.mcpServers = {
-        utlx: createSdkMcpServer({
-          name: 'utlx',
-          version: '1.0.0',
-          tools: [this.buildVerifyTool(verification)],
-        }),
+        utlx: createSdkMcpServer({ name: 'utlx', version: '1.0.0', tools }),
       };
     }
 
     return options;
+  }
+
+  /**
+   * On-demand stdlib lookup. The model passes the names of functions it intends
+   * to use and gets back their signatures, descriptions, and examples — so it
+   * can call them correctly instead of guessing from the name alone.
+   */
+  private buildLookupTool() {
+    return tool(
+      'lookup_function',
+      'Look up the exact signature, description, and examples for UTLX stdlib ' +
+        'functions BEFORE using them. Pass the function names you intend to use ' +
+        '(e.g. ["mapGroups", "sumBy"]). Use this whenever you are unsure how a ' +
+        'function is called — do not guess its arguments.',
+      { names: z.array(z.string()).describe('Function names to look up') },
+      async (args: { names: string[] }) => {
+        const details = await this.lookupFunctions!(args.names);
+        return {
+          content: [{
+            type: 'text',
+            text: details.length
+              ? JSON.stringify(details, null, 2)
+              : `No stdlib functions matched: ${args.names.join(', ')}`,
+          }],
+        };
+      }
+    );
   }
 
   /**
