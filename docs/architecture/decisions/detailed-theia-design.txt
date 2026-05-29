@@ -49,7 +49,7 @@
   - Location: Top area
   - File: src/browser/toolbar/utlx-toolbar-widget.tsx
   - Purpose: Mode switching and AI assistance controls
-  - Features: Runtime/Design-Time toggle, mode indicator, AI Assist button, Execute button
+  - Features: Execution/Message Contract toggle, mode indicator, AI Assist button, Execute button
 
 
 

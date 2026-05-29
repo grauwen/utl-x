@@ -50,7 +50,7 @@ The UTLX Theia extension currently has **8 registered widgets**, but only **4 ar
 
 **Purpose:**
 - Manages multiple input documents with vertical tabs
-- Supports Design-Time mode (Instance/Schema tabs)
+- Supports Message Contract mode (Instance/Schema tabs)
 - Format selection (JSON, XML, YAML, CSV)
 - Load from file, clear, rename functionality
 
@@ -59,7 +59,7 @@ The UTLX Theia extension currently has **8 registered widgets**, but only **4 ar
 **Key Features:**
 - Vertical tabs on left (20px wide - **BUG: too narrow!**)
 - Content area on right with editor
-- Horizontal tabs for Instance/Schema in Design-Time mode
+- Horizontal tabs for Instance/Schema in Message Contract mode
 - Dispatches `utlx-input-format-changed` events
 
 ---
@@ -72,7 +72,7 @@ The UTLX Theia extension currently has **8 registered widgets**, but only **4 ar
 
 **Purpose:**
 - Displays transformation output or inferred schema
-- Supports Design-Time mode (Instance/Schema tabs)
+- Supports Message Contract mode (Instance/Schema tabs)
 - Format selection and viewing modes
 - Copy, save, and clear functionality
 
@@ -117,7 +117,7 @@ The UTLX Theia extension currently has **8 registered widgets**, but only **4 ar
 
 **Purpose:**
 - Top toolbar with mode indicator
-- Mode toggle switch (Runtime ↔ Design-Time)
+- Mode toggle switch (Execution ↔ Message Contract)
 - AI Assist button (MCP integration)
 - Execute button
 
@@ -170,7 +170,7 @@ protected render(): React.ReactNode {
 **Build Number:** 2
 
 **Purpose:**
-- Mode selection UI (Design-Time ↔ Runtime)
+- Mode selection UI (Execution ↔ Message Contract)
 - Auto-infer schema checkbox
 - Type checking toggle
 - Mode description and info boxes
@@ -232,7 +232,7 @@ protected render(): React.ReactNode {
 ├─────────────────────────────────────────────────────────────────┤
 │  TOP AREA: UTLXToolbarWidget                                    │
 │  ┌───────────────────────────────────────────────────────────┐ │
-│  │ [Runtime Mode] [Toggle] [AI Assist] [Execute]             │ │
+│  │ [Execution Mode] [Toggle] [AI Assist] [Execute]           │ │
 │  └───────────────────────────────────────────────────────────┘ │
 ├─────────────────────────────────────────────────────────────────┤
 │                                                                 │
@@ -1077,7 +1077,7 @@ src/browser/toolbar/utlx-toolbar-widget.spec.tsx
 Returns all input documents managed by the panel.
 
 ### `setMode(mode: UTLXMode): void`
-Switches between Design-Time and Runtime modes.
+Switches between Execution and Message Contract modes.
 
 ## Events Dispatched
 

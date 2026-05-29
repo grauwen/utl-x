@@ -142,9 +142,9 @@ Status:      ✅ All tools operational
    - Three-panel layout (Input | Editor | Output)
    - Monaco editor integration
    - LSP client integration
-   - Mode switching UI (Design-Time ↔ Runtime)
+   - Mode switching UI (Execution ↔ Message Contract)
 
-3. **Design-Time Features**
+3. **Message Contract Features**
    - Schema tree view
    - Type graph visualization
    - Output schema generation
@@ -162,7 +162,7 @@ Status:      ✅ All tools operational
 
 ---
 
-### 🚧 Schema Parser (for Design-Time Mode) - OPTIONAL FOR PHASE 1
+### 🚧 Schema Parser (for Message Contract Mode) - OPTIONAL FOR PHASE 1
 
 **Location:** `modules/analysis/` (partially implemented)
 
@@ -174,10 +174,10 @@ Status:      ✅ All tools operational
 - Output schema generation (AST → JSON Schema)
 
 **Impact:**
-- ⚠️ **Required for Design-Time Mode** (Phase 3+)
-- ✅ **Not required for Runtime Mode** (Phase 1)
+- ⚠️ **Required for Message Contract Mode** (Phase 3+)
+- ✅ **Not required for Execution Mode** (Phase 1)
 
-**Recommendation:** Start with Runtime Mode (Phase 1) which doesn't need this
+**Recommendation:** Start with Execution Mode (Phase 1) which doesn't need this
 
 **Timeline:** 2-3 weeks (can be done in parallel with Theia development)
 
@@ -227,7 +227,7 @@ All test suites passing at 100% - exceptional quality!
 
 ### ✅ You Can Start Theia Development NOW
 
-**Phase 1: Runtime Mode Foundation (Weeks 1-4)**
+**Phase 1: Execution Mode Foundation (Weeks 1-4)**
 
 **Start with these tasks:**
 1. ✅ Create `theia-extension/` directory structure
@@ -262,7 +262,7 @@ While frontend team works on Theia (Phase 1), a backend developer can implement:
 
 **Timeline:** 2-3 weeks (parallel to Theia Phase 1)
 
-This ensures Design-Time Mode (Phase 3) isn't delayed.
+This ensures Message Contract Mode (Phase 3) isn't delayed.
 
 ---
 
@@ -329,7 +329,7 @@ This ensures Design-Time Mode (Phase 3) isn't delayed.
 5. 🟡 **Schema parser complexity** - MODERATE (only needed for Phase 3+)
 
 **Mitigation Strategies:**
-- Start with Runtime Mode (simpler, no schema parser needed)
+- Start with Execution Mode (simpler, no schema parser needed)
 - Use Theia examples and documentation
 - Comprehensive backend testing already complete
 
@@ -411,7 +411,7 @@ This ensures Design-Time Mode (Phase 3) isn't delayed.
 
 **Confidence Level:** 🟢 **HIGH** (95% confidence)
 
-**Recommendation:** Begin Theia extension development immediately with Phase 1 (Runtime Mode). All backend dependencies are satisfied.
+**Recommendation:** Begin Theia extension development immediately with Phase 1 (Execution Mode). All backend dependencies are satisfied.
 
 ---
 

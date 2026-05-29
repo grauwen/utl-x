@@ -470,9 +470,9 @@ output json
 // Transform OData metadata to JSON documentation
 ```
 
-More commonly, OData schema is used in Design-Time mode:
+More commonly, OData schema is used in Message Contract mode:
 ```
-Design-Time mode:
+Message Contract mode:
 1. User loads EDMX/CSDL file as osch in input schema tab
 2. UTLX parses EDMX/CSDL → SchemaFieldInfo[]
 3. Function Builder shows entity types with typed fields
@@ -512,7 +512,7 @@ Add new directives to the OData section of the registry, following existing patt
 ### Phase 1: OData Schema Parser (Tier 2 — Schema, Read Direction)
 **Effort: 3-4 days**
 
-This is the highest value deliverable — it enables Design-Time mode with OData services.
+This is the highest value deliverable — it enables Message Contract mode with OData services.
 
 | Step | File | Description |
 |------|------|-------------|
@@ -540,7 +540,7 @@ Wire the OData schema parser into the Theia IDE.
 | 2.5 | `strategies/index.ts` | Register strategy |
 | 2.6 | `output-panel-widget.tsx` | Add `osch` as schema format option |
 
-**Deliverable:** Load `.edmx` file in Design-Time schema tab → entities appear in Function Builder with types.
+**Deliverable:** Load `.edmx` file in Message Contract schema tab → entities appear in Function Builder with types.
 
 ### Phase 3: OData JSON Parser/Serializer (Tier 1 — Data)
 **Effort: 2-3 days**
@@ -604,7 +604,7 @@ Generate EDMX/CSDL from USDL-annotated UDM.
 | 7.1 | Conformance tests with real-world EDMX files (SAP, Microsoft Graph, Northwind) |
 | 7.2 | Round-trip tests: EDMX → UDM → EDMX structural equivalence |
 | 7.3 | Integration tests: OData JSON → transform → JSON/XML output |
-| 7.4 | Design-Time tests: load EDMX → Function Builder shows correct types |
+| 7.4 | Message Contract tests: load EDMX → Function Builder shows correct types |
 | 7.5 | Update `docs/language-guide/universal-schema-dsl.md` with OData examples |
 | 7.6 | Update `docs/formats/` with OData format reference |
 
@@ -630,7 +630,7 @@ Generate EDMX/CSDL from USDL-annotated UDM.
 - Phase 6 can start anytime
 - Phase 7 runs last
 
-**Critical path:** Phase 1 → Phase 2 → Phase 7 (OData schema Design-Time support = highest user value)
+**Critical path:** Phase 1 → Phase 2 → Phase 7 (OData schema Message Contract support = highest user value)
 
 ---
 
@@ -718,7 +718,7 @@ Frontend (TypeScript):
 2. Transform an OData JSON payload → correct UDM with entity data accessible via `$input.Property`
 3. `@odata.*` annotations don't pollute the data model — handled as metadata, not fields
 4. Round-trip EDMX → UDM → EDMX produces structurally equivalent output
-5. Design-Time mode: EDMX schema → typed field suggestions in autocomplete
+5. Message Contract mode: EDMX schema → typed field suggestions in autocomplete
 6. USDL with `%entityType`, `%navigation` → valid EDMX generation
 
 ---

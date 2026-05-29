@@ -1135,7 +1135,7 @@ private handleFormatChange(format: string): void {
     this.eventBus.fire(UTLXInputFormatChangedEvent, {
         format,
         inputId: this.state.activeInputId,
-        isSchema: this.state.mode === UTLXMode.DESIGN_TIME && this.state.activeSubTab === 'schema'
+        isSchema: this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema'
     });
 }
 ```

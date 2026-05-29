@@ -232,17 +232,17 @@ interface InputTab {
 
 Implement in two phases:
 
-### Phase 1: Runtime Mode with Actual Data (Priority)
-Focus on user's primary use case: RUNTIME mode with actual CSV/JSON/XML files
+### Phase 1: Execution Mode with Actual Data (Priority)
+Focus on user's primary use case: EXECUTION mode with actual CSV/JSON/XML files
 
-### Phase 2: Schema-Based for Design-Time (Enhancement)
-Add schema-based completion for design-time validation workflows
+### Phase 2: Schema-Based for Message Contract Mode (Enhancement)
+Add schema-based completion for Message Contract mode validation workflows
 
 ---
 
 ## Implementation Plan
 
-### Phase 1: Runtime Mode with Input Data
+### Phase 1: Execution Mode with Input Data
 
 #### Step 1: Add LSP Method `utlx/registerInputData`
 

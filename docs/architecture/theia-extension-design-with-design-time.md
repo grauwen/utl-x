@@ -1,8 +1,8 @@
-# UTL-X Theia Extension - Design-Time & Runtime Architecture
+# UTL-X Theia Extension - Message Contract & Execution Architecture
 
 **Version:** 2.0
 **Date:** 2025-11-01
-**Status:** Design Proposal - Enhanced with Design-Time Mode
+**Status:** Design Proposal - Enhanced with Message Contract Mode
 **Authors:** UTL-X Architecture Team
 
 ---
@@ -10,10 +10,10 @@
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)
-2. [Design-Time vs Runtime Distinction](#design-time-vs-runtime-distinction)
+2. [Message Contract vs Execution Distinction](#message-contract-vs-execution-distinction)
 3. [Architecture Overview](#architecture-overview)
-4. [Design-Time Mode](#design-time-mode)
-5. [Runtime Mode](#runtime-mode)
+4. [Message Contract Mode](#message-contract-mode)
+5. [Execution Mode](#execution-mode)
 6. [Mode Switching & UI](#mode-switching--ui)
 7. [Three-Panel Layout (Enhanced)](#three-panel-layout-enhanced)
 8. [LSP/Daemon Integration](#lspdaemon-integration)
@@ -31,21 +31,21 @@ The original Theia extension design (v1.0) focused only on **runtime execution**
 - Middle panel: UTL-X transformation
 - Right panel: Output instance data (JSON, XML)
 
-This design is enhanced with **Design-Time Mode** where:
+This design is enhanced with **Message Contract Mode** where:
 - Left panel: Input **schema/metadata** (XSD, JSON Schema)
 - Middle panel: UTL-X transformation (with type checking)
 - Right panel: Output **schema/metadata** (inferred JSON Schema)
 
 ### Key Benefits
 
-**Design-Time Mode:**
+**Message Contract Mode:**
 - ✅ Catch type errors before deployment
 - ✅ Validate API contracts
 - ✅ Autocomplete based on schema structure
 - ✅ Generate output schema for downstream consumers
 - ✅ No need for representative test data
 
-**Runtime Mode:**
+**Execution Mode:**
 - ✅ Test with actual data instances
 - ✅ Debug transformation logic
 - ✅ Verify output format
@@ -53,11 +53,11 @@ This design is enhanced with **Design-Time Mode** where:
 
 ---
 
-## Design-Time vs Runtime Distinction
+## Message Contract vs Execution Distinction
 
 ### CRITICAL: Tier-1 vs Tier-2 Formats
 
-**Design-Time Mode ONLY applies to Tier-1 data format transformations:**
+**Message Contract Mode ONLY applies to Tier-1 data format transformations:**
 - **Tier-1 Formats** (instance data): XML, JSON, YAML, CSV
 - **Tier-2 Formats** (metadata/schemas): XSD, JSON Schema, Avro Schema (.avsc), Protobuf (.proto)
 
@@ -65,16 +65,16 @@ This design is enhanced with **Design-Time Mode** where:
 
 | UTLX Declaration | Transformation Type | Mode |
 |------------------|---------------------|------|
-| `input xml`<br>`output json` | Data-to-data transformation | Design-Time or Runtime |
-| `input xsd`<br>`output jsch` | Schema-to-schema transformation | Runtime only (metadata IS the data) |
+| `input xml`<br>`output json` | Data-to-data transformation | Message Contract or Execution |
+| `input xsd`<br>`output jsch` | Schema-to-schema transformation | Execution only (metadata IS the data) |
 
 ### Three Distinct Scenarios
 
-#### Scenario 1: DESIGN-TIME Mode (Type-Checking for Tier-1)
+#### Scenario 1: MESSAGE CONTRACT Mode (Type-Checking for Tier-1)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ DESIGN-TIME: Schema/Metadata Analysis for Data Transformations │
+│ MESSAGE CONTRACT: Schema/Metadata Analysis for Data Transformations │
 │                                                                 │
 │  UTLX Declaration:  input xml / output json                    │
 │                                                                 │
@@ -99,11 +99,11 @@ This design is enhanced with **Design-Time Mode** where:
 └───────────────────────────────────────────────────────────────┘
 ```
 
-#### Scenario 2: RUNTIME Mode (Data Transformation)
+#### Scenario 2: EXECUTION Mode (Data Transformation)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ RUNTIME: Instance Data Execution                               │
+│ EXECUTION: Instance Data Execution                               │
 │                                                                 │
 │  UTLX Declaration:  input xml / output json                    │
 │                                                                 │
@@ -125,11 +125,11 @@ This design is enhanced with **Design-Time Mode** where:
 └───────────────────────────────────────────────────────────────┘
 ```
 
-#### Scenario 3: METADATA-TO-METADATA Transformation (Always Runtime!)
+#### Scenario 3: METADATA-TO-METADATA Transformation (Always Execution!)
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│ METADATA TRANSFORMATION: Schema Engineering (NOT Design-Time!) │
+│ METADATA TRANSFORMATION: Schema Engineering (NOT Message Contract!) │
 │                                                                 │
 │  UTLX Declaration:  input xsd / output jsch                    │
 │                                                                 │
@@ -150,7 +150,7 @@ This design is enhanced with **Design-Time Mode** where:
 │                        }                                       │
 │                                                                │
 │  Purpose: Convert one schema format to another                │
-│  This is RUNTIME mode - the schema IS the data being          │
+│  This is EXECUTION mode - the schema IS the data being          │
 │  transformed, not metadata for validation!                    │
 │  No "meta-meta-data" exists for type checking                 │
 └───────────────────────────────────────────────────────────────┘
@@ -158,7 +158,7 @@ This design is enhanced with **Design-Time Mode** where:
 
 ### When to Use Each Mode/Scenario
 
-| Use Design-Time When... | Use Runtime When... | Use Metadata-to-Metadata When... |
+| Use Message Contract When... | Use Execution When... | Use Metadata-to-Metadata When... |
 |-------------------------|---------------------|----------------------------------|
 | **UTLX**: `input xml/json/yaml/csv`<br>`output json/xml/yaml/csv` | **UTLX**: `input xml/json/yaml/csv`<br>`output json/xml/yaml/csv` | **UTLX**: `input xsd/jsch/avsc/proto`<br>`output jsch/xsd/avsc/proto` |
 | Building a new transformation | Testing with real data | Converting schema formats |
@@ -180,7 +180,7 @@ This design is enhanced with **Design-Time Mode** where:
 │                    Theia Frontend (Browser)                      │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
-│  │  Mode Selector: [Design-Time] [Runtime]                   │  │
+│  │  Mode Selector: [Message Contract] [Execution]                   │  │
 │  └────────────────────────────────────────────────────────────┘  │
 │                                                                  │
 │  ┌─────────────┬────────────────────┬────────────────────────┐  │
@@ -188,22 +188,22 @@ This design is enhanced with **Design-Time Mode** where:
 │  │    Panel    │   (UTL-X Editor)   │        Panel           │  │
 │  │             │    with LSP        │                        │  │
 │  │             │                    │                        │  │
-│  │  DESIGN:    │                    │  DESIGN:               │  │
+│  │  CONTRACT:  │                    │  CONTRACT:             │  │
 │  │  Schema/    │  %utlx 1.0        │  Output                │  │
 │  │  Metadata   │  input xml        │  Schema                │  │
 │  │  (XSD,      │  output json      │  (JSON Schema)         │  │
 │  │  JSON       │  ---              │                        │  │
 │  │  Schema)    │  {                │  + Type errors         │  │
 │  │             │    id: $input...  │  + Validation          │  │
-│  │  RUNTIME:   │  }                │                        │  │
-│  │  Instance   │                   │  RUNTIME:              │  │
+│  │  EXECUTION:   │  }                │                        │  │
+│  │  Instance   │                   │  EXECUTION:              │  │
 │  │  Data       │                   │  Output                │  │
 │  │  (XML,JSON) │                   │  Data                  │  │
 │  └─────────────┴────────────────────┴────────────────────────┘  │
 │                                                                  │
 │  ┌────────────────────────────────────────────────────────────┐  │
 │  │  Status Bar:                                               │  │
-│  │  Mode: Design-Time | Schema: orders.xsd | Type Check: ✓   │  │
+│  │  Mode: Message Contract | Schema: orders.xsd | Type Check: ✓   │  │
 │  └────────────────────────────────────────────────────────────┘  │
 └──────────────────────────────────────────────────────────────────┘
                               ↕ JSON-RPC (LSP)
@@ -213,17 +213,17 @@ This design is enhanced with **Design-Time Mode** where:
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  Mode-Aware State Manager                                  ││
 │  │                                                             ││
-│  │  Design-Time State:                Runtime State:          ││
+│  │  Message Contract State:                Execution State:          ││
 │  │  - Input schema (XSD)          - Input data instances      ││
 │  │  - Type environment            - Execution context         ││
 │  │  - Inferred output schema      - Output data               ││
-│  │  - Type errors/warnings        - Runtime errors            ││
+│  │  - Type errors/warnings        - Execution errors            ││
 │  └─────────────────────────────────────────────────────────────┘│
 │                                                                  │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  Analysis Engine                                            ││
 │  │  ┌──────────────────┐  ┌──────────────────┐                ││
-│  │  │ Design-Time:     │  │ Runtime:         │                ││
+│  │  │ Message Contract:     │  │ Execution:         │                ││
 │  │  │ - Schema Parser  │  │ - Data Parser    │                ││
 │  │  │ - Type Inference │  │ - Transformer    │                ││
 │  │  │ - Type Checker   │  │ - Serializer     │                ││
@@ -234,19 +234,19 @@ This design is enhanced with **Design-Time Mode** where:
 
 ---
 
-## Design-Time Mode
+## Message Contract Mode
 
 ### Purpose
 
 Analyze transformations using **schema metadata** instead of instance data.
 
-**IMPORTANT CONSTRAINT**: Design-time mode only works when the UTLX transformation declares **tier-1 formats**:
-- ✅ `input xml` / `output json` - Design-time supported
-- ✅ `input json` / `output xml` - Design-time supported
-- ✅ `input yaml` / `output json` - Design-time supported
-- ✅ `input csv` / `output json` - Design-time supported
-- ❌ `input xsd` / `output jsch` - NOT design-time (this is metadata-to-metadata, see separate section)
-- ❌ `input avsc` / `output proto` - NOT design-time (this is metadata-to-metadata)
+**IMPORTANT CONSTRAINT**: Message Contract mode only works when the UTLX transformation declares **tier-1 formats**:
+- ✅ `input xml` / `output json` - Message Contract supported
+- ✅ `input json` / `output xml` - Message Contract supported
+- ✅ `input yaml` / `output json` - Message Contract supported
+- ✅ `input csv` / `output json` - Message Contract supported
+- ❌ `input xsd` / `output jsch` - NOT Message Contract mode (this is metadata-to-metadata, see separate section)
+- ❌ `input avsc` / `output proto` - NOT Message Contract mode (this is metadata-to-metadata)
 
 ### Left Panel: Input Schema (Metadata for Validation)
 
@@ -322,7 +322,7 @@ interface InputSchemaPanel {
 - **Type mismatch errors**: e.g., `sum($input.Order.@id)` → Error: "Cannot sum strings"
 - **Hover hints**: Shows type info (e.g., `$input.Order.@id: String`)
 
-**LSP Messages (Design-Time):**
+**LSP Messages (Message Contract):**
 ```json
 // textDocument/didOpen with schema context
 {
@@ -414,7 +414,7 @@ interface OutputSchemaPanel {
 }
 ```
 
-### Design-Time Workflow
+### Message Contract Workflow
 
 ```
 1. Developer loads input schema (XSD)
@@ -436,7 +436,7 @@ interface OutputSchemaPanel {
 
 ---
 
-## Runtime Mode
+## Execution Mode
 
 ### Purpose
 
@@ -487,7 +487,7 @@ interface InputDataPanel {
 
 **Same editor, different context:**
 - Autocomplete based on actual data structure (if no schema)
-- Runtime error highlighting
+- Execution error highlighting
 - Execution time profiling
 
 ### Right Panel: Output Data
@@ -495,7 +495,7 @@ interface InputDataPanel {
 **Displays:**
 - Transformed JSON/XML/CSV output
 - Execution statistics
-- Runtime errors
+- Execution errors
 
 **UI Components:**
 ```typescript
@@ -530,7 +530,7 @@ interface OutputDataPanel {
 }
 ```
 
-### Runtime Workflow
+### Execution Workflow
 
 ```
 1. Developer loads input data (XML)
@@ -545,7 +545,7 @@ interface OutputDataPanel {
    ↓
 6. Developer verifies correctness
    ↓
-7. Runtime errors displayed if any
+7. Execution errors displayed if any
 ```
 
 ---
@@ -554,7 +554,7 @@ interface OutputDataPanel {
 
 ### Important Distinction
 
-**Metadata-to-metadata transformations are NOT design-time mode.** They are **runtime transformations** where the schema itself is the data being transformed.
+**Metadata-to-metadata transformations are NOT Message Contract mode.** They are **Execution-mode transformations** where the schema itself is the data being transformed.
 
 ### When UTLX Declares Tier-2 Formats
 
@@ -578,7 +578,7 @@ output jsch      ← Tier-2 format (schema)
 
 ### How Theia Extension Handles This
 
-**This is treated as Runtime Mode:**
+**This is treated as Execution Mode:**
 
 | Panel | Content | Purpose |
 |-------|---------|---------|
@@ -586,8 +586,8 @@ output jsch      ← Tier-2 format (schema)
 | **Middle** | UTLX transformation with tier-2 formats | Works with schema constructs (elements, types) |
 | **Right** | JSON Schema file (the OUTPUT) | The resulting schema |
 
-**Key Difference from Design-Time:**
-- **Design-Time**: Left panel = metadata FOR validation, Middle = `input xml`, Right = inferred schema
+**Key Difference from Message Contract:**
+- **Message Contract**: Left panel = metadata FOR validation, Middle = `input xml`, Right = inferred schema
 - **Metadata-to-Metadata**: Left panel = actual data (happens to be a schema), Middle = `input xsd`, Right = transformed output
 
 ### Common Metadata-to-Metadata Use Cases
@@ -671,7 +671,7 @@ output jsch
 }
 ```
 
-### Why No Design-Time Mode?
+### Why No Message Contract Mode?
 
 **There's no "meta-meta-data"** to validate against. You would need:
 - XSD for XSD (Schema of a schema definition)
@@ -682,9 +682,9 @@ While these technically exist, they're not practical for validation in this cont
 ### UI Mode Indication
 
 When the user opens a UTLX file with tier-2 formats:
-- Mode selector should be **disabled** or show "Runtime (Schema Transformation)"
+- Mode selector should be **disabled** or show "Execution (Schema Transformation)"
 - Left/Right panels labeled clearly: "Input Schema (Data)" / "Output Schema (Result)"
-- No type-checking features (since we're in runtime mode)
+- No type-checking features (since we're in Execution mode)
 
 ---
 
@@ -696,7 +696,7 @@ When the user opens a UTLX file with tier-2 formats:
 ┌────────────────────────────────────────────────────────┐
 │  UTL-X Transformation Editor                           │
 │  ┌──────────────────────────────────────────────────┐  │
-│  │  Mode:  ⚪ Design-Time  ⚫ Runtime                │  │
+│  │  Mode:  ⚪ Message Contract  ⚫ Execution                │  │
 │  └──────────────────────────────────────────────────┘  │
 │                                                        │
 │  [Left Panel]  [Middle: UTL-X]  [Right Panel]         │
@@ -731,7 +731,7 @@ class ModeManager {
         // Notify LSP daemon
     }
 
-    switchToRuntime() {
+    switchToExecution() {
         // Save design-time state
         // Load/activate runtime state
         // Update panels
@@ -747,30 +747,30 @@ class ModeManager {
 
 ### Panel Content Based on Mode and UTLX Format
 
-| UTLX Declaration | Panel | Design-Time Mode | Runtime Mode |
+| UTLX Declaration | Panel | Message Contract Mode | Execution Mode |
 |------------------|-------|------------------|--------------|
 | `input xml`<br>`output json` | **Left** | XSD Schema (metadata for validation) | XML Data (instance) |
 | (tier-1 formats) | **Middle** | UTL-X with type checking | UTL-X with execution |
 |  | **Right** | JSON Schema (inferred structure) | JSON Data (transformed result) |
 | | | | |
-| `input xsd`<br>`output jsch` | **Left** | N/A (no design-time mode) | XSD File (the data being transformed) |
+| `input xsd`<br>`output jsch` | **Left** | N/A (no Message Contract mode) | XSD File (the data being transformed) |
 | (tier-2 formats) | **Middle** | N/A | UTL-X transforming schema constructs |
 |  | **Right** | N/A | JSON Schema (output schema) |
 
 **Key Distinction:**
-- **Tier-1 formats**: Two modes available (design-time for validation, runtime for execution)
-- **Tier-2 formats**: Only runtime mode (schema IS the data, not metadata for validation)
+- **Tier-1 formats**: Two modes available (Message Contract for validation, Execution for running)
+- **Tier-2 formats**: Only Execution mode (schema IS the data, not metadata for validation)
 
 ### Toolbar Actions
 
-**Design-Time Actions:**
+**Message Contract Actions:**
 - Load Schema
 - Export Output Schema
 - Generate Sample Data
 - Validate Type System
 - View Type Graph
 
-**Runtime Actions:**
+**Execution Actions:**
 - Load Input Data
 - Execute Transformation
 - Export Output
@@ -785,15 +785,15 @@ class ModeManager {
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│  File: transform.utlx              Mode: [Design] [Runtime]      │
+│  File: transform.utlx            Mode: [Contract] [Execution]      │
 ├────────────┬─────────────────────────────┬────────────────────────┤
 │            │                             │                        │
 │  INPUT     │    TRANSFORMATION           │      OUTPUT            │
 │            │                             │                        │
 │  ┌──────┐  │  %utlx 1.0                  │  ┌──────────────────┐  │
-│  │Schema│  │  input xml                  │  │ Schema (Design)  │  │
+│  │Schema│  │  input xml                  │  │ Schema (Contract)│  │
 │  │ or   │  │  output json                │  │  or              │  │
-│  │Data  │  │  ---                        │  │ Data (Runtime)   │  │
+│  │Data  │  │  ---                        │  │ Data (Execution)   │  │
 │  └──────┘  │                             │  └──────────────────┘  │
 │            │  {                          │                        │
 │  [View]    │    id: $input.Order.@id,    │  [View]                │
@@ -810,7 +810,7 @@ class ModeManager {
 │            │  ℹ 2 optional properties    │  ⏱ Inferred in 45ms   │
 │            │                             │  📊 4 properties       │
 └────────────┴─────────────────────────────┴────────────────────────┘
-│  Status: Mode: Design-Time | Schema: order.xsd | Types: Valid ✓  │
+│  Status: Mode: Message Contract | Schema: order.xsd | Types: Valid ✓  │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
@@ -861,7 +861,7 @@ class ModeManager {
 }
 ```
 
-#### Design-Time Type Checking
+#### Message Contract Type Checking
 
 ```json
 {
@@ -892,7 +892,7 @@ class ModeManager {
 }
 ```
 
-#### Runtime Execution
+#### Execution Execution
 
 ```json
 {
@@ -926,7 +926,7 @@ class ModeManager {
 class DaemonStateManager {
     // Separate state per mode
     private val designTimeStates = ConcurrentHashMap<String, DesignTimeState>()
-    private val runtimeStates = ConcurrentHashMap<String, RuntimeState>()
+    private val runtimeStates = ConcurrentHashMap<String, ExecutionState>()
 
     data class DesignTimeState(
         val inputSchema: Schema,
@@ -935,7 +935,7 @@ class DaemonStateManager {
         val diagnostics: List<Diagnostic>
     )
 
-    data class RuntimeState(
+    data class ExecutionState(
         val inputData: List<InputDocument>,
         val executionResult: ExecutionResult?,
         val executionStats: ExecutionStats?
@@ -962,7 +962,7 @@ class DaemonStateManager {
 
 ## Workflow Examples
 
-### Example 1: Schema-First Development (Design-Time)
+### Example 1: Schema-First Development (Message Contract)
 
 ```
 Scenario: API developer needs to transform orders XML to JSON
@@ -970,7 +970,7 @@ Scenario: API developer needs to transform orders XML to JSON
 
 1. Developer receives order.xsd from partner
 2. Opens UTL-X Theia extension
-3. Switches to Design-Time mode
+3. Switches to Message Contract mode
 4. Loads order.xsd in left panel
 5. Daemon parses XSD → Type Environment
 6. Starts writing transformation in middle panel:
@@ -993,34 +993,34 @@ Scenario: API developer needs to transform orders XML to JSON
 10. Completes transformation
 11. Right panel shows inferred JSON Schema
 12. Exports schema for downstream team
-13. Later, when data arrives, switches to Runtime mode to test
+13. Later, when data arrives, switches to Execution mode to test
 ```
 
-### Example 2: Test-Driven Development (Runtime → Design-Time)
+### Example 2: Test-Driven Development (Execution → Message Contract)
 
 ```
 Scenario: Developer has sample data, wants to ensure transformation
           works for all possible inputs.
 
-1. Developer starts in Runtime mode with sample data
+1. Developer starts in Execution mode with sample data
 2. Writes transformation, verifies output looks correct
-3. Switches to Design-Time mode
+3. Switches to Message Contract mode
 4. Loads full XSD (covers more cases than sample)
 5. Type checker finds edge case:
    "Warning: Item.discount is optional but not handled"
 6. Updates transformation to handle optional fields
-7. Switches back to Runtime, confirms sample still works
+7. Switches back to Execution, confirms sample still works
 8. Exports transformation for production
 ```
 
-### Example 3: Hybrid Mode (Schema Validation + Runtime)
+### Example 3: Hybrid Mode (Schema Validation + Execution)
 
 ```
-Scenario: Developer wants runtime testing with schema validation
+Scenario: Developer wants Execution-mode testing with schema validation
 
-1. Loads XSD in Design-Time mode
+1. Loads XSD in Message Contract mode
 2. Daemon builds type environment
-3. Switches to Runtime mode
+3. Switches to Execution mode
 4. Enables "Validate with Schema" option
 5. Loads input data
 6. Daemon validates data against XSD before transformation
@@ -1058,46 +1058,46 @@ Scenario: Organization is migrating from SOAP/XML to REST/JSON APIs
    }
 
 2. Opens Theia extension (automatically detects tier-2 formats)
-3. Mode selector is DISABLED (only Runtime mode available)
+3. Mode selector is DISABLED (only Execution mode available)
 4. Left panel: Loads customer.xsd (the input DATA being transformed)
 5. Middle panel: The UTLX transformation above
 6. Right panel: Shows resulting customer.schema.json
-7. Developer clicks "Execute" (Runtime mode - transforming schema)
+7. Developer clicks "Execute" (Execution mode - transforming schema)
 8. Verifies JSON Schema is correct
 9. Repeats for all 50 XSD files in the project
 
-Key Difference from Design-Time:
+Key Difference from Message Contract:
 - This is NOT type-checking a data transformation
 - This IS executing a transformation where schemas are the data
-- No "design-time mode" available (no meta-meta-data exists)
+- No "Message Contract mode" available (no meta-meta-data exists)
 ```
 
 ---
 
 ## Implementation Phases
 
-### Phase 1: Runtime Mode (Current)
+### Phase 1: Execution Mode (Current)
 **Status: Implemented in v1.0**
 
 - ✅ Three-panel layout
 - ✅ Input data loading
 - ✅ UTL-X editor with syntax highlighting
-- ✅ Runtime execution
+- ✅ Transformation execution
 - ✅ Output display
 - ✅ LSP integration (basic)
 
-### Phase 2: Design-Time Foundation
+### Phase 2: Message Contract Foundation
 **Estimated: 4-6 weeks**
 
 - [ ] Schema parser (XSD → Type Environment)
 - [ ] Type inference engine
 - [ ] Output schema generation
 - [ ] Mode selector UI
-- [ ] Design-time LSP methods
+- [ ] Message Contract LSP methods
 - [ ] Schema display panels
 
 **Deliverables:**
-- Design-time mode works with XSD
+- Message Contract mode works with XSD
 - Type checking in editor
 - Output schema inference
 - Basic autocomplete from schema
@@ -1219,16 +1219,16 @@ sum($input.Order.Item |> map(item => item.@price * item.@qty))
 TheiaExtension
 ├── ModeSelector
 │   ├── DesignTimeButton
-│   └── RuntimeButton
+│   └── ExecutionButton
 │
 ├── ThreePanelLayout
 │   ├── LeftPanel (ResizablePanel)
 │   │   ├── ModeAwarePanelHeader
-│   │   ├── SchemaEditor (Design-Time)
+│   │   ├── SchemaEditor (Message Contract)
 │   │   │   ├── MonacoEditor
 │   │   │   ├── SchemaTreeView
 │   │   │   └── SchemaActions
-│   │   └── DataEditor (Runtime)
+│   │   └── DataEditor (Execution)
 │   │       ├── MonacoEditor
 │   │       ├── InputList
 │   │       └── DataActions
@@ -1240,20 +1240,20 @@ TheiaExtension
 │   │
 │   └── RightPanel (ResizablePanel)
 │       ├── ModeAwarePanelHeader
-│       ├── SchemaViewer (Design-Time)
+│       ├── SchemaViewer (Message Contract)
 │       │   ├── JSONSchemaDisplay
 │       │   ├── SchemaTreeView
 │       │   └── SchemaActions
-│       └── OutputViewer (Runtime)
+│       └── OutputViewer (Execution)
 │           ├── OutputDisplay
 │           ├── ExecutionStats
 │           └── OutputActions
 │
 └── StatusBar
     ├── ModeIndicator
-    ├── SchemaIndicator (Design-Time)
+    ├── SchemaIndicator (Message Contract)
     ├── TypeCheckStatus
-    └── ExecutionStats (Runtime)
+    └── ExecutionStats (Execution)
 ```
 
 ---
@@ -1262,39 +1262,39 @@ TheiaExtension
 
 This enhanced Theia extension design provides:
 
-1. **Design-Time Mode**: Schema-based type checking and validation
+1. **Message Contract Mode**: Schema-based type checking and validation
    - **Applies to**: Tier-1 data format transformations (`input xml/json/yaml/csv`)
    - **Purpose**: Validate transformation logic against schemas before execution
    - **Benefit**: Catch type errors early, generate output schemas, enable autocomplete
 
-2. **Runtime Mode**: Instance data transformation and testing
+2. **Execution Mode**: Instance data transformation and testing
    - **Applies to**: All transformations (tier-1 and tier-2)
    - **Purpose**: Execute transformations on actual data
    - **Benefit**: Test with real data, debug, performance profiling
 
-3. **Metadata-to-Metadata Transformations**: Schema engineering (Runtime mode only)
+3. **Metadata-to-Metadata Transformations**: Schema engineering (Execution mode only)
    - **Applies to**: Tier-2 format transformations (`input xsd/jsch/avsc/proto`)
    - **Purpose**: Convert between schema formats, generate schemas
-   - **Constraint**: No design-time mode available (schema IS the data, not metadata)
+   - **Constraint**: No Message Contract mode available (schema IS the data, not metadata)
 
-4. **Seamless mode switching**: Easy toggle between design-time and runtime (for tier-1)
+4. **Seamless mode switching**: Easy toggle between Message Contract and Execution (for tier-1)
 
 5. **LSP integration**: Mode-aware language server protocol with format detection
 
 6. **Developer productivity**: Autocomplete, type hints, error detection tailored to mode
 
-7. **API contract validation**: Generate and verify schemas in design-time mode
+7. **API contract validation**: Generate and verify schemas in Message Contract mode
 
 ### Key Scope Clarifications
 
-**What Design-Time Mode Is:**
+**What Message Contract Mode Is:**
 - Type-checking tier-1 data transformations using tier-1 schemas as metadata
 - Validating that `input xml` transformations are type-safe given an XSD
 - Inferring output structure without executing the transformation
 
-**What Design-Time Mode Is NOT:**
+**What Message Contract Mode Is NOT:**
 - NOT for tier-2 metadata-to-metadata transformations (`input xsd`)
-- NOT a replacement for runtime testing (both modes are essential)
+- NOT a replacement for Execution-mode testing (both modes are essential)
 - NOT applicable when schemas don't exist or aren't available
 
 The design supports both **schema-first** and **test-first** development workflows for tier-1 transformations, plus **schema engineering** workflows for tier-2 transformations, giving developers maximum flexibility in how they build and validate UTL-X transformations.

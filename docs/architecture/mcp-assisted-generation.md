@@ -601,7 +601,7 @@ The system will dynamically retrieve examples using `get_examples()` based on:
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│  File: order-to-invoice.utlx          Mode: [Design-Time] [Runtime]│
+│  File: order-to-invoice.utlx   Mode: [Message Contract] [Execution]│
 ├─────────────────────────────────────────────────────────────────────┤
 │                                                                     │
 │  ┌──────────┬─────────────────────┬──────────┐                     │
@@ -654,7 +654,7 @@ The system will dynamically retrieve examples using `get_examples()` based on:
 1. User loads input schema (XSD, JSON Schema)
 2. User enters natural language prompt
 3. AI generates UTLX, inserts into editor
-4. User tests in Design-Time or Runtime mode
+4. User tests in Message Contract or Execution mode
 
 **Mode 2: Refine Existing**
 1. User selects existing UTLX code

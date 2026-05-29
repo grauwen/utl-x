@@ -78,7 +78,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 
 ---
 
-### 🚧 **Partially Implemented** - Design-Time Features
+### 🚧 **Partially Implemented** - Message Contract Features
 
 #### 6. Type System & Analysis
 - **Location:** `modules/analysis/`
@@ -87,7 +87,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
   - Type definitions (ObjectType, ArrayType, StringType, etc.)
   - Basic type inference
   - Type compatibility checking
-- **Missing for Design-Time Mode:**
+- **Missing for Message Contract Mode:**
   - Schema parser (XSD → TypeEnvironment) - **Needs implementation**
   - Full type inference engine - **Needs enhancement**
   - Output schema generation (AST → JSON Schema) - **Needs implementation**
@@ -137,7 +137,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 
 ##### Three-Panel Layout
 - **Left Panel** - `InputPanelWidget`
-  - Design-Time: Schema editor (XSD, JSON Schema)
+  - Message Contract: Schema editor (XSD, JSON Schema)
   - Runtime: Data editor (XML, JSON, YAML, CSV)
   - File upload and workspace integration
   - Multiple input support
@@ -149,18 +149,18 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
   - Mode-aware features
 
 - **Right Panel** - `OutputPanelWidget`
-  - Design-Time: Generated schema display (JSON Schema)
+  - Message Contract: Generated schema display (JSON Schema)
   - Runtime: Transformation result
   - View modes (pretty, raw, tree)
   - Export and copy functionality
 
 ##### Mode Switching UI
-- Mode selector toggle (Design-Time ↔ Runtime)
+- Mode selector toggle (Execution ↔ Message Contract)
 - Mode-aware panel labels
 - State persistence per mode
 - Automatic mode detection (based on UTLX `input`/`output` declaration)
 
-#### 10. Design-Time Mode Features
+#### 10. Message Contract Mode Features
 - **Status:** 📋 Planned (depends on #6 Type System)
 - **Estimated Timeline:** 4-6 weeks
 - **Features:**
@@ -177,7 +177,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 - Type inference engine
 - JSON Schema generator
 
-#### 11. Runtime Mode Features
+#### 11. Execution Mode Features
 - **Status:** 📋 Planned
 - **Estimated Timeline:** 2 weeks (simpler than design-time)
 - **Features:**
@@ -202,7 +202,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 
 ## Implementation Phases
 
-### **Phase 1: Runtime Mode Foundation** (Weeks 1-4)
+### **Phase 1: Execution Mode Foundation** (Weeks 1-4)
 **Goal:** Basic Theia extension with runtime transformation capabilities
 
 **Deliverables:**
@@ -239,7 +239,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 - Errors appear in real-time
 - Editor behaves like modern IDE
 
-### **Phase 3: Design-Time Mode Foundation** (Weeks 7-10)
+### **Phase 3: Message Contract Mode Foundation** (Weeks 7-10)
 **Goal:** Enable schema-based type checking
 
 **Prerequisites:**
@@ -261,7 +261,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 - Type checker validates paths against schema
 - Right panel shows inferred JSON Schema
 
-### **Phase 4: Advanced Design-Time Features** (Weeks 11-14)
+### **Phase 4: Advanced Message Contract Features** (Weeks 11-14)
 **Goal:** Full design-time capabilities
 
 **Deliverables:**
@@ -424,7 +424,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 
 ## Success Metrics
 
-### Phase 1 (Runtime Mode)
+### Phase 1 (Execution Mode)
 - ✅ Extension loads without errors
 - ✅ Can execute basic transformations (XML → JSON)
 - ✅ LSP provides autocomplete
@@ -435,7 +435,7 @@ This document tracks the implementation status of the UTL-X Theia Extension, map
 - ✅ Autocomplete suggestions within 100ms
 - ✅ 90%+ user satisfaction with editor experience
 
-### Phase 3 (Design-Time Mode)
+### Phase 3 (Message Contract Mode)
 - ✅ Schema parsing works for 80% of XSD features
 - ✅ Type checking catches 95% of path errors
 - ✅ Output schema inference accuracy >90%
@@ -503,7 +503,7 @@ The UTL-X Theia extension architecture is well-designed with comprehensive docum
 **Current State:** Infrastructure complete, Theia frontend pending
 **Estimated Timeline:** 16 weeks for full implementation
 **Key Blocker:** Schema parser for design-time mode
-**Recommendation:** Start with Phase 1 (Runtime Mode) to deliver value quickly, then invest in schema parser for Phase 3 (Design-Time Mode)
+**Recommendation:** Start with Phase 1 (Execution Mode) to deliver value quickly, then invest in schema parser for Phase 3 (Message Contract Mode)
 
 ---
 
