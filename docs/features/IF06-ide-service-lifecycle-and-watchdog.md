@@ -1,10 +1,32 @@
 # IF06: IDE — Service Lifecycle, Supervision & Die-With-Parent Watchdog
 
-**Status:** Proposed
+**Status:** Implemented (May 2026) — both directions done; TS supervision has no unit-test harness yet
 **Priority:** High
 **Created:** May 2026
 **Depends on:** existing service-lifecycle-manager (Theia backend); `utlxd`, MCP server
 **Effort:** Medium (2-3 weeks)
+
+> **Implemented — die-with-parent watchdog (child-watches-parent):**
+> - `utlxd`: `ParentWatchdog.kt` (ProcessHandle PID poll; testable `checkOnce`/`isParentAlive`
+>   split from the thread/`exitProcess` plumbing) + `StartCommand --parent-pid` (opt-in).
+>   Unit-tested in `ParentWatchdogTest.kt` (4 tests, green).
+> - MCP server: `UTLX_PARENT_PID` poll via `process.kill(pid, 0)` in `mcp-server/src/index.ts`.
+> - Spawn sites pass the parent PID: `service-lifecycle-manager.ts`, `auto-start-services.ts`,
+>   `utlx-daemon-client.ts` (utlxd `--parent-pid`; MCP `UTLX_PARENT_PID`).
+> - Verified: child self-exits ~one poll after parent death; no parent-pid ⇒ no watchdog.
+>
+> **Implemented — supervision (parent-watches-child)** in `service-lifecycle-manager.ts`
+> (the active `BackendApplicationContribution`; `auto-start-services.ts` is disabled):
+> - `scheduleRestart()`: exponential backoff (1s→30s cap), wired from both child `exit`
+>   handlers (replaces the old `// TODO: Implement restart logic`).
+> - Crash-loop cap: give up after >5 restarts in a 60s rolling window, with a clear error.
+> - Backoff resets once a service is healthy again.
+> - `gracefulKill()`: SIGTERM, then SIGKILL after `shutdownTimeout`; `onStop()` awaits both.
+> - Idempotent daemon reuse: `startUTLXD`/`startMCPServer` skip if the port is already healthy.
+>
+> **Note:** the extension has no JS test runner, so the TS supervision logic is covered by
+> manual/integration verification only (the Kotlin watchdog has JUnit coverage). Standing up
+> jest for the extension is tracked separately, not in IF06.
 
 ---
 
@@ -99,7 +121,43 @@ orphan-able child, so this work stands regardless of any future GraalVM decision
 
 ## Testing
 
+### Implemented unit tests + how to run them
+
+**Kotlin — die-with-parent watchdog** (`ParentWatchdogTest.kt`, JUnit5, 4 tests):
+
+```bash
+# from the repo root
+./gradlew :modules:daemon:test --tests 'org.apache.utlx.daemon.ParentWatchdogTest'
+# or run the whole daemon suite
+./gradlew :modules:daemon:test
+```
+
+**TypeScript — restart-supervision policy** (`restart-policy.test.ts`, jest, 5 tests).
+jest + ts-jest are already installed (hoisted) at the workspace root, so no install
+is needed. Run from the extension package dir:
+
+```bash
+cd theia-extension/utlx-theia-extension
+# jest is hoisted to the workspace root node_modules:
+../../node_modules/.bin/jest --config jest.config.js
+# or target one file:
+../../node_modules/.bin/jest --config jest.config.js src/node/services/restart-policy.test.ts
+```
+
+Notes:
+- The jest config (`jest.config.js`) is scoped to `src/node` (node env). Test files
+  match `**/*.test.ts` and run from `src` — they are **excluded from the `tsc` build**
+  (`tsconfig.json`), so nothing test-related is compiled into `lib/` or shipped.
+- Tests run only when jest/gradle is invoked — never at compile or at IDE/daemon startup.
+- There is intentionally no `test` script in the extension `package.json` yet: its
+  `prepare`/`clean`/`build` lifecycle conflicts with a plain `npm test` in this yarn
+  workspace. Invoke jest via the root binary as above (or wire a workspace-level
+  `yarn test` later).
+
+### Further (manual / integration) verification
+
 - Integration: spawn → `kill -9` the parent → assert children exit (ports freed).
+  (Verified manually: MCP self-exits ~one poll after a dead parent PID.)
 - Integration: kill a child → assert restart-with-backoff; force a crash loop →
   assert cap + error surfaced.
 - Cross-platform: verify the pipe/PID watchdog on macOS and Linux (and Windows for
