@@ -203,7 +203,9 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 'start',
                 '--lsp',
                 '--api',
-                '--api-port', this.config.utlxdRestPort.toString()
+                '--api-port', this.config.utlxdRestPort.toString(),
+                // IF06: die-with-parent watchdog — daemon exits if this backend dies.
+                '--parent-pid', process.pid.toString()
             ], {
                 stdio: ['ignore', 'pipe', 'pipe'],
                 detached: false
@@ -293,6 +295,8 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                     UTLX_DAEMON_URL: `http://localhost:${this.config.utlxdRestPort}`,
                     UTLX_MCP_TRANSPORT: 'http',
                     UTLX_MCP_PORT: this.config.mcpServerPort.toString(),
+                    // IF06: die-with-parent watchdog — MCP exits if this backend dies.
+                    UTLX_PARENT_PID: process.pid.toString(),
                     NODE_ENV: 'production'
                 },
                 detached: false

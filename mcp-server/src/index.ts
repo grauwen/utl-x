@@ -317,6 +317,26 @@ async function main(): Promise<void> {
   const transportSuffix = TRANSPORT === 'stdio' ? 'stdio' : `http-${HTTP_PORT}`;
   process.title = `utlx-mcp-${transportSuffix}`;
 
+  // IF06: die-with-parent watchdog. When the IDE (Theia/Electron backend) that
+  // spawned this server dies — including a hard kill with no graceful shutdown —
+  // exit on our own so we don't orphan and keep the port bound. Opt-in via
+  // UTLX_PARENT_PID; script-managed/standalone runs pass nothing and are unaffected.
+  const parentPid = process.env.UTLX_PARENT_PID
+    ? parseInt(process.env.UTLX_PARENT_PID, 10)
+    : undefined;
+  if (parentPid && !Number.isNaN(parentPid)) {
+    const watchdog = setInterval(() => {
+      try {
+        process.kill(parentPid, 0); // signal 0 = existence check; throws if gone
+      } catch {
+        // eslint-disable-next-line no-console
+        console.error(`[utlx-mcp] Parent ${parentPid} is gone — exiting (die-with-parent watchdog)`);
+        process.exit(0);
+      }
+    }, 2000);
+    watchdog.unref(); // don't keep the process alive on the timer alone
+  }
+
   // Create logger
   const logger = createServerLogger();
 

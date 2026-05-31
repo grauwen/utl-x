@@ -100,7 +100,9 @@ export class UTLXDaemonClient extends EventEmitter {
                     '--lsp-transport', 'http',
                     '--lsp-port', String(this.options.lspPort),
                     '--api',
-                    '--api-port', String(this.options.apiPort)
+                    '--api-port', String(this.options.apiPort),
+                    // IF06: die-with-parent watchdog — daemon exits if this backend dies.
+                    '--parent-pid', String(process.pid)
                 ], {
                     stdio: ['ignore', 'pipe', 'pipe']
                 });

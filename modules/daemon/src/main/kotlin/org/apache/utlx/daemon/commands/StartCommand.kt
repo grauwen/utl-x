@@ -18,6 +18,7 @@ import kotlinx.coroutines.*
 import org.apache.utlx.daemon.UTLXDaemon
 import org.apache.utlx.daemon.TransportType
 import org.apache.utlx.daemon.CommandResult
+import org.apache.utlx.daemon.ParentWatchdog
 import org.apache.utlx.daemon.config.DaemonConfig
 import org.apache.utlx.daemon.mcp.*
 import org.apache.utlx.daemon.session.SessionManager
@@ -43,6 +44,12 @@ object StartCommand {
         return try {
             // Parse command-line arguments
             val options = parseArguments(args)
+
+            // IF06: die-with-parent watchdog. Opt-in — only when the spawning IDE
+            // passes --parent-pid. Started before the (blocking) daemon so it is
+            // active for the whole lifetime. Parsed separately so it never leaks
+            // into DaemonConfig overrides.
+            parseParentPid(args)?.let { pid -> ParentWatchdog.start(pid) }
 
             // Load configuration with CLI overrides
             val config = DaemonConfig.load(
@@ -487,6 +494,13 @@ object StartCommand {
         }
 
         return options
+    }
+
+    /** IF06: extract `--parent-pid <pid>`, or null if absent/invalid. Parsed
+     *  outside the options map so it never reaches DaemonConfig overrides. */
+    private fun parseParentPid(args: Array<String>): Long? {
+        val idx = args.indexOf("--parent-pid")
+        return if (idx >= 0 && idx + 1 < args.size) args[idx + 1].toLongOrNull() else null
     }
 
     /**

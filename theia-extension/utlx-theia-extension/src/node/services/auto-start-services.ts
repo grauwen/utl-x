@@ -146,7 +146,9 @@ async function startUTLXD(config: ServiceConfig): Promise<void> {
         '--lsp-transport', 'socket',
         '--lsp-port', config.utlxdLspPort.toString(),
         '--api',
-        '--api-port', config.utlxdRestPort.toString()
+        '--api-port', config.utlxdRestPort.toString(),
+        // IF06: die-with-parent watchdog — daemon exits if this backend dies.
+        '--parent-pid', process.pid.toString()
     ], {
         stdio: ['ignore', 'pipe', 'pipe'],
         detached: false
@@ -191,6 +193,8 @@ async function startMCPServer(config: ServiceConfig): Promise<void> {
                 // (auth via the user's Claude login; self-corrects against UTLXD).
                 // An explicit UTLX_LLM_PROVIDER in the environment still wins.
                 UTLX_LLM_PROVIDER: process.env.UTLX_LLM_PROVIDER || 'claude-code',
+                // IF06: die-with-parent watchdog — MCP exits if this backend dies.
+                UTLX_PARENT_PID: process.pid.toString(),
                 NODE_ENV: 'production'
             },
             detached: false
