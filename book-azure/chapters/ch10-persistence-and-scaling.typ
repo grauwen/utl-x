@@ -150,7 +150,7 @@ The practical impact: a customer processing 1,000 messages per second sees consi
 
 == Choosing an Execution Strategy
 
-Each transformation runs under one of four execution strategies, set with `strategy:` in `transform.yaml` (or left to the default). The strategy is purely a performance choice --- it never changes the output, only how fast the engine produces it.
+Each transformation runs under an execution strategy, set with `strategy:` in `transform.yaml` (or left to the default). The strategy is purely a performance choice --- it never changes the output, only how fast the engine produces it. Four values are selectable: `TEMPLATE`, `COPY`, `COMPILED`, and `AUTO`. The fifth row below, `COPY` + `COMPILED`, is not a separate value --- it is what `COPY` does automatically when it can also compile the fill logic to bytecode.
 
 #table(
   columns: (auto, auto, 1fr),
