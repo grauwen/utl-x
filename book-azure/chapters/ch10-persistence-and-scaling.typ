@@ -148,6 +148,34 @@ UTLXe uses the Z Garbage Collector (ZGC) with generational mode. This is a delib
 
 The practical impact: a customer processing 1,000 messages per second sees consistent 1--5ms latency per message, with no periodic spikes from GC pauses.
 
+== Choosing an Execution Strategy
+
+Each transformation runs under one of four execution strategies, set with `strategy:` in `transform.yaml` (or left to the default). The strategy is purely a performance choice --- it never changes the output, only how fast the engine produces it.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Strategy*], [*Throughput (per container)*], [*When to use*],
+  [`TEMPLATE`], [1,000--5,000 msg/s], [Development and low volume. Interprets the transformation directly --- instant to load, slowest to run.],
+  [`COPY`], [5,000--20,000 msg/s], [Schema-driven flows with a predictable output shape. Pre-builds an output skeleton and fills it per message.],
+  [`COMPILED`], [20,000--86,000 msg/s], [High volume and complex logic. Generates JVM bytecode for the transformation.],
+  [`COPY` + `COMPILED`], [50,000--86,000+ msg/s], [Maximum throughput: pre-built skeleton for structure plus compiled fill logic.],
+  [`AUTO`], [Varies], [Safe default. Picks `COPY` when an output schema is present, otherwise `TEMPLATE`.],
+)
+
+Throughput figures are for a single container (8 workers, 1 vCPU) on ~1KB JSON-to-JSON messages; larger or XML payloads scale the numbers down proportionally. For the engine mechanics behind these strategies, see Chapter 32 (Engine Lifecycle) in _UTL-X: One Language, All Formats_.
+
+=== Compilation Is Eager --- No First-Message Penalty
+
+A common worry with `COMPILED` is a latency spike on the first message while the engine generates bytecode. *That does not happen.* UTLXe compiles eagerly: every transformation is compiled when the bundle loads (or at upload time), and the engine reports `ready` only after all transformations are compiled. The readiness probe holds traffic until then, so the first message always hits already-compiled code.
+
+What this means operationally on Azure Container Apps:
+
+- *Startup and scale-out, not runtime, pay the cost.* The compile time (seconds for `COMPILED`, milliseconds for `TEMPLATE`/`COPY`) is added to how long a *new replica* takes to become ready --- not to any message's latency. When KEDA scales out, a fresh replica compiles its bundle before the readiness probe passes and traffic is routed to it. Brief slower scale-out, never errors or latency spikes on live traffic.
+- *Bundle (locked) mode keeps restarts fast.* In production bundle mode, a restart compares the bundle manifest version to what was last loaded and skips recompilation if it is unchanged --- so a routine restart does not re-pay the compile cost.
+- *Time-to-ready is the metric to watch*, not first-message latency. If fast scale-out matters more than peak throughput for a given flow (for example, bursty low-volume traffic), `AUTO` or `TEMPLATE` becomes ready almost instantly.
+
+The admin upload response reports the compile time directly, e.g. `"compiled_in_ms": 48`, so you can see exactly what each transformation adds to startup.
+
 == Horizontal Scaling
 
 For higher throughput, deploy multiple container replicas behind the Azure load balancer. Each replica runs an independent UTLXe instance.

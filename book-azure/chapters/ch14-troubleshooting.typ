@@ -78,7 +78,7 @@ Fix: set memory request equal to memory limit in the Container App configuration
 *Cause:* A message (or burst of messages) consumed more heap than available. The JVM exceeded the container memory limit, and Kubernetes killed the process.
 
 *Fix:*
-- *Heap backpressure* is enabled by default (85% threshold). When heap usage exceeds the threshold, UTLXe rejects incoming Dapr messages with 503 --- messages stay in Service Bus and are retried when pressure drops. Check if the threshold is too high for your workload: `GET /admin/backpressure`.
+- *Heap backpressure* is enabled by default (rejects above 92%, resumes below 80%). When heap usage exceeds the high-water mark, UTLXe rejects incoming work with 503 --- Dapr messages stay in Service Bus and are retried when pressure drops. Check if the threshold is too high for your workload: `GET /admin/backpressure`.
 - Set `maxInputSize` per transformation to reject oversized messages before parsing (e.g., `"maxInputSize": "100KB"` in the transformation config).
 - Upgrade to a larger plan (more memory = more headroom for DOM expansion).
 - Check for transformations that create large intermediate objects (deeply nested `map` of `map` operations).

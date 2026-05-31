@@ -120,7 +120,7 @@ Monitor and control heap-based message rejection. Allowed in locked mode.
   columns: (auto, auto, 1fr),
   [*Method*], [*Path*], [*Description*],
   [`GET`], [`/admin/backpressure`], [Current heap usage, threshold, pressure status, used/max MB.],
-  [`POST`], [`/admin/backpressure`], [Set threshold (50--99%). Body: `{"threshold": 85}`. Takes effect immediately.],
+  [`POST`], [`/admin/backpressure`], [Set high-water threshold (50--99%; default 92%). Body: `{"threshold": 92}`. Takes effect immediately.],
 )
 
 === Transformation Config Endpoints (EF03)

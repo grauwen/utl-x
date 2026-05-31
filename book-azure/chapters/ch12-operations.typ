@@ -372,7 +372,11 @@ The stage-then-sync model lets you test transformations via HTTP before connecti
 
 == Heap Backpressure
 
-UTLXe monitors heap usage and automatically rejects incoming Dapr messages when heap usage exceeds the backpressure threshold (default: 85%). Messages stay in Service Bus and are retried when pressure drops. This prevents OOM crashes without operator intervention.
+UTLXe monitors heap usage and automatically rejects incoming work when heap usage exceeds the backpressure threshold (default: 92%). Messages stay in Service Bus and are retried when pressure drops. This prevents OOM crashes without operator intervention.
+
+The mechanism uses a *hysteresis band*: it starts rejecting above the high-water mark (92%) and only resumes accepting once heap falls back below the low-water mark (80%). The 12% gap stops the engine from oscillating between accepting and rejecting on every garbage-collection cycle. The high-water mark sits at 92% because UTLXe runs the Z Garbage Collector (ZGC), whose sub-millisecond pauses stay safe at high heap utilisation --- leaving roughly 8% headroom for in-flight work. (For a JVM tuned to G1GC instead, lower the threshold to around 85%.)
+
+The check is effectively free on the hot path: a background thread refreshes the cached heap percentage every 100ms, and each message handler reads a single cached number --- no per-message computation, no locks.
 
 View current status:
 
@@ -382,7 +386,7 @@ curl -H "X-Admin-Key: $KEY" https://<your-fqdn>/admin/backpressure
 
 ```json
 {
-  "threshold": "85%",
+  "threshold": "92%",
   "heap_used_mb": 1247,
   "heap_max_mb": 3072,
   "heap_usage": "40%",
@@ -400,11 +404,12 @@ curl -X POST -H "X-Admin-Key: $KEY" \
 
 The Web UI shows the heap status visually on the *Config* tab --- a color-coded bar (green/yellow/red) with the threshold dropdown.
 
-What happens during pressure:
+What happens during pressure (all execution transports reject; the error is transient):
 - Dapr binding and pub/sub messages → 503 (retried by Dapr, messages stay in Service Bus)
-- Direct HTTP calls → still accepted (client controls retry)
+- Direct HTTP `/api/execute*` calls → 503 with `error_code: HEAP_PRESSURE` (client retries)
+- Proto (stdio) and gRPC calls → `HEAP_PRESSURE` / `UNAVAILABLE` (transient — retry after a short delay)
 - Admin API → always available (operators can always manage the engine)
-- After GC reduces heap below threshold → messages accepted again automatically
+- Once GC brings heap below the 80% resume mark → work is accepted again automatically
 
 The backpressure check adds zero overhead to message processing --- the heap percentage is cached by a background thread (updated every 100ms) and the hot path reads a single cached number.
 

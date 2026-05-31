@@ -65,7 +65,7 @@ Per-transformation configuration. Optional --- if absent, defaults apply.
   columns: (auto, auto, auto, 1fr),
   [*Setting*], [*Default*], [*Endpoint*], [*Description*],
   [Log level], [`INFO`], [`POST /admin/log/level`], [Change to `DEBUG` for Dapr traffic tracing. Auto-revert option.],
-  [Backpressure threshold], [85%], [`POST /admin/backpressure`], [Heap usage percentage that triggers 503 rejection. Range: 50--99%.],
+  [Backpressure threshold], [92%], [`POST /admin/backpressure`], [Heap high-water mark that triggers 503 rejection (resume below 80%). Range: 50--99%.],
   [Validation override], [_(from config)_], [`POST /admin/transformations/{name}/validation`], [Ephemeral policy override (`strict`, `warn`, `off`). Resets on restart.],
 )
 
