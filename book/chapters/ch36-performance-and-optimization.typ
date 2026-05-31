@@ -37,7 +37,7 @@ The COMPILED strategy compiles UTL-X expressions to JVM bytecode using the ASM l
 - Eliminates the AST tree-walking overhead (~10x faster than TEMPLATE for complex expressions)
 - Uses typed operations (no boxing/unboxing for arithmetic)
 
-The compilation happens once at init-time and is cached by SHA-256 hash of the source. Subsequent starts with the same transformation skip compilation entirely.
+The compilation happens once at init-time --- while the bundle loads, before the engine reports ready --- and is cached by SHA-256 hash of the source. The first message therefore hits already-compiled bytecode; there is no first-message latency penalty. Subsequent starts with the same transformation skip compilation entirely (cache hit).
 
 == Memory Model
 

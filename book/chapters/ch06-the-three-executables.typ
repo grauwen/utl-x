@@ -130,9 +130,12 @@ The engine offers four strategies that trade initialization time for runtime per
   [*Strategy*], [*Init time*], [*Runtime*], [*Best for*],
   [TEMPLATE], [Instant], [Interprets AST], [Development, simple transforms],
   [COPY], [Fast (build skeleton)], [Clone + fill], [Schema-driven, predictable structure],
-  [COMPILED], [Slow first time], [JVM bytecode], [Maximum throughput, complex logic],
+  [COMPILED], [Seconds at startup (one-time, before ready)], [JVM bytecode], [Maximum throughput, complex logic],
+  [COPY + COMPILED], [Seconds at startup (one-time, before ready)], [Clone skeleton + JVM bytecode], [Ultimate throughput: pre-built structure + compiled logic],
   [AUTO], [Depends], [Depends], [Production default (schema → COPY, else → TEMPLATE)],
 )
+
+COPY + COMPILED is not a separate `strategy:` value --- it is what COPY does automatically: when you select COPY (or AUTO chooses it), the engine also compiles the fill logic to bytecode where it can, combining the pre-built skeleton with compiled expressions for the fastest path.
 
 COMPILED strategy compiles UTL-X expressions to JVM bytecode using the ASM library — the same technology that Java itself uses. This achieves throughput of 86,000+ messages per second on a single instance with 8 workers. Chapter 32 covers the engine lifecycle (design-time, init-time, runtime) and Chapter 36 covers performance tuning.
 
