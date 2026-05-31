@@ -1,9 +1,14 @@
-# UTL-X Theia Extension - Message Contract & Execution Architecture
+# UTL-X Theia Extension - IDE Architecture (Modes, Lifecycle, Packaging)
 
-**Version:** 2.0
-**Date:** 2025-11-01
-**Status:** Design Proposal - Enhanced with Message Contract Mode
+**Version:** 3.0
+**Date:** 2026-05-31
+**Status:** Implemented (modes, Phase 1-2) + Roadmap (lifecycle/watchdog, Electron, installers)
 **Authors:** UTL-X Architecture Team
+
+> v3.0 extends the dual-mode IDE design with the full *product* picture: process
+> lifecycle & supervision, the die-with-parent watchdog, daemon runtime choices
+> (JVM jar vs. bundled JRE vs. a future native build), the Electron desktop shell,
+> and per-platform signed installers that embed `utlxd` for a no-prerequisites IDE.
 
 ---
 
@@ -19,6 +24,12 @@
 8. [LSP/Daemon Integration](#lspdaemon-integration)
 9. [Workflow Examples](#workflow-examples)
 10. [Implementation Phases](#implementation-phases)
+11. [Process Lifecycle & Service Supervision](#process-lifecycle--service-supervision)
+12. [Process Watchdog: Die-With-Parent](#process-watchdog-die-with-parent)
+13. [Daemon Runtime: JVM Jar, Bundled JRE, and the Native Option](#daemon-runtime-jvm-jar-bundled-jre-and-the-native-option)
+14. [Electron Desktop Application](#electron-desktop-application)
+15. [Per-Platform Installers (macOS, Windows, Linux)](#per-platform-installers-macos-windows-linux)
+16. [Bundle-Level IDE: Editing & Testing a `.utlar` Project](#bundle-level-ide-editing--testing-a-utlar-project)
 
 ---
 
@@ -1258,6 +1269,264 @@ TheiaExtension
 
 ---
 
+## Process Lifecycle & Service Supervision
+
+The IDE is not a single process. It orchestrates backing services, each a child
+of the Theia backend:
+
+| Service | What it is | Default port | Notes |
+|---|---|---|---|
+| `utlxd` | Language/transform daemon (JVM jar) | API 7779, LSP 7777 | Validate, execute, infer-schema, completions; serves the IDE |
+| UTLX MCP server | Node process (AI assist) | 7780 | Calls `utlxd` over HTTP; provider = claude-code |
+| (Theia backend) | Node host | 4000 (web) | The supervisor of the two above |
+
+**Node is the supervisor — not an OS service manager.** Because the services
+must live and die *with* the IDE, the correct supervisor is the long-lived Theia
+backend (Node), which spawns them via `child_process.spawn`. This lives in
+`utlx-theia-extension/src/node/services/service-lifecycle-manager.ts` (bound as a
+Theia `BackendApplicationContribution`, so its hooks fire on backend start/stop).
+
+We deliberately **do not** use a Java service wrapper (Tanuki, YAJSW, jsvc).
+Those exist to register a JVM as an *independent* OS-level service that survives
+reboots and is supervised by the OS — the opposite of what we want. Adding one
+would create a second supervisor competing with Node and make orphaning *harder*
+to reason about. Everything a wrapper provides we implement in the lifecycle
+manager:
+
+- **Start ordering & readiness gating** — start `utlxd`, poll `/api/health` until
+  ready, *then* start the MCP server (which depends on it). Present as
+  `waitForUTLXD()`.
+- **Restart-with-backoff** — on unexpected child exit, respawn with exponential
+  backoff, a max-retry cap, and crash-loop detection. (Currently a TODO in the
+  manager — the gap to close.)
+- **Graceful shutdown** — SIGTERM, then SIGKILL after a timeout, on backend stop.
+- **Idempotent daemon start** — reuse a healthy `utlxd` if already running (the
+  heavy JVM should not restart on every IDE rebuild); only the MCP server is
+  cheap enough to recycle each cycle.
+
+Configuration is environment-driven (`UTLXD_REST_PORT`, `UTLXD_LSP_PORT`,
+`UTLX_MCP_PORT`, `AUTO_START_SERVICES`, `MCP_SERVER_PATH`, `UTLXD_JAR_PATH`), so
+the same code path works in dev (script-launched) and in a packaged app.
+
+## Process Watchdog: Die-With-Parent
+
+Node's exit handlers cover *graceful* shutdown. They do **not** cover the case
+that has repeatedly bitten us: the parent (Theia/Electron) is `kill -9`'d or
+crashes. The OS does not reap the children, so `utlxd` and the MCP server orphan
+and keep holding their ports — the next launch then hits `EADDRINUSE` and may
+silently keep talking to a stale process.
+
+The robust fix is a **die-with-parent watchdog inside each child**, independent of
+how the parent dies:
+
+- At spawn, the parent passes its PID (and/or an inherited pipe file descriptor).
+- The child runs a small watchdog: if the pipe closes (EOF) or the parent PID
+  disappears, it `exit()`s immediately.
+- Portable mechanism: Linux has `PR_SET_PDEATHSIG`, but macOS has no equivalent,
+  so the pipe/PID-watch is the cross-platform approach — ~30 lines in the daemon
+  and a few on the Node side.
+
+**The watchdog is runtime- and packaging-agnostic.** It is about *process
+topology*, not whether the daemon is a JVM jar or a native binary, and not about
+Electron vs. web. A native `utlxd` spawned by Node is still an orphan-able child,
+so the watchdog is required **regardless of any future GraalVM decision** —
+compiling to native does not remove the need for it.
+
+Together with the supervisor's port-cleanup-on-start, this closes the orphan
+class of bugs in both directions: parent-watches-child (restart) and
+child-watches-parent (self-exit).
+
+## Daemon Runtime: JVM Jar, Bundled JRE, and the Native Option
+
+Two engines make opposite runtime choices, for good reasons:
+
+- **`utlxe` (production engine) stays a JVM jar — permanently.** Its COMPILED
+  strategy generates JVM bytecode at runtime via ASM. GraalVM native-image is
+  closed-world AOT and cannot define classes at runtime, so the engine's headline
+  optimization is fundamentally incompatible with native compilation.
+- **`utlxd` (IDE daemon) is a JVM jar today and is the *candidate* for a native
+  build** — because the IDE does not need the COMPILED strategy. Validate,
+  infer-schema, completions, and single-message live preview all run on the
+  interpreter/TEMPLATE path, which produces identical output. The CLI is already
+  GraalVM-native for the same reason (one-shot, no runtime bytecode generation).
+
+**Packaging the jar (today): bundle a JRE.** A desktop app cannot assume `java`
+is on `PATH`. Use `jlink` to produce a trimmed runtime with only the modules
+`utlxd` needs (tens of MB, not a full JDK), place it in app resources, and spawn
+it explicitly: `<resources>/jre/bin/java -jar utlxd.jar …`. This is a packaging
+step, not a service wrapper.
+
+**The native `utlxd` option (future, Electron-driven).** The attraction is real:
+no bundled JRE, sub-100ms startup, smaller installer. The blocker is **not** ASM
+(utlxd would run interpreter-only) — it is the daemon's dependencies under
+native-image: Ktor (REST), the LSP transport, and Jackson all use
+reflection / dynamic proxies / resource loading that need explicit native-image
+reachability metadata (`reflect-config.json`, resource config), plus a
+per-platform native build matrix and ongoing maintenance. So native `utlxd` is a
+dependency-reachability *project*, gated on (a) guaranteeing `utlxd` never touches
+the COMPILED path and (b) getting those libraries native-clean. It does not change
+the watchdog or supervision design.
+
+Recommendation: ship the jar + bundled JRE now; treat native `utlxd` as a later
+optimization that mainly benefits Electron installer size and cold start.
+
+## Electron Desktop Application
+
+Two delivery shells share the same extension and backend code:
+
+- **Web (`browser-app`, exists today):** Theia served over HTTP, opened in a
+  browser. Best for cloud/hosted use. The frontend must never touch service ports
+  directly — health/status flow through the backend over JSON-RPC
+  (`getServicesHealth()`), because the browser's `localhost` is not the server's.
+- **Desktop (`electron-app`, to add):** Theia packaged as an Electron app for a
+  one-double-click full IDE experience, with `utlxd` + MCP bundled inside.
+
+**Versioning:** add an `electron-app` package beside `browser-app`, with every
+`@theia/*` dependency pinned to the same version the extension already uses
+(mixing Theia versions across the two apps is the primary source of breakage). Do
+**not** choose an Electron version directly — take the one Theia pins via
+`@theia/electron` and pin that exact value. Build the toolchain on the matching
+Node LTS.
+
+**Native modules & ASAR:** `node-pty` (terminal) and any spawned binaries must be
+rebuilt for Electron's ABI (`@electron/rebuild`). In packaging, `asarUnpack` the
+JRE, `utlxd.jar`, the MCP server, and `node-pty` — ASAR archives break process
+spawning and file execution.
+
+**Lifecycle in Electron:** the Electron *main* process owns startup; the Theia
+*backend* (Node) remains the supervisor of `utlxd` + MCP exactly as in the web
+case. The die-with-parent watchdog matters most here, since users quit/kill the
+desktop app directly.
+
+## Per-Platform Installers (macOS, Windows, Linux)
+
+Goal: ship `utlxd` (plus the MCP server and bundled JRE) *inside* a signed,
+double-click installer per platform, so an end user gets the full IDE without
+installing Java, Node, or the daemon separately. Use **`electron-builder`** (or
+Theia's electron packaging) to produce all three from one config.
+
+| Platform | Artifact(s) | Signing / hardening |
+|---|---|---|
+| macOS | `.dmg` (and/or `.pkg`); universal arm64 + x64 | Developer ID code-signing **and notarization** (Gatekeeper); hardened runtime |
+| Windows | NSIS `.exe` and/or `.msi`; Squirrel auto-update | Authenticode signing (EV cert recommended to avoid SmartScreen) |
+| Linux | `AppImage` (portable) + `.deb`/`.rpm` | No mandatory signing; optional GPG for repos |
+
+Cross-cutting requirements:
+
+- **Bundle the runtime per platform.** Each installer carries the matching `jlink`
+  JRE for that OS/arch (or, later, the native `utlxd` binary for that target).
+  Build on each target OS / per arch — native modules and the JRE are not
+  portable across platforms.
+- **Spawn by absolute path from app resources**, never relying on `PATH`. Resolve
+  `utlxd.jar`, the JRE, and the MCP server relative to the app's (asarUnpacked)
+  resource directory.
+- **Ports & single-instance:** keep the env-configurable ports; add a
+  single-instance lock so two windows don't fight over `7777/7779/7780`.
+- **Auto-update** (optional): electron-builder supports per-platform update feeds;
+  the daemon/JRE ship inside the app bundle so they update atomically with the IDE.
+
+This packaging path is what turns "Theia extension + daemon" into a shippable
+product: one installer per platform, `utlxd` embedded, no external prerequisites.
+
+## Bundle-Level IDE: Editing & Testing a `.utlar` Project
+
+### The gap: the IDE edits one transformation, production runs a bundle
+
+Today the IDE models a **single** transformation (Input | Transformation | Output).
+But the unit that the engine loads, that CI/CD ships, and that the book describes
+is the **`.utlar` bundle** — an *integration project*, not one transformation. A
+bundle (see `EF09-production-bundle-mode.md`, `BundleLoader.kt`) contains:
+
+```
+bundle.utlar (ZIP):
+  manifest.json                 ← aggregate: transformations + schemas + messaging topology
+  transformations/
+    orders-in/
+      orders-in.utlx            ← the transformation source
+      transform.yaml            ← strategy, validation policy, messaging in/out, schema refs
+    invoice-to-ubl/
+      invoice-to-ubl.utlx
+      transform.yaml
+  schemas/                      ← SHARED across transformations
+    order.json
+    invoice.xsd
+```
+
+So the IDE is missing the entire **project/bundle tier** above the editor.
+Authoring or testing what you actually ship requires closing that gap.
+
+### Layered model
+
+```
+Bundle (.utlar)         project: manifest + shared schemas + messaging topology   ← MISSING
+  └─ Transformation     orders-in / invoice-to-ubl … (N of them)                  ← IDE handles ONE
+       └─ I / T / O      the current three-panel editor                           ← EXISTS
+```
+
+### Decision: navigate N, do not run N live editors
+
+We support **N transformations in one project — navigable and individually
+editable/testable — but NOT N concurrent Input|Transformation|Output triptychs.**
+The literal "N live editors" is a UX and resource trap (N daemons / N previews /
+confusing layout). Instead we use the standard IDE pattern:
+
+- A **bundle explorer** (project tree) on the left: transformations, shared
+  `schemas/`, and the manifest.
+- Open transformations as **tabs**; the three-panel I/T/O view binds to the
+  **active** transformation.
+- You move freely between many transformations and edit them all, but the heavy
+  three-panel apparatus (and live preview / daemon execution) operates on one at
+  a time.
+
+This is how every IDE handles "a project with many files," and it keeps the
+existing three-panel design intact rather than multiplying it.
+
+### New surfaces this introduces
+
+Beyond the existing I/T/O editor, a bundle needs UI that has **no home today**:
+
+- **Bundle explorer** — the project tree (transformations + schemas + manifest).
+- **Shared `schemas/` view** — one schema set referenced by many `transform.yaml`s
+  (project-level, not per-transformation).
+- **`transform.yaml` editor** — strategy, validation policy, and **messaging
+  in/out** (queue/topic names) per transformation. The IDE currently has no UI
+  for any of this.
+- **Manifest / messaging-topology view** — the queue/topic wiring *across*
+  transformations. This is the one genuinely new view beyond I/T/O: a pipeline /
+  topology diagram of how the bundle's transformations connect.
+- **Bundle build & test** — Build/Export `.utlar`; **Validate All** and **Test
+  All** (run a sample through each transformation, check schema refs resolve, lint
+  the manifest) — "test the bundle," not just one transformation.
+
+### Theia menu & command expansion
+
+Theia's contribution model (menus, commands, keybindings, view-containers) covers
+this directly. Add a top-level **UTL-X** (Bundle) menu + command-palette entries:
+
+- New Bundle · Open Bundle · Build `.utlar` · Validate Bundle · Test All
+- New Transformation (scaffolds `transformations/<name>/` + `transform.yaml`)
+- Add Schema · Edit `transform.yaml` · Edit Manifest
+
+The menu/command surface is low-risk and Theia-native; the *views* behind some
+commands (topology diagram, manifest editor) are the real implementation work.
+
+### Phasing
+
+- **Phase A — Bundle as project (highest value):** recognize/open a `.utlar`
+  project, bundle explorer tree, open transformations as tabs (active one drives
+  the three panels), Build/Export `.utlar`, shared `schemas/` view. Mostly
+  Theia-native (a `.utlar` project is a folder with a known structure); this is
+  the bridge to CI/CD.
+- **Phase B — Per-transformation config:** `transform.yaml` editor
+  (strategy / validation / messaging) surfaced in the IDE.
+- **Phase C — Bundle-level operations:** Validate-All / Test-All, manifest view,
+  and the messaging **topology diagram** (the one truly new view). The UT­L-X menu
+  + commands land across these phases.
+
+This is a deliberate scope expansion from "transformation editor" to "integration
+project IDE," aligned with how the engine already runs (`BundleLoader` / EF09) and
+how bundles are shipped via CI/CD.
+
 ## Conclusion
 
 This enhanced Theia extension design provides:
@@ -1301,10 +1570,12 @@ The design supports both **schema-first** and **test-first** development workflo
 
 ---
 
-**Document Version:** 2.0
-**Last Updated:** 2025-11-01
+**Document Version:** 3.0
+**Last Updated:** 2026-05-31
 **Supersedes:** theia-extension-api-reference.md v1.0 (partially)
 **Related Documents:**
 - design-time-schema-analysis-enhanced.md
 - theia-extension-implementation-guide.md
+- cli-daemon-split-architecture.md (CLI vs daemon split; native CLI)
+- ide-modes-specification.md (Execution vs Message Contract modes)
 - io-theia-explained.md
