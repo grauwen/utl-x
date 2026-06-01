@@ -12,6 +12,7 @@ import { spawn, ChildProcess } from 'child_process';
 import { injectable, inject } from 'inversify';
 import { BackendApplicationContribution } from '@theia/core/lib/node';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
+import { RestartState, newRestartState, decideRestart, markHealthy } from './restart-policy';
 import * as path from 'path';
 import * as fs from 'fs';
 
@@ -40,6 +41,13 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     private isShuttingDown = false;
 
     private daemonClient: UTLXDaemonClient | null = null;
+
+    // IF06: restart-with-backoff supervision state, per service. The decision
+    // logic lives in ./restart-policy (pure + unit-tested); this just holds state.
+    private restartState: Record<'utlxd' | 'mcp', RestartState> = {
+        utlxd: newRestartState(),
+        mcp: newRestartState(),
+    };
 
     constructor() {
         console.log('[ServiceLifecycle] ===== CONSTRUCTOR CALLED =====');
@@ -221,10 +229,10 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
             this.utlxdProcess.on('exit', (code, signal) => {
                 console.log(`[UTLXD] Process exited: code=${code}, signal=${signal}`);
-                if (!this.isShuttingDown && code !== 0) {
-                    console.error('[UTLXD] Unexpected exit');
-                }
                 this.utlxdProcess = null;
+                if (!this.isShuttingDown && code !== 0) {
+                    this.scheduleRestart('utlxd');
+                }
             });
 
             // Wait for UTLXD to be ready
@@ -315,9 +323,9 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             // Handle exit
             this.mcpProcess.on('exit', (code, signal) => {
                 console.log(`[MCP Server] Process exited: code=${code}, signal=${signal}`);
+                this.mcpProcess = null;
                 if (!this.isShuttingDown && code !== 0) {
-                    console.error('[MCP Server] Unexpected exit, attempting restart...');
-                    // TODO: Implement restart logic
+                    this.scheduleRestart('mcp');
                 }
             });
 
@@ -363,6 +371,58 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             await new Promise(resolve => setTimeout(resolve, delayMs));
         }
         throw new Error('MCP server failed to become ready');
+    }
+
+    /**
+     * IF06: restart a crashed service with exponential backoff and crash-loop
+     * detection. Called from the child 'exit' handlers on an unexpected exit.
+     * Graceful shutdown (onStop / stopMCPServer / stopUTLXD) sets isShuttingDown,
+     * so this is a no-op during a normal stop.
+     */
+    private scheduleRestart(service: 'utlxd' | 'mcp'): void {
+        if (this.isShuttingDown) {
+            return;
+        }
+        const state = this.restartState[service];
+        if (state.giveUp) {
+            return;
+        }
+
+        // Decision logic (backoff + crash-loop) lives in ./restart-policy (pure,
+        // unit-tested). This method only performs the side effects.
+        const outcome = decideRestart(state, Date.now());
+        if (outcome.action === 'give-up') {
+            console.error(
+                `[ServiceLifecycle] ${service} ${outcome.reason}. Manual intervention required.`
+            );
+            return;
+        }
+
+        const delay = outcome.delayMs;
+        console.error(
+            `[ServiceLifecycle] ${service} exited unexpectedly — ` +
+            `restarting in ${delay}ms (attempt ${outcome.attempt})`
+        );
+
+        setTimeout(() => {
+            if (this.isShuttingDown || state.giveUp) {
+                return;
+            }
+            const restart = service === 'utlxd'
+                ? this.startUTLXD()
+                : this.startMCPServer();
+            restart
+                .then(() => {
+                    // Healthy again — reset backoff so a later, unrelated crash
+                    // starts from a short delay rather than a long one.
+                    markHealthy(state);
+                    console.log(`[ServiceLifecycle] ${service} restarted successfully`);
+                })
+                .catch(err => {
+                    console.error(`[ServiceLifecycle] ${service} restart failed:`, err);
+                    this.scheduleRestart(service); // try again (backoff continues)
+                });
+        }, delay);
     }
 
     /**

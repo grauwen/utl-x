@@ -6,8 +6,8 @@ Playwright-based end-to-end conformance tests for the UTL-X Theia extension.
 
 This conformance suite verifies:
 - ✅ UTLXD daemon starts with correct command-line arguments (`--lsp-transport socket`, `--api`, `--api-port 7779`)
-- ✅ MCP server starts on port 3001
-- ✅ Theia IDE is accessible on port 3000
+- ✅ MCP server starts on port 7780
+- ✅ Theia IDE is accessible on port 4000
 - ✅ Basic UI elements load correctly
 
 ## Prerequisites
@@ -72,14 +72,14 @@ tests/
 
 ### Service Auto-Start Tests
 
-- **Theia Accessibility**: Verifies Theia loads on port 3000
+- **Theia Accessibility**: Verifies Theia loads on port 4000
 - **UTLXD Command-Line Arguments**: Validates correct startup arguments
   - `--lsp` flag present
   - `--lsp-transport socket` (NOT `--transport`)
   - `--api` flag (NOT `--daemon-rest`)
   - `--api-port 7779` (NOT `--daemon-rest-port`)
 - **UTLXD REST API**: Confirms health endpoint accessible on port 7779
-- **MCP Server**: Verifies MCP server running on port 3001
+- **MCP Server**: Verifies MCP server running on port 7780
 - **All Services**: Confirms all three services are running
 
 ### UI Tests
@@ -115,9 +115,9 @@ The runner waits 10 seconds after Theia starts. If services need more time, modi
 
 ### Port Already in Use
 
-If port 3000, 7779, or 3001 is in use:
+If port 4000, 7779, or 7780 is in use:
 ```bash
-lsof -ti:3000,7779,3001 | xargs kill -9
+lsof -ti:4000,7779,7780 | xargs kill -9
 ```
 
 ## Related Conformance Suites

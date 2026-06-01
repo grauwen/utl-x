@@ -5,7 +5,7 @@ import { promisify } from 'util';
 const execAsync = promisify(exec);
 
 test.describe('Service Auto-Start Conformance', () => {
-  test('Theia should be accessible on port 3000', async ({ page }) => {
+  test('Theia should be accessible on port 4000', async ({ page }) => {
     // Navigate to Theia
     await page.goto('/');
 
@@ -35,19 +35,19 @@ test.describe('Service Auto-Start Conformance', () => {
     expect(response.ok).toBeTruthy();
   });
 
-  test('MCP Server should be running on port 3001', async () => {
+  test('MCP Server should be running on port 7780', async () => {
     // Check if MCP server port is open
-    const { stdout } = await execAsync('lsof -nP -i:3001 | grep LISTEN || echo "NOT_RUNNING"');
+    const { stdout } = await execAsync('lsof -nP -i:7780 | grep LISTEN || echo "NOT_RUNNING"');
 
     expect(stdout).not.toContain('NOT_RUNNING');
-    expect(stdout).toContain('3001');
+    expect(stdout).toContain('7780');
   });
 
   test('All required services should be running', async () => {
     // Check all ports
-    const { stdout: theiaCheck } = await execAsync('lsof -nP -i:3000 | grep LISTEN || echo "NOT_RUNNING"');
+    const { stdout: theiaCheck } = await execAsync('lsof -nP -i:4000 | grep LISTEN || echo "NOT_RUNNING"');
     const { stdout: utlxdCheck } = await execAsync('lsof -nP -i:7779 | grep LISTEN || echo "NOT_RUNNING"');
-    const { stdout: mcpCheck } = await execAsync('lsof -nP -i:3001 | grep LISTEN || echo "NOT_RUNNING"');
+    const { stdout: mcpCheck } = await execAsync('lsof -nP -i:7780 | grep LISTEN || echo "NOT_RUNNING"');
 
     expect(theiaCheck).not.toContain('NOT_RUNNING');
     expect(utlxdCheck).not.toContain('NOT_RUNNING');

@@ -19,8 +19,8 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Check if Theia is already running
-if lsof -nP -i:3000 > /dev/null 2>&1; then
-    echo -e "${GREEN}Theia already running on port 3000${NC}"
+if lsof -nP -i:4000 > /dev/null 2>&1; then
+    echo -e "${GREEN}Theia already running on port 4000${NC}"
     THEIA_STARTED=0
 else
     echo -e "${YELLOW}Starting Theia IDE...${NC}"
@@ -32,7 +32,7 @@ else
     # Wait for Theia to start (max 60 seconds)
     echo -e "${YELLOW}Waiting for Theia to start...${NC}"
     for i in {1..60}; do
-        if lsof -nP -i:3000 > /dev/null 2>&1; then
+        if lsof -nP -i:4000 > /dev/null 2>&1; then
             echo -e "${GREEN}Theia started successfully (PID: $THEIA_PID)${NC}"
             break
         fi
@@ -40,7 +40,7 @@ else
     done
 
     # Verify Theia started
-    if ! lsof -nP -i:3000 > /dev/null 2>&1; then
+    if ! lsof -nP -i:4000 > /dev/null 2>&1; then
         echo -e "${RED}Failed to start Theia${NC}"
         cat /tmp/theia-e2e-tests.log
         exit 1
