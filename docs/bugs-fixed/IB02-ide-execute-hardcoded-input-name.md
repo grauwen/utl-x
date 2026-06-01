@@ -1,6 +1,6 @@
 # IB02: IDE — `/api/execute` binds the single input to a hardcoded `"input"`, breaking custom-named inputs
 
-**Status:** Open
+**Status:** **FIXED** — (a) daemon `/api/execute` binds to the declared input name (2 Kotlin tests green); (b) MCP's `generateUtlx` verification now uses `/api/execute-multipart` with all named inputs (custom-name + N-input). Needs daemon + MCP **restart** to go live. Remaining limitation: the in-session `validate_and_run` dep still passes a single input (fine for single custom-named via (a); multi-input self-correction relies on the post-gen multipart check).
 **Priority:** High (breaks AI-assist generation for custom-named / multi-input transformations)
 **Created:** June 2026
 **Component:** MCP server's use of the daemon's JSON `/api/execute` endpoint. **Not** the IDE Execute button (which uses `/api/execute-multipart` and works), **not** CLI core, **not** the `utlxe` engine.

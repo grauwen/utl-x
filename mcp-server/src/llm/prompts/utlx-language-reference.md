@@ -112,6 +112,9 @@ output <format>
 - `...expr` (in arrays or objects)
 - Arrays: `[...arr]` flattens array
 - Objects: `{...obj}` merges object properties
+- **Prefer spread to copy** — `{ ...item }` copies all fields; `{ ...item, k: v }` copies
+  with an override. Don't enumerate fields 1:1 just to copy them. Use `pick(obj, [...])`
+  / `omit(obj, [...])` to select or drop fields.
 
 ## Operator Precedence (highest to lowest)
 1. Member access (`.`, `.@`, `[...]`)
