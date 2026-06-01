@@ -682,9 +682,14 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private handleAddInput(): void {
+        // Name preference is "input{nextInputId}", but a manual rename may already
+        // hold that name (e.g. tab renamed to "input5" before adding the 5th input).
+        // freeDefaultName guarantees a name no existing tab uses. The id stays
+        // "input-{nextInputId}" (monotonic, always unique) even if name diverges.
+        const taken = new Set(this.state.inputs.map(i => i.name.toLowerCase()));
         const newInput: InputTab = {
             id: `input-${this.nextInputId}`,
-            name: `input${this.nextInputId}`,
+            name: this.freeDefaultName(taken, `input${this.nextInputId}`),
             instanceContent: '',
             instanceFormat: 'json',
             schemaContent: '',
@@ -1556,9 +1561,60 @@ export class MultiInputPanelWidget extends ReactWidget {
         }
     }
 
+    /**
+     * Compute a default name to restore on Clear, GUARANTEED unique among the other
+     * tabs. Prefers the id-derived name ('input-1' -> 'input', 'input-N' -> 'input{N}')
+     * when that is free; otherwise picks the lowest free 'input' / 'input{n}'.
+     *
+     * The uniqueness scan matters because not every id is the canonical 'input-N'
+     * form (header-sync uses 'input-<timestamp>-<i>'), and tabs can be renamed or
+     * deleted — so the id-derived name alone could collide with a tab that already
+     * holds it. This never hands out a name another tab currently uses.
+     */
+    private defaultNameForInput(id: string): string {
+        const taken = new Set(
+            this.state.inputs.filter(i => i.id !== id).map(i => i.name.toLowerCase())
+        );
+        // Preferred name from a canonical 'input-N' id (else just lowest free).
+        const m = id.match(/^input-(\d+)$/);
+        const preferred = m ? (parseInt(m[1], 10) === 1 ? 'input' : `input${m[1]}`) : undefined;
+        return this.freeDefaultName(taken, preferred);
+    }
+
+    /**
+     * Lowest-free 'input' / 'input{n}' given the set of already-taken (lowercased)
+     * names, preferring `preferred` when it is free. Shared by add and clear so a
+     * manually-renamed tab (e.g. "input5") can never be duplicated by either path.
+     */
+    private freeDefaultName(taken: Set<string>, preferred?: string): string {
+        if (preferred && !taken.has(preferred.toLowerCase())) {
+            return preferred;
+        }
+        if (!taken.has('input')) {
+            return 'input';
+        }
+        for (let n = 2; ; n++) {
+            const candidate = `input${n}`;
+            if (!taken.has(candidate.toLowerCase())) {
+                return candidate;
+            }
+        }
+    }
+
     private handleClear(): void {
         const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
         const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+
+        // Clear also restores the input's default name (e.g. a load-derived "test"
+        // reverts to "input"). defaultNameForInput guarantees a name no other tab
+        // currently uses, so no separate dup-check is needed here.
+        let renameTo: string | undefined;
+        if (activeInput) {
+            const def = this.defaultNameForInput(activeInput.id);
+            if (activeInput.name !== def) {
+                renameTo = def;
+            }
+        }
 
         this.setState({
             inputs: this.state.inputs.map(input =>
@@ -1567,10 +1623,14 @@ export class MultiInputPanelWidget extends ReactWidget {
                         ...input,
                         [isSchema ? 'schemaContent' : 'instanceContent']: '',
                         // Also clear UDM when clearing instance content
-                        ...(isSchema ? {} : { udmLanguage: undefined, udmParsed: false, udmError: undefined })
+                        ...(isSchema ? {} : { udmLanguage: undefined, udmParsed: false, udmError: undefined }),
+                        // Restore the default name on clear
+                        ...(renameTo ? { name: renameTo } : {})
                     }
                     : input
-            )
+            ),
+            // Remount the name field so the restored default is visible
+            ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
         });
 
         // Fire events to notify editor widget
@@ -1605,6 +1665,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                     setTimeout(() => this.parseAndFireSchemaFieldTree(this.state.activeInputId), 100);
                 }
             }
+        }
+
+        // Restore the default name LAST: clear events above used the still-current
+        // name; now rename (updates header + renames body refs, e.g. "test" -> "input").
+        if (renameTo && activeInput) {
+            this.eventService.fireInputNameChanged({
+                inputId: activeInput.id,
+                oldName: activeInput.name,
+                newName: renameTo
+            });
         }
     }
 
