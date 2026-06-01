@@ -78,7 +78,7 @@ surfacing, not new infrastructure.
 ```
 ▾ bundle: sales.utlar
   ▾ transformations
-      orders-in           (orders-in.utlx + transform.yaml)
+      orders-in           (orders-in.utlx + transform.yaml + samples/)
       invoice-to-ubl
   ▾ schemas (shared)
       order.json
@@ -88,6 +88,34 @@ surfacing, not new infrastructure.
 
 Selecting a transformation opens/activates its tab and points the three panels at
 it. Selecting a schema or the manifest opens a plain editor (IF05 adds richer views).
+
+**Document persistence — fully Theia/Monaco-compliant (the target architecture).**
+All working documents are **file-backed through the Theia backend**, exactly how VS
+Code (Electron) and Theia SaaS (browser) work — never the browser's ~5 MB Web
+Storage. Concretely:
+
+- **Transformation** — opened via Theia's **editor manager** as a file-backed
+  `file://…/orders-in.utlx` Monaco model (NOT a standalone `monaco.editor.create`
+  with an `inmemory://` URI). This gives native save / dirty-state / undo /
+  reopen-on-refresh and hot-exit backup of unsaved edits — all on disk.
+- **Input samples** — each input's sample instance is a file under the
+  transformation's **`samples/`** dir, loaded/saved via the backend `FileService`.
+  The **link is by convention, anchored to the `.utlx` header**: input named
+  `orders` (format `json`) ↔ `samples/orders.json`. The header stays the structural
+  source of truth; the sample file supplies the data. Renaming an input renames both
+  the header entry and its sample file. (Kept out of `transform.yaml`, which mirrors
+  the *engine's* runtime config — samples are an IDE concern; convention-by-name
+  needs no extra binding file.)
+- **Output** — a derived result (re-run on demand); displayed read-only, optionally
+  written to `output/`. Not persisted as work product.
+- **UI/layout state only** — Theia's `StorageService` (localStorage) is used solely
+  for small view/layout state, never document content.
+
+This supersedes the **IF09** `sessionStorage` snapshot, which is an explicit
+**non-production stopgap** for surviving a browser refresh before file-backing lands.
+The pieces already exist in the stack (Theia backend + `FileService`; the panels
+already load files via it) — file-backing is adopting the standard pattern, not new
+infrastructure.
 
 **Build / Export.** A "Build `.utlar`" command zips the working directory and
 (re)generates `manifest.json` (aggregating each `transform.yaml`'s schema refs and

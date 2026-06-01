@@ -1,11 +1,22 @@
 # IF09: IDE — Session Persistence (survive browser refresh)
 
-**Status:** Proposed
-**Priority:** High
+**Status:** Proposed — **explicit non-production stopgap** (bridge to file-backing; see below)
+**Priority:** High (current refresh footgun)
 **Created:** June 2026
-**Depends on:** existing input/output/editor/toolbar widgets; Theia `StatefulWidget`; `sessionStorage`
+**Depends on:** existing input/output/editor/toolbar widgets; `sessionStorage`
 **Effort:** Small (3-5 days)
+**Superseded by:** IF03/IF04 file-backed documents (the production architecture)
 
+> **⚠️ This is a non-production stopgap.** Production VS-Code-like IDEs (VS Code on
+> Electron; Theia in browser SaaS) never persist document content in the browser's
+> ~5 MB Web Storage — they are **file-backed through the filesystem / Node backend**,
+> using browser storage only for small UI state. The target for this IDE is the same:
+> transformation opened as a **file-backed Monaco model via Theia's editor manager**,
+> input samples as **`samples/` files via `FileService`** (see IF03 "Document
+> persistence — fully Theia/Monaco-compliant"). IF09's `sessionStorage` snapshot is a
+> short-lived bridge to survive a refresh *until* file-backing lands; it then shrinks
+> to nothing (the editor's own dirty buffer / hot-exit handles unsaved recovery).
+>
 > **Design decisions captured here (not yet implemented):**
 > - Persist the **work product** across a browser refresh via `StatefulWidget`
 >   (`storeState`/`restoreState`), backed by **`sessionStorage`** (NOT localStorage).
@@ -85,12 +96,20 @@ The fix is selective, because "lose everything" conflates two kinds of state:
 
 ### Mechanism
 
-Each custom widget implements Theia `StatefulWidget`:
-- `storeState(): object` — return a plain, JSON-serializable snapshot of *only* the
-  work-product fields above.
-- `restoreState(state): void` — rehydrate `this.state` from the snapshot, then
-  re-fire the events that downstream widgets need (e.g. input UDM → editor field
-  tree, header rebuild) so the restored state is consistent, not just visually present.
+**Restore-on-init + save-on-change**, via a small shared `sessionStorage` helper
+(`utils/session-persistence.ts`: versioned envelope, size guard, per-key constants).
+This is preferred over relying on Theia's `StatefulWidget.storeState`/`restoreState`
+because those are only invoked if the shell's layout serializer tracks the
+custom-added widget — the direct approach has no such dependency:
+
+- **Restore on init** — each widget reads its snapshot early (editor: when creating
+  the Monaco model; panels: in `@postConstruct`/initial state) and seeds itself,
+  falling back to defaults when absent. After restore it **re-fires the consistency
+  events** downstream widgets need (input UDM → editor field tree, header rebuild) so
+  the restored state is consistent, not just visually present.
+- **Save on change** — each widget writes a JSON-serializable snapshot of *only* the
+  work-product fields on edit (piggybacked on existing debounce where available, e.g.
+  the editor's content-change timer).
 
 ### Storage backend: sessionStorage, NOT localStorage
 
@@ -120,9 +139,38 @@ localStorage** (a tab id in the key) — more machinery for little gain over
 `sessionStorage`.
 
 Because Theia's `StorageService` is localStorage-backed, IF09 reads/writes
-`sessionStorage` directly (a thin keyed wrapper) rather than routing through it, while
-still using the `StatefulWidget` `storeState`/`restoreState` hooks for the snapshot
-shape and lifecycle.
+`sessionStorage` directly (a thin keyed wrapper, `utils/session-persistence.ts`)
+rather than routing through it.
+
+### The canvas (zustand) store
+
+The graphical mapping editor uses a **zustand** store (`mapping-store.ts`,
+`useMappingStore`: nodes, edges, viewport, `expandedFields`, selections) — currently
+in-memory only. The canvas graph is largely a **visual projection of the
+transformation** (input→output field mappings). So in v1 we do **not** persist the
+zustand store: restoring the editor **text** re-derives the canvas, and node
+positions / viewport / expanded-fields reset (transient UI, consistent with the
+persist-vs-transient split).
+
+If canvas-only state (manual layout, viewport, or *unsynced* graph edits) is later
+found to be lost in a way that matters, persist the store with zustand's **`persist`
+middleware** over a **sessionStorage adapter**
+(`createJSONStorage(() => sessionStorage)`) + `partialize` — noting `expandedFields`
+is a `Set` and needs a custom serialize (Set↔array) or exclusion. That is a follow-up,
+not v1.
+
+### Scale ceiling — and why that's acceptable
+
+`sessionStorage` is a **browser-enforced ~5 MB** per-origin store; exceeding it throws
+`QuotaExceededError`. That ceiling is deliberate, not a limitation to engineer around:
+IF09 is a **refresh safety net for demo / moderate work**, where ~5 MB comfortably
+holds typical samples (≈10–25 inputs of a few hundred KB). **Large datasets, a wide
+range of inputs, or reuse across products (e.g. open-M) are explicitly the job of
+file-backing (IF03/IF04)** — exactly how mature IDEs persist work (files on disk that
+reopen), and the only form that is portable/shareable beyond one browser's private
+storage. Shaped for clean evolution: persisting input content **by name** here becomes
+persisting **file references** under IF03/IF04, with the editor header staying the
+structural source of truth in both.
 
 ### Size guard
 
@@ -148,15 +196,17 @@ restored from disk and IF09's editor snapshot shrinks to unsaved-changes recover
 
 ## Implementation Notes
 
-- Implement `StatefulWidget` on `MultiInputPanelWidget`, `OutputPanelWidget`,
+- Restore-on-init + save-on-change in `MultiInputPanelWidget`, `OutputPanelWidget`,
   `UTLXEditorWidget`. Toolbar persists nothing new beyond existing prompt history.
-- `storeState` returns work-product fields only; `restoreState` rehydrates + re-fires
-  the consistency events (input UDM/field-tree, `updateEditorHeaders`).
+- Snapshots hold work-product fields only; on restore, re-fire the consistency
+  events (input UDM/field-tree, `updateEditorHeaders`).
 - Centralize the cap constants, `schemaVersion`, and the `sessionStorage` keyed
-  read/write helper in one small module.
-- Guard `restoreState` in try/catch — any error falls back to defaults (never block boot).
+  read/write helper in one small module (`utils/session-persistence.ts`).
+- All reads/writes are wrapped so any error falls back to defaults (never block boot).
 - Persist to `sessionStorage` (per-tab); do not route the snapshot through Theia's
   localStorage-backed `StorageService`.
+- **Status:** `utils/session-persistence.ts` + editor-text persistence implemented;
+  input/output panel snapshots in progress.
 
 ## Acceptance Criteria
 
@@ -181,8 +231,9 @@ restored from disk and IF09's editor snapshot shrinks to unsaved-changes recover
 
 ## Related
 
-- IF03 (bundle/project model) and IF04 (transform editor) — the durable file-backed
-  successor; IF09 is the bridge.
+- IF03 (bundle/project model) — §"Document persistence — fully Theia/Monaco-compliant"
+  is the production target that supersedes this stopgap (file-backed editor via the
+  editor manager; samples via `FileService`). IF04 (transform editor) — per-transformation config.
 - IF08 (mode-aware AI assist) — `currentMode` is part of the persisted work product.
 - Existing prompt-history localStorage (toolbar) — the one pre-existing persisted state.
 

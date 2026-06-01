@@ -122,7 +122,10 @@ time (IF03 build / IF05 topology).
 ## Related
 
 - Design: `theia-extension-design-with-design-time.md` §"Bundle-Level IDE" (Phase B)
-- IF03 (bundle project model), IF05 (bundle ops & topology)
+- IF03 (bundle project model) — incl. §"Document persistence — fully Theia/Monaco-compliant"
+  (the `.utlx` opens as a file-backed editor; samples via `FileService`)
+- IF05 (bundle ops & topology)
+- IF09 (session persistence) — the `sessionStorage` stopgap this file-backing supersedes
 - EF09 (`transform.yaml` schema), engine `TransformConfig`
 
 ## Effort Estimate
