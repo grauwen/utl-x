@@ -529,6 +529,76 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     gap: 12px;
 }
 
+/* IF10: per-input list above the prompt, each row expandable to its abstract */
+.utlx-dialog-inputs {
+    margin-bottom: 12px;
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.utlx-dialog-inputs-title {
+    padding: 4px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--theia-descriptionForeground, #999);
+    border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-dialog-input-row {
+    border-top: 1px solid var(--theia-panel-border, #2a2a2a);
+}
+.utlx-dialog-input-row:first-of-type {
+    border-top: none;
+}
+
+.utlx-dialog-input-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: var(--theia-foreground, #ccc);
+    padding: 5px 10px;
+    cursor: pointer;
+    text-align: left;
+    font-size: 12px;
+}
+.utlx-dialog-input-head:hover {
+    background: var(--theia-list-hoverBackground, #2a2d2e);
+}
+
+.utlx-dialog-input-chevron {
+    flex: 0 0 auto;
+    color: var(--theia-descriptionForeground, #888);
+}
+
+.utlx-dialog-input-name {
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    color: var(--theia-textLink-foreground, #3794ff);
+}
+
+.utlx-dialog-input-format {
+    margin-left: auto;
+    font-size: 11px;
+    text-transform: uppercase;
+    color: var(--theia-descriptionForeground, #999);
+}
+
+.utlx-dialog-input-abstract {
+    margin: 0;
+    padding: 6px 10px 8px 28px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: var(--theia-descriptionForeground, #bbb);
+    background: var(--theia-editor-background, #1e1e1e);
+}
+
 /* AI activity monitor — live step log of a generation */
 .utlx-ai-activity {
     margin-top: 10px;

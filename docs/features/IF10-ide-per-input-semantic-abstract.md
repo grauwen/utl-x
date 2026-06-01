@@ -1,6 +1,6 @@
 # IF10: IDE — Per-Input Semantic Abstract ("reversed prompt")
 
-**Status:** Proposed
+**Status:** v1 partially implemented — deterministic abstract (`utils/input-abstract.ts`) + the AI-dialog input list (expandable per-input abstract) are done. Pending: injecting the abstract into the generation prompt (model-facing), the LLM domain gloss, and editable/curated abstracts (v2).
 **Priority:** Medium
 **Created:** June 2026
 **Depends on:** input panel + UDM (`extractInputPaths`/`formatPathsAsSimpleList`); AI assist prompt (IF08, `execution-prompt.ts`)
@@ -107,9 +107,37 @@ Persisted with the input (IF09 session now; bundle file under IF03/IF04 later).
 
 ### Where it plugs in
 
-In the per-input section of `buildUTLXGenerationUserPrompt`, add `## Input semantics`
-with the abstract, and **supplement or replace** the truncated `originalData` block.
-Net effect: more signal, fewer tokens, stable across runs.
+Two surfaces:
+
+**1. The AI-assist prompt (model-facing).** In the per-input section of
+`buildUTLXGenerationUserPrompt`, add `## Input semantics` with the abstract, and
+**supplement or replace** the truncated `originalData` block. Net effect: more
+signal, fewer tokens, stable across runs.
+
+**2. The AI dialog (user-facing) — a compact input list above the prompt.** Today the
+dialog asks "describe what transformation you want" with no reminder of what's
+available. Add, **above** the prompt textarea, a compact read-only list of the inputs
+the AI will use:
+
+```
+Inputs (3):  enterprise-order · json ▸    customers · csv ▸    rates · json ▸
+```
+
+- Each row **expands inline** to show that input's abstract (the "reversed prompt").
+  **Collapsed by default** — the dialog already holds prompt history, the Load chip,
+  the scaffold hint, and the activity log, so another always-open panel would crowd it.
+- **Lazy + cached:** the deterministic abstract is instant; a v2 LLM gloss is
+  generated on first expand and cached.
+- **Friendly label, not jargon:** the expander reads **"What is this input?"** /
+  **"Input summary"** — "reversed prompt" / "input profile" stays the internal name.
+- **Read-only here** (curation/editing is v2). Purpose differs from the input panel
+  (which loads/edits inputs): this is "what the AI will use, summarized," placed where
+  you're about to prompt — so it's complementary, not duplicative.
+
+Why it helps: the user references the **exact** input names (`$enterprise-order`, not
+"the orders") and sees the structure before describing the mapping — improving prompt
+precision. It also extends the "user sees what the AI sees" cluster (Load-current-UTLX,
+activity monitor, show-with-warning) from IF08.
 
 ### Caching & invalidation
 
@@ -129,9 +157,13 @@ work: a curated abstract could later seed or cross-check a real contract.
   include it in the `GenerateUtlxInput` sent to the MCP; render it in `## Input
   semantics` in `execution-prompt.ts`.
 - **Caching:** memoize by UDM hash in the input panel; recompute on input change.
+- **AI dialog list:** a compact read-only input list (name · format) above the prompt
+  textarea in the toolbar AI dialog, each row inline-expandable to its abstract
+  (collapsed by default, lazy-filled, friendly label). Read-only in v1.
 - **v2 (LLM gloss):** one cached MCP call (`describeInput`) for the domain sentence;
   opt-in; never used for field facts.
-- **v2 (editable):** an editable abstract field per input, persisted (IF09 → IF03/IF04).
+- **v2 (editable):** the dialog row's abstract becomes editable; persisted per input
+  (IF09 → IF03/IF04).
 
 ## Acceptance Criteria
 
@@ -142,6 +174,9 @@ work: a curated abstract could later seed or cross-check a real contract.
 - On a deeply nested input, generation grounds on the abstract (measurably fewer
   refine turns / better first-shot than truncated data) — the success metric for v1.
 - The abstract is cached and recomputed only when the input changes.
+- The AI dialog shows a compact input list (name · format) above the prompt; each row
+  expands inline to its abstract (collapsed by default), so the user can reference
+  exact `$names` and see the structure before prompting.
 - (v2) An optional cached domain sentence; an editable/curated abstract.
 
 ## Testing

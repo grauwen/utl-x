@@ -21,6 +21,7 @@ import {
     GenerateUtlxAttempt
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
+import { buildInputAbstract, formatInputAbstract } from '../utils/input-abstract';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
@@ -49,6 +50,9 @@ export interface ToolbarState {
     mcpResultValid?: boolean;       // false => show a red "may not run" warning
     mcpResultStatus?: string;       // short status line for the warning banner
     mcpAttempts: GenerateUtlxAttempt[];
+    // IF10: per-input semantic abstract list shown above the prompt (snapshotted on open).
+    dialogInputs: Array<{ name: string; format: string; abstract?: string }>;
+    expandedInputs: string[];       // input names whose abstract is expanded
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     // IF08: snapshot of the editor body the user opted to share via "Load current
     // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
@@ -100,6 +104,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         mcpProgressPercent: 0,
         mcpActivity: [],
         mcpAttempts: [],
+        dialogInputs: [],
+        expandedInputs: [],
         mcpDialogMode: 'prompt',
         generatedCode: '',
         promptHistory: this.loadPromptHistory(),
@@ -283,6 +289,35 @@ export class UTLXToolbarWidget extends ReactWidget {
                             {this.state.mcpDialogMode === 'prompt' && (
                                 <>
                                     <div className='utlx-dialog-body'>
+                                        {/* IF10: inputs the AI will use, each expandable to its abstract */}
+                                        {this.state.dialogInputs.length > 0 && (
+                                            <div className='utlx-dialog-inputs'>
+                                                <div className='utlx-dialog-inputs-title'>
+                                                    Inputs ({this.state.dialogInputs.length}) — the AI will use these
+                                                </div>
+                                                {this.state.dialogInputs.map((inp, idx) => {
+                                                    const expanded = this.state.expandedInputs.includes(inp.name);
+                                                    return (
+                                                        <div key={idx} className='utlx-dialog-input-row'>
+                                                            <button
+                                                                className='utlx-dialog-input-head'
+                                                                onClick={() => this.toggleInputExpanded(inp.name)}
+                                                                title='What is this input?'
+                                                            >
+                                                                <span className='utlx-dialog-input-chevron'>{expanded ? '▾' : '▸'}</span>
+                                                                <span className='utlx-dialog-input-name'>${inp.name}</span>
+                                                                <span className='utlx-dialog-input-format'>{inp.format}</span>
+                                                            </button>
+                                                            {expanded && (
+                                                                <pre className='utlx-dialog-input-abstract'>
+                                                                    {inp.abstract || 'No data loaded for this input — load a sample to summarize it.'}
+                                                                </pre>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                         <p>Describe what transformation you want to create:</p>
 
                                         {/* Prompt History Dropdown — IF08: only the
@@ -561,6 +596,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         this.setState({
             showMCPDialog: true,
             mcpPrompt: lastPrompt,  // Restore last prompt
+            dialogInputs: this.snapshotDialogInputs(),  // IF10: input list + abstracts
+            expandedInputs: [],
             systemStatus: {
                 mcpServer: null,
                 utlxd: null,
@@ -745,9 +782,46 @@ export class UTLXToolbarWidget extends ReactWidget {
             mcpAttempts: [],
             mcpResultValid: undefined,
             mcpResultStatus: undefined,
+            dialogInputs: [],
+            expandedInputs: [],
             loadedBody: undefined  // IF08: drop the shared body when the dialog closes
         });
         console.log('[UTLXToolbar] ✅ MCP dialog state updated to closed');
+    }
+
+    /**
+     * IF10: snapshot the inputs (name + format) and compute each one's deterministic
+     * semantic abstract from its UDM. No AI — just a walk of the parsed structure.
+     */
+    private snapshotDialogInputs(): Array<{ name: string; format: string; abstract?: string }> {
+        const inputPanel = this.shell.getWidgets('left')
+            .find((w: any) => w instanceof MultiInputPanelWidget) as MultiInputPanelWidget | undefined;
+        if (!inputPanel) {
+            return [];
+        }
+        const tabs = inputPanel.getAllInputTabs();
+        const fullInputs = (inputPanel as any).state?.inputs || [];
+        return tabs.map((t: any) => {
+            const full = fullInputs.find((i: any) => i.id === t.id);
+            const udm: string | undefined = full?.udmLanguage;
+            const built = buildInputAbstract(udm, t.name);
+            return {
+                name: t.name,
+                format: t.format,
+                abstract: built ? formatInputAbstract(built) : undefined,
+            };
+        });
+    }
+
+    /** IF10: toggle the inline abstract for one input row. */
+    private toggleInputExpanded(name: string): void {
+        const set = new Set(this.state.expandedInputs);
+        if (set.has(name)) {
+            set.delete(name);
+        } else {
+            set.add(name);
+        }
+        this.setState({ expandedInputs: Array.from(set) });
     }
 
     /**
