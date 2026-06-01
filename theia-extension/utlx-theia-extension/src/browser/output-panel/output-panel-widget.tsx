@@ -24,6 +24,7 @@ import {
 import { UTLXEventService } from '../events/utlx-event-service';
 import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree } from '../utils/schema-field-tree-parser';
 import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
+import { toHeaderIdentifier } from '../utils/header-identifier';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -647,11 +648,14 @@ export class OutputPanelWidget extends ReactWidget {
             const ext = uri.path.ext.toLowerCase().replace('.', '');
             const detectedFormat = this.detectFormatFromExtension(ext) || format;
 
-            // Derive the output name from the filename stem (employee.csv -> "employee").
-            // Sanitize to a valid UTLX identifier so odd filenames ("2024 sales")
-            // can't produce a malformed header; empty result -> no custom name.
-            // Bump the version so the (uncontrolled) name field remounts to show it.
-            const loadedName = this.toOutputIdentifier(uri.path.name);
+            // Auto-name the output from the filename stem (employee.csv -> "employee"),
+            // sanitized to a valid UTLX identifier — but ONLY when the name is still
+            // the default ("output"/empty). A name the user typed (e.g. "output1") is
+            // never clobbered. Empty derived result -> no rename either.
+            const currentName = this.getOutputName();
+            const isDefaultName = currentName === '' || currentName.toLowerCase() === 'output';
+            const derived = isDefaultName ? this.toOutputIdentifier(uri.path.name) : '';
+            const renameTo = derived !== '' ? derived : undefined;
 
             this.setState({
                 instanceContent: content,
@@ -659,8 +663,11 @@ export class OutputPanelWidget extends ReactWidget {
                 instanceError: undefined,
                 instanceDiagnostics: undefined,
                 instanceExecutionTime: undefined,
-                outputName: loadedName,
-                outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
+                // Only touch the name (and remount the field) when auto-renaming.
+                ...(renameTo ? {
+                    outputName: renameTo,
+                    outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
+                } : {})
             });
 
             // Fire format changed event so editor headers stay in sync
@@ -669,8 +676,10 @@ export class OutputPanelWidget extends ReactWidget {
                 tab: 'instance'
             });
 
-            // Notify so the header becomes "output <loadedName> <format>"
-            this.eventService.fireOutputNameChanged({ newName: loadedName });
+            // Notify so the header becomes "output <renameTo> <format>" (default name only)
+            if (renameTo) {
+                this.eventService.fireOutputNameChanged({ newName: renameTo });
+            }
 
             // Notify canvas about instance content change
             this.eventService.fireOutputInstanceContentChanged({
@@ -771,15 +780,19 @@ export class OutputPanelWidget extends ReactWidget {
 
     private handleClear(): void {
         if (this.state.activeTab === 'instance') {
-            // Reset the output name to its default and bump the version so the
-            // (uncontrolled) name field remounts back to "output".
+            // Reset the output name to its pristine default and bump the version so
+            // the (uncontrolled) name field remounts. Use `undefined`, NOT '': the
+            // field's `defaultValue={outputName ?? 'output'}` only falls back to the
+            // editable literal "output" on null/undefined — an empty string would
+            // leave the field blank with just the greyed placeholder, so the caret
+            // can't be placed to rename it.
             this.setState({
                 instanceContent: '',
                 instanceFormat: undefined,
                 instanceExecutionTime: undefined,
                 instanceError: undefined,
                 instanceDiagnostics: undefined,
-                outputName: '',
+                outputName: undefined,
                 outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
             });
             // Header reverts to "output <format>" (no custom name).
@@ -1027,11 +1040,7 @@ export class OutputPanelWidget extends ReactWidget {
      * e.g. "2024.json" -> just "output json").
      */
     private toOutputIdentifier(stem: string): string {
-        return (stem ?? '')
-            .trim()
-            .replace(/[^\w-]+/g, '_')    // keep letters/digits/_/- ; collapse the rest
-            .replace(/^[^A-Za-z]+/, '')  // drop leading non-letters (digits, -, _) up to first letter
-            .replace(/[_-]+$/g, '');     // trim trailing separators
+        return toHeaderIdentifier(stem);
     }
 
     /**

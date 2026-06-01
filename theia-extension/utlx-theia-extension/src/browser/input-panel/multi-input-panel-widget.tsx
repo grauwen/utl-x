@@ -29,6 +29,7 @@ import {
 import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, inferEdmxFromOData, formatSchema } from '../utils/schema-inferrer';
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
+import { toHeaderIdentifier } from '../utils/header-identifier';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -84,6 +85,10 @@ export interface MultiInputPanelState {
     activeSubTab: 'instance' | 'schema'; // For Message Contract mode
     loading: boolean;
     udmDialogOpen?: boolean;
+    // Bumped only when a load auto-renames the active input from the filename,
+    // so the (uncontrolled) name field remounts to show it. Typing never bumps
+    // it, so the caret is never disturbed mid-edit.
+    inputNameVersion?: number;
 }
 
 @injectable()
@@ -246,7 +251,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 // "backspace deletes p but jumps to end" bug).
                                 // key tied to the input id re-seeds defaultValue when
                                 // the user switches inputs, without re-seeding mid-type.
-                                key={`name-${activeInputId}`}
+                                // inputNameVersion forces a remount when a load
+                                // auto-renames the input (programmatic change).
+                                key={`name-${activeInputId}-${this.state.inputNameVersion ?? 0}`}
                                 defaultValue={activeInput.name}
                                 onChange={(e) => this.handleRenameInput(activeInputId, e.target.value)}
                                 onBlur={(e) => this.commitRenameInput(activeInputId, e.target.value)}
@@ -1871,6 +1878,22 @@ export class MultiInputPanelWidget extends ReactWidget {
                     // Get current input for event firing
                     const currentInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
+                    // Auto-name the input from the loaded filename — but ONLY when it
+                    // still has a default name (input, input2, …). A manually chosen
+                    // name is never clobbered. Instance load only; schema load leaves
+                    // the name alone. "007-test.json" -> "test" (see toHeaderIdentifier).
+                    let renameTo: string | undefined;
+                    if (!isSchema && currentInput && /^input\d*$/i.test(currentInput.name)) {
+                        const stem = file.name.replace(/\.[^./\\]+$/, ''); // drop the last extension
+                        const derived = toHeaderIdentifier(stem);
+                        const duplicate = this.state.inputs.some(
+                            i => i.id !== currentInput.id && i.name.toLowerCase() === derived.toLowerCase()
+                        );
+                        if (derived !== '' && !duplicate && derived !== currentInput.name) {
+                            renameTo = derived;
+                        }
+                    }
+
                     // Update content and optionally format
                     // When loading schema: clear instance content so Function Builder shows schema structure
                     // When loading instance: clear schema content so user can infer new schema if needed
@@ -1882,6 +1905,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     [isSchema ? 'schemaContent' : 'instanceContent']: content,
                                     ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
                                     ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
+                                    // Auto-name from the filename when the name was still a default
+                                    ...(renameTo ? { name: renameTo } : {}),
                                     // Clear instance content and UDM when loading a new schema
                                     ...(isSchema ? {
                                         instanceContent: '',
@@ -1896,10 +1921,22 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 }
                                 : input
                         ),
-                        loading: false
+                        loading: false,
+                        // Remount the name field so the auto-rename is visible.
+                        ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
                     });
 
                     this.messageService.info(`Loaded file: ${file.name}${detectedFormat ? ` (format: ${detectedFormat})` : ''}`);
+
+                    // Notify dependent panels/editor of the auto-rename (updates the
+                    // header and renames body references), same as a manual rename.
+                    if (renameTo && currentInput) {
+                        this.eventService.fireInputNameChanged({
+                            inputId: currentInput.id,
+                            oldName: currentInput.name,
+                            newName: renameTo
+                        });
+                    }
 
                     // Fire format changed event if format was auto-detected
                     if (detectedFormat && !isSchema) {
