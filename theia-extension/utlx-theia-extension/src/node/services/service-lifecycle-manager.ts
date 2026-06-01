@@ -42,6 +42,11 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
     private daemonClient: UTLXDaemonClient | null = null;
 
+    /** Last startup failure message (null if services started cleanly), so a
+     *  health/status query can report it to the frontend instead of it being
+     *  buried in backend logs. */
+    private lastStartupError: string | null = null;
+
     // IF06: restart-with-backoff supervision state, per service. The decision
     // logic lives in ./restart-policy (pure + unit-tested); this just holds state.
     private restartState: Record<'utlxd' | 'mcp', RestartState> = {
@@ -104,42 +109,53 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
     }
 
     /**
-     * Find project root by looking for package.json
-     * For development, finds the actual utl-x repository root
+     * Find the utl-x repository root by walking up from __dirname looking for a
+     * stable marker: a directory that contains BOTH `modules/daemon` and
+     * `mcp-server`. Using source dirs (not `build/libs`) makes this independent
+     * of build state, and walking the full chain works even when the extension
+     * runs as a COPY inside `browser-app/node_modules/utlx-theia-extension`
+     * (the copy is still under the repo, so the chain reaches the root).
+     *
+     * NOTE: this is a dev/source-tree fallback only. In any packaged deployment
+     * (and preferably always), set UTLXD_JAR_PATH / MCP_SERVER_PATH explicitly —
+     * see loadConfig(). Do not let startup depend on this heuristic.
      */
     private findProjectRoot(): string {
-        // First, try to find utlx-theia-extension package
         let dir = __dirname;
-        let extensionRoot: string | null = null;
-
-        while (dir !== '/') {
-            const packagePath = path.join(dir, 'package.json');
-            if (fs.existsSync(packagePath)) {
-                const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf-8'));
-                if (pkg.name === 'utlx-theia-extension') {
-                    extensionRoot = dir;
-                    break;
-                }
+        while (dir !== path.dirname(dir)) {  // until filesystem root
+            if (
+                fs.existsSync(path.join(dir, 'modules', 'daemon')) &&
+                fs.existsSync(path.join(dir, 'mcp-server'))
+            ) {
+                console.log('[ServiceLifecycle] Found utl-x repository root:', dir);
+                return dir;
             }
             dir = path.dirname(dir);
         }
+        console.warn(
+            '[ServiceLifecycle] Could not locate utl-x repo root from __dirname. ' +
+            'Set UTLXD_JAR_PATH and MCP_SERVER_PATH explicitly. Falling back to __dirname.'
+        );
+        return __dirname;
+    }
 
-        // If we found the extension, look for the actual utl-x repository root
-        // by going up and checking for modules/daemon directory
-        if (extensionRoot) {
-            dir = extensionRoot;
-            while (dir !== '/') {
-                const modulesPath = path.join(dir, 'modules/daemon/build/libs');
-                if (fs.existsSync(modulesPath)) {
-                    console.log('[ServiceLifecycle] Found utl-x repository root:', dir);
-                    return dir;
-                }
-                dir = path.dirname(dir);
+    /**
+     * Resolve the `java` executable. A GUI/Electron-launched backend often has a
+     * minimal PATH without `java`, so prefer an explicit JAVA_HOME (or
+     * UTLXD_JAVA_BIN) and only fall back to bare `java` (PATH lookup) as a last
+     * resort. In a packaged app this should point at the bundled jlink JRE.
+     */
+    private resolveJavaBin(): string {
+        if (process.env.UTLXD_JAVA_BIN) {
+            return process.env.UTLXD_JAVA_BIN;
+        }
+        if (process.env.JAVA_HOME) {
+            const candidate = path.join(process.env.JAVA_HOME, 'bin', 'java');
+            if (fs.existsSync(candidate)) {
+                return candidate;
             }
         }
-
-        console.log('[ServiceLifecycle] Could not find utl-x repo root, using extension root');
-        return extensionRoot || __dirname;
+        return 'java'; // PATH fallback (works when launched from a shell)
     }
 
     /**
@@ -168,9 +184,21 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
 
             console.log('[ServiceLifecycle] ✓ All services started successfully');
         } catch (error) {
-            console.error('[ServiceLifecycle] ✗ Failed to start services:', error);
-            // Don't throw - let Theia start even if services fail
-            console.error('[ServiceLifecycle] Continuing without managed services');
+            // Surface the failure prominently. We still don't rethrow (Theia must
+            // boot so the user can read the error / use the IDE shell), but this
+            // must NOT be a quiet log line — the recurring "it silently didn't
+            // start" problem (see IF06) came from swallowing this.
+            const msg = error instanceof Error ? error.message : String(error);
+            console.error('========================================================');
+            console.error('[ServiceLifecycle] ✗ FAILED TO START BACKEND SERVICES');
+            console.error('[ServiceLifecycle]   ' + msg);
+            console.error('[ServiceLifecycle]   utlxdJarPath = ' + this.config.utlxdJarPath);
+            console.error('[ServiceLifecycle]   mcpServerPath = ' + this.config.mcpServerPath);
+            console.error('[ServiceLifecycle]   AI Assist and live execution will be unavailable.');
+            console.error('[ServiceLifecycle]   Fix: set UTLXD_JAR_PATH / MCP_SERVER_PATH, or use rebuild-and-start-mcp.sh.');
+            console.error('========================================================');
+            // Record so a health/status check can report it to the frontend.
+            this.lastStartupError = msg;
         }
     }
 
@@ -193,9 +221,13 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             console.log('[ServiceLifecycle] UTLXD not running, will start it');
         }
 
-        // Check if jar exists
+        // Check if jar exists — fail loudly with an actionable message rather
+        // than letting a bad path surface as an opaque spawn error.
         if (!fs.existsSync(this.config.utlxdJarPath)) {
-            throw new Error(`UTLXD jar not found at: ${this.config.utlxdJarPath}`);
+            throw new Error(
+                `UTLXD jar not found at: ${this.config.utlxdJarPath}. ` +
+                `Build it (./gradlew :modules:daemon:build) or set UTLXD_JAR_PATH to the jar.`
+            );
         }
 
         // Spawn UTLXD directly without daemon client for now
@@ -203,9 +235,10 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
             // Instead of using the daemon client's spawn, we'll start it externally
             // and let the daemon client connect to it
 
-            console.log(`[ServiceLifecycle] Spawning: java -jar ${this.config.utlxdJarPath}`);
+            const javaBin = this.resolveJavaBin();
+            console.log(`[ServiceLifecycle] Spawning: ${javaBin} -jar ${this.config.utlxdJarPath}`);
 
-            this.utlxdProcess = spawn('java', [
+            this.utlxdProcess = spawn(javaBin, [
                 '-jar',
                 this.config.utlxdJarPath,
                 'start',
@@ -562,7 +595,10 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
                 running: this.mcpProcess !== null,
                 port: this.config.mcpServerPort,
                 path: this.config.mcpServerPath
-            }
+            },
+            // null when services started cleanly; otherwise the failure message
+            // so the frontend can surface it instead of it being buried in logs.
+            startupError: this.lastStartupError
         };
     }
 }

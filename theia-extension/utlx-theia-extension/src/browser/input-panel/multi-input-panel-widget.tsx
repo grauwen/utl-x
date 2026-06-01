@@ -240,8 +240,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                             <input
                                 type='text'
                                 className='utlx-input-name-editor'
-                                value={activeInput.name}
+                                // Uncontrolled: the DOM owns the caret. A controlled
+                                // value= re-applied by ReactWidget's async update()
+                                // reset the cursor to end on every keystroke (the
+                                // "backspace deletes p but jumps to end" bug).
+                                // key tied to the input id re-seeds defaultValue when
+                                // the user switches inputs, without re-seeding mid-type.
+                                key={`name-${activeInputId}`}
+                                defaultValue={activeInput.name}
                                 onChange={(e) => this.handleRenameInput(activeInputId, e.target.value)}
+                                onBlur={(e) => this.commitRenameInput(activeInputId, e.target.value)}
                                 placeholder='Input name'
                             />
                             {/* Format Detection Indicator */}
@@ -741,45 +749,77 @@ export class MultiInputPanelWidget extends ReactWidget {
         }, 0);
     }
 
+    /**
+     * Live (per-keystroke) rename. The name field is UNCONTROLLED, so we must NOT
+     * call this.update() here — re-rendering mid-edit would reset the caret to the
+     * end (the bug this fixes). We only update the model in place for valid names,
+     * and fire the name-changed event so dependent panels track it as you type.
+     * Validation/revert of empty or duplicate names is deferred to onBlur
+     * (commitRenameInput), where re-seeding the field is harmless.
+     */
     private handleRenameInput(inputId: string, newName: string): void {
         const oldInput = this.state.inputs.find(i => i.id === inputId);
         if (!oldInput) return;
 
         const oldName = oldInput.name;
 
-        // Prevent empty names
-        if (!newName || newName.trim() === '') {
-            this.messageService.warn('Input name cannot be empty');
-            // Revert to old name by forcing a re-render
-            this.update();
-            return;
-        }
-
-        // Check if another input already has this name (case-insensitive check)
-        const duplicateInput = this.state.inputs.find(
-            input => input.id !== inputId && input.name.toLowerCase() === newName.toLowerCase()
+        // Skip live-commit for empty or duplicate names — keep typing; onBlur
+        // will warn and revert. (No caret-disrupting re-render here.)
+        const trimmed = newName.trim();
+        if (trimmed === '') return;
+        const duplicate = this.state.inputs.some(
+            input => input.id !== inputId && input.name.toLowerCase() === trimmed.toLowerCase()
         );
+        if (duplicate) return;
 
-        if (duplicateInput) {
-            this.messageService.warn(`Input name "${newName}" is already in use. Please choose a different name.`);
-            // Revert to old name by forcing a re-render
-            this.update();
-            return;
-        }
-
-        this.setState({
+        // Update the model WITHOUT re-rendering (uncontrolled input owns the DOM).
+        this.state = {
+            ...this.state,
             inputs: this.state.inputs.map(input =>
                 input.id === inputId ? { ...input, name: newName } : input
             )
-        });
+        };
 
-        // Fire input name changed event
         if (oldName !== newName) {
-            this.eventService.fireInputNameChanged({
-                inputId,
-                oldName,
-                newName
+            this.eventService.fireInputNameChanged({ inputId, oldName, newName });
+        }
+    }
+
+    /**
+     * Commit on blur: validate the final value. Empty or duplicate → warn and
+     * revert (re-render to restore the previous valid name; the `key` on the
+     * field re-seeds defaultValue). Valid → ensure the model matches.
+     */
+    private commitRenameInput(inputId: string, newName: string): void {
+        const input = this.state.inputs.find(i => i.id === inputId);
+        if (!input) return;
+
+        const trimmed = newName.trim();
+
+        if (trimmed === '') {
+            this.messageService.warn('Input name cannot be empty');
+            this.update(); // revert field to the last valid name
+            return;
+        }
+
+        const duplicate = this.state.inputs.some(
+            i => i.id !== inputId && i.name.toLowerCase() === trimmed.toLowerCase()
+        );
+        if (duplicate) {
+            this.messageService.warn(`Input name "${trimmed}" is already in use. Please choose a different name.`);
+            this.update(); // revert field to the last valid name
+            return;
+        }
+
+        // Normalize to the trimmed value and re-render once (caret no longer matters on blur).
+        if (input.name !== trimmed) {
+            const oldName = input.name;
+            this.setState({
+                inputs: this.state.inputs.map(i =>
+                    i.id === inputId ? { ...i, name: trimmed } : i
+                )
             });
+            this.eventService.fireInputNameChanged({ inputId, oldName, newName: trimmed });
         }
     }
 
