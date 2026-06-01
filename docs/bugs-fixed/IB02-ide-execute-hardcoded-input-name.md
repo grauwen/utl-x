@@ -1,9 +1,16 @@
 # IB02: IDE — `/api/execute` binds the single input to a hardcoded `"input"`, breaking custom-named inputs
 
 **Status:** Open
-**Priority:** High (breaks AI-assist generation **and** the IDE Execute button for any custom-named input)
+**Priority:** High (breaks AI-assist generation for custom-named / multi-input transformations)
 **Created:** June 2026
-**Component:** `utlxd` daemon REST API (`/api/execute`) — surfaced via the IDE. **Not** CLI core, **not** the `utlxe` engine.
+**Component:** MCP server's use of the daemon's JSON `/api/execute` endpoint. **Not** the IDE Execute button (which uses `/api/execute-multipart` and works), **not** CLI core, **not** the `utlxe` engine.
+
+> **Scope correction (after investigation):** the daemon has **two** execute
+> endpoints. The IDE Execute button already uses `/api/execute-multipart`, which
+> binds each input **by its real name** and supports N inputs — so it is **not**
+> affected. Only the **MCP/AI-assist** path is broken, because it calls the older
+> JSON `/api/execute`, which carries a single `input` and binds it to the literal
+> `"input"`. The fix is to point the MCP at the multipart endpoint — no daemon change.
 
 ---
 
@@ -23,7 +30,9 @@ the program is valid and parses cleanly. This breaks:
 - **AI assist** — the agentic generator validates (OK) then *executes* its candidate
   to self-correct; every execute returns 500, so the agent can't converge, loops to
   the turn cap, runs slow, and burns LLM usage with no result.
-- **The IDE Execute button** — directly fails for any custom-named single input.
+
+The **IDE Execute button is NOT affected** — it uses a different endpoint
+(`/api/execute-multipart`) that binds inputs by name (see Scope).
 
 ## Reproduction
 
@@ -84,29 +93,79 @@ mismatches.
 
 ## Scope — what is and isn't affected
 
-| Path | Named-input binding | Custom-named single input |
+| Path | Named-input binding | Custom name / N inputs |
 |---|---|---|
 | **`utlxe` engine (Azure)** | ✓ envelope split → named inputs (`CompiledStrategy`/`CopyStrategy`/`TemplateStrategy`; `TransformationRegistry` name→validator) | ✓ works |
 | **CLI (`utlx`)** | ✓ `--input name=file` keyed by real names (`TransformCommand`) | ✓ works (bare stdin shorthand = default `$input`, by design) |
-| **daemon `/api/execute` (IDE)** | ✗ only hardcoded `"input"`, no named path | ✗ **breaks** ← this bug |
+| **IDE Execute button** → daemon `/api/execute-multipart` | ✓ each part bound by `metadata.name` (`RestApiServer.kt:495-503`) | ✓ works (custom names **and** N inputs) |
+| **AI assist (MCP)** → daemon `/api/execute` (JSON) | ✗ single `input`, hardcoded `"input"` | ✗ **breaks** ← this bug |
 
-So this is **not** a core engine/CLI defect — both bind named inputs correctly. It is
-isolated to the daemon REST endpoint that the IDE consumes. (Same class as **IB01**:
-utlxd 500 where CLI/engine succeed.)
+So this is **not** a core engine/CLI defect (both bind named inputs), and **not** an
+IDE-Execute defect (it uses the multipart endpoint, which binds by name and supports
+N inputs). It is isolated to the **MCP's choice of the JSON `/api/execute` endpoint**.
+(Same class as **IB01**: utlxd 500 where CLI/engine succeed.)
 
-## Proposed fix (daemon-only)
+### What happens with N inputs
 
-Bring `/api/execute` in line with the engine and CLI, entirely within
-`RestApiServer.kt` — do **not** touch the shared `TransformationService`, the CLI, or
-the engine:
+- **IDE Execute button:** N inputs **work** — each is sent as a named multipart file
+  part and bound by name.
+- **AI assist (MCP):** N inputs **do not work** — the MCP both (a) calls the
+  single-`input` JSON endpoint and (b) only ever sends **one** sample input
+  (`generateUtlx` picks `inputs.find(i => i.originalData…)`). So for a multi-input
+  transformation the AI's execute-verification can bind at most one input (under the
+  wrong name), every other `$name` is undefined, and it 500s/loops.
 
-- **Minimal:** bind the single input to the program's **declared** input name (from
-  the parsed header's first input) instead of the literal `"input"`.
-- **Better (and matches the IDE's multi-input panel):** extend `ExecutionRequest` to
-  accept **named inputs** (a `name → data` map) and bind them as-is; keep the single
-  `input` field as a back-compat default that maps to the declared name.
+### Does the `utlxe` Azure HTTP offering expose this? — No.
 
-Either keeps the fix in the daemon REST layer.
+`utlxe` (the production engine, `modules/engine`) and `utlxd` (the daemon,
+`modules/daemon`) are **separate products with separate HTTP APIs**. The buggy
+`/api/execute` lives only on the **daemon** (dev/IDE/LSP tooling). The engine's HTTP
+transport (`HttpTransport.kt`) exposes a **different** surface — there is no bare
+`/api/execute`:
+
+- `/api/transform`, `/api/load`
+- `/api/execute/{id}`, `/api/execute-batch/{id}`, `/api/execute-pipeline`
+- Dapr / pub-sub bindings: `/{bindingName}`, `/pubsub/{name}`
+
+These are **id-based** (execute an already-*loaded* transformation) and route through
+`TransportHandlers.handleExecute(...)` → the engine **strategies**, which **split the
+message envelope into named inputs** bound to the transformation's configured input
+slots (`TransformConfig.inputs`, `TransformationRegistry` name→validator). Binding is
+by **declared name**, never a hardcoded `"input"`.
+
+**Therefore the Azure offering is not affected by IB02.** This matches the deliberate
+daemon-vs-engine split: the daemon's REST API is dev/IDE tooling; the engine's
+HTTP/Dapr transport is the production surface. IB02 is entirely daemon-side.
+
+## Proposed fix (MCP-side — no daemon change)
+
+The daemon **already** has the correct endpoint: `/api/execute-multipart` binds each
+input by its real name and supports N inputs (it's what the IDE Execute button uses).
+The MCP just calls the wrong one. So the fix lives entirely in the **MCP server**:
+
+- Point the MCP's `DaemonClient.execute` at **`/api/execute-multipart`** instead of
+  the JSON `/api/execute`, sending the input(s) as named parts (name + format +
+  content) — exactly like the IDE's node daemon-client does.
+- In `generateUtlx`, send **all** inputs that carry sample data (not just the first),
+  each under its real name — so the agent's execute-verification works for multi-input
+  transformations too.
+
+This requires **no** change to the daemon, the engine, the CLI, or the shared
+`TransformationService`, and unblocks AI assist immediately.
+
+### Secondary fix (recommended, separate) — make `/api/execute` correct too
+
+`/api/execute` is a **documented public endpoint** (OpenAPI `docs/api/openapi.yaml`,
+`docs/api/README.md`, curl examples in the daemon REST guide), so it shouldn't 500 on
+a valid single-input program just because the input has a non-default name. As a
+**separate, daemon-local** change (requires a daemon rebuild): in `RestApiServer.kt`'s
+`/api/execute` handler, bind the single input to the program's **declared** input name
+(parse the header for the first input name, as the validate path already parses)
+instead of the literal `"input"`. Scope is honestly single-input — N inputs remain the
+job of `/api/execute-multipart`. No engine / CLI / `TransformationService` change.
+
+Sequencing: #1 (MCP→multipart) is higher priority and rebuild-free; #2 is API hygiene
+and independent.
 
 ## Acceptance
 
@@ -114,8 +173,10 @@ Either keeps the fix in the daemon REST layer.
   executes successfully via `/api/execute`.
 - AI-assist generation for a custom-named input converges fast (validate **and**
   execute pass) instead of looping to the turn cap.
+- Multi-input transformations execute in AI-assist verification (all inputs bound by name).
 - Default-named (`input`) transformations continue to work unchanged.
-- No change to `utlxe`, the CLI, or the shared `TransformationService`.
+- No change to `utlxe`, the CLI, the shared `TransformationService`, or the daemon
+  (the fix is MCP-side, reusing the existing `/api/execute-multipart`).
 
 ## Related
 
