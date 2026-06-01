@@ -59,6 +59,12 @@ trade-offs documented elsewhere are invisible at the point of decision.
   editor mirrors the real schema, nothing more.
 - Secrets/auth for messaging — by design those live in the environment, never in
   `transform.yaml` (EF09).
+- **Collaborative / concurrent editing.** Once transformations are file-backed,
+  multiple frontends (two tabs, or two browsers) on the same Theia backend can open
+  the *same* file. Theia's browser-app is not an OT/CRDT collaborative editor, so this
+  is **last-write-wins** with file-watcher events crossing over — not resolved here.
+  (Today this cannot occur: the editor is an in-memory scratch buffer per frontend —
+  see IF09.) If real multi-client editing is ever required, it needs its own design.
 
 ## Design
 
