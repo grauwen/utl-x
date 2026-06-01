@@ -529,6 +529,148 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     gap: 12px;
 }
 
+/* AI activity monitor — live step log of a generation */
+.utlx-ai-activity {
+    margin-top: 10px;
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 4px;
+    background: var(--theia-editor-background, #1e1e1e);
+    overflow: hidden;
+}
+
+.utlx-ai-activity-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 10px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--theia-descriptionForeground, #999);
+    border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+
+.utlx-ai-activity-copy {
+    background: transparent;
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 3px;
+    color: var(--theia-foreground, #ccc);
+    font-size: 10px;
+    padding: 1px 6px;
+    cursor: pointer;
+}
+
+.utlx-ai-activity-copy:hover {
+    background: var(--theia-list-hoverBackground, #2a2d2e);
+}
+
+/* Red warning when generated UTLX did not validate/run (still shown) */
+.utlx-result-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    margin-bottom: 10px;
+    padding: 8px 12px;
+    border: 1px solid var(--theia-errorForeground, #f48771);
+    border-left-width: 4px;
+    border-radius: 4px;
+    background: rgba(244, 135, 113, 0.12);
+    color: var(--theia-errorForeground, #f48771);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.utlx-result-warning-icon {
+    flex: 0 0 auto;
+}
+
+.utlx-preview-code.invalid {
+    border-color: var(--theia-errorForeground, #f48771);
+}
+
+/* Per-attempt detail (code + errors) */
+.utlx-attempts {
+    margin-top: 10px;
+    font-size: 12px;
+}
+
+.utlx-attempts > summary {
+    cursor: pointer;
+    color: var(--theia-textLink-foreground, #3794ff);
+    padding: 4px 0;
+}
+
+.utlx-attempt {
+    margin: 6px 0;
+    padding: 6px 8px;
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-left-width: 3px;
+    border-radius: 4px;
+}
+
+.utlx-attempt-success { border-left-color: var(--theia-successBackground, #4caf50); }
+.utlx-attempt-validation-failed,
+.utlx-attempt-execution-failed,
+.utlx-attempt-validation-unavailable { border-left-color: var(--theia-errorForeground, #f48771); }
+
+.utlx-attempt-head {
+    color: var(--theia-foreground, #ccc);
+    margin-bottom: 4px;
+}
+
+.utlx-attempt-errors {
+    margin: 4px 0;
+    padding-left: 18px;
+    color: var(--theia-errorForeground, #f48771);
+}
+
+.utlx-attempt-code {
+    margin: 4px 0 0;
+    padding: 6px 8px;
+    max-height: 200px;
+    overflow: auto;
+    background: var(--theia-editor-background, #1e1e1e);
+    border-radius: 3px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 11px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.utlx-ai-activity-log {
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 6px 10px;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.utlx-ai-activity-step {
+    display: flex;
+    gap: 10px;
+    color: var(--theia-foreground, #ccc);
+    opacity: 0.75;
+}
+
+.utlx-ai-activity-step.active {
+    opacity: 1;
+    color: var(--theia-textLink-foreground, #3794ff);
+}
+
+.utlx-ai-activity-time {
+    flex: 0 0 auto;
+    min-width: 44px;
+    text-align: right;
+    color: var(--theia-descriptionForeground, #888);
+}
+
+.utlx-ai-activity-msg {
+    flex: 1 1 auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
 .utlx-mcp-progress-spinner {
     font-size: 20px;
     animation: pulse 2s ease-in-out infinite;

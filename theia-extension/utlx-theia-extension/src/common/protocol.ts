@@ -349,6 +349,22 @@ export interface UTLXService {
      * The frontend calls this over JSON-RPC instead of fetching service ports.
      */
     getServicesHealth(): Promise<ServicesHealth>;
+
+    /**
+     * AI activity monitor: the step-by-step progress events the MCP emits during the
+     * most recent generation (generate → validate → execute → refine …). The backend
+     * buffers them; the frontend polls this during generation to show a live log.
+     */
+    getAiActivity(): Promise<AiActivityEntry[]>;
+}
+
+/**
+ * One step in the AI generation activity log (AI activity monitor).
+ */
+export interface AiActivityEntry {
+    message: string;
+    percent: number;
+    ts: number;  // epoch ms when the event was recorded (backend clock)
 }
 
 /**
@@ -439,6 +455,17 @@ export interface GenerateUtlxRequest {
     existingBody?: string;
 }
 
+/**
+ * One generation attempt: the code it produced and why it failed/succeeded.
+ * Used by the AI activity monitor to show per-attempt code + errors for prompt-tuning.
+ */
+export interface GenerateUtlxAttempt {
+    attempt: number;
+    code: string;
+    status: 'success' | 'validation-failed' | 'execution-failed' | 'validation-unavailable' | string;
+    errors?: string[];
+}
+
 export interface GenerateUtlxResponse {
     success: boolean;
     utlx?: string;
@@ -448,7 +475,11 @@ export interface GenerateUtlxResponse {
         message?: string;
         warning?: string;
         attempts?: number;  // Number of LLM attempts made
+        executed?: boolean;       // whether it also ran cleanly against sample input
+        runtimeError?: string;    // runtime error if execution failed
     };
+    // Per-attempt log (AI activity monitor) — code + errors for each attempt.
+    attempts?: GenerateUtlxAttempt[];
     usage?: {
         inputTokens: number;
         outputTokens: number;

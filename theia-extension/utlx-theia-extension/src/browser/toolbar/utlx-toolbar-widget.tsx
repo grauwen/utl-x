@@ -16,7 +16,9 @@ import {
     UTLXMode,
     UTLXService,
     UTLX_SERVICE_SYMBOL,
-    GenerateUtlxRequest
+    GenerateUtlxRequest,
+    AiActivityEntry,
+    GenerateUtlxAttempt
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
@@ -41,6 +43,12 @@ export interface ToolbarState {
     mcpLoading: boolean;
     mcpProgressMessage: string;
     mcpProgressPercent: number;  // 0-100
+    // AI activity monitor: the live step-by-step log polled from the backend.
+    mcpActivity: AiActivityEntry[];
+    // Result quality (for the preview warning) + per-attempt detail.
+    mcpResultValid?: boolean;       // false => show a red "may not run" warning
+    mcpResultStatus?: string;       // short status line for the warning banner
+    mcpAttempts: GenerateUtlxAttempt[];
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     // IF08: snapshot of the editor body the user opted to share via "Load current
     // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
@@ -80,6 +88,8 @@ export class UTLXToolbarWidget extends ReactWidget {
     private static readonly STATUS_CHECK_INTERVAL_MS = 2000;  // Check status every 2 seconds
 
     private statusCheckInterval?: NodeJS.Timeout;  // Timer for periodic status checks
+    private aiActivityPoll?: number;  // Timer polling the AI activity log during generation
+    private static readonly AI_ACTIVITY_POLL_MS = 400;
 
     private state: ToolbarState = {
         currentMode: UTLXMode.EXECUTION,
@@ -88,6 +98,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         mcpLoading: false,
         mcpProgressMessage: '',
         mcpProgressPercent: 0,
+        mcpActivity: [],
+        mcpAttempts: [],
         mcpDialogMode: 'prompt',
         generatedCode: '',
         promptHistory: this.loadPromptHistory(),
@@ -133,6 +145,7 @@ export class UTLXToolbarWidget extends ReactWidget {
     dispose(): void {
         // Clean up periodic status checks
         this.stopStatusChecks();
+        this.stopAiActivityPoll();
         super.dispose();
     }
 
@@ -362,6 +375,37 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                 <div className='utlx-mcp-progress-message'>{this.state.mcpProgressMessage}</div>
                                             </div>
                                         )}
+                                        {/* AI activity monitor: live step-by-step log of the generation */}
+                                        {this.state.mcpActivity.length > 0 && (
+                                            <div className='utlx-ai-activity'>
+                                                <div className='utlx-ai-activity-title'>
+                                                    <span>AI activity</span>
+                                                    <button
+                                                        className='utlx-ai-activity-copy'
+                                                        title='Copy the AI activity log (+ per-attempt code/errors)'
+                                                        onClick={() => this.copyAiLog()}
+                                                    >
+                                                        ⧉ Copy
+                                                    </button>
+                                                </div>
+                                                <div className='utlx-ai-activity-log'>
+                                                    {this.state.mcpActivity.map((entry, idx) => {
+                                                        const t0 = this.state.mcpActivity[0]?.ts ?? entry.ts;
+                                                        const rel = ((entry.ts - t0) / 1000).toFixed(1);
+                                                        const isLast = idx === this.state.mcpActivity.length - 1;
+                                                        return (
+                                                            <div
+                                                                key={idx}
+                                                                className={`utlx-ai-activity-step${isLast && mcpLoading ? ' active' : ''}`}
+                                                            >
+                                                                <span className='utlx-ai-activity-time'>+{rel}s</span>
+                                                                <span className='utlx-ai-activity-msg'>{entry.message}</span>
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     <div className='utlx-dialog-footer'>
@@ -390,13 +434,44 @@ export class UTLXToolbarWidget extends ReactWidget {
                             {this.state.mcpDialogMode === 'preview' && (
                                 <>
                                     <div className='utlx-dialog-body'>
+                                        {/* Red warning when the result didn't validate/run — still show the code */}
+                                        {this.state.mcpResultValid === false && (
+                                            <div className='utlx-result-warning'>
+                                                <span className='utlx-result-warning-icon'>⚠️</span>
+                                                <span>
+                                                    This UTLX did <strong>not</strong> validate/run — review and fix before applying.
+                                                    {this.state.mcpResultStatus ? ` ${this.state.mcpResultStatus}` : ''}
+                                                </span>
+                                            </div>
+                                        )}
                                         <p>Review the generated UTLX transformation:</p>
                                         <textarea
-                                            className='utlx-mcp-prompt-input utlx-preview-code'
+                                            className={`utlx-mcp-prompt-input utlx-preview-code${this.state.mcpResultValid === false ? ' invalid' : ''}`}
                                             value={this.state.generatedCode}
                                             readOnly
                                             rows={15}
                                         />
+                                        {/* Per-attempt detail (code + errors) for prompt-tuning */}
+                                        {this.state.mcpAttempts.length > 0 && (
+                                            <details className='utlx-attempts'>
+                                                <summary>
+                                                    Attempts ({this.state.mcpAttempts.length}) — code &amp; errors per attempt
+                                                </summary>
+                                                {this.state.mcpAttempts.map((a, i) => (
+                                                    <div key={i} className={`utlx-attempt utlx-attempt-${a.status}`}>
+                                                        <div className='utlx-attempt-head'>
+                                                            Attempt {a.attempt}: <strong>{a.status}</strong>
+                                                        </div>
+                                                        {a.errors && a.errors.length > 0 && (
+                                                            <ul className='utlx-attempt-errors'>
+                                                                {a.errors.map((e, j) => <li key={j}>{e}</li>)}
+                                                            </ul>
+                                                        )}
+                                                        <pre className='utlx-attempt-code'>{a.code}</pre>
+                                                    </div>
+                                                ))}
+                                            </details>
+                                        )}
                                     </div>
 
                                     <div className='utlx-dialog-footer'>
@@ -571,6 +646,62 @@ export class UTLXToolbarWidget extends ReactWidget {
         }
     }
 
+    // ── AI activity monitor ──────────────────────────────────────────────────
+
+    /** Poll the backend's AI step log while a generation is running. */
+    private startAiActivityPoll(): void {
+        this.stopAiActivityPoll();
+        this.aiActivityPoll = window.setInterval(() => {
+            void this.refreshAiActivity();
+        }, UTLXToolbarWidget.AI_ACTIVITY_POLL_MS);
+    }
+
+    private stopAiActivityPoll(): void {
+        if (this.aiActivityPoll !== undefined) {
+            window.clearInterval(this.aiActivityPoll);
+            this.aiActivityPoll = undefined;
+        }
+    }
+
+    /** Copy the AI activity timeline + per-attempt detail to the clipboard. */
+    private copyAiLog(): void {
+        const lines: string[] = ['# AI activity'];
+        const t0 = this.state.mcpActivity[0]?.ts;
+        for (const e of this.state.mcpActivity) {
+            const rel = t0 ? `+${((e.ts - t0) / 1000).toFixed(1)}s ` : '';
+            lines.push(`${rel}${e.message}`);
+        }
+        if (this.state.mcpAttempts.length > 0) {
+            lines.push('', '# Attempts');
+            for (const a of this.state.mcpAttempts) {
+                lines.push('', `## Attempt ${a.attempt} — ${a.status}`);
+                if (a.errors && a.errors.length) {
+                    lines.push('errors:', ...a.errors.map(e => `  - ${e}`));
+                }
+                lines.push('code:', a.code);
+            }
+        }
+        const text = lines.join('\n');
+        try {
+            void navigator.clipboard.writeText(text);
+            this.messageService.info('AI activity log copied to clipboard');
+        } catch {
+            this.messageService.warn('Could not copy to clipboard');
+        }
+    }
+
+    /** Pull the latest step log from the backend; only re-render when it grew. */
+    private async refreshAiActivity(): Promise<void> {
+        try {
+            const activity = await this.utlxService.getAiActivity();
+            if (activity.length !== this.state.mcpActivity.length) {
+                this.setState({ mcpActivity: activity });
+            }
+        } catch {
+            /* polling is best-effort; ignore transient RPC errors */
+        }
+    }
+
     private renderStatusIndicator(label: string, status: boolean | null): React.ReactNode {
         let icon: string;
         let className: string;
@@ -602,6 +733,7 @@ export class UTLXToolbarWidget extends ReactWidget {
 
         // Stop periodic status checks
         this.stopStatusChecks();
+        this.stopAiActivityPoll();
 
         this.setState({
             showMCPDialog: false,
@@ -609,6 +741,10 @@ export class UTLXToolbarWidget extends ReactWidget {
             mcpLoading: false,
             mcpDialogMode: 'prompt',
             generatedCode: '',
+            mcpActivity: [],
+            mcpAttempts: [],
+            mcpResultValid: undefined,
+            mcpResultStatus: undefined,
             loadedBody: undefined  // IF08: drop the shared body when the dialog closes
         });
         console.log('[UTLXToolbar] ✅ MCP dialog state updated to closed');
@@ -808,10 +944,19 @@ export class UTLXToolbarWidget extends ReactWidget {
                 hasOriginalHeader: !!request.originalHeader,
                 originalHeaderPreview: request.originalHeader?.substring(0, 100)
             });
-            this.setState({ mcpProgressMessage: 'Generating transformation with AI (this may take 30-60 seconds)...', mcpProgressPercent: 0 });
+            this.setState({ mcpProgressMessage: 'Generating transformation with AI (this may take 30-60 seconds)...', mcpProgressPercent: 0, mcpActivity: [] });
+
+            // AI activity monitor: poll the backend's step log while it generates.
+            this.startAiActivityPoll();
 
             // Call the backend service (no progress simulation - backend will iterate)
-            const result = await this.utlxService.generateUtlxFromPrompt(request);
+            let result;
+            try {
+                result = await this.utlxService.generateUtlxFromPrompt(request);
+            } finally {
+                this.stopAiActivityPoll();
+                await this.refreshAiActivity();  // capture the final events
+            }
 
             console.log('[Toolbar] Step 5: Backend returned:', result);
 
@@ -845,13 +990,26 @@ export class UTLXToolbarWidget extends ReactWidget {
             // Save prompt to history
             this.addToPromptHistory(mcpPrompt, finalCode);
 
+            // Result quality: surface a clear warning when it didn't validate or
+            // failed to run, but STILL show the code (better than nothing — the user
+            // can review/fix it). valid + executed≠false → clean.
+            const v = result.validation;
+            const resultValid = v ? (v.valid && v.executed !== false) : true;
+            const resultStatus = !v ? undefined
+                : v.executed === false && v.runtimeError ? `Did not run: ${v.runtimeError}`
+                : !v.valid ? (v.message || 'Validation failed — this UTLX may not run')
+                : undefined;
+
             // Show preview mode instead of directly updating editor
             this.setState({
                 mcpLoading: false,
                 mcpProgressMessage: '',
                 mcpProgressPercent: 0,
                 mcpDialogMode: 'preview',
-                generatedCode: finalCode
+                generatedCode: finalCode,
+                mcpResultValid: resultValid,
+                mcpResultStatus: resultStatus,
+                mcpAttempts: result.attempts || []
             });
         } catch (error) {
             console.error('[Toolbar] ❌ Generate UTLX error:', error);

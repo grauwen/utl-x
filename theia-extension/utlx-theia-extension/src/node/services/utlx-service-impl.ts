@@ -27,7 +27,8 @@ import {
     GenerateUtlxResponse,
     LlmStatusResponse,
     ServiceHealth,
-    ServicesHealth
+    ServicesHealth,
+    AiActivityEntry
 } from '../../common/protocol';
 import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
@@ -46,6 +47,11 @@ export class UTLXServiceImpl implements UTLXService {
         autoInferSchema: false,
         enableTypeChecking: true
     };
+
+    // AI activity monitor: step-by-step progress of the most recent generation,
+    // buffered here and polled by the frontend (the MCP streams these over SSE to
+    // the backend; the frontend can't reach the MCP directly).
+    private aiActivity: AiActivityEntry[] = [];
 
     // NOTE: @postConstruct removed because it's async and breaks RPC synchronous instantiation
     // The daemon is managed by ServiceLifecycleManager, no init needed here
@@ -299,6 +305,9 @@ export class UTLXServiceImpl implements UTLXService {
         console.log('[BACKEND] Original header preview:', request.originalHeader?.substring(0, 100));
         console.log('[BACKEND] ========================================');
 
+        // AI activity monitor: start a fresh log for this generation.
+        this.aiActivity = [];
+
         try {
             // Check if MCP server is available
             const isAvailable = await this.mcpClient.ping();
@@ -325,6 +334,10 @@ export class UTLXServiceImpl implements UTLXService {
                 },
                 (progress, message) => {
                     console.log(`[BACKEND] Progress: ${progress}% - ${message}`);
+                    // Buffer for the AI activity monitor (frontend polls getAiActivity).
+                    if (message) {
+                        this.aiActivity.push({ message, percent: progress ?? 0, ts: Date.now() });
+                    }
                 }
             );
 
@@ -366,6 +379,14 @@ export class UTLXServiceImpl implements UTLXService {
             timed(() => this.mcpClient.ping()),
         ]);
         return { daemon, mcp };
+    }
+
+    /**
+     * AI activity monitor: return the buffered step-by-step progress of the most
+     * recent generation. The frontend polls this while a generation is running.
+     */
+    async getAiActivity(): Promise<AiActivityEntry[]> {
+        return [...this.aiActivity];
     }
 
     /**

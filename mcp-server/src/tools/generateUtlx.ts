@@ -399,6 +399,10 @@ export async function handleGenerateUtlx(
     let totalOutputTokens = 0;
     let validationResult: any = null;
 
+    // Per-attempt log (AI activity monitor #1): the code each attempt produced and
+    // why it failed/succeeded — returned in the response for in-UI prompt-tuning.
+    const attemptsLog: Array<{ attempt: number; code: string; status: string; errors?: string[] }> = [];
+
     const conversationHistory: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = [
       { role: 'system', content: systemPrompt },
       { role: 'user', content: userPrompt },
@@ -528,6 +532,7 @@ export async function handleGenerateUtlx(
                 ? `Code validated and executed successfully on attempt ${attempt}!`
                 : `Code validated successfully on attempt ${attempt}!`);
             }
+            attemptsLog.push({ attempt, code: generatedCode, status: 'success' });
             return {
               content: [
                 {
@@ -543,6 +548,7 @@ export async function handleGenerateUtlx(
                         : `Validation passed on attempt ${attempt}/${MAX_ATTEMPTS}`,
                       attempts: attempt,
                     },
+                    attempts: attemptsLog,
                     usage: {
                       inputTokens: totalInputTokens,
                       outputTokens: totalOutputTokens,
@@ -557,6 +563,7 @@ export async function handleGenerateUtlx(
           if (onProgress) {
             onProgress(0, `Execution failed: ${runtimeError}. Refining...`);
           }
+          attemptsLog.push({ attempt, code: generatedCode, status: 'execution-failed', errors: [runtimeError as string] });
           if (attempt < MAX_ATTEMPTS) {
             const feedbackPrompt = `The transformation compiles but FAILS AT RUNTIME on the sample input:\n\n${runtimeError}\n\nThis usually means an expression accesses data the wrong way (e.g. treating an array as an object, or an object as an array). Fix the logic so it runs successfully on the sample input. Generate ONLY the corrected transformation body (no header, no ---, no explanations).`;
             conversationHistory.push({ role: 'user', content: feedbackPrompt });
@@ -579,6 +586,7 @@ export async function handleGenerateUtlx(
                       attempts: MAX_ATTEMPTS,
                       runtimeError,
                     },
+                    attempts: attemptsLog,
                     usage: {
                       inputTokens: totalInputTokens,
                       outputTokens: totalOutputTokens,
@@ -594,8 +602,22 @@ export async function handleGenerateUtlx(
           logger.warn(`Attempt ${attempt}: Validation FAILED with ${errors.length} error(s)`, { errors });
 
           if (onProgress) {
-            onProgress(0, `Validation failed: ${errors.length} error(s). Refining...`);
+            // Surface the ACTUAL diagnostics (not just a count) so the AI activity
+            // monitor is actionable for prompt-tuning — you can see *what* the model
+            // got wrong, not merely that it failed.
+            const detail = errors.slice(0, 2)
+              .map((e: any) => `${e.message}${e.line ? ` (line ${e.line})` : ''}`)
+              .join('; ');
+            const more = errors.length > 2 ? ` (+${errors.length - 2} more)` : '';
+            onProgress(0, `Validation failed: ${detail}${more}. Refining...`);
           }
+
+          attemptsLog.push({
+            attempt,
+            code: generatedCode,
+            status: 'validation-failed',
+            errors: errors.map((e: any) => `${e.message}${e.line ? ` (line ${e.line})` : ''}`),
+          });
 
           if (attempt < MAX_ATTEMPTS) {
             // Prepare feedback message for LLM
@@ -613,6 +635,12 @@ export async function handleGenerateUtlx(
         }
       } catch (validationError) {
         logger.error(`Attempt ${attempt}: Validation call failed`, { error: validationError });
+        attemptsLog.push({
+          attempt,
+          code: generatedCode,
+          status: 'validation-unavailable',
+          errors: [validationError instanceof Error ? validationError.message : String(validationError)],
+        });
 
         // If validation API fails, proceed with the generated code
         if (attempt === MAX_ATTEMPTS) {
@@ -629,6 +657,7 @@ export async function handleGenerateUtlx(
                     message: 'Validation API unavailable - code not validated',
                     attempts: attempt,
                   },
+                  attempts: attemptsLog,
                   usage: {
                     inputTokens: totalInputTokens,
                     outputTokens: totalOutputTokens,
@@ -663,6 +692,7 @@ export async function handleGenerateUtlx(
               attempts: MAX_ATTEMPTS,
               errors: finalErrors,
             },
+            attempts: attemptsLog,
             usage: {
               inputTokens: totalInputTokens,
               outputTokens: totalOutputTokens,
