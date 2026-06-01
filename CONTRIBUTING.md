@@ -210,6 +210,8 @@ git checkout -b fix/bug-description
 - Keep commits focused and atomic
 
 **Testing your changes:**
+
+Kotlin / JVM components (engine, daemon, language) use Gradle:
 ```bash
 # Run all tests
 ./gradlew test
@@ -223,6 +225,54 @@ git checkout -b fix/bug-description
 # Check code coverage
 ./gradlew test jacocoTestReport
 ```
+
+TypeScript / Node components (the Theia extension, MCP server) use jest. jest and
+ts-jest are already installed (hoisted) at the workspace root — no extra install.
+```bash
+# Theia extension unit tests (e.g. service-supervision policy)
+cd theia-extension/utlx-theia-extension
+../../node_modules/.bin/jest --config jest.config.js
+
+# A single test file
+../../node_modules/.bin/jest --config jest.config.js src/node/services/restart-policy.test.ts
+```
+
+Jest tests live next to the code as `src/**/*.test.ts`, are excluded from the
+`tsc` build (never compiled into `lib/` or shipped), and run only when invoked —
+never at compile or at IDE/daemon startup.
+
+Conformance & end-to-end tests live under `conformance-suite/` — these verify
+behavior against a *running* system, separate from the unit tests above:
+
+- **Theia IDE (Playwright, end-to-end UI):** `conformance-suite/theia-extension/`.
+  Requires the IDE stack running first (Theia on `:4000`, daemon on `:7779`, MCP
+  on `:7780`), then:
+  ```bash
+  cd conformance-suite/theia-extension
+  npx playwright test                 # all UI conformance tests
+  npx playwright test tests/toolbar   # one suite
+  ```
+- **YAML cases run by Python runners** (the bulk of conformance). Install the
+  Python deps once: `pip install -r conformance-suite/requirements.txt`. Each
+  surface has its own runner:
+  ```bash
+  # Core language (the primary suite — transforms, all formats)
+  cd conformance-suite/utlx
+  python3 runners/cli-runner/simple-runner.py                 # all
+  python3 runners/cli-runner/simple-runner.py tests/core/     # one category
+  python3 runners/validation-runner.py validation-tests       # validation suite
+
+  # Engine (UTLXe)
+  python3 conformance-suite/utlxe/runners/engine-runner.py
+
+  # Daemon REST API / LSP / MCP (shell wrappers around the Python runners)
+  conformance-suite/daemon-rest-api/runners/python-runner/run-daemon-rest-api-tests.sh
+  conformance-suite/lsp/runners/python-runner/run-lsp-tests.sh
+  conformance-suite/mcp-server/runners/python-runner/run-mcp-server-tests.sh
+  ```
+
+See `conformance-suite/CONFORMANCE-SUITES.md` for the full list of suites,
+categories, and per-runner options.
 
 ### 3. Write Good Commit Messages
 
