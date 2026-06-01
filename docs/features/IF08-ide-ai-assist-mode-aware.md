@@ -209,6 +209,10 @@ sequenceDiagram
 - **Toolbar UI:** Load button + removable preview chip + stateless scaffold hint
   (both derived from current editor content; no new widget state machine).
 - **No semaphore:** do **not** add persistent scaffold/`bodyIntent` state.
+- **Prompt history is mode-tagged:** `PromptHistoryEntry` gains `mode`; the history
+  dropdown shows only the current mode's prompts (a prompt/result is mode-specific).
+  Legacy untagged entries are treated as Execution. Stored indices are preserved so
+  restore stays correct; only the rendered options are filtered.
 
 ## Acceptance Criteria
 
@@ -222,6 +226,8 @@ sequenceDiagram
   that preserves the scaffold's field structure.
 - Execution and Message Contract prompt builders live in separate modules with no
   shared mode-conditional bodies.
+- The prompt-history dropdown shows only entries created in the current mode;
+  legacy untagged entries appear under Execution.
 
 ## Testing
 
