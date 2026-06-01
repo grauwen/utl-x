@@ -44,6 +44,13 @@ export interface InputNameChangedEvent {
 }
 
 /**
+ * Event fired when the output name changes
+ */
+export interface OutputNameChangedEvent {
+    newName: string;
+}
+
+/**
  * Event fired when a new input is added
  */
 export interface InputAddedEvent {
@@ -307,6 +314,20 @@ export class UTLXEventService {
     fireInputNameChanged(event: InputNameChangedEvent): void {
         console.log('[UTLXEventService] Input name changed:', event);
         this.onInputNameChangedEmitter.fire(event);
+    }
+
+    private readonly onOutputNameChangedEmitter = new Emitter<OutputNameChangedEvent>();
+    /**
+     * Event fired when the output name changes
+     */
+    readonly onOutputNameChanged: Event<OutputNameChangedEvent> = this.onOutputNameChangedEmitter.event;
+
+    /**
+     * Fire an output name changed event
+     */
+    fireOutputNameChanged(event: OutputNameChangedEvent): void {
+        console.log('[UTLXEventService] Output name changed:', event);
+        this.onOutputNameChangedEmitter.fire(event);
     }
 
     private readonly onInputAddedEmitter = new Emitter<InputAddedEvent>();

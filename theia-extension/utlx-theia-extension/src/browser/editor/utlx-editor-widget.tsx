@@ -1168,14 +1168,17 @@ output json
     /**
      * Generate header content based on input/output formats
      */
-    protected generateHeader(inputLines: string[], outputFormat: string): string {
+    protected generateHeader(inputLines: string[], outputFormat: string, outputName?: string): string {
         const header = ['%utlx 1.0'];
 
         // Add input line(s)
         header.push(...inputLines);
 
-        // Add output line
-        header.push(`output ${outputFormat}`);
+        // Add output line: "output [optionalname] <format>".
+        // The bare 'output' keyword is the default name → emit no name.
+        const trimmedName = (outputName ?? '').trim();
+        const hasCustomName = trimmedName !== '' && trimmedName !== 'output';
+        header.push(hasCustomName ? `output ${trimmedName} ${outputFormat}` : `output ${outputFormat}`);
 
         // Add separator
         header.push('---');
@@ -1206,8 +1209,8 @@ output json
      * Update headers with new input/output information
      * This is called when formats change in the panels
      */
-    public updateHeaders(inputLines: string[], outputFormat: string): void {
-        console.log('[UTLXEditor] updateHeaders() called', { inputLines, outputFormat });
+    public updateHeaders(inputLines: string[], outputFormat: string, outputName?: string): void {
+        console.log('[UTLXEditor] updateHeaders() called', { inputLines, outputFormat, outputName });
 
         if (!this.editor) {
             console.warn('[UTLXEditor] No editor instance');
@@ -1228,7 +1231,7 @@ output json
             const separatorLine = this.parseHeaderEndLine();
 
             // Generate new header
-            const newHeader = this.generateHeader(inputLines, outputFormat);
+            const newHeader = this.generateHeader(inputLines, outputFormat, outputName);
             const newHeaderLines = newHeader.split('\n');
 
             // Get existing body content (everything after ---)

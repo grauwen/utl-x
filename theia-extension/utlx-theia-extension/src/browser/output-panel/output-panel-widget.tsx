@@ -28,6 +28,13 @@ import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 export interface OutputPanelState {
     mode: UTLXMode;
     activeTab: 'instance' | 'schema';
+    // Optional output name (mirrors per-input names). Empty/"output" means the
+    // header is just "output <format>"; a custom name yields "output <name> <format>".
+    outputName?: string;
+    // Bumped only on PROGRAMMATIC name changes (load gives a filename, clear resets).
+    // Used as the name field's React key so it remounts to show the new value.
+    // Typing never bumps it, so the caret is never disturbed mid-edit.
+    outputNameVersion?: number;
     instanceContent: string;
     schemaContent: string;
     instanceFormat?: string;
@@ -159,7 +166,23 @@ export class OutputPanelWidget extends ReactWidget {
         return (
             <div className='utlx-output-panel-container'>
                 <div className='utlx-panel-header'>
-                    <h3>Output</h3>
+                    <div className='utlx-header-left'>
+                        <input
+                            type='text'
+                            className='utlx-output-name-editor'
+                            // The editable name IS the panel label (no separate
+                            // "Output" heading). Defaults to lowercase "output",
+                            // matching the UTLX header keyword.
+                            // Uncontrolled + key (same fix as the input-name field):
+                            // a controlled value= reset the caret on every keystroke
+                            // because ReactWidget.update() re-renders asynchronously.
+                            key={`output-name-${this.state.outputNameVersion ?? 0}`}
+                            defaultValue={this.state.outputName ?? 'output'}
+                            onChange={(e) => this.handleRenameOutput(e.target.value)}
+                            onBlur={(e) => this.commitRenameOutput(e.target.value)}
+                            placeholder='output'
+                        />
+                    </div>
                     <div className='utlx-panel-actions'>
                         {/* Infer Schema button - only in design-time mode on schema tab when instance exists */}
                         {mode === UTLXMode.MESSAGE_CONTRACT && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && instanceContent && (
@@ -624,12 +647,20 @@ export class OutputPanelWidget extends ReactWidget {
             const ext = uri.path.ext.toLowerCase().replace('.', '');
             const detectedFormat = this.detectFormatFromExtension(ext) || format;
 
+            // Derive the output name from the filename stem (employee.csv -> "employee").
+            // Sanitize to a valid UTLX identifier so odd filenames ("2024 sales")
+            // can't produce a malformed header; empty result -> no custom name.
+            // Bump the version so the (uncontrolled) name field remounts to show it.
+            const loadedName = this.toOutputIdentifier(uri.path.name);
+
             this.setState({
                 instanceContent: content,
                 instanceFormat: detectedFormat,
                 instanceError: undefined,
                 instanceDiagnostics: undefined,
-                instanceExecutionTime: undefined
+                instanceExecutionTime: undefined,
+                outputName: loadedName,
+                outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
             });
 
             // Fire format changed event so editor headers stay in sync
@@ -637,6 +668,9 @@ export class OutputPanelWidget extends ReactWidget {
                 format: detectedFormat,
                 tab: 'instance'
             });
+
+            // Notify so the header becomes "output <loadedName> <format>"
+            this.eventService.fireOutputNameChanged({ newName: loadedName });
 
             // Notify canvas about instance content change
             this.eventService.fireOutputInstanceContentChanged({
@@ -737,13 +771,19 @@ export class OutputPanelWidget extends ReactWidget {
 
     private handleClear(): void {
         if (this.state.activeTab === 'instance') {
+            // Reset the output name to its default and bump the version so the
+            // (uncontrolled) name field remounts back to "output".
             this.setState({
                 instanceContent: '',
                 instanceFormat: undefined,
                 instanceExecutionTime: undefined,
                 instanceError: undefined,
-                instanceDiagnostics: undefined
+                instanceDiagnostics: undefined,
+                outputName: '',
+                outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
             });
+            // Header reverts to "output <format>" (no custom name).
+            this.eventService.fireOutputNameChanged({ newName: '' });
         } else {
             this.setState({
                 schemaContent: '',
@@ -943,6 +983,55 @@ export class OutputPanelWidget extends ReactWidget {
     private setState(partial: Partial<OutputPanelState>): void {
         this.state = { ...this.state, ...partial };
         this.update();
+    }
+
+    /**
+     * Live (per-keystroke) output-name edit. The name field is UNCONTROLLED, so
+     * we must NOT re-render here (it would reset the caret — same bug as the
+     * input-name field). Update the model in place only.
+     * (Step 1: editing only. Wiring the name into the UTLX header — "output
+     * <name> <format>" — and load/clear behavior come in later steps.)
+     */
+    private handleRenameOutput(newName: string): void {
+        this.state = { ...this.state, outputName: newName };
+    }
+
+    /**
+     * Commit on blur: normalize (trim), persist, and notify so the UTLX header
+     * is rewritten as "output <name> <format>".
+     */
+    private commitRenameOutput(newName: string): void {
+        const trimmed = newName.trim();
+        if (this.state.outputName !== trimmed) {
+            this.setState({ outputName: trimmed });
+        }
+        // Always fire — the header builder pulls the current name on every format
+        // change, but a name-only edit needs its own trigger.
+        this.eventService.fireOutputNameChanged({ newName: trimmed });
+    }
+
+    /** Public accessor for the current output name (used by header wiring in a later step). */
+    public getOutputName(): string {
+        return (this.state.outputName ?? '').trim();
+    }
+
+    /**
+     * Turn a filename stem into a valid UTLX identifier for the output header.
+     * UTLX identifiers DO allow hyphens and digits (lexer: input-name, ship07),
+     * but must START with a letter — a leading digit would lex as a number and a
+     * leading "_" is dropped by request. So a numeric/ordering prefix like "07-"
+     * is stripped up to the first letter: "07-shipping-manifest" -> "shipping-manifest".
+     * Chars that aren't letters/digits/_/- (spaces, parens, dots) would split the
+     * name into multiple tokens, so they collapse to "_"; trailing separators are
+     * trimmed. Returns '' when no letter remains (caller treats that as "no name",
+     * e.g. "2024.json" -> just "output json").
+     */
+    private toOutputIdentifier(stem: string): string {
+        return (stem ?? '')
+            .trim()
+            .replace(/[^\w-]+/g, '_')    // keep letters/digits/_/- ; collapse the rest
+            .replace(/^[^A-Za-z]+/, '')  // drop leading non-letters (digits, -, _) up to first letter
+            .replace(/[_-]+$/g, '');     // trim trailing separators
     }
 
     /**

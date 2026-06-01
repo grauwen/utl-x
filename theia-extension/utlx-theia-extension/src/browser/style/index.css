@@ -789,6 +789,33 @@
     outline: 1px solid var(--theia-focusBorder);
 }
 
+/* Output name editor — mirrors the input name editor (IF: editable output name) */
+.utlx-output-name-editor {
+    padding: 4px 8px;
+    border: 1px solid var(--theia-input-border);
+    background: var(--theia-input-background);
+    color: var(--theia-input-foreground);
+    border-radius: 3px;
+    font-size: 13px;
+    font-weight: 600;
+    max-width: 150px;
+    min-width: 80px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.utlx-output-name-editor:focus {
+    outline: 1px solid var(--theia-focusBorder);
+}
+
+/* Output header: keep the "Output" heading and the name field on one row */
+.utlx-output-panel .utlx-panel-header .utlx-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 /* Horizontal Tabs for Message Contract Mode */
 .utlx-horizontal-tabs {
     display: flex;

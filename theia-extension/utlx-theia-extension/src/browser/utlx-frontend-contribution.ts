@@ -78,6 +78,7 @@ export class UTLXFrontendContribution implements
     private mcpStatusId = 'mcp-status';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
+    private outputName: string = ''; // empty / 'output' => no custom name in header
     private currentMode: UTLXMode = UTLXMode.EXECUTION;
     private isUpdatingFromParsedHeaders: boolean = false; // Flag to prevent circular updates
     private canvasFullScreen: boolean = false;
@@ -558,6 +559,14 @@ export class UTLXFrontendContribution implements
             this.updateEditorHeaders();
         });
 
+        // Subscribe to output name changes (Execution mode - rewrites "output <name> <format>")
+        this.eventService.onOutputNameChanged(event => {
+            if (this.isUpdatingFromParsedHeaders) return;
+            console.log('[UTLXFrontendContribution] Output name changed:', event);
+            this.outputName = event.newName;
+            this.updateEditorHeaders();
+        });
+
         // Subscribe to output preset mode changes
         this.eventService.onOutputPresetOn(event => {
             console.log('[UTLXFrontendContribution] Output preset mode ON:', event);
@@ -706,10 +715,11 @@ export class UTLXFrontendContribution implements
             // Update editor headers
             console.log('[UTLXFrontendContribution] Updating editor headers:', {
                 inputLines,
-                outputFormat: this.outputFormat
+                outputFormat: this.outputFormat,
+                outputName: this.outputName
             });
 
-            editor.updateHeaders(inputLines, this.outputFormat);
+            editor.updateHeaders(inputLines, this.outputFormat, this.outputName);
         } catch (error) {
             console.error('[UTLXFrontendContribution] Failed to update editor headers:', error);
         }
