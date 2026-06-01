@@ -24,9 +24,15 @@
 > - `gracefulKill()`: SIGTERM, then SIGKILL after `shutdownTimeout`; `onStop()` awaits both.
 > - Idempotent daemon reuse: `startUTLXD`/`startMCPServer` skip if the port is already healthy.
 >
-> **Note:** the extension has no JS test runner, so the TS supervision logic is covered by
-> manual/integration verification only (the Kotlin watchdog has JUnit coverage). Standing up
-> jest for the extension is tracked separately, not in IF06.
+> **Update (Fix A):** Theia-managed startup path resolution is now fixed in
+> `service-lifecycle-manager.ts` — robust `findProjectRoot()`, explicit `java` via
+> `resolveJavaBin()`, and surfaced startup errors (`getStatus().startupError`).
+> Auto-start remains **off by default**; the script still owns dev startup. See
+> "Why Theia-Managed Startup Failed — and what Fix A changed".
+>
+> **Testing note:** the extension now has jest (restart-policy unit tests). The
+> Kotlin watchdog has JUnit coverage. Fix A's path resolution is verified by tsc +
+> a path-resolution check, but not yet by a full end-to-end auto-start boot.
 
 ---
 
@@ -164,14 +170,18 @@ sequenceDiagram
     end
 ```
 
-## Why Theia-Managed Startup Currently Fails (analysis)
+## Why Theia-Managed Startup Failed — and what Fix A changed (analysis)
 
 Theia auto-start (`ServiceLifecycleManager` spawning `utlxd` + MCP on backend boot)
-was **deliberately disabled** because it failed repeatedly. It is **not flaky** —
-there are three concrete, reproducible causes, all verified against the code and
-the runtime layout. The dev workflow therefore uses the script (`rebuild-and-start-mcp.sh`,
-Step 8.5) which starts the services itself and launches Theia with
-`AUTO_START_SERVICES=false`. Document this so nobody re-enables it blind again.
+was **deliberately disabled** because it failed repeatedly. It was **not flaky** —
+there were three concrete, reproducible causes, verified against the code and the
+runtime layout. **Fix A (below) addresses all three at the code level**, but
+auto-start **remains off by default** (`AUTO_START_SERVICES`): the dev workflow
+still uses the script (`rebuild-and-start-mcp.sh`, Step 8.5), which starts the
+services itself and launches Theia with `AUTO_START_SERVICES=false`. Fix A makes
+the managed path *correct and re-enable-able* (and Electron-ready); it does not
+flip it on. The analysis below is kept so the failure is understood, not
+rediscovered.
 
 ### Intended flow (what the code tries to do)
 
@@ -198,27 +208,35 @@ sequenceDiagram
 
 ### Why it breaks in practice
 
-1. **Jar/MCP path resolution fails under the copy deployment.**
+1. **Jar/MCP path resolution failed under the copy deployment.** *(Fixed in Fix A.)*
    The browser-app does `rm -rf node_modules/utlx-theia-extension` + `yarn install
-   --check-files`, so the extension runs as a **real copy** at
-   `browser-app/node_modules/utlx-theia-extension/lib/node/services/` — **not** a
-   workspace symlink. `findProjectRoot()` walks **up** from `__dirname` looking for
-   `modules/daemon/build/libs`; from inside `node_modules` that directory is never
-   on the path, so the jar path resolves to a non-existent location and
-   `startUTLXD()` throws *"UTLXD jar not found"*. (The jar IS built — this is a
-   path bug, not a build bug.) `mcpServerPath` resolves the same way → same failure.
+   --check-files` (because the extension is a `file:` dependency, so yarn copies it
+   rather than symlinking). The extension therefore runs as a **real copy** at
+   `browser-app/node_modules/utlx-theia-extension/lib/node/services/`. The old
+   `findProjectRoot()` keyed on `modules/daemon/build/**libs**` (which only exists
+   after a build) and anchored on the copy, so the jar path resolved to a
+   non-existent location and `startUTLXD()` threw *"UTLXD jar not found"* (the jar
+   IS built — a path bug, not a build bug). **Fix A** rewrote `findProjectRoot()` to
+   walk up for a stable, build-independent marker (a dir containing both
+   `modules/daemon` *and* `mcp-server`); the copy is still under the repo, so the
+   walk now reaches the real root — verified from the exact copy location.
 
-2. **`java` is not guaranteed on PATH.** `spawn('java', …)` passes no explicit
-   `JAVA_HOME`/PATH. A shell-launched process inherits the user's PATH (java
-   present — which is why the script works); a GUI/Electron-launched backend often
-   has a **minimal PATH without java** → `ENOENT`.
+2. **`java` was not guaranteed on PATH.** *(Fixed in Fix A.)* `spawn('java', …)`
+   passed no explicit binary. A shell-launched process inherits the user's PATH
+   (java present — which is why the script works); a GUI/Electron-launched backend
+   often has a **minimal PATH without java** → `ENOENT`. **Fix A** added
+   `resolveJavaBin()` (`UTLXD_JAVA_BIN` → `$JAVA_HOME/bin/java` → bare `java`), and
+   `startUTLXD` spawns that.
 
-3. **Failures are double-swallowed, so it looks like "the IDE started fine".**
-   Theia wraps `initialize()` in a try/catch that only logs *"Could not initialize
-   contribution"*; `ServiceLifecycleManager.initialize()` *also* catches and logs
-   *"Continuing without managed services"* without rethrowing. Net effect: the IDE
-   boots, AI Assist silently doesn't work, and there is no surfaced error to chase
-   — exactly the "fiddle for an hour, then turn it off" experience.
+3. **Failures were double-swallowed, so it looked like "the IDE started fine".**
+   *(Fixed in Fix A.)* Theia wraps `initialize()` in a try/catch that only logs
+   *"Could not initialize contribution"*; `ServiceLifecycleManager.initialize()`
+   *also* caught and logged *"Continuing without managed services"* without
+   rethrowing. Net effect: the IDE booted, AI Assist silently didn't work, no
+   surfaced error — the "fiddle for an hour, then turn it off" experience.
+   **Fix A** keeps Theia booting (still no rethrow, by design) but logs a
+   prominent boxed error with the resolved paths and records `lastStartupError`,
+   exposed via `getStatus()` so the frontend can report it.
 
 ### Why this is NOT a Java service wrapper problem
 
@@ -231,19 +249,30 @@ launch, so it fixes none of this. The valuable instinct behind VS Code Java
 plugins using wrappers is **bundling a JRE + robust launch**, which this project
 addresses via IF07 (jlink JRE + absolute resource paths), not a wrapper.
 
-### What an actual fix requires (for IF07 / when re-enabling)
+### Fix A — what changed in the code (done)
 
-- **Do not derive paths by walking up from `__dirname`.** Resolve `utlxdJarPath` /
-  `mcpServerPath` from an explicit source: the injected env vars
-  (`UTLXD_JAR_PATH`, `MCP_SERVER_PATH`) the script already sets, or — in the
-  packaged app — absolute paths under the Electron app resources (asarUnpacked).
-- **Spawn `java` by an explicit, resolved binary** (bundled `jlink` JRE in IF07,
-  or a `JAVA_HOME`-derived path), never bare `'java'` relying on PATH.
-- **Surface failures** instead of swallowing them — at minimum a visible
-  notification / health indicator, so a misconfigured start is obvious.
+Applied in `service-lifecycle-manager.ts`:
 
-Until those are done, keep `AUTO_START_SERVICES=false` and let the script own
-startup.
+- **Robust path resolution.** `findProjectRoot()` now walks up for a stable marker
+  (`modules/daemon` + `mcp-server`), build-independent and copy-safe. Env vars
+  (`UTLXD_JAR_PATH`, `MCP_SERVER_PATH`) still take precedence in `loadConfig()`.
+- **Explicit `java`.** `resolveJavaBin()`: `UTLXD_JAVA_BIN` → `$JAVA_HOME/bin/java`
+  → bare `java`. No more reliance on PATH for the GUI/Electron case.
+- **Loud, surfaced failures.** Jar-not-found throws an actionable message; the
+  `initialize()` catch logs a prominent boxed error and records
+  `lastStartupError`, returned by `getStatus()` for the frontend.
+
+**Still off by default.** Fix A makes the managed path correct; it does not enable
+it. Keep `AUTO_START_SERVICES=false` for dev (script owns startup). Verified so
+far: tsc clean; `findProjectRoot()` resolves the repo root from the real copy
+location. **Not yet verified end-to-end** with auto-start actually on.
+
+### Remaining for IF07 (packaged app)
+
+- In the Electron build, set `UTLXD_JAR_PATH` / `MCP_SERVER_PATH` /
+  `UTLXD_JAVA_BIN` to **absolute app-resource paths** (asarUnpacked) and ship a
+  **jlink JRE** — so startup never depends on the dev source-tree heuristic.
+- Surface `getStatus().startupError` in the UI (notification / health indicator).
 
 ## Implementation Notes
 
