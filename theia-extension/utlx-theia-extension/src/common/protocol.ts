@@ -430,6 +430,13 @@ export interface GenerateUtlxRequest {
     inputs: GenerateUtlxInput[];
     outputFormat: string;
     originalHeader: string;  // Original UTLX header from editor (required for validation)
+    // IDE mode (IF08). Defaults to EXECUTION when omitted; MESSAGE_CONTRACT is
+    // routed to a separate prompt builder (a not-implemented stub in v1).
+    mode?: UTLXMode;
+    // Current editor body the user explicitly chose to share via "Load current
+    // UTLX" (IF08). Sent ONLY on opt-in — never automatically. A scaffold is
+    // detected downstream by its ???(type) markers.
+    existingBody?: string;
 }
 
 export interface GenerateUtlxResponse {

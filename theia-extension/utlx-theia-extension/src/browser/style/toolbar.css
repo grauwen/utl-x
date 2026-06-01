@@ -454,6 +454,70 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
 }
 
 /* MCP Progress Indicator */
+/* IF08: "Load current UTLX" control + scaffold hint + loaded-body chip */
+.utlx-mcp-loadbody {
+    margin-top: 8px;
+}
+
+.utlx-mcp-loadbody-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.utlx-mcp-loadbody-btn {
+    background: transparent;
+    color: var(--theia-textLink-foreground, #3794ff);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 4px;
+    padding: 4px 10px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.utlx-mcp-loadbody-btn:hover {
+    background: var(--theia-list-hoverBackground, #2a2d2e);
+}
+
+.utlx-mcp-loadbody-hint {
+    font-size: 12px;
+    color: var(--theia-descriptionForeground, #999);
+    font-style: italic;
+}
+
+.utlx-mcp-loadbody-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    max-width: 100%;
+    padding: 3px 8px;
+    background: var(--theia-badge-background, #4d4d4d);
+    color: var(--theia-badge-foreground, #fff);
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.utlx-mcp-loadbody-label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.utlx-mcp-loadbody-remove {
+    background: transparent;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+}
+
+.utlx-mcp-loadbody-remove:hover {
+    color: var(--theia-errorForeground, #f48771);
+}
+
 .utlx-mcp-progress {
     margin-top: 12px;
     padding: 12px 16px;

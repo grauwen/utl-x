@@ -319,6 +319,9 @@ export class UTLXServiceImpl implements UTLXService {
                     inputs: request.inputs,
                     outputFormat: request.outputFormat,
                     originalHeader: request.originalHeader,
+                    // IF08: forward mode + (opt-in) current body when present.
+                    ...(request.mode ? { mode: request.mode } : {}),
+                    ...(request.existingBody ? { existingBody: request.existingBody } : {}),
                 },
                 (progress, message) => {
                     console.log(`[BACKEND] Progress: ${progress}% - ${message}`);

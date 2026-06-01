@@ -1,5 +1,11 @@
 /**
- * System prompt template for UTLX code generation
+ * EXECUTION-mode prompt builder for UTLX code generation (IF08).
+ *
+ * This module builds the prompt for the IDE's Execution mode: map real instance
+ * data (inputs + UDM paths) to an output instance, validated by compile + execute.
+ * The Message Contract mode has its own separate builder
+ * (`message-contract-prompt.ts`); the dispatcher (`prompt-dispatcher.ts`) selects
+ * between them. Keep the two builders independent — no shared mode conditionals.
  */
 
 import * as fs from 'fs';
@@ -20,6 +26,10 @@ export interface UTLXGenerationContext {
   operatorsContext?: string;
   // USDL directive guidance, present when a Tier 2 schema format is involved.
   usdlContext?: string;
+  // The current editor body, present ONLY when the user explicitly loaded it
+  // ("Load current UTLX", IF08). A scaffold is recognized by its ???(type)
+  // markers and triggers a fill-the-placeholders instruction.
+  existingBody?: string;
 }
 
 /**
@@ -216,12 +226,40 @@ export function buildUTLXGenerationUserPrompt(context: UTLXGenerationContext): s
     prompt += `## USDL Schema Directives\n\n${context.usdlContext}\n`;
   }
 
+  // Current transformation the user chose to share ("Load current UTLX", IF08).
+  // A scaffold is self-describing via ???(type) markers, so detection is
+  // stateless: presence of "???(" means "fill the skeleton", otherwise treat it
+  // as a partial/existing transformation to build on.
+  const hasExistingBody = !!context.existingBody && context.existingBody.trim().length > 0;
+  const isScaffold = hasExistingBody && context.existingBody!.includes('???(');
+  if (hasExistingBody) {
+    if (isScaffold) {
+      prompt += `## Current Transformation (SCAFFOLD — fill it in)\n\n`;
+      prompt += `The editor already contains a generated **scaffold** describing the desired\n`;
+      prompt += `output shape. Each \`???(type)\` is a placeholder. Replace every \`???(type)\`\n`;
+      prompt += `with a real expression derived from the inputs. **Preserve the field names\n`;
+      prompt += `and structure** of the scaffold; do not add or remove fields. Keep any\n`;
+      prompt += `\`// comments\` only if still helpful.\n\n`;
+    } else {
+      prompt += `## Current Transformation (build on this)\n\n`;
+      prompt += `The editor already contains a partial/existing transformation body. Use it\n`;
+      prompt += `as the starting point and complete or refine it per the request below. Keep\n`;
+      prompt += `the parts that are already correct rather than rewriting from scratch.\n\n`;
+    }
+    prompt += '```\n' + context.existingBody!.trim() + '\n```\n\n';
+  }
+
   // User's transformation request
   prompt += `## User Request\n\n${context.userPrompt}\n\n`;
 
   // Generation instructions
   prompt += `## Instructions\n\n`;
   prompt += `Generate ONLY the transformation body that:\n`;
+  if (hasExistingBody) {
+    prompt += isScaffold
+      ? `0. Fills the scaffold above — replace each \`???(type)\` placeholder, preserving its structure\n`
+      : `0. Builds on the current transformation above rather than starting over\n`;
+  }
   prompt += `1. Uses these exact input names:\n`;
   for (const input of context.inputs) {
     prompt += `   - \`$${input.name}\`\n`;

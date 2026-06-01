@@ -10,11 +10,9 @@ import { DaemonClient } from '../client/DaemonClient';
 import { Logger } from 'winston';
 import { z } from 'zod';
 import { LLMGateway } from '../llm/llm-gateway';
-import {
-  buildUTLXGenerationSystemPrompt,
-  buildUTLXGenerationUserPrompt,
-  UTLXGenerationContext,
-} from '../llm/prompts/utlx-generation-prompt';
+import { UTLXGenerationContext } from '../llm/prompts/execution-prompt';
+import { buildPrompt, AssistMode } from '../llm/prompts/prompt-dispatcher';
+import { MessageContractNotImplementedError } from '../llm/prompts/message-contract-prompt';
 import { buildUsdlContext } from '../llm/usdl-context';
 
 export const generateUtlxTool: Tool = {
@@ -61,6 +59,15 @@ export const generateUtlxTool: Tool = {
         type: 'string',
         description: 'Original UTLX header from editor (required for validation)',
       },
+      mode: {
+        type: 'string',
+        enum: ['execution', 'message-contract'],
+        description: 'IDE mode (IF08). Defaults to "execution". "message-contract" is not yet implemented.',
+      },
+      existingBody: {
+        type: 'string',
+        description: 'Optional current editor body the user chose to share ("Load current UTLX", IF08). A scaffold is detected by its ???(type) markers.',
+      },
     },
     required: ['prompt', 'inputs', 'outputFormat', 'originalHeader'],
   },
@@ -76,6 +83,8 @@ const GenerateUtlxArgsSchema = z.object({
   })),
   outputFormat: z.string(),
   originalHeader: z.string(),
+  mode: z.enum(['execution', 'message-contract']).optional(),
+  existingBody: z.string().optional(),
 });
 
 /**
@@ -193,14 +202,36 @@ export async function handleGenerateUtlx(
 ): Promise<ToolInvocationResponse> {
   try {
     // Validate arguments
-    const { prompt, inputs, outputFormat, originalHeader } = GenerateUtlxArgsSchema.parse(args);
+    const { prompt, inputs, outputFormat, originalHeader, mode, existingBody } =
+      GenerateUtlxArgsSchema.parse(args);
+    const assistMode: AssistMode = mode ?? 'execution';
 
     logger.info('Generating UTLX code', {
       prompt: prompt.substring(0, 100),
       inputCount: inputs.length,
       outputFormat,
+      mode: assistMode,
       hasOriginalHeader: !!originalHeader,
+      hasExistingBody: !!existingBody,
     });
+
+    // IF08: Message Contract mode AI assist is not implemented yet. Fail fast
+    // with the typed error's message (no execution-specific context gathering).
+    if (assistMode === 'message-contract') {
+      logger.info('Message Contract AI assist requested — returning not-implemented stub');
+      return {
+        content: [
+          {
+            type: 'text',
+            text: JSON.stringify({
+              success: false,
+              error: new MessageContractNotImplementedError().message,
+            }, null, 2),
+          },
+        ],
+        isError: true,
+      };
+    }
 
     // Report progress: Starting
     if (onProgress) {
@@ -306,11 +337,12 @@ export async function handleGenerateUtlx(
       functionsContext,
       operatorsContext,
       usdlContext,
+      existingBody,
     };
 
-    // Build prompts
-    const systemPrompt = buildUTLXGenerationSystemPrompt();
-    const userPrompt = buildUTLXGenerationUserPrompt(context);
+    // Build prompts via the mode dispatcher (Execution path here; Message
+    // Contract already returned above). IF08.
+    const { systemPrompt, userPrompt } = buildPrompt(assistMode, context);
 
     logger.info('Calling LLM for UTLX generation', {
       promptLength: systemPrompt.length + userPrompt.length,

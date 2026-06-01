@@ -29,6 +29,9 @@ export interface PromptHistoryEntry {
     timestamp: string;
     prompt: string;
     result?: string;  // The generated UTLX code
+    // IDE mode this prompt was created in (IF08). Absent on legacy entries —
+    // treated as EXECUTION (the only mode AI assist worked in before IF08).
+    mode?: UTLXMode;
 }
 
 export interface ToolbarState {
@@ -39,6 +42,9 @@ export interface ToolbarState {
     mcpProgressMessage: string;
     mcpProgressPercent: number;  // 0-100
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
+    // IF08: snapshot of the editor body the user opted to share via "Load current
+    // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
+    loadedBody?: string;
     generatedCode: string;  // The generated code to preview
     promptHistory: PromptHistoryEntry[];  // History of prompts
     systemStatus: {
@@ -168,7 +174,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         const entry: PromptHistoryEntry = {
             timestamp: new Date().toISOString(),
             prompt,
-            result
+            result,
+            mode: this.state.currentMode  // IF08: tag with the mode it was created in
         };
 
         const newHistory = [...this.state.promptHistory, entry];
@@ -265,8 +272,16 @@ export class UTLXToolbarWidget extends ReactWidget {
                                     <div className='utlx-dialog-body'>
                                         <p>Describe what transformation you want to create:</p>
 
-                                        {/* Prompt History Dropdown */}
-                                        {this.state.promptHistory.length > 1 && (
+                                        {/* Prompt History Dropdown — IF08: only the
+                                            current mode's prompts (legacy untagged = Execution) */}
+                                        {(() => {
+                                            const modeHistory = this.state.promptHistory
+                                                .map((entry, index) => ({ entry, index }))
+                                                .filter(({ entry }) => (entry.mode ?? UTLXMode.EXECUTION) === currentMode);
+                                            if (modeHistory.length < 1) {
+                                                return null;
+                                            }
+                                            return (
                                             <div className='utlx-prompt-history'>
                                                 <label>Previous prompts:</label>
                                                 <select
@@ -280,22 +295,22 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                     disabled={mcpLoading}
                                                 >
                                                     <option value="">-- Select a previous prompt --</option>
-                                                    {this.state.promptHistory.slice().reverse().map((entry, idx) => {
-                                                        const actualIndex = this.state.promptHistory.length - 1 - idx;
+                                                    {modeHistory.slice().reverse().map(({ entry, index }) => {
                                                         const date = new Date(entry.timestamp);
                                                         const timeStr = date.toLocaleString();
                                                         const preview = entry.prompt.length > 60
                                                             ? entry.prompt.substring(0, 60) + '...'
                                                             : entry.prompt;
                                                         return (
-                                                            <option key={actualIndex} value={actualIndex}>
+                                                            <option key={index} value={index}>
                                                                 {timeStr}: {preview}
                                                             </option>
                                                         );
                                                     })}
                                                 </select>
                                             </div>
-                                        )}
+                                            );
+                                        })()}
 
                                         <textarea
                                             className='utlx-mcp-prompt-input'
@@ -306,6 +321,41 @@ export class UTLXToolbarWidget extends ReactWidget {
                                             disabled={mcpLoading}
                                             autoFocus
                                         />
+                                        {!mcpLoading && (
+                                            <div className='utlx-mcp-loadbody'>
+                                                {this.state.loadedBody ? (
+                                                    <div className='utlx-mcp-loadbody-chip'>
+                                                        <span>📎</span>
+                                                        <span className='utlx-mcp-loadbody-label'>
+                                                            Current UTLX loaded ({this.state.loadedBody.split('\n').length} lines
+                                                            {this.state.loadedBody.includes('???(') ? ', scaffold' : ''})
+                                                        </span>
+                                                        <button
+                                                            className='utlx-mcp-loadbody-remove'
+                                                            title='Remove — generate without the current UTLX'
+                                                            onClick={() => this.clearLoadedBody()}
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    </div>
+                                                ) : (
+                                                    <div className='utlx-mcp-loadbody-actions'>
+                                                        <button
+                                                            className='utlx-mcp-loadbody-btn'
+                                                            title='Send the current editor body to the AI as a starting point'
+                                                            onClick={() => this.loadCurrentUtlx()}
+                                                        >
+                                                            📎 Load current UTLX
+                                                        </button>
+                                                        {this.getCurrentEditorBody()?.includes('???(') && (
+                                                            <span className='utlx-mcp-loadbody-hint'>
+                                                                Scaffold detected — load it to have AI fill it in.
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
                                         {mcpLoading && this.state.mcpProgressMessage && (
                                             <div className='utlx-mcp-progress'>
                                                 <div className='utlx-mcp-progress-spinner'>⏳</div>
@@ -558,9 +608,46 @@ export class UTLXToolbarWidget extends ReactWidget {
             mcpPrompt: '',
             mcpLoading: false,
             mcpDialogMode: 'prompt',
-            generatedCode: ''
+            generatedCode: '',
+            loadedBody: undefined  // IF08: drop the shared body when the dialog closes
         });
         console.log('[UTLXToolbar] ✅ MCP dialog state updated to closed');
+    }
+
+    /**
+     * IF08: read the current editor body (sync), split off the header.
+     * Used by the "Load current UTLX" action and the stateless scaffold hint.
+     */
+    private getCurrentEditorBody(): string | undefined {
+        const editor = this.shell.getWidgets('main')
+            .find((w: any) => w instanceof UTLXEditorWidget) as UTLXEditorWidget | undefined;
+        if (!editor) {
+            return undefined;
+        }
+        try {
+            const { body } = this.splitHeaderAndBody(editor.getContent());
+            return body;
+        } catch {
+            return undefined;
+        }
+    }
+
+    /**
+     * IF08: snapshot the current editor body into the request (opt-in). The body
+     * is sent ONLY after this — never automatically.
+     */
+    private loadCurrentUtlx(): void {
+        const trimmed = (this.getCurrentEditorBody() ?? '').trim();
+        if (!trimmed) {
+            this.messageService.info('The editor body is empty — nothing to load.');
+            return;
+        }
+        this.setState({ loadedBody: trimmed });
+    }
+
+    /** IF08: drop the shared body so generation ignores the current editor. */
+    private clearLoadedBody(): void {
+        this.setState({ loadedBody: undefined });
     }
 
     private applyGeneratedCode(): void {
@@ -706,7 +793,11 @@ export class UTLXToolbarWidget extends ReactWidget {
                     };
                 }),
                 outputFormat,
-                originalHeader: header  // Send original header for validation
+                originalHeader: header,  // Send original header for validation
+                // IF08: tag the request with the current IDE mode, and include the
+                // editor body ONLY when the user opted in via "Load current UTLX".
+                mode: this.state.currentMode,
+                ...(this.state.loadedBody ? { existingBody: this.state.loadedBody } : {})
             };
 
             console.log('[Toolbar] Step 4: Calling backend service...');
