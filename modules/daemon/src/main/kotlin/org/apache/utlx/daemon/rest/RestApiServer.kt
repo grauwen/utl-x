@@ -383,10 +383,17 @@ class RestApiServer(
                             outputFormat = request.outputFormat
                         )
 
+                        // IB02: bind the single input to the program's DECLARED input
+                        // name (e.g. "invoice") rather than a hardcoded "input", so a
+                        // custom-named single input ($invoice) resolves instead of
+                        // failing with "Undefined variable". Falls back to "input".
+                        // (N inputs are handled by /api/execute-multipart.)
+                        val inputName = firstDeclaredInputName(completeUtlx)
+
                         // Use TransformationService for transformation
                         val (outputData, outputFormat) = transformationService.transform(
                             utlxSource = completeUtlx,
-                            inputs = mapOf("input" to TransformationService.InputData(
+                            inputs = mapOf(inputName to TransformationService.InputData(
                                 content = request.input,
                                 format = request.inputFormat
                             )),
@@ -1124,6 +1131,26 @@ class RestApiServer(
      * with input/output formats specified separately. This helper builds the
      * complete UTLX document with proper headers.
      */
+    /**
+     * IB02: the declared name of the first input in a UTLX program's header, or
+     * "input" if it can't be determined (parse failure, or no declared inputs).
+     * The single-input /api/execute endpoint binds the provided data under this
+     * name so a custom-named input (e.g. $invoice for `input invoice json`) resolves
+     * instead of failing with "Undefined variable". Multi-input is the job of
+     * /api/execute-multipart, which binds each part by its own name.
+     */
+    private fun firstDeclaredInputName(utlxSource: String): String {
+        return try {
+            val tokens = Lexer(utlxSource).tokenize()
+            when (val result = Parser(tokens, utlxSource).parse()) {
+                is ParseResult.Success -> result.program.header.inputs.firstOrNull()?.first ?: "input"
+                else -> "input"
+            }
+        } catch (e: Exception) {
+            "input"
+        }
+    }
+
     private fun buildUtlxDocument(
         transformation: String,
         inputFormat: String,

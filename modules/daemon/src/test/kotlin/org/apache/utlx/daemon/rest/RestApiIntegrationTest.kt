@@ -178,6 +178,63 @@ class RestApiIntegrationTest {
         assertTrue(response.executionTimeMs >= 0)
     }
 
+    // IB02: /api/execute must bind the single input to the program's DECLARED input
+    // name, not a hardcoded "input". These two guard the default and custom-name cases.
+
+    @Test
+    fun `test execute binds the default-named input`() = runBlocking {
+        // Default name "input" — regression guard: must keep working after the IB02 fix.
+        val request = ExecutionRequest(
+            utlx = """
+                %utlx 1.0
+                input json
+                output json
+                ---
+                { vendor: input.vendor }
+            """.trimIndent().trim(),
+            input = """{"vendor": "Acme"}""",
+            inputFormat = "json",
+            outputFormat = "json"
+        )
+
+        val response: ExecutionResponse = client.post("http://127.0.0.1:$port/api/execute") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+        assertTrue(response.success, "Default-named input should execute: ${response.error}")
+        assertNotNull(response.output)
+        assertTrue(response.output!!.contains("Acme"), "Output should contain the mapped value")
+    }
+
+    @Test
+    fun `test execute binds a custom-named input (IB02)`() = runBlocking {
+        // A single input declared under a CUSTOM name ("invoice") must bind to that
+        // name. Before the IB02 fix the endpoint hardcoded "input", so $invoice was
+        // unbound and this returned 500 "RuntimeError: Undefined variable: invoice".
+        val request = ExecutionRequest(
+            utlx = """
+                %utlx 1.0
+                input invoice json
+                output json
+                ---
+                { vendor: invoice.vendor }
+            """.trimIndent().trim(),
+            input = """{"vendor": "Acme"}""",
+            inputFormat = "json",
+            outputFormat = "json"
+        )
+
+        val response: ExecutionResponse = client.post("http://127.0.0.1:$port/api/execute") {
+            contentType(ContentType.Application.Json)
+            setBody(request)
+        }.body()
+
+        assertTrue(response.success, "Custom-named input should execute (IB02): ${response.error}")
+        assertNotNull(response.output)
+        assertTrue(response.output!!.contains("Acme"), "Output should contain the mapped value")
+    }
+
     @Test
     fun `test execute endpoint with XML input and output`() = runBlocking {
         val request = ExecutionRequest(
