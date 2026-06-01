@@ -194,6 +194,35 @@ sequenceDiagram
     T->>E: replace body (whole-body apply)
 ```
 
+### Observability — AI activity monitor (implemented)
+
+The agentic generation was a black box (we debugged it by grepping `/tmp/*.log`).
+The monitor surfaces the steps in the AI dialog:
+
+- **Live step log.** The MCP already emits rich `onProgress` events (per attempt,
+  validating, validation/execution errors, refining, complete). The backend buffers
+  them (`UTLXServiceImpl.aiActivity`) and the frontend **polls `getAiActivity()`**
+  (~400 ms) during generation, rendering a scrollable, timestamped step list. (Poll,
+  not a bidirectional-RPC push — keeps the architecture rule "frontend → backend
+  only"; the buffer is per-generation, and generation is modal.)
+- **Real error detail.** Validation events carry the actual diagnostics
+  (`message (line N)`, first 2 + "+N more"), not just a count — so the log is
+  actionable for prompt-tuning (feeds `docs/architecture/ai-assist-prompt-wins.md`).
+- **Per-attempt code + errors.** `generateUtlx` returns `attempts[]` (each attempt's
+  `code`, `status`, `errors`) in `GenerateUtlxResponse`; the preview shows an
+  expandable "Attempts" section — the bad code next to the error it caused.
+- **Copy log.** One button copies the timeline + per-attempt code/errors to the
+  clipboard (to paste when recording a prompt win).
+
+### Show-with-warning on a failed result (implemented)
+
+A generated transformation that **does not validate or fails to run** is still
+**shown** (better than nothing — the user can review/fix), but with a prominent
+**red warning** banner + red code border and the actual status/error. Only a *total*
+failure (`success:false`, no candidate code at all — infra/LLM error) shows just an
+error toast. Combined with the max-turns **salvage** in `ClaudeCodeProvider` (return
+best-effort instead of hard-failing), the user rarely sees "no output".
+
 ## Implementation Notes
 
 - **Protocol:** add `mode: 'execution' | 'message-contract'` and optional
@@ -213,6 +242,22 @@ sequenceDiagram
   dropdown shows only the current mode's prompts (a prompt/result is mode-specific).
   Legacy untagged entries are treated as Execution. Stored indices are preserved so
   restore stays correct; only the rendered options are filtered.
+- **Activity monitor (implemented):** `UTLXService.getAiActivity()` + an
+  `aiActivity` buffer in `UTLXServiceImpl` (filled from the `callToolWithProgress`
+  callback); toolbar polls it (`startAiActivityPoll`) and renders the step list, the
+  per-attempt `attempts[]` from the response, and a copy button. Enriched validation
+  events (`generateUtlx.ts`) carry real diagnostics.
+- **Show-with-warning (implemented):** toolbar computes `mcpResultValid` from
+  `validation.valid`/`executed`/`runtimeError` and renders the red banner + red code
+  border in preview; `ClaudeCodeProvider` salvages best-effort output on max turns.
+
+## Status
+
+Largely **implemented** (this session): mode field + dispatcher + separated
+prompt builders (Execution real, Message Contract stub); opt-in Load + scaffold hint;
+mode-tagged history; AI activity monitor; show-with-warning. **Pending:** selection-
+scoped assist and a real Message Contract collector/prompt (v2). Needs a live
+(bazooka) pass to verify end-to-end.
 
 ## Acceptance Criteria
 
@@ -228,6 +273,11 @@ sequenceDiagram
   shared mode-conditional bodies.
 - The prompt-history dropdown shows only entries created in the current mode;
   legacy untagged entries appear under Execution.
+- During generation the activity monitor shows a live, timestamped step log with the
+  **actual** validation/runtime errors; after completion it shows per-attempt code +
+  errors; the copy button copies timeline + attempts.
+- A result that doesn't validate/run is **shown** with a red warning (not hidden);
+  only a total `success:false` failure shows just an error toast.
 
 ## Testing
 
