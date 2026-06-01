@@ -138,6 +138,33 @@ function extractCleanCode(response: string): string {
     code = lines.slice(startIndex).join('\n').trim();
   }
 
+  // Step 3b: Strip LEADING prose. When the agent can't validate it sometimes leads
+  // with an explanation paragraph ("The validation service is returning 500s…",
+  // "Based on the error…") before the code. Drop leading sentence-like lines until
+  // the first line that looks like UTLX code. Conservative: only skips multi-word
+  // lines that are NOT code-starts, and never strips everything (keeps original if
+  // no code line is found).
+  {
+    const isCodeStart = (l: string): boolean =>
+      /^[$\{\[\(]/.test(l) ||                 // $input, {, [, (
+      /^[A-Za-z_][\w.]*\s*[\(:]/.test(l) ||   // funcCall( … or field:
+      l.includes('=>');                        // lambda
+    const leadLines = code.split('\n');
+    let firstCode = 0;
+    while (firstCode < leadLines.length) {
+      const t = leadLines[firstCode].trim();
+      const looksProse = t !== '' && !isCodeStart(t) && /\s/.test(t) && t.split(/\s+/).length >= 3;
+      if (t === '' || looksProse) {
+        firstCode++;
+        continue;
+      }
+      break;
+    }
+    if (firstCode > 0 && firstCode < leadLines.length) {
+      code = leadLines.slice(firstCode).join('\n').trim();
+    }
+  }
+
   // Step 4: Remove trailing prose the model may append AFTER the code.
   // CRITICAL: never strip lines that are/contain code punctuation. Closing
   // brackets ( } ] ) ) commonly sit alone on short trailing lines — stripping
@@ -467,17 +494,19 @@ export async function handleGenerateUtlx(
           let runtimeError: string | undefined;
           let executedOutput: string | undefined;
 
-          if (sampleInput?.originalData) {
+          // IB02: execute via the multipart endpoint with ALL sample-bearing inputs,
+          // each bound by its real name — so custom-named AND multi-input transforms
+          // verify correctly (the single-input JSON /api/execute can't carry N inputs,
+          // and binds to a hardcoded "input"). Output format comes from the header.
+          const execInputs = inputs
+            .filter(i => i.originalData && i.originalData.length > 0)
+            .map(i => ({ name: i.name, format: i.format, content: i.originalData as string }));
+          if (execInputs.length > 0) {
             if (onProgress) {
-              onProgress(0, `Running transformation against sample input (attempt ${attempt})...`);
+              onProgress(0, `Running transformation against sample input(s) (attempt ${attempt})...`);
             }
             try {
-              const execResult = await daemonClient.execute({
-                utlx: fullProgram,
-                input: sampleInput.originalData,
-                inputFormat: sampleInput.format,
-                outputFormat,
-              });
+              const execResult = await daemonClient.executeMultipart(fullProgram, execInputs);
               if (execResult.success) {
                 executedOutput = execResult.output;
                 logger.info(`Attempt ${attempt}: Execution PASSED`);

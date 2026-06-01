@@ -8,7 +8,8 @@
     "utlx-mcp-server": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run copy-assets",
+    "copy-assets": "node -e \"const fs=require('fs'),p=require('path');const s='src/llm/prompts',d='dist/llm/prompts';fs.mkdirSync(d,{recursive:true});for(const f of fs.readdirSync(s))if(f.endsWith('.md'))fs.copyFileSync(p.join(s,f),p.join(d,f));console.log('copied .md assets to dist')\"",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "test": "jest",

@@ -15,6 +15,12 @@ import { DisposableCollection } from '@theia/core/lib/common/disposable';
 import { FileDialogService, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import * as monaco from '@theia/monaco-editor-core';
+import { loadSession, saveSession, SESSION_KEYS } from '../utils/session-persistence';
+
+/** IF09: persisted editor snapshot (the transformation text). */
+interface EditorSessionSnapshot {
+    text: string;
+}
 import { UTLXEventService } from '../events/utlx-event-service';
 import { parseUTLXHeaders } from '../parser/utlx-header-parser';
 import { FunctionBuilderDialog } from '../function-builder/function-builder-dialog';
@@ -379,18 +385,22 @@ export class UTLXEditorWidget extends ReactWidget {
             // Use a consistent URI for this editor instance
             const uri = monaco.Uri.parse('inmemory://utlx-editor/transformation.utlx');
 
+            // IF09: restore the last-edited transformation text on refresh; fall
+            // back to the default scaffold when there is no session snapshot.
+            const initialContent = this.restoredEditorText() ?? this.getDefaultContent();
+
             // Check if model already exists (to avoid "model already exists" error)
             let model = monaco.editor.getModel(uri);
             if (!model) {
                 model = monaco.editor.createModel(
-                    this.getDefaultContent(),
+                    initialContent,
                     'utlx', // UTL-X language ID - registered via UTLXLanguageGrammarContribution
                     uri
                 );
                 console.log('[UTLXEditor] Created new Monaco model with UTL-X language');
             } else {
                 console.log('[UTLXEditor] Reusing existing Monaco model');
-                model.setValue(this.getDefaultContent());
+                model.setValue(initialContent);
             }
 
             // Create standalone Monaco editor
@@ -975,6 +985,18 @@ output json
     }
 
     /**
+     * IF09: the persisted transformation text from this tab's session, or undefined
+     * when there is none (fresh tab / first load) — caller uses the default scaffold.
+     * A blank/whitespace-only snapshot is treated as "none" so we don't restore an
+     * empty editor on refresh.
+     */
+    private restoredEditorText(): string | undefined {
+        const snapshot = loadSession<EditorSessionSnapshot>(SESSION_KEYS.editor);
+        const text = snapshot?.text;
+        return text && text.trim().length > 0 ? text : undefined;
+    }
+
+    /**
      * Get current editor content
      */
     public getContent(): string {
@@ -1053,6 +1075,8 @@ output json
 
         this.contentChangeDebounceTimer = window.setTimeout(() => {
             this.parseAndUpdatePanels(content);
+            // IF09: persist the transformation text so a refresh restores it.
+            saveSession<EditorSessionSnapshot>(SESSION_KEYS.editor, { text: content });
         }, this.CONTENT_CHANGE_DEBOUNCE_MS);
     }
 
@@ -1248,6 +1272,12 @@ output json
 
             // Update model
             model.setValue(newContent);
+
+            // IF09: a structural header change (input add/delete/rename, format) —
+            // flush the snapshot IMMEDIATELY rather than waiting for the content
+            // debounce, so a quick refresh can't restore a stale header that would
+            // resurrect a just-deleted input via syncFromHeaders.
+            saveSession<EditorSessionSnapshot>(SESSION_KEYS.editor, { text: newContent });
 
             // Update header end line tracking
             this.headerEndLine = newHeaderLines.length - 1; // -1 because --- is the last header line

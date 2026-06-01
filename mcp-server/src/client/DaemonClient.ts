@@ -3,6 +3,7 @@
  */
 
 import axios, { AxiosInstance, AxiosError } from 'axios';
+import FormData from 'form-data';
 import { Logger } from 'winston';
 import {
   ValidationRequest,
@@ -95,6 +96,45 @@ export class DaemonClient {
   async execute(request: ExecutionRequest): Promise<ExecutionResponse> {
     return this.withRetry(async () => {
       const response = await this.client.post<ExecutionResponse>('/api/execute', request);
+      return response.data;
+    });
+  }
+
+  /**
+   * Execute with N named inputs via the multipart endpoint (IB02). Each input is a
+   * file part whose filename = the input's declared name and `X-Format` = its format,
+   * so the daemon binds `$name` correctly (and supports multiple inputs). The output
+   * format comes from the program header. Mirrors the IDE's node daemon-client.
+   */
+  async executeMultipart(
+    utlx: string,
+    inputs: Array<{ name: string; format: string; content: string }>
+  ): Promise<ExecutionResponse> {
+    return this.withRetry(async () => {
+      const form = new FormData();
+      form.append('utlx', utlx);
+      inputs.forEach((inp, i) => {
+        const buffer = Buffer.from(inp.content, 'utf-8');
+        form.append(`input_${i}`, buffer, {
+          filename: inp.name,
+          contentType: 'application/octet-stream',
+          knownLength: buffer.length,
+          header: {
+            'X-Format': inp.format,
+            'X-Encoding': 'UTF-8',
+            'X-BOM': 'false',
+          },
+        });
+      });
+      const response = await this.client.post<ExecutionResponse>(
+        '/api/execute-multipart',
+        form,
+        {
+          headers: form.getHeaders(),
+          maxBodyLength: Infinity,
+          maxContentLength: Infinity,
+        }
+      );
       return response.data;
     });
   }

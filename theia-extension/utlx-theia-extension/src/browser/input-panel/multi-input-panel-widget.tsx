@@ -30,6 +30,7 @@ import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, inferEdmxFromOData, formatSchema } from '../utils/schema-inferrer';
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { toHeaderIdentifier } from '../utils/header-identifier';
+import { loadSession, saveSession, capContent, SESSION_KEYS } from '../utils/session-persistence';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -77,6 +78,21 @@ export interface InputTab {
     udmError?: string;         // Error message for tooltip
     udmLanguage?: string;      // The parsed UDM representation of the input data (from /api/udm/export)
 }
+
+/**
+ * IF09 session snapshot: input CONTENT keyed by input NAME. The structure
+ * (which inputs exist, their formats) is the editor header's job (restored via
+ * syncFromHeaders); this only carries the data the header can't hold. Capped per
+ * field — `*Dropped` flags a sample that was too large to persist.
+ */
+interface PersistedInputContent {
+    instanceContent?: string;
+    schemaContent?: string;
+    udmLanguage?: string;
+    instanceDropped?: boolean;
+    schemaDropped?: boolean;
+}
+type InputContentSnapshot = { [name: string]: PersistedInputContent };
 
 export interface MultiInputPanelState {
     mode: UTLXMode;
@@ -129,6 +145,13 @@ export class MultiInputPanelWidget extends ReactWidget {
     };
 
     private nextInputId = 2;
+
+    // IF09: content snapshot loaded on init, consumed (one-shot) by the restore —
+    // applied to the default input here and to tabs syncFromHeaders builds from the
+    // restored header. Cleared after the restore window so later header edits don't
+    // re-inject stale content.
+    private pendingRestore?: InputContentSnapshot;
+    private persistTimer?: number;
     private udmDialogPosition = { x: 0, y: 0 };
     private isDraggingDialog = false;
     private dragOffset = { x: 0, y: 0 };
@@ -148,6 +171,18 @@ export class MultiInputPanelWidget extends ReactWidget {
         // Log build version for deployment verification
         console.log(`[MultiInputPanelWidget] BUILD VERSION: ${MultiInputPanelWidget.BUILD_VERSION}`);
         console.log('[MultiInputPanelWidget] Widget initialized with vertical tabs layout');
+
+        // IF09: load the per-tab content snapshot and fill any already-present input
+        // (the default tab). Tabs that syncFromHeaders rebuilds from the restored
+        // editor header get filled there. Cleared after a window so a later manual
+        // header edit can't re-inject stale content.
+        this.pendingRestore = loadSession<InputContentSnapshot>(SESSION_KEYS.inputPanel);
+        if (this.pendingRestore) {
+            const filled = this.state.inputs.map(i => this.applyPendingContent(i));
+            this.state = { ...this.state, inputs: filled };
+            window.setTimeout(() => { this.pendingRestore = undefined; }, 5000);
+            window.setTimeout(() => this.refireRestoredUdm(), 300);
+        }
 
         this.update();
 
@@ -2163,6 +2198,70 @@ export class MultiInputPanelWidget extends ReactWidget {
     private setState(partial: Partial<MultiInputPanelState>): void {
         this.state = { ...this.state, ...partial };
         this.update();
+        this.schedulePersist();
+    }
+
+    /** IF09: debounced persist of the per-tab content snapshot. */
+    private schedulePersist(): void {
+        if (this.persistTimer) {
+            window.clearTimeout(this.persistTimer);
+        }
+        this.persistTimer = window.setTimeout(() => this.persistContent(), 400);
+    }
+
+    private persistContent(): void {
+        const snapshot: InputContentSnapshot = {};
+        for (const input of this.state.inputs) {
+            const inst = capContent(input.instanceContent);
+            const sch = capContent(input.schemaContent);
+            const udm = capContent(input.udmLanguage);
+            if (inst.dropped) {
+                console.warn(`[input-panel] sample for "${input.name}" exceeds cap — not persisted (reload the file after refresh)`);
+            }
+            snapshot[input.name] = {
+                instanceContent: inst.content,
+                instanceDropped: inst.dropped,
+                schemaContent: sch.content,
+                schemaDropped: sch.dropped,
+                udmLanguage: udm.content,
+            };
+        }
+        saveSession<InputContentSnapshot>(SESSION_KEYS.inputPanel, snapshot);
+    }
+
+    /**
+     * IF09: fill an input's content from the one-shot restore snapshot, by name,
+     * only when the input is currently empty (don't clobber live content). Marks
+     * udmParsed so the restored UDM drives the field tree / status icon.
+     */
+    private applyPendingContent(input: InputTab): InputTab {
+        const saved = this.pendingRestore?.[input.name];
+        if (!saved) {
+            return input;
+        }
+        const hasInstance = !!(input.instanceContent && input.instanceContent.length > 0);
+        const hasSchema = !!(input.schemaContent && input.schemaContent.length > 0);
+        return {
+            ...input,
+            instanceContent: !hasInstance && saved.instanceContent ? saved.instanceContent : input.instanceContent,
+            schemaContent: !hasSchema && saved.schemaContent ? saved.schemaContent : input.schemaContent,
+            udmLanguage: input.udmLanguage || saved.udmLanguage,
+            udmParsed: input.udmLanguage || saved.udmLanguage ? true : input.udmParsed,
+        };
+    }
+
+    /** IF09: after a restore, re-fire UDM so the editor/canvas field trees rebuild. */
+    private refireRestoredUdm(): void {
+        this.state.inputs.forEach(input => {
+            if (input.udmLanguage) {
+                this.eventService.fireInputUdmUpdated({
+                    inputId: input.id,
+                    inputName: input.name,
+                    udmLanguage: input.udmLanguage,
+                    format: input.instanceFormat
+                });
+            }
+        });
     }
 
     /**
@@ -2310,17 +2409,20 @@ export class MultiInputPanelWidget extends ReactWidget {
             }
 
             if (existingInput) {
-                // Found matching name - reuse it and update format/options
+                // Found matching name - reuse it and update format/options.
+                // applyPendingContent (IF09) fills content on the initial restore if
+                // this tab is still empty; a no-op once the restore window has passed.
                 console.log(`[MultiInputPanelWidget] Reusing existing input "${parsedInput.name}" (preserving content)`);
-                return {
+                return this.applyPendingContent({
                     ...existingInput,
                     name: parsedInput.name, // Update to new name from UTLX
                     instanceFormat: parsedInput.format as InstanceFormat,
                     csvHeaders: parsedInput.csvHeaders,
                     csvDelimiter: parsedInput.csvDelimiter
-                };
+                });
             } else {
-                // No matching name - create new empty input
+                // No matching name - create new input (IF09: filled from the restore
+                // snapshot by name when this is the initial restore, else empty).
                 console.log(`[MultiInputPanelWidget] Creating new input "${parsedInput.name}"`);
                 const newId = `input-${Date.now()}-${index}`;
                 const schemaFormat: SchemaFormatType =
@@ -2328,7 +2430,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                      parsedInput.format === 'avro' || parsedInput.format === 'proto')
                     ? parsedInput.format as SchemaFormatType
                     : 'jsch';
-                return {
+                return this.applyPendingContent({
                     id: newId,
                     name: parsedInput.name,
                     instanceContent: '',
@@ -2337,7 +2439,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     schemaFormat: schemaFormat,
                     csvHeaders: parsedInput.csvHeaders,
                     csvDelimiter: parsedInput.csvDelimiter
-                };
+                });
             }
         });
 
@@ -2361,6 +2463,15 @@ export class MultiInputPanelWidget extends ReactWidget {
             inputs: newInputs,
             activeInputId: newActiveInputId
         });
+
+        // IF09: the restore is one-shot — once syncFromHeaders has rebuilt the tabs
+        // from the restored header and filled their content, consume the snapshot so
+        // later manual header edits don't re-inject stale data. Re-fire UDM so the
+        // restored field trees rebuild.
+        if (this.pendingRestore) {
+            this.pendingRestore = undefined;
+            window.setTimeout(() => this.refireRestoredUdm(), 100);
+        }
 
         console.log('[MultiInputPanelWidget] Sync complete:', newInputs.map(i => ({name: i.name, format: i.instanceFormat})));
     }

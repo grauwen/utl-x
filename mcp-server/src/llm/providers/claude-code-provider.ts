@@ -77,10 +77,17 @@ export class ClaudeCodeProvider implements LLMProvider {
     // Agentic tools (validate→run→fix cycles, or function lookups) need
     // multiple turns; a plain single-shot completion needs only one.
     const agentic = (this.selfCorrect && !!this.validateUtlx) || !!this.lookupFunctions;
-    this.maxTurns = config.maxTurns ?? (agentic ? 8 : 1);
+    // Agentic generation = generate → validate_and_run → fix, often several rounds.
+    // 8 was too tight (a hard transform exhausts it and the SDK throws); 12 gives
+    // the self-correction loop room to converge while capping worst-case usage.
+    this.maxTurns = config.maxTurns ?? (agentic ? 12 : 1);
   }
 
   async generateCompletion(request: LLMCompletionRequest): Promise<LLMCompletionResponse> {
+    // Hoisted so the catch can salvage partial output if the SDK throws on max turns.
+    let lastAssistantText = '';
+    let inputTokens = 0;
+    let outputTokens = 0;
     try {
       const system = request.messages
         .filter(m => m.role === 'system')
@@ -91,9 +98,6 @@ export class ClaudeCodeProvider implements LLMProvider {
       const options = this.buildOptions(system, request.verification);
 
       let resultText = '';
-      let lastAssistantText = '';
-      let inputTokens = 0;
-      let outputTokens = 0;
       let stopReason: LLMCompletionResponse['stopReason'] = 'end_turn';
 
       for await (const message of query({ prompt, options })) {
@@ -135,9 +139,19 @@ export class ClaudeCodeProvider implements LLMProvider {
         usage: { inputTokens, outputTokens },
       };
     } catch (error) {
-      throw new Error(
-        `Claude Code error: ${error instanceof Error ? error.message : String(error)}`
-      );
+      const msg = error instanceof Error ? error.message : String(error);
+      // The SDK throws (rather than yielding a result) when the turn cap is hit.
+      // If we captured an assistant turn before that, return it as best-effort —
+      // generateUtlx still validates/executes it and can retry — instead of a hard
+      // failure that surfaces to the user as "AI assist doesn't work".
+      if (/maximum number of turns/i.test(msg) && lastAssistantText.trim().length > 0) {
+        return {
+          content: lastAssistantText,
+          stopReason: 'max_tokens',
+          usage: { inputTokens, outputTokens },
+        };
+      }
+      throw new Error(`Claude Code error: ${msg}`);
     }
   }
 

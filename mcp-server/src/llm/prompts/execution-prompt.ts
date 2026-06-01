@@ -36,11 +36,17 @@ export interface UTLXGenerationContext {
  * Load the UTLX language reference from markdown file
  */
 function loadLanguageReference(): string {
-  // Try multiple paths: dist (production) and src (development)
+  // Try multiple paths: dist (production, copied by build) and src (development).
+  // __dirname at runtime is <mcp-server>/dist/llm/prompts, so the source is THREE
+  // levels up (../../../src/...), not two. The cwd-based path is unreliable because
+  // the MCP is spawned with cwd = browser-app, not mcp-server — so anchor on
+  // __dirname. (Was failing: "../../src" resolved to dist/src, and cwd was wrong →
+  // the whole UTL-X language spec was missing from the system prompt.)
   const possiblePaths = [
-    path.join(__dirname, 'utlx-language-reference.md'),                    // dist/llm/prompts/
-    path.join(__dirname, '../../src/llm/prompts/utlx-language-reference.md'), // from dist/ to src/
-    path.join(process.cwd(), 'src/llm/prompts/utlx-language-reference.md'),   // from project root
+    path.join(__dirname, 'utlx-language-reference.md'),                        // dist/llm/prompts/ (build-copied)
+    path.join(__dirname, '../../../src/llm/prompts/utlx-language-reference.md'), // <mcp-server>/src/llm/prompts/
+    path.join(__dirname, '../../src/llm/prompts/utlx-language-reference.md'),    // legacy fallback (dist/src)
+    path.join(process.cwd(), 'src/llm/prompts/utlx-language-reference.md'),      // cwd === mcp-server (rare)
   ];
 
   for (const refPath of possiblePaths) {
@@ -101,6 +107,12 @@ Example of the expected layout:
   ("Cannot access property 'key' on ArrayValue").
 - **Aggregate over an array** → \`array |> count()\`, \`array |> sumBy(x => x.amount)\`.
 - **Wrap a single object to group/iterate it** → \`[$input] |> mapGroups(...)\`.
+- **Copy an object / pass fields through unchanged** → use spread \`{ ...item }\`
+  (with overrides: \`{ ...item, total: recompute(item) }\`).
+  ❌ Do NOT enumerate every field 1:1 just to copy (\`a: item.a, b: item.b, ...\`).
+- **An output collection identical to an input one** → reference it directly:
+  \`lineItems: $order.lineItems\` — no \`map\` needed.
+- **Select or drop fields** → \`pick(item, ["a", "b"])\` / \`omit(item, ["secret"])\`.
 
 # UTLX LANGUAGE REFERENCE
 
