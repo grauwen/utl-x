@@ -1,0 +1,18 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PaymentInstruction",
+  "description": "Incoming SEPA-style payment instruction (source message).",
+  "type": "object",
+  "required": ["paymentId", "amount", "currencyCode", "debtorName", "debtorIBAN", "creditorName", "creditorIBAN", "executionDate"],
+  "properties": {
+    "paymentId":      { "type": "string" },
+    "amount":         { "type": "number" },
+    "currencyCode":   { "type": "string", "description": "ISO 4217 code, e.g. EUR" },
+    "debtorName":     { "type": "string" },
+    "debtorIBAN":     { "type": "string" },
+    "creditorName":   { "type": "string" },
+    "creditorIBAN":   { "type": "string" },
+    "executionDate":  { "type": "string", "format": "date" },
+    "remittanceInfo": { "type": "string", "description": "Free-text payment reference" }
+  }
+}

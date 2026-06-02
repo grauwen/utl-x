@@ -1,0 +1,19 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PatientAdmission",
+  "description": "Hospital admission record (source message).",
+  "type": "object",
+  "required": ["admissionId", "patientFirstName", "patientLastName", "dateOfBirth", "gender", "admissionDate"],
+  "properties": {
+    "admissionId":        { "type": "string" },
+    "patientFirstName":   { "type": "string" },
+    "patientLastName":    { "type": "string" },
+    "dateOfBirth":        { "type": "string", "format": "date" },
+    "gender":             { "type": "string", "enum": ["M", "F", "X"] },
+    "admissionDate":      { "type": "string", "format": "date" },
+    "dischargeDate":      { "type": "string", "format": "date" },
+    "attendingPhysician": { "type": "string", "description": "Free-text physician name" },
+    "primaryComplaint":   { "type": "string", "description": "Free-text reason for admission" },
+    "roomNumber":         { "type": "string" }
+  }
+}

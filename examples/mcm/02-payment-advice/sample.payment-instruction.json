@@ -1,0 +1,11 @@
+{
+  "paymentId": "PMT-9F2C-00831",
+  "amount": 4750.00,
+  "currencyCode": "EUR",
+  "debtorName": "Helios Trading BV",
+  "debtorIBAN": "NL91ABNA0417164300",
+  "creditorName": "Nordwind Logistics GmbH",
+  "creditorIBAN": "DE89370400440532013000",
+  "executionDate": "2026-06-01",
+  "remittanceInfo": "Invoice 2026-0455"
+}

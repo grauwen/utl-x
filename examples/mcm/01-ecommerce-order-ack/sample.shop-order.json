@@ -1,0 +1,15 @@
+{
+  "orderId": "WS-2026-004417",
+  "orderDate": "2026-05-28",
+  "customer": {
+    "name": "Lena Vermeer",
+    "email": "lena.vermeer@example.com"
+  },
+  "currency": "EUR",
+  "totalAmount": 248.40,
+  "lines": [
+    { "sku": "BK-1042", "name": "Mechanical keyboard", "quantity": 1, "unitPrice": 129.00 },
+    { "sku": "MS-3310", "name": "Wireless mouse",      "quantity": 2, "unitPrice": 39.70 },
+    { "sku": "CB-0099", "name": "USB-C cable 2m",       "quantity": 4, "unitPrice": 10.00 }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "admissionId": "ADM-2026-55129",
+  "patientFirstName": "Marcus",
+  "patientLastName": "Albright",
+  "dateOfBirth": "1972-09-14",
+  "gender": "M",
+  "admissionDate": "2026-05-30",
+  "dischargeDate": "2026-06-02",
+  "attendingPhysician": "Dr. Priya Nair",
+  "primaryComplaint": "Acute chest pain, suspected angina",
+  "roomNumber": "C-314"
+}

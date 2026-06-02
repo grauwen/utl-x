@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ShopOrder",
+  "description": "Order as emitted by the web shop (source message).",
+  "type": "object",
+  "required": ["orderId", "orderDate", "customer", "currency", "totalAmount", "lines"],
+  "properties": {
+    "orderId":     { "type": "string", "description": "Shop order identifier" },
+    "orderDate":   { "type": "string", "format": "date", "description": "Date the order was placed" },
+    "customer": {
+      "type": "object",
+      "required": ["name", "email"],
+      "properties": {
+        "name":  { "type": "string" },
+        "email": { "type": "string", "format": "email" }
+      }
+    },
+    "currency":    { "type": "string", "description": "ISO 4217 currency code, e.g. EUR" },
+    "totalAmount": { "type": "number", "description": "Order grand total" },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["sku", "name", "quantity", "unitPrice"],
+        "properties": {
+          "sku":       { "type": "string" },
+          "name":      { "type": "string" },
+          "quantity":  { "type": "integer" },
+          "unitPrice": { "type": "number" }
+        }
+      }
+    }
+  }
+}
