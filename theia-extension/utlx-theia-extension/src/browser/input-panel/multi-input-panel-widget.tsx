@@ -199,7 +199,9 @@ export class MultiInputPanelWidget extends ReactWidget {
         this.eventService.onModeChanged(event => {
             console.log('[MultiInputPanelWidget] Mode changed to:', event.mode);
             // When entering Message Contract, sync schemaFormat to match instanceFormat
-            // (the auto-linking only fires on instance format changes while already in DT mode)
+            // (the auto-linking only fires on instance format changes while already in DT mode).
+            // We do NOT silently change a chosen instance format — if it isn't valid for MC
+            // the dropdown flags it red (see formatInvalid in render) so the user fixes it.
             const updatedInputs = event.mode === UTLXMode.MESSAGE_CONTRACT
                 ? this.state.inputs.map(input => ({
                     ...input,
@@ -247,6 +249,16 @@ export class MultiInputPanelWidget extends ReactWidget {
         const currentFormat = isMessageContract && activeSubTab === 'schema'
             ? activeInput.schemaFormat
             : activeInput.instanceFormat;
+
+        // Which formats are valid for the current mode/tab — and is the current one invalid?
+        // We don't silently change a stale format (e.g. a schema format left over from
+        // Execution mode); instead we keep it selected and flag it red so the user fixes it.
+        const allowedFormats: string[] = isMessageContract
+            ? (activeSubTab === 'schema'
+                ? ['jsch', 'xsd', 'tsch', 'avro', 'proto', 'osch']
+                : ['json', 'xml', 'yaml', 'csv', 'odata'])
+            : ['json', 'xml', 'yaml', 'csv', 'odata', 'jsch', 'xsd', 'avro', 'proto', 'osch', 'tsch'];
+        const formatInvalid = !!currentFormat && !allowedFormats.includes(currentFormat);
 
         return (
             <div className='utlx-multi-input-panel-container'>
@@ -428,8 +440,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                             <>
                                 {/* Message Contract: Schema is the contract (primary). The
                                     Instance tab (an optional sample) is hidden when the
-                                    input is marked "schema only". The Schema tab is always
-                                    reachable — instance and schema are independent here. */}
+                                    input is marked "schema only". The Schema tab is reachable
+                                    except when the instance carries a schema FORMAT (an invalid
+                                    leftover from Execution) — then it's blocked until fixed. */}
                                 {!activeInput.schemaOnly && (
                                     <button
                                         className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
@@ -438,12 +451,21 @@ export class MultiInputPanelWidget extends ReactWidget {
                                         Instance
                                     </button>
                                 )}
-                                <button
-                                    className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''}`}
-                                    onClick={() => this.handleSubTabSwitch('schema')}
-                                >
-                                    Schema
-                                </button>
+                                {(() => {
+                                    const schemaBlocked = !activeInput.schemaOnly && this.isSchemaTabDisabled(activeInput.instanceFormat);
+                                    return (
+                                        <button
+                                            className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''} ${schemaBlocked ? 'disabled' : ''}`}
+                                            onClick={() => !schemaBlocked && this.handleSubTabSwitch('schema')}
+                                            disabled={schemaBlocked}
+                                            title={schemaBlocked
+                                                ? 'Schema not available: the instance format is a schema format — fix the instance format first'
+                                                : 'View input schema'}
+                                        >
+                                            Schema
+                                        </button>
+                                    );
+                                })()}
                                 <label
                                     className='utlx-schema-only-toggle'
                                     title='This input has no sample instance — use only its schema (the contract). Hides the Instance tab.'
@@ -471,17 +493,36 @@ export class MultiInputPanelWidget extends ReactWidget {
                         <label>
                             Format:
                             <select
+                                className={formatInvalid ? 'utlx-format-invalid' : ''}
                                 value={currentFormat}
                                 onChange={(e) => this.handleFormatChange(e.target.value as any)}
                                 disabled={loading}
+                                title={formatInvalid ? `“${currentFormat}” is not valid for this ${activeSubTab} in Message Contract mode — pick a valid format` : undefined}
                             >
+                                {formatInvalid && (
+                                    <option value={currentFormat}>{currentFormat} — not valid here</option>
+                                )}
                                 {isMessageContract && activeSubTab === 'schema' ? (
-                                    // Message Contract Schema tab: linked formats based on instance
+                                    // Message Contract Schema tab: schema formats only
                                     <>
-                                        {this.getSchemaFormatOptions(activeInput.instanceFormat)}
+                                        <option value='jsch'>jsch</option>
+                                        <option value='xsd'>xsd</option>
+                                        <option value='tsch'>tsch</option>
+                                        <option value='avro'>avro</option>
+                                        <option value='proto'>proto</option>
+                                        <option value='osch'>osch</option>
+                                    </>
+                                ) : isMessageContract ? (
+                                    // Message Contract Instance tab: data formats only
+                                    <>
+                                        <option value='json'>json</option>
+                                        <option value='xml'>xml</option>
+                                        <option value='yaml'>yaml</option>
+                                        <option value='csv'>csv</option>
+                                        <option value='odata'>odata</option>
                                     </>
                                 ) : (
-                                    // Execution mode + Message Contract Instance tab: all 8 formats
+                                    // Execution mode: all formats (data + schema-as-data)
                                     <>
                                         <option value='json'>json</option>
                                         <option value='xml'>xml</option>
@@ -702,36 +743,6 @@ export class MultiInputPanelWidget extends ReactWidget {
                 )}
             </div>
         );
-    }
-
-    /**
-     * Get schema format options based on instance format
-     * Linking rules:
-     * - json → jsch (always)
-     * - xml → xsd (always)
-     * - yaml → jsch (always)
-     * - csv → tsch (not implemented yet)
-     * - xsd, jsch, avro, proto → BLUR the schema tab (no schema for schema)
-     */
-    private getSchemaFormatOptions(instanceFormat: InstanceFormat | SchemaFormatType): React.ReactNode[] {
-        switch (instanceFormat) {
-            case 'json':
-            case 'yaml':
-            case 'odata':
-                return [
-                    <option key='jsch' value='jsch'>jsch</option>,
-                    <option key='osch' value='osch'>osch</option>
-                ];
-            case 'xml':
-                return [
-                    <option key='xsd' value='xsd'>xsd</option>,
-                    <option key='osch' value='osch'>osch</option>
-                ];
-            case 'csv':
-                return [<option key='tsch' value='tsch'>tsch</option>];
-            default:
-                return [];
-        }
     }
 
     /**

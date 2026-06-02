@@ -125,7 +125,9 @@ export class OutputPanelWidget extends ReactWidget {
         this.eventService.onModeChanged(event => {
             console.log('[OutputPanelWidget] Mode changed to:', event.mode);
 
-            // When entering design-time mode, link schema format to instance format
+            // When entering design-time mode, link schema format to instance format.
+            // We do NOT silently rewrite a chosen instance format — if it isn't valid for
+            // MC the dropdown flags it red (see formatInvalid in render) so the user fixes it.
             let linkedSchemaFormat = this.state.schemaFormat;
             if (event.mode === UTLXMode.MESSAGE_CONTRACT && this.state.instanceFormat) {
                 const linked = this.getLinkedSchemaFormat(this.state.instanceFormat);
@@ -134,9 +136,15 @@ export class OutputPanelWidget extends ReactWidget {
                 }
             }
 
+            // Land on the Schema tab in MC (output is schema-centric) — UNLESS the schema
+            // tab is blocked because the instance carries a schema FORMAT (invalid leftover
+            // from Execution). Then land on Instance so the user sees the red, fixable value.
+            const schemaBlocked = !this.state.schemaOnly && this.isSchemaTabDisabled();
             this.setState({
                 mode: event.mode,
-                activeTab: event.mode === UTLXMode.MESSAGE_CONTRACT ? 'schema' : 'instance',
+                activeTab: event.mode === UTLXMode.MESSAGE_CONTRACT
+                    ? (schemaBlocked ? 'instance' : 'schema')
+                    : 'instance',
                 schemaFormat: linkedSchemaFormat
             });
         });
@@ -166,6 +174,16 @@ export class OutputPanelWidget extends ReactWidget {
         const currentExecutionTime = activeTab === 'instance' ? instanceExecutionTime : schemaExecutionTime;
         const currentError = activeTab === 'instance' ? instanceError : schemaError;
         const currentDiagnostics = activeTab === 'instance' ? instanceDiagnostics : schemaDiagnostics;
+
+        // Which formats are valid for the current mode/tab — and is the current one invalid?
+        // We keep a stale format selected and flag it red rather than silently rewriting it.
+        const isMC = mode === UTLXMode.MESSAGE_CONTRACT;
+        const allowedFormats: string[] = isMC
+            ? (activeTab === 'schema'
+                ? ['jsch', 'xsd', 'tsch', 'avro', 'proto', 'osch']
+                : ['json', 'xml', 'yaml', 'csv', 'odata'])
+            : ['json', 'xml', 'yaml', 'csv', 'odata', 'jsch', 'xsd', 'avro', 'proto', 'osch', 'tsch'];
+        const formatInvalid = !!currentFormat && !allowedFormats.includes(currentFormat);
 
         return (
             <div className='utlx-output-panel-container'>
@@ -279,20 +297,50 @@ export class OutputPanelWidget extends ReactWidget {
                     <label>
                         Format:
                         <select
+                            className={formatInvalid ? 'utlx-format-invalid' : ''}
                             value={currentFormat || 'json'}
                             onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value)}
+                            title={formatInvalid ? `“${currentFormat}” is not valid for this ${activeTab} in Message Contract mode — pick a valid format` : undefined}
                         >
-                            <option value='json'>json</option>
-                            <option value='xml'>xml</option>
-                            <option value='yaml'>yaml</option>
-                            <option value='csv'>csv</option>
-                            <option value='odata'>odata</option>
-                            <option value='jsch'>jsch %USDL 1.0</option>
-                            <option value='xsd'>xsd %USDL 1.0</option>
-                            <option value='avro'>avro %USDL 1.0</option>
-                            <option value='proto'>proto %USDL 1.0</option>
-                            <option value='osch'>osch %USDL 1.0</option>
-                            <option value='tsch'>tsch %USDL 1.0</option>
+                            {formatInvalid && (
+                                <option value={currentFormat}>{currentFormat} — not valid here</option>
+                            )}
+                            {mode === UTLXMode.MESSAGE_CONTRACT && activeTab === 'schema' ? (
+                                // Message Contract Schema tab: schema (contract) formats only.
+                                // No %USDL labels — USDL is an Execution-mode output concept.
+                                <>
+                                    <option value='jsch'>jsch</option>
+                                    <option value='xsd'>xsd</option>
+                                    <option value='tsch'>tsch</option>
+                                    <option value='avro'>avro</option>
+                                    <option value='proto'>proto</option>
+                                    <option value='osch'>osch</option>
+                                </>
+                            ) : mode === UTLXMode.MESSAGE_CONTRACT ? (
+                                // Message Contract Instance tab: data formats only
+                                <>
+                                    <option value='json'>json</option>
+                                    <option value='xml'>xml</option>
+                                    <option value='yaml'>yaml</option>
+                                    <option value='csv'>csv</option>
+                                    <option value='odata'>odata</option>
+                                </>
+                            ) : (
+                                // Execution mode: data formats + USDL schema presets
+                                <>
+                                    <option value='json'>json</option>
+                                    <option value='xml'>xml</option>
+                                    <option value='yaml'>yaml</option>
+                                    <option value='csv'>csv</option>
+                                    <option value='odata'>odata</option>
+                                    <option value='jsch'>jsch %USDL 1.0</option>
+                                    <option value='xsd'>xsd %USDL 1.0</option>
+                                    <option value='avro'>avro %USDL 1.0</option>
+                                    <option value='proto'>proto %USDL 1.0</option>
+                                    <option value='osch'>osch %USDL 1.0</option>
+                                    <option value='tsch'>tsch %USDL 1.0</option>
+                                </>
+                            )}
                         </select>
                     </label>
 

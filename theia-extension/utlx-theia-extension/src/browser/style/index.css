@@ -846,6 +846,16 @@
     font-weight: 600;
 }
 
+/* A format dropdown whose selected value isn't valid for the current mode/tab.
+   We keep the stale value visible (rather than silently changing it) and flag it red. */
+.utlx-format-invalid {
+    color: var(--theia-errorForeground, #f48771);
+    border-color: var(--theia-errorForeground, #f48771) !important;
+}
+.utlx-format-invalid option {
+    color: var(--theia-foreground, #ccc);
+}
+
 /* MC mode: "schema only" toggle sits at the right of the Instance/Schema tabs. */
 .utlx-schema-only-toggle {
     flex: none;

@@ -1,32 +1,39 @@
-# IB03: IDE — output header parser ignores the output name, silently flipping schema/Tier-2 outputs to `json` on every round-trip
+# IB03: IDE — output header parser ignores the output name, silently flipping every named non-`json` output back to `json` on round-trip
 
 **Status:** **FIXED** — the header parser's `OUTPUT` pattern now accepts the optional
 output name (`output <name> <format>`) and `parseOutput` returns it. A named output no
 longer fails to parse, so the editor↔panel round-trip preserves the real output format.
 Needs the extension **rebuild + reload** to go live.
-**Priority:** High (silently corrupts a selected output format; breaks Tier-2/MC output state)
+**Priority:** High (silently corrupts a selected output format for ALL named outputs —
+Tier 1 and Tier 2; common in plain Execution mode, not just MC)
 **Created:** June 2026
 **Component:** IDE header parser (`theia-extension/.../browser/parser/utlx-header-parser.ts`).
 **Not** the daemon, **not** the CLI, **not** the `utlxe` engine — purely the IDE's
 front-end header round-trip.
 
 > **One-line:** `generateHeader` writes `output <name> <format>`, but the parser only
-> matched `output <format>`. A named output line failed to parse → the caller defaulted
-> to `{format: 'json'}` → `syncFromHeaders` wrote that back, flipping the panel's output
-> format to `json`. Invisible for json outputs (default *is* json); a real data-loss
-> flip for any schema/Tier-2 output (`jsch`/`xsd`/`tsch`/`avro`/`proto`/`osch`).
+> matched `output <format>`. **Any** named output line (name ≠ `output`) failed to parse
+> → the caller defaulted to `{format: 'json'}` → `syncFromHeaders` wrote that back,
+> flipping the panel's output format to `json`. This affects **every non-json format** —
+> Tier 1 (`xml`/`yaml`/`csv`/`odata`) **and** Tier 2 (`jsch`/`xsd`/`tsch`/`avro`/`proto`/`osch`).
+> Only a named **json** output was invisibly unaffected (the parse-failure fallback *is*
+> json). It was first *noticed* on a Tier-2 output, but it was never Tier-2-specific.
 
 ---
 
 ## Problem
 
-In the IDE, select a schema/Tier-2 output format — e.g. **`jsch %USDL 1.0`** (a JSON
-Schema output, where `%`-type USDL directives are usable) — for an output that has a
-**name** (any name other than the default `output`; outputs get auto-named from a loaded
-file, e.g. `claim.json` → `claim`). The selection does not stick: the output format
-**reverts to `json`** on the next editor↔panel header sync. Switching modes makes it
-obvious — e.g. going to Message Contract mode shows the output instance as `json` instead
-of the chosen `jsch`.
+In the IDE, give an output a **name** (any name other than the default `output` — outputs
+get auto-named from a loaded file, e.g. `claim.json` → `claim`) and select **any non-json
+output format**: a Tier-1 data format (`xml`/`yaml`/`csv`/`odata`) or a Tier-2 schema
+format (`jsch`/`xsd`/`tsch`/`avro`/`proto`/`osch`, e.g. `jsch %USDL 1.0` — a JSON Schema
+output where `%`-type USDL directives are usable). The selection does not stick: the
+output format **reverts to `json`** on the next editor↔panel header sync. Switching modes
+makes it obvious — e.g. going to Message Contract mode shows the output as `json` instead
+of the chosen format.
+
+This was first *noticed* on a Tier-2 (`jsch`) output, but it is **not** Tier-2-specific:
+a named `output report xml` flips to `json` just the same in plain Execution mode.
 
 It is **intermittent in appearance** ("works the second time"): once an unrelated
 round-trip happens to set the linked `schemaFormat`, a subsequent re-selection appears
@@ -85,8 +92,10 @@ The input parser was **not** affected — `SINGLE_INPUT`/`INPUT_PART` already ma
   `output <format>` → the parser matched → no flip.
 - For **json** outputs the bug is invisible: the parse-failure fallback is `json`, which
   equals the intended value.
-- It only bites a **named** output set to a **non-json** format — exactly the new
-  Tier-2 / Message-Contract workflows (`jsch`/`xsd`/…).
+- It bites **any named** output set to a **non-json** format — Tier 1
+  (`xml`/`yaml`/`csv`/`odata`) *and* Tier 2 (`jsch`/`xsd`/…). It just happened to be
+  *spotted* in the new Tier-2 / Message-Contract work, but a named `xml`/`csv` output in
+  plain Execution mode was silently reverting to `json` too.
 
 ## Fix (IDE-only, no daemon/engine/CLI change)
 
@@ -105,19 +114,33 @@ return { format, ...(name ? { name } : {}), ...options };
 (`ParsedOutput` gains an optional `name`.) Regex backtracking keeps the unnamed form
 working: `output json` → no name, `format = json`.
 
-**Verified** by unit round-trip:
+**Verified** by unit round-trip (fixed parser) — note Tier 1 was equally broken:
 
 ```
 "output jsch"                -> format=jsch   name=(none)
 "output result jsch"         -> format=jsch   name=result      (previously flipped to json)
+"output report xml"          -> format=xml    name=report      (previously flipped to json)
+"output report yaml"         -> format=yaml   name=report      (previously flipped to json)
+"output report csv"          -> format=csv    name=report      (previously flipped to json)
 "output myOut json"          -> format=json   name=myOut
 "output report-2026 jsch {}" -> format=jsch   name=report-2026
 ```
 
+And the **old** regex, proving every named non-json output failed pre-fix:
+
+```
+OLD = /^output\s+(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/
+"output xml"          -> format=xml
+"output report xml"   -> NO MATCH  -> defaults to json   (flip)
+"output report yaml"  -> NO MATCH  -> defaults to json   (flip)
+"output report jsch"  -> NO MATCH  -> defaults to json   (flip)
+```
+
 ## Acceptance
 
-- A named output set to a schema/Tier-2 format (`output claim jsch`) **keeps** that
-  format across header round-trips (edit, mode switch, paste sync) — no flip to json.
+- A named output set to **any** non-json format **keeps** that format across header
+  round-trips (edit, mode switch, paste sync) — no flip to json. Covers Tier 1
+  (`output report xml` stays `xml`) and Tier 2 (`output claim jsch` stays `jsch`).
 - Default-named and json outputs are unchanged.
 - The parsed output **name** is preserved (named outputs survive copy/paste header sync
   instead of being dropped).

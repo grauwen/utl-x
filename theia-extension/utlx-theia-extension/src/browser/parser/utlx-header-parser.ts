@@ -21,6 +21,7 @@ export interface ParsedInput {
  */
 export interface ParsedOutput {
     format: string;
+    name?: string;   // optional output name ("output result jsch")
     csvHeaders?: boolean;
     csvDelimiter?: string;
     csvBom?: boolean;
@@ -63,8 +64,11 @@ const PATTERNS = {
     // Allow hyphens in input names: [a-zA-Z_][a-zA-Z0-9_-]*
     INPUT_PART: /([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/g,
 
-    // output format OR output format {options}
-    OUTPUT: /^output\s+(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
+    // output [name] format OR output [name] format {options}.
+    // The optional name (e.g. "output result jsch") must be parsed too, otherwise a
+    // named output fails to match and the caller defaults to json — silently flipping
+    // a schema/Tier-2 output (jsch/xsd/…) back to json on every header round-trip.
+    OUTPUT: /^output\s+(?:([a-zA-Z_][a-zA-Z0-9_-]*)\s+)?(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
     // CSV options
     CSV_HEADERS: /headers:\s*(true|false)/,
@@ -217,11 +221,12 @@ function parseOutput(line: string): ParsedOutput | null {
         return null;
     }
 
-    const [, format, optionsStr] = match;
+    const [, name, format, optionsStr] = match;
     const options = parseOptions(optionsStr);
 
     return {
         format,
+        ...(name ? { name } : {}),
         ...options
     };
 }
