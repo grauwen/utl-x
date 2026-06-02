@@ -1,8 +1,17 @@
 # EF03: Bundle Management API
 
-**Status:** Design  
+**Status:** **Implemented** (utlxe / Azure) — *this doc was stale at "Design"; corrected June 2026.*
 **Priority:** High (required for Azure Marketplace offering)  
 **Created:** May 2026
+
+> **As-built API (source of truth = `engine/admin/AdminEndpoint.kt`; see `book-azure/UTLXe on Azure.pdf`):**
+> Authed `/admin/*` routes (admin port), read-only in locked mode except operational endpoints:
+> - `GET /admin/transformations` (list + metrics), `GET /admin/transformations/{name}`
+> - `POST /admin/transformations/{name}` (deploy/update), `DELETE /admin/transformations/{name}`
+> - `POST /admin/transformations/{name}/test`, `POST /admin/transformations/{name}/pause` (+ resume)
+> - `POST /admin/bundle` (ingest a whole bundle: `transformations/` + `schemas/`),
+>   `GET /admin/bundle` (bundle info), `DELETE /admin/bundle`
+> - Consumed by the IDE via **IF05** (Bundle Operations); pairs with EF09 (`.utlar`) for locked mode.
 
 ---
 

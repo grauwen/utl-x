@@ -1,9 +1,20 @@
 # EF09: Production Bundle Mode (.utlar)
 
-**Status:** Design  
+**Status:** **Implemented** (utlxe / Azure) — *this doc was stale at "Design"; corrected June 2026.*
 **Priority:** High (production hardening for Azure Marketplace)  
 **Created:** May 2026  
 **Depends on:** EF03 (Admin API), EF02 (validation wiring)
+
+> **As-built contract (source of truth = engine code; see `book-azure/UTLXe on Azure.pdf`):**
+> - **Mode detection** — `engine/admin/BundleMode.kt::detectBundleMode`: exactly one
+>   `<name>.utlar` ZIP on the data volume → **locked** mode (Admin API read-only except
+>   operational endpoints); none → **open** mode (directory); >1 → ambiguous (uses first, logs error).
+> - **`.utlar` = ZIP** of a bundle directory with layout:
+>   `transformations/<name>/{transform.yaml, <name>.utlx}` + shared `schemas/` + a
+>   **manifest** (`version`, `created`; sha256 checksum computed at load).
+> - **Loading** — `engine/bundle/BundleLoader.kt` (open-dir scan of `transformations/`) and
+>   `engine/admin/BundleMode.kt::loadUtlar` / `readManifestFromUtlar`; wired in `engine/Main.kt`.
+> - Consumed by the IDE via **IF03** (Bundle Project Model & Explorer) against this exact layout.
 
 ---
 
