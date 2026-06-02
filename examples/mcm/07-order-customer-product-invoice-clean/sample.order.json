@@ -1,0 +1,9 @@
+{
+  "orderId": "SO-2026-8100",
+  "orderDate": "2026-05-31",
+  "customerId": "CUST-00412",
+  "lines": [
+    { "productId": "BK-1042", "quantity": 2 },
+    { "productId": "DS-2201", "quantity": 1 }
+  ]
+}

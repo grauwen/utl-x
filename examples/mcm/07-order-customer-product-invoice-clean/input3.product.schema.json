@@ -1,0 +1,14 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ProductCatalog",
+  "description": "Product catalog entry (source 3 of 3).",
+  "type": "object",
+  "required": ["productId", "productName", "unitPrice", "taxRate", "currency"],
+  "properties": {
+    "productId":   { "type": "string" },
+    "productName": { "type": "string" },
+    "unitPrice":   { "type": "number" },
+    "taxRate":     { "type": "number", "description": "Percentage, e.g. 21" },
+    "currency":    { "type": "string" }
+  }
+}

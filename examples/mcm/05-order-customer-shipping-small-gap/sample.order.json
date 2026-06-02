@@ -1,0 +1,10 @@
+{
+  "orderId": "SO-2026-7782",
+  "orderDate": "2026-05-29",
+  "customerId": "CUST-00501",
+  "totalAmount": 88.50,
+  "lines": [
+    { "sku": "CB-0099", "quantity": 5 },
+    { "sku": "MS-3310", "quantity": 1 }
+  ]
+}

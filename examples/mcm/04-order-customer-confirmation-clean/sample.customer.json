@@ -1,0 +1,8 @@
+{
+  "customerId": "CUST-00412",
+  "customerName": "Helios Trading BV",
+  "customerEmail": "ap@helios-trading.example",
+  "billingStreet": "Keizersgracht 123",
+  "billingCity": "Amsterdam",
+  "billingCountry": "NL"
+}

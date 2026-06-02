@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Order",
+  "description": "Order document (source 1 of 3).",
+  "type": "object",
+  "required": ["orderId", "orderDate", "customerId", "lines"],
+  "properties": {
+    "orderId":    { "type": "string" },
+    "orderDate":  { "type": "string", "format": "date" },
+    "customerId": { "type": "string", "description": "Join key to Customer" },
+    "lines": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["productId", "quantity"],
+        "properties": {
+          "productId": { "type": "string", "description": "Join key to Product catalog" },
+          "quantity":  { "type": "integer" }
+        }
+      }
+    }
+  }
+}

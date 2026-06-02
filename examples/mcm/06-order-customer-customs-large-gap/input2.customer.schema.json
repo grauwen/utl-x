@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Customer",
+  "description": "Customer master record (source 2 of 2).",
+  "type": "object",
+  "required": ["customerId", "customerName", "billingCountry"],
+  "properties": {
+    "customerId":     { "type": "string" },
+    "customerName":   { "type": "string" },
+    "billingCountry": { "type": "string" }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "orderId": "SO-2026-7781",
+  "orderDate": "2026-05-29",
+  "customerId": "CUST-00412",
+  "currency": "EUR",
+  "totalAmount": 519.00,
+  "lines": [
+    { "sku": "BK-1042", "quantity": 2, "unitPrice": 129.00 },
+    { "sku": "DS-2201", "quantity": 1, "unitPrice": 261.00 }
+  ]
+}

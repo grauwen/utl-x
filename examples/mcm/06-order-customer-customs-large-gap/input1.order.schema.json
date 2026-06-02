@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Order",
+  "description": "Order document (source 1 of 2).",
+  "type": "object",
+  "required": ["orderId", "orderDate", "customerId", "totalAmount"],
+  "properties": {
+    "orderId":     { "type": "string" },
+    "orderDate":   { "type": "string", "format": "date" },
+    "customerId":  { "type": "string" },
+    "totalAmount": { "type": "number" }
+  }
+}
