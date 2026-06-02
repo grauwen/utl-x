@@ -12,7 +12,6 @@ import { z } from 'zod';
 import { LLMGateway } from '../llm/llm-gateway';
 import { UTLXGenerationContext } from '../llm/prompts/execution-prompt';
 import { buildPrompt, AssistMode } from '../llm/prompts/prompt-dispatcher';
-import { MessageContractNotImplementedError } from '../llm/prompts/message-contract-prompt';
 import { buildUsdlContext } from '../llm/usdl-context';
 
 export const generateUtlxTool: Tool = {
@@ -47,6 +46,10 @@ export const generateUtlxTool: Tool = {
               type: 'string',
               description: 'Optional UDM structure after parsing',
             },
+            schema: {
+              type: 'string',
+              description: 'Optional input schema content (Message Contract mode, jsch/xsd/…)',
+            },
           },
           required: ['name', 'format'],
         },
@@ -54,6 +57,29 @@ export const generateUtlxTool: Tool = {
       outputFormat: {
         type: 'string',
         description: 'Target output format (xml, json, csv, yaml, etc.)',
+      },
+      outputSchema: {
+        type: 'object',
+        description: 'Message Contract mode (IF11): the output CONTRACT schema (fixed target).',
+        properties: {
+          content: { type: 'string' },
+          format: { type: 'string' },
+        },
+      },
+      coverage: {
+        type: 'array',
+        description: 'Message Contract mode (IF11): per-output-field mapping plan from coverage analysis.',
+        items: {
+          type: 'object',
+          properties: {
+            outputPath: { type: 'string' },
+            type: { type: 'string' },
+            required: { type: 'boolean' },
+            status: { type: 'string', enum: ['direct', 'derivable', 'gap'] },
+            source: { type: 'string' },
+            expression: { type: 'string' },
+          },
+        },
       },
       originalHeader: {
         type: 'string',
@@ -80,11 +106,22 @@ const GenerateUtlxArgsSchema = z.object({
     format: z.string(),
     originalData: z.string().optional(),
     udm: z.string().optional(),
+    schema: z.string().optional(),
   })),
   outputFormat: z.string(),
   originalHeader: z.string(),
   mode: z.enum(['execution', 'message-contract']).optional(),
   existingBody: z.string().optional(),
+  // IF11 (Message Contract mode)
+  outputSchema: z.object({ content: z.string(), format: z.string() }).optional(),
+  coverage: z.array(z.object({
+    outputPath: z.string(),
+    type: z.string(),
+    required: z.boolean(),
+    status: z.enum(['direct', 'derivable', 'gap']),
+    source: z.string().optional(),
+    expression: z.string().optional(),
+  })).optional(),
 });
 
 /**
@@ -229,7 +266,7 @@ export async function handleGenerateUtlx(
 ): Promise<ToolInvocationResponse> {
   try {
     // Validate arguments
-    const { prompt, inputs, outputFormat, originalHeader, mode, existingBody } =
+    const { prompt, inputs, outputFormat, originalHeader, mode, existingBody, outputSchema, coverage } =
       GenerateUtlxArgsSchema.parse(args);
     const assistMode: AssistMode = mode ?? 'execution';
 
@@ -240,25 +277,14 @@ export async function handleGenerateUtlx(
       mode: assistMode,
       hasOriginalHeader: !!originalHeader,
       hasExistingBody: !!existingBody,
+      hasOutputSchema: !!outputSchema,
+      coverageFields: coverage?.length ?? 0,
     });
 
-    // IF08: Message Contract mode AI assist is not implemented yet. Fail fast
-    // with the typed error's message (no execution-specific context gathering).
-    if (assistMode === 'message-contract') {
-      logger.info('Message Contract AI assist requested — returning not-implemented stub');
-      return {
-        content: [
-          {
-            type: 'text',
-            text: JSON.stringify({
-              success: false,
-              error: new MessageContractNotImplementedError().message,
-            }, null, 2),
-          },
-        ],
-        isError: true,
-      };
-    }
+    // IF11: Message Contract mode is now implemented — it flows through the same
+    // pipeline (context → mode-dispatched prompt → validate). With schema inputs and
+    // no instance data, the loop below validates-only (no execution), which is the
+    // correct design-time behavior for a schema→schema contract mapping.
 
     // Report progress: Starting
     if (onProgress) {
@@ -358,6 +384,7 @@ export async function handleGenerateUtlx(
         format: input.format,
         originalData: input.originalData,
         udm: input.udm,
+        schema: input.schema,
       })),
       outputFormat,
       userPrompt: prompt,
@@ -365,6 +392,8 @@ export async function handleGenerateUtlx(
       operatorsContext,
       usdlContext,
       existingBody,
+      outputSchema,
+      coverage,
     };
 
     // Build prompts via the mode dispatcher (Execution path here; Message

@@ -16,6 +16,7 @@ import { getUsdlDirectivesTool } from './getUsdlDirectives';
 import { generateUtlxTool } from './generateUtlx';
 import { checkLlmStatusTool } from './checkLlmStatus';
 import { describeInputTool } from './describeInput';
+import { refineCoverageTool } from './refineCoverage';
 
 // Export all MCP tools in logical order
 export const tools: Tool[] = [
@@ -30,6 +31,7 @@ export const tools: Tool[] = [
   generateUtlxTool,          // Tool 9: Generate UTLX from natural language
   checkLlmStatusTool,        // Tool 10: Check LLM provider status
   describeInputTool,         // Tool 11: Semantic gloss for an input (IF10 v2)
+  refineCoverageTool,        // Tool 12: LLM gap refinement for MC coverage (IF11)
 ];
 
 export {
@@ -44,4 +46,5 @@ export {
   generateUtlxTool,
   checkLlmStatusTool,
   describeInputTool,
+  refineCoverageTool,
 };

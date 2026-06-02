@@ -16,6 +16,18 @@ export interface UTLXGenerationInput {
   format: string;
   originalData?: string;
   udm?: string;
+  // IF11 (Message Contract mode): the input's schema content (jsch/xsd/…).
+  schema?: string;
+}
+
+/** IF11: one output field's mapping plan from the coverage analysis. */
+export interface CoverageMappingHint {
+  outputPath: string;
+  type: string;
+  required: boolean;
+  status: 'direct' | 'derivable' | 'gap';
+  source?: string;
+  expression?: string;
 }
 
 export interface UTLXGenerationContext {
@@ -30,6 +42,10 @@ export interface UTLXGenerationContext {
   // ("Load current UTLX", IF08). A scaffold is recognized by its ???(type)
   // markers and triggers a fill-the-placeholders instruction.
   existingBody?: string;
+  // IF11 (Message Contract mode): the output CONTRACT schema (fixed target) and the
+  // coverage plan (output field ← source / gap).
+  outputSchema?: { content: string; format: string };
+  coverage?: CoverageMappingHint[];
 }
 
 /**

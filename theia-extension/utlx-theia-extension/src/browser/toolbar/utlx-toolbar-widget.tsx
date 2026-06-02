@@ -18,14 +18,18 @@ import {
     UTLX_SERVICE_SYMBOL,
     GenerateUtlxRequest,
     AiActivityEntry,
-    GenerateUtlxAttempt
+    GenerateUtlxAttempt,
+    CoverageMappingHint
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
 import { buildAbstractForInput } from '../utils/input-abstract';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from '../output-panel/output-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
-import { CoverageReport, buildContractCoverage } from '../utils/coverage';
+import {
+    CoverageReport, buildContractCoverage, parseSchemaToFields,
+    flattenSchemaLeaves, mergeCoverageSuggestions,
+} from '../utils/coverage';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
 import { SchemaComparisonResult } from '../utils/schema-comparator';
 import { ValidationResultDialog } from './validation-result-dialog';
@@ -60,6 +64,8 @@ export interface ToolbarState {
     // IF11: MC-mode coverage analysis (output contract vs input schemas). Snapshotted on open.
     coverage?: CoverageReport;            // undefined = not computed / no output schema
     coverageExpanded: boolean;            // show the full per-field list (collapsed = summary only)
+    coverageRefining: boolean;            // an LLM gap-refinement call is in flight
+    coverageRefined: boolean;             // gaps have been refined by the LLM (button consumed)
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     // IF08: snapshot of the editor body the user opted to share via "Load current
     // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
@@ -101,6 +107,11 @@ export class UTLXToolbarWidget extends ReactWidget {
     private statusCheckInterval?: NodeJS.Timeout;  // Timer for periodic status checks
     private aiActivityPoll?: number;  // Timer polling the AI activity log during generation
     private static readonly AI_ACTIVITY_POLL_MS = 400;
+    // Monotonic id of the current generation. Bumping it abandons any in-flight run:
+    // its eventual result/error is discarded (see submitMCPPrompt guards). The backend
+    // request keeps running to completion — we just stop waiting on it. True
+    // cross-process cancellation is a documented follow-up (IF08).
+    private genSeq = 0;
 
     private state: ToolbarState = {
         currentMode: UTLXMode.EXECUTION,
@@ -116,6 +127,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         inputGloss: {},
         inputGlossLoading: [],
         coverageExpanded: false,
+        coverageRefining: false,
+        coverageRefined: false,
         mcpDialogMode: 'prompt',
         generatedCode: '',
         promptHistory: this.loadPromptHistory(),
@@ -347,7 +360,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                                         {/* IF11: MC-mode coverage of the output contract by the inputs */}
                                         {currentMode === UTLXMode.MESSAGE_CONTRACT && this.renderCoverage()}
 
-                                        <p>Describe what transformation you want to create:</p>
+                                        <p>{currentMode === UTLXMode.MESSAGE_CONTRACT
+                                            ? 'The AI will map the inputs onto the output contract. Add optional guidance below (e.g. defaults for gaps, lookups) — or just press “Map to output contract”.'
+                                            : 'Describe what transformation you want to create:'}</p>
 
                                         {/* Prompt History Dropdown — IF08: only the
                                             current mode's prompts (legacy untagged = Execution) */}
@@ -393,7 +408,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                                             className='utlx-mcp-prompt-input'
                                             value={mcpPrompt}
                                             onChange={(e) => this.setState({ mcpPrompt: (e.target as HTMLTextAreaElement).value })}
-                                            placeholder='Example: "Transform XML customer data to JSON, extracting name, email, and address fields"'
+                                            placeholder={currentMode === UTLXMode.MESSAGE_CONTRACT
+                                                ? 'Optional guidance — e.g. "default chargeBearer to SHAR", "look up currencyName from currencyCode". Leave empty to just map what you can.'
+                                                : 'Example: "Transform XML customer data to JSON, extracting name, email, and address fields"'}
                                             rows={6}
                                             disabled={mcpLoading}
                                             autoFocus
@@ -477,19 +494,36 @@ export class UTLXToolbarWidget extends ReactWidget {
                                             className='utlx-dialog-button utlx-dialog-button-secondary'
                                             onClick={() => {
                                                 console.log('[UTLXToolbar] 🔘 Cancel button clicked');
-                                                this.closeMCPDialog();
+                                                // Dual purpose: while generating, Cancel stops the
+                                                // run AND closes; otherwise it just closes.
+                                                if (mcpLoading) {
+                                                    this.stopGeneration(true);
+                                                } else {
+                                                    this.closeMCPDialog();
+                                                }
                                             }}
-                                            disabled={mcpLoading}
+                                            title={mcpLoading ? 'Stop the generation and close' : 'Close'}
                                         >
                                             Cancel
                                         </button>
-                                        <button
-                                            className='utlx-dialog-button utlx-dialog-button-primary'
-                                            onClick={() => this.submitMCPPrompt()}
-                                            disabled={mcpLoading || !mcpPrompt.trim()}
-                                        >
-                                            {mcpLoading ? '⏳ Generating...' : '✨ Generate UTLX'}
-                                        </button>
+                                        {mcpLoading ? (
+                                            <button
+                                                className='utlx-dialog-button utlx-dialog-button-stop'
+                                                onClick={() => this.stopGeneration(false)}
+                                                title='Stop the generation but keep this dialog open so you can edit the prompt and retry'
+                                            >
+                                                ■ Stop
+                                            </button>
+                                        ) : (
+                                            <button
+                                                className='utlx-dialog-button utlx-dialog-button-primary'
+                                                onClick={() => this.submitMCPPrompt()}
+                                                // IF11: prompt is optional in MC mode (goal is fixed: map to the contract).
+                                                disabled={currentMode === UTLXMode.EXECUTION && !mcpPrompt.trim()}
+                                            >
+                                                {currentMode === UTLXMode.MESSAGE_CONTRACT ? '✨ Map to output contract' : '✨ Generate UTLX'}
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -630,6 +664,8 @@ export class UTLXToolbarWidget extends ReactWidget {
             // IF11: in MC mode, analyze how well the inputs cover the output contract.
             coverage: this.state.currentMode === UTLXMode.MESSAGE_CONTRACT ? this.snapshotCoverage() : undefined,
             coverageExpanded: false,
+            coverageRefining: false,
+            coverageRefined: false,
             systemStatus: {
                 mcpServer: null,
                 utlxd: null,
@@ -800,6 +836,8 @@ export class UTLXToolbarWidget extends ReactWidget {
     private closeMCPDialog(): void {
         console.log('[UTLXToolbar] 🚪 Closing MCP dialog');
 
+        // Abandon any in-flight generation so a late result can't reopen/overwrite.
+        this.genSeq++;
         // Stop periodic status checks
         this.stopStatusChecks();
         this.stopAiActivityPoll();
@@ -898,6 +936,28 @@ export class UTLXToolbarWidget extends ReactWidget {
                     <div className='utlx-coverage-ok'>✓ Every required output field has a candidate source.</div>
                 )}
 
+                {/* IF11: opt-in LLM gap refinement — resolve name-mismatched gaps semantically. */}
+                {(() => {
+                    const gapCount = cov.entries.filter(e => e.status === 'gap').length;
+                    if (gapCount === 0) return null;
+                    if (this.state.coverageRefining) {
+                        return <div className='utlx-coverage-refine-status'>⏳ Refining gaps with AI…</div>;
+                    }
+                    if (this.state.coverageRefined) {
+                        return <div className='utlx-coverage-refine-status'>✨ Gaps refined by AI — review the suggested sources.</div>;
+                    }
+                    if (this.state.systemStatus.llm === false) return null;
+                    return (
+                        <button
+                            className='utlx-coverage-refine-btn'
+                            title='Ask the AI to resolve the remaining gaps to source fields (one LLM call)'
+                            onClick={() => this.refineCoverageGaps()}
+                        >
+                            ✨ Refine gaps (AI)
+                        </button>
+                    );
+                })()}
+
                 {expanded && (
                     <div className='utlx-coverage-list'>
                         {cov.entries.map((e, i) => (
@@ -905,11 +965,12 @@ export class UTLXToolbarWidget extends ReactWidget {
                                 <span className='cov-icon'>{icon(e.status)}</span>
                                 <span className='cov-path'>{e.outputPath}{e.required ? '*' : ''}</span>
                                 <span className='cov-type'>({e.type})</span>
-                                {e.source && <span className='cov-source'>← {e.source}</span>}
+                                {e.bySuggestion && <span className='cov-ai' title='AI-suggested — review'>✨</span>}
+                                {e.source && <span className='cov-source'>← {e.expression || e.source}</span>}
                                 {e.note && <span className='cov-note'>{e.note}</span>}
                             </div>
                         ))}
-                        <div className='utlx-coverage-legend'>✓ direct · ~ derivable · ✗ gap · * required</div>
+                        <div className='utlx-coverage-legend'>✓ direct · ~ derivable · ✗ gap · * required · ✨ AI-suggested</div>
                     </div>
                 )}
             </div>
@@ -941,6 +1002,81 @@ export class UTLXToolbarWidget extends ReactWidget {
             return { name: t.name, content: full?.schemaContent, format: full?.schemaFormat };
         });
         return buildContractCoverage(inputs, expected.content, expected.format);
+    }
+
+    /**
+     * IF11: the Message Contract context attached to a generation request — the output
+     * CONTRACT schema (the fixed target) and the current coverage plan (output field →
+     * source / gap), so the model performs constrained synthesis against the contract.
+     */
+    private buildMCContractContext(): Partial<GenerateUtlxRequest> {
+        const outputPanel = this.shell.getWidgets('right')
+            .find((w: any) => w instanceof OutputPanelWidget) as OutputPanelWidget | undefined;
+        const expected = outputPanel?.getExpectedSchema();
+        const ctx: Partial<GenerateUtlxRequest> = {};
+        if (expected) {
+            ctx.outputSchema = { content: expected.content, format: expected.format };
+        }
+        const cov = this.state.coverage;
+        if (cov) {
+            ctx.coverage = cov.entries.map<CoverageMappingHint>(e => ({
+                outputPath: e.outputPath,
+                type: e.type,
+                required: e.required,
+                status: e.status,
+                source: e.source,
+                expression: e.expression,
+            }));
+        }
+        return ctx;
+    }
+
+    /**
+     * IF11: opt-in LLM gap refinement. Sends the deterministic gaps + the available
+     * input fields to the AI, which suggests a semantic source/derivation per gap.
+     * Suggestions are merged back (marked ✨, gaps that resolve leave the delta).
+     * One cached call per dialog session. Graceful: no LLM / failure leaves coverage
+     * unchanged and the button consumed.
+     */
+    private async refineCoverageGaps(): Promise<void> {
+        const cov = this.state.coverage;
+        if (!cov || this.state.coverageRefining || this.state.coverageRefined) {
+            return;
+        }
+        const gaps = cov.entries
+            .filter(e => e.status === 'gap')
+            .map(e => ({ path: e.outputPath, type: e.type, required: e.required }));
+        if (gaps.length === 0) {
+            return;
+        }
+
+        // Re-gather the input fields (same source as snapshotCoverage) and flatten them.
+        const inputPanel = this.shell.getWidgets('left')
+            .find((w: any) => w instanceof MultiInputPanelWidget) as MultiInputPanelWidget | undefined;
+        const tabs = inputPanel ? inputPanel.getAllInputTabs() : [];
+        const fullInputs = (inputPanel as any)?.state?.inputs || [];
+        const inputs = tabs
+            .map((t: any) => {
+                const full = fullInputs.find((i: any) => i.id === t.id);
+                const fields = parseSchemaToFields(full?.schemaContent, full?.schemaFormat);
+                return fields && fields.length
+                    ? { name: t.name, fields: flattenSchemaLeaves(fields) }
+                    : undefined;
+            })
+            .filter(Boolean) as Array<{ name: string; fields: Array<{ path: string; name: string; type: string }> }>;
+
+        this.setState({ coverageRefining: true });
+        let suggestions: import('../../common/protocol').CoverageSuggestion[] = [];
+        try {
+            suggestions = await this.utlxService.refineCoverage({ gaps, inputs });
+        } catch (error) {
+            console.error('[UTLXToolbar] refineCoverage failed:', error);
+        }
+        const current = this.state.coverage;
+        const merged = current && suggestions.length > 0
+            ? mergeCoverageSuggestions(current, suggestions)
+            : current;
+        this.setState({ coverage: merged, coverageRefining: false, coverageRefined: true });
     }
 
     /**
@@ -1051,12 +1187,45 @@ export class UTLXToolbarWidget extends ReactWidget {
         this.closeMCPDialog();
     }
 
-    private async submitMCPPrompt(): Promise<void> {
-        const { mcpPrompt } = this.state;
-
-        if (!mcpPrompt.trim()) {
+    /**
+     * Stop an in-flight generation. Bumping genSeq makes submitMCPPrompt discard the
+     * eventual result/error of the run it started. The backend request still finishes
+     * on its own (no cross-process abort yet — see IF08), but the UI is unblocked
+     * immediately so the user can fix the prompt and retry, or close the dialog.
+     *
+     * @param closeAfter true = stop and close the dialog; false = stop but stay on the
+     *                   prompt so the user can edit and regenerate.
+     */
+    private stopGeneration(closeAfter: boolean): void {
+        console.log('[UTLXToolbar] ■ Stopping generation (abandon in-flight)');
+        this.genSeq++;  // invalidate the running generation
+        this.stopAiActivityPoll();
+        if (closeAfter) {
+            this.closeMCPDialog();
             return;
         }
+        this.setState({
+            mcpLoading: false,
+            mcpProgressMessage: 'Generation stopped. Edit your prompt and try again.',
+            mcpProgressPercent: 0,
+        });
+    }
+
+    private async submitMCPPrompt(): Promise<void> {
+        const { mcpPrompt } = this.state;
+        const isMC = this.state.currentMode === UTLXMode.MESSAGE_CONTRACT;
+
+        // The prompt is REQUIRED in Execution mode (the user invents the output) but
+        // OPTIONAL in Message Contract mode (the goal is fixed: map the inputs onto the
+        // output contract). IF11.
+        if (!isMC && !mcpPrompt.trim()) {
+            return;
+        }
+
+        // Token for this run; if Stop/Cancel/close bumps genSeq, we discard this run's
+        // result (the backend keeps going, but the UI ignores it).
+        const myGen = ++this.genSeq;
+        const abandoned = () => myGen !== this.genSeq;
 
         this.setState({ mcpLoading: true, mcpProgressMessage: 'Initializing AI assistant...' });
 
@@ -1153,7 +1322,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                         name: input.name,
                         format: input.format,
                         originalData: fullInput?.instanceContent,
-                        udm: pathStructure || fullInput?.udmLanguage  // Use paths if available, fallback to UDM
+                        udm: pathStructure || fullInput?.udmLanguage,  // Use paths if available, fallback to UDM
+                        // IF11: in MC mode the source structure comes from the schema.
+                        ...(fullInput?.schemaContent ? { schema: fullInput.schemaContent } : {})
                     };
                 }),
                 outputFormat,
@@ -1161,7 +1332,10 @@ export class UTLXToolbarWidget extends ReactWidget {
                 // IF08: tag the request with the current IDE mode, and include the
                 // editor body ONLY when the user opted in via "Load current UTLX".
                 mode: this.state.currentMode,
-                ...(this.state.loadedBody ? { existingBody: this.state.loadedBody } : {})
+                ...(this.state.loadedBody ? { existingBody: this.state.loadedBody } : {}),
+                // IF11: Message Contract mode — attach the output contract + coverage plan
+                // so generation is constrained synthesis against the fixed target.
+                ...(isMC ? this.buildMCContractContext() : {})
             };
 
             console.log('[Toolbar] Step 4: Calling backend service...');
@@ -1177,13 +1351,28 @@ export class UTLXToolbarWidget extends ReactWidget {
             // AI activity monitor: poll the backend's step log while it generates.
             this.startAiActivityPoll();
 
+            // If the user stopped while we were collecting context / checking the LLM,
+            // don't even launch the generation.
+            if (abandoned()) {
+                console.log('[Toolbar] Generation abandoned before launch — skipping');
+                return;
+            }
+
             // Call the backend service (no progress simulation - backend will iterate)
             let result;
             try {
                 result = await this.utlxService.generateUtlxFromPrompt(request);
             } finally {
                 this.stopAiActivityPoll();
-                await this.refreshAiActivity();  // capture the final events
+                if (!abandoned()) {
+                    await this.refreshAiActivity();  // capture the final events
+                }
+            }
+
+            // The user pressed Stop/Cancel while the AI was working — discard the result.
+            if (abandoned()) {
+                console.log('[Toolbar] Generation result discarded (stopped by user)');
+                return;
             }
 
             console.log('[Toolbar] Step 5: Backend returned:', result);
@@ -1215,8 +1404,10 @@ export class UTLXToolbarWidget extends ReactWidget {
             console.log('[Toolbar] Extracted body:', generatedBody);
             console.log('[Toolbar] Final code:', finalCode);
 
-            // Save prompt to history
-            this.addToPromptHistory(mcpPrompt, finalCode);
+            // Save prompt to history (skip empty MC "just map it" runs — nothing to recall).
+            if (mcpPrompt.trim()) {
+                this.addToPromptHistory(mcpPrompt, finalCode);
+            }
 
             // Result quality: surface a clear warning when it didn't validate or
             // failed to run, but STILL show the code (better than nothing — the user
@@ -1240,6 +1431,11 @@ export class UTLXToolbarWidget extends ReactWidget {
                 mcpAttempts: result.attempts || []
             });
         } catch (error) {
+            // A run the user already stopped shouldn't surface its error.
+            if (abandoned()) {
+                console.log('[Toolbar] Suppressing error from abandoned generation');
+                return;
+            }
             console.error('[Toolbar] ❌ Generate UTLX error:', error);
             console.error('[Toolbar] Error type:', error instanceof Error ? 'Error' : typeof error);
             console.error('[Toolbar] Error message:', error instanceof Error ? error.message : String(error));

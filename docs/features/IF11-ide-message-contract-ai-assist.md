@@ -8,8 +8,31 @@
   in MC mode only: a **Contract coverage** panel (summary counts + the delta headline +
   an expandable per-field list) computed on dialog open from the input schemas + the
   output panel's expected schema. No AI.
-- **Pending (Phase 1 cont.):** LLM refinement of gaps → semantic/derivable matches;
-  feeding coverage into the (still-stubbed) MC generation prompt.
+- **Phase 1 — LLM gap refinement: implemented.** Opt-in **"✨ Refine gaps (AI)"**
+  button in the coverage panel (shown only when there are gaps and an LLM is available).
+  Sends the deterministic gaps + the flattened input fields to the new MCP tool
+  **`refine_coverage`** (`mcp-server/src/tools/refineCoverage.ts`), which returns a
+  per-gap semantic suggestion (`direct` / `derivable` / `unmappable`, with source +
+  optional derivation hint + rationale). Suggestions merge back via
+  `mergeCoverageSuggestions` — resolved gaps become ✨-marked direct/derivable rows and
+  leave the delta; the LLM may only reference supplied input fields (no invented
+  sources). One call per dialog session; graceful when no LLM. Mirrors the IF10
+  Explain-AI pattern, keeping the LLM confined to AI assist.
+- **Phase 1 — MC generation (constrained synthesis): implemented.** The MC prompt is no
+  longer a stub: `message-contract-prompt.ts` builds a constrained-synthesis prompt from
+  the **output contract schema** (fixed target) + each **input schema** + the **coverage
+  plan** (output field → source / gap). `generate_utlx_from_prompt` now flows MC mode
+  through the same pipeline; with schema inputs and no instance data the loop
+  **validates-only** (no execution) — the correct design-time behavior. The model fills
+  mapped fields from their source and emits a **typed placeholder + `// TODO`** for each
+  gap (never fabricating data). New request fields (`outputSchema`, per-input `schema`,
+  `coverage`) thread frontend → service → MCP.
+- **MCM UX — "map it" by default, prompt optional: implemented.** In Message Contract
+  mode the prompt is **optional** (the goal is fixed: map inputs → contract). The primary
+  button reads **"✨ Map to output contract"** and is enabled with an empty prompt; the
+  label/placeholder reframe the prompt as optional guidance (defaults for gaps, lookups).
+  Execution mode is unchanged (prompt still required).
+- **Pending (Phase 1 cont.):** richer structural coverage hints for nested/array mappings.
 - **Pending:** Phase 2 (archetype matrix + function kits), Phase 3 (schema-conformance +
   synthetic round-trip).
 **Priority:** High (fills the IF08 Message Contract stub; the integration sweet spot)

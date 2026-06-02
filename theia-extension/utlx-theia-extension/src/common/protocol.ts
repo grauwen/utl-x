@@ -364,6 +364,43 @@ export interface UTLXService {
      * if no LLM is available.
      */
     describeInput(abstract: string, format: string): Promise<string>;
+
+    /**
+     * IF11: LLM gap refinement for MC-mode coverage. Given the deterministic gaps
+     * (output fields with no name match) + the available input fields, the LLM
+     * suggests a semantic source/derivation per gap (or "unmappable"). Opt-in — the
+     * IDE calls this only when the user clicks "Refine gaps (AI)". Returns [] if no
+     * LLM is available or nothing could be resolved.
+     */
+    refineCoverage(request: CoverageRefineRequest): Promise<CoverageSuggestion[]>;
+}
+
+/** IF11: one output field with no deterministic source. */
+export interface CoverageGap {
+    path: string;
+    type: string;
+    required: boolean;
+}
+
+/** IF11: the candidate source fields of one input, flattened. */
+export interface CoverageInputFields {
+    name: string;
+    fields: Array<{ path: string; name: string; type: string }>;
+}
+
+/** IF11: request payload for refine_coverage. */
+export interface CoverageRefineRequest {
+    gaps: CoverageGap[];
+    inputs: CoverageInputFields[];
+}
+
+/** IF11: an LLM-suggested resolution for one gap. */
+export interface CoverageSuggestion {
+    path: string;                                   // the output field path
+    status: 'direct' | 'derivable' | 'unmappable';
+    source?: string;                                // matched input path(s)
+    expression?: string;                            // optional UTL-X-ish derivation hint
+    rationale?: string;                             // short "why"
 }
 
 /**
@@ -447,6 +484,20 @@ export interface GenerateUtlxInput {
     format: string;
     originalData?: string;
     udm?: string;
+    // IF11 (Message Contract mode): the input's SCHEMA content (jsch/xsd/…). MC mode
+    // maps schema→schema, so the model needs the input structure from its schema.
+    schema?: string;
+}
+
+/** IF11: one output field's mapping plan (from the coverage analysis), passed to the
+ *  Message Contract prompt so the model fills sourced fields and flags gaps. */
+export interface CoverageMappingHint {
+    outputPath: string;
+    type: string;
+    required: boolean;
+    status: 'direct' | 'derivable' | 'gap';
+    source?: string;      // "inputName.path"
+    expression?: string;  // optional derivation hint
 }
 
 export interface GenerateUtlxRequest {
@@ -455,12 +506,16 @@ export interface GenerateUtlxRequest {
     outputFormat: string;
     originalHeader: string;  // Original UTLX header from editor (required for validation)
     // IDE mode (IF08). Defaults to EXECUTION when omitted; MESSAGE_CONTRACT is
-    // routed to a separate prompt builder (a not-implemented stub in v1).
+    // routed to a separate prompt builder.
     mode?: UTLXMode;
     // Current editor body the user explicitly chose to share via "Load current
     // UTLX" (IF08). Sent ONLY on opt-in — never automatically. A scaffold is
     // detected downstream by its ???(type) markers.
     existingBody?: string;
+    // IF11 (Message Contract mode): the output CONTRACT schema (the fixed target) and
+    // the coverage plan, so generation is constrained synthesis against the contract.
+    outputSchema?: { content: string; format: string };
+    coverage?: CoverageMappingHint[];
 }
 
 /**

@@ -28,7 +28,9 @@ import {
     LlmStatusResponse,
     ServiceHealth,
     ServicesHealth,
-    AiActivityEntry
+    AiActivityEntry,
+    CoverageRefineRequest,
+    CoverageSuggestion
 } from '../../common/protocol';
 import { DirectiveRegistry, createEmptyDirectiveRegistry } from '../../common/usdl-types';
 import { UTLXDaemonClient } from '../daemon/utlx-daemon-client';
@@ -331,6 +333,9 @@ export class UTLXServiceImpl implements UTLXService {
                     // IF08: forward mode + (opt-in) current body when present.
                     ...(request.mode ? { mode: request.mode } : {}),
                     ...(request.existingBody ? { existingBody: request.existingBody } : {}),
+                    // IF11: Message Contract mode — forward the output contract + coverage plan.
+                    ...(request.outputSchema ? { outputSchema: request.outputSchema } : {}),
+                    ...(request.coverage ? { coverage: request.coverage } : {}),
                 },
                 (progress, message) => {
                     console.log(`[BACKEND] Progress: ${progress}% - ${message}`);
@@ -438,6 +443,24 @@ export class UTLXServiceImpl implements UTLXService {
         } catch (error) {
             console.error('[BACKEND] describeInput error:', error);
             return '';
+        }
+    }
+
+    async refineCoverage(request: CoverageRefineRequest): Promise<CoverageSuggestion[]> {
+        try {
+            if (!(await this.mcpClient.ping())) {
+                return [];
+            }
+            const result = await this.mcpClient.callTool('refine_coverage', {
+                gaps: request.gaps,
+                inputs: request.inputs,
+            });
+            return (result && result.success && Array.isArray(result.suggestions))
+                ? result.suggestions as CoverageSuggestion[]
+                : [];
+        } catch (error) {
+            console.error('[BACKEND] refineCoverage error:', error);
+            return [];
         }
     }
 

@@ -19,6 +19,7 @@ import { handleGetUsdlDirectives } from './getUsdlDirectives';
 import { handleGenerateUtlx } from './generateUtlx';
 import { handleCheckLlmStatus } from './checkLlmStatus';
 import { handleDescribeInput } from './describeInput';
+import { handleRefineCoverage } from './refineCoverage';
 import { LLMGateway } from '../llm/llm-gateway';
 
 export type ToolHandler = (
@@ -41,4 +42,5 @@ export const toolHandlers: Record<string, ToolHandler> = {
   generate_utlx_from_prompt: handleGenerateUtlx,
   check_llm_status: handleCheckLlmStatus,
   describe_input: handleDescribeInput,
+  refine_coverage: handleRefineCoverage,
 };

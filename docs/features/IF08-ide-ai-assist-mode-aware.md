@@ -223,15 +223,47 @@ failure (`success:false`, no candidate code at all — infra/LLM error) shows ju
 error toast. Combined with the max-turns **salvage** in `ClaudeCodeProvider` (return
 best-effort instead of hard-failing), the user rarely sees "no output".
 
+### Stop / cancel an in-flight generation (implemented)
+
+A generation can run 30–60s (longer with retries). Previously the only button was
+**Cancel**, which was `disabled` while generating — so a runaway run (e.g. a bad
+prompt sending the agent in circles) could not be stopped; the user had to wait it
+out. Now:
+
+- While generating, the primary button becomes **■ Stop** (red). It stops *waiting*
+  and returns to the prompt with "Generation stopped. Edit your prompt and try again."
+  so the user can immediately fix the prompt and regenerate.
+- **Cancel** is dual-purpose: enabled during generation, where it stops **and** closes
+  the dialog; otherwise it just closes. Closing the dialog (✕ / overlay) also abandons
+  any in-flight run.
+
+**Mechanism (UI-level abandon).** A monotonic `genSeq` token tags each run; Stop /
+Cancel / close bump it, and `submitMCPPrompt` discards the result/error of any run
+whose token is stale (guards before launch, after the await, and in `catch`). This is
+**abandon, not true cancellation**: the backend MCP/LLM request keeps running to
+completion — the UI simply stops waiting on it. It's immediate, low-risk, and needs no
+new protocol.
+
+**Follow-up (not yet implemented): true cross-process cancellation.** Aborting the
+actual LLM work would require threading an `AbortController` from the frontend through
+a new `cancelGeneration()` RPC → the MCP client request → the `generate_utlx_from_prompt`
+handler → the Agent SDK `query({ ..., abortController })`. That spans three processes
+(no client push channel today) and the Agent SDK subprocess; deferred until the
+abandon UX proves insufficient. Until then, an abandoned run still consumes its LLM
+budget to completion.
+
 ## Implementation Notes
 
+- **Stop/cancel:** `genSeq` token + `stopGeneration(closeAfter)` in the toolbar;
+  guards in `submitMCPPrompt`; footer renders **■ Stop** while loading, dual-purpose
+  **Cancel**. Abandon-only (no backend abort yet — see above).
 - **Protocol:** add `mode: 'execution' | 'message-contract'` and optional
   `existingBody?: string` to `GenerateUtlxRequest` (`common/protocol.ts`). Toolbar
   fills `mode` from `currentMode` and `existingBody` only when the chip is present.
 - **MCP dispatch:** introduce `buildPrompt(request)` switching on `mode`; move the
-  current builder into `prompts/execution-prompt.ts`; add a stubbed
-  `prompts/message-contract-prompt.ts` that returns a clear "Message Contract AI
-  assist is not yet implemented" until v2.
+  current builder into `prompts/execution-prompt.ts`; `prompts/message-contract-prompt.ts`
+  was a stub in IF08 and is now **implemented in IF11** (constrained synthesis against the
+  output contract + coverage plan; prompt optional in MCM).
 - **Fill-`???` branch:** in the Execution builder, when `existingBody?.includes('???(')`,
   emit the placeholder-fill instruction and pass the body verbatim; otherwise the
   body (if present) is "continue/refine this".
