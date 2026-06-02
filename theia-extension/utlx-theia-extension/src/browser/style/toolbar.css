@@ -599,6 +599,34 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     background: var(--theia-editor-background, #1e1e1e);
 }
 
+.utlx-dialog-input-detail {
+    background: var(--theia-editor-background, #1e1e1e);
+    padding-bottom: 6px;
+}
+
+/* IF10 v2: opt-in LLM gloss + button */
+.utlx-explain-ai-btn {
+    margin: 0 0 4px 28px;
+    background: transparent;
+    color: var(--theia-textLink-foreground, #3794ff);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 3px;
+    padding: 2px 8px;
+    font-size: 11px;
+    cursor: pointer;
+}
+.utlx-explain-ai-btn:hover {
+    background: var(--theia-list-hoverBackground, #2a2d2e);
+}
+
+.utlx-dialog-input-gloss {
+    margin: 0 10px 6px 28px;
+    font-size: 12px;
+    font-style: italic;
+    color: var(--theia-foreground, #ccc);
+    line-height: 1.4;
+}
+
 /* AI activity monitor — live step log of a generation */
 .utlx-ai-activity {
     margin-top: 10px;

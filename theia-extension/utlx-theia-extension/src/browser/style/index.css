@@ -877,6 +877,29 @@
     z-index: 5000;
 }
 
+/* IF10: the "Input summary" overlay reuses the UDM dialog chrome but holds only a few
+   lines — size it to its content instead of 70vw × 85vh. */
+.utlx-udm-dialog.utlx-abstract-dialog {
+    width: auto;
+    height: auto;
+    min-width: 360px;
+    min-height: 0;
+    max-width: 640px;
+    max-height: 70vh;
+    resize: none;
+}
+.utlx-abstract-text {
+    margin: 0;
+    padding: 12px 14px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--theia-foreground);
+    overflow: auto;
+}
+
 .utlx-udm-dialog {
     position: fixed;
     top: 50%;

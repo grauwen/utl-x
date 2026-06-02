@@ -425,6 +425,23 @@ export class UTLXServiceImpl implements UTLXService {
     }
 
     /**
+     * IF10 v2: semantic gloss for an input (opt-in, from the AI dialog). Returns ''
+     * when no LLM / on failure — the caller falls back to the deterministic abstract.
+     */
+    async describeInput(abstract: string, format: string): Promise<string> {
+        try {
+            if (!(await this.mcpClient.ping())) {
+                return '';
+            }
+            const result = await this.mcpClient.callTool('describe_input', { abstract, format });
+            return (result && result.success && typeof result.description === 'string') ? result.description : '';
+        } catch (error) {
+            console.error('[BACKEND] describeInput error:', error);
+            return '';
+        }
+    }
+
+    /**
      * Dispose resources
      */
     dispose(): void {

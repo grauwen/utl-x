@@ -31,6 +31,7 @@ import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, infer
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { toHeaderIdentifier } from '../utils/header-identifier';
 import { loadSession, saveSession, capContent, SESSION_KEYS } from '../utils/session-persistence';
+import { buildAbstractForInput } from '../utils/input-abstract';
 
 // Input panel format types (separate from protocol types)
 // Data formats - used for actual data instances
@@ -101,10 +102,15 @@ export interface MultiInputPanelState {
     activeSubTab: 'instance' | 'schema'; // For Message Contract mode
     loading: boolean;
     udmDialogOpen?: boolean;
+    abstractOpen?: boolean;  // IF10: "input summary" (deterministic abstract) overlay
     // Bumped only when a load auto-renames the active input from the filename,
     // so the (uncontrolled) name field remounts to show it. Typing never bumps
     // it, so the caret is never disturbed mid-edit.
     inputNameVersion?: number;
+    // Same idea for the content editor: bumped only on PROGRAMMATIC content changes
+    // (load, clear, infer, header-sync) so the uncontrolled textarea remounts to show
+    // them. Typing never bumps it → the caret is never reset to the end.
+    contentVersion?: number;
 }
 
 @injectable()
@@ -364,6 +370,26 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     {' '}UDM
                                 </button>
                             )}
+                            {/* IF10: deterministic input summary — enabled once the input
+                                 has parsed UDM (instance data) OR a schema to describe */}
+                            {(() => {
+                                const isSchemaFmt = ['jsch', 'xsd', 'osch', 'tsch'].includes(activeInput.instanceFormat);
+                                const canSummarize = activeInput.udmParsed === true
+                                    || (isSchemaFmt && !!activeInput.instanceContent?.trim())
+                                    || !!activeInput.schemaContent?.trim();
+                                return (
+                            <button
+                                onClick={() => this.setState({ abstractOpen: true })}
+                                disabled={!canSummarize}
+                                title={canSummarize
+                                    ? 'Show input summary (shape, fields, arrays, depth)'
+                                    : 'Parse the UDM (or load a schema) first to summarize this input'}
+                            >
+                                <span className='codicon codicon-info' style={{fontSize: '11px'}}></span>
+                                {' '}Info
+                            </button>
+                                );
+                            })()}
                             {/* Infer Schema button - only in design-time mode on schema tab with instance content */}
                             {isMessageContract && activeSubTab === 'schema' && !this.isSchemaTabDisabled(activeInput.instanceFormat) && activeInput.instanceContent && (
                                 <button
@@ -524,7 +550,14 @@ export class MultiInputPanelWidget extends ReactWidget {
                     <div className='utlx-panel-content'>
                         <textarea
                             className='utlx-input-editor'
-                            value={currentContent}
+                            // Uncontrolled (defaultValue + key) — a controlled value= is
+                            // re-applied by ReactWidget's async update() and resets the
+                            // caret to the end on every keystroke (same bug as the name
+                            // field). The key re-seeds only when the active input/sub-tab
+                            // changes or content is set programmatically (contentVersion),
+                            // never while typing.
+                            key={`editor-${activeInputId}-${activeSubTab}-${this.state.contentVersion ?? 0}`}
+                            defaultValue={currentContent}
                             onChange={(e) => this.handleContentChange(e.target.value)}
                             onPaste={(e) => this.handlePaste(e)}
                             placeholder={this.getPlaceholder(activeInput, activeSubTab)}
@@ -610,6 +643,37 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 <button
                                     onClick={() => this.handleCloseUdmDialog()}
                                     title='Close dialog'
+                                >
+                                    <span className='codicon codicon-close' style={{fontSize: '11px'}}></span>
+                                    {' '}Close
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* IF10: input summary (deterministic abstract — no AI) */}
+                {this.state.abstractOpen && (
+                    <div className='utlx-udm-dialog-overlay' onClick={() => this.setState({ abstractOpen: false })}>
+                        <div className='utlx-udm-dialog utlx-abstract-dialog' onClick={(e) => e.stopPropagation()}>
+                            <div className='utlx-udm-dialog-header'>
+                                <h3>Input summary — ${activeInput.name}</h3>
+                                <button
+                                    className='utlx-udm-dialog-close'
+                                    onClick={() => this.setState({ abstractOpen: false })}
+                                    title='Close'
+                                >
+                                    <span className='codicon codicon-close'></span>
+                                </button>
+                            </div>
+                            <div className='utlx-udm-dialog-content'>
+                                <pre className='utlx-abstract-text'>
+                                    {this.abstractForActiveInput(activeInput) || 'No structure available for this input.'}
+                                </pre>
+                            </div>
+                            <div className='utlx-udm-dialog-footer'>
+                                <button
+                                    onClick={() => this.setState({ abstractOpen: false })}
+                                    title='Close'
                                 >
                                     <span className='codicon codicon-close' style={{fontSize: '11px'}}></span>
                                     {' '}Close
@@ -880,16 +944,18 @@ export class MultiInputPanelWidget extends ReactWidget {
 
         const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
 
-        this.setState({
+        // Update the model IN PLACE without re-rendering — the uncontrolled textarea
+        // owns the DOM/caret. Re-rendering mid-keystroke (the old setState) reset the
+        // cursor to the end. Downstream status (UDM, char count) refreshes on the next
+        // render (button click, blur, validate) — same tradeoff as the name field.
+        this.state = {
+            ...this.state,
             inputs: this.state.inputs.map(input =>
                 input.id === this.state.activeInputId
-                    ? {
-                        ...input,
-                        [isSchema ? 'schemaContent' : 'instanceContent']: content
-                    }
+                    ? { ...input, [isSchema ? 'schemaContent' : 'instanceContent']: content }
                     : input
             )
-        });
+        };
     }
 
     private handlePaste(e: React.ClipboardEvent<HTMLTextAreaElement>): void {
@@ -1578,7 +1644,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                             schemaFormat: schemaFormat
                         }
                         : input
-                )
+                ),
+                // Remount the content editor to show the inferred schema.
+                contentVersion: (this.state.contentVersion ?? 0) + 1
             });
 
             this.messageService.info(`${schemaFormat.toUpperCase()} schema inferred from instance data`);
@@ -1664,6 +1732,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                     }
                     : input
             ),
+            // Remount the content editor to show the cleared (empty) content.
+            contentVersion: (this.state.contentVersion ?? 0) + 1,
             // Remount the name field so the restored default is visible
             ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
         });
@@ -1711,6 +1781,16 @@ export class MultiInputPanelWidget extends ReactWidget {
                 newName: renameTo
             });
         }
+    }
+
+    /**
+     * IF10: the "Input summary" text for an input. For a SCHEMA-format input (jsch/
+     * xsd/osch/tsch) the structure is the declared contract → build from the schema
+     * field tree; otherwise build from the instance UDM. (A loaded JSCH has no instance
+     * UDM to walk, which is why it showed "no structure" before.)
+     */
+    private abstractForActiveInput(input: InputTab): string | undefined {
+        return buildAbstractForInput(input);  // schema-aware; shared with the AI dialog (IF10)
     }
 
     private handleViewUdm(): void {
@@ -2027,6 +2107,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 : input
                         ),
                         loading: false,
+                        // Remount the content editor (and name field) to show loaded content.
+                        contentVersion: (this.state.contentVersion ?? 0) + 1,
                         // Remount the name field so the auto-rename is visible.
                         ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
                     });
@@ -2461,7 +2543,9 @@ export class MultiInputPanelWidget extends ReactWidget {
         // Update state - this completely replaces the inputs array
         this.setState({
             inputs: newInputs,
-            activeInputId: newActiveInputId
+            activeInputId: newActiveInputId,
+            // Remount the content editor — the active input may have changed content.
+            contentVersion: (this.state.contentVersion ?? 0) + 1
         });
 
         // IF09: the restore is one-shot — once syncFromHeaders has rebuilt the tabs

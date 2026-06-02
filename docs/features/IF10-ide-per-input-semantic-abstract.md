@@ -1,6 +1,9 @@
 # IF10: IDE — Per-Input Semantic Abstract ("reversed prompt")
 
-**Status:** v1 partially implemented — deterministic abstract (`utils/input-abstract.ts`) + the AI-dialog input list (expandable per-input abstract) are done. Pending: injecting the abstract into the generation prompt (model-facing), the LLM domain gloss, and editable/curated abstracts (v2).
+**Status:** Mostly implemented.
+- **Deterministic abstract** (`utils/input-abstract.ts`), **schema-aware** (data → UDM walk; JSCH/XSD/OSch/TSch → schema field tree, with **required fields + constraints**), single-root unwrap, relative arrays. One shared `buildAbstractForInput(input)` feeds **both** the AI-dialog input list and the input-panel **"Info" button** (compact overlay).
+- **LLM gloss (v2)** — **opt-in "✨ Explain (AI)" button in the AI dialog only** (MCP `describe_input` tool → `UTLXService.describeInput`), one cached call per input, graceful when no LLM. NOT in the input-panel Info button (no LLM scattered outside AI assist).
+- **Pending:** complexity-gated injection of the abstract into the **generation prompt** (model-facing); editable/curated abstracts.
 **Priority:** Medium
 **Created:** June 2026
 **Depends on:** input panel + UDM (`extractInputPaths`/`formatPathsAsSimpleList`); AI assist prompt (IF08, `execution-prompt.ts`)

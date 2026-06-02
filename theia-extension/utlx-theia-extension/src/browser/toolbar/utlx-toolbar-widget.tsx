@@ -21,7 +21,7 @@ import {
     GenerateUtlxAttempt
 } from '../../common/protocol';
 import { UTLXEventService } from '../events/utlx-event-service';
-import { buildInputAbstract, formatInputAbstract } from '../utils/input-abstract';
+import { buildAbstractForInput } from '../utils/input-abstract';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
@@ -53,6 +53,8 @@ export interface ToolbarState {
     // IF10: per-input semantic abstract list shown above the prompt (snapshotted on open).
     dialogInputs: Array<{ name: string; format: string; abstract?: string }>;
     expandedInputs: string[];       // input names whose abstract is expanded
+    inputGloss: Record<string, string>;  // IF10 v2: opt-in LLM "what is this" per input
+    inputGlossLoading: string[];          // input names whose gloss is being fetched
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     // IF08: snapshot of the editor body the user opted to share via "Load current
     // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
@@ -106,6 +108,8 @@ export class UTLXToolbarWidget extends ReactWidget {
         mcpAttempts: [],
         dialogInputs: [],
         expandedInputs: [],
+        inputGloss: {},
+        inputGlossLoading: [],
         mcpDialogMode: 'prompt',
         generatedCode: '',
         promptHistory: this.loadPromptHistory(),
@@ -309,9 +313,25 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                                 <span className='utlx-dialog-input-format'>{inp.format}</span>
                                                             </button>
                                                             {expanded && (
-                                                                <pre className='utlx-dialog-input-abstract'>
-                                                                    {inp.abstract || 'No data loaded for this input — load a sample to summarize it.'}
-                                                                </pre>
+                                                                <div className='utlx-dialog-input-detail'>
+                                                                    <pre className='utlx-dialog-input-abstract'>
+                                                                        {inp.abstract || 'No data loaded for this input — load a sample to summarize it.'}
+                                                                    </pre>
+                                                                    {/* IF10 v2: opt-in LLM "what is this" gloss */}
+                                                                    {this.state.inputGloss[inp.name] !== undefined ? (
+                                                                        <div className='utlx-dialog-input-gloss'>💡 {this.state.inputGloss[inp.name]}</div>
+                                                                    ) : this.state.inputGlossLoading.includes(inp.name) ? (
+                                                                        <div className='utlx-dialog-input-gloss'>⏳ Describing…</div>
+                                                                    ) : (inp.abstract && this.state.systemStatus.llm !== false) ? (
+                                                                        <button
+                                                                            className='utlx-explain-ai-btn'
+                                                                            title='Ask the AI what kind of message this is (one LLM call)'
+                                                                            onClick={() => this.explainInput(inp)}
+                                                                        >
+                                                                            ✨ Explain (AI)
+                                                                        </button>
+                                                                    ) : null}
+                                                                </div>
                                                             )}
                                                         </div>
                                                     );
@@ -784,6 +804,8 @@ export class UTLXToolbarWidget extends ReactWidget {
             mcpResultStatus: undefined,
             dialogInputs: [],
             expandedInputs: [],
+            inputGloss: {},
+            inputGlossLoading: [],
             loadedBody: undefined  // IF08: drop the shared body when the dialog closes
         });
         console.log('[UTLXToolbar] ✅ MCP dialog state updated to closed');
@@ -803,13 +825,40 @@ export class UTLXToolbarWidget extends ReactWidget {
         const fullInputs = (inputPanel as any).state?.inputs || [];
         return tabs.map((t: any) => {
             const full = fullInputs.find((i: any) => i.id === t.id);
-            const udm: string | undefined = full?.udmLanguage;
-            const built = buildInputAbstract(udm, t.name);
-            return {
+            // Schema-aware abstract (shared with the input-panel Info button).
+            const abstract = buildAbstractForInput({
                 name: t.name,
-                format: t.format,
-                abstract: built ? formatInputAbstract(built) : undefined,
-            };
+                instanceContent: full?.instanceContent,
+                instanceFormat: full?.instanceFormat,
+                schemaContent: full?.schemaContent,
+                schemaFormat: full?.schemaFormat,
+                udmLanguage: full?.udmLanguage,
+            });
+            return { name: t.name, format: t.format, abstract };
+        });
+    }
+
+    /**
+     * IF10 v2: opt-in LLM gloss for one input ("Explain (AI)"). One call, cached per
+     * input for the dialog session. Graceful: failures/no-LLM yield a short note.
+     */
+    private async explainInput(inp: { name: string; format: string; abstract?: string }): Promise<void> {
+        if (!inp.abstract) {
+            return;
+        }
+        if (this.state.inputGloss[inp.name] !== undefined || this.state.inputGlossLoading.includes(inp.name)) {
+            return;  // cached or in-flight
+        }
+        this.setState({ inputGlossLoading: [...this.state.inputGlossLoading, inp.name] });
+        let gloss = '';
+        try {
+            gloss = await this.utlxService.describeInput(inp.abstract, inp.format);
+        } catch {
+            gloss = '';
+        }
+        this.setState({
+            inputGloss: { ...this.state.inputGloss, [inp.name]: gloss || '(could not describe this input)' },
+            inputGlossLoading: this.state.inputGlossLoading.filter(n => n !== inp.name),
         });
     }
 
