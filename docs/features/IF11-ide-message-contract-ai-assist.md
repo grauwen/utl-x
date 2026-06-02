@@ -1,6 +1,17 @@
 # IF11: IDE — Message Contract Mode AI Assist (coverage analysis + archetype-guided mapping)
 
-**Status:** Proposed
+**Status:** In progress.
+- **Phase 1 — deterministic coverage analysis: implemented.** `utils/coverage.ts`
+  (`buildCoverage` / `buildContractCoverage` / `formatCoverage`) classifies every output
+  leaf **direct / derivable / gap** by name + type matching (exact normalized, then fuzzy
+  substring) and aggregates required gaps into the **delta**. Surfaced in the AI dialog
+  in MC mode only: a **Contract coverage** panel (summary counts + the delta headline +
+  an expandable per-field list) computed on dialog open from the input schemas + the
+  output panel's expected schema. No AI.
+- **Pending (Phase 1 cont.):** LLM refinement of gaps → semantic/derivable matches;
+  feeding coverage into the (still-stubbed) MC generation prompt.
+- **Pending:** Phase 2 (archetype matrix + function kits), Phase 3 (schema-conformance +
+  synthetic round-trip).
 **Priority:** High (fills the IF08 Message Contract stub; the integration sweet spot)
 **Created:** June 2026
 **Depends on:** IF08 (mode-aware AI assist; `message-contract-prompt.ts` stub), IF10 (per-input abstract / UDM + schema walks), daemon validate/execute, schema field-tree parsers, the 650+ stdlib functions
