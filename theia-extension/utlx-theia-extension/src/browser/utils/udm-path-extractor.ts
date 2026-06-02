@@ -6,7 +6,10 @@
  */
 
 import { UDMLanguageParser } from '../udm/udm-language-parser';
-import { isArray, isObject, UDMObjectHelper } from '../udm/udm-core';
+import {
+    isArray, isObject, isScalar, isDateTime, isDate, isLocalDateTime, isTime, isBinary,
+    UDMObjectHelper,
+} from '../udm/udm-core';
 
 export interface PathInfo {
     path: string;
@@ -93,21 +96,26 @@ function extractPathsRecursive(
  * Get human-readable type label for UDM node
  */
 function getNodeType(node: any): string {
-    if (node === null) return 'null';
-    if (node === undefined) return 'undefined';
+    if (node === null || node === undefined) return 'null';
 
-    if (isArray(node)) {
-        return 'array';
+    if (isArray(node)) return 'array';
+    if (isObject(node)) return 'object';
+
+    // UDM scalars are wrapper nodes ({type:'scalar', value}); unwrap to the JS type.
+    if (isScalar(node)) {
+        const v = node.value;
+        if (v === null) return 'null';
+        const t = typeof v;
+        return (t === 'string' || t === 'number' || t === 'boolean') ? t : 'unknown';
     }
+    if (isDateTime(node) || isLocalDateTime(node)) return 'datetime';
+    if (isDate(node)) return 'date';
+    if (isTime(node)) return 'time';
+    if (isBinary(node)) return 'binary';
 
-    if (isObject(node)) {
-        return 'object';
-    }
-
+    // Fallback: a bare primitive (defensive — UDM nodes are normally wrapped).
     const type = typeof node;
-    if (type === 'string' || type === 'number' || type === 'boolean') {
-        return type;
-    }
+    if (type === 'string' || type === 'number' || type === 'boolean') return type;
 
     return 'unknown';
 }

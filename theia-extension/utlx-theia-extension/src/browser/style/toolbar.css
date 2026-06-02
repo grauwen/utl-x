@@ -627,6 +627,97 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
     line-height: 1.4;
 }
 
+/* IF11: MC-mode contract coverage panel */
+.utlx-coverage {
+    margin: 0 0 10px 0;
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 4px;
+    background: var(--theia-editor-background, #1e1e1e);
+    overflow: hidden;
+}
+.utlx-coverage-empty {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--theia-descriptionForeground, #999);
+}
+.utlx-coverage-empty .utlx-coverage-title {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 2px;
+    color: var(--theia-foreground, #ccc);
+}
+.utlx-coverage-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    padding: 7px 10px;
+    cursor: pointer;
+    color: var(--theia-foreground, #ccc);
+    font-size: 12px;
+}
+.utlx-coverage-head:hover {
+    background: var(--theia-list-hoverBackground, #2a2d2e);
+}
+.utlx-coverage-chevron { width: 10px; opacity: 0.8; }
+.utlx-coverage-title { font-weight: 600; }
+.utlx-coverage-counts { margin-left: auto; display: flex; gap: 10px; font-size: 11px; }
+.utlx-coverage-counts .cov-direct { color: var(--theia-gitDecoration-addedResourceForeground, #4caf50); }
+.utlx-coverage-counts .cov-derivable { color: var(--theia-editorWarning-foreground, #cca700); }
+.utlx-coverage-counts .cov-gap { color: var(--theia-errorForeground, #f48771); }
+.utlx-coverage-counts .cov-total { opacity: 0.7; }
+
+.utlx-coverage-delta {
+    margin: 0 10px 8px 10px;
+    padding: 6px 8px;
+    border-radius: 3px;
+    background: rgba(244, 135, 113, 0.12);
+    border: 1px solid var(--theia-errorForeground, #f48771);
+    color: var(--theia-foreground, #ccc);
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+.utlx-coverage-delta-list { font-weight: 600; }
+.utlx-coverage-ok {
+    margin: 0 10px 8px 10px;
+    font-size: 11.5px;
+    color: var(--theia-gitDecoration-addedResourceForeground, #4caf50);
+}
+
+.utlx-coverage-list {
+    border-top: 1px solid var(--theia-panel-border, #3c3c3c);
+    padding: 6px 10px;
+    max-height: 220px;
+    overflow-y: auto;
+    font-family: var(--theia-editor-font-family, monospace);
+    font-size: 11px;
+}
+.utlx-coverage-row {
+    display: flex;
+    gap: 6px;
+    align-items: baseline;
+    padding: 1px 0;
+    white-space: nowrap;
+}
+.utlx-coverage-row .cov-icon { width: 12px; flex: none; }
+.utlx-coverage-row.cov-direct .cov-icon { color: var(--theia-gitDecoration-addedResourceForeground, #4caf50); }
+.utlx-coverage-row.cov-derivable .cov-icon { color: var(--theia-editorWarning-foreground, #cca700); }
+.utlx-coverage-row.cov-gap .cov-icon { color: var(--theia-errorForeground, #f48771); }
+.utlx-coverage-row .cov-path { font-weight: 600; }
+.utlx-coverage-row .cov-type { opacity: 0.6; }
+.utlx-coverage-row .cov-source { color: var(--theia-textLink-foreground, #3794ff); }
+.utlx-coverage-row .cov-note { opacity: 0.7; font-style: italic; }
+.utlx-coverage-legend {
+    margin-top: 5px;
+    padding-top: 4px;
+    border-top: 1px dotted var(--theia-panel-border, #3c3c3c);
+    opacity: 0.6;
+    font-size: 10px;
+}
+
 /* AI activity monitor — live step log of a generation */
 .utlx-ai-activity {
     margin-top: 10px;

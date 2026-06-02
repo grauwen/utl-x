@@ -23,7 +23,9 @@ import {
 import { UTLXEventService } from '../events/utlx-event-service';
 import { buildAbstractForInput } from '../utils/input-abstract';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
+import { OutputPanelWidget } from '../output-panel/output-panel-widget';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
+import { CoverageReport, buildContractCoverage } from '../utils/coverage';
 import { extractInputPaths, formatPathsAsSimpleList } from '../utils/udm-path-extractor';
 import { SchemaComparisonResult } from '../utils/schema-comparator';
 import { ValidationResultDialog } from './validation-result-dialog';
@@ -55,6 +57,9 @@ export interface ToolbarState {
     expandedInputs: string[];       // input names whose abstract is expanded
     inputGloss: Record<string, string>;  // IF10 v2: opt-in LLM "what is this" per input
     inputGlossLoading: string[];          // input names whose gloss is being fetched
+    // IF11: MC-mode coverage analysis (output contract vs input schemas). Snapshotted on open.
+    coverage?: CoverageReport;            // undefined = not computed / no output schema
+    coverageExpanded: boolean;            // show the full per-field list (collapsed = summary only)
     mcpDialogMode: 'prompt' | 'preview';  // 'prompt' = input, 'preview' = show result
     // IF08: snapshot of the editor body the user opted to share via "Load current
     // UTLX". undefined = not loaded (body is NOT sent). Set at click time.
@@ -110,6 +115,7 @@ export class UTLXToolbarWidget extends ReactWidget {
         expandedInputs: [],
         inputGloss: {},
         inputGlossLoading: [],
+        coverageExpanded: false,
         mcpDialogMode: 'prompt',
         generatedCode: '',
         promptHistory: this.loadPromptHistory(),
@@ -338,6 +344,9 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                 })}
                                             </div>
                                         )}
+                                        {/* IF11: MC-mode coverage of the output contract by the inputs */}
+                                        {currentMode === UTLXMode.MESSAGE_CONTRACT && this.renderCoverage()}
+
                                         <p>Describe what transformation you want to create:</p>
 
                                         {/* Prompt History Dropdown — IF08: only the
@@ -618,6 +627,9 @@ export class UTLXToolbarWidget extends ReactWidget {
             mcpPrompt: lastPrompt,  // Restore last prompt
             dialogInputs: this.snapshotDialogInputs(),  // IF10: input list + abstracts
             expandedInputs: [],
+            // IF11: in MC mode, analyze how well the inputs cover the output contract.
+            coverage: this.state.currentMode === UTLXMode.MESSAGE_CONTRACT ? this.snapshotCoverage() : undefined,
+            coverageExpanded: false,
             systemStatus: {
                 mcpServer: null,
                 utlxd: null,
@@ -836,6 +848,99 @@ export class UTLXToolbarWidget extends ReactWidget {
             });
             return { name: t.name, format: t.format, abstract };
         });
+    }
+
+    /**
+     * IF11: render the MC-mode coverage panel — a summary line, the delta (gaps),
+     * and an expandable per-field list. Guides the user (and grounds generation)
+     * before they describe the mapping.
+     */
+    private renderCoverage(): React.ReactNode {
+        const cov = this.state.coverage;
+        if (!cov) {
+            return (
+                <div className='utlx-coverage utlx-coverage-empty'>
+                    <span className='utlx-coverage-title'>Contract coverage</span>
+                    <span className='utlx-coverage-hint'>
+                        Load an output schema (and input schemas) to see how well the inputs cover the output contract.
+                    </span>
+                </div>
+            );
+        }
+        const c = cov.counts;
+        const expanded = this.state.coverageExpanded;
+        const icon = (s: string) => (s === 'direct' ? '✓' : s === 'derivable' ? '~' : '✗');
+        return (
+            <div className='utlx-coverage'>
+                <button
+                    className='utlx-coverage-head'
+                    onClick={() => this.setState({ coverageExpanded: !expanded })}
+                    title='How well the inputs cover the output contract'
+                >
+                    <span className='utlx-coverage-chevron'>{expanded ? '▾' : '▸'}</span>
+                    <span className='utlx-coverage-title'>Contract coverage</span>
+                    <span className='utlx-coverage-counts'>
+                        <span className='cov-direct'>✓ {c.direct}</span>
+                        <span className='cov-derivable'>~ {c.derivable}</span>
+                        <span className='cov-gap'>✗ {c.gap}</span>
+                        <span className='cov-total'>of {c.total}</span>
+                    </span>
+                </button>
+
+                {/* The delta is the headline: required fields with no source. Always shown. */}
+                {cov.delta.length > 0 ? (
+                    <div className='utlx-coverage-delta'>
+                        ⚠ {cov.delta.length} required field{cov.delta.length === 1 ? '' : 's'} with no source —
+                        needs a lookup, an extra input, or a default:
+                        <span className='utlx-coverage-delta-list'> {cov.delta.map(e => e.outputPath).join(', ')}</span>
+                    </div>
+                ) : (
+                    <div className='utlx-coverage-ok'>✓ Every required output field has a candidate source.</div>
+                )}
+
+                {expanded && (
+                    <div className='utlx-coverage-list'>
+                        {cov.entries.map((e, i) => (
+                            <div key={i} className={`utlx-coverage-row cov-${e.status}`}>
+                                <span className='cov-icon'>{icon(e.status)}</span>
+                                <span className='cov-path'>{e.outputPath}{e.required ? '*' : ''}</span>
+                                <span className='cov-type'>({e.type})</span>
+                                {e.source && <span className='cov-source'>← {e.source}</span>}
+                                {e.note && <span className='cov-note'>{e.note}</span>}
+                            </div>
+                        ))}
+                        <div className='utlx-coverage-legend'>✓ direct · ~ derivable · ✗ gap · * required</div>
+                    </div>
+                )}
+            </div>
+        );
+    }
+
+    /**
+     * IF11: deterministic coverage of the output contract by the input schema(s).
+     * Pulls each input's schema (MC mode is schema→schema) + the output panel's
+     * expected schema, then classifies every output leaf direct/derivable/gap.
+     * No AI — pure name/type matching. Undefined when there's no output schema.
+     */
+    private snapshotCoverage(): CoverageReport | undefined {
+        const inputPanel = this.shell.getWidgets('left')
+            .find((w: any) => w instanceof MultiInputPanelWidget) as MultiInputPanelWidget | undefined;
+        const outputPanel = this.shell.getWidgets('right')
+            .find((w: any) => w instanceof OutputPanelWidget) as OutputPanelWidget | undefined;
+        if (!inputPanel || !outputPanel) {
+            return undefined;
+        }
+        const expected = outputPanel.getExpectedSchema();
+        if (!expected) {
+            return undefined;  // no output contract to cover against
+        }
+        const tabs = inputPanel.getAllInputTabs();
+        const fullInputs = (inputPanel as any).state?.inputs || [];
+        const inputs = tabs.map((t: any) => {
+            const full = fullInputs.find((i: any) => i.id === t.id);
+            return { name: t.name, content: full?.schemaContent, format: full?.schemaFormat };
+        });
+        return buildContractCoverage(inputs, expected.content, expected.format);
     }
 
     /**
