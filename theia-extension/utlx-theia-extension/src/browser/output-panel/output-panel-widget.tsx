@@ -38,6 +38,9 @@ export interface OutputPanelState {
     outputNameVersion?: number;
     instanceContent: string;
     schemaContent: string;
+    // MC mode: the output is purely the contract (schema) — no expected/sample instance.
+    // Hides the Instance tab; only the schema is used by coverage/generation.
+    schemaOnly?: boolean;
     instanceFormat?: string;
     schemaFormat?: string;
     instanceExecutionTime?: number;
@@ -231,22 +234,44 @@ export class OutputPanelWidget extends ReactWidget {
 
                 {/* Tab Navigation */}
                 <div className='utlx-tab-container'>
-                    <button
-                        className={`utlx-tab ${activeTab === 'instance' ? 'active' : ''}`}
-                        onClick={() => this.handleTabSwitch('instance')}
-                    >
-                        Instance
-                    </button>
-                    {/* Only show Schema tab in Message Contract mode */}
-                    {mode === UTLXMode.MESSAGE_CONTRACT && (
+                    {/* The Instance (expected output) tab is hidden when the output is
+                        marked "schema only" — the contract is then the sole artifact. */}
+                    {!(mode === UTLXMode.MESSAGE_CONTRACT && this.state.schemaOnly) && (
                         <button
-                            className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''} ${this.isSchemaTabDisabled() ? 'disabled' : ''}`}
-                            onClick={() => !this.isSchemaTabDisabled() && this.handleTabSwitch('schema')}
-                            disabled={this.isSchemaTabDisabled()}
-                            title={this.isSchemaTabDisabled() ? 'Schema not available for schema formats' : 'View output schema'}
+                            className={`utlx-tab ${activeTab === 'instance' ? 'active' : ''}`}
+                            onClick={() => this.handleTabSwitch('instance')}
                         >
-                            Schema
+                            Instance
                         </button>
+                    )}
+                    {/* Only show Schema tab in Message Contract mode. It stays reachable
+                        when schema-only (it's the only tab); otherwise the schema-of-a-
+                        schema guard still applies. */}
+                    {mode === UTLXMode.MESSAGE_CONTRACT && (() => {
+                        const disabled = !this.state.schemaOnly && this.isSchemaTabDisabled();
+                        return (
+                            <button
+                                className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
+                                onClick={() => !disabled && this.handleTabSwitch('schema')}
+                                disabled={disabled}
+                                title={disabled ? 'Schema not available for schema formats' : 'View output schema'}
+                            >
+                                Schema
+                            </button>
+                        );
+                    })()}
+                    {mode === UTLXMode.MESSAGE_CONTRACT && (
+                        <label
+                            className='utlx-schema-only-toggle'
+                            title='The output is just the contract (schema) — no expected/sample instance. Hides the Instance tab.'
+                        >
+                            <input
+                                type='checkbox'
+                                checked={!!this.state.schemaOnly}
+                                onChange={() => this.toggleSchemaOnly()}
+                            />
+                            schema only
+                        </label>
                     )}
                 </div>
 
@@ -544,6 +569,19 @@ export class OutputPanelWidget extends ReactWidget {
 
     private handleTabSwitch(tab: 'instance' | 'schema'): void {
         this.setState({ activeTab: tab });
+    }
+
+    /**
+     * Toggle "schema only" for the output (MC mode). When on, the output is purely the
+     * contract (schema) — the Instance (expected output) tab is hidden and the view
+     * stays on Schema. Coverage/generation already use only the output schema.
+     */
+    private toggleSchemaOnly(): void {
+        const next = !this.state.schemaOnly;
+        this.setState({
+            schemaOnly: next,
+            ...(next ? { activeTab: 'schema' as const } : {})
+        });
     }
 
     private async handleCopy(): Promise<void> {
