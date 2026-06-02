@@ -32,6 +32,12 @@
   button reads **"✨ Map to output contract"** and is enabled with an empty prompt; the
   label/placeholder reframe the prompt as optional guidance (defaults for gaps, lookups).
   Execution mode is unchanged (prompt still required).
+- **MC input panel fixes:** in Message Contract mode an input's **instance (sample) and
+  schema (contract) are independent** — loading one no longer clears the other, so a
+  sample JSON and its schema can coexist (previously loading a schema wiped the instance
+  and vice-versa). The **Schema tab is always reachable** in MC mode (no longer gated on
+  the instance format). A per-input **"schema only"** toggle hides the Instance tab for
+  pure contract inputs (no sample), contributing only the schema to coverage/generation.
 - **Pending (Phase 1 cont.):** richer structural coverage hints for nested/array mappings.
 - **Pending:** Phase 2 (archetype matrix + function kits), Phase 3 (schema-conformance +
   synthetic round-trip).

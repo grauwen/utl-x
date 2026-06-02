@@ -846,6 +846,24 @@
     font-weight: 600;
 }
 
+/* MC mode: "schema only" toggle sits at the right of the Instance/Schema tabs. */
+.utlx-schema-only-toggle {
+    flex: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-left: auto;
+    padding: 0 10px;
+    font-size: 11px;
+    color: var(--theia-descriptionForeground, #999);
+    cursor: pointer;
+    white-space: nowrap;
+}
+.utlx-schema-only-toggle input {
+    cursor: pointer;
+    margin: 0;
+}
+
 .utlx-horizontal-tab:disabled {
     opacity: 0.3;
     cursor: not-allowed;

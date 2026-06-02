@@ -64,6 +64,9 @@ export interface InputTab {
     instanceFormat: InstanceFormat;
     schemaContent: string;
     schemaFormat: SchemaFormatType;
+    // MC mode: this input has no sample instance — only its schema (the contract).
+    // Hides the Instance tab; the input contributes only its schema to coverage/generation.
+    schemaOnly?: boolean;
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
@@ -423,20 +426,35 @@ export class MultiInputPanelWidget extends ReactWidget {
                     <div className='utlx-horizontal-tabs'>
                         {isMessageContract ? (
                             <>
-                                {/* Message Contract: Show both Instance and Schema tabs */}
-                                <button
-                                    className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
-                                    onClick={() => this.handleSubTabSwitch('instance')}
-                                >
-                                    Instance
-                                </button>
+                                {/* Message Contract: Schema is the contract (primary). The
+                                    Instance tab (an optional sample) is hidden when the
+                                    input is marked "schema only". The Schema tab is always
+                                    reachable — instance and schema are independent here. */}
+                                {!activeInput.schemaOnly && (
+                                    <button
+                                        className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
+                                        onClick={() => this.handleSubTabSwitch('instance')}
+                                    >
+                                        Instance
+                                    </button>
+                                )}
                                 <button
                                     className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''}`}
                                     onClick={() => this.handleSubTabSwitch('schema')}
-                                    disabled={this.isSchemaTabDisabled(activeInput.instanceFormat)}
                                 >
                                     Schema
                                 </button>
+                                <label
+                                    className='utlx-schema-only-toggle'
+                                    title='This input has no sample instance — use only its schema (the contract). Hides the Instance tab.'
+                                >
+                                    <input
+                                        type='checkbox'
+                                        checked={!!activeInput.schemaOnly}
+                                        onChange={() => this.toggleSchemaOnly()}
+                                    />
+                                    schema only
+                                </label>
                             </>
                         ) : (
                             <>
@@ -777,7 +795,28 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private handleSelectInput(inputId: string): void {
-        this.setState({ activeInputId: inputId });
+        // A schema-only input has no Instance tab, so never leave the sub-tab on
+        // 'instance' when selecting one (keeps state consistent with what's shown).
+        const selected = this.state.inputs.find(i => i.id === inputId);
+        const forceSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && !!selected?.schemaOnly;
+        this.setState({
+            activeInputId: inputId,
+            ...(forceSchema ? { activeSubTab: 'schema' as const } : {})
+        });
+    }
+
+    /**
+     * Feature: toggle "schema only" for the active input (MC mode). When on, the input
+     * carries just its schema (the contract) — the Instance tab is hidden and the input
+     * contributes only its schema to coverage/generation. Enabling jumps to the Schema tab.
+     */
+    private toggleSchemaOnly(): void {
+        const id = this.state.activeInputId;
+        const next = !this.state.inputs.find(i => i.id === id)?.schemaOnly;
+        this.setState({
+            inputs: this.state.inputs.map(i => i.id === id ? { ...i, schemaOnly: next } : i),
+            ...(next ? { activeSubTab: 'schema' as const } : {})
+        });
     }
 
     private handleAddInput(): void {
@@ -2079,9 +2118,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                         }
                     }
 
-                    // Update content and optionally format
-                    // When loading schema: clear instance content so Function Builder shows schema structure
-                    // When loading instance: clear schema content so user can infer new schema if needed
+                    // Update content and optionally format. The instance and schema
+                    // slots are INDEPENDENT in MC mode: loading one must NOT wipe the
+                    // other, so a sample instance and the contract schema can coexist.
                     this.setState({
                         inputs: this.state.inputs.map(input =>
                             input.id === this.state.activeInputId
@@ -2091,18 +2130,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
                                     ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
                                     // Auto-name from the filename when the name was still a default
-                                    ...(renameTo ? { name: renameTo } : {}),
-                                    // Clear instance content and UDM when loading a new schema
-                                    ...(isSchema ? {
-                                        instanceContent: '',
-                                        udmLanguage: undefined,
-                                        udmParsed: false,
-                                        udmError: undefined
-                                    } : {}),
-                                    // Clear schema content when loading a new instance (user can infer schema later)
-                                    ...(!isSchema && this.state.mode === UTLXMode.MESSAGE_CONTRACT ? {
-                                        schemaContent: ''
-                                    } : {})
+                                    ...(renameTo ? { name: renameTo } : {})
                                 }
                                 : input
                         ),
@@ -2134,19 +2162,9 @@ export class MultiInputPanelWidget extends ReactWidget {
                         });
                     }
 
-                    // Fire content changed event
+                    // Fire content changed event. Instance and schema are independent —
+                    // loading one does NOT clear the other (so both can be present).
                     if (isSchema) {
-                        // Clear the old instance UDM from editor widget first
-                        if (currentInput) {
-                            console.log('[MultiInputPanel] Schema loaded - clearing instance UDM for:', currentInput.name);
-                            this.eventService.fireInputUdmUpdated({
-                                inputId: this.state.activeInputId,
-                                inputName: currentInput.name,
-                                udmLanguage: '',  // Empty UDM signals clear
-                                format: currentInput.instanceFormat || 'json'
-                            });
-                        }
-
                         this.eventService.fireInputSchemaContentChanged({
                             inputId: this.state.activeInputId,
                             content
@@ -2157,15 +2175,6 @@ export class MultiInputPanelWidget extends ReactWidget {
                         await new Promise(resolve => setTimeout(resolve, 50));
                         this.parseAndFireSchemaFieldTree(this.state.activeInputId);
                     } else {
-                        // When loading instance in Message Contract mode, notify that schema was cleared
-                        if (this.state.mode === UTLXMode.MESSAGE_CONTRACT) {
-                            console.log('[MultiInputPanel] Instance loaded in Message Contract mode - clearing schema');
-                            this.eventService.fireInputSchemaContentChanged({
-                                inputId: this.state.activeInputId,
-                                content: ''
-                            });
-                        }
-
                         this.eventService.fireInputInstanceContentChanged({
                             inputId: this.state.activeInputId,
                             content
