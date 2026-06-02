@@ -1,0 +1,12 @@
+{
+  "_comment": "Source 2 of 3 (CSV instance, Table Schema). Package lines for a shipment.",
+  "fields": [
+    { "name": "packageId", "type": "string", "constraints": { "required": true } },
+    { "name": "shipmentId", "type": "string", "constraints": { "required": true } },
+    { "name": "weightKg", "type": "number", "constraints": { "required": true } },
+    { "name": "lengthCm", "type": "integer" },
+    { "name": "widthCm", "type": "integer" },
+    { "name": "heightCm", "type": "integer" }
+  ],
+  "primaryKey": "packageId"
+}

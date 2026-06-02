@@ -1,0 +1,4 @@
+packageId,shipmentId,weightKg,lengthCm,widthCm,heightCm
+PKG-001,SHP-2026-0042,12.5,40,30,25
+PKG-002,SHP-2026-0042,3.2,20,15,10
+PKG-003,SHP-2026-0042,8.0,35,35,20

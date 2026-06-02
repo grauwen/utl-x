@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Source 1 of 3 (XML instance, XSD schema): a shipment header. -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="Shipment">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="shipmentId" type="xs:string"/>
+        <xs:element name="origin" type="xs:string"/>
+        <xs:element name="destination" type="xs:string"/>
+        <xs:element name="carrier" type="xs:string"/>
+        <xs:element name="shipDate" type="xs:date"/>
+      </xs:sequence>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

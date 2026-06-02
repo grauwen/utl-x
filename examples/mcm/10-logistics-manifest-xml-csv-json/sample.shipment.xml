@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Shipment>
+  <shipmentId>SHP-2026-0042</shipmentId>
+  <origin>Rotterdam, NL</origin>
+  <destination>Hamburg, DE</destination>
+  <carrier>EuroFreight</carrier>
+  <shipDate>2026-06-01</shipDate>
+</Shipment>

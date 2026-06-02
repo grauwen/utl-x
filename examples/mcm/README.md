@@ -40,6 +40,27 @@ each folder carries its own copies of the input schemas + samples, so it loads
 independently. Each sub-folder's `README.md` has the per-field expected coverage table
 and the delta. All deltas above are **verified** against the coverage analyzer.
 
+### Mixed-format scenarios (10–11) — 3 inputs across the 5 instance formats
+
+Unlike 01–09 (all JSON/JSCH), these deliberately **mix formats** and **vary the output
+format**, and each folder is a **triple**: one shared set of 3 inputs with three output
+contracts — **CLEAN**, **SMALL GAP**, **LARGE GAP** (`output.clean.*` / `output.small-gap.*`
+/ `output.large-gap.*`). Together they cover all five instance formats.
+
+| # | Inputs (instance/schema) → Output | CLEAN | SMALL | LARGE |
+|---|---|---|---|---|
+| [10](10-logistics-manifest-xml-csv-json/) | XML/xsd + CSV/tsch + JSON/jsch → **XML/xsd** | 9 direct, 0 gap | 2 gap | 9 gap (+1 fuzzy) |
+| [11](11-payroll-record-odata-yaml-csv/)   | OData/osch + YAML/jsch + CSV/tsch → **JSON/jsch** | 11 direct, 0 gap | 2 gap | 10 gap |
+
+Coverage verified across **all four schema parsers** (jsch, xsd, tsch, osch). OData
+property names (PascalCase) match camelCase targets case-insensitively.
+
+> **Known limitation:** the MC schema dropdown also offers **`avro`** and **`proto`**,
+> but the coverage analyzer has **no parser** for them yet (only jsch/xsd/osch/tsch) — so
+> an avro/proto schema yields no coverage. Examples here use only the four supported
+> formats. (Tracked as a follow-up: add `parseAvroToFieldTree`/`parseProtoToFieldTree`
+> or drop avro/proto from the MC dropdown.)
+
 ## How to use in the IDE
 
 1. Switch the toolbar to **📋 Message Contract Mode**.

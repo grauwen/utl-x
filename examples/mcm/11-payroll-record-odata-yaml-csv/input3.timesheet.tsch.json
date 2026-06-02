@@ -1,0 +1,10 @@
+{
+  "_comment": "Source 3 of 3 (CSV instance, Table Schema). Hours per employee per period.",
+  "fields": [
+    { "name": "employeeId", "type": "string", "constraints": { "required": true } },
+    { "name": "periodId", "type": "string", "constraints": { "required": true } },
+    { "name": "hoursWorked", "type": "number", "constraints": { "required": true } },
+    { "name": "overtimeHours", "type": "number" }
+  ],
+  "primaryKey": ["employeeId", "periodId"]
+}

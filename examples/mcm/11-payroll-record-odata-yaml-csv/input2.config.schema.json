@@ -1,0 +1,12 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PayrollConfig",
+  "description": "Source 2 of 3 (YAML instance, JSON Schema). Run configuration.",
+  "type": "object",
+  "required": ["payrollCycle", "currency", "region"],
+  "properties": {
+    "payrollCycle": { "type": "string", "enum": ["weekly", "biweekly", "monthly"] },
+    "currency":     { "type": "string" },
+    "region":       { "type": "string" }
+  }
+}

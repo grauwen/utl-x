@@ -1,0 +1,13 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Customer",
+  "description": "Source 3 of 3 (JSON instance, JSON Schema). The consignee.",
+  "type": "object",
+  "required": ["customerId", "customerName", "email"],
+  "properties": {
+    "customerId":   { "type": "string" },
+    "customerName": { "type": "string" },
+    "email":        { "type": "string", "format": "email" },
+    "phone":        { "type": "string" }
+  }
+}
