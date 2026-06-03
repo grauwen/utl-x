@@ -1,0 +1,12 @@
+%utlx 1.0
+input invoice json
+output json
+---
+// Route an incoming invoice: normalize a few fields and pick a destination lane.
+{
+  invoiceId: $invoice.invoiceId,
+  customerName: $invoice.customer.name,
+  currency: $invoice.currency,
+  total: $invoice.total,
+  destination: if ($invoice.total > 1000) "priority-queue" else "standard-queue"
+}

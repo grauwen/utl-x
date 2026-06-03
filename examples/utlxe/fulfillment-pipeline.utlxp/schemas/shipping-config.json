@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "shippingConfig",
+  "type": "object",
+  "properties": {
+    "freeShippingThreshold": {
+      "type": "integer"
+    },
+    "flatShippingRate": {
+      "type": "number"
+    },
+    "fallbackCarrier": {
+      "type": "string"
+    },
+    "zones": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "warehouse": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "defaultCarrier": {
+            "type": "string"
+          },
+          "transitDays": {
+            "type": "integer"
+          },
+          "countries": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "warehouse",
+          "region",
+          "defaultCarrier",
+          "transitDays",
+          "countries"
+        ]
+      }
+    },
+    "hazmatCarriers": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "maxWeightKg": {
+      "type": "number"
+    },
+    "oversizeThresholdCm": {
+      "type": "integer"
+    }
+  },
+  "required": [
+    "freeShippingThreshold",
+    "flatShippingRate",
+    "fallbackCarrier",
+    "zones",
+    "hazmatCarriers",
+    "maxWeightKg",
+    "oversizeThresholdCm"
+  ]
+}

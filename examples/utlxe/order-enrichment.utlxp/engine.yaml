@@ -16,17 +16,7 @@ engine:
 
   defaultStrategy: TEMPLATE
 
-# Multi-input transformation: order + customers + inventory
-# Phase 2+ will wire these to separate Pulsar topics.
-# Phase 1: all inputs come from the .utlx header; engine processes via stdin.
-pipes:
-  enrich-order:
-    inputs:
-      - name: order
-        transport: stdin
-      - name: customers
-        transport: stdin
-      - name: inventory
-        transport: stdin
-    output:
-      transport: stdout
+# engine.yaml configures the engine only (name, threads, memory, monitoring,
+# defaultStrategy). Per-transformation I/O (here: order + customers + inventory) is
+# declared in transformations/<name>/transform.yaml; messaging/transport wiring is a
+# runtime concern (Dapr / Azure Service Bus · Event Hub — see EF06/EF10), not set here.

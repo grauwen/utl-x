@@ -1,0 +1,26 @@
+strategy: COMPILED
+validationPolicy: WARN
+
+# Data slots (bound as $invoice in the .utlx), with schemas under the bundle's schemas/.
+inputs:
+  - name: invoice
+    schema: schemas/invoice.json
+output:
+  schema: schemas/routed-invoice.json
+
+maxConcurrent: 16
+
+# ── EF10 messaging (Azure Service Bus via Dapr) ──────────────────────────────
+# Input: a Service Bus TOPIC (pub/sub) — `subscription` is required for a topic input.
+input:
+  topic: raw-invoices
+  subscription: utlxe-invoice-routing
+
+# Output: a Service Bus QUEUE (binding).
+output_messaging:
+  queue: routed-invoices
+
+# Alternatives (one of queue / topic / eventhub per endpoint):
+#   input:   { queue: orders-in }                      # Service Bus queue (binding)
+#   input:   { eventhub: telemetry, consumerGroup: cg } # Event Hub (pub/sub)
+#   output_messaging: { topic: invoices-routed }        # Service Bus topic

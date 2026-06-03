@@ -1,0 +1,10 @@
+{
+  "invoiceId": "INV-2026-0001",
+  "customer": { "id": "C-77", "name": "Helios Trading BV" },
+  "currency": "EUR",
+  "total": 1499.50,
+  "lines": [
+    { "sku": "BK-1042", "qty": 2, "price": 129.00 },
+    { "sku": "DS-2201", "qty": 1, "price": 1241.50 }
+  ]
+}

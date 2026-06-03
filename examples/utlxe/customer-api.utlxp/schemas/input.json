@@ -1,0 +1,113 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "input",
+  "type": "object",
+  "properties": {
+    "order": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        },
+        "orderDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "currency": {
+          "type": "string"
+        },
+        "taxRate": {
+          "type": "number"
+        },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "firstName": {
+              "type": "string"
+            },
+            "lastName": {
+              "type": "string"
+            },
+            "email": {
+              "type": "string"
+            },
+            "vatNumber": {
+              "type": "string"
+            },
+            "address": {
+              "type": "object",
+              "properties": {
+                "street": {
+                  "type": "string"
+                },
+                "city": {
+                  "type": "string"
+                },
+                "postalCode": {
+                  "type": "string"
+                },
+                "country": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "street",
+                "city",
+                "postalCode",
+                "country"
+              ]
+            }
+          },
+          "required": [
+            "firstName",
+            "lastName",
+            "email",
+            "vatNumber",
+            "address"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer"
+              },
+              "unitPrice": {
+                "type": "integer"
+              },
+              "discount": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "sku",
+              "name",
+              "quantity",
+              "unitPrice",
+              "discount"
+            ]
+          }
+        }
+      },
+      "required": [
+        "orderId",
+        "orderDate",
+        "currency",
+        "taxRate",
+        "customer",
+        "items"
+      ]
+    }
+  },
+  "required": [
+    "order"
+  ]
+}
