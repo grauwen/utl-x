@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utl-x.org/schema/transform-config.schema.json",
+  "title": "UTL-X transform.yaml (TransformConfig)",
+  "description": "Per-transformation config in a bundle: transformations/<name>/transform.yaml. Source of truth: modules/engine/.../config/TransformConfig.kt. The engine itself ignores unknown keys; this schema is stricter to help editing/validation in the IDE (IF04).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "strategy": {
+      "type": "string",
+      "enum": ["TEMPLATE", "INTERPRETED", "COPY", "COMPILED"],
+      "default": "TEMPLATE",
+      "description": "Execution strategy. TEMPLATE (alias INTERPRETED) = interpret per message; COPY = pre-parsed AST reused (no per-message reparse); COMPILED = compiled at load (fastest steady-state, one-time startup cost)."
+    },
+    "validationPolicy": {
+      "type": "string",
+      "enum": ["OFF", "SKIP", "WARN", "STRICT"],
+      "default": "SKIP",
+      "description": "Schema validation of inputs/output. OFF/SKIP = none; WARN = log and continue; STRICT = reject on validation failure."
+    },
+    "inputs": {
+      "type": "array",
+      "description": "Data input slots. The name binds to $name in the .utlx; schema (optional) is a path to a schema file under the bundle's shared schemas/.",
+      "items": { "$ref": "#/definitions/inputSlot" }
+    },
+    "output": { "$ref": "#/definitions/outputSlot" },
+    "maxConcurrent": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 0,
+      "description": "EF21 back-pressure: 0 = unlimited; >0 = max in-flight executions before the engine returns 503/back-pressures."
+    },
+    "maxInputSize": {
+      "type": "string",
+      "pattern": "^\\d+\\s*(B|KB|MB|GB)?$",
+      "description": "Per-transformation max input size, e.g. \"100KB\", \"25MB\". Omit to use the engine default."
+    },
+    "outputBinding": {
+      "type": "string",
+      "description": "Legacy Dapr output binding name. Prefer output_messaging."
+    },
+    "input": {
+      "allOf": [{ "$ref": "#/definitions/messagingEndpoint" }],
+      "description": "EF10 messaging INPUT endpoint (singular; distinct from the inputs[] data slots). Maps to a Dapr Service Bus / Event Hub component."
+    },
+    "output_messaging": {
+      "allOf": [{ "$ref": "#/definitions/messagingEndpoint" }],
+      "description": "EF10 messaging OUTPUT endpoint. Maps to a Dapr Service Bus / Event Hub component."
+    }
+  },
+  "definitions": {
+    "inputSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "description": "Input name; bound as $name in the .utlx." },
+        "schema": { "type": "string", "description": "Path to a schema file (e.g. schemas/order.json), relative to the bundle root." }
+      }
+    },
+    "outputSlot": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "schema": { "type": "string", "description": "Path to the output schema file, relative to the bundle root." }
+      }
+    },
+    "messagingEndpoint": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Exactly one of queue / topic / eventhub. The field name is the discriminator (Service Bus queue, Service Bus topic, or Event Hub).",
+      "properties": {
+        "queue": { "type": "string", "description": "Service Bus queue → bindings.azure.servicebusqueues." },
+        "topic": { "type": "string", "description": "Service Bus topic → pubsub.azure.servicebus.topics." },
+        "eventhub": { "type": "string", "description": "Event Hub → bindings.azure.eventhubs (pub/sub when consumerGroup is set)." },
+        "subscription": { "type": "string", "description": "Required for a topic INPUT (Service Bus subscription name)." },
+        "consumerGroup": { "type": "string", "description": "Optional for an eventhub INPUT; presence triggers pub/sub mode." }
+      },
+      "oneOf": [
+        { "required": ["queue"] },
+        { "required": ["topic"] },
+        { "required": ["eventhub"] }
+      ]
+    }
+  }
+}
