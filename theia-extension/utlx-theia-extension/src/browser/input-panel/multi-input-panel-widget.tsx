@@ -160,6 +160,10 @@ export class MultiInputPanelWidget extends ReactWidget {
     // restored header. Cleared after the restore window so later header edits don't
     // re-inject stale content.
     private pendingRestore?: InputContentSnapshot;
+    // IF03 Phase 2: a transformation's input samples keyed by input name, to OVERWRITE
+    // matching tabs (unlike the conservative IF09 restore). Set before the editor loads
+    // the .utlx; consumed by syncFromHeaders as it rebuilds tabs from the header.
+    private pendingBundleSamples?: { [name: string]: string };
     private persistTimer?: number;
     private udmDialogPosition = { x: 0, y: 0 };
     private isDraggingDialog = false;
@@ -2352,6 +2356,55 @@ export class MultiInputPanelWidget extends ReactWidget {
         };
     }
 
+    /**
+     * IF03 Phase 2: load a transformation's input samples (instance content keyed by
+     * input name). Call this BEFORE the editor loads the .utlx — syncFromHeaders (driven
+     * by the header parse) then OVERWRITES each matching tab's content as it rebuilds the
+     * tabs. Also applied immediately to any already-matching tab (covers re-opening the
+     * same transformation, where no resync fires). Cleared one-shot.
+     */
+    public loadBundleSamples(byName: { [name: string]: string }): void {
+        this.pendingBundleSamples = byName;
+        this.applyBundleSamplesToCurrent();
+        // Backstop: drop the pending samples if no resync consumes them shortly, so a
+        // later manual header edit can't re-inject a previous transformation's data.
+        window.setTimeout(() => { this.pendingBundleSamples = undefined; }, 5000);
+    }
+
+    /** Overwrite current tabs' instance content from pendingBundleSamples (by name). */
+    private applyBundleSamplesToCurrent(): void {
+        const byName = this.pendingBundleSamples;
+        if (!byName) {
+            return;
+        }
+        let changed = false;
+        const inputs = this.state.inputs.map(input => {
+            if (Object.prototype.hasOwnProperty.call(byName, input.name)) {
+                changed = true;
+                return {
+                    ...input,
+                    instanceContent: byName[input.name],
+                    // Force UDM re-parse for the new content.
+                    udmLanguage: undefined,
+                    udmParsed: undefined,
+                    udmError: undefined,
+                };
+            }
+            return input;
+        });
+        if (!changed) {
+            return;
+        }
+        this.setState({ inputs, contentVersion: (this.state.contentVersion ?? 0) + 1 });
+        // Re-validate (UDM) each filled input + notify dependents.
+        for (const input of this.state.inputs) {
+            if (Object.prototype.hasOwnProperty.call(byName, input.name) && input.instanceContent.trim()) {
+                this.eventService.fireInputInstanceContentChanged({ inputId: input.id, content: input.instanceContent });
+                this.validateInput(input.id);
+            }
+        }
+    }
+
     /** IF09: after a restore, re-fire UDM so the editor/canvas field trees rebuild. */
     private refireRestoredUdm(): void {
         this.state.inputs.forEach(input => {
@@ -2575,6 +2628,13 @@ export class MultiInputPanelWidget extends ReactWidget {
         if (this.pendingRestore) {
             this.pendingRestore = undefined;
             window.setTimeout(() => this.refireRestoredUdm(), 100);
+        }
+
+        // IF03 Phase 2: now that the tabs match the new transformation's header, overwrite
+        // their content with the bundle samples (by name) and consume them (one-shot).
+        if (this.pendingBundleSamples) {
+            this.applyBundleSamplesToCurrent();
+            this.pendingBundleSamples = undefined;
         }
 
         console.log('[MultiInputPanelWidget] Sync complete:', newInputs.map(i => ({name: i.name, format: i.instanceFormat})));

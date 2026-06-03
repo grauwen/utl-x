@@ -1062,3 +1062,41 @@
 .utlx-udm-dialog-footer button:hover {
     background: var(--theia-button-hoverBackground);
 }
+
+/* ===== IF03: Bundle Explorer ===== */
+.utlx-bundle-explorer-body { display: flex; flex-direction: column; height: 100%; font-size: 13px; }
+.utlx-bundle-toolbar {
+    display: flex; gap: 6px; padding: 6px;
+    border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
+}
+.utlx-bundle-btn {
+    background: var(--theia-button-secondaryBackground, transparent);
+    color: var(--theia-foreground, #ccc);
+    border: 1px solid var(--theia-panel-border, #3c3c3c);
+    border-radius: 3px; padding: 3px 8px; font-size: 12px; cursor: pointer;
+}
+.utlx-bundle-btn:hover:not(:disabled) { background: var(--theia-list-hoverBackground, #2a2d2e); }
+.utlx-bundle-btn:disabled { opacity: 0.5; cursor: default; }
+.utlx-bundle-status, .utlx-bundle-empty { padding: 10px; color: var(--theia-descriptionForeground, #999); }
+.utlx-bundle-empty code { font-family: var(--theia-editor-font-family, monospace); }
+.utlx-bundle-error { padding: 10px; color: var(--theia-errorForeground, #f48771); }
+.utlx-bundle-tree { overflow: auto; padding: 4px 0; flex: 1; }
+.utlx-bundle-root { font-weight: 600; padding: 4px 8px; }
+.utlx-bundle-group {
+    text-transform: uppercase; font-size: 10px; letter-spacing: 0.04em;
+    color: var(--theia-descriptionForeground, #999);
+    padding: 8px 8px 2px 8px;
+}
+.utlx-bundle-node {
+    display: flex; align-items: center; gap: 6px;
+    padding: 2px 8px 2px 16px; cursor: pointer; white-space: nowrap;
+}
+.utlx-bundle-node:hover { background: var(--theia-list-hoverBackground, #2a2d2e); }
+.utlx-bundle-node.missing { opacity: 0.65; }
+.utlx-bundle-icon { width: 12px; opacity: 0.8; flex: none; }
+.utlx-bundle-name { overflow: hidden; text-overflow: ellipsis; }
+.utlx-bundle-badge { opacity: 0.75; }
+.utlx-bundle-badge.clickable { cursor: pointer; }
+.utlx-bundle-badge.clickable:hover { opacity: 1; }
+.utlx-bundle-meta { margin-left: auto; font-size: 11px; color: var(--theia-descriptionForeground, #999); }
+.utlx-bundle-warn { font-size: 11px; color: var(--theia-errorForeground, #f48771); }

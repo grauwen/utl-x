@@ -31,6 +31,7 @@ import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
+import { BundleExplorerWidget } from './bundle-explorer/bundle-explorer-widget';
 import { UTLXEventService } from './events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromYaml, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
 import { generateScaffoldFromStructure } from './utils/scaffold-generator';
@@ -208,9 +209,16 @@ export class UTLXFrontendContribution implements
             const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
                 OutputPanelWidget.ID
             );
+            // IF03: Bundle Explorer (left, above the Input panel)
+            const bundleExplorer = await this.widgetManager.getOrCreateWidget<BundleExplorerWidget>(
+                BundleExplorerWidget.ID
+            );
 
             // Add widgets to shell in 3-column layout
-            // Left column: Input panel
+            // Left column: Bundle Explorer (rank 50) + Input panel (rank 100)
+            if (!bundleExplorer.isAttached) {
+                this.shell.addWidget(bundleExplorer, { area: 'left', rank: 50 });
+            }
             if (!inputPanel.isAttached) {
                 this.shell.addWidget(inputPanel, { area: 'left', rank: 100 });
             }

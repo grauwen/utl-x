@@ -14,6 +14,7 @@ import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
+import { BundleExplorerWidget } from './bundle-explorer/bundle-explorer-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
 import { UTLXEventService } from './events/utlx-event-service';
 import { UTLXLanguageGrammarContribution } from './language/utlx-language';
@@ -131,6 +132,15 @@ export default new ContainerModule(bind => {
             }
         })).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ UTLXToolbarWidget bound');
+
+        // Bind Bundle Explorer (IF03)
+        console.log('[UTLX Frontend Module] Binding BundleExplorerWidget...');
+        bind(BundleExplorerWidget).toSelf();
+        bind(WidgetFactory).toDynamicValue(ctx => ({
+            id: BundleExplorerWidget.ID,
+            createWidget: () => ctx.container.get<BundleExplorerWidget>(BundleExplorerWidget)
+        })).inSingletonScope();
+        console.log('[UTLX Frontend Module] ✓ BundleExplorerWidget bound');
 
         // Bind frontend contribution
         console.log('[UTLX Frontend Module] Binding frontend contribution...');
