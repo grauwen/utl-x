@@ -373,6 +373,22 @@ export interface UTLXService {
      * LLM is available or nothing could be resolved.
      */
     refineCoverage(request: CoverageRefineRequest): Promise<CoverageSuggestion[]>;
+
+    /**
+     * IF03 Phase 3: build/export an engine-loadable `.utlar` from an open `.utlxp` bundle
+     * directory (zip manifest.json + transformations/ + schemas/ + engine.yaml). Returns
+     * the output path. `rootUri` is the bundle directory URI (file://…).
+     */
+    buildBundle(rootUri: string): Promise<BuildBundleResult>;
+}
+
+/** IF03 Phase 3: result of building a `.utlar`. */
+export interface BuildBundleResult {
+    success: boolean;
+    outPath?: string;
+    transformations?: string[];
+    schemaCount?: number;
+    error?: string;
 }
 
 /** IF11: one output field with no deterministic source. */

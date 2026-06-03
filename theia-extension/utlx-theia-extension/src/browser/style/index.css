@@ -1074,7 +1074,9 @@
     color: var(--theia-foreground, #ccc);
     border: 1px solid var(--theia-panel-border, #3c3c3c);
     border-radius: 3px; padding: 3px 8px; font-size: 12px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 4px;
 }
+.utlx-bundle-btn .codicon, .utlx-bundle-node .codicon, .utlx-bundle-root .codicon { vertical-align: middle; }
 .utlx-bundle-btn:hover:not(:disabled) { background: var(--theia-list-hoverBackground, #2a2d2e); }
 .utlx-bundle-btn:disabled { opacity: 0.5; cursor: default; }
 .utlx-bundle-status, .utlx-bundle-empty { padding: 10px; color: var(--theia-descriptionForeground, #999); }
@@ -1093,7 +1095,7 @@
 }
 .utlx-bundle-node:hover { background: var(--theia-list-hoverBackground, #2a2d2e); }
 .utlx-bundle-node.missing { opacity: 0.65; }
-.utlx-bundle-icon { width: 12px; opacity: 0.8; flex: none; }
+.utlx-bundle-icon { width: 16px; text-align: center; opacity: 0.85; flex: none; font-size: 14px; }
 .utlx-bundle-name { overflow: hidden; text-overflow: ellipsis; }
 .utlx-bundle-badge { opacity: 0.75; }
 .utlx-bundle-badge.clickable { cursor: pointer; }

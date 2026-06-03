@@ -446,6 +446,20 @@ export class UTLXServiceImpl implements UTLXService {
         }
     }
 
+    async buildBundle(rootUri: string): Promise<import('../../common/protocol').BuildBundleResult> {
+        try {
+            // file://… → fs path (decode; strip the leading slash before a Windows drive).
+            let fsPath = decodeURIComponent(new URL(rootUri).pathname);
+            if (/^\/[A-Za-z]:/.test(fsPath)) { fsPath = fsPath.slice(1); }
+            const { buildUtlar } = await import('./bundle-builder');
+            const r = buildUtlar(fsPath, new Date().toISOString());
+            return { success: true, outPath: r.outPath, transformations: r.transformations, schemaCount: r.schemaCount };
+        } catch (error) {
+            console.error('[BACKEND] buildBundle error:', error);
+            return { success: false, error: error instanceof Error ? error.message : String(error) };
+        }
+    }
+
     async refineCoverage(request: CoverageRefineRequest): Promise<CoverageSuggestion[]> {
         try {
             if (!(await this.mcpClient.ping())) {

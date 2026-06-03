@@ -24,6 +24,7 @@ import { FileStat } from '@theia/filesystem/lib/common/files';
 import { UTLXEditorWidget } from '../editor/utlx-editor-widget';
 import { MultiInputPanelWidget } from '../input-panel/multi-input-panel-widget';
 import { parseUTLXHeaders } from '../parser/utlx-header-parser';
+import { UTLXService, UTLX_SERVICE_SYMBOL } from '../../common/protocol';
 
 interface BundleTx {
     name: string;
@@ -52,9 +53,11 @@ export class BundleExplorerWidget extends ReactWidget {
     @inject(FileDialogService) protected readonly fileDialogService!: FileDialogService;
     @inject(OpenerService) protected readonly openerService!: OpenerService;
     @inject(ApplicationShell) protected readonly shell!: ApplicationShell;
+    @inject(UTLX_SERVICE_SYMBOL) protected readonly utlxService!: UTLXService;
 
     private bundle: BundleModel | null = null;
     private loading = false;
+    private building = false;
     private error?: string;
 
     constructor() {
@@ -265,6 +268,29 @@ export class BundleExplorerWidget extends ReactWidget {
             || files.find(f => base(f.name).includes(target));
     }
 
+    /**
+     * IF03 Phase 3: build/export a deployable `.utlar` from the open bundle (backend zips
+     * manifest.json + transformations/ + schemas/ + engine.yaml, engine-loadable per EF09).
+     */
+    private async buildBundle(): Promise<void> {
+        if (!this.bundle || this.building) { return; }
+        this.building = true; this.update();
+        try {
+            const res = await this.utlxService.buildBundle(this.bundle.rootUri);
+            if (res.success) {
+                const out = res.outPath ? new URI(res.outPath).path.base : '.utlar';
+                this.messageService.info(
+                    `Built ${out} — ${res.transformations?.length ?? 0} transformation(s), ${res.schemaCount ?? 0} schema(s).`);
+            } else {
+                this.messageService.error('Build .utlar failed: ' + (res.error || 'unknown error'));
+            }
+        } catch (e) {
+            this.messageService.error('Build .utlar failed: ' + (e instanceof Error ? e.message : String(e)));
+        } finally {
+            this.building = false; this.update();
+        }
+    }
+
     /** Open a non-transformation file (schema, manifest) in a normal editor tab. */
     private async openFile(uriStr?: string): Promise<void> {
         if (!uriStr) { return; }
@@ -279,16 +305,27 @@ export class BundleExplorerWidget extends ReactWidget {
         return (
             <div className='utlx-bundle-explorer-body'>
                 <div className='utlx-bundle-toolbar'>
-                    <button className='utlx-bundle-btn' onClick={() => this.openBundleDialog()}>📂 Open Bundle…</button>
+                    <button className='utlx-bundle-btn' onClick={() => this.openBundleDialog()} title='Open a bundle folder'>
+                        <span className='codicon codicon-folder-opened'></span> Open Bundle…
+                    </button>
                     <button
                         className='utlx-bundle-btn'
                         onClick={() => this.bundle && this.loadBundle(new URI(this.bundle.rootUri))}
                         disabled={!this.bundle}
                         title='Refresh'
-                    >↻</button>
+                    ><span className='codicon codicon-refresh'></span></button>
+                    <button
+                        className='utlx-bundle-btn'
+                        onClick={() => this.buildBundle()}
+                        disabled={!this.bundle || this.building}
+                        title='Build / Export a deployable .utlar archive from this bundle'
+                    >
+                        <span className={`codicon ${this.building ? 'codicon-loading codicon-modifier-spin' : 'codicon-package'}`}></span>
+                        {this.building ? ' Building…' : ' Build .utlar'}
+                    </button>
                 </div>
                 {this.loading && <div className='utlx-bundle-status'>Loading…</div>}
-                {this.error && <div className='utlx-bundle-error'>⚠ {this.error}</div>}
+                {this.error && <div className='utlx-bundle-error'><span className='codicon codicon-warning'></span> {this.error}</div>}
                 {!this.bundle && !this.loading && !this.error &&
                     <div className='utlx-bundle-empty'>No bundle open. Use “Open Bundle…” to pick a folder containing <code>transformations/</code>.</div>}
                 {this.bundle && this.renderTree(this.bundle)}
@@ -301,7 +338,7 @@ export class BundleExplorerWidget extends ReactWidget {
         return (
             <div className='utlx-bundle-tree'>
                 <div className='utlx-bundle-root' title={b.rootUri}>
-                    📦 {rootName}{b.manifest?.version ? `  v${b.manifest.version}` : ''}
+                    <span className='codicon codicon-package'></span> {rootName}{b.manifest?.version ? `  v${b.manifest.version}` : ''}
                 </div>
 
                 <div className='utlx-bundle-group'>transformations ({b.transformations.length})</div>
@@ -312,14 +349,14 @@ export class BundleExplorerWidget extends ReactWidget {
                         title={t.utlxUri || 'no .utlx file in this transformation folder'}
                         onClick={() => this.openTransformation(t)}
                     >
-                        <span className='utlx-bundle-icon'>▸</span>
+                        <span className='utlx-bundle-icon codicon codicon-file-code'></span>
                         <span className='utlx-bundle-name'>{t.name}</span>
                         {t.configUri &&
                             <span
-                                className='utlx-bundle-badge clickable'
+                                className='utlx-bundle-badge clickable codicon codicon-gear'
                                 title='Edit transform.yaml'
                                 onClick={e => { e.stopPropagation(); this.openFile(t.configUri); }}
-                            >⚙</span>}
+                            ></span>}
                         {t.sampleCount > 0 && <span className='utlx-bundle-meta'>{t.sampleCount} sample{t.sampleCount === 1 ? '' : 's'}</span>}
                         {!t.utlxUri && <span className='utlx-bundle-warn'>no .utlx</span>}
                     </div>
@@ -328,7 +365,7 @@ export class BundleExplorerWidget extends ReactWidget {
                 <div className='utlx-bundle-group'>schemas ({b.schemas.length})</div>
                 {b.schemas.map(s => (
                     <div key={s.name} className='utlx-bundle-node schema' title={s.uri} onClick={() => this.openFile(s.uri)}>
-                        <span className='utlx-bundle-icon'>◦</span>
+                        <span className='utlx-bundle-icon codicon codicon-symbol-structure'></span>
                         <span className='utlx-bundle-name'>{s.name}</span>
                     </div>
                 ))}
@@ -336,17 +373,17 @@ export class BundleExplorerWidget extends ReactWidget {
                 <div className='utlx-bundle-group'>config</div>
                 {b.engineUri &&
                     <div className='utlx-bundle-node config' title={b.engineUri} onClick={() => this.openFile(b.engineUri)}>
-                        <span className='utlx-bundle-icon'>⚙</span>
+                        <span className='utlx-bundle-icon codicon codicon-gear'></span>
                         <span className='utlx-bundle-name'>engine.yaml</span>
                     </div>}
                 {b.manifestUri &&
                     <div className='utlx-bundle-node manifest' title={b.manifestUri} onClick={() => this.openFile(b.manifestUri)}>
-                        <span className='utlx-bundle-icon'>≡</span>
+                        <span className='utlx-bundle-icon codicon codicon-json'></span>
                         <span className='utlx-bundle-name'>manifest.json</span>
                     </div>}
                 {!b.engineUri && !b.manifestUri &&
                     <div className='utlx-bundle-node' style={{ opacity: 0.6, cursor: 'default' }}>
-                        <span className='utlx-bundle-icon'>·</span>
+                        <span className='utlx-bundle-icon codicon codicon-dash'></span>
                         <span className='utlx-bundle-name'>(no engine.yaml / manifest)</span>
                     </div>}
             </div>
