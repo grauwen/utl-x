@@ -1,0 +1,24 @@
+engine:
+  name: invoice-routing-engine
+
+  threads:
+    sharedPoolSize: 8
+
+  memory:
+    maxHeap: 1g
+
+  monitoring:
+    health:
+      port: 8084
+      path: /health
+    metrics:
+      enabled: true
+      prometheus:
+        port: 9090
+        path: /metrics
+
+  defaultStrategy: COMPILED
+
+# engine.yaml configures the engine only. Per-transformation I/O AND messaging are in
+# transformations/<name>/transform.yaml — here a Service Bus topic in / queue out (EF10),
+# realized as Dapr components at runtime (Service Bus · Event Hub; see EF06/EF10).

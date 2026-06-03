@@ -16,11 +16,7 @@ engine:
 
   defaultStrategy: TEMPLATE
 
-# Single transformation, stdio pipes (Phase 1)
-pipes:
-  normalize-order:
-    inputs:
-      - name: input
-        transport: stdin
-    output:
-      transport: stdout
+# engine.yaml configures the engine only (name, threads, memory, monitoring,
+# defaultStrategy). Per-transformation I/O is declared in
+# transformations/<name>/transform.yaml; messaging/transport wiring is a runtime
+# concern (Dapr / Azure Service Bus · Event Hub — see EF06/EF10), not set here.

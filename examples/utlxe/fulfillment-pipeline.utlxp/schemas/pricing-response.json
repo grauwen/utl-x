@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "pricingResponse",
+  "type": "object",
+  "properties": {
+    "correlationId": {
+      "type": "string"
+    },
+    "pricedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "prices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "listPrice": {
+            "type": "integer"
+          },
+          "discount": {
+            "type": "number"
+          },
+          "finalPrice": {
+            "type": "integer"
+          },
+          "priceList": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku",
+          "listPrice",
+          "discount",
+          "finalPrice",
+          "priceList"
+        ]
+      }
+    }
+  },
+  "required": [
+    "correlationId",
+    "pricedAt",
+    "prices"
+  ]
+}

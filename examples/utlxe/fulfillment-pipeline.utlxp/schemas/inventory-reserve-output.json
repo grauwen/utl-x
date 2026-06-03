@@ -1,0 +1,40 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "currentPayload",
+  "type": "object",
+  "properties": {
+    "pipelineId": {
+      "type": "string"
+    },
+    "reservations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "reserved": {
+            "type": "boolean"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "warehouse": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "sku",
+          "reserved",
+          "quantity",
+          "warehouse"
+        ]
+      }
+    }
+  },
+  "required": [
+    "pipelineId",
+    "reservations"
+  ]
+}

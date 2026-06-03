@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "order",
+  "type": "object",
+  "properties": {
+    "orderId": {
+      "type": "string"
+    },
+    "orderDate": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "customerId": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "sku": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "integer"
+          },
+          "unitPrice": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sku",
+          "quantity",
+          "unitPrice"
+        ]
+      }
+    }
+  },
+  "required": [
+    "orderId",
+    "orderDate",
+    "customerId",
+    "items"
+  ]
+}
