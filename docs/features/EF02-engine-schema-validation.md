@@ -1,11 +1,45 @@
 # EF02: Engine Schema Validation (UTLXe Adaptation for F01)
 
-**Status:** Design — depends on F01  
+**Status:** Design — **partially implemented** (config validator path landed; header fallback + metrics/routing not yet) — see the accuracy note below  
 **Priority:** Medium  
-**Created:** May 2026  
+**Created:** May 2026
+**Updated:** June 2026 (accuracy correction — field names, default policy, what's actually wired)
 **Depends on:** F01 (inline schema validation in header)
 
 ---
+
+> **⚠ Accuracy correction (verified against the engine, June 2026).** This doc was written as
+> a design ahead of implementation; parts have since landed and parts diverge from the shipped
+> code. Corrections:
+>
+> 1. **Config field names are different.** This doc shows a `validation:` section with
+>    `inputValidation` / `inputSchema`. The shipped `TransformConfig` (`modules/engine/.../config/TransformConfig.kt`)
+>    has **no `validation:` block**. Schema refs are **per input/output**:
+>    `inputs[].schema` and `output.schema`; the policy is a **top-level** `validationPolicy`.
+>    ```yaml
+>    validationPolicy: STRICT        # top-level, not under validation:
+>    inputs:
+>      - name: order
+>        schema: schemas/order.json  # per-input, not inputValidation.schema
+>    output:
+>      schema: schemas/invoice.xsd
+>    ```
+> 2. **Default policy is `SKIP`, not `strict`.** `TransformConfig.validationPolicy` defaults to
+>    `"SKIP"` (values OFF/SKIP/WARN/STRICT). The precedence formula below says the built-in
+>    default is `"strict"` — that is **not** what the engine ships.
+> 3. **Only the config validator path is wired.** `UtlxEngine.initialize` (`UtlxEngine.kt:125-143`)
+>    builds validators **solely from `transform.yaml`** (`transformConfig.inputs[].schema` /
+>    `output.schema` via `resolveValidatorFromConfig`). The header `{schema}` **is** read — but
+>    by the **strategies** (`spec.options["schema"]` → `inputSchemaRef`/`outputSchemaRef` in
+>    `CompiledStrategy`/`CopyStrategy`/`TemplateStrategy`), for schema-aware compile/copy — **not**
+>    as the `?? header.schema` *validation* fallback §1 describes. So the precedence **merge**
+>    (config falling back to header for validation) is **not yet implemented**.
+> 4. **§4 metrics, §5 error routing, §6 `--validate` schema verification** remain **design**
+>    (not verified as implemented here).
+>
+> The precedence *intent* in §1 (config overrides header; EF03 runtime override on top) stands
+> as the target. [IF17](IF17-ide-header-level-schema-binding.md) surfaces the header `{schema}`
+> binding in the IDE and follows this EF02 order, flagging where the engine merge is absent.
 
 ## Summary
 
@@ -48,6 +82,11 @@ The runtime override (EF03) is the top-level emergency lever — disable validat
 The header serves as the **default** — if no config override exists, the developer's declaration applies. This means a `.utlx` file with `{schema: "order.json"}` works out of the box in the engine, but ops can override it per environment.
 
 ### Examples
+
+> **⚠ The YAML below uses the original draft field names (`validation:` / `inputSchema`) and is
+> NOT what the engine reads.** The shipped shape is top-level `validationPolicy` +
+> `inputs[].schema` / `output.schema` (see the accuracy correction at the top). Kept here only
+> to show the precedence *intent*.
 
 ```yaml
 # TransformConfig — ops relaxes validation for staging
