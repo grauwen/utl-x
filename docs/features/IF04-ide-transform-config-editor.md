@@ -23,10 +23,24 @@ config JSON Schemas in `docs/api/config/`
 > editor's validation/completion source.
 >
 > **Editing today:** the Bundle Explorer opens `transform.yaml` (the per-transformation ⚙)
-> and `engine.yaml` (project node) as text editors. **Editing target (this feature):** attach
-> the JSON Schemas so Monaco gives inline validation + completion (needs a YAML language
-> service, e.g. `monaco-yaml` — a new dep), plus an optional form UI for the common fields
-> (strategy, validation policy, messaging endpoints).
+> and `engine.yaml` (project node) as plain text editors.
+>
+> **Editing target (this feature) — use a YAML language server, NOT `monaco-yaml`.**
+> Investigated June 2026: `monaco-yaml` is **incompatible** with Theia 1.64, which uses
+> `@theia/monaco-editor-core` (its own repackaged Monaco) + Theia's worker/LSP model rather
+> than the standalone `monaco-editor` package `monaco-yaml` targets — wiring it risks worker
+> conflicts/build breakage. A hand-rolled ajv-on-parsed-object validator is also insufficient
+> on its own: ajv validates the *parsed* object and loses source positions, so diagnostics
+> can't point at the offending YAML line (everything lands on line 1). The correct path is
+> the **`yaml-language-server`** (redhat) wired via **`MonacoLanguageClient`**, registering
+> the two schemas (`docs/api/config/*.schema.json`) for `transform.yaml` / `engine.yaml` by
+> filename — it carries the CST + positions, giving real inline validation **and** completion
+> (incl. the messaging fields). Optionally add a form UI for the common fields (strategy,
+> validation policy, messaging endpoints) on top.
+>
+> **Done already (the hard part):** the two JSON Schemas exist + are verified against every
+> `examples/utlxe/*.utlxp` config (incl. `invoice-routing.utlxp`), and the explorer already
+> opens the files. Remaining = the LSP wiring + schema registration (this feature).
 
 ---
 
