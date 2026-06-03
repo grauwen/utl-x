@@ -1020,10 +1020,25 @@ output json
     }
 
     /**
+     * Show the loaded/saved transformation name in the document-title strip (the tab label
+     * atop the middle pane, beside the ⇄ icon). Pass undefined/empty to reset to the default.
+     * The name is shown VERBATIM — no stripping/sanitizing (IF03: transformation names are
+     * free filesystem names, e.g. `00-enterprise-order.utlx`; the `00-` prefix is kept).
+     */
+    public setTransformationName(name?: string): void {
+        const trimmed = (name ?? '').trim();
+        this.title.label = trimmed ? `UTLX Transformation: ${trimmed}` : 'UTLX Transformation';
+        this.title.caption = trimmed ? `UTLX Transformation: ${trimmed}` : 'UTLX Transformation Editor';
+    }
+
+    /**
      * Clear editor content - preserves header, resets transformation code
      */
     public clearContent(): void {
         console.log('[UTLXEditorWidget] 🧹 Clear button clicked');
+
+        // Cleared editor is no longer a named transformation — drop the name from the title.
+        this.setTransformationName(undefined);
 
         const currentContent = this.getContent();
         console.log('[UTLXEditorWidget] Current content length:', currentContent.length);
@@ -1140,7 +1155,7 @@ output json
                 if (file.name.endsWith('.utlx') || file.type.startsWith('text/')) {
                     try {
                         const content = await file.text();
-                        this.loadFile(content);
+                        this.loadFile(content, file.name);
                         console.log(`[UTLXEditor] Loaded file: ${file.name}`);
                     } catch (error) {
                         console.error('[UTLXEditor] Failed to read dropped file:', error);
@@ -1155,8 +1170,11 @@ output json
     /**
      * Load UTLX file
      */
-    public async loadFile(content: string): Promise<void> {
+    public async loadFile(content: string, name?: string): Promise<void> {
         this.setContent(content);
+        if (name !== undefined) {
+            this.setTransformationName(name);  // show the loaded transformation name in the title
+        }
 
         // Immediately parse headers (bypass debounce for file loads)
         this.parseAndUpdatePanels(content);
@@ -2323,7 +2341,7 @@ output json
             const file = target.files?.[0];
             if (file) {
                 const content = await file.text();
-                this.loadFile(content);
+                this.loadFile(content, file.name);
             }
         };
         input.click();
@@ -2355,6 +2373,7 @@ output json
                 // Write the file to the selected location
                 await this.fileService.write(targetUri, content);
                 this.eventService.setLastUsedDirectoryUri(targetUri.parent.toString());
+                this.setTransformationName(targetUri.path.base);  // show the saved transformation name
                 console.log(`UTLX file saved to: ${targetUri.toString()}`);
             } else {
                 console.log('Save dialog cancelled by user');
