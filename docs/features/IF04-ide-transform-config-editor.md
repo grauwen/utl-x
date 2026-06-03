@@ -1,10 +1,32 @@
 # IF04: IDE — Per-Transformation Config Editor (`transform.yaml`)
 
-**Status:** Proposed
+**Status:** Proposed — *foundations landed (June 2026)*: JSON Schemas for both config files
+exist (`docs/api/config/transform-config.schema.json`, `engine-config.schema.json`), and the
+Bundle Explorer (IF03) now **opens `transform.yaml` and `engine.yaml` for editing** (text).
+Remaining: **schema-assisted** editing (validation + completion) and an optional form UI.
 **Priority:** High
 **Component:** IDE (Theia Extension)
-**Depends on:** IF03 (Bundle Project Model & Explorer), EF09 (Production Bundle Mode)
+**Depends on:** IF03 (Bundle Project Model & Explorer), EF09 (Production Bundle Mode), the
+config JSON Schemas in `docs/api/config/`
 **Effort:** Medium (2-3 weeks)
+
+> **Config contract = JSON Schema (the editing foundation).** Both YAML configs now have
+> authoritative JSON Schemas derived from the engine types:
+> - **`transform.yaml`** → `docs/api/config/transform-config.schema.json` (`TransformConfig`:
+>   `strategy` TEMPLATE/COPY/COMPILED, `validationPolicy` OFF/SKIP/WARN/STRICT, `inputs[]`,
+>   `output`, `maxConcurrent` (EF21), `maxInputSize`, and the **EF10 messaging** endpoints
+>   `input` / `output_messaging` — Service Bus queue/topic or Event Hub via Dapr).
+> - **`engine.yaml`** → `docs/api/config/engine-config.schema.json` (`EngineConfig`).
+>
+> These are **verified** against every `examples/utlxe/*.utlxp` config (incl. the messaging
+> example `invoice-routing.utlxp`). The contract is done; this feature wires it as the
+> editor's validation/completion source.
+>
+> **Editing today:** the Bundle Explorer opens `transform.yaml` (the per-transformation ⚙)
+> and `engine.yaml` (project node) as text editors. **Editing target (this feature):** attach
+> the JSON Schemas so Monaco gives inline validation + completion (needs a YAML language
+> service, e.g. `monaco-yaml` — a new dep), plus an optional form UI for the common fields
+> (strategy, validation policy, messaging endpoints).
 
 ---
 

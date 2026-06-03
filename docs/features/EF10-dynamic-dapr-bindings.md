@@ -5,6 +5,12 @@
 **Created:** May 2026  
 **Depends on:** EF03 (Admin API), EF06 (Dapr strategy), EF09 (open vs locked mode)
 
+> **Config contract & example.** The per-transformation messaging config (`input` /
+> `output_messaging` — Service Bus queue/topic, Event Hub) lives in `transform.yaml`; its
+> contract is `docs/api/config/transform-config.schema.json` (`MessagingEndpoint`). A worked
+> example is `examples/utlxe/invoice-routing.utlxp` (Service Bus topic in → queue out). The
+> IDE edits these files via the IF03 Bundle Explorer; schema-assisted editing is IF04.
+
 ---
 
 ## Summary

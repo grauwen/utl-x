@@ -33,6 +33,14 @@ This matches enterprise expectations: MuleSoft, Tibco, SAP CPI, and Azure Logic 
 
 No CLI flag needed — the mode is determined by what's on the mounted volume. If CI/CD placed a `.utlar` file (any name), it's production. If there's a directory tree (or nothing), it's development. Name the file after the business flow: `sales.utlar`, `orders.utlar`, `website.utlar`.
 
+> **Open-mode project folder convention (`.utlxp`).** Engine open-mode detection is
+> purely **structural** — *any* directory containing `transformations/` (the engine does
+> **not** key off a suffix). The IDE (IF03) names the editable open-mode project directory
+> **`<name>.utlxp/`** as a folder marker (cf. `.xcodeproj`), used for "New Bundle" and
+> badging; it is **not** required for recognition. Build/Export packs a `<name>.utlxp/`
+> into a locked **`<name>.utlar`**. So: **`.utlxp` (open, editable) → Build → `.utlar`
+> (locked, deployed)**.
+
 ## Locked mode: Admin API restrictions
 
 | Endpoint | Open mode | Locked mode | Rationale |
