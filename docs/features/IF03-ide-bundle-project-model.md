@@ -1,6 +1,6 @@
 # IF03: IDE — Bundle Project Model & Explorer
 
-**Status:** **Phases 1–2 implemented** (June 2026).
+**Status:** **Phases 1–3 implemented** (June 2026).
 - **Phase 1:** Bundle Explorer recognizes an open-mode bundle directory (has
   `transformations/`), lists transformations / shared `schemas/` / manifest, and opens a
   transformation or a schema/manifest file. Frontend-only (`FileService` +
@@ -12,7 +12,15 @@
   `loadBundleSamples` hook that `syncFromHeaders` consumes). Output format binds via the
   existing header→output-panel sync; the output result is re-run on demand (derived).
 
-**Pending:** build/export `.utlar`, `/admin/*` deploy (IF05), `.utlar` open (ZIP expand),
+- **Phase 3 (Build/Export `.utlar`):** a **"📦 Build .utlar"** action zips the bundle
+  (manifest.json at the ZIP root + `transformations/` + `schemas/` + engine.yaml) into a
+  deployable archive **structured per the engine's loader** (EF09 `BundleMode.loadUtlar` /
+  `readManifestFromUtlar`). Backend `buildBundle(rootUri)` via a **dependency-free STORE ZIP
+  writer** (no new deps; verified — valid ZIP, CRC-clean, structure matches the contract).
+  The per-transformation **⚙ opens `transform.yaml`** and a project **engine.yaml** node makes
+  config editable (text today; live schema-assisted validation is IF04).
+
+**Pending:** `/admin/*` deploy (IF05), `.utlar` open (ZIP expand to a temp workspace),
 locked-mode read-only, the full command/menu surface below.
 **Priority:** High
 **Component:** IDE (Theia Extension)
