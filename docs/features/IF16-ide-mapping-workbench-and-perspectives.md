@@ -1,148 +1,150 @@
-# IF16: IDE — Mapping Workbench + Activity-Bar Perspectives (Mapping / Bundle / Files)
+# IF16: IDE — Shell Layout (navigators + a persistent Mapping editor; Bundle = MC mapping manager)
 
-**Status:** Proposed
-**Priority:** High (fixes the core layout conflict; foundational for the IDE's information architecture)
+**Status:** Design (corrected June 2026). **Supersedes** the earlier attempts on this branch
+(a single composite `MappingWorkbenchWidget` in `main`, a fake "Mapping launcher" icon, and a
+`PerspectiveService` that hid/resized `mainPanel`). Those were **not the right code** — they
+faked an Eclipse-style "perspective" layer that Theia does not have, and fought the framework.
+This document is the design to implement against; the prior code should be reverted.
+**Priority:** High (defines the IDE's information architecture)
 **Created:** June 2026
-**Component:** IDE stack (Theia extension) — shell layout, view containers, the 3-panel mapping
-**Depends on:** the existing mapping panels (input/editor/output, `UTLXEventService`), IF03 (Bundle Explorer)
-**Effort:** Large (a layout redesign; phased)
+**Updated:** June 2026 (redesigned to the idiomatic navigator + persistent-editor model)
+**Component:** IDE stack (Theia extension) — shell areas, activity-bar views, the mapping editor
+**Depends on:** the mapping panels (input/editor/output, `UTLXEventService`), IF03 (Bundle editor)
+**Effort:** Medium
 
-> **Design decisions captured here (not yet implemented):**
-> - The UTL-X **mapping** (Input | Transform | Output + toolbar) should be **one cohesive
->   workbench**, not three widgets scattered across Theia's `left`/`main`/`right` shell areas.
->   It must get its **own activity-bar icon**.
-> - The **top bar belongs to the mapping**, not the IDE. It currently lives in the global
->   `top` shell area but contains **only mapping controls** — the **Execution ↔ Message
->   Contract mode switch**, **Execute/Validate**, and **AI assist** (Generate / Map). It must
->   move **into the Mapping workbench** and be shown **only in the Mapping perspective**
->   (hidden in Bundle / Files), so a global bar doesn't linger over the explorers.
-> - The **File Explorer** and **Bundle Explorer** are **sidebars** (activity-bar view
->   containers) — each its own icon — and must **not** dismember the mapping.
-> - Selecting an activity-bar item **swaps the full working area** (a *perspective* model):
->   Mapping ⇄ Bundle ⇄ Files. Theia has **no native perspectives**, so this is **custom
->   `ApplicationShell` orchestration** — the trickiest piece.
-> - Implement in **safe phases**; the Bundle-Explorer-own-icon step is a quick early win.
+> **The model (authoritative).** The IDE follows the **idiomatic Theia/VS Code model**:
+> **navigators on the left, a persistent editor in the middle.** There is **no perspective
+> swap** and **no custom shell orchestration**.
+>
+> - **MAIN area = the Mapping editor** — the *currently selected* transformation's mapping:
+>   **input(s) + UTL-X transform + output**. It is **always present** ("the UTL-X editor is
+>   always on top"); nothing a navigator does hides it.
+> - **LEFT side panel (activity bar) = navigators** — **File Explorer** and the **Bundle
+>   editor**. Theia swaps these natively (one at a time).
+> - **The Bundle editor is the Message-Contract *mapping manager*.** It lists the bundle's
+>   transformations. **Selecting a transformation loads its UTL-X + input(s) + output into the
+>   Mapping editor** (refreshes all three). The Bundle context is **always Message-Contract
+>   mode**.
+> - **Execution mode is separate** — standalone testing of a single transformation with sample
+>   data. It is **not** part of the Bundle context. The Execution ↔ Message-Contract switch
+>   applies only to the standalone flow; under the Bundle the mapping is always MC.
+> - **Config files** (`config.yaml` / `transform.yaml` / `engine.yaml`) opened from the Bundle
+>   open as ordinary editors — beside the mapping (a `main` split) or in the bottom panel.
 
 ---
 
 ## Summary
 
-Today the mapping is **three separate widgets in three shell areas** — Input → `left`,
-Transform (editor) → `main`, Output → `right`, toolbar → `top`. Because the **activity bar
-controls the `left` side panel**, the File Explorer and the Bundle Explorer (also `left`
-views) **compete with the Input pane for the same slot** — selecting their icon tears the
-Input pane off the mapping. IF16 restructures the IDE into **perspectives**: the **Mapping**
-becomes a single composite workbench (its own activity-bar icon) in the editor area; the
-**Bundle Explorer** and **File Explorer** are proper activity-bar sidebars; and selecting an
-activity-bar item **swaps the whole working area** rather than cannibalizing the mapping.
+The IDE is **navigators + a persistent editor**, the way every Theia/VS Code app is built. The
+**Mapping editor** (input + UTL-X transform + output) lives in the **main** area and is always
+present. The **Bundle editor** and **File Explorer** are **left side-panel navigators**.
+Selecting a transformation in the **Bundle editor** — which is the **Message-Contract mapping
+manager** — loads that transformation's UTL-X, inputs, and output into the Mapping editor, the
+same way clicking a file in the Explorer opens it in the editor. No perspective machinery.
 
-## Problem
+## Problem (what went wrong before)
 
-- The mapping's **Input pane lives in the `left` side panel**, the slot the activity bar
-  swaps. So opening **Files** or the **Bundle Explorer** *replaces the Input pane*, breaking
-  the triptych. (Root cause.)
-- The mapping is **not a cohesive unit** — its three panes + toolbar are independent shell
-  widgets, so they can't be shown/hidden/swapped as one.
-- There's **no "Mapping" entry** on the activity bar; and no clean way to switch *fully*
-  between the mapping and the explorers.
+Earlier work tried to make selecting an activity-bar item swap the *whole* working area
+(Eclipse "perspectives"). **Theia has no perspectives**, and **activity-bar icons exist only
+for left/right side views** — so faking it required a launcher widget + `mainPanel` hide/show +
+flexbox composites that couldn't size Lumino split panes. The result was fragile and wrong.
+The correct model is the native one below.
 
 ## Goals
 
-- The **Mapping workbench** (Input | Transform | Output + toolbar) is **one unit** with its
-  **own activity-bar icon**; selecting it shows the toolbar + the three panes.
-- **Bundle Explorer** and **File Explorer** are **separate activity-bar view containers**
-  (own icons) and never replace the Input pane.
-- Selecting an activity-bar item **swaps the full working area** (perspective behavior):
-  Mapping shows the triptych; an explorer shows its tree full, the mapping hidden.
-- Preserve the existing panel behavior + `UTLXEventService` wiring (no functional regression
-  in the mapping itself).
+- The **Mapping editor** (input + UTL-X + output) is the **persistent main surface**.
+- **Bundle editor** and **File Explorer** are **left navigators** (native activity-bar swap),
+  and never hide the Mapping editor.
+- The **Bundle editor lists transformations**; **selecting one loads its UTL-X + inputs +
+  output** into the Mapping editor.
+- The **Bundle context is always Message-Contract**; **Execution mode** is a separate
+  standalone flow.
+- Config files open from the Bundle as ordinary editors.
+- Preserve all existing panel behavior + `UTLXEventService` wiring.
 
 ## Non-Goals
 
-- Re-implementing the panels' internals (input/editor/output keep their current logic).
-- A general Eclipse-style perspective *framework* — just the three named perspectives here.
-- Multi-mapping / N-triptych (still one active transformation; see IF03's "navigate-N"
-  decision).
+- Eclipse-style perspectives / full-area swap (Theia has none; do not fake it).
+- Re-implementing the panels' internals (input/editor/output keep their logic).
+- Multi-mapping at once (one active transformation; the Bundle switches which one).
 
 ## Design
 
-### Root fix: get the mapping out of the activity-bar-controlled `left` panel
-The Input pane must stop living in the `left` side panel. Two viable structures:
+### Areas (native Theia, no custom orchestration)
+- **MAIN = Mapping editor.** The selected transformation's **input(s) + UTL-X transform +
+  output**. Always present. (Implementation: a horizontal arrangement of the three panes in
+  the main area — either the existing widgets via native `main` splits, or one composite
+  `SplitWidget`. See "Open decision".)
+- **LEFT = navigators.** File Explorer (Theia built-in) + **Bundle editor** (IF03) as
+  `AbstractViewContribution` views with activity-bar icons. Theia swaps them natively.
+- **Config/file editors** opened from a navigator land in `main` (split beside the mapping) or
+  the **bottom** panel — they do not replace the mapping.
+- **Toolbar** = the mapping's controls (Execute/Validate, AI assist, and — standalone only —
+  the Execution ↔ MC switch). It belongs to the mapping editor; show it with the mapping.
 
-**(Recommended) A composite Mapping workbench in the `main` area.** A
-`MappingWorkbenchWidget` hosts Input | Transform | Output in a **split layout** (Theia
-`SplitPanel`/Phosphor) with the toolbar on top — a single widget in the editor area. The
-three existing widgets become its children (same instances; `UTLXEventService` wiring
-unchanged). The `left` side panel is then **free** for sidebars.
+### The Bundle editor = Message-Contract mapping manager (the key behavior)
+- Lists the bundle's transformations (IF03 already models the tree).
+- **Selecting a transformation** reads its `.utlx`, resolves its input sample(s) and output
+  contract, and **loads all three into the Mapping editor** — replacing the current UTL-X,
+  inputs, and output. (This is exactly the navigator→editor pattern; IF03's
+  "open transformation" already does most of this — it must also drive the output.)
+- The Bundle context is **always MC**: the mode switch is fixed to / hidden in favor of
+  Message-Contract; Execution is not offered from the Bundle.
 
-**The top bar moves with the mapping.** The `UTLXToolbarWidget` (mode switch / Execute /
-Validate / AI assist) is today added to the **global `top` shell area** — so it would hover
-over *every* perspective. It must instead be **embedded at the top of the Mapping
-workbench** (or shown/hidden with the Mapping perspective), so the mode switch and run/AI
-controls appear **only** when the mapping is active. (It's entirely mapping-scoped already;
-nothing in it applies to the Bundle/Files perspectives.)
+### Execution vs Message-Contract
+- **Message-Contract (Bundle):** design-time contract mapping; the Bundle editor manages these.
+- **Execution (standalone):** run a single transformation against sample data to test output.
+  Driven by the toolbar's mode switch *outside* the Bundle context, not by the Bundle editor.
 
-### Activity-bar sidebars (own icons)
-- **File Explorer** — Theia's default left view container (already an activity-bar item).
-- **Bundle Explorer** — its **own** left view container + activity-bar icon (IF03), no longer
-  stacked with the Input pane.
+### Why this is correct (vs. the abandoned approach)
+- It is the **standard Theia model**: navigator opens a document into a persistent main editor.
+- **No `PerspectiveService`, no launcher, no `mainPanel` hide/resize, no flexbox/Lumino
+  composite fights.** Everything maps to native Theia primitives.
 
-### The "Mapping" activity-bar item + perspective swap (the hard part)
-Theia's activity bar natively toggles **left view containers**; the Mapping is a `main`-area
-workbench, not a left view. So a **perspective controller** (custom) drives the activity bar:
-- An activity-bar **"Mapping"** icon (a command/toggle, custom item) → show the Mapping
-  workbench, collapse the side panels.
-- **Bundle / Files** icons → expand that sidebar; per the full-swap requirement, **hide the
-  Mapping** workbench (collapse/hide `main`) so the explorer is the whole area; re-show the
-  Mapping when its icon is selected.
-- Mechanism: `ApplicationShell` APIs — `activateWidget`, panel `collapse()`/`expand()`,
-  widget `hide()`/`show()`, and (optionally) `getLayoutData`/`setLayoutData` saved per
-  perspective. This is **custom orchestration** (Theia has no perspectives) and the main risk
-  to iterate on live.
+## Open decision (one — needs sign-off before coding)
+**Where do the input pane(s) live?**
+- **(A, recommended) In the main Mapping editor** (input | UTL-X | output as the editor
+  surface). Cohesive with "select transformation loads all three"; one editor reload swaps
+  everything. Closest to "the mapping is one document".
+- **(B) As a left navigator view** (the multi-input pane gets its own activity-bar icon).
+  Keeps `main` to UTL-X + output, but then a Bundle selection updates a *hidden* left view.
 
-### The Mapping icon
-No exact `mapping` codicon exists. Options: a **custom SVG** (recommended — view containers
-accept a custom `iconClass`; best for branding), or a codicon stand-in (`arrow-swap`,
-`git-compare`, `type-hierarchy` (input→output), or `symbol-namespace`).
+Recommend **A**.
 
-## Implementation Notes (phased)
-- **Phase 1 (quick win, low risk):** Bundle Explorer → its **own** left view container +
-  activity-bar icon (an `AbstractViewContribution`), so it stops replacing the Input pane.
-- **Phase 2 (the redesign):** build `MappingWorkbenchWidget` (split layout hosting
-  input/editor/output + the toolbar) in `main`; move the three panes off the `left`/`right`
-  shell areas **and the toolbar off the global `top` area** into it; keep `UTLXEventService`
-  wiring. Frees the side panels for sidebars and scopes the mode switch / run / AI controls
-  to the mapping.
-- **Phase 3 (perspectives):** the perspective controller + the Mapping activity-bar icon +
-  full-area swap via `ApplicationShell` (collapse/expand/hide/show; optional saved layouts).
-- The default startup perspective = **Mapping**.
+## Implementation Notes
+- **Bundle editor** (IF03): left `AbstractViewContribution` view; on transformation select →
+  load UTL-X (editor `setContent`) + input samples (`loadBundleSamples`) + output contract.
+  Force MC mode for the loaded mapping.
+- **Mapping editor**: input/editor/output in `main` (native split or one `SplitWidget`); always
+  present. Reuse the existing widgets + `UTLXEventService` wiring.
+- **No** perspective controller, launcher, or shell hide/show.
+- Build the layout in `onDidInitializeLayout` (after the shell layout settles), not `onStart`.
 
 ## Acceptance Criteria
-- The activity bar shows distinct icons for **Mapping**, **Bundle Explorer**, and **Files**.
-- Selecting **Bundle/Files never removes the Input pane** — the mapping is intact when you
-  return to it.
-- Selecting **Mapping** shows the toolbar + Input | Transform | Output as one workbench.
-- The **top bar (mode switch / Execute-Validate / AI assist) appears only in the Mapping
-  perspective** — it is **not** shown over the Bundle or Files perspectives.
-- Selecting an **explorer** swaps the full area to that tree (mapping hidden), and back.
-- The mapping's existing behavior (panels, events, AI assist, coverage) is unchanged.
+- The Mapping editor (input + UTL-X + output) is always present in `main`.
+- File Explorer + Bundle editor are left navigators with activity-bar icons; opening either
+  never hides the Mapping editor.
+- **Selecting a transformation in the Bundle editor refreshes the UTL-X, the input(s), and the
+  output** in the Mapping editor.
+- The Bundle context is always Message-Contract (no Execution mode there).
+- Config files opened from the Bundle edit beside the mapping (or in the bottom panel) without
+  hiding it.
+- Existing mapping behavior (panels, events, AI assist, MCM coverage) is unchanged.
 
 ## Testing
-- **Manual/layout:** switch Mapping ⇄ Bundle ⇄ Files repeatedly — no torn panes, no stale
-  state; mapping restores fully each time.
-- **Regression:** input/output/editor sync, AI assist, MCM coverage still work inside the
-  composite workbench.
-- **Persistence:** perspective + layout survive reload (ties to IF03/IF09 file-backed state).
+- **Bundle selection:** click several transformations → UTL-X, inputs, output all refresh to
+  the selected one each time.
+- **Navigators:** open File Explorer / Bundle → Mapping editor stays visible.
+- **Config editing:** open `config.yaml` from the Bundle → edits beside the mapping.
+- **Modes:** Bundle context is MC; the Execution/MC switch only affects the standalone flow.
 
 ## Related
-- **IF03** — Bundle Explorer (becomes its own activity-bar perspective here).
-- **IF07 / IF14** — desktop & cloud builds (the activity-bar set may differ per build; cloud
-  may drop Files).
-- **IF08–IF13** — the mapping features that live inside the Mapping workbench.
-- IF09 / IF03 — file-backed layout/session state for perspective persistence.
+- **IF03** — Bundle editor / project model — the MC mapping manager described here.
+- **IF04** — config editor (`transform.yaml`/`engine.yaml`) opened from the Bundle.
+- **IF08–IF13** — the mapping/MCM features used in the Mapping editor.
+- **IF07 / IF14** — desktop & cloud builds.
 
 ## Effort Estimate
-Large, phased. Phase 1 (Bundle-Explorer own icon) is small and an immediate UX fix. Phase 2
-(composite Mapping workbench) is the substantial refactor. Phase 3 (perspective swap) is
-custom `ApplicationShell` work and needs live iteration — sequence it last and gate on
-Phase 2.
+Medium. The model is native, so most effort is wiring the Bundle editor's "select transformation
+→ load UTL-X + inputs + output (MC)" and arranging the mapping editor in `main`. No custom
+shell orchestration.
