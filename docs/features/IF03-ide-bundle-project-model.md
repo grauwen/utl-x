@@ -79,6 +79,31 @@ bundle.utlar:
 - Validate-All / Test-All and the messaging topology view — that is IF05.
 - Changing the single-transformation editor itself (it is reused as-is).
 
+## Bundle editor = Message-Contract mapping manager
+
+The Bundle Explorer is not just a file tree — it is the **manager of the bundle's
+Message-Contract mappings**, and it drives the Mapping editor (see IF16). Defining behavior:
+
+- **It lists the bundle's transformations.** Each transformation is a Message-Contract
+  mapping.
+- **Selecting a transformation loads its whole mapping into the editor** — it **refreshes the
+  UTL-X transform, the input(s), and the output** with the selected transformation's. This is
+  the navigator→editor pattern (like clicking a file in the Explorer): the persistent Mapping
+  editor in `main` always shows the *currently selected* transformation, and the three panes
+  swap together on each selection.
+- **The Bundle context is always Message-Contract mode.** Editing a bundle transformation is
+  always design-time contract mapping; the Execution ↔ Message-Contract switch is fixed to /
+  hidden in favor of MC while working inside the bundle.
+- **Execution mode is separate** — running a single transformation against sample data to test
+  its output is a standalone flow, **not** driven by the Bundle editor. The Bundle never offers
+  Execution.
+
+Implementation: "open transformation" already (Phase 2) loads the `.utlx` into the editor and
+binds input samples via `loadBundleSamples`; this section's requirement is that it **also drives
+the output** (the selected transformation's output contract/result) and **forces MC mode**, so
+one selection refreshes all three panes as a unit. See IF16 for the surrounding shell layout
+(navigators + persistent Mapping editor; no perspective swap).
+
 ## Design
 
 **Decision — navigate N, do not run N live editors.** Support N transformations
