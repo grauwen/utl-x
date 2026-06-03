@@ -104,6 +104,49 @@ the output** (the selected transformation's output contract/result) and **forces
 one selection refreshes all three panes as a unit. See IF16 for the surrounding shell layout
 (navigators + persistent Mapping editor; no perspective swap).
 
+## Saving a transformation — two save modes (+ naming)
+
+Today only the **raw `.utlx`** can be saved (from the middle editor). The full *constellation*
+(inputs, transform, output) is not yet saveable. There are **two save modes**, distinguished by
+what the transformation carries, and **both write into the bundle project (`.utlxp/`)** —
+`transformations/<name>/{ <name>.utlx, transform.yaml }` + optional `samples/` + shared
+`schemas/`. (`.utlxp` = the open, editable **project directory**; Build/Export → `.utlar` ZIP.
+See "Two project forms" below.)
+
+| Save mode | Saves | Output | Where |
+|---|---|---|---|
+| **Execution-save** | `.utlx` + **input instances** | **NOT saved** — *derived* by running the saved inputs through the transformation | input instances → `samples/<name>.*`; `.utlx` in the tx folder |
+| **Message-Contract-save** | `.utlx` + **input schema** + **output schema** | **output *schema* IS saved** (it is the *contract*, not a derived result) | schemas → shared `schemas/`, referenced from `transform.yaml` / the header `{schema:…}` |
+
+- The difference is **instances (`samples/`) vs contracts (`schemas/`)** — a transformation may
+  carry both. Execution-save is the lighter form (test data + transform); MC-save persists the
+  contract (the Bundle editor is always MC — see above).
+- In **both** modes the **output result instance** is never persisted as work product (it is
+  re-run on demand); MC-save persists the output **schema**, execution-save persists nothing for
+  output.
+
+### Transformation naming (free filesystem names — NOT identifiers)
+The transformation name is the **directory/file name**, a **free filesystem string** — confirmed
+in the engine: `BundleLoader.kt` `val name = txDir.name` (line ~55), with **no validation, no
+regex, no must-start-with-a-letter rule**; it then prefers `<name>.utlx`. Therefore:
+
+- **No stripping / no sanitizing.** Loading `00-enterprise-order.utlx` keeps the name **verbatim**
+  — the `00-` prefix is meaningful (ordering) and is the artifact's identity on disk. Stripping
+  it would misrepresent the file and break the on-disk link. (Same rule as schema references in
+  IF17.)
+- **Leading digits / dots / hyphens are all legal** for a transformation/`.utlx` name. This is a
+  **different namespace** from **input/output names**, which *are* in-language identifiers
+  (`[a-zA-Z_][a-zA-Z0-9_-]*`, enforced by the lexer/parser). The identifier rule applies only to
+  header names, never to bundle artifact filenames.
+
+### Title bar (document title) shows the transformation name
+The editor widget's Theia title (`utlx-editor-widget.tsx`: `title.label` "UTLX Transformation",
+`title.iconClass = 'codicon codicon-arrow-swap'` — the double-arrow) is the document-title strip
+atop the middle pane. On **load/save** it should show the transformation **name verbatim** (e.g.
+`00-enterprise-order.utlx`, `00-` kept), with a **dirty marker** (`●`) when there are unsaved
+edits — standard editor-tab behavior. The `.utlx` extension may be shown (VS-Code style) or
+dropped for tidiness, but the prefix is never stripped.
+
 ## Design
 
 **Decision — navigate N, do not run N live editors.** Support N transformations
