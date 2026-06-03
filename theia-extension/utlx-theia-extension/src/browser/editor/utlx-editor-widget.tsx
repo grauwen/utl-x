@@ -1027,8 +1027,8 @@ output json
      */
     public setTransformationName(name?: string): void {
         const trimmed = (name ?? '').trim();
-        this.title.label = trimmed ? `UTLX Transformation: ${trimmed}` : 'UTLX Transformation';
-        this.title.caption = trimmed ? `UTLX Transformation: ${trimmed}` : 'UTLX Transformation Editor';
+        this.title.label = trimmed ? `UTLX Transformation — ${trimmed}` : 'UTLX Transformation';
+        this.title.caption = trimmed ? `UTLX Transformation — ${trimmed}` : 'UTLX Transformation Editor';
     }
 
     /**
