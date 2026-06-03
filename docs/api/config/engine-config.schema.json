@@ -1,0 +1,66 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://utl-x.org/schema/engine-config.schema.json",
+  "title": "UTL-X engine.yaml (EngineConfig)",
+  "description": "Engine-level config at a bundle's root: engine.yaml. Source of truth: modules/engine/.../config/EngineConfig.kt. Configures the engine only — per-transformation I/O is in transformations/<name>/transform.yaml; messaging/transport wiring is a runtime (Dapr) concern, not here. The engine ignores unknown keys; this schema is stricter for editing/validation.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "engine": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "name": { "type": "string", "default": "utlxe", "description": "Engine instance name." },
+        "threads": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "sharedPoolSize": { "type": "integer", "minimum": 0, "default": 0, "description": "Worker pool size; 0 = number of CPU cores." }
+          }
+        },
+        "memory": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "maxHeap": { "type": "string", "default": "2g", "description": "Max heap, e.g. 512m, 1g, 2g." }
+          }
+        },
+        "monitoring": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "health": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "port": { "type": "integer", "default": 8081 },
+                "path": { "type": "string", "default": "/health" }
+              }
+            },
+            "metrics": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "enabled": { "type": "boolean", "default": false },
+                "prometheus": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "properties": {
+                    "port": { "type": "integer", "default": 9090 },
+                    "path": { "type": "string", "default": "/metrics" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "defaultStrategy": {
+          "type": "string",
+          "enum": ["TEMPLATE", "INTERPRETED", "COPY", "COMPILED"],
+          "default": "TEMPLATE",
+          "description": "Strategy used when a transform.yaml does not specify one."
+        }
+      }
+    }
+  }
+}
