@@ -41,6 +41,10 @@ import {
     parseOSchToFieldTree,
     parseTschToFieldTree
 } from './utils/schema-field-tree-parser';
+import { getFileDialogMode, setFileDialogMode } from './utils/feature-flags';
+
+/** Command id for the runtime file-Load dialog "semaphore" (toggled from the status bar). */
+const TOGGLE_FILE_DIALOG_MODE_COMMAND = 'utlx.toggleFileDialogMode';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -76,6 +80,7 @@ export class UTLXFrontendContribution implements
 
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
+    private fileDialogModeId = 'utlx-file-dialog-mode';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
     private outputName: string = ''; // empty / 'output' => no custom name in header
@@ -91,6 +96,9 @@ export class UTLXFrontendContribution implements
 
         // Add health status to status bar
         await this.initializeHealthStatus();
+
+        // Show the file-Load dialog mode toggle in the status bar (bottom).
+        this.updateFileDialogModeStatus();
 
         // Subscribe to format change events for header coordination
         this.subscribeToFormatChanges();
@@ -151,6 +159,24 @@ export class UTLXFrontendContribution implements
                 } catch (error) {
                     this.messageService.error(`Failed to restart daemon: ${error}`);
                 }
+            }
+        });
+
+        // File-load dialog mode (the runtime "semaphore") — toggled by clicking the status-bar
+        // item (bottom bar). Theia dialog = workspace/bundle files + full path; browser = upload.
+        commands.registerCommand({
+            id: TOGGLE_FILE_DIALOG_MODE_COMMAND,
+            label: 'UTL-X: Toggle File Load Dialog (Theia / Browser)'
+        }, {
+            execute: () => {
+                const next = getFileDialogMode() === 'theia' ? 'browser' : 'theia';
+                setFileDialogMode(next);
+                this.updateFileDialogModeStatus();
+                this.messageService.info(
+                    next === 'theia'
+                        ? 'File Load: Theia dialog (browse workspace/bundle files)'
+                        : 'File Load: browser picker (upload a local file)'
+                );
             }
         });
     }
@@ -369,6 +395,24 @@ export class UTLXFrontendContribution implements
             console.error('Failed to open toolbar:', error);
             this.messageService.error(`Failed to open toolbar: ${error}`);
         }
+    }
+
+    /**
+     * Render the file-Load dialog mode in the status bar (bottom). Clicking it runs the toggle
+     * command (the runtime "semaphore"): Theia dialog (workspace/bundle files + full path) ↔
+     * Browser picker (client upload, basename only).
+     */
+    private updateFileDialogModeStatus(): void {
+        const mode = getFileDialogMode();
+        this.statusBar.setElement(this.fileDialogModeId, {
+            text: mode === 'theia' ? '$(folder-opened) Load: Theia' : '$(device-desktop) Load: Browser',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 98,
+            tooltip: mode === 'theia'
+                ? 'File Load: Theia dialog (workspace/bundle files, full path). Click to switch to Browser (upload).'
+                : 'File Load: Browser picker (upload a local file, basename only). Click to switch to Theia (workspace).',
+            command: TOGGLE_FILE_DIALOG_MODE_COMMAND
+        });
     }
 
     private async initializeHealthStatus(): Promise<void> {

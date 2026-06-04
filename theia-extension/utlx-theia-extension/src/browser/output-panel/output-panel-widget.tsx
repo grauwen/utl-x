@@ -25,6 +25,7 @@ import { UTLXEventService } from '../events/utlx-event-service';
 import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree } from '../utils/schema-field-tree-parser';
 import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 import { toHeaderIdentifier } from '../utils/header-identifier';
+import { toProjectRelativePath } from '../utils/path-utils';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -473,7 +474,7 @@ export class OutputPanelWidget extends ReactWidget {
                         : (instanceContent?.trim() ? this.state.instanceFileName : undefined);
                     const filePath = activeTab === 'schema' ? this.state.schemaFilePath : this.state.instanceFilePath;
                     return fileName ? (
-                        <div className='utlx-input-filename' title={`Loaded from: ${filePath ? this.toProjectRelativePath(filePath) : fileName}`}>
+                        <div className='utlx-input-filename' title={`Loaded from: ${filePath ? toProjectRelativePath(filePath) : fileName}`}>
                             <span className='codicon codicon-file' style={{ fontSize: '11px' }}></span>
                             {' '}{fileName}
                         </div>
@@ -924,21 +925,6 @@ export class OutputPanelWidget extends ReactWidget {
             // Notify other widgets that schema was cleared
             this.eventService.fireOutputSchemaContentChanged({ content: '' });
         }
-    }
-
-    /**
-     * Shorten a full path for display: if it runs through a `*.utlxp` project directory, show it
-     * from that project root onward (project-relative, portable) —
-     * "/Users/…/sales.utlxp/schemas/x.xsd" → "sales.utlxp/schemas/x.xsd". Otherwise the full path.
-     */
-    private toProjectRelativePath(fullPath: string): string {
-        const segments = fullPath.split('/');
-        for (let i = segments.length - 1; i >= 0; i--) {
-            if (segments[i].endsWith('.utlxp')) {
-                return segments.slice(i).join('/');
-            }
-        }
-        return fullPath;
     }
 
     private handleViewModeChange(viewMode: 'pretty' | 'raw'): void {

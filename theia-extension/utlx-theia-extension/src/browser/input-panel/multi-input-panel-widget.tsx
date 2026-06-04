@@ -30,6 +30,8 @@ import { UTLXEventService } from '../events/utlx-event-service';
 import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, inferEdmxFromOData, formatSchema } from '../utils/schema-inferrer';
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { toHeaderIdentifier } from '../utils/header-identifier';
+import { toProjectRelativePath } from '../utils/path-utils';
+import { getFileDialogMode } from '../utils/feature-flags';
 import { loadSession, saveSession, capContent, SESSION_KEYS } from '../utils/session-persistence';
 import { buildAbstractForInput } from '../utils/input-abstract';
 
@@ -69,9 +71,13 @@ export interface InputTab {
     schemaOnly?: boolean;
     // Provenance: the ORIGINAL filename a sample instance / schema was loaded from, kept
     // VERBATIM (e.g. "00-enterprise-order.json"; the input *name* is the stripped identifier
-    // "enterprise-order"). Shown in the panel title for the active input + sub-tab.
+    // "enterprise-order"). Shown in the panel body for the active input + sub-tab.
     instanceFileName?: string;
     schemaFileName?: string;
+    // Full path of the loaded file — available only when loaded via Theia's dialog (FILE_DIALOG_MODE
+    // = 'theia'); undefined for the browser picker (basename only). Shown on hover (project-relative).
+    instanceFilePath?: string;
+    schemaFilePath?: string;
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
@@ -636,8 +642,10 @@ export class MultiInputPanelWidget extends ReactWidget {
                         const fileName = showSchema
                             ? (activeInput.schemaContent?.trim() ? activeInput.schemaFileName : undefined)
                             : (activeInput.instanceContent?.trim() ? activeInput.instanceFileName : undefined);
+                        // Full path is present only for the Theia loader (browser picker → basename only).
+                        const filePath = showSchema ? activeInput.schemaFilePath : activeInput.instanceFilePath;
                         return fileName ? (
-                            <div className='utlx-input-filename' title={`Loaded from: ${fileName}`}>
+                            <div className='utlx-input-filename' title={`Loaded from: ${filePath ? toProjectRelativePath(filePath) : fileName}`}>
                                 <span className='codicon codicon-file' style={{ fontSize: '11px' }}></span>
                                 {' '}{fileName}
                             </div>
@@ -2085,174 +2093,212 @@ export class MultiInputPanelWidget extends ReactWidget {
     }
 
     private async handleLoadFile(): Promise<void> {
+        // The runtime FILE_DIALOG_MODE "semaphore" (utils/feature-flags.ts) picks the loader; the
+        // user toggles it via the UTL-X menu. Read it each time so changes take effect immediately.
+        // Both loaders are live; default is Theia's dialog (workspace/bundle filesystem + full path).
+        if (getFileDialogMode() === 'browser') {
+            this.loadViaBrowserPicker();
+        } else {
+            await this.loadViaTheiaDialog();
+        }
+    }
+
+    /** Load via Theia's open dialog — browses the workspace/bundle filesystem, returns a URI
+     *  (full path → provenance hover + future bundle save). */
+    private async loadViaTheiaDialog(): Promise<void> {
         try {
-            // Determine if we're loading into schema tab in design mode
+            const isSchemaTab = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
+            const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+            const exts = (isSchemaTab && activeInput)
+                ? this.getSchemaFileExtensions(activeInput.schemaFormat).split(',').map(s => s.trim().replace(/^\./, '')).filter(Boolean)
+                : ['csv', 'json', 'xml', 'yaml', 'yml', 'xsd', 'avsc', 'proto'];
+
+            const folder = await this.resolveDialogFolder();
+            const selectedUri = await this.fileDialogService.showOpenDialog({
+                title: isSchemaTab ? 'Load Schema' : 'Load Instance',
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: { [isSchemaTab ? 'Schema Files' : 'Data Files']: exts, 'All Files': ['*'] }
+            }, folder);
+            if (!selectedUri) return;
+            const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            this.eventService.setLastUsedDirectoryUri(uri.parent.toString());
+
+            this.setState({ loading: true });
+            try {
+                const content = (await this.fileService.read(uri)).value;
+                await this.applyLoadedFile(content, uri.path.base, uri.path.toString());
+            } catch (error) {
+                this.setState({ loading: false });
+                this.messageService.error(`Failed to load file: ${error}`);
+            }
+        } catch (error) {
+            this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
+    }
+
+    /** Load via the plain HTML file picker — client-side upload; basename only (no path). */
+    private loadViaBrowserPicker(): void {
+        try {
             const isSchemaTab = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
             const activeInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
 
-            // Create file input element
             const input = document.createElement('input');
             input.type = 'file';
+            input.accept = (isSchemaTab && activeInput)
+                ? this.getSchemaFileExtensions(activeInput.schemaFormat)
+                : '.csv,.json,.xml,.yaml,.yml,.xsd,.avsc,.proto,text/*';
 
-            // Set file filter based on context
-            if (isSchemaTab && activeInput) {
-                // In schema tab, filter by expected schema format based on instance format
-                const schemaExtensions = this.getSchemaFileExtensions(activeInput.schemaFormat);
-                input.accept = schemaExtensions;
-            } else {
-                // In instance tab or runtime mode, allow all data formats
-                input.accept = '.csv,.json,.xml,.yaml,.yml,.xsd,.avsc,.proto,text/*';
-            }
-
-            // Handle file selection
             input.onchange = async (e: Event) => {
-                const target = e.target as HTMLInputElement;
-                const file = target.files?.[0];
+                const file = (e.target as HTMLInputElement).files?.[0];
                 if (!file) return;
-
                 this.setState({ loading: true });
-
                 try {
-                    // Read file content
                     const content = await file.text();
-
-                    // Determine if we're loading into instance or schema
-                    const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
-
-                    // Auto-detect format: start with file extension, then refine with content analysis
-                    let detectedFormat = this.detectFormatFromFilename(file.name);
-
-                    // Content-based detection can refine generic filename extensions
-                    // e.g., OData JSON files have .json extension but content reveals @odata.* markers
-                    // However, compound extensions (.tsch.json, .schema.json) are already specific
-                    // and should NOT be overridden by content detection
-                    const filenameIsSpecific = detectedFormat && detectedFormat !== 'json' && detectedFormat !== 'xml';
-                    if (!filenameIsSpecific) {
-                        const contentDetectedFormat = this.detectContentFormat(content);
-                        if (contentDetectedFormat) {
-                            detectedFormat = contentDetectedFormat as InstanceFormat | SchemaFormatType;
-                        }
-                    }
-
-                    // Special handling for schema tab: .json files are JSON Schema (jsch)
-                    if (isSchema && detectedFormat === 'json') {
-                        detectedFormat = 'jsch';
-                    }
-
-                    console.log('[MultiInputPanel] ════════════════════════════════════════');
-                    console.log('[MultiInputPanel] FILE LOAD - Format detection');
-                    console.log('[MultiInputPanel] File:', file.name);
-                    console.log('[MultiInputPanel] isSchema:', isSchema);
-                    console.log('[MultiInputPanel] Format from filename:', this.detectFormatFromFilename(file.name) || 'none');
-                    console.log('[MultiInputPanel] Format from content:', filenameIsSpecific ? '(skipped - filename specific)' : 'applied');
-                    console.log('[MultiInputPanel] Final detected format:', detectedFormat || 'none');
-                    console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
-                    console.log('[MultiInputPanel] ════════════════════════════════════════');
-
-                    // Get current input for event firing
-                    const currentInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
-
-                    // Auto-name the input from the loaded filename — but ONLY when it
-                    // still has a default name (input, input2, …). A manually chosen
-                    // name is never clobbered. Instance load only; schema load leaves
-                    // the name alone. "007-test.json" -> "test" (see toHeaderIdentifier).
-                    let renameTo: string | undefined;
-                    if (!isSchema && currentInput && /^input\d*$/i.test(currentInput.name)) {
-                        const stem = file.name.replace(/\.[^./\\]+$/, ''); // drop the last extension
-                        const derived = toHeaderIdentifier(stem);
-                        const duplicate = this.state.inputs.some(
-                            i => i.id !== currentInput.id && i.name.toLowerCase() === derived.toLowerCase()
-                        );
-                        if (derived !== '' && !duplicate && derived !== currentInput.name) {
-                            renameTo = derived;
-                        }
-                    }
-
-                    // Update content and optionally format. The instance and schema
-                    // slots are INDEPENDENT in MC mode: loading one must NOT wipe the
-                    // other, so a sample instance and the contract schema can coexist.
-                    this.setState({
-                        inputs: this.state.inputs.map(input =>
-                            input.id === this.state.activeInputId
-                                ? {
-                                    ...input,
-                                    [isSchema ? 'schemaContent' : 'instanceContent']: content,
-                                    ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
-                                    ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
-                                    // Keep the original filename (verbatim) for the title — instance vs schema slot
-                                    [isSchema ? 'schemaFileName' : 'instanceFileName']: file.name,
-                                    // Auto-name from the filename when the name was still a default
-                                    ...(renameTo ? { name: renameTo } : {})
-                                }
-                                : input
-                        ),
-                        loading: false,
-                        // Remount the content editor (and name field) to show loaded content.
-                        contentVersion: (this.state.contentVersion ?? 0) + 1,
-                        // Remount the name field so the auto-rename is visible.
-                        ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
-                    });
-
-                    this.messageService.info(`Loaded file: ${file.name}${detectedFormat ? ` (format: ${detectedFormat})` : ''}`);
-
-                    // Notify dependent panels/editor of the auto-rename (updates the
-                    // header and renames body references), same as a manual rename.
-                    if (renameTo && currentInput) {
-                        this.eventService.fireInputNameChanged({
-                            inputId: currentInput.id,
-                            oldName: currentInput.name,
-                            newName: renameTo
-                        });
-                    }
-
-                    // Fire format changed event if format was auto-detected
-                    if (detectedFormat && !isSchema) {
-                        this.eventService.fireInputFormatChanged({
-                            format: detectedFormat,
-                            inputId: this.state.activeInputId,
-                            isSchema: false
-                        });
-                    }
-
-                    // Fire content changed event. Instance and schema are independent —
-                    // loading one does NOT clear the other (so both can be present).
-                    if (isSchema) {
-                        this.eventService.fireInputSchemaContentChanged({
-                            inputId: this.state.activeInputId,
-                            content
-                        });
-
-                        // Parse schema to field tree for Function Builder (Message Contract mode)
-                        // Wait for state to update before parsing
-                        await new Promise(resolve => setTimeout(resolve, 50));
-                        this.parseAndFireSchemaFieldTree(this.state.activeInputId);
-                    } else {
-                        this.eventService.fireInputInstanceContentChanged({
-                            inputId: this.state.activeInputId,
-                            content
-                        });
-
-                        // Wait for state to update before validation
-                        await new Promise(resolve => setTimeout(resolve, 50));
-
-                        console.log('[MultiInputPanel] ════════════════════════════════════════');
-                        console.log('[MultiInputPanel] FILE LOAD - About to validate');
-                        console.log('[MultiInputPanel] Format in state NOW:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
-                        console.log('[MultiInputPanel] ════════════════════════════════════════');
-
-                        // Trigger UDM parsing for instance content (AFTER state update completes)
-                        await this.validateInput(this.state.activeInputId);
-                    }
+                    await this.applyLoadedFile(content, file.name);  // no path from the browser picker
                 } catch (error) {
                     this.setState({ loading: false });
                     this.messageService.error(`Failed to load file: ${error}`);
                 }
             };
-
-            // Trigger file dialog
             input.click();
         } catch (error) {
             this.messageService.error(`Failed to open file dialog: ${error}`);
+        }
+    }
+
+    /** Shared processing for a loaded file (both loaders): format detect → auto-name → update
+     *  the active input's instance/schema slot → fire events → validate / parse the schema tree.
+     *  `filePath` is the full path when available (Theia loader); undefined for the browser picker. */
+    private async applyLoadedFile(content: string, fileName: string, filePath?: string): Promise<void> {
+        const isSchema = this.state.mode === UTLXMode.MESSAGE_CONTRACT && this.state.activeSubTab === 'schema';
+
+        // Auto-detect format: start with file extension, then refine with content analysis
+        let detectedFormat = this.detectFormatFromFilename(fileName);
+
+        // Content-based detection can refine generic filename extensions
+        // e.g., OData JSON files have .json extension but content reveals @odata.* markers
+        // However, compound extensions (.tsch.json, .schema.json) are already specific
+        // and should NOT be overridden by content detection
+        const filenameIsSpecific = detectedFormat && detectedFormat !== 'json' && detectedFormat !== 'xml';
+        if (!filenameIsSpecific) {
+            const contentDetectedFormat = this.detectContentFormat(content);
+            if (contentDetectedFormat) {
+                detectedFormat = contentDetectedFormat as InstanceFormat | SchemaFormatType;
+            }
+        }
+
+        // Special handling for schema tab: .json files are JSON Schema (jsch)
+        if (isSchema && detectedFormat === 'json') {
+            detectedFormat = 'jsch';
+        }
+
+        console.log('[MultiInputPanel] ════════════════════════════════════════');
+        console.log('[MultiInputPanel] FILE LOAD - Format detection');
+        console.log('[MultiInputPanel] File:', fileName);
+        console.log('[MultiInputPanel] isSchema:', isSchema);
+        console.log('[MultiInputPanel] Format from filename:', this.detectFormatFromFilename(fileName) || 'none');
+        console.log('[MultiInputPanel] Format from content:', filenameIsSpecific ? '(skipped - filename specific)' : 'applied');
+        console.log('[MultiInputPanel] Final detected format:', detectedFormat || 'none');
+        console.log('[MultiInputPanel] Current format in state:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
+        console.log('[MultiInputPanel] ════════════════════════════════════════');
+
+        // Get current input for event firing
+        const currentInput = this.state.inputs.find(i => i.id === this.state.activeInputId);
+
+        // Auto-name the input from the loaded filename — but ONLY when it
+        // still has a default name (input, input2, …). A manually chosen
+        // name is never clobbered. Instance load only; schema load leaves
+        // the name alone. "007-test.json" -> "test" (see toHeaderIdentifier).
+        let renameTo: string | undefined;
+        if (!isSchema && currentInput && /^input\d*$/i.test(currentInput.name)) {
+            const stem = fileName.replace(/\.[^./\\]+$/, ''); // drop the last extension
+            const derived = toHeaderIdentifier(stem);
+            const duplicate = this.state.inputs.some(
+                i => i.id !== currentInput.id && i.name.toLowerCase() === derived.toLowerCase()
+            );
+            if (derived !== '' && !duplicate && derived !== currentInput.name) {
+                renameTo = derived;
+            }
+        }
+
+        // Update content and optionally format. The instance and schema
+        // slots are INDEPENDENT in MC mode: loading one must NOT wipe the
+        // other, so a sample instance and the contract schema can coexist.
+        this.setState({
+            inputs: this.state.inputs.map(input =>
+                input.id === this.state.activeInputId
+                    ? {
+                        ...input,
+                        [isSchema ? 'schemaContent' : 'instanceContent']: content,
+                        ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
+                        ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
+                        // Keep the original filename (verbatim) for the title — instance vs schema slot.
+                        // Plus the full path (Theia loader only; undefined for the browser picker).
+                        [isSchema ? 'schemaFileName' : 'instanceFileName']: fileName,
+                        [isSchema ? 'schemaFilePath' : 'instanceFilePath']: filePath,
+                        // Auto-name from the filename when the name was still a default
+                        ...(renameTo ? { name: renameTo } : {})
+                    }
+                    : input
+            ),
+            loading: false,
+            // Remount the content editor (and name field) to show loaded content.
+            contentVersion: (this.state.contentVersion ?? 0) + 1,
+            // Remount the name field so the auto-rename is visible.
+            ...(renameTo ? { inputNameVersion: (this.state.inputNameVersion ?? 0) + 1 } : {})
+        });
+
+        this.messageService.info(`Loaded file: ${fileName}${detectedFormat ? ` (format: ${detectedFormat})` : ''}`);
+
+        // Notify dependent panels/editor of the auto-rename (updates the
+        // header and renames body references), same as a manual rename.
+        if (renameTo && currentInput) {
+            this.eventService.fireInputNameChanged({
+                inputId: currentInput.id,
+                oldName: currentInput.name,
+                newName: renameTo
+            });
+        }
+
+        // Fire format changed event if format was auto-detected
+        if (detectedFormat && !isSchema) {
+            this.eventService.fireInputFormatChanged({
+                format: detectedFormat,
+                inputId: this.state.activeInputId,
+                isSchema: false
+            });
+        }
+
+        // Fire content changed event. Instance and schema are independent —
+        // loading one does NOT clear the other (so both can be present).
+        if (isSchema) {
+            this.eventService.fireInputSchemaContentChanged({
+                inputId: this.state.activeInputId,
+                content
+            });
+
+            // Parse schema to field tree for Function Builder (Message Contract mode)
+            // Wait for state to update before parsing
+            await new Promise(resolve => setTimeout(resolve, 50));
+            this.parseAndFireSchemaFieldTree(this.state.activeInputId);
+        } else {
+            this.eventService.fireInputInstanceContentChanged({
+                inputId: this.state.activeInputId,
+                content
+            });
+
+            // Wait for state to update before validation
+            await new Promise(resolve => setTimeout(resolve, 50));
+
+            console.log('[MultiInputPanel] ════════════════════════════════════════');
+            console.log('[MultiInputPanel] FILE LOAD - About to validate');
+            console.log('[MultiInputPanel] Format in state NOW:', this.state.inputs.find(i => i.id === this.state.activeInputId)?.instanceFormat);
+            console.log('[MultiInputPanel] ════════════════════════════════════════');
+
+            // Trigger UDM parsing for instance content (AFTER state update completes)
+            await this.validateInput(this.state.activeInputId);
         }
     }
 

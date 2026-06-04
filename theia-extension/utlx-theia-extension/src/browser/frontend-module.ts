@@ -7,6 +7,7 @@
 import './style/index.css';
 import { ContainerModule } from 'inversify';
 import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler } from '@theia/core/lib/browser';
+import { CommandContribution } from '@theia/core/lib/common';
 import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
@@ -134,7 +135,11 @@ export default new ContainerModule(bind => {
 
         // Bind frontend contribution
         console.log('[UTLX Frontend Module] Binding frontend contribution...');
-        bind(FrontendApplicationContribution).to(UTLXFrontendContribution).inSingletonScope();
+        // Bind the SAME singleton as both FrontendApplicationContribution and CommandContribution
+        // so registerCommands() runs (required for the status-bar file-dialog toggle to work).
+        bind(UTLXFrontendContribution).toSelf().inSingletonScope();
+        bind(FrontendApplicationContribution).toService(UTLXFrontendContribution);
+        bind(CommandContribution).toService(UTLXFrontendContribution);
         console.log('[UTLX Frontend Module] ✓ Frontend contribution bound');
 
         // Bind language grammar contribution for Monaco syntax highlighting
