@@ -67,6 +67,11 @@ export interface InputTab {
     // MC mode: this input has no sample instance — only its schema (the contract).
     // Hides the Instance tab; the input contributes only its schema to coverage/generation.
     schemaOnly?: boolean;
+    // Provenance: the ORIGINAL filename a sample instance / schema was loaded from, kept
+    // VERBATIM (e.g. "00-enterprise-order.json"; the input *name* is the stripped identifier
+    // "enterprise-order"). Shown in the panel title for the active input + sub-tab.
+    instanceFileName?: string;
+    schemaFileName?: string;
     // CSV-specific parameters
     csvHeaders?: boolean;      // Default true
     csvDelimiter?: string;     // Default ","
@@ -233,7 +238,25 @@ export class MultiInputPanelWidget extends ReactWidget {
         });
     }
 
+    /**
+     * Sync the panel title to mirror the UTLX header convention: a SINGLE input is
+     * `input <name> <fmt>` (no colon), MULTIPLE inputs are `input: a x, b y` (colon). So the
+     * title shows "Input" for one input and "Input:" for >1 — a mnemonic for the header syntax.
+     * (Theia uppercases the side-panel title → INPUT / INPUT:.) The loaded filename is shown in
+     * the panel BODY, not here, because the side-panel title is force-uppercased and can't be
+     * scoped (`.theia-sidepanel-title { text-transform: uppercase }`).
+     */
+    private refreshTitle(): void {
+        const multi = this.state.inputs.length > 1;
+        const label = multi ? `${MultiInputPanelWidget.LABEL}:` : MultiInputPanelWidget.LABEL;
+        if (this.title.label !== label) {
+            this.title.label = label;
+            this.title.caption = multi ? 'Inputs (multiple)' : 'Input';
+        }
+    }
+
     protected render(): React.ReactNode {
+        this.refreshTitle();
         const { mode, inputs, activeInputId, activeSubTab, loading, udmDialogOpen } = this.state;
         const activeInput = inputs.find(input => input.id === activeInputId);
 
@@ -604,6 +627,22 @@ export class MultiInputPanelWidget extends ReactWidget {
                             </>
                         )}
                     </div>
+
+                    {/* Loaded-file provenance — directly above the content (normal case; the
+                        side-panel TITLE is force-uppercased by Theia and can't be scoped). Shows
+                        the active slot's original filename (instance vs schema), only when loaded. */}
+                    {(() => {
+                        const showSchema = isMessageContract && activeSubTab === 'schema';
+                        const fileName = showSchema
+                            ? (activeInput.schemaContent?.trim() ? activeInput.schemaFileName : undefined)
+                            : (activeInput.instanceContent?.trim() ? activeInput.instanceFileName : undefined);
+                        return fileName ? (
+                            <div className='utlx-input-filename' title={`Loaded from: ${fileName}`}>
+                                <span className='codicon codicon-file' style={{ fontSize: '11px' }}></span>
+                                {' '}{fileName}
+                            </div>
+                        ) : null;
+                    })()}
 
                     {/* Content Editor */}
                     <div className='utlx-panel-content'>
@@ -2140,6 +2179,8 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     [isSchema ? 'schemaContent' : 'instanceContent']: content,
                                     ...(detectedFormat && !isSchema ? { instanceFormat: detectedFormat } : {}),
                                     ...(detectedFormat && isSchema ? { schemaFormat: detectedFormat as SchemaFormatType } : {}),
+                                    // Keep the original filename (verbatim) for the title — instance vs schema slot
+                                    [isSchema ? 'schemaFileName' : 'instanceFileName']: file.name,
                                     // Auto-name from the filename when the name was still a default
                                     ...(renameTo ? { name: renameTo } : {})
                                 }

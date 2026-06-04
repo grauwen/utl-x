@@ -656,6 +656,21 @@
     opacity: 0.8;
 }
 
+/* Loaded-file provenance shown in the Input panel body (normal case — the side-panel title
+   is force-uppercased by Theia and can't be scoped). */
+.utlx-input-filename {
+    padding: 2px 8px;
+    font-size: 11px;
+    color: var(--theia-descriptionForeground, #999);
+    text-transform: none;            /* keep the real filename case, incl. .json/.xml */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
 /* ===== Multi-Input Panel Widget ===== */
 .utlx-multi-input-panel-container {
     display: flex;
