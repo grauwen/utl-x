@@ -153,6 +153,10 @@ export interface SchemaInferenceResult {
     error?: string;  // Error message when success=false
     typeErrors?: Diagnostic[];
     warnings?: Diagnostic[];
+    // Set when the schema was LOADED from a file (basename) so the panel can show provenance.
+    // Absent for inferred/generated schemas (which have no source file).
+    fileName?: string;
+    filePath?: string;  // full path of the loaded file (for hover)
 }
 
 /**

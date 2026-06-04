@@ -1365,7 +1365,9 @@ export class UTLXFrontendContribution implements
             outputPanel.displaySchemaResult({
                 success: true,
                 schema: content,
-                schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' | 'tsch'
+                schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' | 'tsch',
+                fileName: uri.path.base,          // provenance for the output panel body
+                filePath: uri.path.toString()     // full path (for hover)
             });
 
             this.messageService.info(`Schema loaded from ${uri.path.base}`);
