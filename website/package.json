@@ -1,0 +1,18 @@
+{
+  "name": "utlx-lang-site",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "description": "utlx-lang.org — UTL-X language reference + book (VitePress static site)",
+  "scripts": {
+    "convert": "./scripts/convert-book.sh",
+    "stdlib": "node ./scripts/build-stdlib.mjs",
+    "content": "npm run convert && npm run stdlib",
+    "dev": "vitepress dev",
+    "build": "vitepress build",
+    "preview": "vitepress preview"
+  },
+  "devDependencies": {
+    "vitepress": "^1.6.3"
+  }
+}

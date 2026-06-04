@@ -1,0 +1,2664 @@
+[
+  {
+    "text": "String (84)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "analyzeString",
+        "link": "/reference/functions/analyzeString"
+      },
+      {
+        "text": "camelCase",
+        "link": "/reference/functions/camelCase"
+      },
+      {
+        "text": "camelize",
+        "link": "/reference/functions/camelize"
+      },
+      {
+        "text": "capitalize",
+        "link": "/reference/functions/capitalize"
+      },
+      {
+        "text": "charAt",
+        "link": "/reference/functions/charAt"
+      },
+      {
+        "text": "charCodeAt",
+        "link": "/reference/functions/charCodeAt"
+      },
+      {
+        "text": "concat",
+        "link": "/reference/functions/concat"
+      },
+      {
+        "text": "constantCase",
+        "link": "/reference/functions/constantCase"
+      },
+      {
+        "text": "contains",
+        "link": "/reference/functions/contains"
+      },
+      {
+        "text": "dotCase",
+        "link": "/reference/functions/dotCase"
+      },
+      {
+        "text": "endsWith",
+        "link": "/reference/functions/endsWith"
+      },
+      {
+        "text": "extractBetween",
+        "link": "/reference/functions/extractBetween"
+      },
+      {
+        "text": "findAllMatches",
+        "link": "/reference/functions/findAllMatches"
+      },
+      {
+        "text": "formatPlural",
+        "link": "/reference/functions/formatPlural"
+      },
+      {
+        "text": "fromCamelCase",
+        "link": "/reference/functions/fromCamelCase"
+      },
+      {
+        "text": "fromCharCode",
+        "link": "/reference/functions/fromCharCode"
+      },
+      {
+        "text": "fromConstantCase",
+        "link": "/reference/functions/fromConstantCase"
+      },
+      {
+        "text": "fromDotCase",
+        "link": "/reference/functions/fromDotCase"
+      },
+      {
+        "text": "fromHex",
+        "link": "/reference/functions/fromHex"
+      },
+      {
+        "text": "fromKebabCase",
+        "link": "/reference/functions/fromKebabCase"
+      },
+      {
+        "text": "fromPascalCase",
+        "link": "/reference/functions/fromPascalCase"
+      },
+      {
+        "text": "fromPathCase",
+        "link": "/reference/functions/fromPathCase"
+      },
+      {
+        "text": "fromSnakeCase",
+        "link": "/reference/functions/fromSnakeCase"
+      },
+      {
+        "text": "fromTitleCase",
+        "link": "/reference/functions/fromTitleCase"
+      },
+      {
+        "text": "hasAlpha",
+        "link": "/reference/functions/hasAlpha"
+      },
+      {
+        "text": "hasNumeric",
+        "link": "/reference/functions/hasNumeric"
+      },
+      {
+        "text": "isAlpha",
+        "link": "/reference/functions/isAlpha"
+      },
+      {
+        "text": "isAlphanumeric",
+        "link": "/reference/functions/isAlphanumeric"
+      },
+      {
+        "text": "isAscii",
+        "link": "/reference/functions/isAscii"
+      },
+      {
+        "text": "isHexadecimal",
+        "link": "/reference/functions/isHexadecimal"
+      },
+      {
+        "text": "isLowerCase",
+        "link": "/reference/functions/isLowerCase"
+      },
+      {
+        "text": "isNumeric",
+        "link": "/reference/functions/isNumeric"
+      },
+      {
+        "text": "isPlural",
+        "link": "/reference/functions/isPlural"
+      },
+      {
+        "text": "isPrintable",
+        "link": "/reference/functions/isPrintable"
+      },
+      {
+        "text": "isSingular",
+        "link": "/reference/functions/isSingular"
+      },
+      {
+        "text": "isUpperCase",
+        "link": "/reference/functions/isUpperCase"
+      },
+      {
+        "text": "isWhitespace",
+        "link": "/reference/functions/isWhitespace"
+      },
+      {
+        "text": "join",
+        "link": "/reference/functions/join"
+      },
+      {
+        "text": "joinToString",
+        "link": "/reference/functions/joinToString"
+      },
+      {
+        "text": "kebabCase",
+        "link": "/reference/functions/kebabCase"
+      },
+      {
+        "text": "lastIndexOf",
+        "link": "/reference/functions/lastIndexOf"
+      },
+      {
+        "text": "leftTrim",
+        "link": "/reference/functions/leftTrim"
+      },
+      {
+        "text": "length",
+        "link": "/reference/functions/length"
+      },
+      {
+        "text": "lower",
+        "link": "/reference/functions/lower"
+      },
+      {
+        "text": "lowerCase",
+        "link": "/reference/functions/lowerCase"
+      },
+      {
+        "text": "matches",
+        "link": "/reference/functions/matches"
+      },
+      {
+        "text": "matchesWhole",
+        "link": "/reference/functions/matchesWhole"
+      },
+      {
+        "text": "normalizeSpace",
+        "link": "/reference/functions/normalizeSpace"
+      },
+      {
+        "text": "pad",
+        "link": "/reference/functions/pad"
+      },
+      {
+        "text": "padLeft",
+        "link": "/reference/functions/padLeft"
+      },
+      {
+        "text": "padRight",
+        "link": "/reference/functions/padRight"
+      },
+      {
+        "text": "pascalCase",
+        "link": "/reference/functions/pascalCase"
+      },
+      {
+        "text": "pathCase",
+        "link": "/reference/functions/pathCase"
+      },
+      {
+        "text": "pluralize",
+        "link": "/reference/functions/pluralize"
+      },
+      {
+        "text": "pluralizeWithCount",
+        "link": "/reference/functions/pluralizeWithCount"
+      },
+      {
+        "text": "regexGroups",
+        "link": "/reference/functions/regexGroups"
+      },
+      {
+        "text": "regexNamedGroups",
+        "link": "/reference/functions/regexNamedGroups"
+      },
+      {
+        "text": "remove",
+        "link": "/reference/functions/remove"
+      },
+      {
+        "text": "repeat",
+        "link": "/reference/functions/repeat"
+      },
+      {
+        "text": "replace",
+        "link": "/reference/functions/replace"
+      },
+      {
+        "text": "replaceRegex",
+        "link": "/reference/functions/replaceRegex"
+      },
+      {
+        "text": "replaceWithFunction",
+        "link": "/reference/functions/replaceWithFunction"
+      },
+      {
+        "text": "reverseString",
+        "link": "/reference/functions/reverseString"
+      },
+      {
+        "text": "rightTrim",
+        "link": "/reference/functions/rightTrim"
+      },
+      {
+        "text": "singularize",
+        "link": "/reference/functions/singularize"
+      },
+      {
+        "text": "slugify",
+        "link": "/reference/functions/slugify"
+      },
+      {
+        "text": "snakeCase",
+        "link": "/reference/functions/snakeCase"
+      },
+      {
+        "text": "split",
+        "link": "/reference/functions/split"
+      },
+      {
+        "text": "splitWithMatches",
+        "link": "/reference/functions/splitWithMatches"
+      },
+      {
+        "text": "startsWith",
+        "link": "/reference/functions/startsWith"
+      },
+      {
+        "text": "substring",
+        "link": "/reference/functions/substring"
+      },
+      {
+        "text": "substringAfter",
+        "link": "/reference/functions/substringAfter"
+      },
+      {
+        "text": "substringAfterLast",
+        "link": "/reference/functions/substringAfterLast"
+      },
+      {
+        "text": "substringBefore",
+        "link": "/reference/functions/substringBefore"
+      },
+      {
+        "text": "substringBeforeLast",
+        "link": "/reference/functions/substringBeforeLast"
+      },
+      {
+        "text": "titleCase",
+        "link": "/reference/functions/titleCase"
+      },
+      {
+        "text": "toTitleCase",
+        "link": "/reference/functions/toTitleCase"
+      },
+      {
+        "text": "translate",
+        "link": "/reference/functions/translate"
+      },
+      {
+        "text": "trim",
+        "link": "/reference/functions/trim"
+      },
+      {
+        "text": "truncate",
+        "link": "/reference/functions/truncate"
+      },
+      {
+        "text": "uncamelize",
+        "link": "/reference/functions/uncamelize"
+      },
+      {
+        "text": "upper",
+        "link": "/reference/functions/upper"
+      },
+      {
+        "text": "upperCase",
+        "link": "/reference/functions/upperCase"
+      },
+      {
+        "text": "wordCase",
+        "link": "/reference/functions/wordCase"
+      }
+    ]
+  },
+  {
+    "text": "Array (57)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "all",
+        "link": "/reference/functions/all"
+      },
+      {
+        "text": "any",
+        "link": "/reference/functions/any"
+      },
+      {
+        "text": "chunk",
+        "link": "/reference/functions/chunk"
+      },
+      {
+        "text": "chunkBy",
+        "link": "/reference/functions/chunkBy"
+      },
+      {
+        "text": "compact",
+        "link": "/reference/functions/compact"
+      },
+      {
+        "text": "count",
+        "link": "/reference/functions/count"
+      },
+      {
+        "text": "countBy",
+        "link": "/reference/functions/countBy"
+      },
+      {
+        "text": "crossJoin",
+        "link": "/reference/functions/crossJoin"
+      },
+      {
+        "text": "difference",
+        "link": "/reference/functions/difference"
+      },
+      {
+        "text": "distinct",
+        "link": "/reference/functions/distinct"
+      },
+      {
+        "text": "distinctBy",
+        "link": "/reference/functions/distinctBy"
+      },
+      {
+        "text": "drop",
+        "link": "/reference/functions/drop"
+      },
+      {
+        "text": "every",
+        "link": "/reference/functions/every"
+      },
+      {
+        "text": "filter",
+        "link": "/reference/functions/filter"
+      },
+      {
+        "text": "find",
+        "link": "/reference/functions/find"
+      },
+      {
+        "text": "findIndex",
+        "link": "/reference/functions/findIndex"
+      },
+      {
+        "text": "findLastIndex",
+        "link": "/reference/functions/findLastIndex"
+      },
+      {
+        "text": "first",
+        "link": "/reference/functions/first"
+      },
+      {
+        "text": "flatMap",
+        "link": "/reference/functions/flatMap"
+      },
+      {
+        "text": "flatten",
+        "link": "/reference/functions/flatten"
+      },
+      {
+        "text": "flattenDeep",
+        "link": "/reference/functions/flattenDeep"
+      },
+      {
+        "text": "fullOuterJoin",
+        "link": "/reference/functions/fullOuterJoin"
+      },
+      {
+        "text": "groupBy",
+        "link": "/reference/functions/groupBy"
+      },
+      {
+        "text": "head",
+        "link": "/reference/functions/head"
+      },
+      {
+        "text": "includes",
+        "link": "/reference/functions/includes"
+      },
+      {
+        "text": "indexOf",
+        "link": "/reference/functions/indexOf"
+      },
+      {
+        "text": "insertAfter",
+        "link": "/reference/functions/insertAfter"
+      },
+      {
+        "text": "insertBefore",
+        "link": "/reference/functions/insertBefore"
+      },
+      {
+        "text": "intersect",
+        "link": "/reference/functions/intersect"
+      },
+      {
+        "text": "joinWith",
+        "link": "/reference/functions/joinWith"
+      },
+      {
+        "text": "last",
+        "link": "/reference/functions/last"
+      },
+      {
+        "text": "leftJoin",
+        "link": "/reference/functions/leftJoin"
+      },
+      {
+        "text": "lookupBy",
+        "link": "/reference/functions/lookupBy"
+      },
+      {
+        "text": "map",
+        "link": "/reference/functions/map"
+      },
+      {
+        "text": "mapGroups",
+        "link": "/reference/functions/mapGroups"
+      },
+      {
+        "text": "nestBy",
+        "link": "/reference/functions/nestBy"
+      },
+      {
+        "text": "none",
+        "link": "/reference/functions/none"
+      },
+      {
+        "text": "partition",
+        "link": "/reference/functions/partition"
+      },
+      {
+        "text": "reduce",
+        "link": "/reference/functions/reduce"
+      },
+      {
+        "text": "reverse",
+        "link": "/reference/functions/reverse"
+      },
+      {
+        "text": "rightJoin",
+        "link": "/reference/functions/rightJoin"
+      },
+      {
+        "text": "scan",
+        "link": "/reference/functions/scan"
+      },
+      {
+        "text": "slice",
+        "link": "/reference/functions/slice"
+      },
+      {
+        "text": "some",
+        "link": "/reference/functions/some"
+      },
+      {
+        "text": "sort",
+        "link": "/reference/functions/sort"
+      },
+      {
+        "text": "sortBy",
+        "link": "/reference/functions/sortBy"
+      },
+      {
+        "text": "symmetricDifference",
+        "link": "/reference/functions/symmetricDifference"
+      },
+      {
+        "text": "tail",
+        "link": "/reference/functions/tail"
+      },
+      {
+        "text": "take",
+        "link": "/reference/functions/take"
+      },
+      {
+        "text": "transpose",
+        "link": "/reference/functions/transpose"
+      },
+      {
+        "text": "union",
+        "link": "/reference/functions/union"
+      },
+      {
+        "text": "unique",
+        "link": "/reference/functions/unique"
+      },
+      {
+        "text": "unnest",
+        "link": "/reference/functions/unnest"
+      },
+      {
+        "text": "windowed",
+        "link": "/reference/functions/windowed"
+      },
+      {
+        "text": "zip",
+        "link": "/reference/functions/zip"
+      },
+      {
+        "text": "zipWith",
+        "link": "/reference/functions/zipWith"
+      },
+      {
+        "text": "zipWithIndex",
+        "link": "/reference/functions/zipWithIndex"
+      }
+    ]
+  },
+  {
+    "text": "Object (31)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "containsKey",
+        "link": "/reference/functions/containsKey"
+      },
+      {
+        "text": "containsValue",
+        "link": "/reference/functions/containsValue"
+      },
+      {
+        "text": "countEntries",
+        "link": "/reference/functions/countEntries"
+      },
+      {
+        "text": "deepClone",
+        "link": "/reference/functions/deepClone"
+      },
+      {
+        "text": "deepMerge",
+        "link": "/reference/functions/deepMerge"
+      },
+      {
+        "text": "deepMergeAll",
+        "link": "/reference/functions/deepMergeAll"
+      },
+      {
+        "text": "divideBy",
+        "link": "/reference/functions/divideBy"
+      },
+      {
+        "text": "entries",
+        "link": "/reference/functions/entries"
+      },
+      {
+        "text": "everyEntry",
+        "link": "/reference/functions/everyEntry"
+      },
+      {
+        "text": "filterEntries",
+        "link": "/reference/functions/filterEntries"
+      },
+      {
+        "text": "fromEntries",
+        "link": "/reference/functions/fromEntries"
+      },
+      {
+        "text": "get",
+        "link": "/reference/functions/get"
+      },
+      {
+        "text": "hasKey",
+        "link": "/reference/functions/hasKey"
+      },
+      {
+        "text": "invert",
+        "link": "/reference/functions/invert"
+      },
+      {
+        "text": "keys",
+        "link": "/reference/functions/keys"
+      },
+      {
+        "text": "mapEntries",
+        "link": "/reference/functions/mapEntries"
+      },
+      {
+        "text": "mapKeys",
+        "link": "/reference/functions/mapKeys"
+      },
+      {
+        "text": "mapTree",
+        "link": "/reference/functions/mapTree"
+      },
+      {
+        "text": "mapValues",
+        "link": "/reference/functions/mapValues"
+      },
+      {
+        "text": "merge",
+        "link": "/reference/functions/merge"
+      },
+      {
+        "text": "omit",
+        "link": "/reference/functions/omit"
+      },
+      {
+        "text": "pick",
+        "link": "/reference/functions/pick"
+      },
+      {
+        "text": "reduceEntries",
+        "link": "/reference/functions/reduceEntries"
+      },
+      {
+        "text": "someEntry",
+        "link": "/reference/functions/someEntry"
+      },
+      {
+        "text": "treeDepth",
+        "link": "/reference/functions/treeDepth"
+      },
+      {
+        "text": "treeFilter",
+        "link": "/reference/functions/treeFilter"
+      },
+      {
+        "text": "treeFind",
+        "link": "/reference/functions/treeFind"
+      },
+      {
+        "text": "treeFlatten",
+        "link": "/reference/functions/treeFlatten"
+      },
+      {
+        "text": "treeMap",
+        "link": "/reference/functions/treeMap"
+      },
+      {
+        "text": "treePaths",
+        "link": "/reference/functions/treePaths"
+      },
+      {
+        "text": "values",
+        "link": "/reference/functions/values"
+      }
+    ]
+  },
+  {
+    "text": "Math (52)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "abs",
+        "link": "/reference/functions/abs"
+      },
+      {
+        "text": "acos",
+        "link": "/reference/functions/acos"
+      },
+      {
+        "text": "asin",
+        "link": "/reference/functions/asin"
+      },
+      {
+        "text": "atan",
+        "link": "/reference/functions/atan"
+      },
+      {
+        "text": "atan2",
+        "link": "/reference/functions/atan2"
+      },
+      {
+        "text": "avg",
+        "link": "/reference/functions/avg"
+      },
+      {
+        "text": "avgBy",
+        "link": "/reference/functions/avgBy"
+      },
+      {
+        "text": "ceil",
+        "link": "/reference/functions/ceil"
+      },
+      {
+        "text": "cos",
+        "link": "/reference/functions/cos"
+      },
+      {
+        "text": "cosh",
+        "link": "/reference/functions/cosh"
+      },
+      {
+        "text": "e",
+        "link": "/reference/functions/e"
+      },
+      {
+        "text": "exp",
+        "link": "/reference/functions/exp"
+      },
+      {
+        "text": "floor",
+        "link": "/reference/functions/floor"
+      },
+      {
+        "text": "formatNumber",
+        "link": "/reference/functions/formatNumber"
+      },
+      {
+        "text": "goldenRatio",
+        "link": "/reference/functions/goldenRatio"
+      },
+      {
+        "text": "iqr",
+        "link": "/reference/functions/iqr"
+      },
+      {
+        "text": "ln",
+        "link": "/reference/functions/ln"
+      },
+      {
+        "text": "log",
+        "link": "/reference/functions/log"
+      },
+      {
+        "text": "log10",
+        "link": "/reference/functions/log10"
+      },
+      {
+        "text": "log2",
+        "link": "/reference/functions/log2"
+      },
+      {
+        "text": "max",
+        "link": "/reference/functions/max"
+      },
+      {
+        "text": "maxBy",
+        "link": "/reference/functions/maxBy"
+      },
+      {
+        "text": "median",
+        "link": "/reference/functions/median"
+      },
+      {
+        "text": "min",
+        "link": "/reference/functions/min"
+      },
+      {
+        "text": "minBy",
+        "link": "/reference/functions/minBy"
+      },
+      {
+        "text": "mode",
+        "link": "/reference/functions/mode"
+      },
+      {
+        "text": "parseDouble",
+        "link": "/reference/functions/parseDouble"
+      },
+      {
+        "text": "parseEUNumber",
+        "link": "/reference/functions/parseEUNumber"
+      },
+      {
+        "text": "parseFloat",
+        "link": "/reference/functions/parseFloat"
+      },
+      {
+        "text": "parseInt",
+        "link": "/reference/functions/parseInt"
+      },
+      {
+        "text": "parseNumber",
+        "link": "/reference/functions/parseNumber"
+      },
+      {
+        "text": "parseUSNumber",
+        "link": "/reference/functions/parseUSNumber"
+      },
+      {
+        "text": "percentageChange",
+        "link": "/reference/functions/percentageChange"
+      },
+      {
+        "text": "percentile",
+        "link": "/reference/functions/percentile"
+      },
+      {
+        "text": "pi",
+        "link": "/reference/functions/pi"
+      },
+      {
+        "text": "pow",
+        "link": "/reference/functions/pow"
+      },
+      {
+        "text": "quartiles",
+        "link": "/reference/functions/quartiles"
+      },
+      {
+        "text": "random",
+        "link": "/reference/functions/random"
+      },
+      {
+        "text": "round",
+        "link": "/reference/functions/round"
+      },
+      {
+        "text": "roundToCents",
+        "link": "/reference/functions/roundToCents"
+      },
+      {
+        "text": "roundToDecimalPlaces",
+        "link": "/reference/functions/roundToDecimalPlaces"
+      },
+      {
+        "text": "sin",
+        "link": "/reference/functions/sin"
+      },
+      {
+        "text": "sinh",
+        "link": "/reference/functions/sinh"
+      },
+      {
+        "text": "sqrt",
+        "link": "/reference/functions/sqrt"
+      },
+      {
+        "text": "stdDev",
+        "link": "/reference/functions/stdDev"
+      },
+      {
+        "text": "sum",
+        "link": "/reference/functions/sum"
+      },
+      {
+        "text": "sumBy",
+        "link": "/reference/functions/sumBy"
+      },
+      {
+        "text": "tan",
+        "link": "/reference/functions/tan"
+      },
+      {
+        "text": "tanh",
+        "link": "/reference/functions/tanh"
+      },
+      {
+        "text": "toDegrees",
+        "link": "/reference/functions/toDegrees"
+      },
+      {
+        "text": "toRadians",
+        "link": "/reference/functions/toRadians"
+      },
+      {
+        "text": "variance",
+        "link": "/reference/functions/variance"
+      }
+    ]
+  },
+  {
+    "text": "Type (38)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "and",
+        "link": "/reference/functions/and"
+      },
+      {
+        "text": "canCoerce",
+        "link": "/reference/functions/canCoerce"
+      },
+      {
+        "text": "coalesce",
+        "link": "/reference/functions/coalesce"
+      },
+      {
+        "text": "coerce",
+        "link": "/reference/functions/coerce"
+      },
+      {
+        "text": "coerceAll",
+        "link": "/reference/functions/coerceAll"
+      },
+      {
+        "text": "equals",
+        "link": "/reference/functions/equals"
+      },
+      {
+        "text": "getType",
+        "link": "/reference/functions/getType"
+      },
+      {
+        "text": "ifThenElse",
+        "link": "/reference/functions/ifThenElse"
+      },
+      {
+        "text": "implies",
+        "link": "/reference/functions/implies"
+      },
+      {
+        "text": "isArray",
+        "link": "/reference/functions/isArray"
+      },
+      {
+        "text": "isBlank",
+        "link": "/reference/functions/isBlank"
+      },
+      {
+        "text": "isBoolean",
+        "link": "/reference/functions/isBoolean"
+      },
+      {
+        "text": "isDate",
+        "link": "/reference/functions/isDate"
+      },
+      {
+        "text": "isDateTime",
+        "link": "/reference/functions/isDateTime"
+      },
+      {
+        "text": "isDefined",
+        "link": "/reference/functions/isDefined"
+      },
+      {
+        "text": "isEmpty",
+        "link": "/reference/functions/isEmpty"
+      },
+      {
+        "text": "isNotEmpty",
+        "link": "/reference/functions/isNotEmpty"
+      },
+      {
+        "text": "isNull",
+        "link": "/reference/functions/isNull"
+      },
+      {
+        "text": "isNumber",
+        "link": "/reference/functions/isNumber"
+      },
+      {
+        "text": "isObject",
+        "link": "/reference/functions/isObject"
+      },
+      {
+        "text": "isString",
+        "link": "/reference/functions/isString"
+      },
+      {
+        "text": "isTime",
+        "link": "/reference/functions/isTime"
+      },
+      {
+        "text": "nand",
+        "link": "/reference/functions/nand"
+      },
+      {
+        "text": "nor",
+        "link": "/reference/functions/nor"
+      },
+      {
+        "text": "not",
+        "link": "/reference/functions/not"
+      },
+      {
+        "text": "numberOrDefault",
+        "link": "/reference/functions/numberOrDefault"
+      },
+      {
+        "text": "parseBoolean",
+        "link": "/reference/functions/parseBoolean"
+      },
+      {
+        "text": "smartCoerce",
+        "link": "/reference/functions/smartCoerce"
+      },
+      {
+        "text": "stringOrDefault",
+        "link": "/reference/functions/stringOrDefault"
+      },
+      {
+        "text": "toArray",
+        "link": "/reference/functions/toArray"
+      },
+      {
+        "text": "toBoolean",
+        "link": "/reference/functions/toBoolean"
+      },
+      {
+        "text": "toNumber",
+        "link": "/reference/functions/toNumber"
+      },
+      {
+        "text": "toObject",
+        "link": "/reference/functions/toObject"
+      },
+      {
+        "text": "toString",
+        "link": "/reference/functions/toString"
+      },
+      {
+        "text": "tryCoerce",
+        "link": "/reference/functions/tryCoerce"
+      },
+      {
+        "text": "typeOf",
+        "link": "/reference/functions/typeOf"
+      },
+      {
+        "text": "xnor",
+        "link": "/reference/functions/xnor"
+      },
+      {
+        "text": "xor",
+        "link": "/reference/functions/xor"
+      }
+    ]
+  },
+  {
+    "text": "Date & Time (70)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "addDays",
+        "link": "/reference/functions/addDays"
+      },
+      {
+        "text": "addHours",
+        "link": "/reference/functions/addHours"
+      },
+      {
+        "text": "addMinutes",
+        "link": "/reference/functions/addMinutes"
+      },
+      {
+        "text": "addMonths",
+        "link": "/reference/functions/addMonths"
+      },
+      {
+        "text": "addQuarters",
+        "link": "/reference/functions/addQuarters"
+      },
+      {
+        "text": "addSeconds",
+        "link": "/reference/functions/addSeconds"
+      },
+      {
+        "text": "addWeeks",
+        "link": "/reference/functions/addWeeks"
+      },
+      {
+        "text": "addYears",
+        "link": "/reference/functions/addYears"
+      },
+      {
+        "text": "age",
+        "link": "/reference/functions/age"
+      },
+      {
+        "text": "compareDates",
+        "link": "/reference/functions/compareDates"
+      },
+      {
+        "text": "convertTimezone",
+        "link": "/reference/functions/convertTimezone"
+      },
+      {
+        "text": "currentDate",
+        "link": "/reference/functions/currentDate"
+      },
+      {
+        "text": "currentTime",
+        "link": "/reference/functions/currentTime"
+      },
+      {
+        "text": "day",
+        "link": "/reference/functions/day"
+      },
+      {
+        "text": "dayOfMonth",
+        "link": "/reference/functions/dayOfMonth"
+      },
+      {
+        "text": "dayOfWeek",
+        "link": "/reference/functions/dayOfWeek"
+      },
+      {
+        "text": "dayOfWeekName",
+        "link": "/reference/functions/dayOfWeekName"
+      },
+      {
+        "text": "dayOfYear",
+        "link": "/reference/functions/dayOfYear"
+      },
+      {
+        "text": "daysBetween",
+        "link": "/reference/functions/daysBetween"
+      },
+      {
+        "text": "daysInMonth",
+        "link": "/reference/functions/daysInMonth"
+      },
+      {
+        "text": "daysInYear",
+        "link": "/reference/functions/daysInYear"
+      },
+      {
+        "text": "diffDays",
+        "link": "/reference/functions/diffDays"
+      },
+      {
+        "text": "diffHours",
+        "link": "/reference/functions/diffHours"
+      },
+      {
+        "text": "diffMinutes",
+        "link": "/reference/functions/diffMinutes"
+      },
+      {
+        "text": "diffMonths",
+        "link": "/reference/functions/diffMonths"
+      },
+      {
+        "text": "diffSeconds",
+        "link": "/reference/functions/diffSeconds"
+      },
+      {
+        "text": "diffWeeks",
+        "link": "/reference/functions/diffWeeks"
+      },
+      {
+        "text": "diffYears",
+        "link": "/reference/functions/diffYears"
+      },
+      {
+        "text": "endOfDay",
+        "link": "/reference/functions/endOfDay"
+      },
+      {
+        "text": "endOfMonth",
+        "link": "/reference/functions/endOfMonth"
+      },
+      {
+        "text": "endOfQuarter",
+        "link": "/reference/functions/endOfQuarter"
+      },
+      {
+        "text": "endOfWeek",
+        "link": "/reference/functions/endOfWeek"
+      },
+      {
+        "text": "endOfYear",
+        "link": "/reference/functions/endOfYear"
+      },
+      {
+        "text": "formatDate",
+        "link": "/reference/functions/formatDate"
+      },
+      {
+        "text": "formatDateTimeInTimezone",
+        "link": "/reference/functions/formatDateTimeInTimezone"
+      },
+      {
+        "text": "fromUTC",
+        "link": "/reference/functions/fromUTC"
+      },
+      {
+        "text": "getTimezone",
+        "link": "/reference/functions/getTimezone"
+      },
+      {
+        "text": "getTimezoneName",
+        "link": "/reference/functions/getTimezoneName"
+      },
+      {
+        "text": "getTimezoneOffsetHours",
+        "link": "/reference/functions/getTimezoneOffsetHours"
+      },
+      {
+        "text": "getTimezoneOffsetSeconds",
+        "link": "/reference/functions/getTimezoneOffsetSeconds"
+      },
+      {
+        "text": "hours",
+        "link": "/reference/functions/hours"
+      },
+      {
+        "text": "isAfter",
+        "link": "/reference/functions/isAfter"
+      },
+      {
+        "text": "isBefore",
+        "link": "/reference/functions/isBefore"
+      },
+      {
+        "text": "isBetween",
+        "link": "/reference/functions/isBetween"
+      },
+      {
+        "text": "isLeapYear",
+        "link": "/reference/functions/isLeapYear"
+      },
+      {
+        "text": "isLeapYearFunc",
+        "link": "/reference/functions/isLeapYearFunc"
+      },
+      {
+        "text": "isLocalDateTime",
+        "link": "/reference/functions/isLocalDateTime"
+      },
+      {
+        "text": "isSameDay",
+        "link": "/reference/functions/isSameDay"
+      },
+      {
+        "text": "isToday",
+        "link": "/reference/functions/isToday"
+      },
+      {
+        "text": "isValidTimezone",
+        "link": "/reference/functions/isValidTimezone"
+      },
+      {
+        "text": "isWeekday",
+        "link": "/reference/functions/isWeekday"
+      },
+      {
+        "text": "isWeekend",
+        "link": "/reference/functions/isWeekend"
+      },
+      {
+        "text": "minutes",
+        "link": "/reference/functions/minutes"
+      },
+      {
+        "text": "month",
+        "link": "/reference/functions/month"
+      },
+      {
+        "text": "monthName",
+        "link": "/reference/functions/monthName"
+      },
+      {
+        "text": "now",
+        "link": "/reference/functions/now"
+      },
+      {
+        "text": "parseDate",
+        "link": "/reference/functions/parseDate"
+      },
+      {
+        "text": "parseDateTimeWithTimezone",
+        "link": "/reference/functions/parseDateTimeWithTimezone"
+      },
+      {
+        "text": "quarter",
+        "link": "/reference/functions/quarter"
+      },
+      {
+        "text": "seconds",
+        "link": "/reference/functions/seconds"
+      },
+      {
+        "text": "startOfDay",
+        "link": "/reference/functions/startOfDay"
+      },
+      {
+        "text": "startOfMonth",
+        "link": "/reference/functions/startOfMonth"
+      },
+      {
+        "text": "startOfQuarter",
+        "link": "/reference/functions/startOfQuarter"
+      },
+      {
+        "text": "startOfWeek",
+        "link": "/reference/functions/startOfWeek"
+      },
+      {
+        "text": "startOfYear",
+        "link": "/reference/functions/startOfYear"
+      },
+      {
+        "text": "timestamp",
+        "link": "/reference/functions/timestamp"
+      },
+      {
+        "text": "toDate",
+        "link": "/reference/functions/toDate"
+      },
+      {
+        "text": "toUTC",
+        "link": "/reference/functions/toUTC"
+      },
+      {
+        "text": "validateDate",
+        "link": "/reference/functions/validateDate"
+      },
+      {
+        "text": "weekOfYear",
+        "link": "/reference/functions/weekOfYear"
+      }
+    ]
+  },
+  {
+    "text": "XML (59)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "addNamespaceDeclarations",
+        "link": "/reference/functions/addNamespaceDeclarations"
+      },
+      {
+        "text": "attribute",
+        "link": "/reference/functions/attribute"
+      },
+      {
+        "text": "attributes",
+        "link": "/reference/functions/attributes"
+      },
+      {
+        "text": "c14n",
+        "link": "/reference/functions/c14n"
+      },
+      {
+        "text": "c14n11",
+        "link": "/reference/functions/c14n11"
+      },
+      {
+        "text": "c14n11WithComments",
+        "link": "/reference/functions/c14n11WithComments"
+      },
+      {
+        "text": "c14nEquals",
+        "link": "/reference/functions/c14nEquals"
+      },
+      {
+        "text": "c14nFingerprint",
+        "link": "/reference/functions/c14nFingerprint"
+      },
+      {
+        "text": "c14nHash",
+        "link": "/reference/functions/c14nHash"
+      },
+      {
+        "text": "c14nPhysical",
+        "link": "/reference/functions/c14nPhysical"
+      },
+      {
+        "text": "c14nSubset",
+        "link": "/reference/functions/c14nSubset"
+      },
+      {
+        "text": "c14nWithComments",
+        "link": "/reference/functions/c14nWithComments"
+      },
+      {
+        "text": "canonicalizeWithAlgorithm",
+        "link": "/reference/functions/canonicalizeWithAlgorithm"
+      },
+      {
+        "text": "childCount",
+        "link": "/reference/functions/childCount"
+      },
+      {
+        "text": "childNames",
+        "link": "/reference/functions/childNames"
+      },
+      {
+        "text": "compactXML",
+        "link": "/reference/functions/compactXML"
+      },
+      {
+        "text": "convertXMLEncoding",
+        "link": "/reference/functions/convertXMLEncoding"
+      },
+      {
+        "text": "createCDATA",
+        "link": "/reference/functions/createCDATA"
+      },
+      {
+        "text": "createQname",
+        "link": "/reference/functions/createQname"
+      },
+      {
+        "text": "createSOAPEnvelope",
+        "link": "/reference/functions/createSOAPEnvelope"
+      },
+      {
+        "text": "detectBOM",
+        "link": "/reference/functions/detectBOM"
+      },
+      {
+        "text": "detectXMLEncoding",
+        "link": "/reference/functions/detectXMLEncoding"
+      },
+      {
+        "text": "elementPath",
+        "link": "/reference/functions/elementPath"
+      },
+      {
+        "text": "enforceNamespacePrefixes",
+        "link": "/reference/functions/enforceNamespacePrefixes"
+      },
+      {
+        "text": "escapeXML",
+        "link": "/reference/functions/escapeXML"
+      },
+      {
+        "text": "excC14n",
+        "link": "/reference/functions/excC14n"
+      },
+      {
+        "text": "excC14nWithComments",
+        "link": "/reference/functions/excC14nWithComments"
+      },
+      {
+        "text": "extractCDATA",
+        "link": "/reference/functions/extractCDATA"
+      },
+      {
+        "text": "formatEmptyElements",
+        "link": "/reference/functions/formatEmptyElements"
+      },
+      {
+        "text": "getBOMBytes",
+        "link": "/reference/functions/getBOMBytes"
+      },
+      {
+        "text": "getNamespaces",
+        "link": "/reference/functions/getNamespaces"
+      },
+      {
+        "text": "hasAttribute",
+        "link": "/reference/functions/hasAttribute"
+      },
+      {
+        "text": "hasBOM",
+        "link": "/reference/functions/hasBOM"
+      },
+      {
+        "text": "hasContent",
+        "link": "/reference/functions/hasContent"
+      },
+      {
+        "text": "hasNamespace",
+        "link": "/reference/functions/hasNamespace"
+      },
+      {
+        "text": "isCDATA",
+        "link": "/reference/functions/isCDATA"
+      },
+      {
+        "text": "isEmptyElement",
+        "link": "/reference/functions/isEmptyElement"
+      },
+      {
+        "text": "localName",
+        "link": "/reference/functions/localName"
+      },
+      {
+        "text": "namespacePrefix",
+        "link": "/reference/functions/namespacePrefix"
+      },
+      {
+        "text": "namespaceUri",
+        "link": "/reference/functions/namespaceUri"
+      },
+      {
+        "text": "nodeType",
+        "link": "/reference/functions/nodeType"
+      },
+      {
+        "text": "normalizeBOM",
+        "link": "/reference/functions/normalizeBOM"
+      },
+      {
+        "text": "normalizeXMLEncoding",
+        "link": "/reference/functions/normalizeXMLEncoding"
+      },
+      {
+        "text": "parent",
+        "link": "/reference/functions/parent"
+      },
+      {
+        "text": "prepareForSignature",
+        "link": "/reference/functions/prepareForSignature"
+      },
+      {
+        "text": "qualifiedName",
+        "link": "/reference/functions/qualifiedName"
+      },
+      {
+        "text": "removeBOM",
+        "link": "/reference/functions/removeBOM"
+      },
+      {
+        "text": "renderXml",
+        "link": "/reference/functions/renderXml"
+      },
+      {
+        "text": "resolveQName",
+        "link": "/reference/functions/resolveQName"
+      },
+      {
+        "text": "shouldUseCDATA",
+        "link": "/reference/functions/shouldUseCDATA"
+      },
+      {
+        "text": "stripBOM",
+        "link": "/reference/functions/stripBOM"
+      },
+      {
+        "text": "textContent",
+        "link": "/reference/functions/textContent"
+      },
+      {
+        "text": "unescapeXML",
+        "link": "/reference/functions/unescapeXML"
+      },
+      {
+        "text": "unwrapCDATA",
+        "link": "/reference/functions/unwrapCDATA"
+      },
+      {
+        "text": "updateXMLEncoding",
+        "link": "/reference/functions/updateXMLEncoding"
+      },
+      {
+        "text": "validateEncoding",
+        "link": "/reference/functions/validateEncoding"
+      },
+      {
+        "text": "wrapIfNeeded",
+        "link": "/reference/functions/wrapIfNeeded"
+      },
+      {
+        "text": "xmlEscape",
+        "link": "/reference/functions/xmlEscape"
+      },
+      {
+        "text": "xmlUnescape",
+        "link": "/reference/functions/xmlUnescape"
+      }
+    ]
+  },
+  {
+    "text": "JSON (7)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "canonicalizeJSON",
+        "link": "/reference/functions/canonicalizeJSON"
+      },
+      {
+        "text": "canonicalJSONHash",
+        "link": "/reference/functions/canonicalJSONHash"
+      },
+      {
+        "text": "canonicalJSONSize",
+        "link": "/reference/functions/canonicalJSONSize"
+      },
+      {
+        "text": "compactJSON",
+        "link": "/reference/functions/compactJSON"
+      },
+      {
+        "text": "isCanonicalJSON",
+        "link": "/reference/functions/isCanonicalJSON"
+      },
+      {
+        "text": "jcs",
+        "link": "/reference/functions/jcs"
+      },
+      {
+        "text": "jsonEquals",
+        "link": "/reference/functions/jsonEquals"
+      }
+    ]
+  },
+  {
+    "text": "CSV (14)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "compactCSV",
+        "link": "/reference/functions/compactCSV"
+      },
+      {
+        "text": "csvAddColumn",
+        "link": "/reference/functions/csvAddColumn"
+      },
+      {
+        "text": "csvCell",
+        "link": "/reference/functions/csvCell"
+      },
+      {
+        "text": "csvColumn",
+        "link": "/reference/functions/csvColumn"
+      },
+      {
+        "text": "csvColumns",
+        "link": "/reference/functions/csvColumns"
+      },
+      {
+        "text": "csvFilter",
+        "link": "/reference/functions/csvFilter"
+      },
+      {
+        "text": "csvRemoveColumns",
+        "link": "/reference/functions/csvRemoveColumns"
+      },
+      {
+        "text": "csvRow",
+        "link": "/reference/functions/csvRow"
+      },
+      {
+        "text": "csvRows",
+        "link": "/reference/functions/csvRows"
+      },
+      {
+        "text": "csvSelectColumns",
+        "link": "/reference/functions/csvSelectColumns"
+      },
+      {
+        "text": "csvSort",
+        "link": "/reference/functions/csvSort"
+      },
+      {
+        "text": "csvSummarize",
+        "link": "/reference/functions/csvSummarize"
+      },
+      {
+        "text": "csvTranspose",
+        "link": "/reference/functions/csvTranspose"
+      },
+      {
+        "text": "renderCsv",
+        "link": "/reference/functions/renderCsv"
+      }
+    ]
+  },
+  {
+    "text": "YAML (23)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "renderYaml",
+        "link": "/reference/functions/renderYaml"
+      },
+      {
+        "text": "yamlDelete",
+        "link": "/reference/functions/yamlDelete"
+      },
+      {
+        "text": "yamlEntries",
+        "link": "/reference/functions/yamlEntries"
+      },
+      {
+        "text": "yamlExists",
+        "link": "/reference/functions/yamlExists"
+      },
+      {
+        "text": "yamlFilterByKeyPattern",
+        "link": "/reference/functions/yamlFilterByKeyPattern"
+      },
+      {
+        "text": "yamlFindByField",
+        "link": "/reference/functions/yamlFindByField"
+      },
+      {
+        "text": "yamlFindObjectsWithField",
+        "link": "/reference/functions/yamlFindObjectsWithField"
+      },
+      {
+        "text": "yamlFromEntries",
+        "link": "/reference/functions/yamlFromEntries"
+      },
+      {
+        "text": "yamlGetDocument",
+        "link": "/reference/functions/yamlGetDocument"
+      },
+      {
+        "text": "yamlHasRequiredFields",
+        "link": "/reference/functions/yamlHasRequiredFields"
+      },
+      {
+        "text": "yamlKeys",
+        "link": "/reference/functions/yamlKeys"
+      },
+      {
+        "text": "yamlMerge",
+        "link": "/reference/functions/yamlMerge"
+      },
+      {
+        "text": "yamlMergeAll",
+        "link": "/reference/functions/yamlMergeAll"
+      },
+      {
+        "text": "yamlMergeDocuments",
+        "link": "/reference/functions/yamlMergeDocuments"
+      },
+      {
+        "text": "yamlOmitKeys",
+        "link": "/reference/functions/yamlOmitKeys"
+      },
+      {
+        "text": "yamlPath",
+        "link": "/reference/functions/yamlPath"
+      },
+      {
+        "text": "yamlSelectKeys",
+        "link": "/reference/functions/yamlSelectKeys"
+      },
+      {
+        "text": "yamlSet",
+        "link": "/reference/functions/yamlSet"
+      },
+      {
+        "text": "yamlSort",
+        "link": "/reference/functions/yamlSort"
+      },
+      {
+        "text": "yamlSplitDocuments",
+        "link": "/reference/functions/yamlSplitDocuments"
+      },
+      {
+        "text": "yamlValidate",
+        "link": "/reference/functions/yamlValidate"
+      },
+      {
+        "text": "yamlValidateKeyPattern",
+        "link": "/reference/functions/yamlValidateKeyPattern"
+      },
+      {
+        "text": "yamlValues",
+        "link": "/reference/functions/yamlValues"
+      }
+    ]
+  },
+  {
+    "text": "Binary (50)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "addBOM",
+        "link": "/reference/functions/addBOM"
+      },
+      {
+        "text": "binaryConcat",
+        "link": "/reference/functions/binaryConcat"
+      },
+      {
+        "text": "binaryEquals",
+        "link": "/reference/functions/binaryEquals"
+      },
+      {
+        "text": "binaryLength",
+        "link": "/reference/functions/binaryLength"
+      },
+      {
+        "text": "binarySlice",
+        "link": "/reference/functions/binarySlice"
+      },
+      {
+        "text": "binaryToString",
+        "link": "/reference/functions/binaryToString"
+      },
+      {
+        "text": "bitwiseAnd",
+        "link": "/reference/functions/bitwiseAnd"
+      },
+      {
+        "text": "bitwiseNot",
+        "link": "/reference/functions/bitwiseNot"
+      },
+      {
+        "text": "bitwiseOr",
+        "link": "/reference/functions/bitwiseOr"
+      },
+      {
+        "text": "bitwiseXor",
+        "link": "/reference/functions/bitwiseXor"
+      },
+      {
+        "text": "compress",
+        "link": "/reference/functions/compress"
+      },
+      {
+        "text": "decompress",
+        "link": "/reference/functions/decompress"
+      },
+      {
+        "text": "deflate",
+        "link": "/reference/functions/deflate"
+      },
+      {
+        "text": "fromBytes",
+        "link": "/reference/functions/fromBytes"
+      },
+      {
+        "text": "gunzip",
+        "link": "/reference/functions/gunzip"
+      },
+      {
+        "text": "gzip",
+        "link": "/reference/functions/gzip"
+      },
+      {
+        "text": "hexDecode",
+        "link": "/reference/functions/hexDecode"
+      },
+      {
+        "text": "hexEncode",
+        "link": "/reference/functions/hexEncode"
+      },
+      {
+        "text": "inflate",
+        "link": "/reference/functions/inflate"
+      },
+      {
+        "text": "isGzipped",
+        "link": "/reference/functions/isGzipped"
+      },
+      {
+        "text": "isJarFile",
+        "link": "/reference/functions/isJarFile"
+      },
+      {
+        "text": "isZipArchive",
+        "link": "/reference/functions/isZipArchive"
+      },
+      {
+        "text": "listJarEntries",
+        "link": "/reference/functions/listJarEntries"
+      },
+      {
+        "text": "listZipEntries",
+        "link": "/reference/functions/listZipEntries"
+      },
+      {
+        "text": "readByte",
+        "link": "/reference/functions/readByte"
+      },
+      {
+        "text": "readDouble",
+        "link": "/reference/functions/readDouble"
+      },
+      {
+        "text": "readFloat",
+        "link": "/reference/functions/readFloat"
+      },
+      {
+        "text": "readInt16",
+        "link": "/reference/functions/readInt16"
+      },
+      {
+        "text": "readInt32",
+        "link": "/reference/functions/readInt32"
+      },
+      {
+        "text": "readInt64",
+        "link": "/reference/functions/readInt64"
+      },
+      {
+        "text": "readJarEntry",
+        "link": "/reference/functions/readJarEntry"
+      },
+      {
+        "text": "readJarManifest",
+        "link": "/reference/functions/readJarManifest"
+      },
+      {
+        "text": "readZipEntry",
+        "link": "/reference/functions/readZipEntry"
+      },
+      {
+        "text": "shiftLeft",
+        "link": "/reference/functions/shiftLeft"
+      },
+      {
+        "text": "shiftRight",
+        "link": "/reference/functions/shiftRight"
+      },
+      {
+        "text": "toBase64",
+        "link": "/reference/functions/toBase64"
+      },
+      {
+        "text": "toBinary",
+        "link": "/reference/functions/toBinary"
+      },
+      {
+        "text": "toBytes",
+        "link": "/reference/functions/toBytes"
+      },
+      {
+        "text": "toHex",
+        "link": "/reference/functions/toHex"
+      },
+      {
+        "text": "unzip",
+        "link": "/reference/functions/unzip"
+      },
+      {
+        "text": "unzipArchive",
+        "link": "/reference/functions/unzipArchive"
+      },
+      {
+        "text": "unzipN",
+        "link": "/reference/functions/unzipN"
+      },
+      {
+        "text": "writeByte",
+        "link": "/reference/functions/writeByte"
+      },
+      {
+        "text": "writeDouble",
+        "link": "/reference/functions/writeDouble"
+      },
+      {
+        "text": "writeFloat",
+        "link": "/reference/functions/writeFloat"
+      },
+      {
+        "text": "writeInt16",
+        "link": "/reference/functions/writeInt16"
+      },
+      {
+        "text": "writeInt32",
+        "link": "/reference/functions/writeInt32"
+      },
+      {
+        "text": "writeInt64",
+        "link": "/reference/functions/writeInt64"
+      },
+      {
+        "text": "zipAll",
+        "link": "/reference/functions/zipAll"
+      },
+      {
+        "text": "zipArchive",
+        "link": "/reference/functions/zipArchive"
+      }
+    ]
+  },
+  {
+    "text": "Security (46)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "base64Decode",
+        "link": "/reference/functions/base64Decode"
+      },
+      {
+        "text": "base64Encode",
+        "link": "/reference/functions/base64Encode"
+      },
+      {
+        "text": "decodeJWS",
+        "link": "/reference/functions/decodeJWS"
+      },
+      {
+        "text": "decodeJWT",
+        "link": "/reference/functions/decodeJWT"
+      },
+      {
+        "text": "decryptAES",
+        "link": "/reference/functions/decryptAES"
+      },
+      {
+        "text": "decryptAES256",
+        "link": "/reference/functions/decryptAES256"
+      },
+      {
+        "text": "encryptAES",
+        "link": "/reference/functions/encryptAES"
+      },
+      {
+        "text": "encryptAES256",
+        "link": "/reference/functions/encryptAES256"
+      },
+      {
+        "text": "extractTimestampFromUuidV7",
+        "link": "/reference/functions/extractTimestampFromUuidV7"
+      },
+      {
+        "text": "fromBase64",
+        "link": "/reference/functions/fromBase64"
+      },
+      {
+        "text": "generateIV",
+        "link": "/reference/functions/generateIV"
+      },
+      {
+        "text": "generateKey",
+        "link": "/reference/functions/generateKey"
+      },
+      {
+        "text": "generateUuidV7Batch",
+        "link": "/reference/functions/generateUuidV7Batch"
+      },
+      {
+        "text": "getJWSAlgorithm",
+        "link": "/reference/functions/getJWSAlgorithm"
+      },
+      {
+        "text": "getJWSHeader",
+        "link": "/reference/functions/getJWSHeader"
+      },
+      {
+        "text": "getJWSInfo",
+        "link": "/reference/functions/getJWSInfo"
+      },
+      {
+        "text": "getJWSKeyId",
+        "link": "/reference/functions/getJWSKeyId"
+      },
+      {
+        "text": "getJWSPayload",
+        "link": "/reference/functions/getJWSPayload"
+      },
+      {
+        "text": "getJWSSigningInput",
+        "link": "/reference/functions/getJWSSigningInput"
+      },
+      {
+        "text": "getJWSTokenType",
+        "link": "/reference/functions/getJWSTokenType"
+      },
+      {
+        "text": "getJWTAudience",
+        "link": "/reference/functions/getJWTAudience"
+      },
+      {
+        "text": "getJWTClaim",
+        "link": "/reference/functions/getJWTClaim"
+      },
+      {
+        "text": "getJWTClaims",
+        "link": "/reference/functions/getJWTClaims"
+      },
+      {
+        "text": "getJWTIssuer",
+        "link": "/reference/functions/getJWTIssuer"
+      },
+      {
+        "text": "getJWTSubject",
+        "link": "/reference/functions/getJWTSubject"
+      },
+      {
+        "text": "getUuidVersion",
+        "link": "/reference/functions/getUuidVersion"
+      },
+      {
+        "text": "hash",
+        "link": "/reference/functions/hash"
+      },
+      {
+        "text": "hmac",
+        "link": "/reference/functions/hmac"
+      },
+      {
+        "text": "hmacBase64",
+        "link": "/reference/functions/hmacBase64"
+      },
+      {
+        "text": "hmacMD5",
+        "link": "/reference/functions/hmacMD5"
+      },
+      {
+        "text": "hmacSHA1",
+        "link": "/reference/functions/hmacSHA1"
+      },
+      {
+        "text": "hmacSHA256",
+        "link": "/reference/functions/hmacSHA256"
+      },
+      {
+        "text": "hmacSHA384",
+        "link": "/reference/functions/hmacSHA384"
+      },
+      {
+        "text": "hmacSHA512",
+        "link": "/reference/functions/hmacSHA512"
+      },
+      {
+        "text": "isJWSFormat",
+        "link": "/reference/functions/isJWSFormat"
+      },
+      {
+        "text": "isJWTExpired",
+        "link": "/reference/functions/isJWTExpired"
+      },
+      {
+        "text": "isUuidV7",
+        "link": "/reference/functions/isUuidV7"
+      },
+      {
+        "text": "isValidUuid",
+        "link": "/reference/functions/isValidUuid"
+      },
+      {
+        "text": "mask",
+        "link": "/reference/functions/mask"
+      },
+      {
+        "text": "md5",
+        "link": "/reference/functions/md5"
+      },
+      {
+        "text": "sha1",
+        "link": "/reference/functions/sha1"
+      },
+      {
+        "text": "sha224",
+        "link": "/reference/functions/sha224"
+      },
+      {
+        "text": "sha256",
+        "link": "/reference/functions/sha256"
+      },
+      {
+        "text": "sha384",
+        "link": "/reference/functions/sha384"
+      },
+      {
+        "text": "sha512",
+        "link": "/reference/functions/sha512"
+      },
+      {
+        "text": "validateDigest",
+        "link": "/reference/functions/validateDigest"
+      }
+    ]
+  },
+  {
+    "text": "URL (20)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "addQueryParam",
+        "link": "/reference/functions/addQueryParam"
+      },
+      {
+        "text": "buildQueryString",
+        "link": "/reference/functions/buildQueryString"
+      },
+      {
+        "text": "buildURL",
+        "link": "/reference/functions/buildURL"
+      },
+      {
+        "text": "getBaseURL",
+        "link": "/reference/functions/getBaseURL"
+      },
+      {
+        "text": "getFragment",
+        "link": "/reference/functions/getFragment"
+      },
+      {
+        "text": "getHost",
+        "link": "/reference/functions/getHost"
+      },
+      {
+        "text": "getPath",
+        "link": "/reference/functions/getPath"
+      },
+      {
+        "text": "getPort",
+        "link": "/reference/functions/getPort"
+      },
+      {
+        "text": "getProtocol",
+        "link": "/reference/functions/getProtocol"
+      },
+      {
+        "text": "getQuery",
+        "link": "/reference/functions/getQuery"
+      },
+      {
+        "text": "getQueryParams",
+        "link": "/reference/functions/getQueryParams"
+      },
+      {
+        "text": "isValidURL",
+        "link": "/reference/functions/isValidURL"
+      },
+      {
+        "text": "parseQueryString",
+        "link": "/reference/functions/parseQueryString"
+      },
+      {
+        "text": "parseURL",
+        "link": "/reference/functions/parseURL"
+      },
+      {
+        "text": "removeQueryParam",
+        "link": "/reference/functions/removeQueryParam"
+      },
+      {
+        "text": "setPath",
+        "link": "/reference/functions/setPath"
+      },
+      {
+        "text": "urlDecode",
+        "link": "/reference/functions/urlDecode"
+      },
+      {
+        "text": "urlDecodeComponent",
+        "link": "/reference/functions/urlDecodeComponent"
+      },
+      {
+        "text": "urlEncode",
+        "link": "/reference/functions/urlEncode"
+      },
+      {
+        "text": "urlEncodeComponent",
+        "link": "/reference/functions/urlEncodeComponent"
+      }
+    ]
+  },
+  {
+    "text": "Geospatial (8)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "bearing",
+        "link": "/reference/functions/bearing"
+      },
+      {
+        "text": "boundingBox",
+        "link": "/reference/functions/boundingBox"
+      },
+      {
+        "text": "destinationPoint",
+        "link": "/reference/functions/destinationPoint"
+      },
+      {
+        "text": "distance",
+        "link": "/reference/functions/distance"
+      },
+      {
+        "text": "isPointInCircle",
+        "link": "/reference/functions/isPointInCircle"
+      },
+      {
+        "text": "isPointInPolygon",
+        "link": "/reference/functions/isPointInPolygon"
+      },
+      {
+        "text": "isValidCoordinates",
+        "link": "/reference/functions/isValidCoordinates"
+      },
+      {
+        "text": "midpoint",
+        "link": "/reference/functions/midpoint"
+      }
+    ]
+  },
+  {
+    "text": "Financial (13)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "addTax",
+        "link": "/reference/functions/addTax"
+      },
+      {
+        "text": "calculateDiscount",
+        "link": "/reference/functions/calculateDiscount"
+      },
+      {
+        "text": "calculateTax",
+        "link": "/reference/functions/calculateTax"
+      },
+      {
+        "text": "compoundInterest",
+        "link": "/reference/functions/compoundInterest"
+      },
+      {
+        "text": "formatCurrency",
+        "link": "/reference/functions/formatCurrency"
+      },
+      {
+        "text": "futureValue",
+        "link": "/reference/functions/futureValue"
+      },
+      {
+        "text": "getCurrencyDecimals",
+        "link": "/reference/functions/getCurrencyDecimals"
+      },
+      {
+        "text": "isValidAmount",
+        "link": "/reference/functions/isValidAmount"
+      },
+      {
+        "text": "isValidCurrency",
+        "link": "/reference/functions/isValidCurrency"
+      },
+      {
+        "text": "parseCurrency",
+        "link": "/reference/functions/parseCurrency"
+      },
+      {
+        "text": "presentValue",
+        "link": "/reference/functions/presentValue"
+      },
+      {
+        "text": "removeTax",
+        "link": "/reference/functions/removeTax"
+      },
+      {
+        "text": "simpleInterest",
+        "link": "/reference/functions/simpleInterest"
+      }
+    ]
+  },
+  {
+    "text": "Format (16)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "parse",
+        "link": "/reference/functions/parse"
+      },
+      {
+        "text": "parseCsv",
+        "link": "/reference/functions/parseCsv"
+      },
+      {
+        "text": "parseJson",
+        "link": "/reference/functions/parseJson"
+      },
+      {
+        "text": "parseXml",
+        "link": "/reference/functions/parseXml"
+      },
+      {
+        "text": "parseYaml",
+        "link": "/reference/functions/parseYaml"
+      },
+      {
+        "text": "prettyPrint",
+        "link": "/reference/functions/prettyPrint"
+      },
+      {
+        "text": "prettyPrintCSV",
+        "link": "/reference/functions/prettyPrintCSV"
+      },
+      {
+        "text": "prettyPrintFormat",
+        "link": "/reference/functions/prettyPrintFormat"
+      },
+      {
+        "text": "prettyPrintJSON",
+        "link": "/reference/functions/prettyPrintJSON"
+      },
+      {
+        "text": "prettyPrintXML",
+        "link": "/reference/functions/prettyPrintXML"
+      },
+      {
+        "text": "prettyPrintYAML",
+        "link": "/reference/functions/prettyPrintYAML"
+      },
+      {
+        "text": "render",
+        "link": "/reference/functions/render"
+      },
+      {
+        "text": "renderJson",
+        "link": "/reference/functions/renderJson"
+      },
+      {
+        "text": "udmToJSON",
+        "link": "/reference/functions/udmToJSON"
+      },
+      {
+        "text": "udmToXML",
+        "link": "/reference/functions/udmToXML"
+      },
+      {
+        "text": "udmToYAML",
+        "link": "/reference/functions/udmToYAML"
+      }
+    ]
+  },
+  {
+    "text": "System (52)",
+    "collapsed": true,
+    "items": [
+      {
+        "text": "assert",
+        "link": "/reference/functions/assert"
+      },
+      {
+        "text": "assertEqual",
+        "link": "/reference/functions/assertEqual"
+      },
+      {
+        "text": "availableProcessors",
+        "link": "/reference/functions/availableProcessors"
+      },
+      {
+        "text": "clearLogs",
+        "link": "/reference/functions/clearLogs"
+      },
+      {
+        "text": "currentDir",
+        "link": "/reference/functions/currentDir"
+      },
+      {
+        "text": "debug",
+        "link": "/reference/functions/debug"
+      },
+      {
+        "text": "debugPrint",
+        "link": "/reference/functions/debugPrint"
+      },
+      {
+        "text": "debugPrintCompact",
+        "link": "/reference/functions/debugPrintCompact"
+      },
+      {
+        "text": "endTimer",
+        "link": "/reference/functions/endTimer"
+      },
+      {
+        "text": "env",
+        "link": "/reference/functions/env"
+      },
+      {
+        "text": "envAll",
+        "link": "/reference/functions/envAll"
+      },
+      {
+        "text": "environment",
+        "link": "/reference/functions/environment"
+      },
+      {
+        "text": "envOrDefault",
+        "link": "/reference/functions/envOrDefault"
+      },
+      {
+        "text": "error",
+        "link": "/reference/functions/error"
+      },
+      {
+        "text": "generateUuid",
+        "link": "/reference/functions/generateUuid"
+      },
+      {
+        "text": "generateUuidV4",
+        "link": "/reference/functions/generateUuidV4"
+      },
+      {
+        "text": "generateUuidV7",
+        "link": "/reference/functions/generateUuidV7"
+      },
+      {
+        "text": "getLogs",
+        "link": "/reference/functions/getLogs"
+      },
+      {
+        "text": "hasEnv",
+        "link": "/reference/functions/hasEnv"
+      },
+      {
+        "text": "homeDir",
+        "link": "/reference/functions/homeDir"
+      },
+      {
+        "text": "info",
+        "link": "/reference/functions/info"
+      },
+      {
+        "text": "isDebugMode",
+        "link": "/reference/functions/isDebugMode"
+      },
+      {
+        "text": "javaVersion",
+        "link": "/reference/functions/javaVersion"
+      },
+      {
+        "text": "logCount",
+        "link": "/reference/functions/logCount"
+      },
+      {
+        "text": "logPretty",
+        "link": "/reference/functions/logPretty"
+      },
+      {
+        "text": "logSize",
+        "link": "/reference/functions/logSize"
+      },
+      {
+        "text": "logType",
+        "link": "/reference/functions/logType"
+      },
+      {
+        "text": "measure",
+        "link": "/reference/functions/measure"
+      },
+      {
+        "text": "memoryInfo",
+        "link": "/reference/functions/memoryInfo"
+      },
+      {
+        "text": "osArch",
+        "link": "/reference/functions/osArch"
+      },
+      {
+        "text": "osVersion",
+        "link": "/reference/functions/osVersion"
+      },
+      {
+        "text": "platform",
+        "link": "/reference/functions/platform"
+      },
+      {
+        "text": "runtimeInfo",
+        "link": "/reference/functions/runtimeInfo"
+      },
+      {
+        "text": "setConsoleLogging",
+        "link": "/reference/functions/setConsoleLogging"
+      },
+      {
+        "text": "setLogLevel",
+        "link": "/reference/functions/setLogLevel"
+      },
+      {
+        "text": "startTimer",
+        "link": "/reference/functions/startTimer"
+      },
+      {
+        "text": "systemPropertiesAll",
+        "link": "/reference/functions/systemPropertiesAll"
+      },
+      {
+        "text": "systemProperty",
+        "link": "/reference/functions/systemProperty"
+      },
+      {
+        "text": "systemPropertyOrDefault",
+        "link": "/reference/functions/systemPropertyOrDefault"
+      },
+      {
+        "text": "tempDir",
+        "link": "/reference/functions/tempDir"
+      },
+      {
+        "text": "timerCheck",
+        "link": "/reference/functions/timerCheck"
+      },
+      {
+        "text": "timerClear",
+        "link": "/reference/functions/timerClear"
+      },
+      {
+        "text": "timerList",
+        "link": "/reference/functions/timerList"
+      },
+      {
+        "text": "timerReset",
+        "link": "/reference/functions/timerReset"
+      },
+      {
+        "text": "timerStart",
+        "link": "/reference/functions/timerStart"
+      },
+      {
+        "text": "timerStats",
+        "link": "/reference/functions/timerStats"
+      },
+      {
+        "text": "timerStop",
+        "link": "/reference/functions/timerStop"
+      },
+      {
+        "text": "trace",
+        "link": "/reference/functions/trace"
+      },
+      {
+        "text": "uptime",
+        "link": "/reference/functions/uptime"
+      },
+      {
+        "text": "username",
+        "link": "/reference/functions/username"
+      },
+      {
+        "text": "version",
+        "link": "/reference/functions/version"
+      },
+      {
+        "text": "warn",
+        "link": "/reference/functions/warn"
+      }
+    ]
+  }
+]

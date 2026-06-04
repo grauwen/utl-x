@@ -1,0 +1,77 @@
+/* ---------- Layout: flush-left, wider sidebar (reclaim the wasted left band) ---------- */
+:root {
+  /* 100% removes the centering gutters, so the sidebar/nav hug the left edge
+     instead of floating in the middle of wide monitors. */
+  --vp-layout-max-width: 100%;
+  /* Wider sidebar so the longest chapter titles ("The Three Executables: utlx,
+     utlxd, and utlxe", "Data Restructuring: Flat, Hierarchical, and Back") fit
+     on one line instead of wrapping. */
+  --vp-sidebar-width: 400px;
+}
+
+/* Left-align the article so it sits right next to the sidebar instead of
+   centering in the remaining space (which left a big empty band between the
+   sidebar and the text on wide monitors). */
+.VPDoc .container { margin-left: 0 !important; margin-right: 0 !important; }
+.VPDoc .content-container { margin-left: 0 !important; }
+
+/* The stdlib index + function pages are reference-dense — give them the full
+   width so the function grid and signature/examples breathe. Scoped via the
+   `pageClass: stdlib-page` frontmatter so the prose guide keeps its readable
+   line length. */
+.stdlib-page .VPDoc .container { max-width: 1320px; }
+.stdlib-page .VPDoc.has-aside .content-container { max-width: 1180px; }
+.stdlib-page .VPDoc:not(.has-aside) .content-container { max-width: 1180px; }
+
+/* ---------- Index: responsive grid of function-name links ---------- */
+.fn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 0.4rem 1rem;
+  margin: 0.5rem 0 2.25rem;
+}
+.fn-grid a {
+  display: block;
+  padding: 0.3rem 0.55rem;
+  border: 1px solid var(--vp-c-divider);
+  border-radius: 6px;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: border-color .2s, background-color .2s;
+}
+.fn-grid a:hover {
+  border-color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+}
+.fn-grid a code {
+  background: none;
+  padding: 0;
+  color: inherit;
+  font-size: 0.92em;
+}
+
+/* ---------- Per-function page: signature + category line ---------- */
+.stdlib-meta {
+  margin-top: -0.25rem;
+  margin-bottom: 1.25rem;
+  font-size: 0.95em;
+}
+.stdlib-meta code {
+  background: var(--vp-c-default-soft);
+  font-size: 0.95em;
+}
+
+/* ---------- Index: "N functions" badge under each category ---------- */
+.stdlib-count {
+  display: inline-block;
+  margin: 0.25rem 0 0.75rem;
+  padding: 0.1rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.8em;
+  font-weight: 600;
+  color: var(--vp-c-brand-1);
+  background: var(--vp-c-brand-soft);
+}
