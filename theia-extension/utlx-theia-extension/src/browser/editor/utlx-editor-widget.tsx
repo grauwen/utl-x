@@ -14,6 +14,7 @@ import URI from '@theia/core/lib/common/uri';
 import { DisposableCollection } from '@theia/core/lib/common/disposable';
 import { FileDialogService, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import { getFileDialogMode } from '../utils/feature-flags';
 import * as monaco from '@theia/monaco-editor-core';
 import { loadSession, saveSession, SESSION_KEYS } from '../utils/session-persistence';
 
@@ -2332,6 +2333,17 @@ output json
      * Handle load file button click
      */
     protected async handleLoadFile(): Promise<void> {
+        // Honor the runtime FILE_DIALOG_MODE "semaphore" (status-bar toggle): Theia dialog
+        // (workspace/bundle files) by default, or the plain browser picker (client upload).
+        if (getFileDialogMode() === 'browser') {
+            this.loadUtlxViaBrowserPicker();
+        } else {
+            await this.loadUtlxViaTheiaDialog();
+        }
+    }
+
+    /** Load a .utlx via the plain HTML file picker (client upload). */
+    private loadUtlxViaBrowserPicker(): void {
         // Open file dialog
         const input = document.createElement('input');
         input.type = 'file';
@@ -2345,6 +2357,27 @@ output json
             }
         };
         input.click();
+    }
+
+    /** Load a .utlx via Theia's open dialog (browses the workspace/bundle filesystem). */
+    private async loadUtlxViaTheiaDialog(): Promise<void> {
+        try {
+            const folder = await this.resolveDialogFolder();
+            const selectedUri = await this.fileDialogService.showOpenDialog({
+                title: 'Load UTL-X Transformation',
+                canSelectFiles: true,
+                canSelectFolders: false,
+                canSelectMany: false,
+                filters: { 'UTL-X Files': ['utlx'], 'All Files': ['*'] }
+            }, folder);
+            if (!selectedUri) return;
+            const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
+            this.eventService.setLastUsedDirectoryUri(uri.parent.toString());
+            const content = (await this.fileService.read(uri)).value;
+            await this.loadFile(content, uri.path.base);
+        } catch (error) {
+            console.error('[UTLXEditor] Load error:', error);
+        }
     }
 
     /**
