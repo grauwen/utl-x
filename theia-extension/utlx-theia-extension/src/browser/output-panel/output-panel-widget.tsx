@@ -26,6 +26,7 @@ import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parse
 import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 import { toHeaderIdentifier } from '../utils/header-identifier';
 import { toProjectRelativePath } from '../utils/path-utils';
+import { getFileDialogMode } from '../utils/feature-flags';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -730,7 +731,17 @@ export class OutputPanelWidget extends ReactWidget {
             return;
         }
 
-        // Instance tab - load instance file directly
+        // Instance tab — the runtime FILE_DIALOG_MODE "semaphore" (status-bar toggle) picks the
+        // loader. Both are live; default is Theia's dialog (workspace files + full path).
+        if (getFileDialogMode() === 'browser') {
+            this.loadInstanceViaBrowserPicker();
+        } else {
+            await this.loadInstanceViaTheiaDialog();
+        }
+    }
+
+    /** Load an output instance via Theia's open dialog (workspace/bundle files → full path). */
+    private async loadInstanceViaTheiaDialog(): Promise<void> {
         try {
             const format = this.state.instanceFormat || 'json';
             const extensions = this.getInstanceFileExtensions(format);
@@ -753,58 +764,88 @@ export class OutputPanelWidget extends ReactWidget {
             const uri = Array.isArray(selectedUri) ? selectedUri[0] : selectedUri;
             this.updateLastUsedDirectory(uri);
             const fileContent = await this.fileService.read(uri);
-            const content = fileContent.value;
-
-            // Detect format from file extension if needed
-            const ext = uri.path.ext.toLowerCase().replace('.', '');
-            const detectedFormat = this.detectFormatFromExtension(ext) || format;
-
-            // Auto-name the output from the filename stem (employee.csv -> "employee"),
-            // sanitized to a valid UTLX identifier — but ONLY when the name is still
-            // the default ("output"/empty). A name the user typed (e.g. "output1") is
-            // never clobbered. Empty derived result -> no rename either.
-            const currentName = this.getOutputName();
-            const isDefaultName = currentName === '' || currentName.toLowerCase() === 'output';
-            const derived = isDefaultName ? this.toOutputIdentifier(uri.path.name) : '';
-            const renameTo = derived !== '' ? derived : undefined;
-
-            this.setState({
-                instanceContent: content,
-                instanceFormat: detectedFormat,
-                instanceFileName: uri.path.base,        // provenance: loaded-from filename
-                instanceFilePath: uri.path.toString(),  // full path (for hover)
-                instanceError: undefined,
-                instanceDiagnostics: undefined,
-                instanceExecutionTime: undefined,
-                // Only touch the name (and remount the field) when auto-renaming.
-                ...(renameTo ? {
-                    outputName: renameTo,
-                    outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
-                } : {})
-            });
-
-            // Fire format changed event so editor headers stay in sync
-            this.eventService.fireOutputFormatChanged({
-                format: detectedFormat,
-                tab: 'instance'
-            });
-
-            // Notify so the header becomes "output <renameTo> <format>" (default name only)
-            if (renameTo) {
-                this.eventService.fireOutputNameChanged({ newName: renameTo });
-            }
-
-            // Notify canvas about instance content change
-            this.eventService.fireOutputInstanceContentChanged({
-                content,
-                format: detectedFormat
-            });
-
-            this.messageService.info(`Loaded ${uri.path.base}`);
+            this.applyLoadedInstance(fileContent.value, uri.path.base, uri.path.toString());
         } catch (error) {
             console.error('[OutputPanel] Load error:', error);
             this.messageService.error(`Failed to load: ${error instanceof Error ? error.message : String(error)}`);
         }
+    }
+
+    /** Load an output instance via the plain HTML file picker (client upload; basename only). */
+    private loadInstanceViaBrowserPicker(): void {
+        try {
+            const format = this.state.instanceFormat || 'json';
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = this.getInstanceFileExtensions(format).map(e => '.' + e).join(',') || '*';
+            input.onchange = async (e: Event) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                try {
+                    const content = await file.text();
+                    this.applyLoadedInstance(content, file.name);  // no path from the browser picker
+                } catch (error) {
+                    this.messageService.error(`Failed to load: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            };
+            input.click();
+        } catch (error) {
+            this.messageService.error(`Failed to load: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
+    /** Shared processing for a loaded output instance (both loaders). `filePath` is the full
+     *  path when available (Theia loader), undefined for the browser picker. */
+    private applyLoadedInstance(content: string, fileName: string, filePath?: string): void {
+        const format = this.state.instanceFormat || 'json';
+
+        // Detect format from file extension if needed
+        const ext = fileName.includes('.') ? fileName.slice(fileName.lastIndexOf('.') + 1).toLowerCase() : '';
+        const detectedFormat = this.detectFormatFromExtension(ext) || format;
+
+        // Auto-name the output from the filename stem (employee.csv -> "employee"),
+        // sanitized to a valid UTLX identifier — but ONLY when the name is still
+        // the default ("output"/empty). A name the user typed (e.g. "output1") is
+        // never clobbered. Empty derived result -> no rename either.
+        const stem = fileName.replace(/\.[^./\\]+$/, '');
+        const currentName = this.getOutputName();
+        const isDefaultName = currentName === '' || currentName.toLowerCase() === 'output';
+        const derived = isDefaultName ? this.toOutputIdentifier(stem) : '';
+        const renameTo = derived !== '' ? derived : undefined;
+
+        this.setState({
+            instanceContent: content,
+            instanceFormat: detectedFormat,
+            instanceFileName: fileName,        // provenance: loaded-from filename
+            instanceFilePath: filePath,        // full path (for hover); undefined for the browser picker
+            instanceError: undefined,
+            instanceDiagnostics: undefined,
+            instanceExecutionTime: undefined,
+            // Only touch the name (and remount the field) when auto-renaming.
+            ...(renameTo ? {
+                outputName: renameTo,
+                outputNameVersion: (this.state.outputNameVersion ?? 0) + 1
+            } : {})
+        });
+
+        // Fire format changed event so editor headers stay in sync
+        this.eventService.fireOutputFormatChanged({
+            format: detectedFormat,
+            tab: 'instance'
+        });
+
+        // Notify so the header becomes "output <renameTo> <format>" (default name only)
+        if (renameTo) {
+            this.eventService.fireOutputNameChanged({ newName: renameTo });
+        }
+
+        // Notify canvas about instance content change
+        this.eventService.fireOutputInstanceContentChanged({
+            content,
+            format: detectedFormat
+        });
+
+        this.messageService.info(`Loaded ${fileName}`);
     }
 
     /**

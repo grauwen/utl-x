@@ -1359,11 +1359,48 @@ export class UTLXFrontendContribution implements
      * Load output schema from file (design-time mode)
      * Opens a file dialog to let the user select a schema file
      */
+    /** Load an output schema via the plain HTML file picker (client upload; basename only, no path). */
+    private loadOutputSchemaViaBrowserPicker(schemaFormat: string): void {
+        try {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = this.getSchemaFileExtensions(schemaFormat).map(e => '.' + e).join(',') || '*';
+            input.onchange = async (e: Event) => {
+                const file = (e.target as HTMLInputElement).files?.[0];
+                if (!file) return;
+                try {
+                    const content = await file.text();
+                    const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(
+                        OutputPanelWidget.ID
+                    );
+                    outputPanel.displaySchemaResult({
+                        success: true,
+                        schema: content,
+                        schemaFormat: schemaFormat as 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' | 'tsch',
+                        fileName: file.name  // browser picker → no full path
+                    });
+                    this.messageService.info(`Schema loaded from ${file.name}`);
+                } catch (error) {
+                    this.messageService.error(`Failed to load schema: ${error instanceof Error ? error.message : String(error)}`);
+                }
+            };
+            input.click();
+        } catch (error) {
+            this.messageService.error(`Failed to load schema: ${error instanceof Error ? error.message : String(error)}`);
+        }
+    }
+
     private async loadOutputSchemaFromFile(schemaFormat: string): Promise<void> {
         console.log('[UTLXFrontendContribution] ========================================');
         console.log('[UTLXFrontendContribution] LOAD OUTPUT SCHEMA FROM FILE');
         console.log('[UTLXFrontendContribution] Schema format:', schemaFormat);
         console.log('[UTLXFrontendContribution] ========================================');
+
+        // The runtime FILE_DIALOG_MODE "semaphore" (status-bar toggle) picks the loader.
+        if (getFileDialogMode() === 'browser') {
+            this.loadOutputSchemaViaBrowserPicker(schemaFormat);
+            return;
+        }
 
         try {
             // Determine file extensions based on schema format
