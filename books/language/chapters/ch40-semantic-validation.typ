@@ -18,7 +18,7 @@ Consider a Peppol invoice that passes all syntactical checks:
   "issueDate": "2026-04-30",
   "dueDate": "2026-03-15",
   "lines": [
-    {"product": "Widget", "qty": 10, "unitPrice": 25.00, "lineTotal": 300.00},
+    {"product": "Widget", "qty": 10, "unitPrice": 30.00, "lineTotal": 300.00},
     {"product": "Gadget", "qty": 5, "unitPrice": 49.99, "lineTotal": 249.95}
   ],
   "total": 999.99
@@ -87,10 +87,10 @@ Used by Camunda, jBPM, Kogito, and Drools for decision tables and business rules
 
 === Other Approaches
 
-- *OPA/Rego (Open Policy Agent):* policy-as-code, used in Kubernetes admission control and API authorization
-- *CUE:* configuration language with built-in validation constraints — validates and generates
-- *CEL (Common Expression Language):* Google's lightweight expression language for security policies and IAM conditions
-- *Ajv custom keywords:* extend JSON Schema with JavaScript validators — JSON-only
+- *OPA/Rego (Open Policy Agent):* policy-as-code, used in Kubernetes admission control and API authorization. A distinct approach because rules live as *external policy* evaluated across many data sources, rather than being attached to a single document's schema.
+- *CUE:* configuration language with built-in validation constraints — validates and generates. Distinct in that the *same* constraints both check data and produce derived configuration, unifying validation with generation.
+- *CEL (Common Expression Language):* Google's lightweight expression language for security policies and IAM conditions. Distinct as a tiny, sandboxed, *embeddable* evaluator — ideal when semantic checks must run inside an API or edge runtime with minimal overhead.
+- *Ajv custom keywords:* extend JSON Schema with JavaScript validators — JSON-only. Distinct because the semantic rule is expressed *inside JSON Schema itself* rather than in a separate language — at the cost of being tied to JavaScript and JSON.
 
 == How Semantic Validation Could Work in UTL-X
 
@@ -148,14 +148,17 @@ All using the same 652 stdlib functions available in the transformation body.
 
 === Integration with the Validation Orchestrator
 
-Semantic validation becomes a fourth step in UTLXe's sandwich pattern:
+Semantic validation slots into UTLXe's sandwich pattern — and it can run at *two* points: on the input before transforming, and on the output afterward:
 
 ```
-1. PRE-VALIDATION    Validate input against input schema (syntactical)
-2. TRANSFORMATION    Execute the .utlx body
-3. POST-VALIDATION   Validate output against output schema (syntactical)
-4. SEMANTIC          Run validate { ... } assertions (semantic)
+1. PRE-VALIDATION     Validate input against input schema (syntactical)
+2. INPUT SEMANTICS    (optional) Assert business rules on $input before transforming
+3. TRANSFORMATION     Execute the .utlx body
+4. POST-VALIDATION    Validate output against output schema (syntactical)
+5. OUTPUT SEMANTICS   Run validate { ... } assertions on the result (semantic)
 ```
+
+Validating the input semantically catches bad source data early — before a transformation is wasted on it (e.g. a Peppol invoice whose `vatId` country prefix doesn't match `country`). Validating the output catches calculation and business-logic errors introduced by the mapping itself. Most pipelines use output semantics; input semantics is worth adding when the source is untrusted or expensive to process.
 
 If semantic validation fails, the behavior depends on the validation policy:
 - *STRICT:* transformation fails, output rejected, error returned

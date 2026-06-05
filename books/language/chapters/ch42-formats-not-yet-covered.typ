@@ -2,7 +2,7 @@
 
 UTL-X supports 5 data formats (JSON, XML, CSV, YAML, OData) and 6 schema formats (XSD, JSON Schema, Avro, Protobuf, EDMX, Table Schema). That's 11 formats — more than any competing tool. But the integration world has more formats. This chapter surveys the ones UTL-X does not yet support, explains why, and describes the path to adding them.
 
-== High Priority: EDI / EDIFACT
+== Medium Priority: EDI / EDIFACT
 
 EDI (Electronic Data Interchange) is the backbone of logistics, retail, automotive, and government procurement. Two standards dominate:
 
@@ -33,7 +33,7 @@ Every segment has a tag (UNH, BGM, DTM), elements separated by `+`, and sub-elem
 
 *Would enable:* direct EDI-to-JSON transformation — eliminating the XML intermediate step. Huge value for logistics and retail integration.
 
-== High Priority: HL7 v2
+== Medium Priority: HL7 v2
 
 HL7 version 2 is the pipe-delimited healthcare messaging standard. Still the most widely deployed health data exchange format in the world — hospitals, labs, pharmacies, and insurance companies send billions of HL7 v2 messages daily.
 
@@ -66,7 +66,7 @@ Apache Parquet is the columnar storage format for big data — used by Spark, Da
 
 *Would enable:* direct data lake integration — read Parquet files, transform, write back without leaving UTL-X.
 
-== Medium Priority: TOML
+== Low Priority: TOML
 
 Tom's Obvious Minimal Language — the configuration format of the Rust ecosystem (`Cargo.toml`), Python (`pyproject.toml`), and Hugo.
 

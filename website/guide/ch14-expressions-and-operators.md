@@ -7,7 +7,10 @@ that evaluates to the output.
 
 This chapter covers all operators, their precedence, and practical
 patterns. If you've used JavaScript, Kotlin, or any C-family language,
-most operators will be immediately familiar.
+most operators will be immediately familiar. The individual operators
+are introduced in Chapter 9 (Operators); here the focus is on
+precedence, object/array construction, and how operators combine in real
+transformations — see Chapter 9 for the compact per-operator reference.
 
 ## Arithmetic Operators
 

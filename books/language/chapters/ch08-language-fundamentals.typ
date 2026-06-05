@@ -620,4 +620,4 @@ let tax = subtotal * taxRate
 
 This transformation demonstrates: property access, attribute access (\@), safe navigation (??), let bindings, map with lambdas, conditional logic (if/else), arithmetic, and object construction. All in ~25 lines of readable, declarative code.
 
-The next chapter explores the Universal Data Model — the internal representation that makes all of this work across formats.
+The next chapter covers UTL-X's operators in depth; Chapter 10 then explores the Universal Data Model — the internal representation that makes all of this work across formats.

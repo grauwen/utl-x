@@ -66,9 +66,9 @@ Kotlin's `map`, `filter`, `reduce`, `flatMap` — and its lambda syntax — are 
   columns: (auto, auto),
   align: (left, left),
   [*Language*], [*Why not*],
-  [Java], [Too verbose for parser/AST code. No sealed classes until Java 17 (UTL-X started earlier). No null safety. Same JVM, less expressive.],
+  [Java], [Too verbose for parser/AST and interpreter code. Weaker null safety. Same JVM as Kotlin, but less expressive — Kotlin's data classes, sealed hierarchies, and null safety mean far less boilerplate.],
   [Scala], [Complex type system (implicits, macros). Slow compilation. Smaller community. SBT build tool friction.],
-  [Go], [No generics (at the time of decision). No sealed types. No expression-based programming. Great for the controller (Open-M), wrong for the engine.],
+  [Go], [No sealed/sum types for a clean AST. Not expression-based. Verbose error handling for a tree-walking interpreter. Great for the controller (Open-M), wrong for the engine.],
   [Rust], [Too low-level for a transformation engine. Ownership/borrowing model adds complexity to tree manipulation. No garbage collector — UDM trees would need manual lifecycle management.],
   [Python], [Too slow for production (86K msg/s not achievable). GIL limits concurrency. Dynamic typing makes the interpreter error-prone. Great for the conformance suite runner, wrong for the engine.],
   [TypeScript], [Single-threaded (Node.js event loop). Float-only numbers (0.1 + 0.2 != 0.3). No native compilation path. Different XML parser in every environment.],
@@ -137,7 +137,7 @@ GraalVM native for UTLXe would enable true scale-to-zero on serverless platforms
 - Native cold start: under 1 second (viable for serverless)
 - Memory: 40MB vs 150MB (direct cost reduction)
 
-This is deferred due to reflection challenges (Kotlin reflection, dynamic class loading, serialization libraries). When GraalVM's reachability metadata improves, UTLXe native becomes practical.
+This is deferred due to remaining native-image challenges in third-party dependencies (dynamic class loading and serialization-library metadata) — UTL-X's own stdlib dispatch is already reflection-free (see §46.3.2). When GraalVM's reachability metadata improves, UTLXe native becomes practical.
 
 == Why NOT JavaScript/TypeScript
 
@@ -170,7 +170,7 @@ The browser DOM API is different from Node.js XML parsers (xml2js, fast-xml-pars
 === Why It Doesn't Work Today
 
 - *No system clock:* WASM sandboxes I/O. `now()`, `today()`, `parseDate()` — 68 date functions depend on platform time. Would need WASI (not yet standardized across runtimes).
-- *No reflection:* UTL-X's interpreter uses reflection for stdlib dispatch. Kotlin/WASM doesn't support reflection.
+- *Limited reflection:* Kotlin/WASM doesn't support the Kotlin reflection API, which some dependencies (serialization, introspection) still rely on. UTL-X's own stdlib dispatch is already reflection-free (see §46.3.2), but the surrounding libraries are not.
 - *String handling:* WASM uses linear memory with manual allocation. UTL-X processes thousands of strings per transformation. WasmGC (garbage collection) helps but is not universal.
 - *Binary size:* ~20MB WASM module — too large for edge deployment.
 - *650+ stdlib functions:* each needs WASM-compatible implementation. Crypto, XML parsing, file I/O — none available in WASM sandbox.

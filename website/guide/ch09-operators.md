@@ -3,7 +3,9 @@
 Operators are the building blocks of every UTL-X expression. This
 chapter covers all 32 operators — arithmetic, comparison, logical, null
 handling, access, construction, and flow — with examples and precedence
-rules.
+rules. Chapter 14 (Expressions and Operators) builds on this reference,
+covering precedence in depth and how operators combine in practical
+expression patterns.
 
 ## Arithmetic Operators
 

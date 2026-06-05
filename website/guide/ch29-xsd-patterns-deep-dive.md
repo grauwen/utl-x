@@ -22,6 +22,13 @@ definitions. Understanding the pattern tells you what to expect.
 
 ## The Five Core Patterns
 
+All five patterns below are shown with the same domain — an Order
+containing a Customer containing an Address — so you can focus on **how
+each pattern organizes the same structure** (global vs. local elements,
+named vs. anonymous types) rather than on changing example data. The
+final pattern (Swiss Army Knife) adds a few extra fields to show a
+realistic mixed schema.
+
 ### 1. Russian Doll
 
 Everything nested inside one global element. Types are defined inline

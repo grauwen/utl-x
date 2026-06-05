@@ -188,12 +188,14 @@ PayPal's open-source data contract standard, more detailed than datacontract.com
   [*Aspect*], [*datacontract.com*], [*ODCS (PayPal)*],
   [Schema], [JSON Schema-like], [Custom + JSON Schema],
   [Quality rules], [Basic (threshold)], [Detailed (accuracy, timeliness)],
-  [SLA], [Freshness, availability], [+ Latency, retention],
+  [SLA], [Freshness, availability], [\+ Latency, retention],
   [Security], [Minimal], [Classification, PII tagging],
   [Lineage], [Minimal], [Source systems, transforms],
-  [Governance], [Owner, team], [+ Domain, steward, approvers],
+  [Governance], [Owner, team], [\+ Domain, steward, approvers],
   [Adoption], [Broader community], [PayPal + enterprises],
 )
+
+*Update — the two standards have merged.* Since this comparison was first drawn, the ecosystem has converged on a single standard. With ODCS 3.1, the Data Contract Specification (datacontract.com) was deprecated in favour of the *Open Data Contract Standard* (ODCS), now an open-source project governed under the Linux Foundation's Bitol initiative (#link("https://bitol-io.github.io/open-data-contract-standard/")[bitol-io.github.io/open-data-contract-standard]). New data-contract work should target ODCS; the two columns above are best read as ODCS's heritage rather than two competing standards.
 
 == How UTL-X Fits in the Contract Landscape
 

@@ -332,7 +332,7 @@ hasKey($input.servers, "production")    // true
 let env = "staging"
 $input.servers[env]                     // {host: "staging-db...", port: 5432}
 
-// Wildcard — all values as array
+// Wildcard — all values as array (equivalent to values($input.servers) above)
 $input.servers.*                        // [{host: "prod-db...", ...}, ...]
 
 // Get key-value pairs for iteration
