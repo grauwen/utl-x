@@ -1,5 +1,9 @@
 # EF13: Admin Web UI
 
+> **See also:** **[IF19](IF19-shared-bundle-api-and-management-ui.md)** — this admin UI is the
+> **reuse candidate (Option A)** for in-IDE bundle management (embedded in Theia's freed terminal
+> slot, driven by a shared bundle API on utlxd).
+
 **Status:** Design  
 **Priority:** High (Marketplace customer experience)  
 **Created:** May 2026  

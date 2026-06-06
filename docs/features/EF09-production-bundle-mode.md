@@ -1,5 +1,9 @@
 # EF09: Production Bundle Mode (.utlar)
 
+> **Canonical bundle format:** the on-disk layout and naming rules are specified in
+> **[Bundle Format](../architecture/bundle-format.md)**. This doc owns the **locked `.utlar`
+> deploy form** (manifest, locked mode, CI/CD) and defers to it for the general structure.
+
 **Status:** **Implemented** (utlxe / Azure) — *this doc was stale at "Design"; corrected June 2026.*
 **Priority:** High (production hardening for Azure Marketplace)  
 **Created:** May 2026  

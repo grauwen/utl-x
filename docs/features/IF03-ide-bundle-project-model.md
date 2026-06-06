@@ -1,5 +1,14 @@
 # IF03: IDE — Bundle Project Model & Explorer
 
+> **Canonical bundle format:** the on-disk layout (`.utlxp`/`.utlar`, `transformations/<tx>/…`,
+> `transform.yaml`, `schemas/`, `test-input-<slot>.<ext>`), the three naming namespaces, the
+> `inputs[]`-is-the-order rule, terminology (instance / test input), and the execution-save vs
+> Message-Contract-save model are specified in **[Bundle Format](../architecture/bundle-format.md)**.
+> That file is authoritative; this doc covers the IDE project/explorer UX and defers to it for
+> structure. (Note: earlier mentions here of a bundle-root `samples/` and of `manifest.json` for
+> the open form are superseded — instances live at `transformations/<tx>/test-input-<slot>.<ext>`,
+> and the open `.utlxp` uses `engine.yaml`.)
+
 **Status:** **Phases 1–3 implemented** (June 2026).
 - **Phase 1:** Bundle Explorer recognizes an open-mode bundle directory (has
   `transformations/`), lists transformations / shared `schemas/` / manifest, and opens a

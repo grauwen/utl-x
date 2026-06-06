@@ -1,5 +1,9 @@
 # IF05: IDE — Bundle Operations & Messaging Topology
 
+> **Canonical bundle format:** the on-disk layout and naming rules are specified in
+> **[Bundle Format](../architecture/bundle-format.md)**. This doc owns **bundle operations and
+> messaging topology** and defers to it for structure.
+
 **Status:** Proposed
 **Priority:** Medium
 **Created:** May 2026

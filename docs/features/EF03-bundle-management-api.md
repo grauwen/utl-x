@@ -1,5 +1,13 @@
 # EF03: Bundle Management API
 
+> **See also:** **[IF19](IF19-shared-bundle-api-and-management-ui.md)** proposes extracting a
+> *shared, file-level* bundle layer that this API would be refactored onto, so **utlxd** (the IDE
+> daemon) and utlxe stay in lockstep. Today EF03 is engine-coupled (manages the live registry).
+>
+> **Canonical bundle format:** the on-disk layout, naming rules, and structure are specified in
+> **[Bundle Format](../architecture/bundle-format.md)**. This doc owns the **REST management API**
+> (upload/list/update transformations, schemas, bundles) and defers to it for the artifact layout.
+
 **Status:** **Implemented** (utlxe / Azure) — *this doc was stale at "Design"; corrected June 2026.*
 **Priority:** High (required for Azure Marketplace offering)  
 **Created:** May 2026

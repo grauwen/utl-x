@@ -1,5 +1,9 @@
 # UTL-X Project Directory Structure
 
+> **Canonical bundle format:** for the **deployable/editable bundle** layout specifically
+> (`.utlxp`/`.utlar`, `transformations/<tx>/…`, `transform.yaml`, `schemas/`, test inputs), see
+> **[Bundle Format](../bundle-format.md)**. This doc covers the broader **source-repo** structure.
+
 Complete directory structure following best practices for a multi-runtime language implementation.
 
 ## Overview

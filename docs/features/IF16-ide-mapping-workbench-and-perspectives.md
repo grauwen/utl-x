@@ -1,5 +1,9 @@
 # IF16: IDE — Shell Layout (navigators + a persistent Mapping editor; Bundle = MC mapping manager)
 
+> **Command surfaces** (menu bar · toolbar · status bar) are specified in **[IF18: IDE Menu &
+> Chrome Structure](IF18-ide-menu-and-chrome-structure.md)**. IF16 owns the *panel/editor layout*;
+> IF18 owns the *menus and chrome* around it.
+
 **Status:** Design (corrected June 2026). **Supersedes** the earlier attempts on this branch
 (a single composite `MappingWorkbenchWidget` in `main`, a fake "Mapping launcher" icon, and a
 `PerspectiveService` that hid/resized `mainPanel`). Those were **not the right code** — they

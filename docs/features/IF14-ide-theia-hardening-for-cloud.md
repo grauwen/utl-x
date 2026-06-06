@@ -1,5 +1,9 @@
 # IF14: IDE — Theia Hardening for a Cloud / Multi-Tenant Offering
 
+> **Resulting menu/toolbar/status-bar surface** is specified in **[IF18: IDE Menu & Chrome
+> Structure](IF18-ide-menu-and-chrome-structure.md)**. IF14 owns the *mechanism* (package
+> omission, command/preference lockdown, sandboxing); IF18 owns the *layout* it produces.
+
 **Status:** Proposed
 **Priority:** High (a prerequisite for offering the UTL-X IDE as a hosted Theia Cloud product)
 **Created:** June 2026

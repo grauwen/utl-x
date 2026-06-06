@@ -1,5 +1,9 @@
 # UTLX Bundle Bootstrap and Lifecycle
 
+> **Canonical bundle format:** the bundle on-disk layout and naming rules are specified in
+> **[Bundle Format](../architecture/bundle-format.md)**. This doc owns **bootstrap & lifecycle
+> (Dapr)** and defers to it for the artifact structure.
+
 **Document purpose:** Define how a UTLX engine instance receives its initial
 configuration bundle on first start, and how subsequent bundle additions,
 deletions, and full replacements propagate across replicas. This document is

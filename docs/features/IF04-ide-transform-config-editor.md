@@ -1,5 +1,10 @@
 # IF04: IDE — Per-Transformation Config Editor (`transform.yaml`)
 
+> **Canonical bundle format:** `transform.yaml`'s role in the bundle, the `inputs[]`-is-the-order
+> rule, and the `additionalProperties: false` constraint are specified in
+> **[Bundle Format](../architecture/bundle-format.md)** (§4). This doc owns the **editor UX** and
+> defers to it (and `docs/api/config/transform-config.schema.json`) for the schema.
+
 **Status:** Proposed — *foundations landed (June 2026)*: JSON Schemas for both config files
 exist (`docs/api/config/transform-config.schema.json`, `engine-config.schema.json`), and the
 Bundle Explorer (IF03) now **opens `transform.yaml` and `engine.yaml` for editing** (text).
