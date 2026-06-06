@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "playwright": {
+      "command": "node",
+      "args": ["playwright-mcp-server/dist/index.js"],
+      "env": {
+        "CDP_URL": "${CDP_URL:-http://localhost:9223}"
+      }
+    }
+  }
+}
