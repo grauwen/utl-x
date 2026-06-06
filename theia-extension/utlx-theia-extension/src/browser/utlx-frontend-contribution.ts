@@ -41,10 +41,13 @@ import {
     parseOSchToFieldTree,
     parseTschToFieldTree
 } from './utils/schema-field-tree-parser';
-import { getFileDialogMode, setFileDialogMode } from './utils/feature-flags';
+import { getFileDialogMode, setFileDialogMode, getNameOnLoadMode, setNameOnLoadMode } from './utils/feature-flags';
 
 /** Command id for the runtime file-Load dialog "semaphore" (toggled from the status bar). */
 const TOGGLE_FILE_DIALOG_MODE_COMMAND = 'utlx.toggleFileDialogMode';
+
+/** Command id for the runtime "name on load" semaphore (inherit the file's name vs keep the slot name). */
+const TOGGLE_NAME_ON_LOAD_MODE_COMMAND = 'utlx.toggleNameOnLoadMode';
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -81,6 +84,7 @@ export class UTLXFrontendContribution implements
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
     private fileDialogModeId = 'utlx-file-dialog-mode';
+    private nameOnLoadModeId = 'utlx-name-on-load-mode';
     private inputs: Map<string, { name: string; format: string; csvHeaders?: boolean; csvDelimiter?: string }> = new Map(); // inputId -> {name, format, csvHeaders, csvDelimiter}
     private outputFormat: string = 'json';
     private outputName: string = ''; // empty / 'output' => no custom name in header
@@ -99,6 +103,9 @@ export class UTLXFrontendContribution implements
 
         // Show the file-Load dialog mode toggle in the status bar (bottom).
         this.updateFileDialogModeStatus();
+
+        // Show the "name on load" (inherit / keep) toggle in the status bar (bottom).
+        this.updateNameOnLoadModeStatus();
 
         // Subscribe to format change events for header coordination
         this.subscribeToFormatChanges();
@@ -176,6 +183,25 @@ export class UTLXFrontendContribution implements
                     next === 'theia'
                         ? 'File Load: Theia dialog (browse workspace/bundle files)'
                         : 'File Load: browser picker (upload a local file)'
+                );
+            }
+        });
+
+        // "Name on load" semaphore — toggled by clicking the status-bar item. 'inherit' = the
+        // loaded file's name becomes the input/output name; 'keep' = the slot name is unchanged
+        // (e.g. so $input stays $input — see B24).
+        commands.registerCommand({
+            id: TOGGLE_NAME_ON_LOAD_MODE_COMMAND,
+            label: 'UTL-X: Toggle Name on Load (Inherit / Keep)'
+        }, {
+            execute: () => {
+                const next = getNameOnLoadMode() === 'inherit' ? 'keep' : 'inherit';
+                setNameOnLoadMode(next);
+                this.updateNameOnLoadModeStatus();
+                this.messageService.info(
+                    next === 'inherit'
+                        ? 'Name on Load: Inherit (loaded file renames the input/output)'
+                        : 'Name on Load: Keep (input/output name is unchanged on load)'
                 );
             }
         });
@@ -412,6 +438,24 @@ export class UTLXFrontendContribution implements
                 ? 'File Load: Theia dialog (workspace/bundle files, full path). Click to switch to Browser (upload).'
                 : 'File Load: Browser picker (upload a local file, basename only). Click to switch to Theia (workspace).',
             command: TOGGLE_FILE_DIALOG_MODE_COMMAND
+        });
+    }
+
+    /**
+     * Render the "name on load" mode in the status bar (bottom), next to the file-dialog toggle.
+     * Clicking it runs the toggle command (the runtime "semaphore"): Inherit (loaded file renames
+     * the input/output) ↔ Keep (the slot name is left unchanged — e.g. $input stays $input, B24).
+     */
+    private updateNameOnLoadModeStatus(): void {
+        const mode = getNameOnLoadMode();
+        this.statusBar.setElement(this.nameOnLoadModeId, {
+            text: mode === 'inherit' ? '$(tag) Name: Inherit' : '$(lock) Name: Keep',
+            alignment: StatusBarAlignment.RIGHT,
+            priority: 97,
+            tooltip: mode === 'inherit'
+                ? 'Name on Load: Inherit — a loaded file renames the input/output (e.g. "order.json" → "order"). Click to switch to Keep.'
+                : 'Name on Load: Keep — the input/output name is unchanged on load (e.g. $input stays $input). Click to switch to Inherit.',
+            command: TOGGLE_NAME_ON_LOAD_MODE_COMMAND
         });
     }
 

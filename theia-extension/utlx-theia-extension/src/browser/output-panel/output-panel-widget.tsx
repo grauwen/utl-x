@@ -26,7 +26,7 @@ import { SchemaFieldInfo, parseJsonSchemaToFieldTree, parseXsdToFieldTree, parse
 import { isScaffoldSupportedFormat } from '../utils/scaffold-generator';
 import { toHeaderIdentifier } from '../utils/header-identifier';
 import { toProjectRelativePath } from '../utils/path-utils';
-import { getFileDialogMode } from '../utils/feature-flags';
+import { getFileDialogMode, getNameOnLoadMode } from '../utils/feature-flags';
 
 export interface OutputPanelState {
     mode: UTLXMode;
@@ -807,10 +807,13 @@ export class OutputPanelWidget extends ReactWidget {
         // sanitized to a valid UTLX identifier — but ONLY when the name is still
         // the default ("output"/empty). A name the user typed (e.g. "output1") is
         // never clobbered. Empty derived result -> no rename either.
+        // The "name on load" semaphore (status bar) gates this: 'inherit' (default) adopts the
+        // file's name; 'keep' leaves the output name unchanged on load (see B24).
         const stem = fileName.replace(/\.[^./\\]+$/, '');
         const currentName = this.getOutputName();
         const isDefaultName = currentName === '' || currentName.toLowerCase() === 'output';
-        const derived = isDefaultName ? this.toOutputIdentifier(stem) : '';
+        const inheritName = getNameOnLoadMode() === 'inherit';
+        const derived = (inheritName && isDefaultName) ? this.toOutputIdentifier(stem) : '';
         const renameTo = derived !== '' ? derived : undefined;
 
         this.setState({

@@ -31,7 +31,7 @@ import { inferSchemaFromJson, inferSchemaFromXml, inferTableSchemaFromCsv, infer
 import { parseJsonSchemaToFieldTree, parseXsdToFieldTree, parseOSchToFieldTree, parseTschToFieldTree, SchemaFieldInfo } from '../utils/schema-field-tree-parser';
 import { toHeaderIdentifier } from '../utils/header-identifier';
 import { toProjectRelativePath } from '../utils/path-utils';
-import { getFileDialogMode } from '../utils/feature-flags';
+import { getFileDialogMode, getNameOnLoadMode } from '../utils/feature-flags';
 import { loadSession, saveSession, capContent, SESSION_KEYS } from '../utils/session-persistence';
 import { buildAbstractForInput } from '../utils/input-abstract';
 
@@ -2211,8 +2211,11 @@ export class MultiInputPanelWidget extends ReactWidget {
         // still has a default name (input, input2, …). A manually chosen
         // name is never clobbered. Instance load only; schema load leaves
         // the name alone. "007-test.json" -> "test" (see toHeaderIdentifier).
+        // The "name on load" semaphore (status bar) gates this: 'inherit' (default)
+        // adopts the file's name; 'keep' leaves the input name unchanged (e.g. so
+        // $input stays $input — see B24).
         let renameTo: string | undefined;
-        if (!isSchema && currentInput && /^input\d*$/i.test(currentInput.name)) {
+        if (getNameOnLoadMode() === 'inherit' && !isSchema && currentInput && /^input\d*$/i.test(currentInput.name)) {
             const stem = fileName.replace(/\.[^./\\]+$/, ''); // drop the last extension
             const derived = toHeaderIdentifier(stem);
             const duplicate = this.state.inputs.some(
