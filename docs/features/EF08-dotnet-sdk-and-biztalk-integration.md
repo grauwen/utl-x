@@ -1,5 +1,9 @@
 # EF08: .NET SDK, BizTalk Shim, and Logic Apps Integration
 
+> **Part of a wider plan:** **[EF22](EF22-polyglot-sdk-and-embedding-strategy.md)** — the coordinated
+> four-language SDK set (.NET · Go · Java/Kotlin · Python) over the single proto contract. This
+> .NET SDK is the **reference implementation** the others are modeled on.
+
 **Status:** SDK core + BizTalk shim + Logic Apps helpers implemented  
 **Priority:** High (BizTalk SBMP deadline September 30, 2026)  
 **Created:** May 2026  
