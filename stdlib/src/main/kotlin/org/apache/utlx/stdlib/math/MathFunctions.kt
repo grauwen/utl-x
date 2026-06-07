@@ -30,24 +30,40 @@ object MathFunctions {
     }
 
     @UTLXFunction(
-        description = "Performs round operation",
+        description = "Rounds to the nearest integer, or to N decimal places when a second argument is given",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 2,
         category = "Math",
         parameters = [
-            "num: Num value",
-        "exp: Exp value"
+            "num: the number to round",
+            "decimals: (optional) number of decimal places; omitted or <= 0 rounds to an integer"
         ],
         returns = "Result of the operation",
-        example = "round(...) => result",
+        example = "round(3.14159, 2) => 3.14",
         tags = ["math"],
         since = "1.0"
     )
     
     fun round(args: List<UDM>): UDM {
-        requireArgs(args, 1, "round")
+        // B25: optional second argument = number of decimal places. round(x) -> nearest integer;
+        // round(x, n) -> rounded to n decimals. Previously round() was strict 1-arg, so any
+        // round(x, n) call threw on the native/JVM path.
+        if (args.size !in 1..2) {
+            throw FunctionArgumentException(
+                "round expects 1 or 2 argument(s), got ${args.size}. " +
+                "Usage: round(x) or round(x, decimals)."
+            )
+        }
         val num = args[0].asNumber()
-        return UDM.Scalar(round(num))
+        if (args.size == 1) {
+            return UDM.Scalar(round(num))
+        }
+        val places = args[1].asNumber().toInt()
+        if (places <= 0) {
+            return UDM.Scalar(round(num))
+        }
+        val factor = 10.0.pow(places)
+        return UDM.Scalar(round(num * factor) / factor)
     }
 
     @UTLXFunction(

@@ -194,13 +194,13 @@ expected:
             "category": "groceries",
             "total_spent": 150.75,
             "transaction_count": 1,
-            "avg_transaction": 151
+            "avg_transaction": 150.75
           },
           {
             "category": "utilities",
             "total_spent": 89.99,
             "transaction_count": 1,
-            "avg_transaction": 90
+            "avg_transaction": 89.99
           },
           {
             "category": "rent",
@@ -213,7 +213,7 @@ expected:
         "financial_health": {
           "net_income": 2500,
           "total_expenses": 1440.74,
-          "savings_rate": 42,
+          "savings_rate": 42.37,
           "largest_expense": {
             "amount": 1200,
             "merchant": "Property Management LLC",

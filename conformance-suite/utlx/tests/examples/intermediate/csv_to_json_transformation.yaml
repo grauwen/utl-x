@@ -86,7 +86,7 @@ expected:
             "salary": 75000,
             "hire_date": "2020-03-15",
             "is_active": true,
-            "years_employed": 5,
+            "years_employed": 4.6,
             "salary_grade": "Mid"
           }
         },
@@ -104,7 +104,7 @@ expected:
             "salary": 68000,
             "hire_date": "2019-07-22",
             "is_active": true,
-            "years_employed": 5,
+            "years_employed": 5.3,
             "salary_grade": "Mid"
           }
         },
@@ -140,7 +140,7 @@ expected:
             "salary": 82000,
             "hire_date": "2018-01-10",
             "is_active": true,
-            "years_employed": 7,
+            "years_employed": 6.8,
             "salary_grade": "Senior"
           }
         },
@@ -158,7 +158,7 @@ expected:
             "salary": 58000,
             "hire_date": "2022-05-03",
             "is_active": true,
-            "years_employed": 2,
+            "years_employed": 2.5,
             "salary_grade": "Junior"
           }
         }

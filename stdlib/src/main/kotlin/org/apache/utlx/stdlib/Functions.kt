@@ -487,7 +487,7 @@ object StandardLibrary {
         // Extended math
         register("formatNumber", ExtendedMathFunctions::formatNumber)
         register("parseInt", ExtendedMathFunctions::parseInt)
-        register("parseFloat", ExtendedMathFunctions::parseFloat)
+        // parseFloat is registered in registerConversionFunctions() alongside parseNumber/parseDouble.
 
         // Statistical functions
         register("median", StatisticalFunctions::median)
@@ -785,8 +785,11 @@ object StandardLibrary {
          register("parseNumber", ConversionFunctions::parseNumber)
          register("toNumber", ConversionFunctions::toNumber)
          // register("parseInt", ConversionFunctions::parseInt) // DUPLICATE: parseInt already registered in ExtendedMathFunctions
-         // register("parseFloat", ConversionFunctions::parseFloat) // DUPLICATE: parseFloat already registered in ExtendedMathFunctions
-         register("parseDouble", ConversionFunctions::parseDouble)  
+         // B25: parseFloat lives here with its conversion siblings; delegates to parseNumber so it
+         // strips grouping/currency separators ("1,234.56"). (Was previously registered from
+         // ExtendedMathFunctions with a plain toDouble() that failed on commas.)
+         register("parseFloat", ConversionFunctions::parseFloat)
+         register("parseDouble", ConversionFunctions::parseDouble)
          
          // String conversion
          register("toString", ConversionFunctions::toString)
