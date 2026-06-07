@@ -172,8 +172,8 @@ class TransformationService {
                 val errorMessages = parseResult.errors.joinToString("\n") { error ->
                     "  ${error.message} at ${error.location}"
                 }
-                System.err.println("Parse errors:")
-                System.err.println(errorMessages)
+                // B26: do NOT print here. The message is carried by the exception and printed once
+                // by Main.kt (CommandResult.Failure). Printing here too duplicated the whole block.
                 throw IllegalStateException("Parse errors:\n$errorMessages")
             }
         }

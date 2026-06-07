@@ -170,7 +170,8 @@ object TransformCommand {
             }
             return CommandResult.Failure(e.message ?: "Unknown error", 1)
         } catch (e: IllegalArgumentException) {
-            // Argument parsing errors (already printed to stderr)
+            // B26: argument-parsing errors carry their message here; Main.kt prints it once as
+            // "Error: <message>". parseOptions no longer prints the message itself (only usage).
             return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
         }
 
@@ -232,7 +233,20 @@ object TransformCommand {
                     }
                 }
             } else {
-                // No named inputs - read from stdin (backward compat)
+                // No named inputs - read from stdin (backward compat).
+                // B26: guard against blocking forever on an interactive terminal. readStdin() calls
+                // readLine(), which waits indefinitely for typed input + EOF when nothing is piped.
+                // System.console() != null means stdin is a TTY (not redirected) — same heuristic
+                // Main.kt uses to detect a pipe. In that case there is no input to read: fail fast.
+                // The `utlx.stdin.interactive` property is a test seam: a subprocess has no real
+                // console, so tests set it to drive this branch; production leaves it unset.
+                val stdinIsInteractive = System.getProperty("utlx.stdin.interactive")
+                    ?.toBooleanStrictOrNull() ?: (System.console() != null)
+                if (stdinIsInteractive) {
+                    return CommandResult.Failure(
+                        "No input provided. Pass an input file " +
+                        "(utlx transform <script> <input>) or pipe data via stdin.", 1)
+                }
                 val inputFormat = options.inputFormat
                 val charsetHint = options.charset?.let {
                     try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
@@ -307,6 +321,12 @@ ${"$"}input"""
             } else {
                 // Normal mode: read script from file
                 scriptContent = options.scriptFile!!.readText()
+                // B26: friendly message for an empty script, instead of the parser-internal
+                // "Expected '---' separator after header" the user would otherwise see.
+                if (scriptContent.isBlank()) {
+                    return CommandResult.Failure(
+                        "Script file is empty: ${options.scriptFile!!.absolutePath}", 1)
+                }
                 effectiveOutputFormat = options.outputFormat
             }
 
@@ -567,7 +587,8 @@ ${"$"}input"""
                             namedInputs["input"] = File(args[i])
                         }
                     } else {
-                        System.err.println("Unknown option: ${args[i]}")
+                        // B26: don't print the message here; printUsage() gives context and Main.kt
+                        // prints "Error: <message>" once from the thrown exception.
                         printUsage()
                         throw IllegalArgumentException("Unknown option: ${args[i]}")
                     }
@@ -622,21 +643,21 @@ ${"$"}input"""
                     identityMode = true
                 )
             }
-            System.err.println("Error: Script file is required")
+            // B26: single output channel — printUsage() for context, Main.kt prints the error once.
             printUsage()
             throw IllegalArgumentException("Script file is required")
         }
 
         if (!scriptFile.exists()) {
-            System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")
+            // B26: was printed here AND again by Main.kt → duplicate. Throw only; Main.kt prints once.
             throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
         }
 
         // Validate all input files exist
         namedInputs.forEach { (name, file) ->
             if (!file.exists()) {
-                System.err.println("Error: Input file not found: ${file.absolutePath} (input: $name)")
-                throw IllegalArgumentException("Input file not found: ${file.absolutePath}")
+                // B26: throw only (was duplicated by Main.kt). Keep the "(input: name)" detail in the message.
+                throw IllegalArgumentException("Input file not found: ${file.absolutePath} (input: $name)")
             }
         }
 
