@@ -1,6 +1,6 @@
 # B25: stdlib functions fail **inside `map`/`filter`/`reduce`/templates** on the native binary — higher-order builtins evaluate lambdas on a throwaway `Interpreter()` that lacks the stdlib lookup
 
-**Status:** Root cause **CONFIRMED & reproduced** on the released native binary. **Fix B IMPLEMENTED** on `development` (higher-order builtins reuse the calling interpreter) — core compiles, JVM verified (`parseNumber`/`length` now work inside `map`), **conformance suite 522/522 (100%)**. Pending: cherry-pick to `main` + native rebuild to confirm on the binary; then the duplicate-builtin cleanup.
+**Status:** ✅ **RESOLVED** on `development`. Fix B (owner-reuse) + the Group-2 duplicate cleanup + reconciliation + regression guards all implemented and **verified on the GraalVM native binary** (both faces pass — see "Resolution (final)" below). JVM: all unit tests + **conformance 522/522**. Pending only: merge to `main`.
 **Priority:** Critical — breaks the README example and shipped `.utlx` examples on v1.2.1 native (Windows/macOS/Linux), XML and JSON inputs.
 **Created:** June 2026
 **Reported:** GitHub issue #3 (@skin27 / Raymond Meester) — Windows 11, UTL-X CLI v1.2.1 (Oracle GraalVM native).
@@ -8,6 +8,66 @@
 
 > **Filename note:** kept as `…parseNumber-not-implemented…` for link stability, but the title is the
 > accurate description. `parseNumber` *is* implemented and registered — see below.
+
+---
+
+## Resolution (final) — 2026-06-07, fully fixed & verified on the native binary
+
+**Fix B + C + D implemented, the Group-2 duplicate cleanup done, and confirmed on the GraalVM native
+image (not just the JVM).** What shipped:
+
+1. **Owner fix (Fix B).** `StandardLibraryImpl.registerAll(env, owner)` now receives the calling
+   interpreter (passed as `this` from `Interpreter.init`). The higher-order builtins
+   (`map`/`filter`/`reduce`/`find`/`findIndex`) evaluate lambda bodies on `owner ?: Interpreter()`
+   instead of a throwaway `Interpreter()`, so the populated stdlib lookup (and input metadata) is
+   reachable from inside lambdas. Also eliminates the per-array-element interpreter allocation.
+
+2. **Group-2 duplicate removal (the consolidation).** Removed **18** duplicate value functions from
+   `StandardLibraryImpl` — `upper lower trim sum count abs round ceil floor pow sqrt toString
+   toNumber parseNumber parseDouble parseFloat sha256 distance` — so each has a **single**
+   implementation (the stdlib module), served via the lookup.
+   - **Correction to the plan below — `first`/`last` were KEPT interpreter-side.** Unlike the other
+     value fns, they return *an element of the input*; routing them through the lookup round-trips
+     that element through UDM↔RuntimeValue and loses fidelity (Int collapses to Double, XML
+     attributes/elements are dropped — caught by 3 conformance tests). They are legitimately
+     interpreter-bound for the same reason as `find`. So the kept set is `map filter reduce find
+     findIndex first last`; everything else moved to the stdlib lookup.
+   - `upper`/`lower` were safely removable after all — the stdlib has them as `upperCase`/`lowerCase`
+     (with `upper`/`lower` aliases), so the "do not delete `upper`/`lower`" caveat below was moot.
+
+3. **Canonical reconciliation** (so removing the duplicates preserved behaviour, with one bug fix):
+   - `parseFloat` re-pointed to `ConversionFunctions::parseFloat` (== `parseNumber`, strips
+     `,$€£¥%`) and moved into `registerConversionFunctions()`; the bare
+     `ExtendedMathFunctions::parseFloat` (plain `toDouble`, no stripping) is no longer registered.
+   - `round` gained an optional precision arg — `round(x, n)` now actually rounds to *n* decimals.
+     The interpreter's old duplicate **silently ignored `n`** and rounded to an integer, masking the
+     bug; 4 conformance expectations were corrected to the true decimals. Annotation → `maxArgs = 2`.
+   - `distance` reproduces the interpreter's exact arithmetic — `atan2(sqrt(a), sqrt(1-a))`,
+     `toRadians(Δ)`, `x*x` — so results match the suite bit-for-bit.
+   - Removed the now-dead 2-arg `extractNumber` helper.
+
+4. **Fix C.** With the lookup reached everywhere (top level and inside lambdas), the
+   `Class.forName`/reflective `execute` fallback is no longer on the hot path.
+
+5. **Fix D — regression guards.** New `B25StdlibLookupTest` registers a **lookup-only synthetic
+   function** and asserts it resolves at the top level AND inside `map`/`filter`/`reduce`. Verified it
+   **fails without the owner fix** (top-level passes, the three lambda cases fail — the exact B25
+   signature) and passes with it. `StandardLibraryIntegrationTest` updated to the new architecture.
+
+### Verification
+- **JVM:** `:stdlib:test` + `:modules:core:test` + `:modules:cli:test` green; conformance **522/522**.
+- **Native binary** (`modules/cli/build/native/nativeCompile/utlx`, GraalVM):
+  - top-level — `parseNumber("1,234.56")` → `1234.56`
+  - inside a lambda (the bug) — `map(["1","2","3"], x => parseNumber(x))` → `[1, 2, 3]` ✅
+
+  Both faces pass on the native image — **B25 is closed.**
+
+### Follow-ups (optional)
+- Bake the part-(b) smoke check (`parseNumber` inside `map`) into `native-build.yml`; the existing
+  native job only tests `version`/`--help`, which is how B25 slipped through.
+- Clean up the noisy `DEBUG:` + stack-trace print on stdlib failures (Notes below).
+
+*The analysis below is the original investigation, kept for the record.*
 
 ---
 
