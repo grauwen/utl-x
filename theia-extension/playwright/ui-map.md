@@ -110,17 +110,23 @@ Read-only (no testid): format-match `.utlx-format-indicator`, loaded file `.utlx
 | Scaffold Output | `utlx-editor-scaffold` |
 | Classic / Canvas view toggle (Contract) | `utlx-editor-view-classic` / `utlx-editor-view-canvas` |
 
-**Driving Monaco**
-- Type: click `[data-testid="utlx-monaco"] .monaco-editor`, `keyboard.press('<Mod>+A')`,
-  `keyboard.type(code, { delay })`.
-- Read (via the model — URI `inmemory://utlx-editor/transformation.utlx`):
-  ```js
-  const text = await page.evaluate(() => {
-    const m = window.monaco?.editor?.getModels?.()
-      .find(m => m.uri.toString().includes('utlx-editor'));
-    return m?.getValue?.() ?? '';
-  });
-  ```
+**Driving Monaco — edit the BODY only; NEVER touch the header**
+
+The Monaco model is the full `.utlx`: `%utlx 1.0` + input/output declarations + `---` + body.
+The header is **IDE-managed** (synced from the panels). **Never recreate or overwrite it** — so
+**do NOT `<Mod>+A` + type** (that deletes the header).
+
+Correct way to set the body:
+1. Click **Clear** (`utlx-editor-clear`). `clearContent()` keeps the header lines and resets the
+   body to `{ // Your transformation code here }`.
+2. Replace just the placeholder: focus `[data-testid="utlx-monaco"] .monaco-editor` →
+   `<Mod>+F` → type `// Your transformation code here` → `Enter` → `Esc` → `keyboard.type(body)`.
+   (Type the inner fields only — Clear already provides the `{ }`.)
+
+⚠️ **`window.monaco` is NOT exposed** in Theia's renderer, so reading via
+`window.monaco.editor.getModels()` returns nothing (confirmed). To read the **result**, read the
+**output panel** instead: `getByTestId('utlx-output')` (success) / `utlx-output-error`. To assert
+the **header survived**, check the visible editor text via the DOM, not the (absent) monaco global.
 
 ---
 
@@ -166,6 +172,11 @@ wording-independent signal is wanted).
 `kiosk-demo.js` referenced `.utlx-editor-widget .monaco-editor` (a class that doesn't exist).
 Use `[data-testid="utlx-monaco"] .monaco-editor` (or `SEL.monaco`). Centralizing on
 [`selectors.js`](./selectors.js) prevents this class of drift.
+
+**Header overwrite (fixed).** The demo did `<Mod>+A` + type in Monaco, which **wiped the
+IDE-managed header**. Fixed to: **Clear (`utlx-editor-clear`) → replace the
+`// Your transformation code here` placeholder** (see *Driving Monaco* above). The header is
+never recreated. `window.monaco` is not available for a model-API approach.
 
 ## Live recon gap (unchanged)
 

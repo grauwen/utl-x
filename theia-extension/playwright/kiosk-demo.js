@@ -28,6 +28,21 @@
 const path = require('path');
 const fs = require('fs');
 const { chromium } = require('playwright');
+const { execSync } = require('child_process');
+const { SEL, PRECONDITION } = require('./selectors');   // single selector source of truth (mirrors ui-map.md)
+
+// Best-effort screen size in logical px (Chrome --window-size + osascript desktop bounds both use
+// logical points, so they match on Retina). macOS via osascript; falls back to 1920×1080.
+function screenSize() {
+  try {
+    if (process.platform === 'darwin') {
+      const out = execSync(`osascript -e 'tell application "Finder" to get bounds of window of desktop'`, { encoding: 'utf8' }).trim();
+      const p = out.split(',').map(s => parseInt(s.trim(), 10));
+      if (p[2] > 0 && p[3] > 0) return { w: p[2], h: p[3] };
+    }
+  } catch { /* fall through to default */ }
+  return { w: 1920, h: 1080 };
+}
 
 const REPO = path.resolve(__dirname, '../..');
 
@@ -35,30 +50,21 @@ const CONFIG = {
   baseURL: 'http://localhost:4000',
   inputFile: path.join(REPO, 'examples/json/00-enterprise-order.json'),
 
-  // A small, slide-legible transform. Fields verified against the enterprise-order example.
+  // The transform BODY (inner fields only). Clear provides the `{ }` wrapper + header;
+  // we replace only the `// Your transformation code here` placeholder. Header is never touched.
   transform: [
-    '{',
-    '  orderId: $input.orderId,',
-    '  customer: $input.customer.companyName,',
-    '  status: $input.orderStatus,',
-    '  total: $input.totalAmount,',
-    '  currency: $input.currency',
-    '}'
+    'orderId: $input.orderId,',
+    'customer: $input.customer.companyName,',
+    'status: $input.orderStatus,',
+    'total: $input.totalAmount,',
+    'currency: $input.currency'
   ].join('\n'),
 
   outputFormats: ['json', 'xml', 'yaml'],   // steps 2/5/7
 
-  // ── selectors: prefer stable data-testid hooks; class selector is a fallback
-  //    (so this works whether or not the extension has been rebuilt yet) ──────
-  sel: {
-    inputTextarea: '[data-testid="utlx-input"], textarea.utlx-input-editor',
-    monaco: '.utlx-editor-widget .monaco-editor',                     // Monaco internal — no testid
-    executeBtn: '[data-testid="utlx-execute"], .utlx-toolbar-button:has-text("Execute")',
-    outputFormatSelect: '[data-testid="utlx-output-format"], .utlx-output-panel-container .utlx-panel-toolbar select',
-    outputResult: '[data-testid="utlx-output"], pre.utlx-output-display',
-    outputError: '[data-testid="utlx-output-error"], pre.utlx-error-message',
-    // for future scenarios: modeToggle '[data-testid="utlx-mode-toggle"]', inputLoad '[data-testid="utlx-input-load"]', aiAssist '[data-testid="utlx-ai-assist"]'
-  },
+  // Selectors come from ./selectors.js (the source of truth; full catalog in ui-map.md).
+  // These are data-testid based → they require the extension to be rebuilt (rebuild-and-start-mcp.sh).
+  sel: SEL,
 
   // ── pacing (demo speed) ──────────────────────────────────────────────────
   slowMo: 250,            // ms per Playwright action (visible, watchable)
@@ -77,6 +83,24 @@ function narrate(msg) { console.log(`\n▶ ${msg}`); }
 
 async function setOutputFormat(page, fmt) {
   await page.locator(CONFIG.sel.outputFormatSelect).first().selectOption(fmt);
+}
+
+// Write the transform body WITHOUT ever touching the header. The IDE's Clear button
+// (clearContent) keeps the header lines and resets the body to `{ // Your transformation code
+// here }`. So: click Clear, then replace just that placeholder line with the body. The header
+// is never recreated or edited.
+const BODY_PLACEHOLDER = '// Your transformation code here';
+async function setTransformBody(page, body) {
+  // 1. Clear → preserves the header, body becomes `{ <placeholder> }`.
+  await page.locator(SEL.editorClearBtn).first().click();
+  await sleep(500);
+  // 2. Select the placeholder and type the body over it (header untouched; typing stays visible).
+  await page.locator(SEL.monaco).first().click();          // focus Monaco
+  await page.keyboard.press(`${MOD}+f`);                   // open find
+  await page.keyboard.type(BODY_PLACEHOLDER);
+  await page.keyboard.press('Enter');                      // select the placeholder
+  await page.keyboard.press('Escape');                     // close find (placeholder still selected)
+  await page.keyboard.type(body, { delay: CONFIG.typeDelay });
 }
 
 async function execute(page) {
@@ -107,13 +131,9 @@ async function runOnce(page, inputJson) {
   await setOutputFormat(page, 'json');
   await sleep(CONFIG.beat);
 
-  // 3. Type a small UTL-X transform in Monaco.
-  narrate('Step 3 — write a small UTL-X transform');
-  const editor = page.locator(CONFIG.sel.monaco).first();
-  await editor.click();                       // focus Monaco  (VERIFY: right editor)
-  await page.keyboard.press(`${MOD}+A`);
-  await page.keyboard.press('Delete');
-  await page.keyboard.type(CONFIG.transform, { delay: CONFIG.typeDelay });
+  // 3. Write the transform — BODY ONLY (the header is IDE-managed; never overwrite it).
+  narrate('Step 3 — write a small UTL-X transform (body only; header kept)');
+  await setTransformBody(page, CONFIG.transform);
   await sleep(CONFIG.beat);
 
   // 4. Execute → JSON result.
@@ -139,21 +159,29 @@ async function runOnce(page, inputJson) {
   const inputJson = fs.readFileSync(CONFIG.inputFile, 'utf-8');
   fs.mkdirSync(CONFIG.recordVideoDir, { recursive: true });
 
+  // Fill the screen: explicit window-size/position (Playwright + --kiosk alone isn't reliably
+  // wide), plus fullscreen for a clean, chrome-less talk view.
+  const { w, h } = screenSize();
   const browser = await chromium.launch({
     headless: false,
     slowMo: CONFIG.slowMo,
-    args: ['--kiosk', '--start-fullscreen', '--disable-infobars'],
+    args: [
+      '--start-fullscreen',
+      '--disable-infobars',
+      '--window-position=0,0',
+      `--window-size=${w},${h}`,
+    ],
   });
   const context = await browser.newContext({
-    viewport: null,
-    recordVideo: { dir: CONFIG.recordVideoDir },
+    viewport: null,                                                        // page uses the full window
+    recordVideo: { dir: CONFIG.recordVideoDir, size: { width: w, height: h } },  // wide video (else ~800px default)
   });
 
   // Precondition (semaphores): Load Theia + Name Keep — set before any page script runs.
-  await context.addInitScript(() => {
-    localStorage.setItem('utlx.fileDialogMode', 'theia');
-    localStorage.setItem('utlx.nameOnLoadMode', 'keep');
-  });
+  await context.addInitScript(({ keys }) => {
+    localStorage.setItem(keys.fileDialogMode, 'theia');   // scenario1: Load Theia
+    localStorage.setItem(keys.nameOnLoadMode, 'keep');    // scenario1: Name Keep
+  }, { keys: PRECONDITION });
 
   const page = await context.newPage();
   await page.goto(CONFIG.baseURL, { waitUntil: 'domcontentloaded' });
