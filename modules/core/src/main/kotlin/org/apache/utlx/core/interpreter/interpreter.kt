@@ -1907,7 +1907,48 @@ class StandardLibraryImpl {
                 throw RuntimeError("Cannot convert '$str' to number")
             }
         }
+
         
+        // B25: parseNumber / parseDouble / parseFloat — convert a string (or number) to a number.
+        // XML/CSV attribute values are always strings, so this is the primary type-conversion
+        // function used across the examples. It was declared in the type registry but had no
+        // runtime impl, so calls fell through to a (native-broken) reflection path. parseNumber
+        // accepts an optional 2nd argument used as the fallback when the value can't be parsed;
+        // parseDouble/parseFloat are aliases (see docs/stdlib).
+        val parseNumberImpl: (List<RuntimeValue>) -> RuntimeValue = impl@{ args ->
+            val arg = args.getOrNull(0)
+            val str: String? = when (arg) {
+                is RuntimeValue.StringValue -> arg.value
+                is RuntimeValue.NumberValue -> return@impl arg  // already a number
+                is RuntimeValue.UDMValue -> when (val udm = arg.udm) {
+                    is UDM.Scalar -> when (val value = udm.value) {
+                        is String -> value
+                        is Number -> return@impl RuntimeValue.NumberValue(value.toDouble())
+                        else -> null
+                    }
+                    else -> null
+                }
+                else -> null
+            }
+            // Strip grouping separators, currency symbols, percent and whitespace, plus a leading
+            // '+', so regional values like "1,234.56" or "$99.99" parse — mirrors the canonical
+            // stdlib parseNumber (ConversionFunctions.parseNumber).
+            val parsed = str?.trim()
+                ?.replace(Regex("[,$€£¥%\\s]"), "")
+                ?.replace(Regex("^[+]"), "")
+                ?.toDoubleOrNull()
+            when {
+                parsed != null -> RuntimeValue.NumberValue(parsed)
+                args.size >= 2 -> args[1]  // unparseable → caller-supplied default
+                else -> throw RuntimeError(
+                    "parseNumber() cannot convert ${str?.let { "'$it'" } ?: (arg?.javaClass?.simpleName ?: "null")} to a number"
+                )
+            }
+        }
+        registerFunction(env, "parseNumber", parseNumberImpl)
+        registerFunction(env, "parseDouble", parseNumberImpl)
+        registerFunction(env, "parseFloat", parseNumberImpl)
+
         // Date/time functions
         // now() removed - use stdlib DateFunctions::now which returns UDM.DateTime instead of string
 
