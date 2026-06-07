@@ -2262,6 +2262,7 @@ output json
 
                 {/* Classic View: Monaco Editor */}
                 <div
+                    data-testid='utlx-monaco'
                     className='utlx-editor-content'
                     style={{ display: isClassic ? 'block' : 'none' }}
                     ref={container => {

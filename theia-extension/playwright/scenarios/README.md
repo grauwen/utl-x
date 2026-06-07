@@ -34,14 +34,15 @@ used by scripts.
 
 ## Stable selectors (the hook surface)
 
-**Every interactive control is tagged** — ~104 `data-testid` hooks across all panels, the toolbar,
+**Every interactive control is tagged** — ~105 `data-testid` hooks across all panels, the toolbar,
 and every dialog. Scripts target these, never fragile text/CSS. Convention:
 `[data-testid="utlx-<area>-<action>"]`.
 
 Groups (count): `utlx-execute` · `utlx-mode-toggle` · `utlx-ai-assist` · **input** (18) ·
 **output** (20) · **editor** (7) · **mcp** dialog (14) · **fb** = Function Builder dialog (23) ·
 **field** = FB inputs tree (10) · **op** = FB operators tree (3) · **udm** viewer (6) ·
-**info** summary (3) · **coverage** (2). Monaco itself: `.utlx-editor-widget .monaco-editor`.
+**info** summary (3) · **coverage** (2). The transform Monaco editor: **`utlx-monaco`**
+(or `.utlx-editor-widget .monaco-editor`).
 
 **Status bar** (class hooks — Theia StatusBar takes no data-testid):
 `.utlx-sb-file-dialog-mode` (Load: Theia/Browser) · `.utlx-sb-name-on-load-mode` (Name: Inherit/Keep)
