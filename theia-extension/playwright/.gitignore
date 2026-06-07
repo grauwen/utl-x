@@ -1,0 +1,9 @@
+# This dir holds hand-written Playwright sources (demo + tests). The parent
+# theia-extension/.gitignore ignores *.js (compiled extension output) — re-include
+# our source .js here, and ignore the runtime junk instead.
+!*.js
+
+node_modules/
+recordings/
+test-results/
+playwright-report/

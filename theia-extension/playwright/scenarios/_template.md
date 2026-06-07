@@ -3,6 +3,7 @@
 - **Goal:** <what it demonstrates / verifies>
 - **Mode:** demo | test
 - **Needs:** Theia :4000 · utlxd · UTLX MCP :7780? (only if an AI-assist step is used)
+- **precondition:** Load Theia | Load Browser, Name Keep | Name Inherit
 - **Data:** <example input/transform path under examples/…, or inline>
 
 ## Steps

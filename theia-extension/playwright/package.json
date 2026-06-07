@@ -1,0 +1,12 @@
+{
+  "name": "utlx-ide-playwright",
+  "private": true,
+  "description": "UTL-X IDE Playwright demos/tests (talk kiosk demo + generated specs).",
+  "scripts": {
+    "demo": "node kiosk-demo.js",
+    "demo:once": "DEMO_ONCE=1 node kiosk-demo.js"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}
