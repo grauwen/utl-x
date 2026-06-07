@@ -116,6 +116,57 @@ blanket `org.apache` replace.
   Gradle plugin `tools/gradle-plugin`, SDKs under EF22, Dapr/proto packaging) must bump to the new
   groupId in the same release.
 
+## Decision 3 — keeping `main` (subset) and `development` (superset) in sync across the rename
+
+`main` and `development` have **diverged in both directions** (merge-base `094339e0`, 2026-04-06):
+618 commits in `development` not in `main`, 271 in `main` not in `development`. But the divergence is
+**almost entirely non-code** — measured on `.kt` files (`git diff --name-only --diff-filter=… main development`):
+
+| Category | Count | Meaning |
+|---|---|---|
+| `.kt` only on `development` (added) | **120** | the superset features |
+| `.kt` only on `main` (deleted) | **0** | `main` introduces no Kotlin files `development` lacks |
+| `.kt` shared but content-drifted (modified) | **4** | the *only* real code overlap to reason about |
+
+So for **code**, `main` is effectively a clean subset of `development`; `main`'s ~208 unique commits
+are docs/README/design-notes/uploads. The **4 shared-drifted `.kt` files** are:
+- `formats/xml/.../xml_parser.kt`
+- `modules/cli/.../Main.kt`
+- `modules/cli/.../commands/TransformCommand.kt`
+- `modules/cli/.../service/TransformationService.kt`  ← also carries the B25 fix on `development`
+
+On all 4, **`development` is the newer side** (it has the extra CLI/B25 work).
+
+### Rejected approach: rename both, then merge `uat/rename` → `feature/rename` for shared files
+A tempting plan is to perfect the rename on a `uat/rename` branch off `main`, rename `development` on
+`feature/rename`, then merge the shared (core/Kotlin) files back. **Don't.** It is at best a no-op and
+at worst a regression:
+- The shared *unmodified* files rename **byte-identically** on both branches (same deterministic
+  script, same input) — nothing to reconcile, so the merge buys nothing.
+- For the **4 drifted** files, `main`'s version is *older*; merging its renamed-but-stale content into
+  `development` would **overwrite newer code** (including the B25 fix). You want `development`'s
+  content there.
+- `git merge` has no native "only files present in both" mode; you'd hand-drive
+  `git checkout uat/rename -- <paths>`, which is exactly where the regression sneaks in. A real merge
+  also drags `main`'s content/divergence against the old base.
+
+### Chosen approach: share the *script*, not a merge
+1. **`uat/rename` off `main`** — perfect the rename here as a rehearsal. `main` is small, a near-clean
+   code subset, and carries the native-build + `reflect-config.json` + `Class.forName` edits. Get it
+   **compiling and the native binary working** (this doubles as end-to-end validation of the B25
+   native fix). **Fold every manual fix back into the deterministic script** so the script — not
+   memory — is the source of truth.
+2. **`feature/rename` off `development`** — run the **identical, battle-tested script**. The 120
+   dev-only files rename the same way; shared files rename consistently with `main` *by construction*.
+3. **No cross-branch merge for the rename.** For the 4 drifted files, keep `development`'s newer
+   content; the script renames them in place regardless.
+4. **Real content sync stays separate.** Genuine fixes (e.g. B25) move by normal cherry-pick, ideally
+   **drained before** the rename while both branches are still `org.apache` — never folded into the
+   rename commit.
+
+Net effect: both branches land in `com.glomidco.utlx` via the same mechanical transform, the curated
+`main`/`development` split is preserved, and there is no namespace skew for future cherry-picks.
+
 ## Risks
 
 - **String-literal reflection misses** → runtime `ClassNotFoundException`. Mitigate: grep for the old
@@ -124,6 +175,11 @@ blanket `org.apache` replace.
 - **Native-image breakage** if config files aren't migrated in lockstep (this is also the B25 surface).
 - **Merge-conflict storm** with open branches (see Decision 2).
 - **Accidental rename of real Apache deps** (mitigated by anchoring on `org.apache.utlx`).
+- **Rename-detection limit on merges/cherry-picks.** Moving 500+ files across `org/apache/utlx` →
+  `com/glomidco/utlx` can exceed Git's default detection cap (~1000) and degrade into add/delete
+  conflicts instead of clean rename merges. Before any cross-branch op set
+  `git config merge.renameLimit 999999` and `git config diff.renameLimit 999999`, and use `git mv`
+  for the directory moves so detection has maximum signal.
 
 ## Verification / done criteria
 
