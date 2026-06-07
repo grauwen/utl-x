@@ -6,7 +6,7 @@
 [![Version](https://img.shields.io/badge/version-1.2.2-green)](https://github.com/grauwen/utl-x/releases)
 [![Website](https://img.shields.io/badge/website-utlx.dev-blue)](https://utlx.dev)
 [![Documentation](https://img.shields.io/badge/docs-utlx--lang.org-brightgreen)](https://utlx-lang.org)
-[![GitHub stars](https://img.shields.io/github/stars/grauwen/utl-x?style=social)](https://github.com/grauwen/utl-x)
+[![GitHub stars](https://img.shields.io/github/stars/grauwen/utl-x)](https://github.com/grauwen/utl-x)
 
 ## Overview
 
