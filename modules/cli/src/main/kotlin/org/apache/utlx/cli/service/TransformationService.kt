@@ -61,7 +61,28 @@ class TransformationService {
                             stdlibLookup = functions.mapValues { (_, func) ->
                                 { args: List<UDM> -> func.execute(args) }
                             }
-                        } catch (e: Exception) {
+                            // B25: this lookup is the *only* native-safe path to the stdlib module.
+                            // If it ends up empty, every stdlib-module function (parseNumber, upper,
+                            // sum, …) silently falls back to reflection — which fails on the native
+                            // binary (NoSuchMethodException). Surface the size so an empty/partial
+                            // lookup is visible instead of mysterious "Undefined function" errors.
+                            if (functions.isEmpty()) {
+                                System.err.println(
+                                    "WARNING: stdlib lookup is EMPTY (StandardLibrary.getAllFunctions() " +
+                                    "returned no functions). All stdlib functions will fail on the native binary."
+                                )
+                            }
+                        } catch (e: Throwable) {
+                            // B25: NEVER swallow silently. A failure here (e.g. a GraalVM reachability
+                            // problem building the stdlib registry in the native image) is exactly what
+                            // makes parseNumber et al. unresolvable on the released binary. Log it loudly
+                            // — including the type/message — so the real native cause is diagnosable.
+                            System.err.println(
+                                "ERROR: failed to build stdlib lookup — stdlib functions will be " +
+                                "unavailable (falls back to reflection, which fails on native binaries): " +
+                                "${e.javaClass.name}: ${e.message}"
+                            )
+                            e.printStackTrace()
                             stdlibLookup = emptyMap()
                         }
                     }
