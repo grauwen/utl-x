@@ -94,7 +94,7 @@ class EngineConfigTest {
         assertEquals("TEMPLATE", config.strategy)
         assertEquals("SKIP", config.validationPolicy)
         assertEquals(0, config.inputs.size)
-        assertEquals(1, config.maxConcurrent)
+        assertEquals(0, config.maxConcurrent)   // EF21: 0 = unlimited (opt-in backpressure)
     }
 
     @Test

@@ -92,9 +92,12 @@ class HeapBackpressureTest {
         assertTrue(heapThread != null && heapThread.isAlive, "heap-monitor thread should be running")
 
         engine.stop()
-        Thread.sleep(300) // allow interrupt to propagate
+        // Wait (up to a generous ceiling) for the interrupt to propagate. join() returns as soon as
+        // the thread dies, so this is fast in the common case but not flaky under full-suite load —
+        // a fixed Thread.sleep(300) intermittently fired before the monitor's poll loop noticed stop().
+        heapThread!!.join(5000)
 
-        assertFalse(heapThread!!.isAlive, "heap-monitor thread should have stopped after engine.stop()")
+        assertFalse(heapThread.isAlive, "heap-monitor thread should have stopped after engine.stop()")
     }
 
     @Test
