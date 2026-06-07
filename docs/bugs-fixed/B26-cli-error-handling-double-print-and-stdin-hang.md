@@ -1,6 +1,6 @@
 # B26: CLI error handling — errors printed twice, parse failures dump a stack trace, and `transform <script>` with no input hangs
 
-**Status:** Root cause **CONFIRMED** by source analysis (not yet reproduced on the released native binary; fixes **proposed, not yet implemented**).
+**Status:** Root cause **CONFIRMED** by source analysis. **Fixes IMPLEMENTED + TESTED** on `feature/ide` — `:modules:cli` and `:modules:core` compile clean; a 7-case subprocess regression suite (`CliErrorHandlingTest`) passes, full `:modules:cli:test` green (49 existing + 7 new). Pending: native rebuild to confirm on the v1.2.1-class binary.
 **Priority:** Medium — no incorrect transformation output; this is UX / input-validation quality. Bug 3 (hang) is the most user-hostile.
 **Created:** June 2026
 **Reported:** GitHub issue #2 (@skin27 / Raymond Meester) — Windows 11, UTL-X CLI v1.2.1 (Oracle GraalVM native, Java 25.0.3 LTS).
@@ -19,12 +19,13 @@ are emitted on **two channels at once** — printed at the `throw` site via `Sys
 printed *again* by `Main.kt` when it renders the returned `CommandResult.Failure`. The third is an
 unguarded blocking `readLine()` on stdin.
 
-| # | Symptom | Root cause | File:line |
-|---|---|---|---|
-| 1 | `Error: Script file not found: …` printed **twice** | double output channel (throw-site print + `Main` print) | `TransformCommand.kt:631` |
-| 2a | Parse failure prints a full **Java stack trace** | parser logs an *expected* `ParseException` at `error` level **with the throwable** | `parser_impl.kt:61` |
-| 2b | `Parse errors:` block printed **twice** | double output channel (same as #1) | `TransformationService.kt:175-177` |
-| 3 | `utlx transform <script>` (no input) **hangs** | unguarded `readLine()` blocks on an interactive TTY | `TransformCommand.kt:255`, `:448` |
+| # | Symptom | Root cause | File:line | Status |
+|---|---|---|---|---|
+| 1 | `Error: Script file not found: …` printed **twice** | double output channel (throw-site print + `Main` print) | `TransformCommand.kt:631` | ✅ fixed |
+| 2a | Parse failure prints a full **Java stack trace** | parser logs an *expected* `ParseException` at `error` level **with the throwable** | `parser_impl.kt:61` | ✅ fixed |
+| 2b | `Parse errors:` block printed **twice** | double output channel (same as #1) | `TransformationService.kt:175-177` | ✅ fixed |
+| 2c | Cryptic *"Expected '---' separator"* for an empty script | parser-internal message surfaced for blank input | `TransformCommand.kt` (normal-mode read) | ✅ fixed |
+| 3 | `utlx transform <script>` (no input) **hangs** | unguarded `readLine()` blocks on an interactive TTY | `TransformCommand.kt:255`, `:448` | ✅ fixed (common case; see residual edge) |
 
 The unifying fix is **one error-output channel**: throw the message, let `Main.kt` render it once.
 
@@ -181,16 +182,63 @@ if (options.namedInputs.isEmpty() && System.console() != null) {
 `System.console()` returns null when stdin *or* stdout is redirected — the same imperfection already
 relied upon in `Main.kt:23`, so this stays consistent with existing behavior.
 
+**Chosen approach:** the `System.console()` guard (pragmatic, portable, **no false positives** — a
+non-null console guarantees stdin is a TTY, so valid piped/redirected input is never rejected).
+
+**Known residual edge (accepted):** because `System.console()` conflates stdin and stdout, the
+variant `utlx transform <script> > out.json` (stdin interactive, stdout redirected) makes
+`console()` null and still blocks on `readLine()`. Fully closing this requires testing stdin
+specifically (e.g. a native `isatty(0)` in the GraalVM image), which is out of scope for this fix.
+The common reported case — bare `utlx transform <script>` — is resolved.
+
+| Invocation (no input file) | stdin | `System.console()` | Guard fires? | Result |
+|---|---|---|---|---|
+| `cat data \| utlx transform s.utlx` | piped | null | no | reads stdin ✓ |
+| `utlx transform s.utlx < data` | redirect | null | no | reads stdin ✓ |
+| `utlx transform s.utlx` (interactive) | TTY | non-null | **yes** | clean error ✓ (was the hang) |
+| `utlx transform s.utlx > out.json` | TTY | null (stdout redirected) | no | still blocks ✗ (residual) |
+
+**Status:** ✅ Fixed (`TransformCommand.kt`, B26) — `System.console()` guard added before the
+stdin read.
+
 ---
 
-## Suggested fix order
+## Implemented changes
 
-1. **Bug 3** (hang) — highest user impact; small, self-contained guard.
-2. **Bug 2a** (stack trace) — one-line logger change in core.
-3. **Bugs 1 + 2b** (double print) — adopt the single-channel convention across `parseOptions` and
-   `compileScript`; verify no message is lost for the throw-only validation cases.
-4. **Bug 2c** (empty-script message) — optional polish.
+All applied on `feature/ide`; `:modules:cli` + `:modules:core` compile clean.
 
-All changes are localized to `TransformCommand.kt`, `TransformationService.kt`, and one line in
-`parser_impl.kt`. No transformation-semantics impact; recommend a few CLI-level regression tests
-(missing script, empty script, no input on a TTY) to lock the behavior.
+1. **Bug 3** (hang) — `System.console()` guard before the stdin read. `TransformCommand.execute`.
+2. **Bug 2a** (stack trace) — `logger.error(e)` → `logger.debug(e)`. `parser_impl.kt:61`.
+3. **Bug 2b** (double parse-error print) — removed the two `System.err.println`; the thrown message
+   is printed once by `Main.kt`. `TransformationService.compileScript`.
+4. **Bug 1** (double validation print) — removed the throw-site `System.err.println("Error: …")` in
+   `parseOptions` (kept `printUsage()`); folded the `(input: name)` detail into the thrown message;
+   refreshed the stale "already printed to stderr" comment. `TransformCommand.parseOptions`/`execute`.
+5. **Bug 2c** (empty script) — blank-script pre-check returns `"Script file is empty: <path>"`.
+   `TransformCommand.execute` (normal-mode read).
+
+No transformation-semantics impact.
+
+### Regression tests (added)
+
+`modules/cli/src/test/kotlin/org/apache/utlx/cli/CliErrorHandlingTest.kt` — 7 **integration** cases
+that spawn the assembled fat JAR as a subprocess (the only level where these process-behavior bugs
+are observable) and assert on exit code + stdout/stderr + a hard timeout:
+
+| Case | Asserts |
+|---|---|
+| missing script file | `Script file not found` appears **exactly once**, no stack trace |
+| missing input file | `Input file not found` **once**, keeps `(input: name)` detail |
+| unknown option | `Unknown option: --bogus` **once** |
+| parse error | `Parse errors:` **once**, real message shown, **no** `ParseException`/stack trace |
+| empty script | friendly `Script file is empty`, **not** the parser-internal separator message |
+| no input on interactive stdin | terminates within timeout (no hang), exit 1, `No input provided` |
+| piped stdin | valid piped input still read and transformed (guard doesn't break input) |
+
+Wiring: `build.gradle.kts` `tasks.test` `dependsOn(tasks.jar)` and passes the JAR path via the
+`utlx.cli.jar` system property. Bug 3's TTY branch uses a test seam — the `utlx.stdin.interactive`
+system property overrides `System.console()` (a subprocess has no real console); production leaves
+it unset.
+
+**Pending:** native rebuild to confirm on the v1.2.1-class binary. **Residual (accepted):** the
+`> out.json`-while-interactive stdin edge for Bug 3 (see the Bug 3 table above).
