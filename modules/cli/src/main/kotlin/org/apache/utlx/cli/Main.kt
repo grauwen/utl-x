@@ -43,6 +43,10 @@ object Main {
 
             val result = when (command.lowercase()) {
                 "transform", "t" -> TransformCommand.execute(commandArgs)
+                // Issue #5: `convert` is a friendly front door for quick, script-free format
+                // conversion (xml/json/yaml/csv …). It is identity mode (smart flip / --from / --to)
+                // with the same --input/--output file handling — no new conversion logic.
+                "convert", "conv" -> TransformCommand.execute(commandArgs, identityMode = true)
                 "repl", "r" -> ReplCommand.execute(commandArgs)
                 "design", "d" -> {
                     System.err.println("Design-time analysis features have been moved to the daemon server.")
@@ -142,6 +146,7 @@ object Main {
             |
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
+            |  convert   (conv) Quick format conversion, no script (xml/json/yaml/csv)
             |  repl      (r)  Start interactive REPL session
             |  design    (d)  Design-time analysis (typecheck, generate schemas, IDE support)
             |  capture        Manage test capture settings (enable/disable/status)
@@ -172,6 +177,9 @@ object Main {
             |  cat data.xml | utlx                              Identity mode: XML to JSON (smart flip)
             |  cat data.json | utlx                             Identity mode: JSON to XML (smart flip)
             |  cat data.csv | utlx --to yaml                   Identity mode: CSV to YAML
+            |  utlx convert --input data.xml --output data.json   Convert a file (XML to JSON, smart flip)
+            |  utlx convert -i data.csv --to yaml -o data.yaml    Convert with explicit target format
+            |  cat data.xml | utlx convert --to yaml              Convert from stdin
             |  utlx script.utlx input.xml                      Implicit transform (no 'transform' subcommand)
             |  utlx repl
             |  utlx transform script.utlx input.xml -o output.json

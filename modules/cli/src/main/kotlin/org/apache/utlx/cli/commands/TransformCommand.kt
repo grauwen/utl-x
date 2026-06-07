@@ -243,9 +243,11 @@ object TransformCommand {
                 val stdinIsInteractive = System.getProperty("utlx.stdin.interactive")
                     ?.toBooleanStrictOrNull() ?: (System.console() != null)
                 if (stdinIsInteractive) {
+                    // Verb-neutral: this code path is shared by `transform` and `convert`, so the
+                    // message names neither a verb nor a script — just the two ways to supply input.
                     return CommandResult.Failure(
-                        "No input provided. Pass an input file " +
-                        "(utlx transform <script> <input>) or pipe data via stdin.", 1)
+                        "No input provided. Pass an input file (-i/--input FILE) " +
+                        "or pipe data via stdin.", 1)
                 }
                 val inputFormat = options.inputFormat
                 val charsetHint = options.charset?.let {
