@@ -344,7 +344,7 @@ def main():
         script_dir = Path(__file__).parent.parent.parent.parent
         possible_paths = [
             script_dir / 'utlx',
-            script_dir / 'modules' / 'cli' / 'build' / 'libs' / 'cli-1.2.1.jar',
+            script_dir / 'modules' / 'cli' / 'build' / 'libs' / 'cli-1.2.2.jar',
             'utlx',  # In PATH
         ]
 

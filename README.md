@@ -3,8 +3,9 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-1.2.1-green)](https://github.com/grauwen/utl-x/releases)
-[![Documentation](https://img.shields.io/badge/docs-utlx.dev-brightgreen)](https://utl-x.org/docs)
+[![Version](https://img.shields.io/badge/version-1.2.2-green)](https://github.com/grauwen/utl-x/releases)
+[![Website](https://img.shields.io/badge/website-utlx.dev-blue)](https://utlx.dev)
+[![Documentation](https://img.shields.io/badge/docs-utlx--lang.org-brightgreen)](https://utlx-lang.org)
 [![GitHub stars](https://img.shields.io/github/stars/grauwen/utl-x?style=social)](https://github.com/grauwen/utl-x)
 
 ## Overview
@@ -245,7 +246,7 @@ Available on the [Chocolatey community repository](https://community.chocolatey.
 
 **Direct download (any distro):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.2.1/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.2.2/utlx-linux-x64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
@@ -261,7 +262,7 @@ brew install utlx
 
 ### Download Pre-Built Binaries
 
-Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.2.1):
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.2.2):
 
 | Platform | Binary |
 |----------|--------|
@@ -293,7 +294,7 @@ Windows: use `utlx.bat` or `.\utlx.ps1` instead of `./utlx`.
 
 ```bash
 utlx --version
-# UTL-X CLI v1.2.1
+# UTL-X CLI v1.2.2
 ```
 
 ## Quick Start
@@ -551,10 +552,12 @@ input.customer?.address?.city ?? "Unknown"
 
 ## Documentation
 
-- 📖 **[Getting Started Guide](docs/getting-started/installation.md)** - Installation and basics
-- 📚 **[Language Guide](docs/language-guide/overview.md)** - Complete language reference
-- 💡 **[Examples](docs/examples/README.md)** - Real-world transformation examples
-- 📊 **[Stdlib Reference](docs/stdlib/stdlib-complete-reference.md)** - All 652 functions
+📚 Full documentation and the book are hosted at **[utlx-lang.org](https://utlx-lang.org)**.
+
+- 📖 **[Getting Started](https://utlx-lang.org/guide/ch04-getting-started)** - Installation and basics
+- 📚 **[Language Fundamentals](https://utlx-lang.org/guide/ch08-language-fundamentals)** - Complete language reference
+- 💡 **[Case Studies & Recipes](https://utlx-lang.org/guide/ch47-case-studies)** - Real-world transformation examples
+- 📊 **[Standard Library Reference](https://utlx-lang.org/reference/stdlib)** - All 650+ functions
 
 ## Community & Support
 
@@ -577,16 +580,14 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 1.2.1
+**Current Version**: 1.2.2
 
-### What's in 1.2.1
+### What's in 1.2.2
 
-- Bug fixes: B13 (XML text node unwrapping) and B14 (XML attributes in JSON/YAML output)
-- XML-to-JSON/YAML pass-through now produces clean output without internal `_text` wrappers
-- YAML attribute output uses `@` prefix inline (industry standard, consistent with JSON)
-- New `writeAttributes` output option for preserving XML attributes on leaf elements (DataWeave-compatible)
-- Privacy policy and EULA added
-- Conformance suite expanded to 453 tests
+- **B25 fix:** stdlib functions (e.g. `parseNumber`) failed on the **native binary** when called inside `map`/`filter`/`reduce` — higher-order builtins now evaluate lambdas on the owning interpreter, so the reflection-free stdlib lookup is reachable everywhere (top-level and inside lambdas); verified on the GraalVM native binary
+- Consolidated duplicated interpreter builtins to a single source of truth in the stdlib module (removes the "works at top level, fails in `map`" class of bugs); `round(x, n)` now correctly rounds to *n* decimal places
+- **B26 fix:** CLI error handling — errors no longer printed twice, parse failures no longer dump a stack trace, and `transform <script>` with no piped input no longer hangs
+- **F20:** new `convert` command — quick, script-free format conversion (`utlx convert -i data.xml -o data.json`, or `cat data.csv | utlx convert --to yaml`)
 
 ### What's in 1.0.1
 
@@ -602,7 +603,7 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.2.1 Released** |
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.2.2 Released** |
 | **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
 | **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
 | **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |
@@ -665,4 +666,4 @@ If you find UTL-X useful, please consider [starring the repository](https://gith
 
 **Made with ❤️ by the UTL-X community**
 
-[Website](https://utl-x.dev) • [Documentation](https://utl-x.dev/docs) • [GitHub](https://github.com/grauwen/utl-x) 
+[Website](https://utlx.dev) • [Documentation](https://utlx-lang.org) • [GitHub](https://github.com/grauwen/utl-x) 

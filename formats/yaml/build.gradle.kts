@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "org.apache.utlx.formats"
-version = "1.2.1"
+version = "1.2.2"
 
 // Repository management is handled in settings.gradle.kts
 // repositories {
