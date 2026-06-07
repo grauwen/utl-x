@@ -127,12 +127,18 @@ object GeospatialFunctions {
         validateCoordinates(lat1Val, lon1Val)
         validateCoordinates(lat2Val, lon2Val)
 
-        // Haversine formula
-        val dLat = lat2 - lat1
-        val dLon = lon2 - lon1
+        // Haversine formula.
+        // B25: compute the deltas as toRadians(lat2Val - lat1Val) and multiply sin terms with
+        // `x * x` (not `.pow(2)`), and use atan2(sqrt(a), sqrt(1-a)) (not asin). All are
+        // mathematically equivalent, but this exact arithmetic reproduces, bit-for-bit, the results
+        // the conformance suite was authored against, so removing the interpreter-local `distance`
+        // duplicate doesn't shift any value in the last decimal places.
+        val dLat = Math.toRadians(lat2Val - lat1Val)
+        val dLon = Math.toRadians(lon2Val - lon1Val)
 
-        val a = sin(dLat / 2).pow(2) + cos(lat1) * cos(lat2) * sin(dLon / 2).pow(2)
-        val c = 2 * asin(sqrt(a))
+        val a = sin(dLat / 2) * sin(dLat / 2) +
+                cos(lat1) * cos(lat2) * sin(dLon / 2) * sin(dLon / 2)
+        val c = 2 * atan2(sqrt(a), sqrt(1 - a))
 
         val radius = when (unit) {
             "mi", "miles" -> EARTH_RADIUS_MI
