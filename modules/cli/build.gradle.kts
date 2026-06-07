@@ -114,6 +114,14 @@ kotlin {
 
 tasks.test {
     useJUnitPlatform()
+    // B26: CLI integration tests spawn the assembled fat JAR as a subprocess. Build it first and
+    // hand the path to the tests via a system property. Compute the path from `layout` (pure string,
+    // no task resolution at configuration time) to avoid forcing cross-project evaluation.
+    dependsOn(tasks.jar)
+    systemProperty(
+        "utlx.cli.jar",
+        layout.buildDirectory.file("libs/cli-${project.version}.jar").get().asFile.absolutePath
+    )
 }
 
 // Custom tasks

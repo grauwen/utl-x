@@ -58,7 +58,10 @@ class Parser(
                 ParseResult.Failure(errors)
             }
         } catch (e: ParseException) {
-            logger.error(e) { "Parse exception: ${e.message}" }
+            // B26: a ParseException is an expected user error — it is converted into a
+            // ParseResult.Failure below and handled by the caller. Log at debug (without dumping
+            // the stack trace to the default console); the trace stays available under --debug.
+            logger.debug(e) { "Parse exception: ${e.message}" }
 
             // Enhance error message with contextual help
             val enhancedError = ParseErrorEnhancer.enhance(e, source, tokens, current)
