@@ -721,6 +721,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         <h2>Function Builder</h2>
                     </div>
                     <input
+                        data-testid='utlx-fb-search'
                         type='text'
                         className='search-box'
                         placeholder='Search functions and fields...'
@@ -728,7 +729,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         onChange={e => setSearchQuery(e.target.value)}
                         autoFocus
                     />
-                    <button className='close-btn' onClick={onClose} title='Close'>
+                    <button data-testid='utlx-fb-close' className='close-btn' onClick={onClose} title='Close'>
                         <span className='codicon codicon-close'></span>
                     </button>
                 </div>
@@ -740,6 +741,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         {/* Tabs Header */}
                         <div className='tab-header'>
                             <button
+                                data-testid='utlx-fb-tab-functions'
                                 className={`tab-button ${activeTab === 'functions' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('functions')}
                             >
@@ -747,6 +749,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 Standard Library
                             </button>
                             <button
+                                data-testid='utlx-fb-tab-inputs'
                                 className={`tab-button ${activeTab === 'inputs' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('inputs')}
                             >
@@ -754,6 +757,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                 Available Inputs
                             </button>
                             <button
+                                data-testid='utlx-fb-tab-operators'
                                 className={`tab-button ${activeTab === 'operators' ? 'active' : ''}`}
                                 onClick={() => setActiveTab('operators')}
                             >
@@ -762,6 +766,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                             </button>
                             {isUsdlFormat && (
                                 <button
+                                    data-testid='utlx-fb-tab-directives'
                                     className={`tab-button ${activeTab === 'directives' ? 'active' : ''}`}
                                     onClick={() => setActiveTab('directives')}
                                 >
@@ -785,6 +790,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                     Array.from(functionsByCategory.entries()).map(([category, categoryFunctions]) => (
                                         <div key={category} className='category'>
                                             <div
+                                                data-testid='utlx-fb-category'
                                                 className='category-header'
                                                 onClick={() => toggleCategory(category)}
                                             >
@@ -797,6 +803,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 <div className='category-functions'>
                                                     {categoryFunctions.map((fn, index) => (
                                                         <div
+                                                            data-testid='utlx-fb-function'
                                                             key={`${fn.name}-${index}`}
                                                             className={`function-item-compact ${selectedFunction?.name === fn.name && selectedFunction?.signature === fn.signature ? 'selected' : ''}`}
                                                             onClick={() => setSelectedFunction(fn)}
@@ -835,6 +842,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                         </div>
                                         <div className='details-actions'>
                                             <button
+                                                data-testid='utlx-fb-help'
                                                 className='help-btn'
                                                 title='Show full help and examples'
                                                 onClick={() => setShowHelp(true)}
@@ -843,6 +851,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 Help
                                             </button>
                                             <button
+                                                data-testid='utlx-fb-insert'
                                                 className='insert-btn'
                                                 title='Insert into editor'
                                                 onClick={handleInsertFunction}
@@ -851,6 +860,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 Insert
                                             </button>
                                             <button
+                                                data-testid='utlx-fb-copy'
                                                 className='copy-btn'
                                                 title='Copy to clipboard'
                                                 onClick={() => {
@@ -982,6 +992,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                 </div>
                                                 <div className='details-actions'>
                                                     <button
+                                                        data-testid='utlx-fb-operator-help'
                                                         className='help-btn'
                                                         title='Show full help and examples'
                                                         onClick={() => setShowOperatorHelp(true)}
@@ -990,6 +1001,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                                         Help
                                                     </button>
                                                     <button
+                                                        data-testid='utlx-fb-insert-operator'
                                                         className='insert-btn'
                                                         title='Insert operator'
                                                         onClick={() => handleInsertOperator(selectedOperator)}
@@ -1064,6 +1076,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                             }
                                         }}
                                         title='Undo (Ctrl+Z / Cmd+Z)'
+                                        data-testid='utlx-fb-editor-undo'
                                     >
                                         <span className='codicon codicon-discard'></span>
                                     </button>
@@ -1077,6 +1090,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                             }
                                         }}
                                         title='Redo (Ctrl+Y / Cmd+Shift+Z)'
+                                        data-testid='utlx-fb-editor-redo'
                                     >
                                         <span className='codicon codicon-redo'></span>
                                     </button>
@@ -1107,6 +1121,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                             }
                                         }}
                                         title='Cut (Ctrl+X / Cmd+X)'
+                                        data-testid='utlx-fb-editor-cut'
                                     >
                                         <span className='codicon codicon-clippy'></span>
                                     </button>
@@ -1142,6 +1157,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                             }
                                         }}
                                         title='Copy (Ctrl+C / Cmd+C)'
+                                        data-testid='utlx-fb-editor-copy'
                                     >
                                         <span className='codicon codicon-copy'></span>
                                     </button>
@@ -1175,6 +1191,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                             }
                                         }}
                                         title='Paste (Ctrl+V / Cmd+V)'
+                                        data-testid='utlx-fb-editor-paste'
                                     >
                                         <span className='codicon codicon-insert'></span>
                                     </button>
@@ -1228,6 +1245,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                     </div>
                     <div className='footer-actions'>
                         <button
+                            data-testid='utlx-fb-apply'
                             className='footer-btn apply-btn'
                             onClick={() => {
                                 const editor = expressionEditorRef.current;
@@ -1244,6 +1262,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                             Apply to Main Editor
                         </button>
                         <button
+                            data-testid='utlx-fb-footer-close'
                             className='footer-btn close-btn-footer'
                             onClick={onClose}
                             title='Close without inserting'
@@ -1260,7 +1279,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         <div className='help-modal' onClick={e => e.stopPropagation()}>
                             <div className='help-header'>
                                 <h2>{selectedFunction.name}</h2>
-                                <button onClick={() => setShowHelp(false)}>
+                                <button data-testid='utlx-fb-help-close' onClick={() => setShowHelp(false)}>
                                     <span className='codicon codicon-close'></span>
                                 </button>
                             </div>
@@ -1308,7 +1327,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                                         {selectedFunction.examples.map((example, idx) => (
                                             <div key={idx} className='example'>
                                                 <pre><code>{example}</code></pre>
-                                                <button onClick={() => { onInsert(example); setShowHelp(false); }}>
+                                                <button data-testid='utlx-fb-help-try' onClick={() => { onInsert(example); setShowHelp(false); }}>
                                                     Try This Example
                                                 </button>
                                             </div>
@@ -1326,7 +1345,7 @@ export const FunctionBuilderDialog: React.FC<FunctionBuilderDialogProps> = ({
                         <div className='help-modal' onClick={e => e.stopPropagation()}>
                             <div className='help-header'>
                                 <h2>{selectedOperator.symbol} - {selectedOperator.name}</h2>
-                                <button onClick={() => setShowOperatorHelp(false)}>
+                                <button data-testid='utlx-fb-operator-help-close' onClick={() => setShowOperatorHelp(false)}>
                                     <span className='codicon codicon-close'></span>
                                 </button>
                             </div>

@@ -200,6 +200,7 @@ export class OutputPanelWidget extends ReactWidget {
                 <div className='utlx-panel-header'>
                     <div className='utlx-header-left'>
                         <input
+                            data-testid='utlx-output-name'
                             type='text'
                             className='utlx-output-name-editor'
                             // The editable name IS the panel label (no separate
@@ -219,6 +220,7 @@ export class OutputPanelWidget extends ReactWidget {
                         {/* Infer Schema button - only in design-time mode on schema tab when instance exists */}
                         {mode === UTLXMode.MESSAGE_CONTRACT && activeTab === 'schema' && !this.isSchemaTabDisabled() && instanceFormat !== 'csv' && instanceContent && (
                             <button
+                                data-testid='utlx-output-infer-schema'
                                 onClick={() => this.handleInferSchema()}
                                 title='Infer output schema from transformation'
                             >
@@ -227,6 +229,7 @@ export class OutputPanelWidget extends ReactWidget {
                             </button>
                         )}
                         <button
+                            data-testid='utlx-output-copy'
                             onClick={() => this.handleCopy()}
                             disabled={!currentContent}
                             title='Copy to clipboard'
@@ -235,6 +238,7 @@ export class OutputPanelWidget extends ReactWidget {
                             {' '}Copy
                         </button>
                         <button
+                            data-testid='utlx-output-load'
                             onClick={() => this.handleLoad()}
                             title={activeTab === 'schema' ? 'Load schema from file' : 'Load instance from file'}
                         >
@@ -242,6 +246,7 @@ export class OutputPanelWidget extends ReactWidget {
                             {' '}Load
                         </button>
                         <button
+                            data-testid='utlx-output-save'
                             onClick={() => this.handleSave()}
                             disabled={!currentContent}
                             title='Save to file'
@@ -250,6 +255,7 @@ export class OutputPanelWidget extends ReactWidget {
                             {' '}Save
                         </button>
                         <button
+                            data-testid='utlx-output-clear'
                             onClick={() => this.handleClear()}
                             disabled={!currentContent && !currentError}
                             title='Clear output'
@@ -266,6 +272,7 @@ export class OutputPanelWidget extends ReactWidget {
                         marked "schema only" — the contract is then the sole artifact. */}
                     {!(mode === UTLXMode.MESSAGE_CONTRACT && this.state.schemaOnly) && (
                         <button
+                            data-testid='utlx-output-tab-instance'
                             className={`utlx-tab ${activeTab === 'instance' ? 'active' : ''}`}
                             onClick={() => this.handleTabSwitch('instance')}
                         >
@@ -279,6 +286,7 @@ export class OutputPanelWidget extends ReactWidget {
                         const disabled = !this.state.schemaOnly && this.isSchemaTabDisabled();
                         return (
                             <button
+                                data-testid='utlx-output-tab-schema'
                                 className={`utlx-tab ${activeTab === 'schema' ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
                                 onClick={() => !disabled && this.handleTabSwitch('schema')}
                                 disabled={disabled}
@@ -294,6 +302,7 @@ export class OutputPanelWidget extends ReactWidget {
                             title='The output is just the contract (schema) — no expected/sample instance. Hides the Instance tab.'
                         >
                             <input
+                                data-testid='utlx-output-schema-only'
                                 type='checkbox'
                                 checked={!!this.state.schemaOnly}
                                 onChange={() => this.toggleSchemaOnly()}
@@ -307,6 +316,7 @@ export class OutputPanelWidget extends ReactWidget {
                     <label>
                         Format:
                         <select
+                            data-testid='utlx-output-format'
                             className={formatInvalid ? 'utlx-format-invalid' : ''}
                             value={currentFormat || 'json'}
                             onChange={(e) => this.handleFormatChange((e.target as HTMLSelectElement).value)}
@@ -360,6 +370,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 Headers:
                                 <select
+                                    data-testid='utlx-output-csv-headers'
                                     value={this.state.csvHeaders === false ? 'false' : 'true'}
                                     onChange={(e) => this.handleCsvHeadersChange(e.target.value === 'true')}
                                 >
@@ -370,6 +381,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 Delimiter:
                                 <select
+                                    data-testid='utlx-output-csv-delimiter'
                                     value={this.state.csvDelimiter || ','}
                                     onChange={(e) => this.handleCsvDelimiterChange(e.target.value)}
                                 >
@@ -382,6 +394,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 BOM:
                                 <select
+                                    data-testid='utlx-output-csv-bom'
                                     value={this.state.csvBom ? 'true' : 'false'}
                                     onChange={(e) => this.handleCsvBomChange(e.target.value === 'true')}
                                     title='Byte Order Mark (UTF-8 BOM)'
@@ -398,6 +411,7 @@ export class OutputPanelWidget extends ReactWidget {
                         <label>
                             Encoding:
                             <select
+                                data-testid='utlx-output-xml-encoding'
                                 value={this.state.xmlEncoding || 'UTF-8'}
                                 onChange={(e) => this.handleXmlEncodingChange(e.target.value)}
                             >
@@ -417,6 +431,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 Metadata:
                                 <select
+                                    data-testid='utlx-output-odata-metadata'
                                     value={this.state.odataMetadata || 'minimal'}
                                     onChange={(e) => this.handleOdataMetadataChange(e.target.value as 'minimal' | 'full' | 'none')}
                                 >
@@ -428,6 +443,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 Context:
                                 <input
+                                    data-testid='utlx-output-odata-context'
                                     type='text'
                                     value={this.state.odataContext || ''}
                                     onChange={(e) => this.handleOdataContextChange(e.target.value)}
@@ -438,6 +454,7 @@ export class OutputPanelWidget extends ReactWidget {
                             <label>
                                 Wrap Collection:
                                 <select
+                                    data-testid='utlx-output-odata-wrap'
                                     value={this.state.odataWrapCollection === false ? 'false' : 'true'}
                                     onChange={(e) => this.handleOdataWrapCollectionChange(e.target.value === 'true')}
                                 >
@@ -451,6 +468,7 @@ export class OutputPanelWidget extends ReactWidget {
                     <label>
                         View:
                         <select
+                            data-testid='utlx-output-view-mode'
                             value={viewMode}
                             onChange={(e) => this.handleViewModeChange((e.target as HTMLSelectElement).value as 'pretty' | 'raw')}
                         >
@@ -486,10 +504,10 @@ export class OutputPanelWidget extends ReactWidget {
                     {currentError ? (
                         <div className='utlx-error-display'>
                             <div className='utlx-error-header'>❌ Error</div>
-                            <pre className='utlx-error-message'>{currentError}</pre>
+                            <pre data-testid='utlx-output-error' className='utlx-error-message'>{currentError}</pre>
                         </div>
                     ) : currentContent ? (
-                        <pre className='utlx-output-display'>
+                        <pre data-testid='utlx-output' className='utlx-output-display'>
                             {viewMode === 'pretty' ? this.formatContent(currentContent, currentFormat) : currentContent}
                         </pre>
                     ) : (

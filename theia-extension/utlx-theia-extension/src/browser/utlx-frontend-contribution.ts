@@ -432,6 +432,8 @@ export class UTLXFrontendContribution implements
         const mode = getFileDialogMode();
         this.statusBar.setElement(this.fileDialogModeId, {
             text: mode === 'theia' ? '$(folder-opened) Load: Theia' : '$(device-desktop) Load: Browser',
+            // Stable hook for demos/tests (StatusBar has no data-testid; className is the anchor).
+            className: 'utlx-sb-file-dialog-mode',
             alignment: StatusBarAlignment.RIGHT,
             priority: 98,
             tooltip: mode === 'theia'
@@ -450,6 +452,8 @@ export class UTLXFrontendContribution implements
         const mode = getNameOnLoadMode();
         this.statusBar.setElement(this.nameOnLoadModeId, {
             text: mode === 'inherit' ? '$(tag) Name: Inherit' : '$(lock) Name: Keep',
+            // Stable hook for demos/tests (StatusBar has no data-testid; className is the anchor).
+            className: 'utlx-sb-name-on-load-mode',
             alignment: StatusBarAlignment.RIGHT,
             priority: 97,
             tooltip: mode === 'inherit'

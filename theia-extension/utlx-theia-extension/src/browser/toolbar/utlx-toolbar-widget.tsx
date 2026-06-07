@@ -244,6 +244,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                     <div className='utlx-mode-switcher'>
                         <label className='utlx-toggle-switch'>
                             <input
+                                data-testid='utlx-mode-toggle'
                                 type='checkbox'
                                 checked={currentMode === UTLXMode.MESSAGE_CONTRACT}
                                 onChange={() => this.toggleMode()}
@@ -267,6 +268,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                 {/* Right section: Actions */}
                 <div className='utlx-toolbar-right'>
                     <button
+                        data-testid='utlx-ai-assist'
                         className='utlx-toolbar-button utlx-mcp-button'
                         onClick={() => this.openMCPDialog()}
                         title='Ask AI to help write UTLX transformation'
@@ -276,6 +278,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                     </button>
 
                     <button
+                        data-testid='utlx-execute'
                         className='utlx-toolbar-button'
                         onClick={() => this.handleExecute()}
                         title={currentMode === UTLXMode.EXECUTION ? 'Execute transformation' : 'Validate output schema'}
@@ -301,6 +304,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                     )}
                                 </div>
                                 <button
+                                    data-testid='utlx-mcp-close'
                                     className='utlx-dialog-close'
                                     onClick={() => this.closeMCPDialog()}
                                 >
@@ -323,6 +327,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                     return (
                                                         <div key={idx} className='utlx-dialog-input-row'>
                                                             <button
+                                                                data-testid='utlx-mcp-input-expand'
                                                                 className='utlx-dialog-input-head'
                                                                 onClick={() => this.toggleInputExpanded(inp.name)}
                                                                 title='What is this input?'
@@ -343,6 +348,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                                         <div className='utlx-dialog-input-gloss'>⏳ Describing…</div>
                                                                     ) : (inp.abstract && this.state.systemStatus.llm !== false) ? (
                                                                         <button
+                                                                            data-testid='utlx-mcp-explain'
                                                                             className='utlx-explain-ai-btn'
                                                                             title='Ask the AI what kind of message this is (one LLM call)'
                                                                             onClick={() => this.explainInput(inp)}
@@ -377,6 +383,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                             <div className='utlx-prompt-history'>
                                                 <label>Previous prompts:</label>
                                                 <select
+                                                    data-testid='utlx-mcp-history'
                                                     className='utlx-prompt-history-select'
                                                     onChange={(e) => {
                                                         const index = parseInt(e.target.value, 10);
@@ -405,6 +412,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                         })()}
 
                                         <textarea
+                                            data-testid='utlx-mcp-prompt'
                                             className='utlx-mcp-prompt-input'
                                             value={mcpPrompt}
                                             onChange={(e) => this.setState({ mcpPrompt: (e.target as HTMLTextAreaElement).value })}
@@ -425,6 +433,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                             {this.state.loadedBody.includes('???(') ? ', scaffold' : ''})
                                                         </span>
                                                         <button
+                                                            data-testid='utlx-mcp-clear-body'
                                                             className='utlx-mcp-loadbody-remove'
                                                             title='Remove — generate without the current UTLX'
                                                             onClick={() => this.clearLoadedBody()}
@@ -435,6 +444,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                 ) : (
                                                     <div className='utlx-mcp-loadbody-actions'>
                                                         <button
+                                                            data-testid='utlx-mcp-load-current'
                                                             className='utlx-mcp-loadbody-btn'
                                                             title='Send the current editor body to the AI as a starting point'
                                                             onClick={() => this.loadCurrentUtlx()}
@@ -462,6 +472,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                                 <div className='utlx-ai-activity-title'>
                                                     <span>AI activity</span>
                                                     <button
+                                                        data-testid='utlx-mcp-copy-log'
                                                         className='utlx-ai-activity-copy'
                                                         title='Copy the AI activity log (+ per-attempt code/errors)'
                                                         onClick={() => this.copyAiLog()}
@@ -491,6 +502,7 @@ export class UTLXToolbarWidget extends ReactWidget {
 
                                     <div className='utlx-dialog-footer'>
                                         <button
+                                            data-testid='utlx-mcp-cancel-prompt'
                                             className='utlx-dialog-button utlx-dialog-button-secondary'
                                             onClick={() => {
                                                 console.log('[UTLXToolbar] 🔘 Cancel button clicked');
@@ -508,6 +520,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                         </button>
                                         {mcpLoading ? (
                                             <button
+                                                data-testid='utlx-mcp-stop'
                                                 className='utlx-dialog-button utlx-dialog-button-stop'
                                                 onClick={() => this.stopGeneration(false)}
                                                 title='Stop the generation but keep this dialog open so you can edit the prompt and retry'
@@ -516,6 +529,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                                             </button>
                                         ) : (
                                             <button
+                                                data-testid='utlx-mcp-submit'
                                                 className='utlx-dialog-button utlx-dialog-button-primary'
                                                 onClick={() => this.submitMCPPrompt()}
                                                 // IF11: prompt is optional in MC mode (goal is fixed: map to the contract).
@@ -574,18 +588,21 @@ export class UTLXToolbarWidget extends ReactWidget {
 
                                     <div className='utlx-dialog-footer'>
                                         <button
+                                            data-testid='utlx-mcp-cancel'
                                             className='utlx-dialog-button utlx-dialog-button-secondary'
                                             onClick={() => this.cancelGeneration()}
                                         >
                                             Cancel
                                         </button>
                                         <button
+                                            data-testid='utlx-mcp-retry'
                                             className='utlx-dialog-button utlx-dialog-button-secondary'
                                             onClick={() => this.retryGeneration()}
                                         >
                                             🔄 Retry
                                         </button>
                                         <button
+                                            data-testid='utlx-mcp-apply'
                                             className='utlx-dialog-button utlx-dialog-button-primary'
                                             onClick={() => this.applyGeneratedCode()}
                                         >
@@ -911,6 +928,7 @@ export class UTLXToolbarWidget extends ReactWidget {
         return (
             <div className='utlx-coverage'>
                 <button
+                    data-testid='utlx-coverage-toggle'
                     className='utlx-coverage-head'
                     onClick={() => this.setState({ coverageExpanded: !expanded })}
                     title='How well the inputs cover the output contract'
@@ -949,6 +967,7 @@ export class UTLXToolbarWidget extends ReactWidget {
                     if (this.state.systemStatus.llm === false) return null;
                     return (
                         <button
+                            data-testid='utlx-coverage-refine'
                             className='utlx-coverage-refine-btn'
                             title='Ask the AI to resolve the remaining gaps to source fields (one LLM call)'
                             onClick={() => this.refineCoverageGaps()}

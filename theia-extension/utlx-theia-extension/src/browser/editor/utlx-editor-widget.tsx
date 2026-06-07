@@ -2177,6 +2177,7 @@ output json
                         {this.currentMode === UTLXMode.MESSAGE_CONTRACT && (
                             <div className='mapping-view-toggle'>
                                 <button
+                                    data-testid='utlx-editor-view-classic'
                                     className={`mapping-view-toggle-btn ${isClassic ? 'active' : ''}`}
                                     onClick={() => this.switchViewMode('classic')}
                                     title='Classic view — Monaco code editor'
@@ -2185,6 +2186,7 @@ output json
                                     {' '}Classic
                                 </button>
                                 <button
+                                    data-testid='utlx-editor-view-canvas'
                                     className={`mapping-view-toggle-btn ${isCanvas ? 'active' : ''}`}
                                     onClick={() => this.switchViewMode('canvas')}
                                     title='Canvas view — graphical mapping editor'
@@ -2210,6 +2212,7 @@ output json
                                     </span>
                                 )}
                                 <button
+                                    data-testid='utlx-editor-scaffold'
                                     title={this.hasOutputStructure
                                         ? 'Generate UTLX structure from output schema/instance'
                                         : 'No output schema or instance available (JSON/XML only)'}
@@ -2220,6 +2223,7 @@ output json
                                     {' '}Scaffold Output
                                 </button>
                                 <button
+                                    data-testid='utlx-editor-function-builder'
                                     title='Function Builder - Browse and insert stdlib functions'
                                     onClick={() => this.openFunctionBuilder()}
                                 >
@@ -2230,6 +2234,7 @@ output json
                         )}
                         {/* Shared buttons (both views) */}
                         <button
+                            data-testid='utlx-editor-load'
                             title='Load UTLX File'
                             onClick={() => this.handleLoadFile()}
                         >
@@ -2237,6 +2242,7 @@ output json
                             {' '}Load
                         </button>
                         <button
+                            data-testid='utlx-editor-save'
                             title='Save UTLX File'
                             onClick={() => this.handleSaveFile()}
                         >
@@ -2244,6 +2250,7 @@ output json
                             {' '}Save
                         </button>
                         <button
+                            data-testid='utlx-editor-clear'
                             title='Clear Editor'
                             onClick={() => this.clearContent()}
                         >

@@ -495,6 +495,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                                     <div style={{ display: 'flex', gap: '4px', flexShrink: 0 }}>
                                                         {onInsertValue && (
                                                             <button
+                                                                data-testid='utlx-field-insert-value'
                                                                 className='insert-btn'
                                                                 title={`Insert ${quotedValue} into editor`}
                                                                 onClick={(e) => {
@@ -519,6 +520,7 @@ export const FieldTree: React.FC<FieldTreeProps> = ({ fieldTrees, onInsertField,
                                                             </button>
                                                         )}
                                                         <button
+                                                            data-testid='utlx-field-copy-value'
                                                             className='copy-btn'
                                                             title={`Copy ${quotedValue} to clipboard`}
                                                             onClick={(e) => {
@@ -739,6 +741,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         <span className='input-format-badge'>{tree.format}</span>
                         <span className='input-array-badge'>Object</span>
                         <button
+                            data-testid='utlx-field-insert'
                             className='insert-btn'
                             title={`Insert $${tree.inputName} (first row as object)`}
                             onClick={(e) => {
@@ -749,6 +752,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             <span className='codicon codicon-insert'></span>
                         </button>
                         <button
+                            data-testid='utlx-field-copy'
                             className='copy-btn'
                             title={`Copy $${tree.inputName} to clipboard`}
                             onClick={(e) => {
@@ -770,6 +774,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         <span className='input-format-badge'>{tree.format}</span>
                         <span className='input-array-badge'>Array</span>
                         <button
+                            data-testid='utlx-field-insert'
                             className='insert-btn'
                             title={`Insert $${tree.inputName}[0] (array access)`}
                             onClick={(e) => {
@@ -780,6 +785,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                             <span className='codicon codicon-insert'></span>
                         </button>
                         <button
+                            data-testid='utlx-field-copy'
                             className='copy-btn'
                             title={`Copy $${tree.inputName}[0] to clipboard`}
                             onClick={(e) => {
@@ -802,6 +808,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                     <span className='input-format-badge'>{tree.format}</span>
                     <span className='input-array-badge'>{typeLabel}</span>
                     <button
+                        data-testid='utlx-field-insert'
                         className='insert-btn'
                         title={`Insert $${tree.inputName}`}
                         onClick={(e) => {
@@ -812,6 +819,7 @@ const InputNode: React.FC<InputNodeProps> = ({ tree, isExpanded, onToggle, onIns
                         <span className='codicon codicon-insert'></span>
                     </button>
                     <button
+                        data-testid='utlx-field-copy'
                         className='copy-btn'
                         title={`Copy $${tree.inputName} to clipboard`}
                         onClick={(e) => {
@@ -936,9 +944,10 @@ const FieldNode: React.FC<FieldNodeProps> = ({
 
     return (
         <div className='field-node' style={{ paddingLeft: `${level * 12}px` }}>
-            <div className='field-header' onClick={() => onSelect({ inputName, fieldPath: path })}>
+            <div data-testid='utlx-field-select' className='field-header' onClick={() => onSelect({ inputName, fieldPath: path })}>
                 {hasChildren ? (
                     <span
+                        data-testid='utlx-field-toggle'
                         className={`codicon codicon-chevron-${expanded ? 'down' : 'right'}`}
                         onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
                         style={{ cursor: 'pointer' }}

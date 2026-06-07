@@ -296,6 +296,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     {inputs.map(input => (
                         <div
                             key={input.id}
+                            data-testid='utlx-input-tab'
                             className={`utlx-vertical-tab ${input.id === activeInputId ? 'active' : ''}`}
                             onClick={() => this.handleSelectInput(input.id)}
                         >
@@ -304,6 +305,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             </span>
                             {inputs.length > 1 && (
                                 <button
+                                    data-testid='utlx-input-delete'
                                     className='utlx-vertical-tab-delete'
                                     onClick={(e) => this.handleDeleteInput(input.id, e)}
                                     title='Delete input'
@@ -314,6 +316,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         </div>
                     ))}
                     <button
+                        data-testid='utlx-input-add'
                         className='utlx-vertical-tab-add'
                         onClick={() => this.handleAddInput()}
                         title='Add input'
@@ -328,6 +331,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     <div className='utlx-panel-header'>
                         <div className='utlx-header-left'>
                             <input
+                                data-testid='utlx-input-name'
                                 type='text'
                                 className='utlx-input-name-editor'
                                 // Uncontrolled: the DOM owns the caret. A controlled
@@ -385,6 +389,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             )}
                             {!activeInput.udmValidating && activeInput.udmParsed === true && (
                                 <button
+                                    data-testid='utlx-input-validate'
                                     className='utlx-udm-indicator utlx-udm-clickable'
                                     style={{ color: '#50fa7b' }}
                                     title={`UDM parsed successfully - Click to re-validate`}
@@ -395,6 +400,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             )}
                             {!activeInput.udmValidating && activeInput.udmParsed === false && (
                                 <button
+                                    data-testid='utlx-input-validate'
                                     className='utlx-udm-indicator utlx-udm-clickable'
                                     style={{ color: '#ff5555' }}
                                     title={`UDM parse error: ${activeInput.udmError || 'Unknown error'} - Click to retry`}
@@ -407,6 +413,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         <div className='utlx-panel-actions'>
                             {activeInput.udmParsed === true && (
                                 <button
+                                    data-testid='utlx-input-view-udm'
                                     onClick={() => this.handleViewUdm()}
                                     title='View UDM representation'
                                 >
@@ -423,6 +430,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     || !!activeInput.schemaContent?.trim();
                                 return (
                             <button
+                                data-testid='utlx-input-info'
                                 onClick={() => this.setState({ abstractOpen: true })}
                                 disabled={!canSummarize}
                                 title={canSummarize
@@ -437,6 +445,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             {/* Infer Schema button - only in design-time mode on schema tab with instance content */}
                             {isMessageContract && activeSubTab === 'schema' && !this.isSchemaTabDisabled(activeInput.instanceFormat) && activeInput.instanceContent && (
                                 <button
+                                    data-testid='utlx-input-infer-schema'
                                     onClick={() => this.handleInferInputSchema()}
                                     title='Infer input schema from instance data'
                                 >
@@ -445,6 +454,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 </button>
                             )}
                             <button
+                                data-testid='utlx-input-load'
                                 onClick={() => this.handleLoadFile()}
                                 disabled={loading}
                                 title='Load from file'
@@ -453,6 +463,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 {' '}Load
                             </button>
                             <button
+                                data-testid='utlx-input-clear'
                                 onClick={() => this.handleClear()}
                                 disabled={loading || !currentContent}
                                 title='Clear input'
@@ -474,6 +485,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     leftover from Execution) — then it's blocked until fixed. */}
                                 {!activeInput.schemaOnly && (
                                     <button
+                                        data-testid='utlx-input-tab-instance'
                                         className={`utlx-horizontal-tab ${activeSubTab === 'instance' ? 'active' : ''}`}
                                         onClick={() => this.handleSubTabSwitch('instance')}
                                     >
@@ -484,6 +496,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     const schemaBlocked = !activeInput.schemaOnly && this.isSchemaTabDisabled(activeInput.instanceFormat);
                                     return (
                                         <button
+                                            data-testid='utlx-input-tab-schema'
                                             className={`utlx-horizontal-tab ${activeSubTab === 'schema' ? 'active' : ''} ${schemaBlocked ? 'disabled' : ''}`}
                                             onClick={() => !schemaBlocked && this.handleSubTabSwitch('schema')}
                                             disabled={schemaBlocked}
@@ -500,6 +513,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     title='This input has no sample instance — use only its schema (the contract). Hides the Instance tab.'
                                 >
                                     <input
+                                        data-testid='utlx-input-schema-only'
                                         type='checkbox'
                                         checked={!!activeInput.schemaOnly}
                                         onChange={() => this.toggleSchemaOnly()}
@@ -522,6 +536,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                         <label>
                             Format:
                             <select
+                                data-testid='utlx-input-format'
                                 className={formatInvalid ? 'utlx-format-invalid' : ''}
                                 value={currentFormat}
                                 onChange={(e) => this.handleFormatChange(e.target.value as any)}
@@ -575,6 +590,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 <label>
                                     Headers:
                                     <select
+                                        data-testid='utlx-input-csv-headers'
                                         value={activeInput.csvHeaders === false ? 'false' : 'true'}
                                         onChange={(e) => this.handleCsvHeadersChange(e.target.value === 'true')}
                                         disabled={loading}
@@ -586,6 +602,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 <label>
                                     Delimiter:
                                     <select
+                                        data-testid='utlx-input-csv-delimiter'
                                         value={activeInput.csvDelimiter || ','}
                                         onChange={(e) => this.handleCsvDelimiterChange(e.target.value)}
                                         disabled={loading}
@@ -655,6 +672,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                     {/* Content Editor */}
                     <div className='utlx-panel-content'>
                         <textarea
+                            data-testid='utlx-input'
                             className='utlx-input-editor'
                             // Uncontrolled (defaultValue + key) — a controlled value= is
                             // re-applied by ReactWidget's async update() and resets the
@@ -701,6 +719,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             >
                                 <h3>UDM Representation</h3>
                                 <button
+                                    data-testid='utlx-udm-close'
                                     className='utlx-udm-dialog-close'
                                     onClick={() => this.handleCloseUdmDialog()}
                                     title='Close'
@@ -712,6 +731,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 <label>
                                     View:
                                     <select
+                                        data-testid='utlx-udm-view-mode'
                                         value={this.udmViewMode}
                                         onChange={(e) => {
                                             this.udmViewMode = (e.target as HTMLSelectElement).value as 'raw' | 'pretty';
@@ -725,6 +745,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             </div>
                             <div className='utlx-udm-dialog-content'>
                                 <textarea
+                                    data-testid='utlx-udm-content'
                                     className='utlx-udm-viewer'
                                     value={this.udmViewMode === 'pretty' ? this.formatUdm(activeInput.udmLanguage) : activeInput.udmLanguage}
                                     readOnly
@@ -733,6 +754,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             </div>
                             <div className='utlx-udm-dialog-footer'>
                                 <button
+                                    data-testid='utlx-udm-copy'
                                     onClick={() => this.handleCopyUdmToClipboard()}
                                     title='Copy UDM to clipboard'
                                 >
@@ -740,6 +762,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     {' '}Copy to Clipboard
                                 </button>
                                 <button
+                                    data-testid='utlx-udm-save'
                                     onClick={() => this.handleSaveUdm()}
                                     title='Save UDM to file'
                                 >
@@ -747,6 +770,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                                     {' '}Save
                                 </button>
                                 <button
+                                    data-testid='utlx-udm-close-footer'
                                     onClick={() => this.handleCloseUdmDialog()}
                                     title='Close dialog'
                                 >
@@ -764,6 +788,7 @@ export class MultiInputPanelWidget extends ReactWidget {
                             <div className='utlx-udm-dialog-header'>
                                 <h3>Input summary — ${activeInput.name}</h3>
                                 <button
+                                    data-testid='utlx-info-close'
                                     className='utlx-udm-dialog-close'
                                     onClick={() => this.setState({ abstractOpen: false })}
                                     title='Close'
@@ -772,12 +797,13 @@ export class MultiInputPanelWidget extends ReactWidget {
                                 </button>
                             </div>
                             <div className='utlx-udm-dialog-content'>
-                                <pre className='utlx-abstract-text'>
+                                <pre data-testid='utlx-info-content' className='utlx-abstract-text'>
                                     {this.abstractForActiveInput(activeInput) || 'No structure available for this input.'}
                                 </pre>
                             </div>
                             <div className='utlx-udm-dialog-footer'>
                                 <button
+                                    data-testid='utlx-info-close-footer'
                                     onClick={() => this.setState({ abstractOpen: false })}
                                     title='Close'
                                 >

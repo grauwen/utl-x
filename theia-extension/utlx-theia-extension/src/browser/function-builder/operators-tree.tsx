@@ -61,6 +61,7 @@ export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
             {Array.from(operatorsByCategory.entries()).map(([category, operators]) => (
                 <div key={category} className='operator-category'>
                     <div
+                        data-testid='utlx-op-category'
                         className='category-header'
                         onClick={() => toggleCategory(category)}
                     >
@@ -73,6 +74,7 @@ export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
                         <div className='category-operators'>
                             {operators.map((op) => (
                                 <div
+                                    data-testid='utlx-op-item'
                                     key={op.symbol}
                                     className={`operator-item ${selectedOperator?.symbol === op.symbol ? 'selected' : ''}`}
                                     onClick={() => onSelectOperator(op)}
@@ -82,6 +84,7 @@ export const OperatorsTree: React.FC<OperatorsTreeProps> = ({
                                     <span className='operator-name'>{op.name}</span>
                                     <div className='operator-actions'>
                                         <button
+                                            data-testid='utlx-op-insert'
                                             className='insert-btn'
                                             onClick={(e) => {
                                                 e.stopPropagation();

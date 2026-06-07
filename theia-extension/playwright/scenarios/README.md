@@ -32,6 +32,27 @@ used by scripts.
 - anything fragile or order-dependent
 ```
 
+## Stable selectors (the hook surface)
+
+**Every interactive control is tagged** — ~104 `data-testid` hooks across all panels, the toolbar,
+and every dialog. Scripts target these, never fragile text/CSS. Convention:
+`[data-testid="utlx-<area>-<action>"]`.
+
+Groups (count): `utlx-execute` · `utlx-mode-toggle` · `utlx-ai-assist` · **input** (18) ·
+**output** (20) · **editor** (7) · **mcp** dialog (14) · **fb** = Function Builder dialog (23) ·
+**field** = FB inputs tree (10) · **op** = FB operators tree (3) · **udm** viewer (6) ·
+**info** summary (3) · **coverage** (2). Monaco itself: `.utlx-editor-widget .monaco-editor`.
+
+**Status bar** (class hooks — Theia StatusBar takes no data-testid):
+`.utlx-sb-file-dialog-mode` (Load: Theia/Browser) · `.utlx-sb-name-on-load-mode` (Name: Inherit/Keep)
+
+To list every hook (authoritative):
+```bash
+grep -rhoE "data-testid='utlx-[a-z-]+'" utlx-theia-extension/src/browser | sort -u
+```
+
+> These appear in the DOM only **after the extension is rebuilt** (`rebuild-and-start-mcp.sh`).
+
 Tips that make a scenario easy to script reliably:
 - Refer to UI by **what the user sees** ("click **Execute**", "the **Output** panel shows …")
   — I'll map those to stable selectors (adding `data-testid` hooks where needed).
