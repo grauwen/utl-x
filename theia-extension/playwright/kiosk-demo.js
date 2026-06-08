@@ -55,6 +55,14 @@ const CONFIG = {
   inputFile: path.join(REPO, 'examples/json/00-enterprise-order.json'),
   // Step 9: the matching real-world transform for the SAME input — shows the language at scale.
   exampleUtlxFile: path.join(REPO, 'examples/json/00-enterprise-order-to-fulfillment-ticket.utlx'),
+  // Step 28: a second input loaded alongside the order (name inherited from the file → employee-roster).
+  rosterCsvFile: path.join(REPO, 'examples/csv/01-employee-roster.csv'),
+  // Step 30: a small mapping that reads BOTH inputs.
+  dualInputTransform: [
+    'orderId: $input.orderId,',
+    'customer: $input.customer.companyName,',
+    'employeeCount: count($employee-roster)'
+  ].join('\n'),
 
   // The transform BODY (inner fields only). Clear provides the `{ }` wrapper + header;
   // we replace only the `// Your transformation code here` placeholder. Header is never touched.
@@ -140,6 +148,29 @@ async function slowScroll(page, selector, { total = 2000, step = 110, pause = 38
   }
 }
 
+// ── Function Builder helpers (selectors verified against the live FB dialog) ─────────────────
+// FB = the modal dialog. Tabs: button.tab-button (Available Inputs | Operators | Standard Library).
+// Operators categories: .operator-category > .category-header (items: .operator-item/.operator-name).
+// Stdlib categories:     .category          > .category-header (items: .function-item-compact/.function-name).
+const FB = '.utlx-function-builder-dialog';
+async function openFunctionBuilder(page) {
+  await page.locator('[data-testid="utlx-editor-function-builder"]').first().click();
+  await page.locator(FB).first().waitFor({ state: 'visible', timeout: 15000 });
+  await sleep(CONFIG.beat);
+}
+async function fbTab(page, name) {
+  await page.locator(`${FB} button.tab-button`, { hasText: name }).first().click();
+  await sleep(CONFIG.beat);
+}
+// Toggle a category open/closed by clicking its header. scope = '.operator-category' or '.category'.
+async function fbToggleCategory(page, scope, name) {
+  await page.locator(`${FB} ${scope}`, { hasText: name }).locator('.category-header').first().click();
+}
+async function closeFunctionBuilder(page) {
+  await page.locator(`${FB} button.close-btn-footer`).first().click().catch(() => {});
+  await page.locator(FB).first().waitFor({ state: 'hidden', timeout: 10000 }).catch(() => {});
+}
+
 async function runOnce(page, inputJson) {
   // 1. Load the JSON input. Name Keep ⇒ the slot stays "input" (so $input resolves).
   //    (trial 1) We fill the input textarea directly — robust + same visible result as a
@@ -203,7 +234,129 @@ async function runOnce(page, inputJson) {
   narrate('Step 12 — scroll the result to show the full fulfillment ticket');
   await slowScroll(page, SEL.outputResult, { total: 2200, step: 110, pause: 380 });
 
-  narrate('Simple mapping → real-world transform. Done.');
+  // 13. Open the Function Builder — defaults to the "Available Inputs" tab.
+  narrate('Step 13 — open the Function Builder (Available Inputs)');
+  await openFunctionBuilder(page);
+
+  // 14–20. Drill into the $input field tree. Structure (field-tree.tsx):
+  //   $input row : .input-node > .input-header  (chevron codicon-chevron-right/down)
+  //   field row  : .field-node > .field-header   (expand chevron = [data-testid=utlx-field-toggle],
+  //                .field-name = the label, insert = .insert-btn). A single object input auto-expands.
+  narrate('Step 14 — the $input tree (Available Inputs)');
+  console.log('   $input nodes present:', await page.locator(`${FB} .input-node`).count().catch(() => 0));
+
+  // 15. Ensure $input is expanded (single input auto-expands; click the header only if collapsed).
+  narrate('Step 15 — expand $input');
+  if (await page.locator(`${FB} .input-node .input-header .codicon-chevron-right`).count().catch(() => 0)) {
+    await page.locator(`${FB} .input-node .input-header`).first().click().catch(() => {});
+  }
+  await sleep(2000);
+
+  // A field row addressed by its EXACT name, via its direct header child (avoids ancestor matches).
+  const fieldRow = (name) => page.locator(`${FB} .field-node`).filter({
+    has: page.locator('> .field-header > .field-name', { hasText: new RegExp(`^${name}$`) })
+  }).first();
+  const expandField = async (name) => {
+    const r = fieldRow(name);
+    await r.scrollIntoViewIfNeeded().catch(() => {});
+    await r.locator('> .field-header [data-testid="utlx-field-toggle"]').first().click().catch(() => {});
+  };
+
+  // 16–18. Expand customer → primaryContact → address (the data uses lowercase primaryContact).
+  for (const f of ['customer', 'primaryContact', 'address']) {
+    narrate(`Step — expand ${f}`);
+    await expandField(f);
+    await sleep(2000);
+  }
+
+  // 19. Select postalCode (clicking the row shows its "Available Data").
+  narrate('Step 19 — select postalCode (show available data)');
+  {
+    const r = fieldRow('postalCode');
+    await r.scrollIntoViewIfNeeded().catch(() => {});
+    await r.locator('> .field-header').first().click().catch(() => {});
+    await sleep(2000);
+  }
+
+  // 20. Click the insert icon on the postalCode line.
+  narrate('Step 20 — insert postalCode');
+  await fieldRow('postalCode').locator('> .field-header > .insert-btn').first().click().catch(() => {});
+  await sleep(4000);
+
+  // 15. Operators tab.
+  narrate('Step 15 — Operators tab');
+  await fbTab(page, 'Operators');
+
+  // 16–21. Open each operator category for 5s, then close it.
+  for (const cat of ['Arithmetic', 'Comparison', 'Logical']) {
+    narrate(`Step — ${cat}: open (5s) then close`);
+    await fbToggleCategory(page, '.operator-category', cat); await sleep(5000);
+    await fbToggleCategory(page, '.operator-category', cat); await sleep(CONFIG.beat);
+  }
+
+  // 22. Special: open, then click each operator (3s between, 3s after the last).
+  narrate('Step 22 — Special: open and click each operator');
+  await fbToggleCategory(page, '.operator-category', 'Special'); await sleep(CONFIG.beat);
+  {
+    const items = page.locator(`${FB} .operator-category`, { hasText: 'Special' }).locator('.operator-item');
+    const c = await items.count().catch(() => 0);
+    for (let i = 0; i < c; i++) { await items.nth(i).click().catch(() => {}); await sleep(3000); }
+  }
+
+  // 23. Standard Library tab; scroll down, then bring Geospatial back into view.
+  narrate('Step 23 — Standard Library: scroll down, back up to Geospatial');
+  await fbTab(page, 'Standard Library');
+  await slowScroll(page, `${FB}`, { total: 1800, step: 110, pause: 320 });
+  await page.locator(`${FB} .category`, { hasText: 'Geospatial' }).first().scrollIntoViewIfNeeded().catch(() => {});
+  await sleep(CONFIG.beat);
+
+  // 24. Open Geospatial.
+  narrate('Step 24 — open Geospatial');
+  await fbToggleCategory(page, '.category', 'Geospatial'); await sleep(2000);
+
+  // 25. Click destinationPoint.
+  narrate('Step 25 — destinationPoint');
+  await page.locator(`${FB} .function-item-compact`, { hasText: 'destinationPoint' }).first().click().catch(() => {});
+  await sleep(3000);
+
+  // 26. Close the Function Builder.
+  narrate('Step 26 — close the Function Builder');
+  await closeFunctionBuilder(page);
+
+  // 27. Flip Name keep → inherit (status-bar switch) so the next loaded file names its own input.
+  narrate('Step 27 — switch Name keep → inherit');
+  await page.locator(SEL.sbNameOnLoadMode).first().click().catch(() => {});
+  await sleep(CONFIG.beat);
+
+  // 28. Add a second input and load the employee-roster CSV (real Load button → filechooser).
+  narrate('Step 28 — add a second input: load 01-employee-roster.csv');
+  await page.locator(SEL.inputAddBtn).first().click().catch(() => {});
+  await sleep(CONFIG.beat);
+  try {
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 15000 }),
+      page.locator(SEL.inputLoadBtn).last().click(),   // last() = the just-added input's Load
+    ]);
+    await chooser.setFiles(CONFIG.rosterCsvFile);
+  } catch (e) { console.error('  step 28 load failed:', e.message); }
+  await sleep(3000);
+
+  // 29. Clear the transform.
+  narrate('Step 29 — clear the UTL-X');
+  await page.locator(SEL.editorClearBtn).first().click().catch(() => {});
+  await sleep(CONFIG.beat);
+
+  // 30. Write a mapping that reads BOTH inputs.
+  narrate('Step 30 — a mapping that uses $input and $employee-roster');
+  await setTransformBody(page, CONFIG.dualInputTransform);
+  await sleep(CONFIG.beat);
+
+  // 31. Execute the multi-input mapping.
+  narrate('Step 31 — Execute the multi-input mapping');
+  await setOutputFormat(page, 'json');
+  await execute(page);
+
+  narrate('Simple mapping → real-world transform → Function Builder → multi-input. Done.');
 }
 
 (async () => {
