@@ -105,9 +105,13 @@ fi
 
 # Free the port first — kill any prior UTLX MCP instance (incl. an orphan that
 # survived a Theia restart) so we don't hit EADDRINUSE and silently keep an old build.
-EXISTING=$(lsof -ti:"$PORT" 2>/dev/null || true)
+#
+# CRITICAL: only the LISTENER. Plain `lsof -ti:$PORT` also matches *clients connected to*
+# $PORT — and the Theia backend holds a client connection to the MCP — so killing that set
+# would take Theia down too. `-sTCP:LISTEN` restricts it to the server socket.
+EXISTING=$(lsof -nP -iTCP:"$PORT" -sTCP:LISTEN -t 2>/dev/null || true)
 if [ -n "$EXISTING" ]; then
-    echo "Port $PORT in use by PID(s): $EXISTING — killing before start..."
+    echo "Port $PORT listener in use by PID(s): $EXISTING — killing before start..."
     echo "$EXISTING" | xargs kill -9 2>/dev/null || true
     sleep 1
 fi

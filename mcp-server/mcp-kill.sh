@@ -5,8 +5,10 @@
 #
 PORT="${1:-7780}"
 
-# 1) Kill whatever holds the port (the reliable path).
-PIDS=$(lsof -ti:"$PORT" 2>/dev/null || true)
+# 1) Kill the LISTENER on the port. NOT a plain `lsof -ti:$PORT` — that also matches
+#    *clients connected to* the port (the Theia backend holds a client connection to the
+#    MCP), so killing that set would take Theia down too. `-sTCP:LISTEN` = server only.
+PIDS=$(lsof -nP -iTCP:"$PORT" -sTCP:LISTEN -t 2>/dev/null || true)
 if [ -n "$PIDS" ]; then
     echo "Killing PID(s) on port $PORT: $PIDS"
     echo "$PIDS" | xargs kill -9 2>/dev/null || true

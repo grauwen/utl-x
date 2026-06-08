@@ -77,7 +77,10 @@ fi
 # a previous Theia run. Without this the Theia backend's auto-start hits
 # EADDRINUSE and the stale (old-build) MCP keeps serving the AI Assist panel.
 UTLX_MCP_PORT_NUM="${UTLX_MCP_PORT:-7780}"
-UTLX_MCP_PIDS=$(lsof -ti:"$UTLX_MCP_PORT_NUM" 2>/dev/null || true)
+# LISTENER only — a plain `lsof -ti:$PORT` also matches *clients connected to* the MCP
+# (the Theia backend holds such a connection), so it would kill Theia too. `-sTCP:LISTEN`
+# restricts to the server socket; the title-based backstop below covers orphans.
+UTLX_MCP_PIDS=$(lsof -nP -iTCP:"$UTLX_MCP_PORT_NUM" -sTCP:LISTEN -t 2>/dev/null || true)
 if [ -n "$UTLX_MCP_PIDS" ]; then
     echo "Killing UTL-X MCP server on port $UTLX_MCP_PORT_NUM: $UTLX_MCP_PIDS"
     echo "$UTLX_MCP_PIDS" | xargs kill -9 2>/dev/null || true
