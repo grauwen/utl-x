@@ -13,6 +13,10 @@
  *   4. Execute → show result
  *   5. switch output → xml ; 6. Execute
  *   7. switch output → yaml; 8. Execute
+ *   9. load the full enterprise transform (examples/json/00-enterprise-order-to-fulfillment-ticket.utlx)
+ *   10. slow-scroll Monaco to show its complexity
+ *   11. Execute → full fulfillment ticket
+ *   12. slow-scroll the result
  *   (loop, with a pause, until you Ctrl-C)
  *
  * Run (Playwright resolves from playwright-mcp-server):
@@ -49,6 +53,8 @@ const REPO = path.resolve(__dirname, '../..');
 const CONFIG = {
   baseURL: 'http://localhost:4000',
   inputFile: path.join(REPO, 'examples/json/00-enterprise-order.json'),
+  // Step 9: the matching real-world transform for the SAME input — shows the language at scale.
+  exampleUtlxFile: path.join(REPO, 'examples/json/00-enterprise-order-to-fulfillment-ticket.utlx'),
 
   // The transform BODY (inner fields only). Clear provides the `{ }` wrapper + header;
   // we replace only the `// Your transformation code here` placeholder. Header is never touched.
@@ -111,6 +117,29 @@ async function execute(page) {
   await sleep(CONFIG.afterExecute);
 }
 
+// Step 9: load a complete .utlx via the REAL editor Load button. In 'browser' file-dialog mode the
+// button opens a native <input type=file>, which Playwright drives through the filechooser event +
+// setFiles. This goes through the IDE's loadFile(), so the file's own %utlx header is preserved
+// (unlike pasting into Monaco, where the IDE re-applies its managed header and the file's is lost).
+async function loadTransformViaButton(page, filePath) {
+  const [chooser] = await Promise.all([
+    page.waitForEvent('filechooser', { timeout: 15000 }),
+    page.locator(SEL.editorLoadBtn).first().click(),
+  ]);
+  await chooser.setFiles(filePath);
+}
+
+// Slow, audience-friendly scroll of a scrollable element (Monaco surface or the result <pre>):
+// hover it so the wheel targets it, then wheel down in small beats.
+async function slowScroll(page, selector, { total = 2000, step = 120, pause = 250 } = {}) {
+  const el = page.locator(selector).first();
+  await el.hover().catch(() => {});
+  for (let scrolled = 0; scrolled < total; scrolled += step) {
+    await page.mouse.wheel(0, step);
+    await sleep(pause);
+  }
+}
+
 async function runOnce(page, inputJson) {
   // 1. Load the JSON input. Name Keep ⇒ the slot stays "input" (so $input resolves).
   //    (trial 1) We fill the input textarea directly — robust + same visible result as a
@@ -152,7 +181,29 @@ async function runOnce(page, inputJson) {
   await sleep(CONFIG.beat);
   await execute(page);
 
-  narrate('One transform, three formats — done.');
+  narrate('One transform, three formats — now scale up.');
+
+  // 9. Load the matching real-world transform via the REAL Load button (preserves the file header).
+  narrate('Step 9 — load the enterprise order → fulfillment-ticket transform (Load button)');
+  await loadTransformViaButton(page, CONFIG.exampleUtlxFile);
+  await sleep(CONFIG.beat);
+
+  // 10. Slowly scroll the editor to show the transform's real-world complexity.
+  narrate('Step 10 — scroll the editor to show the complexity');
+  await slowScroll(page, SEL.monaco, { total: 2200, step: 120, pause: 260 });
+  await sleep(CONFIG.beat);
+
+  // 11. Execute → the full fulfillment ticket (JSON).
+  narrate('Step 11 — Execute the enterprise transform');
+  await setOutputFormat(page, 'json');
+  await sleep(CONFIG.beat);
+  await execute(page);
+
+  // 12. Slowly scroll the result to reveal the full ticket.
+  narrate('Step 12 — scroll the result to show the full fulfillment ticket');
+  await slowScroll(page, SEL.outputResult, { total: 2200, step: 120, pause: 260 });
+
+  narrate('Simple mapping → real-world transform. Done.');
 }
 
 (async () => {
@@ -179,7 +230,11 @@ async function runOnce(page, inputJson) {
 
   // Precondition (semaphores): Load Theia + Name Keep — set before any page script runs.
   await context.addInitScript(({ keys }) => {
-    localStorage.setItem(keys.fileDialogMode, 'theia');   // scenario1: Load Theia
+    // Step 9 uses the REAL editor Load button. 'browser' mode makes it open a native
+    // <input type=file>, which Playwright drives via the filechooser event (the Theia dialog
+    // is a widget Playwright can't reliably drive). Either mode loads via loadFile() so the
+    // file's %utlx header is preserved.
+    localStorage.setItem(keys.fileDialogMode, 'browser'); // scenario1: Load via native file picker
     localStorage.setItem(keys.nameOnLoadMode, 'keep');    // scenario1: Name Keep
   }, { keys: PRECONDITION });
 
