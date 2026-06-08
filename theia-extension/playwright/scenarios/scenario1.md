@@ -65,41 +65,50 @@
 56.  Wait 8 seconds
 57.  input customer schema TAB LOAD examples/mcm/06-order-customers/input2.customer.schema.json
 58.  wait 8 seconds
-59.  output schema TAB LOAD examples/mcm/06-order-customers/output.customs-declaration.schemna.json
-60.  wait 8 seconds
-61.  click AI assist
-62.  wait 2 seconds
-63.  click > Contract coverage (so it is opening)
-64.  wait 30 seconds
-65.  click cancel in AI assist
-66.  clear all input,
-67.  claer transformaation
-68.  clear output
-69.  rename input to shipment
-70.  input schipment instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json//sample.shipment.xml
-71.  wait 8 seconds
-72.  input  schipment schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input1.shipment.xsd 
-73.  wait 8 seconds
-74.  Add additional input (2nd) and rename to packages
-75.  input packages  instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-jsonn/sample.packages.csv
-76.   wait 8 seconds
-77.  input packages schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input2.packages.tsch.json
-78.   wait 8 seconds
-79.   Add additional input (3rd) and rename to customer
-80.   input customer instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/sample.customer.json
-81.   wait 8 seconds
-82.   input customer  schmea TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input3.customer.schema.json
-83.   wait 8 seconds
-84.   output schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/output.clean.shipping-manifest.xsd
-85.   wait 8 seconds
-86.   click AI assist
-87.   wait 20 seconds
-88.   In the prompt type MAP
-89.   wait 42 seconds
-90.   click > Contract coverage (so it is opening)
-91.   wait 20 seonds
-92.   click map to output contract
-93.   
+59.  output schema TAB format jsch
+60.  output schema TAB LOAD examples/mcm/06-order-customers/output.customs-declaration.schemna.json
+61.  wait 8 seconds
+62.  click AI assist
+63.  wait 2 seconds
+64.  click > Contract coverage (so it is opening)
+65.  wait 30 seconds
+66.  click cancel in AI assist
+67.  clear all input,
+68.  claer transformaation
+69.  clear output
+70.  rename input to shipment
+71.  input schipment instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json//sample.shipment.xml
+72.  wait 8 seconds
+73.  input  schipment schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input1.shipment.xsd 
+74.  wait 8 seconds
+75.  Add additional input (2nd) and rename to packages
+76.  input packages  instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-jsonn/sample.packages.csv
+77.   wait 8 seconds
+78.  input packages schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input2.packages.tsch.json
+79.   wait 8 seconds
+80.   Add additional input (3rd) and rename to customer
+81.   input customer instance TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/sample.customer.json
+82.   wait 8 seconds
+83.   input customer  schmea TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/input3.customer.schema.json
+84.   wait 8 seconds
+85.   output schema TAB format xsd
+86.   output schema TAB LOAD examples/mcm/10-logistics-manifest-xml-csv-json/output.clean.shipping-manifest.xsd
+87.   wait 8 seconds
+88.   click AI assist
+89.   wait 20 seconds
+90.   In the prompt type MAP
+91.   wait 42 seconds
+92.   click > Contract coverage (so it is opening)
+93.   wait 10 seonds
+94.   click v Contract coverga ti close it again
+95.   click map to output contract
+96.   Wait till the AI assist comes with result
+97.   wait 10 seconds
+98.   Click apply
+99.   wait 10 seconds
+100.  
+101.  
+102.  
 
 ## Notes
 - <pacing / narration cues for a talk>
