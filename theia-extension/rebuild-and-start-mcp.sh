@@ -203,7 +203,15 @@ else
     echo "  ✓ UTLXD healthy on :$UTLXD_API_PORT"
 fi
 
-# --- MCP: (re)start each run so it reflects the just-built dist (claude-code, :$MCP_PORT) ---
+# --- MCP: rebuild dist from src, THEN (re)start so it reflects the latest code (claude-code, :$MCP_PORT) ---
+echo "  Building UTLX MCP server (tsc + assets) ..."
+if ( cd "$REPO_ROOT/mcp-server" && npm run build ) > /tmp/mcp-build-theia.log 2>&1; then
+    echo "  ✓ MCP server built (dist up to date)"
+else
+    echo "  ✗ MCP server build FAILED (see /tmp/mcp-build-theia.log):"
+    tail -20 /tmp/mcp-build-theia.log
+    exit 1
+fi
 echo "  (Re)starting UTLX MCP on :$MCP_PORT via mcp-server.sh (claude-code)..."
 "$REPO_ROOT/mcp-server/mcp-server.sh" > /tmp/mcp-server-theia.log 2>&1
 mcp_ok=false
