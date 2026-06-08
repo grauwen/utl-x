@@ -284,7 +284,7 @@ async function runOnce(page, inputJson) {
   await sleep(4000);
 
   // 15. Operators tab.
-  narrate('Step 15 — Operators tab');
+  narrate('Step 21 — Operators tab');
   await fbTab(page, 'Operators');
 
   // 16–21. Open each operator category for 5s, then close it.
@@ -295,7 +295,7 @@ async function runOnce(page, inputJson) {
   }
 
   // 22. Special: open, then click each operator (3s between, 3s after the last).
-  narrate('Step 22 — Special: open and click each operator');
+  narrate('Step 28 — Special: open and click each operator');
   await fbToggleCategory(page, '.operator-category', 'Special'); await sleep(CONFIG.beat);
   {
     const items = page.locator(`${FB} .operator-category`, { hasText: 'Special' }).locator('.operator-item');
@@ -304,32 +304,32 @@ async function runOnce(page, inputJson) {
   }
 
   // 23. Standard Library tab; scroll down, then bring Geospatial back into view.
-  narrate('Step 23 — Standard Library: scroll down, back up to Geospatial');
+  narrate('Step 29 — Standard Library: scroll down, back up to Geospatial');
   await fbTab(page, 'Standard Library');
   await slowScroll(page, `${FB}`, { total: 1800, step: 110, pause: 320 });
   await page.locator(`${FB} .category`, { hasText: 'Geospatial' }).first().scrollIntoViewIfNeeded().catch(() => {});
   await sleep(CONFIG.beat);
 
   // 24. Open Geospatial.
-  narrate('Step 24 — open Geospatial');
+  narrate('Step 30 — open Geospatial');
   await fbToggleCategory(page, '.category', 'Geospatial'); await sleep(2000);
 
   // 25. Click destinationPoint.
-  narrate('Step 25 — destinationPoint');
+  narrate('Step 31 — destinationPoint');
   await page.locator(`${FB} .function-item-compact`, { hasText: 'destinationPoint' }).first().click().catch(() => {});
   await sleep(3000);
 
   // 26. Close the Function Builder.
-  narrate('Step 26 — close the Function Builder');
+  narrate('Step 32 — close the Function Builder');
   await closeFunctionBuilder(page);
 
   // 27. Flip Name keep → inherit (status-bar switch) so the next loaded file names its own input.
-  narrate('Step 27 — switch Name keep → inherit');
+  narrate('Step 33 — switch Name keep → inherit');
   await page.locator(SEL.sbNameOnLoadMode).first().click().catch(() => {});
   await sleep(CONFIG.beat);
 
   // 28. Add a second input and load the employee-roster CSV (real Load button → filechooser).
-  narrate('Step 28 — add a second input: load 01-employee-roster.csv');
+  narrate('Step 34 — add a second input: load 01-employee-roster.csv');
   await page.locator(SEL.inputAddBtn).first().click().catch(() => {});
   await sleep(CONFIG.beat);
   try {
@@ -342,17 +342,17 @@ async function runOnce(page, inputJson) {
   await sleep(3000);
 
   // 29. Clear the transform.
-  narrate('Step 29 — clear the UTL-X');
+  narrate('Step 35 — clear the UTL-X');
   await page.locator(SEL.editorClearBtn).first().click().catch(() => {});
   await sleep(CONFIG.beat);
 
   // 30. Write a mapping that reads BOTH inputs.
-  narrate('Step 30 — a mapping that uses $input and $employee-roster');
+  narrate('Step 36 — a mapping that uses $input and $employee-roster');
   await setTransformBody(page, CONFIG.dualInputTransform);
   await sleep(CONFIG.beat);
 
   // 31. Execute the multi-input mapping.
-  narrate('Step 31 — Execute the multi-input mapping');
+  narrate('Step 37 — Execute the multi-input mapping');
   await setOutputFormat(page, 'json');
   await execute(page);
 
