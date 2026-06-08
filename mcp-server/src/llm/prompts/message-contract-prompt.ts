@@ -61,6 +61,11 @@ export function buildMessageContractSystemPrompt(): string {
     '  comment. NEVER fabricate a realistic-looking value for a gap.',
     '- Prefer the provided coverage plan for sourcing; use the schemas as the structural truth.',
     '',
+    'You produce a UTL-X TRANSFORMATION (the mapping body) that, WHEN RUN, emits a DATA INSTANCE',
+    'in the data format named below, conforming to the contract. You must NEVER emit a schema —',
+    'no XSD, JSON Schema, USDL, or `%types`/`%fields`/`%namespace`/`%kind`. The contract schema is',
+    'your TARGET (an input), not your output; reproduce its DATA shape, not its schema definition.',
+    '',
     'Output ONLY the transformation body (after the --- separator). Do not restate the header.',
   ].join('\n');
 }

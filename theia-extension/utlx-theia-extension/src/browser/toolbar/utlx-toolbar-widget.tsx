@@ -1299,7 +1299,13 @@ export class UTLXToolbarWidget extends ReactWidget {
             // Get existing editor content and extract header
             const editorContent = editor.getContent();
             const { header, body } = this.splitHeaderAndBody(editorContent);
-            const outputFormat = this.extractOutputFormat(editorContent);
+            // IB05: in MC mode the editor's `output` directive is the CONTRACT SCHEMA format
+            // (jsch/xsd/usdl/…). The transformation must emit a DATA INSTANCE conforming to the
+            // contract, so generation's output format must be the DATA format the schema
+            // describes (xsd→xml, jsch→json, …) — NOT the schema format (else the model returns
+            // the schema/USDL instead of a mapping). Execution mode is left as-is.
+            const rawOutputFormat = this.extractOutputFormat(editorContent);
+            const outputFormat = isMC ? this.schemaToDataFormat(rawOutputFormat) : rawOutputFormat;
 
             console.log('[Toolbar] Step 3: Building request...');
             console.log('[Toolbar] Existing header:', header.substring(0, 100));
@@ -1552,6 +1558,25 @@ export class UTLXToolbarWidget extends ReactWidget {
             }
         }
         return 'json'; // Default
+    }
+
+    /**
+     * IB05: map a schema format to the DATA (instance) format it describes. In MC mode the
+     * generated transformation must output a data instance conforming to the contract — not the
+     * schema itself — so the request's output format must be a data format. Non-schema formats
+     * pass through unchanged. (Mirrors schemaFormatToInstanceFormat in the frontend contribution.)
+     */
+    private schemaToDataFormat(fmt: string): string {
+        switch ((fmt || '').toLowerCase()) {
+            case 'jsch':  return 'json';
+            case 'xsd':   return 'xml';
+            case 'osch':  return 'odata';
+            case 'tsch':  return 'csv';
+            case 'avro':  return 'json';
+            case 'proto': return 'json';
+            case 'usdl':  return 'json';
+            default:      return fmt;   // already a data format
+        }
     }
 
     private async handleExecute(): Promise<void> {
