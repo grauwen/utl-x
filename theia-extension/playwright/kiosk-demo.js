@@ -73,11 +73,11 @@ const CONFIG = {
   sel: SEL,
 
   // ── pacing (demo speed) ──────────────────────────────────────────────────
-  slowMo: 250,            // ms per Playwright action (visible, watchable)
-  typeDelay: 45,          // ms per keystroke when typing the transform
-  beat: 1200,             // pause between steps (narration room)
-  afterExecute: 1600,     // pause to let the audience read each result
-  betweenLoops: 4000,     // pause before repeating
+  slowMo: 380,            // ms per Playwright action (visible, watchable)
+  typeDelay: 65,          // ms per keystroke when typing the transform
+  beat: 1800,             // pause between steps (narration room)
+  afterExecute: 4200,     // pause to let the audience read each result (extra time after every Execute)
+  betweenLoops: 6000,     // pause before repeating
 
   loop: !process.env.DEMO_ONCE,   // `npm run demo:once` = one pass then exit (good for recording)
   recordVideoDir: path.join(__dirname, 'recordings'),  // talk-safe fallback video
@@ -131,7 +131,7 @@ async function loadTransformViaButton(page, filePath) {
 
 // Slow, audience-friendly scroll of a scrollable element (Monaco surface or the result <pre>):
 // hover it so the wheel targets it, then wheel down in small beats.
-async function slowScroll(page, selector, { total = 2000, step = 120, pause = 250 } = {}) {
+async function slowScroll(page, selector, { total = 2000, step = 110, pause = 380 } = {}) {
   const el = page.locator(selector).first();
   await el.hover().catch(() => {});
   for (let scrolled = 0; scrolled < total; scrolled += step) {
@@ -190,7 +190,7 @@ async function runOnce(page, inputJson) {
 
   // 10. Slowly scroll the editor to show the transform's real-world complexity.
   narrate('Step 10 — scroll the editor to show the complexity');
-  await slowScroll(page, SEL.monaco, { total: 2200, step: 120, pause: 260 });
+  await slowScroll(page, SEL.monaco, { total: 2200, step: 110, pause: 380 });
   await sleep(CONFIG.beat);
 
   // 11. Execute → the full fulfillment ticket (JSON).
@@ -201,7 +201,7 @@ async function runOnce(page, inputJson) {
 
   // 12. Slowly scroll the result to reveal the full ticket.
   narrate('Step 12 — scroll the result to show the full fulfillment ticket');
-  await slowScroll(page, SEL.outputResult, { total: 2200, step: 120, pause: 260 });
+  await slowScroll(page, SEL.outputResult, { total: 2200, step: 110, pause: 380 });
 
   narrate('Simple mapping → real-world transform. Done.');
 }
