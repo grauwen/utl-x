@@ -305,7 +305,23 @@ else
     exit 1
 fi
 
-# Launch Chrome Canary with remote debugging, clean profile
+# Bust the service-worker + HTTP cache in the launch profile so a freshly rebuilt frontend is
+# actually loaded. Theia registers a service worker that caches the app shell, so WITHOUT this a
+# rebuild keeps serving the OLD bundle even on a hard reload (a new window on the same profile
+# isn't enough — the SW lives in the profile). We delete only the caches; Local Storage / IndexedDB
+# (Theia layout, open editors) are preserved.
+# NOTE: the "-canary" in the profile name is historical — this is a DEDICATED profile used by
+# whichever browser we launch ($BROWSER_NAME, regular Chrome by default), not Chrome Canary. The
+# path is kept stable on purpose so the profile (and its Theia layout) survives across runs.
+CHROME_PROFILE="$HOME/.utlx-chrome-canary-profile"
+echo "Clearing service-worker + HTTP cache in $CHROME_PROFILE (so the new build loads)..."
+rm -rf "$CHROME_PROFILE/Default/Service Worker" \
+       "$CHROME_PROFILE/Default/Cache" \
+       "$CHROME_PROFILE/Default/Code Cache" \
+       "$CHROME_PROFILE/Default/GPUCache" 2>/dev/null || true
+
+# Launch the selected browser ($BROWSER_NAME — regular Chrome by default; Canary only as fallback)
+# with remote debugging, into the dedicated profile above.
 "$BROWSER_PATH" \
     --remote-debugging-port=$CDP_PORT \
     --user-data-dir="$HOME/.utlx-chrome-canary-profile" \
