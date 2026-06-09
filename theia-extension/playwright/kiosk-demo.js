@@ -87,7 +87,12 @@ const CONFIG = {
   afterExecute: 4200,     // pause to let the audience read each result (extra time after every Execute)
   betweenLoops: 6000,     // pause before repeating
 
-  loop: !process.env.DEMO_ONCE,   // `npm run demo:once` = one pass then exit (good for recording)
+  // Run modes (default = one pass, then leave the browser OPEN — best for a talk):
+  //   (none)    → one pass, then leave the browser open (Ctrl-C to close + flush video)
+  //   DEMO_LOOP → repeat until Ctrl-C (kiosk attract mode)
+  //   DEMO_ONCE → one pass, then close (flush video — for recording)
+  loop: !!process.env.DEMO_LOOP,
+  stayOpen: !process.env.DEMO_LOOP && !process.env.DEMO_ONCE,
   recordVideoDir: path.join(__dirname, 'recordings'),  // talk-safe fallback video
 };
 
@@ -137,10 +142,22 @@ async function loadTransformViaButton(page, filePath) {
   await chooser.setFiles(filePath);
 }
 
-// Slow, audience-friendly scroll of a scrollable element (Monaco surface or the result <pre>):
-// hover it so the wheel targets it, then wheel down in small beats.
+// Slow, audience-friendly scroll. Prefer driving the element's own scrollTop in small beats — that's
+// reliable for DOM-scrollable containers (the FB `.function-tree`, the result <pre>). Only fall back
+// to mouse-wheel for things that aren't scrollTop-scrollable (e.g. Monaco's virtualized viewport),
+// where the cursor must be over the surface.
 async function slowScroll(page, selector, { total = 2000, step = 110, pause = 380 } = {}) {
   const el = page.locator(selector).first();
+  if (!(await el.count().catch(() => 0))) return;
+  const max = await el.evaluate(n => n.scrollHeight - n.clientHeight).catch(() => 0);
+  if (max > 10) {
+    const steps = Math.max(1, Math.ceil(total / step));
+    for (let i = 1; i <= steps; i++) {
+      await el.evaluate((n, top) => { n.scrollTop = top; }, Math.round((max * i) / steps)).catch(() => {});
+      await sleep(pause);
+    }
+    return;
+  }
   await el.hover().catch(() => {});
   for (let scrolled = 0; scrolled < total; scrolled += step) {
     await page.mouse.wheel(0, step);
@@ -163,8 +180,12 @@ async function fbTab(page, name) {
   await sleep(CONFIG.beat);
 }
 // Toggle a category open/closed by clicking its header. scope = '.operator-category' or '.category'.
+// Scroll it into view first and bound the click — a category below the fold must not hang (30s) or
+// abort the whole pass.
 async function fbToggleCategory(page, scope, name) {
-  await page.locator(`${FB} ${scope}`, { hasText: name }).locator('.category-header').first().click();
+  const cat = page.locator(`${FB} ${scope}`, { hasText: name }).first();
+  await cat.scrollIntoViewIfNeeded().catch(() => {});
+  await cat.locator('.category-header').first().click({ timeout: 8000 }).catch(() => {});
 }
 async function closeFunctionBuilder(page) {
   await page.locator(`${FB} button.close-btn-footer`).first().click().catch(() => {});
@@ -172,18 +193,29 @@ async function closeFunctionBuilder(page) {
 }
 
 async function runOnce(page, inputJson) {
-  // 1. Load the JSON input. Name Keep ⇒ the slot stays "input" (so $input resolves).
-  //    (trial 1) We fill the input textarea directly — robust + same visible result as a
-  //    file Load. To show the actual "Load from file" gesture, replace this with a click on
-  //    button[title="Load from file"] and drive the Theia open dialog.
-  narrate('Step 1 — put a JSON order in the Input panel');
-  const ta = page.locator(CONFIG.sel.inputTextarea).first();
-  await ta.waitFor({ state: 'visible', timeout: 15000 });
-  await ta.click();
-  await page.keyboard.press(`${MOD}+A`);
-  await page.keyboard.press('Delete');
-  await ta.fill(inputJson);
-  await ta.blur();
+  // 1. Load the JSON input via the REAL Load button (filechooser → the actual file). This runs the
+  //    IDE's input parse pipeline — format detection + UDM build + the ✓ Format / ✓ UDM indicators —
+  //    so the Function Builder's $input tree has real CONTENTS. (A plain textarea fill drops text in
+  //    the Instance tab but DOESN'T parse → $input shows but is empty.) Name Keep ⇒ slot stays
+  //    "input" (so $input resolves). Browser file-dialog mode ⇒ native picker, drivable via filechooser.
+  narrate('Step 1 — Load the JSON order via the input Load button (parses → UDM)');
+  try {
+    const [chooser] = await Promise.all([
+      page.waitForEvent('filechooser', { timeout: 15000 }),
+      page.locator(CONFIG.sel.inputLoadBtn).first().click(),
+    ]);
+    await chooser.setFiles(CONFIG.inputFile);
+  } catch (e) {
+    // Fallback (less faithful — no parse pipeline): fill the textarea directly.
+    console.error('  step 1: Load button failed, falling back to textarea fill:', e.message);
+    const ta = page.locator(CONFIG.sel.inputTextarea).first();
+    await ta.waitFor({ state: 'visible', timeout: 15000 });
+    await ta.click();
+    await page.keyboard.press(`${MOD}+A`);
+    await page.keyboard.press('Delete');
+    await ta.fill(inputJson);
+    await ta.blur();
+  }
   await sleep(CONFIG.beat);
 
   // 2. Output format defaults to json.
@@ -306,7 +338,8 @@ async function runOnce(page, inputJson) {
   // 23. Standard Library tab; scroll down, then bring Geospatial back into view.
   narrate('Step 29 — Standard Library: scroll down, back up to Geospatial');
   await fbTab(page, 'Standard Library');
-  await slowScroll(page, `${FB}`, { total: 1800, step: 110, pause: 320 });
+  // The scrollable list inside the Standard Library tab is `.function-tree` (not the dialog root).
+  await slowScroll(page, `${FB} .function-tree`, { total: 1800, step: 110, pause: 320 });
   await page.locator(`${FB} .category`, { hasText: 'Geospatial' }).first().scrollIntoViewIfNeeded().catch(() => {});
   await sleep(CONFIG.beat);
 
@@ -410,6 +443,11 @@ async function runOnce(page, inputJson) {
     if (CONFIG.loop) await sleep(CONFIG.betweenLoops);
   } while (CONFIG.loop);
 
+  if (CONFIG.stayOpen) {
+    console.log('\n✓ demo complete — browser left OPEN (no repeat). Press Ctrl-C to close it and flush the video.');
+    await new Promise(resolve => process.once('SIGINT', resolve));
+    console.log('\nClosing…');
+  }
   await context.close();   // flushes the recording to recordings/
   await browser.close();
   console.log(`\n✓ video saved under ${CONFIG.recordVideoDir}`);
