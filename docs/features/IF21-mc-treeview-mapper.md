@@ -1,6 +1,13 @@
 # IF21: IDE — MC "Treeview" mapper (BW-style inputs ▸ output, Function Builder per output node)
 
-**Status:** Proposed (design). Not implemented.
+**Status:** **Phase 1 implemented** (read-only treeview, coverage-colored). Phases 2–3 proposed.
+- **Phase 1 (done):** a third editor view **Treeview** (toggle: Classic | Canvas | Treeview, MC mode only) —
+  all inputs as field trees (left) + the output contract tree (right), each output leaf colored by IF11
+  coverage (✓ direct / ~ derivable / ✗ gap) with its source; containers show a descendant-gap badge; a
+  per-contract summary count. Read-only. Files: `mapping-editor/treeview-widget.tsx`, `style/treeview.css`
+  (+ `index.css` import), `mapping-editor/mapping-types.ts` (`ViewMode += 'treeview'`),
+  `events/utlx-event-service.ts` (event widened), `editor/utlx-editor-widget.tsx` (toggle button +
+  `buildTreeviewData()` reusing `schemaFieldTreeMap` + output preset schema + `buildCoverage`). Typechecks clean.
 **Priority:** High — a familiar, scalable visual mapper for Message Contract mode; it's the human-facing
 surface for the coverage (IF11) + strategy (IF20) work, and reuses components that already exist.
 **Created:** June 2026
@@ -95,8 +102,10 @@ deterministic generator seeds it, the FB refines per node.
 
 ## Phasing
 
-1. **Read-only treeview** — inputs-left / output-contract-right (both `FieldTree`), output nodes **colored
-   by coverage status**. Pure reuse + coverage; instantly useful as a "what maps / what's a gap" view. Low risk.
+1. **Read-only treeview** — inputs-left / output-contract-right, output nodes **colored by coverage
+   status**. Instantly useful as a "what maps / what's a gap" view. **✅ DONE** (uses a lightweight
+   read-only tree renderer rather than the FB `FieldTree`, to avoid its insert buttons / sample pane;
+   FB reuse comes with Phase 2's interactivity).
 2. **Click-to-map** — clicking an output node opens the FB seeded for that field; bind the returned
    expression; regenerate `%utlx`. (Flat / object fields first.)
 3. **Arrays / loops** — drive iteration from IF20 strategy (driver / array-transform), per-collection loop

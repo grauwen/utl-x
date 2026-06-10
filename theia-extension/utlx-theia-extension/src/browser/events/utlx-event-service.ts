@@ -237,7 +237,7 @@ export interface ScaffoldOutputEvent {
  * Event fired when the editor view mode changes (Classic ↔ Canvas)
  */
 export interface EditorViewModeChangedEvent {
-    viewMode: 'classic' | 'canvas';
+    viewMode: 'classic' | 'canvas' | 'treeview';
     fullScreen?: boolean;  // Only relevant for canvas — toggles panel collapse
 }
 

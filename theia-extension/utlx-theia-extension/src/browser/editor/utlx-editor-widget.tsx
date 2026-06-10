@@ -39,6 +39,8 @@ import type { ViewMode } from '../mapping-editor/mapping-types';
 import { useMappingStore } from '../mapping-editor/mapping-store';
 import { schemaFieldInfoToSchemaFields, udmFieldsToSchemaFields, jsonInstanceToSchemaFields, xmlInstanceToSchemaFields } from '../mapping-editor/schema-converter';
 import { parseUdmToTree } from '../function-builder/udm-parser-new';
+import { TreeviewWidget } from '../mapping-editor/treeview-widget';
+import { parseSchemaToFields, buildCoverage } from '../utils/coverage';
 
 export const UTLX_EDITOR_WIDGET_ID = 'utlx-editor';
 
@@ -2016,6 +2018,20 @@ output json
     }
 
     /**
+     * IF21 — assemble the read-only Treeview data from current editor state (no shell needed):
+     * input field trees (from the per-input schema field-tree map), the output contract field tree
+     * (parsed from the output preset schema), and the IF11 coverage report.
+     */
+    protected buildTreeviewData(): { inputs: Array<{ name: string; fields: SchemaFieldInfo[] }>; outputFields: SchemaFieldInfo[]; coverage?: ReturnType<typeof buildCoverage> } {
+        const inputs = Array.from(this.schemaFieldTreeMap.entries())
+            .map(([name, fields]) => ({ name, fields: (fields || []) as SchemaFieldInfo[] }));
+        const outputFields = parseSchemaToFields(this.outputSchemaContent, this.outputSchemaFormat) || [];
+        const covInputs = inputs.filter(i => i.fields.length).map(i => ({ name: i.name, fields: i.fields }));
+        const coverage = outputFields.length ? buildCoverage(covInputs, outputFields) : undefined;
+        return { inputs, outputFields, coverage };
+    }
+
+    /**
      * Toggle canvas full-screen mode (collapse/expand Input/Output panels)
      */
     protected toggleCanvasFullScreen = (): void => {
@@ -2168,6 +2184,7 @@ output json
     protected render(): React.ReactNode {
         const isClassic = this.editorViewMode === 'classic';
         const isCanvas = this.editorViewMode === 'canvas';
+        const isTreeview = this.editorViewMode === 'treeview';
 
         return (
             <div className='utlx-editor-container'>
@@ -2193,6 +2210,15 @@ output json
                                 >
                                     <span className='codicon codicon-type-hierarchy' style={{ fontSize: '11px' }} />
                                     {' '}Canvas
+                                </button>
+                                <button
+                                    data-testid='utlx-editor-view-treeview'
+                                    className={`mapping-view-toggle-btn ${isTreeview ? 'active' : ''}`}
+                                    onClick={() => this.switchViewMode('treeview')}
+                                    title='Treeview — inputs vs. output contract, colored by coverage'
+                                >
+                                    <span className='codicon codicon-list-tree' style={{ fontSize: '11px' }} />
+                                    {' '}Treeview
                                 </button>
                             </div>
                         )}
@@ -2287,11 +2313,23 @@ output json
                     </div>
                 )}
 
+                {/* Treeview View (IF21): inputs ▸ output contract, colored by coverage */}
+                {isTreeview && (() => {
+                    const tv = this.buildTreeviewData();
+                    return (
+                        <div className='utlx-editor-content'>
+                            <TreeviewWidget inputs={tv.inputs} outputFields={tv.outputFields} coverage={tv.coverage} />
+                        </div>
+                    );
+                })()}
+
                 <div className='utlx-editor-footer'>
                     <span className='utlx-editor-info'>
                         {isClassic
                             ? 'UTLX Editor | Connected to LSP'
-                            : 'Mapping Canvas | Draw connections between fields'}
+                            : isTreeview
+                                ? 'Treeview | Inputs ▸ output contract (coverage)'
+                                : 'Mapping Canvas | Draw connections between fields'}
                     </span>
                 </div>
 

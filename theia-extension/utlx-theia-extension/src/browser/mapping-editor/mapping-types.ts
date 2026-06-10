@@ -136,4 +136,4 @@ export type MappingEdge = Edge<MappingEdgeData>;
 
 // ─── View Mode ───
 
-export type ViewMode = 'classic' | 'canvas';
+export type ViewMode = 'classic' | 'canvas' | 'treeview';

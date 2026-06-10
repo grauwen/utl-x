@@ -1,0 +1,101 @@
+/* IF21 — Treeview mapper (MC mode). Read-only inputs ▸ output-contract, coverage-colored. */
+
+.utlx-treeview {
+    display: flex;
+    flex-direction: row;
+    height: 100%;
+    width: 100%;
+    overflow: hidden;
+    background: var(--theia-editor-background);
+    color: var(--theia-editor-foreground);
+    font-size: var(--theia-ui-font-size1);
+}
+
+.utlx-tv-pane {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 50%;
+    min-width: 0;
+    overflow: hidden;
+}
+.utlx-tv-inputs { border-right: 1px solid var(--theia-editorGroup-border, var(--theia-panel-border)); }
+
+.utlx-tv-pane-header {
+    flex: 0 0 auto;
+    padding: 6px 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: var(--theia-ui-font-size0);
+    background: var(--theia-sideBarSectionHeader-background, var(--theia-titleBar-inactiveBackground));
+    border-bottom: 1px solid var(--theia-panel-border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.utlx-tv-pane-body {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 4px 0;
+}
+
+.utlx-tv-empty {
+    padding: 14px 12px;
+    opacity: .6;
+    font-style: italic;
+}
+
+.utlx-tv-input-group { margin-bottom: 6px; }
+.utlx-tv-input-title {
+    padding: 4px 10px;
+    font-weight: 600;
+    color: var(--theia-textLink-foreground);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* nodes */
+.utlx-tv-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 8px 2px 0;
+    white-space: nowrap;
+    cursor: default;
+    border-left: 3px solid transparent;
+}
+.utlx-tv-row:hover { background: var(--theia-list-hoverBackground); }
+.utlx-tv-twisty { display: inline-block; width: 12px; text-align: center; opacity: .7; }
+.utlx-tv-name { font-family: var(--theia-code-font-family); }
+.utlx-tv-type {
+    font-size: var(--theia-ui-font-size0);
+    opacity: .65;
+    padding: 0 4px;
+    border: 1px solid var(--theia-panel-border);
+    border-radius: 3px;
+}
+.utlx-tv-req { color: var(--theia-errorForeground); font-weight: 700; }
+
+/* coverage status (output pane) */
+.utlx-tv-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-left: auto;
+    padding-left: 10px;
+    font-size: var(--theia-ui-font-size0);
+}
+.utlx-tv-src { font-family: var(--theia-code-font-family); opacity: .8; }
+.utlx-tv-todo { opacity: .7; font-style: italic; }
+
+.cov-direct    { color: var(--theia-charts-green,  #3fb950); }
+.cov-derivable { color: var(--theia-charts-purple, #a371f7); }
+.cov-gap       { color: var(--theia-charts-red,    #f85149); }
+
+.utlx-tv-row.cov-direct    { border-left-color: var(--theia-charts-green,  #3fb950); }
+.utlx-tv-row.cov-derivable { border-left-color: var(--theia-charts-purple, #a371f7); }
+.utlx-tv-row.cov-gap       { border-left-color: var(--theia-charts-red,    #f85149); background: color-mix(in srgb, var(--theia-charts-red, #f85149) 8%, transparent); }
+
+.utlx-tv-summary { margin-left: auto; display: inline-flex; gap: 10px; font-weight: 600; }
