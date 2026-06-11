@@ -19,6 +19,8 @@ import {
 import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import { EditorManager } from '@theia/editor/lib/browser';
+import { WorkspaceService } from '@theia/workspace/lib/browser';
+import { TerminalService } from '@theia/terminal/lib/browser/base/terminal-service';
 import URI from '@theia/core/lib/common/uri';
 import {
     Command,
@@ -53,6 +55,15 @@ const TOGGLE_FILE_DIALOG_MODE_COMMAND = 'utlx.toggleFileDialogMode';
 
 /** Command id for the runtime "name on load" semaphore (inherit the file's name vs keep the slot name). */
 const TOGGLE_NAME_ON_LOAD_MODE_COMMAND = 'utlx.toggleNameOnLoadMode';
+
+/**
+ * Where the Help → Demo scripts live: the **version-controlled repo** `playwright/` dir — NOT the
+ * Theia workspace (which holds the user's `.utlx` work and shouldn't carry tooling). This is the
+ * single source of truth (`cli-demo.sh`, `run-demo.sh`). The path is resolved on the BACKEND host
+ * (where the integrated terminal's shell runs). Promote to a preference later if it needs to vary
+ * per machine. The Demo IDE kiosk can only live here anyway (it needs node_modules + Chromium).
+ */
+const DEMO_DIR = '/Users/magr/data/mapping/github-git/utl-x/theia-extension/playwright';
 
 /**
  * Minimal OK-only modal alert. Theia's `ConfirmDialog` always renders an OK **and** a Cancel button;
@@ -105,6 +116,12 @@ export class UTLXFrontendContribution implements
 
     @inject(EditorManager)
     protected readonly editorManager!: EditorManager;
+
+    @inject(WorkspaceService)
+    protected readonly workspaceService!: WorkspaceService;
+
+    @inject(TerminalService)
+    protected readonly terminalService!: TerminalService;
 
     // The currently-open UTLX project (set by Open UTLX Project), so the Edit-config commands know
     // where transform.yaml (in the tx dir) and engine.yaml (project root) live.
@@ -242,6 +259,10 @@ export class UTLXFrontendContribution implements
             { execute: () => this.openProject() }
         );
         commands.registerCommand(
+            { id: 'utlx.project.openAsWorkspace', label: 'UTL-X: Open Project as Workspace (Explorer / Git)' },
+            { execute: () => this.openProjectAsWorkspace() }
+        );
+        commands.registerCommand(
             { id: 'utlx.transformation.save', label: 'UTL-X: Save Project' },
             { execute: () => this.saveTransformation(false) }
         );
@@ -259,6 +280,30 @@ export class UTLXFrontendContribution implements
             { id: 'utlx.config.editEngine', label: 'UTL-X: Edit engine.yaml (bottom panel)' },
             { execute: () => this.openConfigInBottom('engine.yaml') }
         );
+
+        // Help → demos: run a workspace script in the integrated terminal.
+        commands.registerCommand(
+            { id: 'utlx.demo.cli', label: 'UTL-X: Demo CLI (terminal)' },
+            { execute: () => this.runInTerminal('UTL-X CLI Demo', `bash "${DEMO_DIR}/cli-demo.sh"`) }
+        );
+        commands.registerCommand(
+            { id: 'utlx.demo.ide', label: 'UTL-X: Demo IDE (walkthrough)' },
+            { execute: () => this.runInTerminal('UTL-X IDE Demo', `bash "${DEMO_DIR}/run-demo.sh" --once`) }
+        );
+    }
+
+    /** Run a shell command in a fresh integrated terminal (Help → Demo commands). The scripts live in
+     *  the repo's playwright/ dir (DEMO_DIR), not the workspace: cli-demo.sh (self-narrating CLI demo)
+     *  and run-demo.sh (Playwright IDE walkthrough; --once = one pass then close). */
+    private async runInTerminal(title: string, command: string): Promise<void> {
+        try {
+            const terminal = await this.terminalService.newTerminal({ title });
+            await terminal.start();
+            this.terminalService.open(terminal);
+            terminal.sendText(command + '\n');
+        } catch (err) {
+            this.messageService.error(`Could not start "${title}": ${err instanceof Error ? err.message : String(err)}`);
+        }
     }
 
     /**
@@ -293,6 +338,11 @@ export class UTLXFrontendContribution implements
             label: 'Open UTLX Project…',
             order: 'a1'
         });
+        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+            commandId: 'utlx.project.openAsWorkspace',
+            label: 'Open UTLX Project as Workspace…',
+            order: 'a2'
+        });
         menus.registerMenuAction(CommonMenus.FILE_SAVE, {
             commandId: 'utlx.transformation.save',
             label: 'Save UTLX Project',
@@ -312,6 +362,18 @@ export class UTLXFrontendContribution implements
             commandId: 'utlx.config.editEngine',
             label: 'Edit engine.yaml',
             order: 'c2'
+        });
+
+        // Help → Demos
+        menus.registerMenuAction(CommonMenus.HELP, {
+            commandId: 'utlx.demo.cli',
+            label: 'Demo CLI',
+            order: 'z1'
+        });
+        menus.registerMenuAction(CommonMenus.HELP, {
+            commandId: 'utlx.demo.ide',
+            label: 'Demo IDE',
+            order: 'z2'
         });
 
         // Add UTL-X menu
@@ -399,6 +461,26 @@ export class UTLXFrontendContribution implements
         } catch {
             this.messageService.warn(`${title}: ${msg}`);
         }
+    }
+
+    /**
+     * IF22 Step 1 — set the Theia **workspace** to the open project's root (or a picked .utlxp) so the
+     * Navigator (and `@theia/git`, once composed) bind to the project. NOTE: this **reloads** the window
+     * (a Theia workspace switch), so the in-memory mapping panels are NOT preserved — that's why it's a
+     * separate, explicit action from "Open UTLX Project" (file-backed docs that survive the reload are
+     * IF22 Step 3).
+     */
+    private async openProjectAsWorkspace(): Promise<void> {
+        let root = this.currentProjectRoot;
+        if (!root) {
+            const folder = await this.resolveDialogFolder();
+            const sel = await this.fileDialogService.showOpenDialog(
+                { title: 'Open UTLX Project as Workspace — select the .utlxp directory', canSelectFiles: false, canSelectFolders: true, canSelectMany: false },
+                folder);
+            root = (Array.isArray(sel) ? sel[0] : sel) || undefined;
+        }
+        if (!root) { return; }
+        this.workspaceService.open(root);   // reloads the window rooted at the project
     }
 
     /**
