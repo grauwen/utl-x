@@ -36,6 +36,7 @@ import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
+import { DocsDialog } from './docs/docs-dialog';
 import { UTLXEventService } from './events/utlx-event-service';
 import { parseUTLXHeaders } from './parser/utlx-header-parser';
 import { buildSavePlan, dataExt, SaveInput, extToSchemaFormat, parseTransformYamlRefs } from './bundle/transformation-io';
@@ -281,7 +282,11 @@ export class UTLXFrontendContribution implements
             { execute: () => this.openConfigInBottom('engine.yaml') }
         );
 
-        // Help → demos: run a workspace script in the integrated terminal.
+        // Help → UTLX Language (modal docs dialog) + demos.
+        commands.registerCommand(
+            { id: 'utlx.help.language', label: 'UTL-X: UTLX Language (Documentation)' },
+            { execute: () => { new DocsDialog().open(); } }
+        );
         commands.registerCommand(
             { id: 'utlx.demo.cli', label: 'UTL-X: Demo CLI (terminal)' },
             { execute: () => this.runInTerminal('UTL-X CLI Demo', `bash "${DEMO_DIR}/cli-demo.sh"`) }
@@ -364,7 +369,12 @@ export class UTLXFrontendContribution implements
             order: 'c2'
         });
 
-        // Help → Demos
+        // Help → UTLX Language + Demos
+        menus.registerMenuAction(CommonMenus.HELP, {
+            commandId: 'utlx.help.language',
+            label: 'UTLX Language',
+            order: 'a1'
+        });
         menus.registerMenuAction(CommonMenus.HELP, {
             commandId: 'utlx.demo.cli',
             label: 'Demo CLI',

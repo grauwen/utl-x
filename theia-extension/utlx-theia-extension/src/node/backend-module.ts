@@ -13,6 +13,7 @@ import { UTLXServiceImpl } from './services/utlx-service-impl';
 import { UTLXDaemonClient } from './daemon/utlx-daemon-client';
 import { MCPClient } from './mcp/mcp-client';
 import { ServiceLifecycleManager } from './services/service-lifecycle-manager';
+import { DocsStaticContribution } from './docs/docs-static-contribution';
 
 // Import the service starter
 // DISABLED: Start UTLXD and MCP manually instead
@@ -32,6 +33,9 @@ export default new ContainerModule(bind => {
     // Bind service lifecycle manager directly as BackendApplicationContribution
     bind(BackendApplicationContribution).to(ServiceLifecycleManager).inSingletonScope();
     console.log('[Backend Module] Service lifecycle manager bound as BackendApplicationContribution');
+
+    // Serve the VitePress docs site for the in-IDE Help → UTLX Language panel.
+    bind(BackendApplicationContribution).to(DocsStaticContribution).inSingletonScope();
 
     // Bind service implementation
     bind(UTLX_SERVICE_SYMBOL).to(UTLXServiceImpl).inSingletonScope();
