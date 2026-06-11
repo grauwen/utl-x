@@ -215,11 +215,11 @@ export class UTLXFrontendContribution implements
             { execute: () => this.openProject() }
         );
         commands.registerCommand(
-            { id: 'utlx.transformation.save', label: 'UTL-X: Save Transformation' },
+            { id: 'utlx.transformation.save', label: 'UTL-X: Save Project' },
             { execute: () => this.saveTransformation(false) }
         );
         commands.registerCommand(
-            { id: 'utlx.transformation.saveAs', label: 'UTL-X: Save Transformation As…' },
+            { id: 'utlx.transformation.saveAs', label: 'UTL-X: Save Project As…' },
             { execute: () => this.saveTransformation(true) }
         );
     }
@@ -228,17 +228,17 @@ export class UTLXFrontendContribution implements
         // File menu — documents (Open/Save Transformation), per IF18 + bundle-format §7.
         menus.registerMenuAction(CommonMenus.FILE_OPEN, {
             commandId: 'utlx.project.open',
-            label: 'Open UTL-X Project…',
+            label: 'Open UTLX Project…',
             order: 'a1'
         });
         menus.registerMenuAction(CommonMenus.FILE_SAVE, {
             commandId: 'utlx.transformation.save',
-            label: 'Save Transformation',
+            label: 'Save UTLX Project',
             order: 'a1'
         });
         menus.registerMenuAction(CommonMenus.FILE_SAVE, {
             commandId: 'utlx.transformation.saveAs',
-            label: 'Save Transformation As…',
+            label: 'Save UTLX Project As…',
             order: 'a2'
         });
 
