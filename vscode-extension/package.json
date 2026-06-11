@@ -22,7 +22,8 @@
   ],
   "main": "./out/extension.js",
   "activationEvents": [
-    "onLanguage:utlx"
+    "onLanguage:utlx",
+    "onLanguage:utlx-config"
   ],
   "contributes": {
     "languages": [
@@ -37,6 +38,17 @@
           ".UTLX"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "utlx-config",
+        "aliases": [
+          "UTLX Config"
+        ],
+        "filenames": [
+          "transform.yaml",
+          "engine.yaml"
+        ],
+        "configuration": "./language-configuration-yaml.json"
       }
     ],
     "grammars": [
@@ -44,6 +56,11 @@
         "language": "utlx",
         "scopeName": "source.utlx",
         "path": "./syntaxes/utlx.tmLanguage.json"
+      },
+      {
+        "language": "utlx-config",
+        "scopeName": "source.utlx-config",
+        "path": "./syntaxes/utlx-config.tmLanguage.json"
       }
     ],
     "configuration": {

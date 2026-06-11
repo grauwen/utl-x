@@ -1,0 +1,48 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "UTLX Config",
+  "scopeName": "source.utlx-config",
+  "patterns": [
+    { "include": "#modeline" },
+    { "include": "#comment" },
+    { "include": "#key" },
+    { "include": "#sequence" },
+    { "include": "#value" }
+  ],
+  "repository": {
+    "modeline": {
+      "comment": "yaml-language-server schema modeline",
+      "match": "^(#)\\s*(yaml-language-server)\\s*:\\s*(.*)$",
+      "captures": {
+        "1": { "name": "punctuation.definition.comment.utlx-config" },
+        "2": { "name": "keyword.control.directive.utlx-config" },
+        "3": { "name": "string.unquoted.utlx-config" }
+      }
+    },
+    "comment": {
+      "match": "(#).*$",
+      "name": "comment.line.number-sign.utlx-config"
+    },
+    "key": {
+      "comment": "mapping key (block-style)",
+      "match": "^(\\s*)(-\\s+)?([A-Za-z0-9_.$/-]+)(\\s*)(:)(\\s|$)",
+      "captures": {
+        "2": { "name": "punctuation.definition.block.sequence.utlx-config" },
+        "3": { "name": "entity.name.tag.utlx-config" },
+        "5": { "name": "punctuation.separator.key-value.utlx-config" }
+      }
+    },
+    "sequence": {
+      "match": "^\\s*(-)(\\s|$)",
+      "captures": { "1": { "name": "punctuation.definition.block.sequence.utlx-config" } }
+    },
+    "value": {
+      "patterns": [
+        { "match": "\"[^\"]*\"", "name": "string.quoted.double.utlx-config" },
+        { "match": "'[^']*'", "name": "string.quoted.single.utlx-config" },
+        { "match": "\\b(true|false|null|yes|no|on|off|~)\\b", "name": "constant.language.utlx-config" },
+        { "match": "(?<![\\w.])-?[0-9]+(\\.[0-9]+)?([eE][+-]?[0-9]+)?([KMG]B?)?(?![\\w.])", "name": "constant.numeric.utlx-config" }
+      ]
+    }
+  }
+}

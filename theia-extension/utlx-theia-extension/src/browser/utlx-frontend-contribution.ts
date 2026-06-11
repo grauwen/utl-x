@@ -17,6 +17,7 @@ import {
 } from '@theia/core/lib/browser';
 import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
+import { EditorManager } from '@theia/editor/lib/browser';
 import URI from '@theia/core/lib/common/uri';
 import {
     Command,
@@ -83,6 +84,13 @@ export class UTLXFrontendContribution implements
     @inject(FileService)
     protected readonly fileService!: FileService;
 
+    @inject(EditorManager)
+    protected readonly editorManager!: EditorManager;
+
+    // The currently-open UTLX project (set by Open UTLX Project), so the Edit-config commands know
+    // where transform.yaml (in the tx dir) and engine.yaml (project root) live.
+    private currentProjectRoot?: URI;
+    private currentTxDir?: URI;
 
     private utlxdStatusId = 'utlxd-status';
     private mcpStatusId = 'mcp-status';
@@ -222,6 +230,41 @@ export class UTLXFrontendContribution implements
             { id: 'utlx.transformation.saveAs', label: 'UTL-X: Save Project As…' },
             { execute: () => this.saveTransformation(true) }
         );
+
+        // Edit the project's YAML config in the BOTTOM panel (where the Terminal lives).
+        commands.registerCommand(
+            { id: 'utlx.config.editTransform', label: 'UTL-X: Edit transform.yaml (bottom panel)' },
+            { execute: () => this.openConfigInBottom('transform.yaml') }
+        );
+        commands.registerCommand(
+            { id: 'utlx.config.editEngine', label: 'UTL-X: Edit engine.yaml (bottom panel)' },
+            { execute: () => this.openConfigInBottom('engine.yaml') }
+        );
+    }
+
+    /**
+     * Open a project config file in the BOTTOM panel area (where the Terminal lives), via Theia's
+     * EditorManager (`area: 'bottom'`). transform.yaml resolves against the open transformation dir;
+     * engine.yaml against the project root. The `utlx-config` language (utlx-language-support) provides
+     * highlighting + schema validation on the opened file.
+     */
+    private async openConfigInBottom(which: 'transform.yaml' | 'engine.yaml'): Promise<void> {
+        const uri = which === 'transform.yaml'
+            ? this.currentTxDir?.resolve('transform.yaml')
+            : this.currentProjectRoot?.resolve('engine.yaml');
+        if (!uri) {
+            this.messageService.warn('Open a UTLX Project first (File → Open UTLX Project…).');
+            return;
+        }
+        try {
+            if (!(await this.fileService.exists(uri))) {
+                this.messageService.warn(`No ${which} in the open project.`);
+                return;
+            }
+            await this.editorManager.open(uri, { widgetOptions: { area: 'bottom' } });
+        } catch (err) {
+            this.messageService.error(`Could not open ${which}: ${err instanceof Error ? err.message : String(err)}`);
+        }
     }
 
     registerMenus(menus: MenuModelRegistry): void {
@@ -240,6 +283,16 @@ export class UTLXFrontendContribution implements
             commandId: 'utlx.transformation.saveAs',
             label: 'Save UTLX Project As…',
             order: 'a2'
+        });
+        menus.registerMenuAction(CommonMenus.FILE_SAVE, {
+            commandId: 'utlx.config.editTransform',
+            label: 'Edit transform.yaml',
+            order: 'c1'
+        });
+        menus.registerMenuAction(CommonMenus.FILE_SAVE, {
+            commandId: 'utlx.config.editEngine',
+            label: 'Edit engine.yaml',
+            order: 'c2'
         });
 
         // Add UTL-X menu
@@ -355,6 +408,8 @@ export class UTLXFrontendContribution implements
             const txStat = txDirs[0];   // Phase 1: open the first transformation
             const txName = txStat.resource.path.base;
             const multiNote = txDirs.length > 1 ? ` (project has ${txDirs.length} transformations; opened "${txName}")` : '';
+            this.currentProjectRoot = root;        // engine.yaml lives here
+            this.currentTxDir = txStat.resource;   // transform.yaml lives here
 
             // Find the .utlx (prefer <tx>.utlx, else the first *.utlx).
             const txChildren = (await this.fileService.resolve(txStat.resource)).children || [];
