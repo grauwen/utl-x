@@ -13,7 +13,8 @@ import {
     WidgetManager,
     StatusBar,
     StatusBarAlignment,
-    CommonMenus
+    CommonMenus,
+    AbstractDialog
 } from '@theia/core/lib/browser';
 import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
@@ -52,6 +53,24 @@ const TOGGLE_FILE_DIALOG_MODE_COMMAND = 'utlx.toggleFileDialogMode';
 
 /** Command id for the runtime "name on load" semaphore (inherit the file's name vs keep the slot name). */
 const TOGGLE_NAME_ON_LOAD_MODE_COMMAND = 'utlx.toggleNameOnLoadMode';
+
+/**
+ * Minimal OK-only modal alert. Theia's `ConfirmDialog` always renders an OK **and** a Cancel button;
+ * for a pure warning there's nothing to "cancel", so we use a one-button dialog (plus the title 'x').
+ * Preserves newlines in the message via `white-space: pre-wrap`.
+ */
+class AlertDialog extends AbstractDialog<void> {
+    constructor(title: string, message: string) {
+        super({ title });
+        const body = document.createElement('div');
+        body.style.whiteSpace = 'pre-wrap';
+        body.style.maxWidth = '34rem';
+        body.textContent = message;
+        this.contentNode.appendChild(body);
+        this.appendAcceptButton('OK');
+    }
+    get value(): void { return undefined; }
+}
 
 @injectable()
 export class UTLXFrontendContribution implements
@@ -372,6 +391,16 @@ export class UTLXFrontendContribution implements
         }
     }
 
+    /** Modal warning popup (blocks until acknowledged) — for "wrong folder"-type project errors,
+     *  more visible than a transient toast. Falls back to a toast if the dialog can't open. */
+    private async warnDialog(title: string, msg: string): Promise<void> {
+        try {
+            await new AlertDialog(title, msg).open();
+        } catch {
+            this.messageService.warn(`${title}: ${msg}`);
+        }
+    }
+
     /**
      * File → Open UTL-X Project (bundle-format §7). Select the **`.utlxp` project directory** (the
      * root, NOT a single `.utlx`) and load the COMPLETE transformation setup: the `.utlx` into the
@@ -397,12 +426,17 @@ export class UTLXFrontendContribution implements
             try {
                 txParentStat = await this.fileService.resolve(root.resolve('transformations'));
             } catch {
-                this.messageService.error('Not a UTL-X project: no "transformations/" directory at the selected root.');
+                await this.warnDialog(
+                    'Not a UTL-X Project',
+                    'The selected folder is not a UTL-X project — it has no "transformations/" directory.\n\n' +
+                    'Pick a .utlxp project directory (the folder that contains transformations/, schemas/, engine.yaml).');
                 return;
             }
             const txDirs = (txParentStat.children || []).filter(c => c.isDirectory);
             if (txDirs.length === 0) {
-                this.messageService.error('No transformations found in this project.');
+                await this.warnDialog(
+                    'Empty UTL-X Project',
+                    'This project has a "transformations/" directory but no transformations inside it.');
                 return;
             }
             const txStat = txDirs[0];   // Phase 1: open the first transformation
@@ -416,7 +450,7 @@ export class UTLXFrontendContribution implements
             const utlxFiles = txChildren.filter(c => !c.isDirectory && c.resource.path.ext === '.utlx');
             const utlxStat = utlxFiles.find(c => c.resource.path.name === txName) || utlxFiles[0];
             if (!utlxStat) {
-                this.messageService.error(`No .utlx source in transformation "${txName}".`);
+                await this.warnDialog('No Transformation Source', `The transformation "${txName}" has no .utlx source file.`);
                 return;
             }
 

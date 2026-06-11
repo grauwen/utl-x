@@ -111,6 +111,138 @@ export function activate(context: vscode.ExtensionContext) {
 
     context.subscriptions.push(reloadCommand);
     context.subscriptions.push(showStatusCommand);
+
+    // utlx-config (transform.yaml / engine.yaml): dependency-free schema lint.
+    registerConfigDiagnostics(context);
+}
+
+/**
+ * Lightweight, dependency-free validation for UTLX config files (`transform.yaml` / `engine.yaml`,
+ * language id `utlx-config`). Line-based on purpose: it ships inside `out/extension.js` via `tsc`
+ * (the .vsix excludes `node_modules` and there's no bundler), and lines give precise diagnostic
+ * positions. Encodes the high-confidence rules from docs/api/config/*.schema.json:
+ *   - tabs are illegal YAML indentation;
+ *   - `strategy`/`defaultStrategy` ∈ {TEMPLATE, INTERPRETED, COPY, COMPILED};
+ *   - `validationPolicy` ∈ {OFF, SKIP, WARN, STRICT} (transform.yaml);
+ *   - unknown TOP-LEVEL keys in transform.yaml (the schema is additionalProperties:false).
+ * Deeper semantic lints (messaging exactly-one-of, required input names) can layer on later.
+ */
+function registerConfigDiagnostics(context: vscode.ExtensionContext): void {
+    const collection = vscode.languages.createDiagnosticCollection('utlx-config');
+    context.subscriptions.push(collection);
+
+    const STRATEGY = ['TEMPLATE', 'INTERPRETED', 'COPY', 'COMPILED'];
+    const VALIDATION = ['OFF', 'SKIP', 'WARN', 'STRICT'];
+    const TX_TOP_KEYS = ['strategy', 'validationPolicy', 'inputs', 'output', 'maxConcurrent', 'maxInputSize', 'outputBinding', 'input', 'output_messaging'];
+
+    type Entry = { n: number; indent: number; isItem: boolean; key?: string; keyStart: number };
+
+    const validate = (doc: vscode.TextDocument): void => {
+        if (doc.languageId !== 'utlx-config') { collection.delete(doc.uri); return; }
+        const base = (doc.fileName.split(/[\\/]/).pop() || '').toLowerCase();
+        const isTransform = base === 'transform.yaml';
+        const diags: vscode.Diagnostic[] = [];
+        const lines = doc.getText().split(/\r?\n/);
+        const entries: Entry[] = [];   // key lines + bare item markers, for the structural pass
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i];
+
+            // 1) Tabs in leading whitespace — illegal YAML indentation.
+            const lead = (line.match(/^[ \t]*/) || [''])[0];
+            const tab = lead.indexOf('\t');
+            if (tab >= 0) {
+                diags.push(new vscode.Diagnostic(
+                    new vscode.Range(i, tab, i, tab + 1),
+                    'YAML does not allow tabs for indentation — use spaces.',
+                    vscode.DiagnosticSeverity.Error));
+                continue;
+            }
+
+            // Skip blank / comment-only lines (incl. the `# yaml-language-server:` modeline).
+            if (!line.replace(/#.*$/, '').trim()) { continue; }
+
+            // Bare list-item marker ("  -") — records an item boundary with no inline key.
+            const bare = line.match(/^(\s*)-\s*$/);
+            if (bare) { entries.push({ n: i, indent: bare[1].length, isItem: true, keyStart: bare[1].length }); continue; }
+
+            const kv = line.match(/^(\s*)(-\s+)?([A-Za-z_][\w]*)\s*:\s*(.*?)\s*(?:#.*)?$/);
+            if (!kv) { continue; }
+            const indent = kv[1].length;
+            const isListItem = !!kv[2];
+            const key = kv[3];
+            const rawVal = kv[4] || '';
+            const value = rawVal.replace(/^["']|["']$/g, '');
+            const keyStart = indent + (kv[2] ? kv[2].length : 0);
+            const valStart = rawVal ? Math.max(keyStart, line.indexOf(rawVal, keyStart + key.length)) : keyStart;
+            entries.push({ n: i, indent, isItem: isListItem, key, keyStart });
+
+            if ((key === 'strategy' || key === 'defaultStrategy') && value && !STRATEGY.includes(value)) {
+                diags.push(new vscode.Diagnostic(
+                    new vscode.Range(i, valStart, i, valStart + rawVal.length),
+                    `Invalid ${key} "${value}". Expected one of: ${STRATEGY.join(', ')}.`,
+                    vscode.DiagnosticSeverity.Error));
+            }
+            if (isTransform && key === 'validationPolicy' && value && !VALIDATION.includes(value)) {
+                diags.push(new vscode.Diagnostic(
+                    new vscode.Range(i, valStart, i, valStart + rawVal.length),
+                    `Invalid validationPolicy "${value}". Expected one of: ${VALIDATION.join(', ')}.`,
+                    vscode.DiagnosticSeverity.Error));
+            }
+            if (isTransform && indent === 0 && !isListItem && !TX_TOP_KEYS.includes(key)) {
+                diags.push(new vscode.Diagnostic(
+                    new vscode.Range(i, keyStart, i, keyStart + key.length),
+                    `Unknown top-level key "${key}" in transform.yaml. Allowed: ${TX_TOP_KEYS.join(', ')}.`,
+                    vscode.DiagnosticSeverity.Warning));
+            }
+        }
+
+        // 5/6) Structural lints (transform.yaml): every input has a name; messaging endpoints
+        // declare exactly one of queue/topic/eventhub (§4b). Block = a top-level key's deeper-
+        // indented children. (Inline `- name: x` is the common form; bare `-` items are handled too.)
+        if (isTransform) {
+            for (let idx = 0; idx < entries.length; idx++) {
+                const e = entries[idx];
+                if (e.indent !== 0 || e.isItem) { continue; }
+                const children: Entry[] = [];
+                for (let j = idx + 1; j < entries.length && entries[j].indent > e.indent; j++) { children.push(entries[j]); }
+
+                if (e.key === 'inputs') {
+                    const items: Entry[][] = [];
+                    for (const c of children) {
+                        if (c.isItem) { items.push([c]); }
+                        else if (items.length) { items[items.length - 1].push(c); }
+                    }
+                    for (const item of items) {
+                        if (!item.some(c => c.key === 'name')) {
+                            const h = item[0];
+                            diags.push(new vscode.Diagnostic(
+                                new vscode.Range(h.n, h.keyStart, h.n, h.keyStart + 1),
+                                'Each input under "inputs:" must declare a "name:".',
+                                vscode.DiagnosticSeverity.Warning));
+                        }
+                    }
+                } else if (e.key === 'input' || e.key === 'output_messaging') {
+                    const eps = children.filter(c => c.key === 'queue' || c.key === 'topic' || c.key === 'eventhub');
+                    if (eps.length !== 1) {
+                        diags.push(new vscode.Diagnostic(
+                            new vscode.Range(e.n, e.keyStart, e.n, e.keyStart + (e.key ? e.key.length : 0)),
+                            `Messaging "${e.key}" must declare exactly one of queue / topic / eventhub (found ${eps.length}).`,
+                            vscode.DiagnosticSeverity.Warning));
+                    }
+                }
+            }
+        }
+
+        collection.set(doc.uri, diags);
+    };
+
+    context.subscriptions.push(
+        vscode.workspace.onDidOpenTextDocument(validate),
+        vscode.workspace.onDidChangeTextDocument(e => validate(e.document)),
+        vscode.workspace.onDidCloseTextDocument(d => collection.delete(d.uri))
+    );
+    vscode.workspace.textDocuments.forEach(validate);
 }
 
 /**
