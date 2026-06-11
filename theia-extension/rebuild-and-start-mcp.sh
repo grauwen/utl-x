@@ -320,6 +320,17 @@ rm -rf "$CHROME_PROFILE/Default/Service Worker" \
        "$CHROME_PROFILE/Default/Code Cache" \
        "$CHROME_PROFILE/Default/GPUCache" 2>/dev/null || true
 
+# Suppress the "Restore pages? Chrome didn't shut down correctly" bubble. Step 2 kills Chrome with
+# kill -9, which leaves the profile marked as a crash (exit_type:"Crashed"). Normalize it to a clean
+# exit before relaunching so Chrome won't offer to restore the previous (killed) session.
+CHROME_PREFS="$CHROME_PROFILE/Default/Preferences"
+if [ -f "$CHROME_PREFS" ]; then
+    sed -i '' \
+        -e 's/"exit_type":"Crashed"/"exit_type":"Normal"/' \
+        -e 's/"exited_cleanly":false/"exited_cleanly":true/' \
+        "$CHROME_PREFS" 2>/dev/null || true
+fi
+
 # Launch the selected browser ($BROWSER_NAME — regular Chrome by default; Canary only as fallback)
 # with remote debugging, into the dedicated profile above.
 "$BROWSER_PATH" \
@@ -327,6 +338,8 @@ rm -rf "$CHROME_PROFILE/Default/Service Worker" \
     --user-data-dir="$HOME/.utlx-chrome-canary-profile" \
     --no-first-run \
     --no-default-browser-check \
+    --hide-crash-restore-bubble \
+    --disable-session-crashed-bubble \
     --disable-background-networking \
     --disable-sync \
     --disable-component-update \
