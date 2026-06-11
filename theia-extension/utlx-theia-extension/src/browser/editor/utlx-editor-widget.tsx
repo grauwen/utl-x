@@ -136,8 +136,9 @@ export class UTLXEditorWidget extends ReactWidget {
         this.eventService.onModeChanged(event => {
             console.log('[UTLXEditorWidget] 📡 RECEIVED: Mode changed:', event);
             this.currentMode = event.mode;
-            // Canvas is Message Contract mode only — switch back to classic when entering Execution mode
-            if (event.mode === UTLXMode.EXECUTION && this.editorViewMode === 'canvas') {
+            // Canvas and treeview are Message Contract mode only — switch back to classic when
+            // entering Execution mode (any non-classic view, so future MC-only views are covered too).
+            if (event.mode === UTLXMode.EXECUTION && this.editorViewMode !== 'classic') {
                 this.switchViewMode('classic');
             }
             this.update();
