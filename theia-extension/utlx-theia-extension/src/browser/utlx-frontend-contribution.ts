@@ -12,9 +12,10 @@ import {
     ApplicationShell,
     WidgetManager,
     StatusBar,
-    StatusBarAlignment
+    StatusBarAlignment,
+    CommonMenus
 } from '@theia/core/lib/browser';
-import { FileDialogService, OpenFileDialogProps } from '@theia/filesystem/lib/browser';
+import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
 import URI from '@theia/core/lib/common/uri';
 import {
@@ -32,6 +33,8 @@ import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { UTLXEventService } from './events/utlx-event-service';
+import { parseUTLXHeaders } from './parser/utlx-header-parser';
+import { buildSavePlan, dataExt, SaveInput, extToSchemaFormat, parseTransformYamlRefs } from './bundle/transformation-io';
 import { inferSchemaFromJson, inferSchemaFromYaml, inferSchemaFromXml, inferEdmxFromOData, inferTableSchemaFromCsv, formatSchema } from './utils/schema-inferrer';
 import { generateScaffoldFromStructure } from './utils/scaffold-generator';
 import { compareSchemas } from './utils/schema-comparator';
@@ -205,9 +208,40 @@ export class UTLXFrontendContribution implements
                 );
             }
         });
+
+        // ── File menu: Open / Save Transformation (bundle-format §7, IF18) ──
+        commands.registerCommand(
+            { id: 'utlx.project.open', label: 'UTL-X: Open Project…' },
+            { execute: () => this.openProject() }
+        );
+        commands.registerCommand(
+            { id: 'utlx.transformation.save', label: 'UTL-X: Save Transformation' },
+            { execute: () => this.saveTransformation(false) }
+        );
+        commands.registerCommand(
+            { id: 'utlx.transformation.saveAs', label: 'UTL-X: Save Transformation As…' },
+            { execute: () => this.saveTransformation(true) }
+        );
     }
 
     registerMenus(menus: MenuModelRegistry): void {
+        // File menu — documents (Open/Save Transformation), per IF18 + bundle-format §7.
+        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+            commandId: 'utlx.project.open',
+            label: 'Open UTL-X Project…',
+            order: 'a1'
+        });
+        menus.registerMenuAction(CommonMenus.FILE_SAVE, {
+            commandId: 'utlx.transformation.save',
+            label: 'Save Transformation',
+            order: 'a1'
+        });
+        menus.registerMenuAction(CommonMenus.FILE_SAVE, {
+            commandId: 'utlx.transformation.saveAs',
+            label: 'Save Transformation As…',
+            order: 'a2'
+        });
+
         // Add UTL-X menu
         menus.registerMenuAction(['1_utlx'], {
             commandId: UTLXCommands.TOGGLE_MODE,
@@ -220,6 +254,216 @@ export class UTLXFrontendContribution implements
             label: 'Restart Daemon',
             order: '2'
         });
+    }
+
+    /**
+     * File → Save Transformation (bundle-format §7). Writes the constellation as a `.utlxp`:
+     * transformations/<name>/{<name>.utlx, transform.yaml, test-input-<slot>.<ext>} (+ schemas/ when
+     * contracts are loaded). One name = the project = the single transformation (single-tx default).
+     */
+    private async saveTransformation(_saveAs: boolean): Promise<void> {
+        try {
+            const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(UTLXEditorWidget.ID);
+            const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(MultiInputPanelWidget.ID);
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(OutputPanelWidget.ID);
+
+            const utlx = editor.getContent();
+            if (!utlx || !utlx.trim()) {
+                this.messageService.warn('Nothing to save — the transformation editor is empty.');
+                return;
+            }
+
+            // Full input constellation (instances + contracts) from panel state.
+            const stateInputs: Array<{ name: string; instanceContent?: string; instanceFormat?: string; schemaContent?: string; schemaFormat?: string }> =
+                (inputPanel as unknown as { state?: { inputs?: any[] } }).state?.inputs || [];
+            const inputs: SaveInput[] = stateInputs.map(i => ({
+                name: i.name,
+                content: i.instanceContent || '',
+                format: i.instanceFormat || 'json',
+                schemaContent: i.schemaContent || undefined,
+                schemaFormat: i.schemaFormat || undefined,
+            }));
+            const outExpected = outputPanel.getExpectedSchema();
+
+            const folder = await this.resolveDialogFolder();
+            const props: SaveFileDialogProps = {
+                title: 'Save Transformation — name the .utlxp project',
+                inputValue: 'transformation.utlxp',
+                saveLabel: 'Save'
+            };
+            const target = await this.fileDialogService.showSaveDialog(props, folder);
+            if (!target) return;
+
+            const root = target;                               // the <name>.utlxp directory
+            const txName = target.path.name || 'transformation'; // basename without .utlxp
+            const plan = buildSavePlan({
+                txName,
+                utlx,
+                inputs,
+                outputSchemaContent: outExpected?.content,
+                outputSchemaFormat: outExpected?.format
+            });
+
+            for (const dir of plan.dirs) {
+                await this.fileService.createFolder(root.resolve(dir));
+            }
+            for (const f of plan.files) {
+                await this.fileService.write(root.resolve(f.path), f.content);
+            }
+
+            editor.setTransformationName(txName);
+            this.messageService.info(`✓ Saved transformation "${txName}" → ${root.path.base}`);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] Save Transformation failed:', err);
+            this.messageService.error(`Save Transformation failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+
+    /**
+     * File → Open UTL-X Project (bundle-format §7). Select the **`.utlxp` project directory** (the
+     * root, NOT a single `.utlx`) and load the COMPLETE transformation setup: the `.utlx` into the
+     * editor, the input slots from its header, each slot's `test-input-<slot>` instance + its schema
+     * (from `transform.yaml` refs), and the output contract. Phase 1 opens the first transformation
+     * in the project. (A single-`.utlx` load is already available via the editor's Load button.)
+     */
+    private async openProject(): Promise<void> {
+        try {
+            const folder = await this.resolveDialogFolder();
+            const props: OpenFileDialogProps = {
+                title: 'Open UTL-X Project — select the .utlxp directory',
+                canSelectFiles: false,
+                canSelectFolders: true,
+                canSelectMany: false
+            };
+            const selected = await this.fileDialogService.showOpenDialog(props, folder);
+            const root = Array.isArray(selected) ? selected[0] : selected;
+            if (!root) return;
+
+            // Locate transformations/<tx>/ (the structural marker of a bundle project).
+            let txParentStat;
+            try {
+                txParentStat = await this.fileService.resolve(root.resolve('transformations'));
+            } catch {
+                this.messageService.error('Not a UTL-X project: no "transformations/" directory at the selected root.');
+                return;
+            }
+            const txDirs = (txParentStat.children || []).filter(c => c.isDirectory);
+            if (txDirs.length === 0) {
+                this.messageService.error('No transformations found in this project.');
+                return;
+            }
+            const txStat = txDirs[0];   // Phase 1: open the first transformation
+            const txName = txStat.resource.path.base;
+            const multiNote = txDirs.length > 1 ? ` (project has ${txDirs.length} transformations; opened "${txName}")` : '';
+
+            // Find the .utlx (prefer <tx>.utlx, else the first *.utlx).
+            const txChildren = (await this.fileService.resolve(txStat.resource)).children || [];
+            const utlxFiles = txChildren.filter(c => !c.isDirectory && c.resource.path.ext === '.utlx');
+            const utlxStat = utlxFiles.find(c => c.resource.path.name === txName) || utlxFiles[0];
+            if (!utlxStat) {
+                this.messageService.error(`No .utlx source in transformation "${txName}".`);
+                return;
+            }
+
+            const utlx = (await this.fileService.read(utlxStat.resource)).value.toString();
+            const parsed = parseUTLXHeaders(utlx);
+
+            const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(UTLXEditorWidget.ID);
+            const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(MultiInputPanelWidget.ID);
+            const outputPanel = await this.widgetManager.getOrCreateWidget<OutputPanelWidget>(OutputPanelWidget.ID);
+
+            editor.setContent(utlx);
+            editor.setTransformationName(txName);
+            try { this.shell.activateWidget(editor.id); } catch { /* editor model may not be attached yet */ }
+
+            // transform.yaml → per-input + output schema refs (relative to the project root).
+            let refs: ReturnType<typeof parseTransformYamlRefs> = { inputs: [] };
+            try {
+                const y = (await this.fileService.read(txStat.resource.resolve('transform.yaml'))).value.toString();
+                refs = parseTransformYamlRefs(y);
+            } catch { /* no/unreadable transform.yaml — instances only */ }
+
+            // Tolerant instance matching — support multiple file-naming standards:
+            //   test-input-<slot>.<ext> · <slot>.<ext> · kebab/camel variants (normalized) ·
+            //   and a single-input bundle's bare test-input.<ext>.
+            const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+            const dataFileExts = ['json', 'xml', 'csv', 'yaml', 'yml', 'txt'];
+            const instanceFiles = txChildren.filter(c =>
+                !c.isDirectory &&
+                c.resource.path.base !== 'transform.yaml' &&
+                dataFileExts.includes((c.resource.path.ext || '').replace(/^\./, '').toLowerCase())
+            );
+            const slotKey = (nameNoExt: string) => norm(nameNoExt.replace(/^test-?input-?/i, ''));
+            const findInstance = (slot: string) => {
+                const key = norm(slot);
+                return instanceFiles.find(c => slotKey(c.resource.path.name) === key)
+                    || instanceFiles.find(c => norm(c.resource.path.name) === key)
+                    || (parsed.inputs.length === 1 && instanceFiles.length === 1 ? instanceFiles[0] : undefined);
+            };
+
+            // Per slot: load instance + schema; CLEAR (empty string) when not found, so a previous
+            // session's content for a same-named slot can never linger → no garbage in Execution mode.
+            const samples: Array<{ name: string; content: string; format: string; schemaContent: string; schemaFormat?: string }> = [];
+            for (const inp of parsed.inputs) {
+                let content = '';
+                const hit = findInstance(inp.name);
+                if (hit) {
+                    try { content = (await this.fileService.read(hit.resource)).value.toString(); } catch { content = ''; }
+                }
+                let schemaContent = '';
+                let schemaFormat: string | undefined;
+                const ref = refs.inputs.find(r => r.name === inp.name)?.schemaRef;
+                if (ref) {
+                    try {
+                        const schUri = root.resolve(ref);
+                        if (await this.fileService.exists(schUri)) {
+                            schemaContent = (await this.fileService.read(schUri)).value.toString();
+                            schemaFormat = extToSchemaFormat(ref);
+                        }
+                    } catch { /* skip missing schema */ }
+                }
+                samples.push({ name: inp.name, content, format: inp.format, schemaContent, schemaFormat });
+            }
+
+            // ORDER (per design): the .utlx header drives the input/output TABS first; THEN each
+            // instance + schema is loaded into the known tabs (empty tabs when a project has no
+            // schemas). The editor (re)parses the loaded header on a 500ms debounce to build the tabs,
+            // so we wait for that to settle and then apply tabs + instances/schemas as the LAST write —
+            // otherwise the async header-parse can clobber them (→ "no inputs"/garbage).
+            await new Promise(resolve => setTimeout(resolve, 650));
+            inputPanel.syncFromHeaders(parsed.inputs);   // authoritative input set + display order (header owns these)
+            outputPanel.syncFromHeaders(parsed.output);
+            inputPanel.loadBundleSamples(samples);       // fill each instance + schema into its tab
+
+            // Output contract → apply via the SAME path the "Load output schema" button uses
+            // (the output panel does not consume fireOutputPresetOn).
+            let outLoaded = false;
+            if (refs.outputSchemaRef) {
+                try {
+                    const outUri = root.resolve(refs.outputSchemaRef);
+                    if (await this.fileService.exists(outUri)) {
+                        const schema = (await this.fileService.read(outUri)).value.toString();
+                        const sf = extToSchemaFormat(refs.outputSchemaRef);
+                        const schemaFormat = (['xsd', 'jsch', 'avro', 'proto', 'osch', 'tsch'].includes(sf) ? sf : 'jsch') as 'xsd' | 'jsch' | 'avro' | 'proto' | 'osch' | 'tsch';
+                        outputPanel.displaySchemaResult({
+                            success: true,
+                            schema,
+                            schemaFormat,
+                            fileName: outUri.path.base,
+                            filePath: outUri.path.toString()
+                        });
+                        outLoaded = true;
+                    }
+                } catch { /* skip missing output schema */ }
+            }
+
+            const loaded = samples.filter(s => s.content.trim()).length;
+            const schemas = samples.filter(s => s.schemaContent.trim()).length + (outLoaded ? 1 : 0);
+            this.messageService.info(`✓ Opened project "${root.path.name}" → "${txName}"${multiNote} — ${loaded} input(s), ${schemas} schema(s)`);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] Open UTL-X Project failed:', err);
+            this.messageService.error(`Open UTL-X Project failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
     }
 
     registerKeybindings(keybindings: KeybindingRegistry): void {

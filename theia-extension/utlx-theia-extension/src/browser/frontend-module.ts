@@ -6,8 +6,8 @@
 
 import './style/index.css';
 import { ContainerModule } from 'inversify';
-import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler } from '@theia/core/lib/browser';
-import { CommandContribution } from '@theia/core/lib/common';
+import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler, KeybindingContribution } from '@theia/core/lib/browser';
+import { CommandContribution, MenuContribution } from '@theia/core/lib/common';
 import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
@@ -135,11 +135,16 @@ export default new ContainerModule(bind => {
 
         // Bind frontend contribution
         console.log('[UTLX Frontend Module] Binding frontend contribution...');
-        // Bind the SAME singleton as both FrontendApplicationContribution and CommandContribution
-        // so registerCommands() runs (required for the status-bar file-dialog toggle to work).
+        // Bind the SAME singleton as ALL FOUR contributions the class implements, so
+        // registerCommands(), registerMenus() (File → Open/Save Transformation), AND
+        // registerKeybindings() all run. Previously only Command + FrontendApplication were bound,
+        // so registerMenus()/registerKeybindings() NEVER executed — the File-menu items (and the
+        // old '1_utlx' menu) never appeared regardless of rebuilds/cache.
         bind(UTLXFrontendContribution).toSelf().inSingletonScope();
         bind(FrontendApplicationContribution).toService(UTLXFrontendContribution);
         bind(CommandContribution).toService(UTLXFrontendContribution);
+        bind(MenuContribution).toService(UTLXFrontendContribution);
+        bind(KeybindingContribution).toService(UTLXFrontendContribution);
         console.log('[UTLX Frontend Module] ✓ Frontend contribution bound');
 
         // Bind language grammar contribution for Monaco syntax highlighting

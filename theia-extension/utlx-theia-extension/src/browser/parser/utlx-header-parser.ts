@@ -57,6 +57,11 @@ const PATTERNS = {
     // Note: odata must appear before json/xml to prevent partial match on 'o' in input names
     SINGLE_INPUT: /^input\s+([a-zA-Z_][a-zA-Z0-9_-]*)\s+(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?/,
 
+    // Unnamed single-input shorthand: "input json" / "input csv {…}" — a single input with no name,
+    // bound as `input` (the default root). Tried only after SINGLE_INPUT fails (anchored at end so a
+    // real "input <name> <format>" never matches here).
+    SINGLE_INPUT_UNNAMED: /^input\s+(csv|odata|osch|tsch|json|xml|yaml|xsd|jsch|avro|proto)(?:\s+(\{[^}]+\}))?\s*$/,
+
     // input: name1 format1, name2 format2, ...
     MULTI_INPUT: /^input:\s*(.+)$/,
 
@@ -168,18 +173,17 @@ function parseOptions(optionsStr: string | undefined): {
  */
 function parseSingleInput(line: string): ParsedInput | null {
     const match = line.match(PATTERNS.SINGLE_INPUT);
-    if (!match) {
-        return null;
+    if (match) {
+        const [, name, format, optionsStr] = match;
+        return { name, format, ...parseOptions(optionsStr) };
     }
-
-    const [, name, format, optionsStr] = match;
-    const options = parseOptions(optionsStr);
-
-    return {
-        name,
-        format,
-        ...options
-    };
+    // Unnamed shorthand: "input <format>" → a single input named `input` (bound as `input`/$input).
+    const unnamed = line.match(PATTERNS.SINGLE_INPUT_UNNAMED);
+    if (unnamed) {
+        const [, format, optionsStr] = unnamed;
+        return { name: 'input', format, ...parseOptions(optionsStr) };
+    }
+    return null;
 }
 
 /**

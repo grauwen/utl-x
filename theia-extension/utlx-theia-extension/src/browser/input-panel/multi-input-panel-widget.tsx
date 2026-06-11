@@ -264,10 +264,13 @@ export class MultiInputPanelWidget extends ReactWidget {
     protected render(): React.ReactNode {
         this.refreshTitle();
         const { mode, inputs, activeInputId, activeSubTab, loading, udmDialogOpen } = this.state;
-        const activeInput = inputs.find(input => input.id === activeInputId);
+        // Resilience: if the active id ever drifts (e.g. a header re-parse during a project load),
+        // fall back to the first input instead of flashing "No active input". Only show a message
+        // when there are genuinely no inputs declared in the header.
+        const activeInput = inputs.find(input => input.id === activeInputId) || (inputs.length > 0 ? inputs[0] : undefined);
 
         if (!activeInput) {
-            return <div>Error: No active input</div>;
+            return <div style={{ padding: '12px', opacity: 0.7 }}>No inputs declared in the transformation header.</div>;
         }
 
         // Determine current content and format based on mode and active sub-tab
@@ -2694,5 +2697,45 @@ export class MultiInputPanelWidget extends ReactWidget {
         }
 
         console.log('[MultiInputPanelWidget] Sync complete:', newInputs.map(i => ({name: i.name, format: i.instanceFormat})));
+    }
+
+    /**
+     * IF-bundle (File → Open UTL-X Project): populate input slots BY NAME after syncFromHeaders has
+     * rebuilt the tabs from the .utlx header — the instance (test-input-<slot>) and, when the project
+     * carries contracts, the schema too. Bumps contentVersion so the content editor remounts (mirrors
+     * syncFromHeaders). Slots without a matching entry are left untouched; fields left undefined on an
+     * entry are not overwritten. setState here is synchronous, so calling this right after
+     * syncFromHeaders is safe (no ordering race).
+     */
+    public loadBundleSamples(samples: Array<{ name: string; content?: string; format?: string; schemaContent?: string; schemaFormat?: string }>): void {
+        const toValidate: string[] = [];
+        const updated = this.state.inputs.map(inp => {
+            const s = samples.find(x => x.name === inp.name);
+            if (!s) return inp;
+            const next = {
+                ...inp,
+                ...(s.content !== undefined ? { instanceContent: s.content } : {}),
+                ...(s.format ? { instanceFormat: s.format as InstanceFormat } : {}),
+                ...(s.schemaContent !== undefined ? { schemaContent: s.schemaContent } : {}),
+                ...(s.schemaFormat ? { schemaFormat: s.schemaFormat as SchemaFormatType } : {}),
+            };
+            if (s.content && s.content.trim()) toValidate.push(next.id);
+            return next;
+        });
+        // Pin a valid active input — a project load (and the editor's debounced header re-parse) can
+        // otherwise leave activeInputId dangling → "No active input".
+        const activeInputId = updated.some(i => i.id === this.state.activeInputId)
+            ? this.state.activeInputId
+            : (updated[0]?.id || '');
+        this.setState({
+            inputs: updated,
+            activeInputId,
+            contentVersion: (this.state.contentVersion ?? 0) + 1,
+        });
+        // Parse UDM for the freshly loaded instances → creates the instance doc / field tree, exactly
+        // like a manual content edit. Without this the content sits in state but isn't a live instance.
+        for (const id of toValidate) {
+            void this.validateInput(id);
+        }
     }
 }

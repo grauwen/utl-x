@@ -155,9 +155,26 @@ exists).
 `utlx.toggleFileDialogMode`. Re-home: Execute/Validate/Toggle → toolbar; Restart → status bar;
 the rest → palette/View.
 
-**New commands to add** (File / Bundle):
-- `utlx.transformation.new` · `utlx.transformation.open` · `utlx.transformation.save` ·
-  `utlx.transformation.saveAs`
+**Implemented (Phase 1, June 2026):** `utlx.project.open` (**File → Open UTL-X Project…**) ·
+`utlx.transformation.save` / `.saveAs` (**File → Save Transformation / As…**), under
+`CommonMenus.FILE_OPEN` / `FILE_SAVE` (and the Command Palette).
+- **Open UTL-X Project** selects the **`.utlxp` directory** (folder picker, not a single `.utlx`) and
+  loads the COMPLETE setup: the first transformation's `.utlx` into the editor, the input slots from
+  its header, each slot's `test-input-<slot>` instance **and** its schema (from `transform.yaml`
+  refs), and the output contract (via `fireOutputPresetOn`). A bare single-`.utlx` open is *not*
+  offered here — that's the editor's existing Load button.
+- **Save** writes the constellation as a `.utlxp` per [bundle-format §7](../architecture/bundle-format.md)
+  ("write whatever's loaded": `.utlx` + `transform.yaml` + `test-input-<slot>` always; `schemas/` +
+  refs when contracts are loaded).
+- Code: `browser/bundle/transformation-io.ts` (save plan, `transform.yaml` gen, `parseTransformYamlRefs`,
+  ext↔format), `utlx-frontend-contribution.ts` (commands/menus/`openProject`/`saveTransformation`),
+  `multi-input-panel-widget.tsx` (`loadBundleSamples`). **Critical wiring fix:** `frontend-module.ts`
+  now binds `MenuContribution` **and** `KeybindingContribution` (previously unbound → `registerMenus()`
+  never ran, so no File-menu items appeared). Typechecks clean.
+
+**New commands** (File / Bundle):
+- `utlx.transformation.new` (pending) · `utlx.project.open` ✅ · `utlx.transformation.save` ✅ ·
+  `utlx.transformation.saveAs` ✅
 - `utlx.bundle.new` · `utlx.bundle.open` · `utlx.bundle.build` (`.utlar`) · `utlx.bundle.validate` ·
   `utlx.bundle.deploy` (IF05) · `utlx.bundle.refresh` · `utlx.bundle.close`
 - `utlx.help.docs` (→ utlx-lang.org) · `utlx.help.languageReference` · `utlx.help.stdlib` ·
