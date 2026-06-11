@@ -2,6 +2,17 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Working agreement — builds (IMPORTANT)
+
+**Claude verifies; the user builds.**
+- Claude validates code changes with a **TypeScript typecheck only** — `npx tsc --noEmit` in
+  `theia-extension/utlx-theia-extension`. That is the full extent of Claude's "build".
+- The **user** runs the actual build (the Theia / webpack browser-app bundle) using their own
+  script (e.g. `theia-extension/rebuild-and-start-mcp.sh`).
+- **Claude never builds.** No `npx theia build`, no `yarn install` for the browser-app bundle,
+  no running the rebuild/start scripts. After editing, Claude typechecks and hands off to the user
+  to build.
+
 ## Project Overview
 
 # Universal Transformation Language Extended (UTL-X): An Open Source Alternative to DataWeave
