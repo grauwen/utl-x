@@ -33,13 +33,20 @@ function referenceSidebar() {
   return [{ text: 'Standard Library', link: '/reference/stdlib' }, ...groups]
 }
 
+// base/outDir are env-driven so the SAME source builds two targets from one config:
+//   web (utlx-lang.org): npm run build      → base '/'           → .vitepress/dist
+//   in-IDE help        : npm run build:ide  → base '/utlx-docs/' → .vitepress/dist-ide
+// (the in-IDE build is served same-origin under /utlx-docs/ through Theia's backend.)
+const BASE = process.env.DOCS_BASE || '/'
+
 export default defineConfig({
-  // base/outDir are env-driven so the SAME source builds two targets from one config:
-  //   web (utlx-lang.org): npm run build      → base '/'           → .vitepress/dist
-  //   in-IDE help        : npm run build:ide  → base '/utlx-docs/' → .vitepress/dist-ide
-  // (the in-IDE build is served same-origin under /utlx-docs/ through Theia's backend.)
-  base: process.env.DOCS_BASE || '/',
+  base: BASE,
   outDir: process.env.DOCS_OUTDIR || '.vitepress/dist',
+  // NOTE: build-stdlib.mjs emits RAW-HTML content links that are root-absolute (/reference/…, /guide/…)
+  // and bypass VitePress's link base-rewriting (Markdown + theme links only). For the sub-path IDE build
+  // those are fixed AFTER the build by scripts/fix-ide-base.mjs (rewrites dist-ide HTML + JS). The web
+  // build (base '/') needs nothing. (Doing it post-build is more reliable than transformHtml/renderChunk,
+  // which miss the client JS chunks.)
   title: 'UTL-X',
   description: 'UTL-X — One Language, All Formats. The complete language reference and standard library.',
   lang: 'en-US',

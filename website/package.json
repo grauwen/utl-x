@@ -10,7 +10,7 @@
     "content": "npm run convert && npm run stdlib",
     "dev": "vitepress dev",
     "build": "vitepress build",
-    "build:ide": "DOCS_BASE=/utlx-docs/ DOCS_OUTDIR=.vitepress/dist-ide vitepress build",
+    "build:ide": "DOCS_BASE=/utlx-docs/ DOCS_OUTDIR=.vitepress/dist-ide vitepress build && node ./scripts/fix-ide-base.mjs",
     "preview": "vitepress preview"
   },
   "devDependencies": {
