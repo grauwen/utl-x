@@ -2023,9 +2023,31 @@ output json
      * input field trees (from the per-input schema field-tree map), the output contract field tree
      * (parsed from the output preset schema), and the IF11 coverage report.
      */
-    protected buildTreeviewData(): { inputs: Array<{ name: string; fields: SchemaFieldInfo[] }>; outputFields: SchemaFieldInfo[]; coverage?: ReturnType<typeof buildCoverage> } {
-        const inputs = Array.from(this.schemaFieldTreeMap.entries())
-            .map(([name, fields]) => ({ name, fields: (fields || []) as SchemaFieldInfo[] }));
+    protected buildTreeviewData(): { inputs: Array<{ name: string; format?: string; fields: SchemaFieldInfo[] }>; outputFields: SchemaFieldInfo[]; coverage?: ReturnType<typeof buildCoverage> } {
+        // Inputs use the SAME resolution as the canvas: design-time schema field tree first, else
+        // UDM-parsed instance fields. Previously only schemaFieldTreeMap was used, so an input that
+        // had data/UDM but no explicit schema rendered with no hierarchy (output was unaffected — it
+        // has its own parse path). SchemaFieldInfo extends UdmField, so UDM fields slot in directly.
+        const inputNames = new Set([
+            ...this.schemaFieldTreeMap.keys(),
+            ...this.inputUdmMap.keys(),
+        ]);
+        const inputs = Array.from(inputNames).map(name => {
+            const format = this.inputFormatsMap.get(name) || 'json';
+            const schemaFields = this.schemaFieldTreeMap.get(name);
+            let fields: SchemaFieldInfo[] = (schemaFields && schemaFields.length) ? schemaFields : [];
+            if (!fields.length) {
+                const udmLanguage = this.inputUdmMap.get(name);
+                if (udmLanguage) {
+                    try {
+                        fields = parseUdmToTree(name, format, udmLanguage).fields as SchemaFieldInfo[];
+                    } catch (err) {
+                        console.warn('[UTLXEditorWidget] Treeview: UDM parse failed for input', name, err);
+                    }
+                }
+            }
+            return { name, format, fields };
+        });
         const outputFields = parseSchemaToFields(this.outputSchemaContent, this.outputSchemaFormat) || [];
         const covInputs = inputs.filter(i => i.fields.length).map(i => ({ name: i.name, fields: i.fields }));
         const coverage = outputFields.length ? buildCoverage(covInputs, outputFields) : undefined;
