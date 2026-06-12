@@ -1,0 +1,17 @@
+%utlx 1.0
+input order json
+output json
+---
+// order-to-picklist — turn an order into a warehouse pick list: one pick per SKU + total units.
+// The SECOND transformation in this project (see also order-to-invoice). Same `order` input.
+{
+  pickList: {
+    orderId: $order.orderId,
+    picks: $order.items |> map(item => {
+      sku: item.sku,
+      quantity: item.quantity
+    }),
+    totalUnits: $order.items |> map(i => i.quantity) |> sum(),
+    lineCount: count($order.items)
+  }
+}

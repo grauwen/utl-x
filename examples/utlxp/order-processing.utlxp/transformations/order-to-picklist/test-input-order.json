@@ -1,0 +1,10 @@
+{
+  "orderId": "ORD-1001",
+  "orderDate": "2026-06-01T10:30:00Z",
+  "customerId": "CUST-42",
+  "items": [
+    { "sku": "WIDGET-1", "quantity": 3, "unitPrice": 10 },
+    { "sku": "GADGET-7", "quantity": 1, "unitPrice": 149 },
+    { "sku": "BOLT-9", "quantity": 12, "unitPrice": 2 }
+  ]
+}

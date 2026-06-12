@@ -1,0 +1,8 @@
+strategy: TEMPLATE
+validationPolicy: WARN
+inputs:
+  - name: order
+    schema: schemas/order.json
+output:
+  schema: schemas/picklist.json
+maxConcurrent: 8

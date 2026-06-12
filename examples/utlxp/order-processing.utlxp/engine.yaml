@@ -1,0 +1,22 @@
+engine:
+  name: order-processing-engine
+
+  threads:
+    sharedPoolSize: 8
+
+  memory:
+    maxHeap: 1g
+
+  monitoring:
+    health:
+      port: 8082
+      path: /health
+    metrics:
+      enabled: false
+
+  defaultStrategy: TEMPLATE
+
+# engine.yaml configures the engine only (name, threads, memory, monitoring, defaultStrategy).
+# This project bundles TWO transformations — order-to-invoice and order-to-picklist — each with
+# its own transform.yaml describing that transformation's inputs/output. Both read the same
+# `order` contract (schemas/order.json) and emit a different output contract.

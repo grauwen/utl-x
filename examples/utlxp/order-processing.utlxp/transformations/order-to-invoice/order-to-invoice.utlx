@@ -1,0 +1,20 @@
+%utlx 1.0
+input order json
+output json
+---
+// order-to-invoice — turn an order into a billing invoice: per-line totals + subtotal.
+// One of TWO transformations in this project (see also order-to-picklist).
+{
+  invoice: {
+    orderId: $order.orderId,
+    billTo: $order.customerId,
+    lines: $order.items |> map(item => {
+      sku: item.sku,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      lineTotal: item.quantity * item.unitPrice
+    }),
+    subtotal: roundToDecimalPlaces($order.items |> map(i => i.quantity * i.unitPrice) |> sum(), 2),
+    currency: "USD"
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "picklist",
+  "type": "object",
+  "properties": {
+    "pickList": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        },
+        "picks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "sku",
+              "quantity"
+            ]
+          }
+        },
+        "totalUnits": {
+          "type": "integer"
+        },
+        "lineCount": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "orderId",
+        "picks",
+        "totalUnits"
+      ]
+    }
+  },
+  "required": [
+    "pickList"
+  ]
+}
