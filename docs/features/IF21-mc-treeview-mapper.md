@@ -1,6 +1,7 @@
 # IF21: IDE — MC "Treeview" mapper (BW-style inputs ▸ output, Function Builder per output node)
 
 **Status:** **Phase 1 implemented** (read-only treeview, coverage-colored). Phases 2–3 proposed.
+**Design updated (June 2026) — see ["Design update: UTLX-led derivation + 3-column functoid model"](#design-update-june-2026--utlx-led-derivation--3-column-functoid-model) below.** This supersedes the *"editable coverage / treeview is generative"* framing: **UTLX is the lead**, the treeview is a **read-only projection of the UTLX AST**, derived mappings render as **functoid blocks** in a center lane, and coverage is demoted to a **gap/suggestion overlay**.
 - **Phase 1 (done):** a third editor view **Treeview** (toggle: Classic | Canvas | Treeview, MC mode only) —
   all inputs as field trees (left) + the output contract tree (right), each output leaf colored by IF11
   coverage (✓ direct / ~ derivable / ✗ gap) with its source; containers show a descendant-gap badge; a
@@ -122,6 +123,187 @@ Phase 1 alone is a compelling demo and validates the layout with almost no new l
 - `theia-extension/.../browser/utils/coverage.ts` — per-output status + source (node colors + seed).
 - `theia-extension/.../browser/mapping-editor/code-generator.ts` + `mapping-store.ts` — model → `%utlx`.
 - `theia-extension/.../browser/editor/utlx-editor-widget.tsx` — view toggle (add `editorViewTree`).
+
+## Design update (June 2026) — UTLX-led derivation + 3-column functoid model
+
+> Records a design decision that **reverses open question #2** (source of truth) and resolves #3/#4.
+> Phase 1 (read-only, coverage-colored) stays as shipped; this is the model for Phase 1.5+.
+
+### The decision: UTLX is the lead; the treeview is a projection of it
+
+The original framing made the treeview **generative** (it owns a mapping model and writes the `%utlx`
+body), with coverage as the editable data. We are inverting that: **the `%utlx` is the single source of
+truth**, and the treeview is a **read-only projection of what the transform actually does** (might become
+editable later — see phasing). Consequences:
+
+- **Lines come from the UTLX AST, not from `buildCoverage`.** Coverage is a name/type *heuristic*
+  ("what could map / what's a gap"); it is **not** what the code does. With UTLX present, the authoritative
+  mapping is each output field's **binding expression**, which names the real input paths and the
+  functions/lets between them.
+- **Coverage is demoted to a gap/suggestion overlay** — it colors *unmapped* contract nodes
+  ("no derivation yet; likely source = …"), it no longer defines the lines.
+
+### The tree is UDM-shaped (one node type, two providers)
+
+Every node in both panes is a **`UdmField`** (name, type, nested `fields`) — the format-agnostic
+abstraction. Only the *provider* differs:
+
+- **shape** (a schema / USDL) → `SchemaFieldInfo` = `UdmField` + schema metadata (`isRequired`,
+  `constraints`, `schemaType`);
+- **data** (an instance) → plain `UdmField` (via `parseUdmToTree`).
+
+Same node, two sources — which is why the input pane already falls back from schema field tree to
+UDM-parsed instance with no conversion (`SchemaFieldInfo extends UdmField`). Keep this invariant: the
+mapper renders **UDM-shaped trees**; it never cares which provider filled a branch.
+
+### Data model v2 — a per-output *derivation*, not a coverage string
+
+```
+Derivation {
+  outputPath: string;                  // target node path; MAY target a container, not only a leaf
+  kind: 'direct' | 'function' | 'operator' | 'let' | 'literal'
+      | 'conditional' | 'loop' | 'spread' | 'structural' | 'gap';
+  cut: 'leaf' | 'sealed';              // the granularity the UTLX maps this branch at (see "cut level"):
+                                       //   'leaf'   = mapped down to this scalar
+                                       //   'sealed' = whole subtree produced wholesale (spread / subtree
+                                       //              copy); ONE cut, no per-leaf lines expected below
+  inputs: string[];                    // fully-qualified input paths referenced → the fan-in lines
+  letRefs?: string[];                  // names of let-bindings used → route line through the shared block
+  label?: string;                      // short display: function/operator name, 'if', 'map', literal value
+  code?: string;                       // the UTLX sub-expression (read-only display / hover / later FB seed)
+  location?: { line: number; column: number };   // jump-to-code in classic view
+  children?: Derivation[];             // loop/structural: nested derivations relative to the element;
+                                       //   a 'sealed' cut has none (descendants are inherited, not mapped)
+}
+```
+
+Render rules (3-column: input trees · derivation lane · output tree):
+
+| kind | visual |
+|---|---|
+| `direct` | straight line input → output, **no block** (green) |
+| `function`/`operator`/`conditional` | input(s) → **functoid block** (label/code) → output; multi-input ⇒ fan-in |
+| `let` | a **shared block** in the lane; every output that uses it lines into the same block |
+| `literal` | a small constant block (no input line) |
+| `loop` | block on the collection (driver from IF20); `children` map relative to the element |
+| `spread`/`structural` (`cut: 'sealed'`) | **one line at the container level**; subtree shown as a sealed cut (a "copied wholesale" badge), not drilled per-leaf |
+| `gap` | no line; coverage overlay flags it |
+
+### Cut level — the UTLX sets the granularity per branch
+
+A mapping isn't always leaf-to-leaf. `output = { ...$order }` (spread) or `output.addr = $order.shipTo`
+(subtree copy) produce a **whole container at once** — the transform never touches the leaves. So each
+output branch has a UTLX-derived **cut**: `sealed` (mapped wholesale at a container — one line, subtree
+sealed) or `leaf` (mapped down to the scalar). Different branches of the same contract cut at different
+levels, and the level is *derived from the AST*, not chosen arbitrarily.
+
+This gives two independent notions of depth:
+1. **Semantic cut** — the level the UTLX maps a branch at (from `deriveMapping`).
+2. **User folding** — manual expand/collapse on top (the deepest-visible-ancestor rule below).
+
+**The treeview opens at the semantic cut**, not uniformly collapsed: spreads stay folded as one sealed
+cut, explicitly-mapped fields expand to their leaves. The *initial shape of the tree itself* then shows
+how the transform is structured — where it copies wholesale, computes, or loops — which is the whole
+human payoff. User folding adjusts from that starting point.
+
+### Derivation source = a utlxd design-time query (not a client-side parser)
+
+Because **the engine owns the real UTLX parser**, the treeview must **not** reimplement a body parser in
+the browser (it would drift). Instead, add a **design-time derivation query** to `utlxd`, beside the
+existing `design generate-schema / typecheck / infer`. Then: **build the derivation once, render it twice**
+— the **canvas** graph and the **treeview** 3-column are two presentations over the same map (this is how
+#3 "treeview vs canvas" resolves: not two mappers, two renderers).
+
+**Endpoint spec — `design deriveMapping`** (LSP method / stdio request; CLI `utlxd design derive`):
+
+Request:
+```json
+{
+  "utlx": "%utlx 1.0\ninput order json\noutput json\n---\n{ ... }",
+  "inputs": [
+    { "name": "order", "format": "json", "schema": "<schema text>" }
+  ],
+  "outputFormat": "json"
+}
+```
+
+Response:
+```json
+{
+  "outputs": [
+    { "outputPath": "shipmentId", "kind": "direct", "cut": "leaf",
+      "inputs": ["order.id"], "code": "$order.id", "location": { "line": 5, "column": 3 } },
+
+    { "outputPath": "customer.fullName", "kind": "function", "cut": "leaf", "label": "concat",
+      "inputs": ["order.customer.firstName", "order.customer.lastName"],
+      "code": "concat($order.customer.firstName, \" \", $order.customer.lastName)" },
+
+    { "outputPath": "shipTo", "kind": "spread", "cut": "sealed",
+      "inputs": ["order.shippingAddress"], "code": "$order.shippingAddress" },
+
+    { "outputPath": "tax", "kind": "let", "cut": "leaf", "label": "tax", "letRefs": ["tax"],
+      "inputs": ["order.total"], "code": "$tax" },
+
+    { "outputPath": "lines", "kind": "loop", "cut": "leaf", "label": "map", "driver": "order.items",
+      "inputs": ["order.items"], "code": "$order.items |> map(...)",
+      "children": [
+        { "outputPath": "lines[].sku", "kind": "direct", "cut": "leaf",
+          "inputs": ["order.items[].code"], "code": "$it.code" }
+      ] },
+
+    { "outputPath": "address.country", "kind": "gap", "cut": "leaf", "inputs": [] }
+  ],
+  "lets": [
+    { "name": "tax", "code": "$order.total * 0.21", "inputs": ["order.total"] }
+  ],
+  "diagnostics": []
+}
+```
+
+Notes: `outputPath` must use the **same path convention as the treeview's output `TreeNode.path`**, and
+`inputs[]` the same convention as the input node paths (`inputName.path`), so the
+**deepest-visible-ancestor** resolver can match endpoints directly. Resolving that convention against
+`coverage.ts`'s `flattenLeaves` paths is the first correctness check before any drawing.
+
+### Folding/aggregation (carried over from the line-drawing design)
+
+One rule covers collapsed trees: **resolve each line endpoint (and each block's owner) to its deepest
+*visible* ancestor, then dedup by anchor pair.** A folded input/output aggregates its descendants' lines
+onto the visible ancestor; a folded output hides its block and the line aggregates upward. Folding is the
+**density control** — start collapsed (already implemented), fan out on expand. Blocks belong to their
+output field, so they hide/show with it.
+
+### Read-only now → editable later (still UTLX-led)
+
+- **Now (read-only):** blocks display the function/snippet; hover → full `code`; click → jump to
+  `location` in classic view. No write-back.
+- **Later (editable):** click a block → Function Builder seeded from `code` → on apply it **writes UTLX**,
+  which re-derives the view. UTLX stays the single source of truth; the treeview never holds a divergent
+  model. This is the clean answer to old open-question #2 (no reverse-parsing of hand-edits into a separate
+  model — the derivation query *is* the parse).
+
+### Execution mode (parked — MC only for now)
+
+Because the tree is UDM-shaped with pluggable providers, an Execution-mode treeview is the *same* tree
+with a different mix: input = **UDM** (real instance), output = **shape inferred from the UTLX** (USDL-ish)
+optionally annotated with **runtime values** (UDM). No new tree type — just which provider fills each side,
+and `deriveMapping` over the same AST. Deferred; noting it so the model doesn't paint us into an
+MC-only corner. (To pursue it, first pin USDL's exact role vs UDM for the output "shape + value" overlay.)
+
+### Revised phasing
+
+- **1.5 — read-only lines + functoid blocks** from `design deriveMapping`: direct lines, function/let
+  blocks, fan-in, gap overlay, with the folding-aggregation rule. (Loops can show as a single block first.)
+- **2 — editable round-trip:** block → FB → writes UTLX → re-derive.
+- **3 — loops/arrays in depth:** expand `children` relative to the loop element (IF20 driver/strategy).
+
+### Open decisions
+
+1. **Where `deriveMapping` runs** — recommended: **utlxd design-time** (engine owns the parser). Alterative
+   (client-side body parser) is rejected as drift-prone.
+2. **Canvas convergence** — adopt the v2 derivation map as the canvas's input too, so both views share it.
+
+---
 
 ## Related
 
