@@ -1,6 +1,162 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "enriched-order",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "description": "Inferred from instance document",
   "type": "object",
-  "description": "Output contract — derived result; placeholder (no output sample). Refine as needed."
+  "properties": {
+    "enrichedOrder": {
+      "type": "object",
+      "properties": {
+        "orderId": {
+          "type": "string"
+        },
+        "orderDate": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string"
+        },
+        "customer": {
+          "type": "object",
+          "properties": {
+            "customerId": {
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "tier": {
+              "type": "string"
+            },
+            "creditLimit": {
+              "type": "integer"
+            },
+            "creditAvailable": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "customerId",
+            "name",
+            "tier",
+            "creditLimit",
+            "creditAvailable"
+          ]
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "sku": {
+                "type": "string"
+              },
+              "productName": {
+                "type": "string"
+              },
+              "quantity": {
+                "type": "integer"
+              },
+              "unitPrice": {
+                "type": "integer"
+              },
+              "lineTotal": {
+                "type": "integer"
+              },
+              "availability": {
+                "type": "object",
+                "properties": {
+                  "inStock": {
+                    "type": "boolean"
+                  },
+                  "quantityAvailable": {
+                    "type": "integer"
+                  },
+                  "warehouse": {
+                    "type": "string"
+                  },
+                  "backorderRequired": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pricing": {
+          "type": "object",
+          "properties": {
+            "subtotal": {
+              "type": "integer"
+            },
+            "discountTier": {
+              "type": "string"
+            },
+            "discountPercent": {
+              "type": "integer"
+            },
+            "discountAmount": {
+              "type": "number"
+            },
+            "total": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "subtotal",
+            "discountTier",
+            "discountPercent",
+            "discountAmount",
+            "total"
+          ]
+        },
+        "fulfillment": {
+          "type": "object",
+          "properties": {
+            "allItemsInStock": {
+              "type": "boolean"
+            },
+            "backorderCount": {
+              "type": "integer"
+            },
+            "warehouses": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "allItemsInStock",
+            "backorderCount",
+            "warehouses"
+          ]
+        },
+        "audit": {
+          "type": "object",
+          "properties": {
+            "creditApproved": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "creditApproved"
+          ]
+        }
+      },
+      "required": [
+        "orderId",
+        "orderDate",
+        "status",
+        "customer",
+        "items",
+        "pricing",
+        "fulfillment",
+        "audit"
+      ]
+    }
+  },
+  "required": [
+    "enrichedOrder"
+  ]
 }
