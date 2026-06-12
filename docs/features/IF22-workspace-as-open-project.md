@@ -1,8 +1,15 @@
 # IF22: IDE — the Theia **workspace** = the open `.utlxp` project (file-backed docs + git)
 
-**Status:** Proposed (design). **Step 1 implemented** — an explicit **"Open Project as Workspace"**
-command (`utlx.project.openAsWorkspace`) sets the Theia workspace to the project root. The deeper
-unification (file-backed docs, git, survive-reload) is phased below.
+**Status:** **Unified open implemented** (June 2026). There is now **one** command —
+**File → Open UTLX Project** (`utlx.project.open`) — and **opening a `.utlxp` IS the workspace**
+(like VS Code "Open Folder"): it `WorkspaceService.open()`s the project (the window reloads, rooted
+there), and on the next startup the IDE **detects the `.utlxp` workspace** (`transformations/`),
+**auto-loads** the transformation + panels, and **switches to Message-Contract** — so the project
+comes back **loaded, in MC**, with the Explorer rooted at it. **Mode is DERIVED from the workspace**
+(`mode = f(workspace)`), durable across reloads, not a transient toggle. The earlier two-command
+split (a separate `utlx.project.openAsWorkspace`) has been **removed** — "workspace" is plumbing, not
+a user concept; you open a *project*. Still pending: **git** (`@theia/git`/`@theia/scm` not composed —
+Step 2) and **file-backed documents** (Step 3).
 **Priority:** Medium-High — unlocks git/versioning, native save/undo, and a real project tree, and is
 the prerequisite for treating a bundle as a versioned, deployable repo.
 **Created:** June 2026
@@ -41,22 +48,24 @@ Theia's workspace machinery would operate on the **project**:
   **external-edit reload** (file watch), **per-project settings** (`.theia/settings.json`, e.g. the
   `utlx-config` schema prefs), **terminal rooted at the project**.
 
-## The hard part — switching the workspace **reloads** Theia
+## The reload — and how the unified open handles it (implemented)
 
-`WorkspaceService.open(uri)` **reloads the window** (workspace switch). That **wipes the in-memory
-panel state** the current "Open UTLX Project" just loaded. So the two cannot be naively merged into one
-action — auto-switching on Open would discard the load. Resolutions:
+`WorkspaceService.open(uri)` **reloads the window** (workspace switch), which **wipes the in-memory
+panel state**. So "set the workspace" and "load the panels" can't happen in one synchronous action — the
+load must happen **after** the reload. The implemented solution makes the **workspace itself the durable
+signal**:
 
-1. **Keep them separate (Step 1, done):** "Open UTLX Project" loads the panels (light, no reload);
-   a distinct **"Open Project as Workspace"** opts into the reload for Navigator/git. Complementary tools.
-2. **Survive-reload handshake:** Open Project stores a *pending-open* (project root) in
-   `localStorage`/workspace storage, calls `WorkspaceService.open`, and a startup hook re-runs the panel
-   load after the reload. Makes "Open Project" both set the workspace *and* populate the panels.
-3. **File-backed docs (the real fix):** once `.utlx`/test-input/schemas are workspace **files** opened
-   via `EditorManager`/`FileService` (IF03), the in-memory load is moot — the workspace files *are* the
-   documents, and they survive reload by definition. This is the destination.
-4. **Multi-root alternative:** `WorkspaceService.addRoot(projectUri)` can surface the project tree as an
-   *additional* root without a full single-root switch — lighter, but multi-root has its own UX/`.theia-workspace` wrinkles.
+- **Open** = `WorkspaceService.open(.utlxp)` → reload, rooted at the project.
+- **Startup** = `maybeLoadProjectWorkspace()` asks *"is the workspace root a `.utlxp` (has
+  `transformations/`)?"* → if so, `loadProjectFromRoot()` loads the transformation + panels and fires
+  **Message-Contract**. **Mode is DERIVED, not asserted** — the `.utlxp` survives the reload, so MC is
+  re-derived on every startup (no race, no `localStorage` handshake needed).
+
+Considered but not taken: a `localStorage` *pending-open* handshake (works, but the workspace is already
+a durable signal); **multi-root** `addRoot` (lighter, but `.theia-workspace` UX wrinkles). The **real
+destination** is still **file-backed documents** (Step 3): once `.utlx`/test-input/schemas are opened as
+workspace *files* via `EditorManager`/`FileService` (IF03), the in-memory load is moot and the documents
+survive the reload by definition.
 
 ## Caveat — where the git boundary is
 
@@ -68,19 +77,25 @@ repos, which is the right direction anyway.
 
 ## Phasing
 
-1. **Open Project as Workspace** (✅ done) — `utlx.project.openAsWorkspace`: set the Theia workspace to
-   the project root (uses the currently-open project, else a folder pick). Explicit, opt-in (reloads).
+1. **Unified open** (✅ done) — `utlx.project.open` opens the `.utlxp` **as the workspace**; startup
+   `maybeLoadProjectWorkspace()` auto-loads the transformation + **Message-Contract**. One command;
+   **mode = f(workspace)**. (The separate `openAsWorkspace` command was **removed**.)
+   *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
+   into MC (avoids the brief E→MC flash on startup).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs
    with IF14 cloud-hardening decisions about exposing SCM.)
 3. **File-backed documents** (IF03) — bind the editor + input/output panels to workspace files via
-   `EditorManager`/`FileService` so save/undo/dirty/reopen are native and survive reload; then unify
-   "Open Project" to set the workspace *and* restore the panes from the files (no separate command needed).
+   `EditorManager`/`FileService` so save/undo/dirty/reopen are native (and the load survives the reload
+   without the startup re-read).
 4. **(optional)** multi-root surfacing; search-in-workspace.
 
 ## Code pointers
 
-- `browser/utlx-frontend-contribution.ts` — `openProject()` already tracks `currentProjectRoot`;
-  Step-1 adds `openProjectAsWorkspace()` using `WorkspaceService` (`@theia/workspace/lib/browser`).
+- `browser/utlx-frontend-contribution.ts` — `openProject()` (pick `.utlxp` + `WorkspaceService.open`),
+  `maybeLoadProjectWorkspace()` (startup: detect `transformations/`), `loadProjectFromRoot()` (load
+  panels + fire `MESSAGE_CONTRACT`). `WorkspaceService` from `@theia/workspace/lib/browser`.
+- `browser/toolbar/utlx-toolbar-widget.tsx` — now **listens** to `onModeChanged` (badge + backend
+  `setMode` follow an external switch), so MC derived at startup propagates to the whole IDE.
 - IF03 file-backing is the substrate for Steps 3–4 (`EditorManager.open` for `.utlx`, `FileService`
   for test-input/schemas).
 - `browser-app/package.json` — add `@theia/git` + `@theia/scm` for Step 2.
