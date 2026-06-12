@@ -1391,9 +1391,18 @@ export class OutputPanelWidget extends ReactWidget {
     }): void {
         console.log('[OutputPanelWidget] Syncing from headers:', parsedOutput);
 
+        // IB06: in MC the output directive often carries a SCHEMA format (`output jsch`/`xsd`/…).
+        // The INSTANCE is the data the schema describes (json/xml/…), never the schema format itself.
+        // Split the header format: the instance gets the data format; if a schema format was given,
+        // capture it on the schema tab too. jsch describes JSON *or* YAML — if the instance is already
+        // a valid data format for that schema, keep it (don't clobber YAML → json).
+        const instanceFmt = this.instanceFormatForSchema(parsedOutput.format, this.state.instanceFormat);
+        const wasSchemaFormat = instanceFmt !== parsedOutput.format;
+
         // Update state with parsed output format and options
         this.setState({
-            instanceFormat: parsedOutput.format,
+            instanceFormat: instanceFmt,
+            ...(wasSchemaFormat ? { schemaFormat: parsedOutput.format } : {}),
             csvHeaders: parsedOutput.csvHeaders,
             csvDelimiter: parsedOutput.csvDelimiter,
             csvBom: parsedOutput.csvBom,
@@ -1403,7 +1412,41 @@ export class OutputPanelWidget extends ReactWidget {
             odataWrapCollection: parsedOutput.odataWrapCollection
         });
 
-        console.log('[OutputPanelWidget] Synced to format:', parsedOutput.format);
+        console.log('[OutputPanelWidget] Synced — instance:', instanceFmt,
+            wasSchemaFormat ? `(schema: ${parsedOutput.format})` : '');
+    }
+
+    /**
+     * Resolve the DATA (instance) format for an output directive (IB06). A SCHEMA format never
+     * belongs on the instance tab — it maps to the data it describes. A schema can describe more
+     * than one data format (jsch → JSON *or* YAML), so if the current instance already carries a
+     * valid data format for that schema, it is preserved; otherwise the first (default) is used.
+     * A data format passes through unchanged. Mirrors schemaToDataFormat in the toolbar widget.
+     */
+    private instanceFormatForSchema(fmt: string, current?: string): string {
+        const valid = this.schemaDataFormats(fmt);
+        if (!valid) {
+            return fmt;   // not a schema format — already a data format
+        }
+        return current && valid.includes(current.toLowerCase()) ? current : valid[0];
+    }
+
+    /**
+     * Data formats a schema format can describe (first = default), or null if `fmt` isn't a schema
+     * format. `syncFromHeaders` runs in BOTH modes, but only a schema format triggers a remap — and a
+     * schema format only ever appears in the `output` directive in MC. In Execution the directive is a
+     * data format (json/xml/avro/proto/…), which falls through `default: null` and passes through
+     * unchanged. So this list is the MC output-contract schema set; `avro`/`proto`/`usdl` are NOT valid
+     * MC contracts and are omitted (as *data* formats in Execution they still pass through via default).
+     */
+    private schemaDataFormats(fmt: string): string[] | null {
+        switch ((fmt || '').toLowerCase()) {
+            case 'jsch':  return ['json', 'yaml'];   // JSON Schema → JSON or YAML
+            case 'xsd':   return ['xml'];
+            case 'osch':  return ['odata'];
+            case 'tsch':  return ['csv'];
+            default:      return null;               // already a data format
+        }
     }
 
     /**

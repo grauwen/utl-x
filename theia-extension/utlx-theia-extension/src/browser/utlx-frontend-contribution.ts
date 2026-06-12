@@ -1108,15 +1108,14 @@ export class UTLXFrontendContribution implements
         this.eventService.onOutputSchemaFormatChanged(event => {
             console.log('[UTLXFrontendContribution] Output schema format changed:', event);
 
-            if (this.currentMode === UTLXMode.MESSAGE_CONTRACT) {
-                // In Message Contract mode, the schema describes the output data format.
-                // Map schema format → instance format for the UTLX header:
-                // jsch→json, xsd→xml, osch→odata, tsch→csv
-                this.outputFormat = this.schemaFormatToInstanceFormat(event.format);
-            } else {
-                // In Execution mode, use the format as-is
-                this.outputFormat = event.format;
-            }
+            // IB06: this event ALWAYS carries a SCHEMA format (the output Schema tab's format —
+            // jsch/xsd/osch/tsch). The `output` directive (and the execute request) is ALWAYS a DATA
+            // format — you execute *to* data, never *to* a schema. So map schema→data in BOTH modes
+            // (jsch→json, xsd→xml, …; a data format passes through). This must not depend on
+            // currentMode: when an MC project loads, this fires BEFORE fireModeChanged(MC) sets the
+            // mode, so a mode-gated branch would leak `jsch` into the Execution output format and
+            // break Execute with "UDM does not represent valid JSON Schema".
+            this.outputFormat = this.schemaFormatToInstanceFormat(event.format);
 
             // Update editor headers
             this.updateEditorHeaders();
