@@ -283,6 +283,10 @@ export class UTLXFrontendContribution implements
             { execute: () => this.openProject() }
         );
         commands.registerCommand(
+            { id: 'utlx.project.switchTransformation', label: 'UTL-X: Switch Transformation…' },
+            { execute: () => this.switchTransformation() }
+        );
+        commands.registerCommand(
             { id: 'utlx.transformation.save', label: 'UTL-X: Save Project' },
             { execute: () => this.saveTransformation(false) }
         );
@@ -366,6 +370,11 @@ export class UTLXFrontendContribution implements
             commandId: 'utlx.project.open',
             label: 'Open UTLX Project…',
             order: 'a1'
+        });
+        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+            commandId: 'utlx.project.switchTransformation',
+            label: 'Switch Transformation…',
+            order: 'a2'
         });
         menus.registerMenuAction(CommonMenus.FILE_SAVE, {
             commandId: 'utlx.transformation.save',
@@ -642,7 +651,7 @@ output json
      * transformation; binds each input's test-input instance + schema (transform.yaml refs) + the
      * output contract. (A single-`.utlx` load is still available via the editor's Load button.)
      */
-    private async loadProjectFromRoot(root: URI): Promise<void> {
+    private async loadProjectFromRoot(root: URI, preferredTxName?: string): Promise<void> {
             const txParentStat = await this.fileService.resolve(root.resolve('transformations'));
             const txDirs = (txParentStat.children || []).filter(c => c.isDirectory)
                 .sort((a, b) => a.resource.path.base.localeCompare(b.resource.path.base));
@@ -651,9 +660,12 @@ output json
             // One transformation → open it. Multiple → ask which one (a project can bundle several
             // mappings, e.g. order-to-invoice + order-to-picklist). The picker runs at startup after
             // the workspace reload; dismissing it falls back to the first (alphabetical) so the project
-            // still opens.
+            // still opens. `preferredTxName` (e.g. from Switch Transformation) loads that one directly,
+            // bypassing the picker.
             let txStat = txDirs[0];
-            if (txDirs.length > 1) {
+            if (preferredTxName) {
+                txStat = txDirs.find(d => d.resource.path.base === preferredTxName) || txStat;
+            } else if (txDirs.length > 1) {
                 const items = txDirs.map(d => ({
                     label: d.resource.path.base,
                     description: 'transformation',
@@ -775,6 +787,60 @@ output json
             const loaded = samples.filter(s => s.content.trim()).length;
             const schemas = samples.filter(s => s.schemaContent.trim()).length + (outLoaded ? 1 : 0);
             this.messageService.info(`✓ Opened project "${root.path.name}" → "${txName}"${multiNote} — ${loaded} input(s), ${schemas} schema(s)`);
+    }
+
+    /**
+     * File → Switch Transformation. Within the ALREADY-OPEN project (the workspace `.utlxp`), pick a
+     * different transformation and reload the editor + input/output panels in place — no window reload
+     * (the workspace and Message-Contract mode are unchanged). Only meaningful when the project bundles
+     * more than one transformation.
+     */
+    private async switchTransformation(): Promise<void> {
+        try {
+            // The open project is the workspace root; prefer the tracked root, else the workspace.
+            let root = this.currentProjectRoot;
+            if (!root) {
+                await this.workspaceService.ready;
+                const roots = this.workspaceService.tryGetRoots();
+                root = roots && roots[0] ? roots[0].resource : undefined;
+            }
+            let txParentStat;
+            try {
+                txParentStat = root && await this.fileService.resolve(root.resolve('transformations'));
+            } catch { /* not a project */ }
+            if (!root || !txParentStat) {
+                await this.warnDialog(
+                    'No UTL-X project open',
+                    'Open a UTL-X project first (File → Open UTLX Project) — Switch Transformation works within an open project.');
+                return;
+            }
+
+            const txDirs = (txParentStat.children || []).filter(c => c.isDirectory)
+                .sort((a, b) => a.resource.path.base.localeCompare(b.resource.path.base));
+            if (txDirs.length < 2) {
+                this.messageService.info('This project has only one transformation — nothing to switch to.');
+                return;
+            }
+
+            const currentName = this.currentTxDir?.path.base;
+            const items = txDirs.map(d => ({
+                label: d.resource.path.base,
+                description: d.resource.path.base === currentName ? 'current' : 'transformation',
+                stat: d
+            }));
+            const picked = await this.quickInput.showQuickPick(items, {
+                title: 'Switch Transformation',
+                placeholder: 'Select a transformation to load (reloads the editor + panels).'
+            });
+            if (!picked) { return; }
+            const pickedName = picked.stat.resource.path.base;
+            if (pickedName === currentName) { return; }   // already open — nothing to do
+
+            await this.loadProjectFromRoot(root, pickedName);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] Switch Transformation failed:', err);
+            this.messageService.error(`Switch Transformation failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
     }
 
     registerKeybindings(keybindings: KeybindingRegistry): void {

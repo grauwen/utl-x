@@ -88,9 +88,11 @@ repos, which is the right direction anyway.
    `transformations/`. On load, **one** opens directly; **>1** prompts a `QuickInputService` picker
    (*"Open UTL-X Project — choose a transformation"*) and opens the chosen one (dismiss → first,
    alphabetical). Sample: `examples/utlxp/order-processing.utlxp` (order-to-invoice + order-to-picklist,
-   one shared `order` contract). *Follow-up:* let the **toolbar read the same `transformations/` signal
-   at init** so it boots straight into MC (avoids the brief E→MC flash on startup); and switching the
-   active transformation **without reopening** the project (Phase ≥2).
+   one shared `order` contract). **File → Switch Transformation…** (`utlx.project.switchTransformation`)
+   re-picks within the **already-open** project and reloads the editor + panels **in place** — no window
+   reload (workspace + MC unchanged); it reuses `loadProjectFromRoot(root, preferredTxName)`.
+   *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
+   into MC (avoids the brief E→MC flash on startup).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs
    with IF14 cloud-hardening decisions about exposing SCM.)
 3. **File-backed documents** (IF03) — bind the editor + input/output panels to workspace files via
