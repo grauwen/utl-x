@@ -101,6 +101,30 @@ const TreeNode: React.FC<{
     );
 };
 
+// ── one input as a foldable group ($order, $invoice, …); collapsed by default ────────────────
+// The input root itself is foldable from the highest level, and starts closed so nothing is
+// auto-expanded — the user opens what they want. (The output pane keeps its own default below.)
+const InputTreeGroup: React.FC<{ inp: TreeviewInput }> = ({ inp }) => {
+    const [open, setOpen] = React.useState(false);   // start folded
+    const fields = inp.fields || [];
+    const hasFields = fields.length > 0;
+    return (
+        <div className='utlx-tv-input-group'>
+            <div
+                className='utlx-tv-input-title'
+                style={hasFields ? { cursor: 'pointer' } : undefined}
+                onClick={() => hasFields && setOpen(o => !o)}
+            >
+                <span className='utlx-tv-twisty'>{hasFields ? (open ? '▾' : '▸') : ''}</span>
+                ${inp.name}{inp.format ? <span className='utlx-tv-type'>{inp.format}</span> : null}
+            </div>
+            {open && fields.map((f, i) => (
+                <TreeNode key={`${inp.name}.${f.name}.${i}`} field={f} path={f.name} depth={0} defaultExpanded={false} />
+            ))}
+        </div>
+    );
+};
+
 export const TreeviewWidget: React.FC<TreeviewWidgetProps> = ({ inputs, outputName, outputFields, coverage }) => {
     const byPath = React.useMemo(() => {
         const m = new Map<string, CoverageEntry>();
@@ -120,14 +144,7 @@ export const TreeviewWidget: React.FC<TreeviewWidgetProps> = ({ inputs, outputNa
                 <div className='utlx-tv-pane-body'>
                     {!hasInputs && <div className='utlx-tv-empty'>No input schemas loaded.</div>}
                     {inputs.map((inp, idx) => (
-                        <div className='utlx-tv-input-group' key={`${inp.name}-${idx}`}>
-                            <div className='utlx-tv-input-title'>
-                                ${inp.name}{inp.format ? <span className='utlx-tv-type'>{inp.format}</span> : null}
-                            </div>
-                            {(inp.fields || []).map((f, i) => (
-                                <TreeNode key={`${inp.name}.${f.name}.${i}`} field={f} path={f.name} depth={0} defaultExpanded={true} />
-                            ))}
-                        </div>
+                        <InputTreeGroup key={`${inp.name}-${idx}`} inp={inp} />
                     ))}
                 </div>
             </div>
