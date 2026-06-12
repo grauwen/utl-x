@@ -124,6 +124,9 @@ export class UTLXFrontendContribution implements
     @inject(WorkspaceService)
     protected readonly workspaceService!: WorkspaceService;
 
+    @inject(MenuModelRegistry)
+    protected readonly menus!: MenuModelRegistry;
+
     // The currently-open UTLX project (set by Open UTLX Project), so the Edit-config commands know
     // where transform.yaml (in the tx dir) and engine.yaml (project root) live.
     private currentProjectRoot?: URI;
@@ -163,6 +166,13 @@ export class UTLXFrontendContribution implements
 
         // Open toolbar at top
         await this.openToolbar();
+
+        // Relabel the built-in @theia/workspace "Open Recent Workspace…" File-menu entry to
+        // "Open Recent UTLX Project…" — in our unified model a workspace IS a .utlxp project (IF22).
+        // Done here (after MenuModelRegistry.onStart has run all registerMenus) so it's order-safe;
+        // command/behavior are unchanged (still workspace:openRecent). (The Command Palette keeps the
+        // original command label.)
+        this.relabelOpenRecent();
 
         // Open 3-column layout: Input | Editor | Output
         await this.open3ColumnLayout();
@@ -259,7 +269,11 @@ export class UTLXFrontendContribution implements
             }
         });
 
-        // ── File menu: Open / Save Transformation (bundle-format §7, IF18) ──
+        // ── File menu: New / Open / Save Transformation (bundle-format §7, IF18) ──
+        commands.registerCommand(
+            { id: 'utlx.project.new', label: 'UTL-X: New Project…' },
+            { execute: () => this.newProject() }
+        );
         commands.registerCommand(
             { id: 'utlx.project.open', label: 'UTL-X: Open Project…' },
             { execute: () => this.openProject() }
@@ -338,7 +352,12 @@ export class UTLXFrontendContribution implements
     }
 
     registerMenus(menus: MenuModelRegistry): void {
-        // File menu — documents (Open/Save Transformation), per IF18 + bundle-format §7.
+        // File menu — documents (New/Open/Save Transformation), per IF18 + bundle-format §7.
+        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+            commandId: 'utlx.project.new',
+            label: 'New UTLX Project…',
+            order: 'a0'
+        });
         menus.registerMenuAction(CommonMenus.FILE_OPEN, {
             commandId: 'utlx.project.open',
             label: 'Open UTLX Project…',
@@ -476,6 +495,90 @@ export class UTLXFrontendContribution implements
      * (from `transform.yaml` refs), and the output contract. Phase 1 opens the first transformation
      * in the project. (A single-`.utlx` load is already available via the editor's Load button.)
      */
+    /**
+     * File → New UTL-X Project. Pick a parent folder + name, scaffold a MINIMAL `.utlxp` bundle
+     * (one transformation with a stub `%utlx 1.0` header, `transform.yaml`, no schemas yet) and adopt
+     * it AS the Theia workspace (like VS Code "New Project") — the window reloads and the startup hook
+     * `maybeLoadProjectWorkspace()` loads it into the panels in Message-Contract mode (mode = f(workspace)).
+     * Creating a project IS opening it as the workspace (IF22 unified model).
+     */
+    private async newProject(): Promise<void> {
+        try {
+            const folder = await this.resolveDialogFolder();
+            const props: SaveFileDialogProps = {
+                title: 'New UTL-X Project — name the .utlxp project',
+                inputValue: 'untitled.utlxp',
+                saveLabel: 'Create'
+            };
+            const target = await this.fileDialogService.showSaveDialog(props, folder);
+            if (!target) return;
+
+            // Always ensure the `.utlxp` suffix on the project directory. The user browses to a parent
+            // folder and types a name — a new subdir name OR an existing plain dir name — WITHOUT
+            // `.utlxp`; we append it (a sibling `<name>.utlxp`). If they already typed `.utlxp`, keep it.
+            // (Use `path.base`, not `path.name`, so a dotted name like `my.data` isn't truncated.)
+            const typed = target.path.base;
+            const hasExt = typed.toLowerCase().endsWith('.utlxp');
+            const root = hasExt ? target : target.parent.resolve(`${typed}.utlxp`);   // the <name>.utlxp directory
+            const txName = (hasExt ? typed.slice(0, -'.utlxp'.length) : typed) || 'transformation'; // name w/o .utlxp
+
+            // Don't clobber an existing project — point the user at Open instead.
+            if (await this.fileService.exists(root)) {
+                await this.warnDialog(
+                    'Already exists',
+                    `"${root.path.base}" already exists.\n\nPick a new name, or use Open UTLX Project to open it.`);
+                return;
+            }
+
+            // Minimal, valid skeleton — one input slot + a JSON output, empty body.
+            const utlx =
+`%utlx 1.0
+input payload json
+output json
+---
+// New UTL-X transformation — map $payload to the output contract.
+{
+}
+`;
+            const plan = buildSavePlan({
+                txName,
+                utlx,
+                inputs: [{ name: 'payload', content: '', format: 'json' }]
+            });
+            for (const dir of plan.dirs) {
+                await this.fileService.createFolder(root.resolve(dir));
+            }
+            for (const f of plan.files) {
+                await this.fileService.write(root.resolve(f.path), f.content);
+            }
+
+            // Adopt the new project AS the workspace (reloads). Startup then loads it + Message-Contract.
+            this.workspaceService.open(root);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] New UTL-X Project failed:', err);
+            this.messageService.error(`New UTL-X Project failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+
+    /**
+     * Relabel the built-in `workspace:openRecent` File-menu action to "Open Recent UTLX Project…".
+     * Pure menu-label override (unregister the workspace-provided action, re-register the same
+     * commandId with our label + same order) — the command and its behavior are untouched. Run from
+     * onStart so all menu contributions have registered (order-safe). Best-effort: never block startup.
+     */
+    private relabelOpenRecent(): void {
+        try {
+            this.menus.unregisterMenuAction('workspace:openRecent', CommonMenus.FILE_OPEN);
+            this.menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+                commandId: 'workspace:openRecent',
+                label: 'Open Recent UTLX Project…',
+                order: 'a20'   // keep the original slot (right after Open Workspace, a10)
+            });
+        } catch (err) {
+            console.warn('[UTLXFrontendContribution] Could not relabel Open Recent Workspace:', err);
+        }
+    }
+
     private async openProject(): Promise<void> {
         try {
             const folder = await this.resolveDialogFolder();
@@ -755,28 +858,50 @@ export class UTLXFrontendContribution implements
             setTimeout(cleanupRightPanel, 1500);
             setTimeout(cleanupRightPanel, 3000);
 
-            // Monitor when active widget changes - restore Input/Output panels
-            this.shell.onDidChangeActiveWidget((widget) => {
-                // Skip restoring panels when canvas is full-screen
+            // Monitor when active widget changes — restore Input/Output panels, but only when the
+            // user POSITIVELY moves focus into the editor (main) or output (right). Earlier this
+            // restored on `activeArea !== 'left'`, which also fired on a transient/undefined active
+            // change — e.g. RIGHT-CLICKING in the Explorer opens a context menu that blurs to no shell
+            // widget (activeArea === undefined), so it yanked the input panel back over the Explorer
+            // mid-right-click. Now: an undefined active (context menu/popup) restores NOTHING, and an
+            // active left-area view (Explorer in use — new file/folder, etc.) is left alone. The panels
+            // come back when the user clicks into the editor/output (or toggles the Explorer icon off).
+            this.shell.onDidChangeActiveWidget(() => {
                 if (this.canvasFullScreen) return;
-                // Restore Input Panel and Output Panel when other views (Explorer, Outline) take over
-                setTimeout(() => {
-                    // Re-check: canvas may have gone full-screen while this timer was pending
+                // Run as a MICROTASK (not setTimeout) so the restore lands in the SAME frame as the
+                // collapse — a 100ms timer painted the collapsed state (editor slid left) and only then
+                // restored the input panel (editor slid back), a visible two-step flicker. A microtask
+                // flushes before the browser paints, so collapse + restore reflow once.
+                void Promise.resolve().then(() => {
                     if (this.canvasFullScreen) return;
-                    const currentActiveWidget = this.shell.activeWidget;
-                    const activeArea = currentActiveWidget &&
-                        this.shell.getAreaFor(currentActiveWidget);
+                    const active = this.shell.activeWidget;
+                    const activeArea = active && this.shell.getAreaFor(active);
 
-                    // If Input Panel is hidden and no other left area widget is active, restore it
-                    if (inputPanel.isAttached && !inputPanel.isVisible && activeArea !== 'left') {
+                    // Is another LEFT-area view (the Explorer/Navigator) still showing on top of the
+                    // left panel? This is the discriminator between two cases that BOTH blur focus to no
+                    // shell widget (activeArea === undefined):
+                    //   • right-click in the Explorer → context menu, Explorer STILL visible → keep it.
+                    //   • collapse the Explorer (icon) → Explorer now HIDDEN → fall back to input panel.
+                    const otherLeftVisible = this.shell.getWidgets('left')
+                        .some(w => w !== inputPanel && w.isVisible);
+
+                    // INPUT panel (left): bring it back when the user moved focus to the editor (main) or
+                    // output (right) — a positive "clicked away" — OR when no other left view is showing
+                    // (Explorer collapsed/closed, so the left panel falls back to the input panel). NOT
+                    // while the Explorer is the visible left tab with only a transient blur (its menu).
+                    const movedToMainOrRight = activeArea === 'main' || activeArea === 'right';
+                    if (inputPanel.isAttached && !inputPanel.isVisible &&
+                        (movedToMainOrRight || !otherLeftVisible)) {
                         this.shell.activateWidget(inputPanel.id);
                     }
 
-                    // If Output Panel is hidden (e.g. Outline took over), restore it
-                    if (outputPanel.isAttached && !outputPanel.isVisible && activeArea !== 'right') {
+                    // Output panel (right): restore when something else (e.g. Outline) took its slot and
+                    // the user moved to the editor or the left panel.
+                    if (outputPanel.isAttached && !outputPanel.isVisible &&
+                        (activeArea === 'main' || activeArea === 'left')) {
                         this.shell.activateWidget(outputPanel.id);
                     }
-                }, 100);
+                });
             });
 
             // Set initial panel sizes for 1:1:1 ratio (equal thirds)
