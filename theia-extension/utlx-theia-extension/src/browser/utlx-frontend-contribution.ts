@@ -118,11 +118,11 @@ export class UTLXFrontendContribution implements
     @inject(EditorManager)
     protected readonly editorManager!: EditorManager;
 
-    @inject(WorkspaceService)
-    protected readonly workspaceService!: WorkspaceService;
-
     @inject(TerminalService)
     protected readonly terminalService!: TerminalService;
+
+    @inject(WorkspaceService)
+    protected readonly workspaceService!: WorkspaceService;
 
     // The currently-open UTLX project (set by Open UTLX Project), so the Edit-config commands know
     // where transform.yaml (in the tx dir) and engine.yaml (project root) live.
@@ -166,6 +166,11 @@ export class UTLXFrontendContribution implements
 
         // Open 3-column layout: Input | Editor | Output
         await this.open3ColumnLayout();
+
+        // If the Theia workspace IS a .utlxp project (set by "Open UTL-X Project", which reloads into
+        // the project), auto-load the transformation + Message-Contract mode (IF03). Fire-and-forget —
+        // it awaits workspaceService.ready internally.
+        void this.maybeLoadProjectWorkspace();
 
         console.log('[UTLXFrontendContribution] ===== onStart() completed =====');
     }
@@ -260,10 +265,6 @@ export class UTLXFrontendContribution implements
             { execute: () => this.openProject() }
         );
         commands.registerCommand(
-            { id: 'utlx.project.openAsWorkspace', label: 'UTL-X: Open Project as Workspace (Explorer / Git)' },
-            { execute: () => this.openProjectAsWorkspace() }
-        );
-        commands.registerCommand(
             { id: 'utlx.transformation.save', label: 'UTL-X: Save Project' },
             { execute: () => this.saveTransformation(false) }
         );
@@ -342,11 +343,6 @@ export class UTLXFrontendContribution implements
             commandId: 'utlx.project.open',
             label: 'Open UTLX Project…',
             order: 'a1'
-        });
-        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
-            commandId: 'utlx.project.openAsWorkspace',
-            label: 'Open UTLX Project as Workspace…',
-            order: 'a2'
         });
         menus.registerMenuAction(CommonMenus.FILE_SAVE, {
             commandId: 'utlx.transformation.save',
@@ -474,26 +470,6 @@ export class UTLXFrontendContribution implements
     }
 
     /**
-     * IF22 Step 1 — set the Theia **workspace** to the open project's root (or a picked .utlxp) so the
-     * Navigator (and `@theia/git`, once composed) bind to the project. NOTE: this **reloads** the window
-     * (a Theia workspace switch), so the in-memory mapping panels are NOT preserved — that's why it's a
-     * separate, explicit action from "Open UTLX Project" (file-backed docs that survive the reload are
-     * IF22 Step 3).
-     */
-    private async openProjectAsWorkspace(): Promise<void> {
-        let root = this.currentProjectRoot;
-        if (!root) {
-            const folder = await this.resolveDialogFolder();
-            const sel = await this.fileDialogService.showOpenDialog(
-                { title: 'Open UTLX Project as Workspace — select the .utlxp directory', canSelectFiles: false, canSelectFolders: true, canSelectMany: false },
-                folder);
-            root = (Array.isArray(sel) ? sel[0] : sel) || undefined;
-        }
-        if (!root) { return; }
-        this.workspaceService.open(root);   // reloads the window rooted at the project
-    }
-
-    /**
      * File → Open UTL-X Project (bundle-format §7). Select the **`.utlxp` project directory** (the
      * root, NOT a single `.utlx`) and load the COMPLETE transformation setup: the `.utlx` into the
      * editor, the input slots from its header, each slot's `test-input-<slot>` instance + its schema
@@ -513,10 +489,9 @@ export class UTLXFrontendContribution implements
             const root = Array.isArray(selected) ? selected[0] : selected;
             if (!root) return;
 
-            // Locate transformations/<tx>/ (the structural marker of a bundle project).
-            let txParentStat;
+            // Validate it's a bundle project (has transformations/).
             try {
-                txParentStat = await this.fileService.resolve(root.resolve('transformations'));
+                await this.fileService.resolve(root.resolve('transformations'));
             } catch {
                 await this.warnDialog(
                     'Not a UTL-X Project',
@@ -524,13 +499,46 @@ export class UTLXFrontendContribution implements
                     'Pick a .utlxp project directory (the folder that contains transformations/, schemas/, engine.yaml).');
                 return;
             }
+
+            // Open the project AS the Theia workspace (Explorer/git root) — like VS Code "Open Folder",
+            // this RELOADS the window. The startup hook maybeLoadProjectWorkspace() then auto-loads the
+            // transformation + enforces Message-Contract mode (mode is DERIVED from the workspace).
+            this.workspaceService.open(root);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] Open UTL-X Project failed:', err);
+            this.messageService.error(`Open UTL-X Project failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+
+    /**
+     * Startup hook: if the current Theia workspace IS a `.utlxp` project (has transformations/), load
+     * the transformation into the panels and switch to Message-Contract (IF03: a bundle is always MC).
+     * Mode is DERIVED from the workspace — durable across reloads — not asserted as a transient toggle.
+     */
+    private async maybeLoadProjectWorkspace(): Promise<void> {
+        try {
+            await this.workspaceService.ready;
+            const roots = this.workspaceService.tryGetRoots();
+            const root = roots && roots[0] ? roots[0].resource : undefined;
+            if (!root) return;
+            try { await this.fileService.resolve(root.resolve('transformations')); }
+            catch { return; }   // not a bundle workspace → stay in default (Execution) mode
+            await this.loadProjectFromRoot(root);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] auto-load project workspace failed:', err);
+        }
+    }
+
+    /**
+     * Load a `.utlxp` project rooted at `root` into the editor + panels and switch to MC. Used by the
+     * startup hook (after "Open UTL-X Project" reloads into the project workspace). Opens the first
+     * transformation; binds each input's test-input instance + schema (transform.yaml refs) + the
+     * output contract. (A single-`.utlx` load is still available via the editor's Load button.)
+     */
+    private async loadProjectFromRoot(root: URI): Promise<void> {
+            const txParentStat = await this.fileService.resolve(root.resolve('transformations'));
             const txDirs = (txParentStat.children || []).filter(c => c.isDirectory);
-            if (txDirs.length === 0) {
-                await this.warnDialog(
-                    'Empty UTL-X Project',
-                    'This project has a "transformations/" directory but no transformations inside it.');
-                return;
-            }
+            if (txDirs.length === 0) { return; }   // empty project — nothing to load
             const txStat = txDirs[0];   // Phase 1: open the first transformation
             const txName = txStat.resource.path.base;
             const multiNote = txDirs.length > 1 ? ` (project has ${txDirs.length} transformations; opened "${txName}")` : '';
@@ -541,10 +549,7 @@ export class UTLXFrontendContribution implements
             const txChildren = (await this.fileService.resolve(txStat.resource)).children || [];
             const utlxFiles = txChildren.filter(c => !c.isDirectory && c.resource.path.ext === '.utlx');
             const utlxStat = utlxFiles.find(c => c.resource.path.name === txName) || utlxFiles[0];
-            if (!utlxStat) {
-                await this.warnDialog('No Transformation Source', `The transformation "${txName}" has no .utlx source file.`);
-                return;
-            }
+            if (!utlxStat) { return; }   // no .utlx source — nothing to load
 
             const utlx = (await this.fileService.read(utlxStat.resource)).value.toString();
             const parsed = parseUTLXHeaders(utlx);
@@ -638,13 +643,13 @@ export class UTLXFrontendContribution implements
                 } catch { /* skip missing output schema */ }
             }
 
+            // IF03: a bundle is always Message-Contract. Mode is DERIVED from the workspace; the
+            // toolbar/editor/panels all listen to onModeChanged, so the whole IDE follows.
+            this.eventService.fireModeChanged({ mode: UTLXMode.MESSAGE_CONTRACT });
+
             const loaded = samples.filter(s => s.content.trim()).length;
             const schemas = samples.filter(s => s.schemaContent.trim()).length + (outLoaded ? 1 : 0);
             this.messageService.info(`✓ Opened project "${root.path.name}" → "${txName}"${multiNote} — ${loaded} input(s), ${schemas} schema(s)`);
-        } catch (err) {
-            console.error('[UTLXFrontendContribution] Open UTL-X Project failed:', err);
-            this.messageService.error(`Open UTL-X Project failed: ${err instanceof Error ? err.message : String(err)}`);
-        }
     }
 
     registerKeybindings(keybindings: KeybindingRegistry): void {

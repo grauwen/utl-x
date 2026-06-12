@@ -163,6 +163,21 @@ export class UTLXToolbarWidget extends ReactWidget {
             });
         });
 
+        // Sync the toolbar (badge + backend) when the mode is changed EXTERNALLY — e.g. opening a
+        // .utlxp project forces Message-Contract (IF03). The toolbar emits onModeChanged from its own
+        // toggle, so the guard ignores its own echo (event.mode already equals currentMode by then).
+        this.eventService.onModeChanged(event => {
+            if (event.mode === this.state.currentMode) {
+                return;
+            }
+            this.setState({ currentMode: event.mode });
+            this.utlxService.setMode({
+                mode: event.mode,
+                autoInferSchema: false,
+                enableTypeChecking: true
+            }).catch(err => console.error('[UTLXToolbar] Failed to sync external mode:', err));
+        });
+
         // Sync backend mode with toolbar's default on startup
         this.utlxService.setMode({
             mode: this.state.currentMode,
