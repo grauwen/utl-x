@@ -84,8 +84,13 @@ repos, which is the right direction anyway.
    **mode = f(workspace)**. (The separate `openAsWorkspace` command was **removed**.) *Note:* `Save
    Project As` writes a `.utlxp` but does **not** adopt it as the workspace — a deliberate gap (saving a
    copy ≠ switching projects); revisit if "Save As → switch into it" is wanted.
-   *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
-   into MC (avoids the brief E→MC flash on startup).
+   *Multi-transformation projects:* a `.utlxp` can bundle several transformations under
+   `transformations/`. On load, **one** opens directly; **>1** prompts a `QuickInputService` picker
+   (*"Open UTL-X Project — choose a transformation"*) and opens the chosen one (dismiss → first,
+   alphabetical). Sample: `examples/utlxp/order-processing.utlxp` (order-to-invoice + order-to-picklist,
+   one shared `order` contract). *Follow-up:* let the **toolbar read the same `transformations/` signal
+   at init** so it boots straight into MC (avoids the brief E→MC flash on startup); and switching the
+   active transformation **without reopening** the project (Phase ≥2).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs
    with IF14 cloud-hardening decisions about exposing SCM.)
 3. **File-backed documents** (IF03) — bind the editor + input/output panels to workspace files via
@@ -97,8 +102,9 @@ repos, which is the right direction anyway.
 
 - `browser/utlx-frontend-contribution.ts` — `newProject()` (scaffold a minimal `.utlxp` via
   `buildSavePlan` + `WorkspaceService.open`), `openProject()` (pick `.utlxp` + `WorkspaceService.open`),
-  `maybeLoadProjectWorkspace()` (startup: detect `transformations/`), `loadProjectFromRoot()` (load
-  panels + fire `MESSAGE_CONTRACT`). `WorkspaceService` from `@theia/workspace/lib/browser`.
+  `maybeLoadProjectWorkspace()` (startup: detect `transformations/`), `loadProjectFromRoot()` (pick a
+  transformation when >1 via `QuickInputService`, then load panels + fire `MESSAGE_CONTRACT`).
+  `WorkspaceService` from `@theia/workspace/lib/browser`, `QuickInputService` from `@theia/core/lib/browser`.
 - `browser/toolbar/utlx-toolbar-widget.tsx` — now **listens** to `onModeChanged` (badge + backend
   `setMode` follow an external switch), so MC derived at startup propagates to the whole IDE.
 - IF03 file-backing is the substrate for Steps 3–4 (`EditorManager.open` for `.utlx`, `FileService`
