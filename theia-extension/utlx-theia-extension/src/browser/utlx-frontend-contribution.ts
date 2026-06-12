@@ -14,7 +14,8 @@ import {
     StatusBar,
     StatusBarAlignment,
     CommonMenus,
-    AbstractDialog
+    AbstractDialog,
+    QuickInputService
 } from '@theia/core/lib/browser';
 import { FileDialogService, OpenFileDialogProps, SaveFileDialogProps } from '@theia/filesystem/lib/browser';
 import { FileService } from '@theia/filesystem/lib/browser/file-service';
@@ -126,6 +127,9 @@ export class UTLXFrontendContribution implements
 
     @inject(MenuModelRegistry)
     protected readonly menus!: MenuModelRegistry;
+
+    @inject(QuickInputService)
+    protected readonly quickInput!: QuickInputService;
 
     // The currently-open UTLX project (set by Open UTLX Project), so the Edit-config commands know
     // where transform.yaml (in the tx dir) and engine.yaml (project root) live.
@@ -640,9 +644,27 @@ output json
      */
     private async loadProjectFromRoot(root: URI): Promise<void> {
             const txParentStat = await this.fileService.resolve(root.resolve('transformations'));
-            const txDirs = (txParentStat.children || []).filter(c => c.isDirectory);
+            const txDirs = (txParentStat.children || []).filter(c => c.isDirectory)
+                .sort((a, b) => a.resource.path.base.localeCompare(b.resource.path.base));
             if (txDirs.length === 0) { return; }   // empty project — nothing to load
-            const txStat = txDirs[0];   // Phase 1: open the first transformation
+
+            // One transformation → open it. Multiple → ask which one (a project can bundle several
+            // mappings, e.g. order-to-invoice + order-to-picklist). The picker runs at startup after
+            // the workspace reload; dismissing it falls back to the first (alphabetical) so the project
+            // still opens.
+            let txStat = txDirs[0];
+            if (txDirs.length > 1) {
+                const items = txDirs.map(d => ({
+                    label: d.resource.path.base,
+                    description: 'transformation',
+                    stat: d
+                }));
+                const picked = await this.quickInput.showQuickPick(items, {
+                    title: 'Open UTL-X Project — choose a transformation',
+                    placeholder: `This project bundles ${txDirs.length} transformations. Select one to open.`
+                });
+                if (picked) { txStat = picked.stat; }
+            }
             const txName = txStat.resource.path.base;
             const multiNote = txDirs.length > 1 ? ` (project has ${txDirs.length} transformations; opened "${txName}")` : '';
             this.currentProjectRoot = root;        // engine.yaml lives here
