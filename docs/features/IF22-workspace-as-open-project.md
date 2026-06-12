@@ -91,6 +91,10 @@ repos, which is the right direction anyway.
    one shared `order` contract). **File → Switch Transformation…** (`utlx.project.switchTransformation`)
    re-picks within the **already-open** project and reloads the editor + panels **in place** — no window
    reload (workspace + MC unchanged); it reuses `loadProjectFromRoot(root, preferredTxName)`.
+   **File → New Transformation…** (`utlx.project.newTransformation`) scaffolds a new
+   `transformations/<name>/` (stub `.utlx` + `transform.yaml`, siblings untouched) and loads it in place;
+   it **requires an open project** — otherwise it tells the user to create one first. Both Switch and New
+   Transformation reuse the same in-place loader.
    *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
    into MC (avoids the brief E→MC flash on startup).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs

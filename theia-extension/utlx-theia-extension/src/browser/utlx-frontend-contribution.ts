@@ -287,6 +287,10 @@ export class UTLXFrontendContribution implements
             { execute: () => this.switchTransformation() }
         );
         commands.registerCommand(
+            { id: 'utlx.project.newTransformation', label: 'UTL-X: New Transformation…' },
+            { execute: () => this.newTransformation() }
+        );
+        commands.registerCommand(
             { id: 'utlx.transformation.save', label: 'UTL-X: Save Project' },
             { execute: () => this.saveTransformation(false) }
         );
@@ -360,7 +364,15 @@ export class UTLXFrontendContribution implements
     }
 
     registerMenus(menus: MenuModelRegistry): void {
-        // File menu — documents (New/Open/Save Transformation), per IF18 + bundle-format §7.
+        // File menu (IF18 + bundle-format §7), grouped — Theia draws a separator between distinct
+        // groups:
+        //   • PROJECT commands       → FILE_OPEN ('2_open'), beside Theia's Open Workspace/Recent.
+        //   • TRANSFORMATION commands → a dedicated group keyed '2a_…' that sorts AFTER '2_open' and
+        //     BEFORE '3_save' ('_' < 'a' < '3'), so a divider frames it on both sides.
+        //   • SAVE / config commands → FILE_SAVE ('3_save').
+        const UTLX_TX_MENU = [...CommonMenus.FILE, '2a_utlx_transformation'];
+
+        // — Project group (create / open a .utlxp project) —
         menus.registerMenuAction(CommonMenus.FILE_OPEN, {
             commandId: 'utlx.project.new',
             label: 'New UTLX Project…',
@@ -371,7 +383,15 @@ export class UTLXFrontendContribution implements
             label: 'Open UTLX Project…',
             order: 'a1'
         });
-        menus.registerMenuAction(CommonMenus.FILE_OPEN, {
+        // (Open Recent UTLX Project is relabeled into this same group from onStart, order 'a20'.)
+
+        // — Transformation group (operate within the open project) —
+        menus.registerMenuAction(UTLX_TX_MENU, {
+            commandId: 'utlx.project.newTransformation',
+            label: 'New Transformation…',
+            order: 'a1'
+        });
+        menus.registerMenuAction(UTLX_TX_MENU, {
             commandId: 'utlx.project.switchTransformation',
             label: 'Switch Transformation…',
             order: 'a2'
@@ -840,6 +860,85 @@ output json
         } catch (err) {
             console.error('[UTLXFrontendContribution] Switch Transformation failed:', err);
             this.messageService.error(`Switch Transformation failed: ${err instanceof Error ? err.message : String(err)}`);
+        }
+    }
+
+    /**
+     * File → New Transformation. Adds a NEW transformation to the ALREADY-OPEN project (the workspace
+     * `.utlxp`): scaffold `transformations/<name>/{<name>.utlx, transform.yaml}` (siblings untouched)
+     * and load it in place. Requires an open UTL-X project — otherwise it tells the user to create one
+     * first.
+     */
+    private async newTransformation(): Promise<void> {
+        try {
+            // Must be inside an open UTL-X project (workspace = .utlxp with transformations/).
+            let root = this.currentProjectRoot;
+            if (!root) {
+                await this.workspaceService.ready;
+                const roots = this.workspaceService.tryGetRoots();
+                root = roots && roots[0] ? roots[0].resource : undefined;
+            }
+            let txParentStat;
+            try {
+                txParentStat = root && await this.fileService.resolve(root.resolve('transformations'));
+            } catch { /* not a project */ }
+            if (!root || !txParentStat) {
+                await this.warnDialog(
+                    'No UTL-X project open',
+                    'Please create a UTL-X project first (File → New UTLX Project) — a transformation lives inside a project.');
+                return;
+            }
+
+            const existing = new Set((txParentStat.children || [])
+                .filter(c => c.isDirectory)
+                .map(c => c.resource.path.base.toLowerCase()));
+
+            const entered = await this.quickInput.input({
+                title: 'New Transformation',
+                prompt: 'Name for the new transformation (becomes a folder under transformations/)',
+                placeHolder: 'e.g. order-to-shipment',
+                validateInput: async (v: string) => {
+                    const t = (v || '').trim();
+                    if (!t) { return 'Enter a name.'; }
+                    if (!/^[A-Za-z0-9._-]+$/.test(t)) { return 'Use letters, digits, dot, dash or underscore only.'; }
+                    if (existing.has(t.toLowerCase())) { return `A transformation "${t}" already exists in this project.`; }
+                    return null;
+                }
+            });
+            const txName = (entered || '').trim();
+            if (!txName) { return; }   // cancelled
+
+            // Minimal skeleton — same stub as a New Project's first transformation.
+            const utlx =
+`%utlx 1.0
+input payload json
+output json
+---
+// New transformation — map $payload to the output contract.
+{
+}
+`;
+            // buildSavePlan emits the transformation subtree relative to the project root; with no
+            // schemas it's just transformations/<txName>/{<txName>.utlx, transform.yaml}. Writing it
+            // into the existing project ADDS the transformation without touching its siblings.
+            const plan = buildSavePlan({
+                txName,
+                utlx,
+                inputs: [{ name: 'payload', content: '', format: 'json' }]
+            });
+            for (const dir of plan.dirs) {
+                await this.fileService.createFolder(root.resolve(dir));   // idempotent; 'transformations' already exists
+            }
+            for (const f of plan.files) {
+                await this.fileService.write(root.resolve(f.path), f.content);
+            }
+
+            // Load the new transformation in place (no window reload — workspace + MC unchanged).
+            await this.loadProjectFromRoot(root, txName);
+            this.messageService.info(`✓ Created transformation "${txName}"`);
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] New Transformation failed:', err);
+            this.messageService.error(`New Transformation failed: ${err instanceof Error ? err.message : String(err)}`);
         }
     }
 
