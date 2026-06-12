@@ -77,9 +77,13 @@ repos, which is the right direction anyway.
 
 ## Phasing
 
-1. **Unified open** (✅ done) — `utlx.project.open` opens the `.utlxp` **as the workspace**; startup
-   `maybeLoadProjectWorkspace()` auto-loads the transformation + **Message-Contract**. One command;
-   **mode = f(workspace)**. (The separate `openAsWorkspace` command was **removed**.)
+1. **Unified open + new** (✅ done) — `utlx.project.open` opens an existing `.utlxp` **as the
+   workspace**; `utlx.project.new` **scaffolds** a minimal `.utlxp` (one stub transformation) and adopts
+   it as the workspace the same way. Both reload; startup `maybeLoadProjectWorkspace()` auto-loads the
+   transformation + **Message-Contract**. **Creating a project IS opening it as the workspace**;
+   **mode = f(workspace)**. (The separate `openAsWorkspace` command was **removed**.) *Note:* `Save
+   Project As` writes a `.utlxp` but does **not** adopt it as the workspace — a deliberate gap (saving a
+   copy ≠ switching projects); revisit if "Save As → switch into it" is wanted.
    *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
    into MC (avoids the brief E→MC flash on startup).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs
@@ -91,7 +95,8 @@ repos, which is the right direction anyway.
 
 ## Code pointers
 
-- `browser/utlx-frontend-contribution.ts` — `openProject()` (pick `.utlxp` + `WorkspaceService.open`),
+- `browser/utlx-frontend-contribution.ts` — `newProject()` (scaffold a minimal `.utlxp` via
+  `buildSavePlan` + `WorkspaceService.open`), `openProject()` (pick `.utlxp` + `WorkspaceService.open`),
   `maybeLoadProjectWorkspace()` (startup: detect `transformations/`), `loadProjectFromRoot()` (load
   panels + fire `MESSAGE_CONTRACT`). `WorkspaceService` from `@theia/workspace/lib/browser`.
 - `browser/toolbar/utlx-toolbar-widget.tsx` — now **listens** to `onModeChanged` (badge + backend
