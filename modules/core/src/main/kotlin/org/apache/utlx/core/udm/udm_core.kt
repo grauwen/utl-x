@@ -99,7 +99,7 @@ sealed class UDM {
         val properties: Map<String, UDM>,
         val attributes: Map<String, String> = emptyMap(),
         val name: String? = null,  // Element/object name (for XML)
-        val metadata: Map<String, String> = emptyMap()  // Internal metadata (not serialized)
+        val metadata: Map<String, String> = emptyMap()  // Format-fidelity metadata (e.g. XML namespaces, __xsdPattern). Dropped by JSON/XML/YAML output, but PRESERVED in the .udm UDM Language for round-trip.
     ) : UDM() {
         fun get(key: String): UDM? = properties[key]
         fun getAttribute(key: String): String? = attributes[key]
