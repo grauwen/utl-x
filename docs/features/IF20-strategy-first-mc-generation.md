@@ -207,6 +207,48 @@ no value side, keys are the values of interest (codelist) → `enumeration`.
 }
 ```
 
+### Where the tag lives — a schema-document envelope, not the data UDM (resolved, code-grounded)
+
+Schema-type is carried by a **new design-time `UDMSchemaDocument` envelope**, *not* by the runtime data
+UDM. Grounded in the code (`modules/core/.../udm/udm_core.kt`):
+
+- Core `UDM` is the **runtime data/instance model** (`Scalar | Array | Object | DateTime | Date | …`) — it
+  represents *values*, not schemas. Schema-type (`payload`/`lookup`/…) is an **input role** decided at
+  design time; it is meaningless on instance data. So the tag belongs on the **schema representation**, in
+  an envelope — the delta's "envelope around the graph, not a node in the graph," with the one correction
+  that the graph is the **schema** graph, distinct from the data UDM:
+
+```
+UDMSchemaDocument            ← NEW (design-time); not the data UDM
+  ├── metadata: UDMSchemaMeta   (schema_type, type_source, role, lookup_key, chain_index, fixed)
+  └── graph: <UDM-based schema graph>   ← greenfield; no UDMSchema/SchemaGraph in core today
+```
+
+Phase 0 typing thus folds into the **parse step**: parsing an input yields a *typed* `UDMSchemaDocument`,
+and Phases 1–3 receive already-typed inputs (the four-phase pipeline collapses to *parse+type → align →
+refine*). Type resolution runs inside the parser with the priority cascade **platform slot > inline
+`x-utlx` tag > `%utlx` header > Phase-0 inference > error**, recorded as `type_source`.
+
+**Backward compatibility: none broken.** The envelope is additive and design-time — it does **not** touch
+the runtime data UDM type, format parsers/serializers, the engine, the `.udm` UDM-Language format and its
+roundtrip tests, the conformance suite, or the `utlxe` proto/SDKs. Because the UDM-based schema graph is
+**greenfield** (schemas today parse to *data*-UDM or to IDE field-trees), it is *defined with* the envelope
+from day one — nothing to migrate.
+
+**Do NOT overload the data UDM.** `UDM.Object` has `attributes` + a `metadata: Map<String,String>` map, so
+one *could* inject `schema_type` there — but that map is a **reserved, `__`-prefixed format-fidelity
+channel** (XML namespace context; the detected XSD design pattern `__xsdPattern` = russian-doll /
+salami-slice / venetian-blind / …), and the **UDM-Language serializer writes it to `.udm`** for roundtrip.
+So it's wrong on three counts: per-instance/per-node granularity, a reserved *fidelity* channel (not a
+design-time analysis store), and persisted to `.udm` (overloading risks roundtrip tests). (Its
+`// Internal metadata (not serialized)` comment at `udm_core.kt:102` is inaccurate and should be fixed.)
+Version the envelope with the schema-document / correspondence-set artifact, **decoupled** from the `.udm`
+format version.
+
+> **Note on "design-time":** here it means **MC mode** — schema-based, *no data execution*. The
+> `UDMSchemaDocument` envelope is an MC/design-time artifact; the runtime data UDM is Execution mode's
+> output. (Consistent with the MC = schema / Execution = instance separation above.)
+
 ---
 
 ## The mapping matrix → the correspondence set
