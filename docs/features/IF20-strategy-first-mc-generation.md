@@ -22,6 +22,18 @@ treeview is the human-facing surface for this analysis).
 > Bernstein's schema-only vs instance-based axis). Execution is out of scope here / deferred (its
 > prompting works to a degree and is not being touched).
 
+## Diagrams
+
+- **Pipeline / flow** — [`IF20-pipeline.svg`](./IF20-pipeline.svg): inputs → schema parse+type → align →
+  refine → correspondence set → strategy → generate, with the bindings branch, the deterministic↔AI split,
+  and the dual-purpose artifact (IF21 + AI chain).
+- **Typing model** — [`IF20-typing.svg`](./IF20-typing.svg): two-level typing (schema-level role +
+  node/graph-level FK/header-detail) and the `structural_class` message archetypes.
+
+![IF20 pipeline](./IF20-pipeline.svg)
+
+![IF20 typing model](./IF20-typing.svg)
+
 ---
 
 ## Motivation
@@ -365,6 +377,43 @@ internal XML / raw tgd-GLAV notation — are academic or tool-internal; JSON is 
 
 ---
 
+## Output (target) field analysis — the dual of input typing
+
+IF20 types **inputs** (Phase 0) and aligns **source→target** — but the **output contract deserves a
+symmetric pass**: classify each *target* field by **how it must be produced**, much of it inferable from
+the output schema *alone* (name + type + constraints + structural context), with the source only deciding
+copy-vs-gap. This is the target-driven half that *feeds* `mapping_class`/`inferred_function` (below).
+
+| Output-field kind | Signal (mostly from the output schema) | Needs source? | UTL-X | mc_status |
+|---|---|---|---|---|
+| **copy / direct** | scalar, a type-compatible source exists | 1 source | field ref | complete |
+| **calculated / derived** | composite/formatted; name like `fullName`, `displayDate` | source(s) + computation | `concat` / format / arithmetic | derivation-gap |
+| **aggregate** | numeric over a sibling repeating group (`total`, `count`, `avg`) | a source collection | `sumBy` / `reduce` / `countBy` | derivation-gap |
+| **lookup-required** | descriptive field + a code/id sibling + a `lookup` input present | source + join | `findBy` / `filterBy` | complete / gap |
+| **constant / literal** | required, no candidate, fixed/enum | none (or config binding) | literal / binding | complete via binding |
+| **generated / system** | `id` / `uuid` / `timestamp` / `correlationId` names | none / pipeline var | `uuid()` / `now()` / binding | complete via generator |
+| **conditional** | boolean / `status` / flag from a condition | source(s) + predicate | `if` / `match` | derivation-gap |
+| **default / optional** | optional with a default | none | omit / default | complete |
+| **unmapped** | required, no plausible source or derivation | — | — | gap (human) |
+
+**When it runs:** at contract-load, **before alignment** — it needs no inputs, and it proactively flags
+*"this field needs an aggregate / a lookup / a computation"* up front. Then:
+
+```
+mapping_class  =  output-field-kind  ×  source availability (from alignment)
+```
+
+So `mapping_class`/`mc_status` is the *synthesis* of this target classification and the source→target
+correspondences. The existing **`derivation-gap`** is just one cell of this fuller table — generalizing it
+makes the MC report a structural draft of the mapping, not a coverage %. Most signals are schema-local
+(name + type + constraint + sibling cardinality); a small **AI assist** covers semantic names
+(`netDue` ⇒ aggregate? `clientRef` ⇒ lookup?) — flagged `basis: ai-inferred`.
+
+> **IF21 tie-in:** this *types* the output pane. Each output node's coverage color gains a **reason** —
+> not just direct/derivable/gap but **why** (calculated · lookup · aggregate · generated · constant) —
+> which is exactly the content of IF21's functoid blocks. Output analysis is what makes those blocks
+> meaningful before any source line is drawn.
+
 ## Function inference belongs inside MC — not a separate layer
 
 ### The false-coverage problem
@@ -640,6 +689,25 @@ MC problem (and must apply the matchers to **UDM schema graphs**, not per-format
   the **Canonical Data Model** — message-kind classification for integration.
 - **EDI / IDOC structure** — EDIFACT / X12 / SAP IDOC segment hierarchies (control / header / detail /
   status) — the formal header-detail message archetype.
+
+**Output / target-field derivation** (grounds the [Output (target) field analysis](#output-target-field-analysis--the-dual-of-input-typing) — "how is each output value produced?"):
+
+- **Data provenance / lineage (how-provenance)** — the formal study of *how* an output value is computed:
+  Green, Karvounarakis & Tannen, *"Provenance Semirings"* (PODS 2007); Cui, Widom & Wiener, *"Tracing the
+  Lineage of View Data"* (ACM TODS 2000); Cui & Widom, *"Lineage Tracing for General DW Transformations"*
+  (VLDBJ 2003) — which **classify transformations** (dispatcher / aggregator / black-box) by output↔input
+  relationship; Buneman, Khanna & Tan, *"Why and Where"* (ICDT 2001).
+- **ETL transformation taxonomies** (the most directly on-point) — Kimball & Caserta, *The Data Warehouse
+  ETL Toolkit*: target columns as direct / **derived-computed** / **surrogate-key (generated)** /
+  **lookup-decode** / default. Tool **functoid/component catalogs** are de-facto target-derivation
+  taxonomies: Altova MapForce (constant, autonumber, lookup, aggregate, math, string), BizTalk functoids
+  (Cumulative/aggregate, Database/lookup, Mathematical, Logical, String, Date/Time), SSIS (Derived Column,
+  Lookup, Aggregate).
+- **Data-exchange value invention** — where a target value is *not* a source projection: **Skolem
+  functions / labeled nulls** (Fagin/Kolaitis/Miller/Popa; Popa et al., *Translating Web Data*). The formal
+  line between *copy* and *must-derive* — i.e. why calculated/aggregate/generated fields sit beyond tgds.
+- **Program synthesis / PBE** — synthesizing the derivation expression once a field is typed `calculated`:
+  Gulwani, *"Automating String Processing… from Input-Output Examples"* (FlashFill, POPL 2011).
 
 ## Phasing
 
