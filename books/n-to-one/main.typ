@@ -1,9 +1,9 @@
-// From Many, One — The Theory of N:1 Data Mapping
-// Compile: typst compile main.typ "From Many One - The Theory of N to 1 Data Mapping.pdf"
-// Watch:   typst watch main.typ "From Many One - The Theory of N to 1 Data Mapping.pdf"
+// Many to One — The Theory of N:1 Data Mapping
+// Compile: typst compile main.typ "Many to One - The Theory of N to 1 Data Mapping.pdf"
+// Watch:   typst watch main.typ "Many to One - The Theory of N to 1 Data Mapping.pdf"
 
 #set document(
-  title: "From Many, One: The Theory of N:1 Data Mapping",
+  title: "Many to One: The Theory of N:1 Data Mapping",
   author: "Ir. Marcel A. Grauwen",
   date: datetime.today(),
 )
@@ -17,7 +17,7 @@
       let current-page = here().page()
       let all-headings = query(heading.where(level: 1))
       let chapter-name = {
-        let found = [From Many, One]
+        let found = [Many to One]
         for h in all-headings {
           if h.location().page() <= current-page {
             found = h.body
@@ -61,7 +61,7 @@
 
 #block(width: 100%, inset: (x: 1.5cm, y: 0.6cm))[
   #align(center)[
-    #text(size: 22pt, weight: "bold")[From Many, One]
+    #text(size: 22pt, weight: "bold")[Many to One]
     #v(0.4cm)
     #text(size: 13pt)[The Theory of N:1 Data Mapping — the Universal Data Model, Message Contracts, and Schema-Driven Mapping]
   ]
@@ -86,7 +86,7 @@
 #set text(size: 9pt)
 #v(1fr)
 
-*From Many, One: The Theory of N:1 Data Mapping — the Universal Data Model, Message Contracts, and Schema-Driven Mapping*
+*Many to One: The Theory of N:1 Data Mapping — the Universal Data Model, Message Contracts, and Schema-Driven Mapping*
 
 Copyright \u{00A9} 2026 Ir. Marcel A. Grauwen. All rights reserved.
 
@@ -206,11 +206,26 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 #include "chapters/ch13-ai-author-not-executor.typ"
 #pagebreak()
 
-// ── Part IV: The Classical Foundation ──
+// ── Part IV: Scope & Rationale ──
 
 #align(center)[
   #v(6cm)
   #text(size: 28pt, weight: "bold", fill: rgb("#003366"))[Part IV]
+  #v(0.5cm)
+  #text(size: 18pt, fill: rgb("#666666"))[Scope & Rationale]
+  #v(1cm)
+  #text(size: 12pt, fill: rgb("#999999"))[Why a single output, and the boundaries of the model]
+]
+#pagebreak()
+
+#include "chapters/ch14-why-one-output.typ"
+#pagebreak()
+
+// ── Part V: The Classical Foundation ──
+
+#align(center)[
+  #v(6cm)
+  #text(size: 28pt, weight: "bold", fill: rgb("#003366"))[Part V]
   #v(0.5cm)
   #text(size: 18pt, fill: rgb("#666666"))[The Classical Foundation]
   #v(1cm)
@@ -218,9 +233,9 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 ]
 #pagebreak()
 
-#include "chapters/ch14-theory-of-one-to-one-mapping.typ"
+#include "chapters/ch15-theory-of-one-to-one-mapping.typ"
 #pagebreak()
-#include "chapters/ch15-bibliography.typ"
+#include "chapters/ch16-bibliography.typ"
 #pagebreak()
 
 // ── Back Page ──
@@ -230,7 +245,7 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 
 #v(0.5cm)
 
-#text(size: 18pt, weight: "bold")[From Many, One]
+#text(size: 18pt, weight: "bold")[Many to One]
 
 #v(0.6cm)
 

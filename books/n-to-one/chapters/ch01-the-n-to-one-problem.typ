@@ -74,3 +74,5 @@ The remainder of the book builds, piece by piece, an answer to the N:1 problem:
 - Generate the transformation *strategy-first*, choosing the shape before filling the fields (Chapter 11).
 
 None of these steps is new to computer science. The contribution is in assembling them into a single, coherent account of how many inputs become one output — and in grounding that account on a data model and a mode distinction that actually ship.
+
+One question is deferred on purpose. *Why* a single output — and how a system that genuinely needs two, such as an engine producing a payload and a dynamic configuration at once, decomposes without abandoning the discipline — is a design-rationale question that depends on the formal object of Chapter 6 and the pipeline of Chapter 8. It is taken up on its own terms in Chapter 14, _Why One Output?_, which a first reader may safely leave for later.

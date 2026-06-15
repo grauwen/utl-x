@@ -55,10 +55,10 @@ All of this is Message Contract mode, and it has a natural home in the tooling. 
 
 The correspondence set, the typed inputs, and the inferred functions are not only fuel for a generator; they are a *picture*. Rendered, they become a mapper in the familiar idiom: the input schemas as trees on one side, the output contract as a tree on the other, and between them the derivations — a direct copy as a plain connector, a function as a labelled block, a gap as a flagged node. Each connector's colour carries its status and its basis, so a structurally certain copy and an AI-inferred guess do not look alike. The same analysis that grounds the generated code grounds the diagram a human reads; persistence, generation, and visualisation are three uses of one object, which has been the recurring sign throughout this book that the formalisation was worth it.
 
-== From Many, One
+== Many to One
 
 It is worth stating plainly what has been built, because it is easy to lose in the machinery. An N:1 mapping began, in Chapter 1, as a craft: several inputs, one contract, and a developer's judgement filling the space between. The chapters since have turned that craft into something that can be *reasoned about*. The inputs and output share one model. Schemas are graphs. A mapping is a formal object — a set of dependencies, with a clean line between the structure a graph determines and the computation it cannot. The analysis is a scored, provenance-bearing artifact. The inputs are typed by role and structure; the outputs by derivation. The functions are inferred where structure decides and flagged where it does not. And the transformation is generated strategy-first, idiomatic by construction.
 
 The result is not that mappings get written for you — judgement remains, especially at the derivation gaps and the semantic name bridges where the theory honestly says structure runs out. The result is that you can say, precisely, what a mapping *does*: which fields are copied and which derived, which inputs are sources and which are looked up, where it is complete and where a human must still decide. That is the difference between writing an N:1 mapping and *understanding* one — and it is why, for the architect who wants the second, the theory was worth the book.
 
-From many inputs, one output. From a craft, a discipline. From many, one.
+From many inputs, one output. From a craft, a discipline. Many to one.

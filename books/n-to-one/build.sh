@@ -1,15 +1,15 @@
 #!/bin/bash
-# Build the "From Many, One" theory book.
+# Build the "Many to One" theory book.
 #
 # Usage: ./build.sh
 #
 # Produces:
-#   From Many One - The Theory of N to 1 Data Mapping.pdf
+#   Many to One - The Theory of N to 1 Data Mapping.pdf
 
 set -e
 cd "$(dirname "$0")"
 
-OUTPUT="From Many One - The Theory of N to 1 Data Mapping.pdf"
+OUTPUT="Many to One - The Theory of N to 1 Data Mapping.pdf"
 
 echo "=== Building \"$OUTPUT\" ==="
 typst compile main.typ "$OUTPUT"
