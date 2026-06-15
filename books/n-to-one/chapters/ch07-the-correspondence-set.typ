@@ -29,10 +29,13 @@ Beyond *how* confident, the set records *where each correspondence came from*. A
   [`fk-reachable`], [derived from a foreign-key path in the schema graph — high confidence, deterministic],
   [`name-heuristic`], [proposed by name similarity among structurally plausible candidates — review],
   [`ai-inferred`], [supplied by a language model for a gap deterministic rules could not close],
+  [`analyst-spec`], [extracted from a human mapping specification — documented intent, but unverified against the live schema],
   [`user-confirmed`], [accepted or corrected by a human — locked],
 )
 
 Provenance is what makes human review *targeted* rather than exhaustive. A reviewer need not re-examine every foreign-key-reachable correspondence; those are structural facts. Attention goes to the `name-heuristic` and `ai-inferred` rows — the correspondences that rest on the fallible signals — which is the highest-value use of a reviewer's time. The set does not hide its uncertainty in an average; it localises it in a field.
+
+The `analyst-spec` row earns a word now and a section later. In many real integrations a human analyst has already written down the mapping — typically a free-format spreadsheet pairing source fields to target fields, with rules and lookups beside them. That document is, informally, a correspondence set authored by hand: it supplies exactly the *semantic* pairings the deterministic graph cannot recover. Such an entry sits between `ai-inferred` and `user-confirmed` in trust — a human meant it, so it outranks a model's guess, but it was written against a schema that may since have drifted, so it is not yet locked. The discipline that turns it into a usable correspondence — formalise the spreadsheet, then validate it against the live schema — is the subject of Chapter 12.
 
 == Function and Status: The Completed Entry
 

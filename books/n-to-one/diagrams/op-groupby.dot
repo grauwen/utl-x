@@ -1,0 +1,26 @@
+// `groupBy` as a graph rewrite: quotient / contract nodes by a key (partition the graph).
+// Render: dot -Tsvg op-groupby.dot -o op-groupby.svg
+digraph op_groupby {
+  rankdir=LR; bgcolor="transparent"; compound=true; ranksep=1.0;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+        color="#334155", fillcolor="#f8fafc", penwidth=1.1, margin="0.12,0.07"];
+  edge [fontname="Helvetica", fontsize=9, color="#94a3b8", penwidth=1.0, arrowsize=0.7];
+
+  subgraph cluster_src {
+    label="source — flat rows"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    r1 [label="order\ncust: A", fillcolor="#eff6ff", color="#2563eb"];
+    r2 [label="order\ncust: A", fillcolor="#eff6ff", color="#2563eb"];
+    r3 [label="order\ncust: B", fillcolor="#eff6ff", color="#2563eb"];
+  }
+  subgraph cluster_tgt {
+    label="target — grouped"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    gA [label="A\n{ 2 orders }", fillcolor="#fffbeb", color="#f59e0b"];
+    gB [label="B\n{ 1 order }",  fillcolor="#fffbeb", color="#f59e0b"];
+  }
+
+  r1 -> gA [ltail=cluster_src, lhead=cluster_tgt,
+            label="  groupBy(cust)  \n  contract by key  ",
+            color="#1d4ed8", fontcolor="#1d4ed8", penwidth=2.0, arrowsize=0.9];
+}

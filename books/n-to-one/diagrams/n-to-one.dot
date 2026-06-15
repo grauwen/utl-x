@@ -1,0 +1,31 @@
+// The N:1 picture: many heterogeneous inputs converge into one output contract.
+// Render: dot -Tsvg n-to-one.dot -o n-to-one.svg
+digraph n_to_one {
+  rankdir=LR;
+  bgcolor="transparent";
+  nodesep=0.35; ranksep=1.1;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11,
+        penwidth=1.3, margin="0.18,0.11"];
+  edge [fontname="Helvetica", fontsize=9, color="#475569", penwidth=1.3];
+
+  // inputs (left)
+  payload [label=<<b>payload</b><br/><font point-size="9" color="#475569">order · structural</font>>,
+           color="#2563eb", fillcolor="#eff6ff"];
+  chain   [label=<<b>chain[1]</b><br/><font point-size="9" color="#475569">prior step</font>>,
+           color="#60a5fa", fillcolor="#eff6ff"];
+  lookup  [label=<<b>lookup</b><br/><font point-size="9" color="#475569">catalogue</font>>,
+           color="#059669", fillcolor="#ecfdf5"];
+  config  [label=<<b>config / nvp</b><br/><font point-size="9" color="#475569">constants</font>>,
+           color="#6b7280", fillcolor="#f1f5f9"];
+
+  // the one output (right)
+  out [label=<<b>Output contract</b><br/><font point-size="9" color="#92400e">the fixed target</font>>,
+       color="#f59e0b", fillcolor="#fffbeb", penwidth=1.6];
+
+  payload -> out [label="primary",   color="#2563eb"];
+  chain   -> out [label="enrichment", color="#60a5fa"];
+  lookup  -> out [label="join",       color="#059669", style=dashed];
+  config  -> out [label="binding",    color="#6b7280", style=dotted];
+
+  { rank=same; payload; chain; lookup; config; }
+}

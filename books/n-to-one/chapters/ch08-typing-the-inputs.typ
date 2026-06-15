@@ -47,6 +47,19 @@ This is the strongest possible evidence that the taxonomy is well-grounded: it w
 
 The `meta-schema` row deserves a note in the vocabulary of Chapter 2. If a schema is *metadata* — data about a class of data — then a registry of schemas is *meta-metadata*, sitting one rung higher on the ladder. A `meta-schema` input is therefore not data to map but metadata to *unpack*: its entities must be extracted before any of them can be typed as a payload or lookup in their own right.
 
+== A Concrete Instance: the Open-M Inputs
+
+Theory is easier to trust against a real example. UTL-X's production pipeline, _Open-M_, hands a transformation a fixed set of seven named inputs — and they sort, without forcing, into exactly the two camps the taxonomy predicts.
+
+#figure(
+  image("../diagrams/open-m-context.svg", width: 100%),
+  caption: [The seven Open-M mapping-context inputs, typed by the taxonomy: two *structural* inputs enter the matching pipeline; five *name–value* inputs become bindings. The mapping is delivered in `SEPARATE` or `COMBINED` mode (Chapter 14).],
+)
+
+Two inputs are *structurally rich* and enter the matching pipeline: `$payload`, the current message, and `$step_window`, the payloads of the last few upstream steps — the `chain` of prior outputs. The other five are *flat name–value maps* and become bindings, never touching structural alignment: `$vars` (pipeline variables), `$headers` (envelope headers), `$shared` (cluster-wide variables), `$config` (the downstream component's static configuration), and `$global` (pipeline-wide properties). The split the taxonomy draws on paper is the split the engine draws in fact: two schema-bearing sources, five injected parameter sets.
+
+A second detail in the figure looks ahead. The mapping's output is delivered in one of two modes — *separate*, the mapped payload alone, or *combined*, the payload and a dynamic engine configuration merged into a single document. Whether those two outputs should share one transformation or be kept apart is the question of Chapter 14; the engine, by offering both modes, simply leaves the choice open.
+
 == The Weak Seam: `config` Versus `nvp`
 
 The grounding also exposes the taxonomy's softest joint. Master-data classification puts `config` and `nvp` in one box — configuration — and structurally they are indistinguishable: both are flat maps of keys to scalar values. Any attempt to separate them by *shape* (homogeneous strings on one side, mixed scalar types on the other) is a thin and unreliable test, because the real difference is not structural at all. It is role and lifecycle — and, in the three-times vocabulary of Chapter 3, it is precisely the init/run boundary: `config` is bound once at *init time* and may be inlined; `nvp` is read per message at *run time*. No inspection of shape can recover that distinction reliably, because the difference is one of *time*, not structure.

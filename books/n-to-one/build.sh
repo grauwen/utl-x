@@ -9,6 +9,17 @@
 set -e
 cd "$(dirname "$0")"
 
+# Render Graphviz diagrams (DOT -> SVG) if graphviz is installed; otherwise reuse existing SVGs.
+if command -v dot >/dev/null 2>&1; then
+    for d in diagrams/*.dot; do
+        [ -e "$d" ] || continue
+        dot -Tsvg "$d" -o "${d%.dot}.svg"
+    done
+    echo "  diagrams: rendered diagrams/*.dot -> *.svg"
+else
+    echo "  diagrams: graphviz 'dot' not found — reusing existing diagrams/*.svg"
+fi
+
 OUTPUT="Many to One - The Theory of N to 1 Data Mapping.pdf"
 
 echo "=== Building \"$OUTPUT\" ==="

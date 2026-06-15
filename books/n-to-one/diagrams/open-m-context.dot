@@ -1,0 +1,59 @@
+// The seven Open-M mapping-context inputs, typed by the book's theory:
+//   two structural (schema-bearing) inputs -> matching pipeline;
+//   five flat name-value inputs -> bindings.
+// Mapping (UTLXe) -> output in SEPARATE or COMBINED delivery mode.
+// Render: dot -Tsvg open-m-context.dot -o open-m-context.svg
+digraph open_m_context {
+  rankdir=LR; bgcolor="transparent"; compound=true; nodesep=0.22; ranksep=1.1;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+        penwidth=1.2, margin="0.16,0.08"];
+  edge [fontname="Helvetica", fontsize=8, color="#94a3b8", penwidth=1.1, arrowsize=0.7];
+
+  // ── structural inputs (schema-bearing → enter the matching pipeline) ──
+  subgraph cluster_struct {
+    label="structural inputs — schema-bearing → matching pipeline";
+    fontname="Helvetica"; fontsize=9; fontcolor="#1e3a8a"; style="rounded"; color="#93c5fd";
+    payload  [label=<<b>$payload</b><br/><font point-size="8" color="#475569">current message payload · in MPPM</font>>,
+              color="#2563eb", fillcolor="#eff6ff"];
+    stepwin  [label=<<b>$step_window</b><br/><font point-size="8" color="#475569">upstream step payloads (last N) · in MPPM</font>>,
+              color="#2563eb", fillcolor="#eff6ff"];
+  }
+
+  // ── binding inputs (flat name–value → bindings, no structural alignment) ──
+  subgraph cluster_bind {
+    label="binding inputs — name–value → bindings";
+    fontname="Helvetica"; fontsize=9; fontcolor="#374151"; style="rounded"; color="#cbd5e1";
+    vars     [label=<<b>$vars</b><br/><font point-size="8" color="#475569">pipeline variables · in MPPM</font>>,
+              color="#6b7280", fillcolor="#f1f5f9"];
+    headers  [label=<<b>$headers</b><br/><font point-size="8" color="#475569">envelope headers · in MPPM</font>>,
+              color="#6b7280", fillcolor="#f1f5f9"];
+    shared   [label=<<b>$shared</b><br/><font point-size="8" color="#475569">shared, cluster-wide · external</font>>,
+              color="#9ca3af", fillcolor="#f8fafc"];
+    config   [label=<<b>$config</b><br/><font point-size="8" color="#475569">target component config · external</font>>,
+              color="#9ca3af", fillcolor="#f8fafc"];
+    global   [label=<<b>$global</b><br/><font point-size="8" color="#475569">pipeline properties · external</font>>,
+              color="#9ca3af", fillcolor="#f8fafc"];
+  }
+
+  // ── the mapping (UTLXe) ──
+  mapping [label=<<b>UTL-X mapping</b><br/><font point-size="8" color="#475569">UTLXe · JVM · stdio-proto<br/>compiled once, cached per message</font>>,
+           shape=box, style="rounded,filled", color="#334155", fillcolor="#f8fafc", penwidth=1.6];
+
+  // ── outputs: two delivery modes ──
+  sep [label=<<b>SEPARATE</b><br/><font point-size="8" color="#92400e">mapped payload only</font>>,
+       color="#f59e0b", fillcolor="#fffbeb", penwidth=1.5];
+  com [label=<<b>COMBINED</b><br/><font point-size="8" color="#92400e">payload + dynamic config,<br/>merged in one document</font>>,
+       color="#f59e0b", fillcolor="#fffbeb", penwidth=1.5];
+
+  // edges: structural (solid blue), bindings (dashed grey)
+  payload -> mapping [color="#2563eb", penwidth=1.5];
+  stepwin -> mapping [color="#2563eb", penwidth=1.5];
+  vars    -> mapping [color="#6b7280", style=dashed];
+  headers -> mapping [color="#6b7280", style=dashed];
+  shared  -> mapping [color="#9ca3af", style=dotted];
+  config  -> mapping [color="#9ca3af", style=dotted];
+  global  -> mapping [color="#9ca3af", style=dotted];
+
+  mapping -> sep [label=" delivery: separate ", color="#475569", penwidth=1.3];
+  mapping -> com [label=" delivery: combined ", color="#475569", penwidth=1.3];
+}

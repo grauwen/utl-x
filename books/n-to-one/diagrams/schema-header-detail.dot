@@ -1,0 +1,23 @@
+// Header-detail schema graph (the IDOC case): Order 1:N OrderLine, OrderLine -FK-> Product.
+// Render: dot -Tsvg schema-header-detail.dot -o schema-header-detail.svg
+digraph header_detail {
+  rankdir=TB;
+  bgcolor="transparent";
+  node  [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=11,
+         color="#2563eb", fillcolor="#eff6ff", penwidth=1.3, margin="0.16,0.10"];
+  edge  [fontname="Helvetica", fontsize=9, color="#475569", penwidth=1.2];
+
+  Order     [label=<<b>Order</b><br/><font point-size="9" color="#475569">entity · PK id</font>>];
+  OrderLine [label=<<b>OrderLine</b><br/><font point-size="9" color="#475569">entity · FK orderId</font>>];
+  Product   [label=<<b>Product</b><br/><font point-size="9" color="#475569">lookup · PK code</font>>,
+             color="#059669", fillcolor="#ecfdf5"];
+
+  // containment (1:N) — solid
+  Order -> OrderLine [label="  1:N  ", color="#2563eb", penwidth=1.6];
+
+  // foreign-key reference (join) — dashed, green
+  OrderLine -> Product [label="  FK productCode  ", color="#059669", style=dashed, penwidth=1.4,
+                        fontcolor="#065f46", constraint=false];
+
+  { rank=same; OrderLine; Product; }
+}

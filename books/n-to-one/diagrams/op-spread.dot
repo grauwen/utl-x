@@ -1,0 +1,27 @@
+// `...spread` as a graph rewrite: cut a whole subtree from the source and graft it onto the target.
+// Render: dot -Tsvg op-spread.dot -o op-spread.svg
+digraph op_spread {
+  rankdir=LR; bgcolor="transparent"; compound=true; ranksep=1.0;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+        color="#334155", fillcolor="#f8fafc", penwidth=1.1, margin="0.12,0.07"];
+  edge [fontname="Helvetica", fontsize=9, color="#94a3b8", penwidth=1.0, arrowsize=0.7];
+
+  subgraph cluster_src {
+    label="source"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    s_addr [label="shipTo", fillcolor="#eff6ff", color="#2563eb"];
+    s_st [label="street"]; s_ci [label="city"]; s_zip [label="zip"];
+    s_addr -> s_st; s_addr -> s_ci; s_addr -> s_zip;
+  }
+  subgraph cluster_tgt {
+    label="target (Invoice)"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    t_addr [label="shipTo", fillcolor="#fffbeb", color="#f59e0b"];
+    t_st [label="street"]; t_ci [label="city"]; t_zip [label="zip"];
+    t_addr -> t_st; t_addr -> t_ci; t_addr -> t_zip;
+  }
+
+  s_addr -> t_addr [ltail=cluster_src, lhead=cluster_tgt,
+                    label="  ...spread  \n  cut-and-graft subtree  ",
+                    color="#1d4ed8", fontcolor="#1d4ed8", penwidth=2.0, arrowsize=0.9];
+}

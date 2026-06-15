@@ -27,23 +27,11 @@ The naive view is that an N:1 mapping is simply several 1:1 mappings stacked tog
 
 These three failures — asymmetry, derivation, and shape — are the reason a *theory* is worth having. Each is addressed head-on in later chapters: input roles in Chapter 8, derivation and output analysis in Chapter 9, and mapping shapes in Chapter 11.
 
-== Open-M: The Concrete N:1 Model
+== The Inputs Are Not Homogeneous
 
-UTL-X's production pipeline, _Open-M_, gives the abstract N:1 problem a fixed structure. An Open-M transformation receives a known set of input slots:
+The inputs of an N:1 mapping are not one uniform thing, and the difference between them organises much of what follows. Some inputs are *structurally rich* — they have nesting, keys, and foreign-key relationships, and they participate in genuine structural mapping. Others are *flat name–value parameters* — constants and run-time variables injected at mapping time, with no structure to align, closer to what a programming language calls parameters than to a source schema.
 
-#table(
-  columns: (auto, auto, auto),
-  align: (left, left, left),
-  [*Slot*], [*Role*], [*Nature*],
-  [`payload`], [primary data, full structure], [a schema — structurally rich],
-  [`payload-1 … payload-N`], [prior pipeline-step outputs (chained)], [a schema — structurally rich, with temporal order],
-  [`lookup`], [reference / enrichment data, joined by key], [a schema — structurally rich],
-  [global config], [environment constants], [name–value pairs — not a schema],
-  [shared variables], [run-time variables], [name–value pairs — not a schema],
-  [pipeline variables], [six fixed named inputs, always present], [name–value pairs — not a schema],
-)
-
-This is the first hint of the structure that organises the whole theory. The slots fall into two camps. Some are *structurally rich* — they have nesting, keys, and foreign-key relationships, and they participate in genuine structural mapping. Others — the name–value pairs — carry no structure to align at all; they are constants injected at mapping time, closer to what a programming language calls parameters than to a source schema. Chapter 8 makes this split formal; for now it is enough to see that "the inputs" are not one homogeneous thing.
+This split — structural sources versus injected parameters — is the first hint of the architecture the rest of the book builds. The structural inputs feed the matching and alignment machinery of Part II; the parameters bypass it entirely, recorded as direct value bindings. A real production pipeline makes this concrete, with a fixed set of named input slots of each kind, and that concrete model is taken up in Chapter 8, where inputs are typed by role and structure. For now it is enough to see that "the inputs" are plural in *kind*, not only in number.
 
 == What Must Be True of the Output
 

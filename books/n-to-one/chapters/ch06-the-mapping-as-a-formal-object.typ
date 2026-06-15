@@ -30,7 +30,7 @@ This is the formal line between *copying* and *deriving*, and it is the spine of
 
 == Three Kinds of Dependency for N Inputs
 
-The Open-M inputs of Chapter 1 are not symmetric, and the formal object must reflect that. The tgds fall into three classes.
+The heterogeneous inputs of Chapter 1 are not symmetric, and the formal object must reflect that. The tgds fall into three classes.
 
 #table(
   columns: (auto, auto),

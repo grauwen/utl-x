@@ -1,0 +1,27 @@
+// `filter` as a graph rewrite: prune nodes/edges by predicate (delete a subgraph).
+// Render: dot -Tsvg op-filter.dot -o op-filter.svg
+digraph op_filter {
+  rankdir=LR; bgcolor="transparent"; compound=true; ranksep=1.0;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+        color="#334155", fillcolor="#f8fafc", penwidth=1.1, margin="0.12,0.07"];
+  edge [fontname="Helvetica", fontsize=9, color="#94a3b8", penwidth=1.0, arrowsize=0.7];
+
+  subgraph cluster_src {
+    label="source"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    a1 [label="a ✓", fillcolor="#eff6ff", color="#2563eb"];
+    b1 [label="b ✗", fillcolor="#f1f5f9", color="#cbd5e1", fontcolor="#94a3b8", style="rounded,filled,dashed"];
+    c1 [label="c ✓", fillcolor="#eff6ff", color="#2563eb"];
+    d1 [label="d ✗", fillcolor="#f1f5f9", color="#cbd5e1", fontcolor="#94a3b8", style="rounded,filled,dashed"];
+  }
+  subgraph cluster_tgt {
+    label="target — pruned"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    a2 [label="a", fillcolor="#fffbeb", color="#f59e0b"];
+    c2 [label="c", fillcolor="#fffbeb", color="#f59e0b"];
+  }
+
+  a1 -> a2 [ltail=cluster_src, lhead=cluster_tgt,
+            label="  filter(p)  \n  prune by predicate  ",
+            color="#1d4ed8", fontcolor="#1d4ed8", penwidth=2.0, arrowsize=0.9];
+}

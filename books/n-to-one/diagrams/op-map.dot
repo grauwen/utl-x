@@ -1,0 +1,27 @@
+// `map` as a graph rewrite: apply a per-element rewrite over every element of a repeating subgraph.
+// Render: dot -Tsvg op-map.dot -o op-map.svg
+digraph op_map {
+  rankdir=LR; bgcolor="transparent"; compound=true; ranksep=1.0;
+  node [shape=box, style="rounded,filled", fontname="Helvetica", fontsize=10,
+        color="#334155", fillcolor="#f8fafc", penwidth=1.1, margin="0.12,0.07"];
+  edge [fontname="Helvetica", fontsize=9, color="#94a3b8", penwidth=1.0, arrowsize=0.7];
+
+  subgraph cluster_src {
+    label="source"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    s_items [label="items[ ]", fillcolor="#eff6ff", color="#2563eb"];
+    s_el [label="item\n{ sku, qty }"];
+    s_items -> s_el [label=" each ", fontsize=8];
+  }
+  subgraph cluster_tgt {
+    label="target"; fontname="Helvetica"; fontsize=10; fontcolor="#64748b";
+    style="rounded"; color="#cbd5e1";
+    t_items [label="lineItems[ ]", fillcolor="#fffbeb", color="#f59e0b"];
+    t_el [label="lineItem\n{ code, quantity }"];
+    t_items -> t_el [label=" each ", fontsize=8];
+  }
+
+  s_el -> t_el [ltail=cluster_src, lhead=cluster_tgt,
+                label="  map(item => …)  \n  per-element rewrite  ",
+                color="#1d4ed8", fontcolor="#1d4ed8", penwidth=2.0, arrowsize=0.9];
+}
