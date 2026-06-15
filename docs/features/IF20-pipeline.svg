@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 540" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#475569"/>
+    </marker>
+    <marker id="arrowD" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <rect width="1500" height="540" fill="#ffffff"/>
+
+  <!-- title -->
+  <text x="30" y="40" font-size="26" font-weight="700" fill="#0f172a">IF20 — Strategy-First Message-Contract Generation</text>
+  <text x="30" y="64" font-size="14" fill="#64748b">MC mode · design-time (schema only, no execution) · run by the Validate button</text>
+  <text x="1470" y="40" text-anchor="end" font-size="12" fill="#94a3b8">Execution mode = runtime/data → separate instance-based analyzer</text>
+
+  <!-- ===== main pipeline boxes (y 110..270) ===== -->
+
+  <!-- 1 Inputs -->
+  <rect x="30" y="110" width="200" height="160" rx="10" fill="#f8fafc" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="44" y="134" font-size="13" font-weight="700" fill="#1e3a8a">Inputs (Open-M)</text>
+  <circle cx="48" cy="158" r="4" fill="#2563eb"/><text x="58" y="162" font-size="11.5" fill="#0f172a">payload · order.xsd</text>
+  <circle cx="48" cy="180" r="4" fill="#60a5fa"/><text x="58" y="184" font-size="11.5" fill="#0f172a">chain[1] · proc-order</text>
+  <circle cx="48" cy="202" r="4" fill="#059669"/><text x="58" y="206" font-size="11.5" fill="#0f172a">lookup · catalog</text>
+  <circle cx="48" cy="224" r="4" fill="#6b7280"/><text x="58" y="228" font-size="11.5" fill="#0f172a">nvp / config · vars</text>
+  <text x="44" y="252" font-size="10" fill="#94a3b8">structurally-rich vs bindings</text>
+
+  <!-- 2 Phase 0+1 -->
+  <rect x="260" y="110" width="230" height="160" rx="10" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5"/>
+  <rect x="424" y="118" width="58" height="16" rx="8" fill="#0ea5e9"/><text x="453" y="130" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">DETERMINISTIC</text>
+  <text x="272" y="134" font-size="13" font-weight="700" fill="#075985">Phase 0+1 · Schema parse + type</text>
+  <text x="272" y="160" font-size="11.5" fill="#0f172a">→ UDMSchemaDocument</text>
+  <text x="272" y="180" font-size="10.5" fill="#334155">metadata: schema_type · type_source</text>
+  <text x="272" y="196" font-size="10.5" fill="#334155">· structural_class</text>
+  <text x="272" y="216" font-size="10.5" fill="#334155">graph: entity·key·FK·nesting</text>
+  <text x="272" y="240" font-size="10" fill="#94a3b8">envelope ⟂ data UDM · once, at parse</text>
+
+  <!-- 3 Phase 2 -->
+  <rect x="520" y="110" width="180" height="160" rx="10" fill="#f0f9ff" stroke="#0ea5e9" stroke-width="1.5"/>
+  <rect x="600" y="118" width="92" height="16" rx="8" fill="#38bdf8"/><text x="646" y="130" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">MOSTLY DET. + AI</text>
+  <text x="532" y="134" font-size="13" font-weight="700" fill="#075985">Phase 2 · Align</text>
+  <text x="532" y="160" font-size="11.5" fill="#0f172a">Structural alignment</text>
+  <text x="532" y="180" font-size="10.5" fill="#334155">Clio: graph reachability,</text>
+  <text x="532" y="196" font-size="10.5" fill="#334155">PK/FK pairing, cardinality</text>
+  <text x="532" y="220" font-size="10.5" fill="#0f172a">→ candidate correspondences</text>
+  <text x="532" y="244" font-size="10" fill="#94a3b8">AI: implicit FK · choice groups</text>
+
+  <!-- 4 Phase 3 -->
+  <rect x="730" y="110" width="180" height="160" rx="10" fill="#faf5ff" stroke="#a855f7" stroke-width="1.5"/>
+  <rect x="828" y="118" width="74" height="16" rx="8" fill="#a855f7"/><text x="865" y="130" text-anchor="middle" font-size="9" font-weight="700" fill="#fff">AI PRIMARY</text>
+  <text x="742" y="134" font-size="13" font-weight="700" fill="#6b21a8">Phase 3 · Refine</text>
+  <text x="742" y="160" font-size="11.5" fill="#0f172a">Name refinement</text>
+  <text x="742" y="180" font-size="10.5" fill="#334155">firstName ↔ givenName</text>
+  <text x="742" y="196" font-size="10.5" fill="#334155">customerId ↔ clientRef · NL↔EN</text>
+  <text x="742" y="220" font-size="10.5" fill="#0f172a">→ scored correspondence set</text>
+  <text x="742" y="244" font-size="10" fill="#94a3b8">tie-break within structural matches</text>
+
+  <!-- 5 Correspondence set -->
+  <rect x="940" y="110" width="250" height="160" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.5"/>
+  <text x="952" y="134" font-size="13" font-weight="700" fill="#b45309">Correspondence Set</text>
+  <text x="952" y="158" font-size="11" fill="#0f172a">src_path → tgt_path</text>
+  <text x="952" y="178" font-size="11" fill="#0f172a">mapping_class · inferred_function</text>
+  <text x="952" y="198" font-size="10.5" fill="#334155">signals{ structural · type · name · fk }</text>
+  <text x="952" y="216" font-size="10.5" fill="#334155">basis · mc_status · coverage %</text>
+  <text x="952" y="240" font-size="10" fill="#94a3b8">scored · subscores · git-versioned JSON</text>
+
+  <!-- 6 Strategy / generate -->
+  <rect x="1220" y="110" width="250" height="160" rx="10" fill="#f8fafc" stroke="#475569" stroke-width="1.5"/>
+  <text x="1232" y="134" font-size="13" font-weight="700" fill="#1e293b">Strategy → prompt → Generate</text>
+  <text x="1232" y="160" font-size="11" fill="#0f172a">select strategy from the matrix:</text>
+  <text x="1232" y="180" font-size="10.5" fill="#334155">mirror/spread · array→map</text>
+  <text x="1232" y="196" font-size="10.5" fill="#334155">join/lookup · groupBy/reduce</text>
+  <text x="1232" y="218" font-size="11" fill="#0f172a">→ idiomatic UTL-X</text>
+  <text x="1232" y="242" font-size="10" fill="#94a3b8">per-strategy prompt + scaffold</text>
+
+  <!-- arrows between boxes -->
+  <line x1="230" y1="190" x2="258" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="490" y1="190" x2="518" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="700" y1="190" x2="728" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="910" y1="190" x2="938" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="1190" y1="190" x2="1218" y2="190" stroke="#475569" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== bindings branch ===== -->
+  <rect x="260" y="320" width="230" height="56" rx="10" fill="#f1f5f9" stroke="#6b7280" stroke-width="1.5" stroke-dasharray="4 3"/>
+  <text x="272" y="342" font-size="12" font-weight="700" fill="#374151">Bindings (tgd_class: lookup)</text>
+  <text x="272" y="362" font-size="10.5" fill="#475569">nvp / config — constants, no scoring</text>
+  <!-- input -> bindings -->
+  <path d="M130,270 L130,348 L258,348" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#arrowD)"/>
+  <!-- bindings -> correspondence set (bypass P2-P3) -->
+  <path d="M490,348 L915,348 L915,272" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="4 3" marker-end="url(#arrowD)"/>
+  <text x="640" y="340" font-size="10" fill="#94a3b8">bypass Phases 2–3 → bindings[]</text>
+
+  <!-- dual-purpose consumers -->
+  <path d="M1065,270 L1065,300 L980,300 L980,322" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <path d="M1100,270 L1100,300 L1300,300 L1300,322" fill="none" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#arrow)"/>
+  <rect x="900" y="324" width="170" height="40" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="985" y="343" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">IF21 treeview</text>
+  <text x="985" y="357" text-anchor="middle" font-size="9.5" fill="#92400e">lines + functoid blocks</text>
+  <rect x="1230" y="324" width="240" height="40" rx="8" fill="#fff7ed" stroke="#f59e0b" stroke-width="1.2"/>
+  <text x="1350" y="343" text-anchor="middle" font-size="11" font-weight="700" fill="#b45309">AI chain (grounded prompt)</text>
+  <text x="1350" y="357" text-anchor="middle" font-size="9.5" fill="#92400e">fill gaps · resolve ambiguous</text>
+  <text x="1045" y="312" font-size="10" fill="#b45309">dual-purpose artifact</text>
+
+  <!-- ===== footer notes ===== -->
+  <line x1="30" y1="412" x2="1470" y2="412" stroke="#e2e8f0" stroke-width="1"/>
+  <text x="30" y="436" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#0ea5e9">▍</tspan> Phase 0 folds into the <tspan font-weight="700">schema</tspan> parse — design-time/MC, <tspan font-weight="700">never</tspan> on the Execute hot path (the data parse → data UDM is separate).</text>
+  <text x="30" y="458" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#f59e0b">▍</tspan> Coverage (IF11) is <tspan font-weight="700">demoted to a gap/suggestion overlay</tspan> — it colors unmapped nodes; the AST/graph defines the lines.</text>
+  <text x="30" y="480" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#a855f7">▍</tspan> <tspan font-weight="700">Deterministic</tspan> (blue) ▸ <tspan font-weight="700">AI-beneficial</tspan> (purple). <tspan font-weight="700">basis</tspan> ∈ { fk-reachable, name-heuristic, ai-inferred, user-confirmed } — every match's provenance is explicit.</text>
+  <text x="30" y="502" font-size="11.5" fill="#334155"><tspan font-weight="700" fill="#475569">▍</tspan> Grounded in schema-matching theory: Rahm &amp; Bernstein (element vs structure; schema vs instance) · Clio (joins/nesting from PK/FK) · tgds (the formal mapping).</text>
+</svg>

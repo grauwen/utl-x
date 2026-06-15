@@ -1,0 +1,113 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 620" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#475569"/>
+    </marker>
+    <marker id="ad" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 z" fill="#059669"/>
+    </marker>
+  </defs>
+  <rect width="1500" height="620" fill="#ffffff"/>
+
+  <text x="30" y="40" font-size="26" font-weight="700" fill="#0f172a">IF20 — Two-level typing &amp; message archetypes</text>
+  <text x="30" y="64" font-size="14" fill="#64748b">Role (per input) + structure (inside a schema). The granular "kind of message" lives at the structural level.</text>
+
+  <!-- ===== Panel 1 — schema-level role ===== -->
+  <rect x="30" y="90" width="560" height="300" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="50" y="120" font-size="15" font-weight="700" fill="#0f172a">1 · Schema-level role  —  per input</text>
+  <text x="50" y="140" font-size="11" fill="#94a3b8">grounded in MDM data classification (right column)</text>
+
+  <!-- taxonomy rows -->
+  <g font-size="12.5">
+    <circle cx="60" cy="168" r="5" fill="#2563eb"/><text x="74" y="172" fill="#0f172a" font-weight="600">payload</text><text x="330" y="172" fill="#64748b">→ transactional data</text>
+    <circle cx="76" cy="190" r="5" fill="#60a5fa"/><text x="90" y="194" fill="#0f172a">└ chain</text><text x="330" y="194" fill="#64748b">→ transactional (prior step)</text>
+    <circle cx="60" cy="214" r="5" fill="#059669"/><text x="74" y="218" fill="#0f172a" font-weight="600">lookup</text><text x="330" y="218" fill="#64748b">→ master / reference data</text>
+    <circle cx="60" cy="238" r="5" fill="#6b7280"/><text x="74" y="242" fill="#0f172a" font-weight="600">nvp</text><text x="330" y="242" fill="#64748b">→ configuration</text>
+    <circle cx="76" cy="260" r="5" fill="#9ca3af"/><text x="90" y="264" fill="#0f172a">└ config</text><text x="330" y="264" fill="#64748b">→ configuration (inlinable)</text>
+    <circle cx="60" cy="284" r="5" fill="#14b8a6"/><text x="74" y="288" fill="#0f172a" font-weight="600">enumeration</text><text x="330" y="288" fill="#64748b">→ reference (codelist)</text>
+    <circle cx="60" cy="308" r="5" fill="#94a3b8"/><text x="74" y="312" fill="#0f172a" font-weight="600">shared-type-library</text><text x="330" y="312" fill="#64748b">→ type dependency</text>
+    <circle cx="60" cy="332" r="5" fill="#94a3b8"/><text x="74" y="336" fill="#0f172a" font-weight="600">meta-schema</text><text x="330" y="336" fill="#64748b">→ registry (extract entities)</text>
+  </g>
+  <rect x="50" y="352" width="490" height="28" rx="6" fill="#fef9c3" stroke="#eab308" stroke-width="1"/>
+  <text x="60" y="370" font-size="11" fill="#854d0e"><tspan font-weight="700">config vs nvp:</tspan> structurally identical — don't infer the split, declare it (slot/header).</text>
+
+  <!-- ===== Panel 2 — node/graph level ===== -->
+  <rect x="620" y="90" width="850" height="300" rx="12" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="640" y="120" font-size="15" font-weight="700" fill="#0f172a">2 · Node / graph level  —  inside one schema  <tspan fill="#2563eb">(the granularity that predicts strategy)</tspan></text>
+
+  <!-- Order entity -->
+  <rect x="700" y="150" width="170" height="58" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="785" y="174" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">Order</text>
+  <text x="785" y="194" text-anchor="middle" font-size="10.5" fill="#334155">entity · 🔑 PK id</text>
+
+  <!-- OrderLine entity -->
+  <rect x="700" y="280" width="170" height="58" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.5"/>
+  <text x="785" y="304" text-anchor="middle" font-size="13" font-weight="700" fill="#1e3a8a">OrderLine</text>
+  <text x="785" y="324" text-anchor="middle" font-size="10.5" fill="#334155">entity · FK orderId</text>
+
+  <!-- containment edge -->
+  <line x1="785" y1="208" x2="785" y2="278" stroke="#2563eb" stroke-width="2" marker-end="url(#a)"/>
+  <text x="795" y="248" font-size="11" font-weight="700" fill="#1e3a8a">1:N</text>
+  <text x="795" y="263" font-size="10" fill="#64748b">containment / FK</text>
+
+  <!-- Product lookup -->
+  <rect x="1020" y="280" width="180" height="58" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.5"/>
+  <text x="1110" y="304" text-anchor="middle" font-size="13" font-weight="700" fill="#065f46">Product (lookup)</text>
+  <text x="1110" y="324" text-anchor="middle" font-size="10.5" fill="#334155">dimension · 🔑 PK code</text>
+
+  <!-- FK edge to lookup -->
+  <line x1="870" y1="309" x2="1018" y2="309" stroke="#059669" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#ad)"/>
+  <text x="944" y="300" font-size="10.5" font-weight="700" fill="#065f46">FK productCode</text>
+  <text x="944" y="328" font-size="10" fill="#64748b">join → findBy</text>
+
+  <!-- caption -->
+  <rect x="640" y="352" width="810" height="28" rx="6" fill="#eff6ff" stroke="#93c5fd" stroke-width="1"/>
+  <text x="650" y="370" font-size="11" fill="#1e3a8a"><tspan font-weight="700">IDOC order ↔ orderlines</tspan> = node-level FK / header-detail (1:N) inside the payload graph  →  <tspan font-weight="700">map + groupBy</tspan>  (orderline = weak/dependent entity)</text>
+
+  <!-- ===== Band 3 — structural_class archetypes ===== -->
+  <rect x="30" y="412" width="1440" height="180" rx="12" fill="#fafafa" stroke="#cbd5e1" stroke-width="1.5"/>
+  <text x="50" y="440" font-size="15" font-weight="700" fill="#0f172a">structural_class  —  message archetype (orthogonal to role) → predicted UTL-X</text>
+  <text x="50" y="459" font-size="11" fill="#94a3b8">derived from graph topology · Kimball dimensional + Chen ER · cousin of the XSD __xsdPattern (russian-doll/…)</text>
+
+  <!-- 5 cards -->
+  <!-- single-record -->
+  <rect x="50" y="474" width="262" height="100" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <rect x="70" y="494" width="60" height="22" rx="4" fill="#e2e8f0" stroke="#94a3b8"/>
+  <text x="150" y="500" font-size="12.5" font-weight="700" fill="#0f172a">single-record</text>
+  <text x="150" y="520" font-size="11" fill="#475569">one entity, no repeats</text>
+  <text x="70" y="556" font-size="11.5" font-weight="700" fill="#2563eb">→ field / spread</text>
+
+  <!-- flat-list -->
+  <rect x="330" y="474" width="262" height="100" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <rect x="350" y="492" width="60" height="7" rx="2" fill="#cbd5e1"/><rect x="350" y="503" width="60" height="7" rx="2" fill="#cbd5e1"/><rect x="350" y="514" width="60" height="7" rx="2" fill="#cbd5e1"/>
+  <text x="430" y="500" font-size="12.5" font-weight="700" fill="#0f172a">flat-list</text>
+  <text x="430" y="520" font-size="11" fill="#475569">one repeating entity</text>
+  <text x="350" y="556" font-size="11.5" font-weight="700" fill="#2563eb">→ map</text>
+
+  <!-- header-detail (highlighted) -->
+  <rect x="610" y="474" width="262" height="100" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <rect x="630" y="492" width="46" height="14" rx="3" fill="#bfdbfe" stroke="#2563eb"/>
+  <rect x="624" y="514" width="26" height="11" rx="2" fill="#dbeafe" stroke="#2563eb"/><rect x="656" y="514" width="26" height="11" rx="2" fill="#dbeafe" stroke="#2563eb"/>
+  <line x1="653" y1="506" x2="637" y2="514" stroke="#2563eb"/><line x1="653" y1="506" x2="669" y2="514" stroke="#2563eb"/>
+  <text x="710" y="500" font-size="12.5" font-weight="700" fill="#1e3a8a">header-detail (1:N)</text>
+  <text x="710" y="520" font-size="11" fill="#475569">parent + child collection</text>
+  <text x="630" y="556" font-size="11.5" font-weight="700" fill="#1d4ed8">→ map + groupBy   ★ the IDOC case</text>
+
+  <!-- star/snowflake -->
+  <rect x="890" y="474" width="262" height="100" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <circle cx="925" cy="510" r="9" fill="#dbeafe" stroke="#2563eb"/>
+  <circle cx="905" cy="492" r="5" fill="#d1fae5" stroke="#059669"/><circle cx="945" cy="492" r="5" fill="#d1fae5" stroke="#059669"/><circle cx="945" cy="528" r="5" fill="#d1fae5" stroke="#059669"/>
+  <line x1="925" y1="510" x2="905" y2="492" stroke="#94a3b8"/><line x1="925" y1="510" x2="945" y2="492" stroke="#94a3b8"/><line x1="925" y1="510" x2="945" y2="528" stroke="#94a3b8"/>
+  <text x="975" y="500" font-size="12.5" font-weight="700" fill="#0f172a">star / snowflake</text>
+  <text x="975" y="520" font-size="11" fill="#475569">fact + FK to dimensions</text>
+  <text x="910" y="556" font-size="11.5" font-weight="700" fill="#059669">→ findBy / filterBy joins</text>
+
+  <!-- deeply-nested -->
+  <rect x="1170" y="474" width="280" height="100" rx="10" fill="#ffffff" stroke="#94a3b8" stroke-width="1.2"/>
+  <rect x="1190" y="492" width="46" height="30" rx="3" fill="none" stroke="#94a3b8"/>
+  <rect x="1198" y="500" width="30" height="15" rx="2" fill="none" stroke="#94a3b8"/>
+  <rect x="1204" y="506" width="16" height="6" rx="1" fill="none" stroke="#94a3b8"/>
+  <text x="1255" y="500" font-size="12.5" font-weight="700" fill="#0f172a">deeply-nested</text>
+  <text x="1255" y="520" font-size="11" fill="#475569">depth ≥ 3, mixed card.</text>
+  <text x="1190" y="556" font-size="11.5" font-weight="700" fill="#2563eb">→ composed map / spread</text>
+</svg>
