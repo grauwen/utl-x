@@ -189,7 +189,7 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
   #v(0.5cm)
   #text(size: 18pt, fill: rgb("#666666"))[From Theory to Transformation]
   #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Typing inputs, analysing outputs, inferring functions, and strategy-first generation]
+  #text(size: 12pt, fill: rgb("#999999"))[Typing inputs, analysing outputs, inferring functions, strategy-first generation, and the place of AI]
 ]
 #pagebreak()
 
@@ -200,6 +200,10 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 #include "chapters/ch10-function-inference.typ"
 #pagebreak()
 #include "chapters/ch11-strategy-first-generation.typ"
+#pagebreak()
+#include "chapters/ch12-proposing-a-mapping.typ"
+#pagebreak()
+#include "chapters/ch13-ai-author-not-executor.typ"
 #pagebreak()
 
 // ── Part IV: The Classical Foundation ──
@@ -214,9 +218,9 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 ]
 #pagebreak()
 
-#include "chapters/ch12-theory-of-one-to-one-mapping.typ"
+#include "chapters/ch14-theory-of-one-to-one-mapping.typ"
 #pagebreak()
-#include "chapters/ch13-bibliography.typ"
+#include "chapters/ch15-bibliography.typ"
 #pagebreak()
 
 // ── Back Page ──
