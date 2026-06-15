@@ -224,10 +224,18 @@ UDMSchemaDocument            ← NEW (design-time); not the data UDM
   └── graph: <UDM-based schema graph>   ← greenfield; no UDMSchema/SchemaGraph in core today
 ```
 
-Phase 0 typing thus folds into the **parse step**: parsing an input yields a *typed* `UDMSchemaDocument`,
-and Phases 1–3 receive already-typed inputs (the four-phase pipeline collapses to *parse+type → align →
-refine*). Type resolution runs inside the parser with the priority cascade **platform slot > inline
-`x-utlx` tag > `%utlx` header > Phase-0 inference > error**, recorded as `type_source`.
+Phase 0 typing thus folds into the **schema-parse step**: parsing an input **schema** yields a *typed*
+`UDMSchemaDocument`, and Phases 1–3 receive already-typed inputs (the four-phase pipeline collapses to
+*parse+type → align → refine*). Type resolution runs inside the schema parser with the priority cascade
+**platform slot > inline `x-utlx` tag > `%utlx` header > Phase-0 inference > error**, recorded as
+`type_source`.
+
+> **This is the *schema* parse, not the data parse — it never touches the Execute hot path.** There are two
+> distinct parses: the **data parse** (runtime/Execution) turns an input *instance* into the **data UDM**
+> per message; the **schema parse** (design-time/MC) turns an input *schema* into a `UDMSchemaDocument` when
+> a schema is loaded/changed. Phase 0 folds into the latter only. Execute never parses schemas or runs
+> typing, so this adds **zero** Execute-path cost. (Keep `classifySchemaType()` a separate, testable
+> function the schema parser *calls* — fold the *artifact and timing* into the parse, not the classifier code.)
 
 **Backward compatibility: none broken.** The envelope is additive and design-time — it does **not** touch
 the runtime data UDM type, format parsers/serializers, the engine, the `.udm` UDM-Language format and its

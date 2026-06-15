@@ -244,8 +244,10 @@ runtime output.)
   the runtime data UDM type, format parsers/serializers, the engine, the `.udm` UDM-Language format + its
   roundtrip tests, the conformance suite, or the `utlxe` proto/SDKs. And because the UDM-based schema graph
   is **greenfield** (schemas today parse to *data*-UDM or IDE field-trees), it is *defined with* the
-  envelope from the start — **nothing to migrate**. So §4's "Phase 0 folds into UDM parsing" is exactly
-  right: parsing yields a *typed* `UDMSchemaDocument`.
+  envelope from the start — **nothing to migrate**. So §4's "Phase 0 folds into *schema* parsing" is
+  exactly right: parsing an input **schema** yields a *typed* `UDMSchemaDocument`. (This is the
+  design-time/MC **schema** parse — distinct from the runtime **data** parse, so it never touches the
+  Execute hot path.)
 
 - **Do NOT overload the data UDM's existing `metadata`.** `UDM.Object` carries `attributes` + a
   `metadata: Map<String,String>` map — but that map is a **reserved, `__`-prefixed format-fidelity
@@ -261,11 +263,19 @@ artifact, **decoupled** from the data-UDM/`.udm` format version (independent cad
 
 -----
 
-## 4. Pipeline Simplification: Phase 0 Folds into UDM Parsing
+## 4. Pipeline Simplification: Phase 0 Folds into Schema Parsing
 
 ### Consequence of UDM carrying schema type
 
-Phase 0 (schema typing) is no longer a separate pipeline phase. It becomes **part of the UDM parsing step**. The output of parsing is not a raw graph but a typed `UDMSchemaDocument`. Phase 1 (graph construction) receives already-typed inputs.
+Phase 0 (schema typing) is no longer a separate pipeline phase. It becomes **part of the *schema*-parse step** — the design-time parse of an input **schema** that produces the `UDMSchemaDocument`. The output of schema parsing is not a raw graph but a typed `UDMSchemaDocument`. Phase 1 (graph construction) receives already-typed inputs.
+
+> ⚠️ **"Schema parse", not "data parse" — no Execute impact.** There are two distinct parses: the **data
+> parse** (runtime/Execution) turns an input *instance* into the **data UDM** per message; the **schema
+> parse** (design-time/MC) turns an input *schema* into a `UDMSchemaDocument` when a schema is
+> loaded/changed. Phase 0 folds into the **schema** parse only — Execute never parses schemas or runs
+> typing, so this adds **zero** cost to the Execute hot path. (Implementation note: keep
+> `classifySchemaType()` a separate, testable function the schema parser *calls* — fold the *artifact and
+> timing* into the parse, not the classifier code.)
 
 The four-phase pipeline simplifies to three:
 
@@ -277,9 +287,9 @@ Before (four phases):
   Phase 3  ──►  name refinement  →  scored correspondence set
 
 After (three phases):
-  Parse + type  ──►  typed UDMSchemaDocument     [Phase 0 + 1 merged]
-  Align         ──►  candidate correspondences    [was Phase 2]
-  Refine        ──►  scored correspondence set    [was Phase 3]
+  Schema-parse + type  ──►  typed UDMSchemaDocument     [Phase 0 + 1 merged]
+  Align                ──►  candidate correspondences    [was Phase 2]
+  Refine               ──►  scored correspondence set    [was Phase 3]
 ```
 
 This is architecturally cleaner: the UDM carries its own type, and no downstream phase ever needs to re-derive or re-ask. The typing decision is made once, at parse time, with full priority-cascade logic, and propagated forward as a first-class UDM property.
