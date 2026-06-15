@@ -257,6 +257,47 @@ format version.
 > `UDMSchemaDocument` envelope is an MC/design-time artifact; the runtime data UDM is Execution mode's
 > output. (Consistent with the MC = schema / Execution = instance separation above.)
 
+### Taxonomy refinement & the structural archetype axis
+
+Typing happens at **two levels**, and most of the granular signal lives at the second:
+
+1. **Schema-level type** (`payload`/`lookup`/`nvp`/…) — the input's **role** in the mapping (above).
+2. **Node/graph-level type** (Phase 1) — **entity / key / reference(FK) / containment / value** on the
+   nodes and edges *inside* a schema. **This is where the real granularity is.** An SAP **IDOC**'s
+   *orders with id ↔ orderlines with id* is a **node-level FK / header-detail (1:N) relationship inside the
+   `payload` graph** — not a new top-level type. It's exactly this relationship that predicts the mapping
+   shape: header + lines with a 1:N containment/FK ⇒ `map`/`groupBy`. (In ER terms, an orderline is a
+   **weak/dependent entity** under an identifying relationship — the canonical transactional-message shape.)
+
+Two refinements follow:
+
+**(a) `config` vs `nvp` — don't *infer* the split.** Structurally they're near-identical (flat key→scalar);
+the real difference is **role/lifecycle** (`config` = deploy-time constants, inlinable; `nvp` = runtime
+variables), which shape can't reveal reliably. So **infer a single `bindings` kind** and refine to
+`config`/`nvp` **only by declaration** (slot/header) — which the priority cascade already favors. The thin
+"homogeneous-strings vs mixed-scalars" test (Test 2) is a weak seam; lean on declaration there.
+
+**(b) Add a `structural_class` axis — orthogonal to `schema_type`, derived from the graph topology.** This
+names the "kind of message" feeling and is *predictive of strategy*:
+
+| `structural_class` | Graph signature | Predicts |
+|---|---|---|
+| `single-record` | one entity, no repeating groups | direct/spread |
+| `flat-list` | one repeating entity, no nesting | `map` |
+| `header-detail` (1:N) | parent entity + child collection via containment/FK (the IDOC case) | `map` + `groupBy` |
+| `star` / `snowflake` | a fact entity with FK edges to `lookup` dimensions | `findBy`/`filterBy` joins |
+| `deeply-nested` | depth ≥ 3 containment, mixed cardinalities | composed `map`/spread |
+
+`structural_class` lives on the `UDMSchemaDocument` envelope alongside `schema_type`. The XSD design
+patterns already in the codebase (`__xsdPattern`: russian-doll / salami-slice / …) are the *serialization*
+cousin of this; `structural_class` is the *relational/shape* cousin and the one that drives function
+inference.
+
+> **Showing it (Validate / IDE):** surface `schema_type` + `type_source` (and, where useful,
+> `structural_class`) as a **per-input chip** (`$order ▸ payload · header-detail (header)`), **distinct
+> from** the green format/UDM *validity* indicator — green answers "is it valid?", the chip answers "what
+> role/shape is it?". This is the "Classify inputs" stage of the Validate panel.
+
 ---
 
 ## The mapping matrix → the correspondence set
@@ -581,6 +622,24 @@ MC problem (and must apply the matchers to **UDM schema graphs**, not per-format
   graph propagation, applicable to UDM graph alignment).
 - **Best single entry point** — Bellahsene, Bonifati, Rahm (eds.), *"Schema Matching and Mapping"*,
   Springer 2011 — surveys all of the above; the reference for anyone implementing IF20's strategy layer.
+
+**Data classification & message archetypes** (grounds the `schema_type` + `structural_class` taxonomy):
+
+- **Master Data Management / data classification** — the enterprise taxonomy *is* IF20's: **master** ·
+  **transactional** · **reference** · **metadata** · **configuration** data. Maps ~1:1 — `lookup` ≈
+  master/reference, `payload`/`chain` ≈ transactional, `enumeration` ≈ reference (codelist), `config`/`nvp`
+  ≈ configuration. (DAMA-DMBOK; Loshin, *Master Data Management*; Dreibelbis et al., *Enterprise MDM*.)
+  Strongest validation that the role taxonomy is well-grounded — and that `config`/`nvp` are both just
+  "configuration."
+- **Dimensional modeling** — Kimball, *The Data Warehouse Toolkit*: **fact vs dimension**,
+  **star/snowflake**. `lookup` = dimension, `payload`-with-lines = fact. The literature for the
+  `structural_class` (star/snowflake/header-detail) axis.
+- **Entity-Relationship modeling** — Chen, *"The Entity-Relationship Model"* (1976): entities, cardinality,
+  **weak entities / identifying relationships** — exactly the order↔orderline (header-detail) case.
+- **Enterprise Integration Patterns** — Hohpe & Woolf: **message types** (Document / Command / Event) and
+  the **Canonical Data Model** — message-kind classification for integration.
+- **EDI / IDOC structure** — EDIFACT / X12 / SAP IDOC segment hierarchies (control / header / detail /
+  status) — the formal header-detail message archetype.
 
 ## Phasing
 
