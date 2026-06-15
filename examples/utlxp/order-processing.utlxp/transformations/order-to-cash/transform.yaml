@@ -1,0 +1,4 @@
+strategy: TEMPLATE
+validationPolicy: SKIP
+inputs:
+  - name: payload
