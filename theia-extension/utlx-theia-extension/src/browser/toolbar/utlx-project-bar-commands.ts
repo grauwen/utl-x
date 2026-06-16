@@ -23,21 +23,12 @@ export class UtlxProjectBarItems implements TabBarToolbarContribution {
 
         // ── PROJECT zone (LEFT): create / open a .utlxp project ──
         registry.registerItem({
-            id: 'utlx.project-bar.newProject',
-            command: 'utlx.project.new',
-            icon: 'codicon codicon-new-folder',
-            tooltip: 'New UTLX Project…',
-            group: 'project',
-            priority: 0,
-            isVisible: onBar,
-        });
-        registry.registerItem({
             id: 'utlx.project-bar.openProject',
             command: 'utlx.project.open',
             icon: 'codicon codicon-folder-opened',
             tooltip: 'Open UTLX Project…',
             group: 'project',
-            priority: 1,
+            priority: 0,
             isVisible: onBar,
         });
         registry.registerItem({
@@ -46,7 +37,16 @@ export class UtlxProjectBarItems implements TabBarToolbarContribution {
             icon: 'codicon codicon-history',
             tooltip: 'Open Recent UTLX Project…',
             group: 'project',
-            priority: 2,
+            priority: 1,
+            isVisible: onBar,
+        });
+        registry.registerItem({
+            id: 'utlx.project-bar.newProject',
+            command: 'utlx.project.new',
+            icon: 'codicon codicon-new-folder',
+            tooltip: 'New UTLX Project…',
+            group: 'project',
+            priority: 2,   // moved two places right (after Open + Open Recent)
             isVisible: onBar,
         });
         registry.registerItem({
@@ -65,6 +65,15 @@ export class UtlxProjectBarItems implements TabBarToolbarContribution {
             tooltip: 'Save UTLX Project As…',
             group: 'project',
             priority: 4,
+            isVisible: onBar,
+        });
+        registry.registerItem({
+            id: 'utlx.project-bar.closeProject',
+            command: 'utlx.project.close',
+            icon: 'codicon codicon-close',
+            tooltip: 'Close UTLX Project',
+            group: 'project',
+            priority: 5,
             isVisible: onBar,
         });
 

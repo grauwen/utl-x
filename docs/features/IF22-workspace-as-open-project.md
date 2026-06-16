@@ -95,6 +95,11 @@ repos, which is the right direction anyway.
    `transformations/<name>/` (stub `.utlx` + `transform.yaml`, siblings untouched) and loads it in place;
    it **requires an open project** — otherwise it tells the user to create one first. Both Switch and New
    Transformation reuse the same in-place loader.
+   **File → Close UTLX Project** (`utlx.project.close`) = `workspaceService.close()`: it closes the
+   `.utlxp` workspace and reloads into a **no-project** session. No explicit mode reset is needed —
+   because **mode = f(workspace)**, no `.utlxp` ⇒ `maybeLoadProjectWorkspace()` doesn't fire
+   Message-Contract ⇒ the IDE comes back in **Execution** (and the status bar shows Theia's purple
+   "no folder" colour). This is the inverse of open: opening *derives* MC, closing *un-derives* it.
    *Follow-up:* let the **toolbar read the same `transformations/` signal at init** so it boots straight
    into MC (avoids the brief E→MC flash on startup).
 2. **Add git** — compose `@theia/git` + `@theia/scm`; the SCM view then versions the project repo. (Pairs
@@ -108,6 +113,7 @@ repos, which is the right direction anyway.
 
 - `browser/utlx-frontend-contribution.ts` — `newProject()` (scaffold a minimal `.utlxp` via
   `buildSavePlan` + `WorkspaceService.open`), `openProject()` (pick `.utlxp` + `WorkspaceService.open`),
+  `closeProject()` (`WorkspaceService.close()` → no-project session → Execution),
   `maybeLoadProjectWorkspace()` (startup: detect `transformations/`), `loadProjectFromRoot()` (pick a
   transformation when >1 via `QuickInputService`, then load panels + fire `MESSAGE_CONTRACT`).
   `WorkspaceService` from `@theia/workspace/lib/browser`, `QuickInputService` from `@theia/core/lib/browser`.

@@ -290,6 +290,10 @@ export class UTLXFrontendContribution implements
             { execute: () => this.switchTransformation() }
         );
         commands.registerCommand(
+            { id: 'utlx.project.close', label: 'UTL-X: Close Project' },
+            { execute: () => this.closeProject() }
+        );
+        commands.registerCommand(
             { id: 'utlx.project.newTransformation', label: 'UTL-X: New Transformation…' },
             { execute: () => this.newTransformation() }
         );
@@ -480,6 +484,13 @@ export class UTLXFrontendContribution implements
             label: 'Open UTLX Project…',
             order: 'a1'
         });
+        // Close the open project (closes the .utlxp workspace → reloads into a no-project session →
+        // Execution mode, since mode is derived from the workspace).
+        menus.registerMenuAction(CommonMenus.FILE_CLOSE, {
+            commandId: 'utlx.project.close',
+            label: 'Close UTLX Project',
+            order: 'a1'
+        });
         // (Open Recent UTLX Project is relabeled into this same group from onStart, order 'a20'.)
 
         // — Transformation group (operate within the open project) —
@@ -550,7 +561,7 @@ export class UTLXFrontendContribution implements
      * transformations/<name>/{<name>.utlx, transform.yaml, test-input-<slot>.<ext>} (+ schemas/ when
      * contracts are loaded). One name = the project = the single transformation (single-tx default).
      */
-    private async saveTransformation(_saveAs: boolean): Promise<void> {
+    private async saveTransformation(_saveAs: boolean): Promise<boolean> {
         try {
             const editor = await this.widgetManager.getOrCreateWidget<UTLXEditorWidget>(UTLXEditorWidget.ID);
             const inputPanel = await this.widgetManager.getOrCreateWidget<MultiInputPanelWidget>(MultiInputPanelWidget.ID);
@@ -559,7 +570,7 @@ export class UTLXFrontendContribution implements
             const utlx = editor.getContent();
             if (!utlx || !utlx.trim()) {
                 this.messageService.warn('Nothing to save — the transformation editor is empty.');
-                return;
+                return false;
             }
 
             // Full input constellation (instances + contracts) from panel state.
@@ -581,7 +592,7 @@ export class UTLXFrontendContribution implements
                 saveLabel: 'Save'
             };
             const target = await this.fileDialogService.showSaveDialog(props, folder);
-            if (!target) return;
+            if (!target) return false;
 
             const root = target;                               // the <name>.utlxp directory
             const txName = target.path.name || 'transformation'; // basename without .utlxp
@@ -602,9 +613,11 @@ export class UTLXFrontendContribution implements
 
             editor.setTransformationName(txName);
             this.messageService.info(`✓ Saved transformation "${txName}" → ${root.path.base}`);
+            return true;
         } catch (err) {
             console.error('[UTLXFrontendContribution] Save Transformation failed:', err);
             this.messageService.error(`Save Transformation failed: ${err instanceof Error ? err.message : String(err)}`);
+            return false;
         }
     }
 
@@ -706,6 +719,47 @@ output json
             });
         } catch (err) {
             console.warn('[UTLXFrontendContribution] Could not relabel Open Recent Workspace:', err);
+        }
+    }
+
+    /**
+     * Close the open project. `workspaceService.close()` reloads into a no-project session — which both
+     * **clears** the in-memory transformation / inputs / output / schemas AND drops back to **Execution**
+     * (mode = f(workspace), IF22). We have no file-backed dirty tracking yet (IF03), and the reload
+     * discards in-memory work silently, so we PROMPT to save first: Save and Close / Close without
+     * Saving / Cancel. (Once IF03 lands, this can use real dirty state instead of always prompting.)
+     */
+    private async closeProject(): Promise<void> {
+        try {
+            await this.workspaceService.ready;
+            if (!this.workspaceService.opened) {
+                this.messageService.info('No UTL-X project is open.');
+                return;
+            }
+            const choice = await this.quickInput.showQuickPick(
+                [
+                    { label: 'Save and Close', id: 'save' },
+                    { label: 'Close without Saving', id: 'discard' },
+                    { label: 'Cancel', id: 'cancel' },
+                ],
+                {
+                    title: 'Close UTL-X Project',
+                    placeholder: 'Closing clears the transformation, inputs, output and schemas. Save first?'
+                }
+            );
+            if (!choice || choice.id === 'cancel') {
+                return;
+            }
+            if (choice.id === 'save') {
+                const saved = await this.saveTransformation(false);
+                if (!saved) {
+                    return;   // save dialog cancelled (or nothing to save) → keep the project open
+                }
+            }
+            await this.workspaceService.close();   // reload → cleared panels + Execution mode
+        } catch (err) {
+            console.error('[UTLXFrontendContribution] Close Project failed:', err);
+            this.messageService.error(`Close Project failed: ${err instanceof Error ? err.message : String(err)}`);
         }
     }
 
