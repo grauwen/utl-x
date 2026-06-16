@@ -7,8 +7,15 @@ as an empty stripe. Per the documented fallback, placement switched to **Archite
 `ApplicationShell` subclass (`UtlxApplicationShell`) inserts the Project Bar as its **own fixed-height
 row** in the shell's vertical layout — **no global top-panel CSS**, so the menu + Action Bar are
 untouched. The bar is a **single** injectable `ReactWidget` rendering both sides (items pick a side via
-`group: 'left'|'right'`), built on `TabBarToolbarRegistry`, Theia-1.64-correct. **v1 = action buttons**
-(Switch/New Transformation left; New/Open Project right) reusing existing IF18/IF22 commands. **Deferred (v2):** a live project /
+`group: 'left'|'right'`), built on `TabBarToolbarRegistry`, Theia-1.64-correct. **v1 layout = labelled zones:** **PROJECT** (left —
+New/Open/Recent/Save/Save As) │ **UTLX ARCHIVE** (the project config — transform.yaml/engine.yaml,
+divider after Project) · **TRANSFORMATION** (centre, over the editor — Switch/New Transformation) ·
+**EDIT** (right — the standard editor commands: Undo/Redo/Cut/Copy/Paste/Find/Replace, `core.*`). Group
+**labels** are shown because the bar must be self-explanatory when the **menu bar is detached**
+(Electron/macOS native menu sits in the system bar, not the window). Project/Transformation/Archive items
+reuse IF18/IF22 commands; Edit items reuse Theia's `core.*`. *Caveats:* codicon lacks undo/cut/paste/find
+glyphs (closest matches used); cut/copy/paste run via `document.execCommand` and depend on editor focus,
+so they may be inert when clicked from the bar. **Deferred (v2):** a live project /
 transformation **context label + inline switcher dropdown** (needs an `onProjectContextChanged` event +
 `switchTransformation(txName)` direct-switch); a **Run** item (needs `EXECUTE_TRANSFORMATION` to gain a
 command handler — today execution goes through `fireExecuteTransformation`).

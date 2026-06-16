@@ -1,0 +1,7 @@
+%utlx 1.0
+input payload json
+output json
+---
+// New UTL-X transformation — map $payload to the output contract.
+{
+}

@@ -60,13 +60,31 @@ export class UtlxProjectBar extends ReactWidget {
     protected render(): React.ReactNode {
         // Theia 1.64: each runtime item carries render(widget) — it draws the icon button and wires
         // click / enabled / toggled / tooltip itself (resolving the command via CommandRegistry).
-        const renderGroup = (group: 'left' | 'right') => this.items
-            .filter(i => i.group === group)
+        //
+        // Labelled zones so the bar is self-explanatory even when the menu bar is detached (Electron/
+        // macOS native menu). LEFT: PROJECT, a divider, then UTLX ARCHIVE (the project's config —
+        // transform.yaml / engine.yaml). CENTRE: TRANSFORMATION (over the editor). RIGHT: EDIT (the
+        // standard editor commands — undo/redo/cut/copy/paste/find/replace).
+        const group = (g: string) => this.items
+            .filter(i => i.group === g)
             .map(i => <React.Fragment key={i.id}>{i.render(this)}</React.Fragment>);
         return (
             <div className='utlx-project-bar-container'>
-                <div className='utlx-project-bar-items'>{renderGroup('left')}</div>
-                <div className='utlx-project-bar-items'>{renderGroup('right')}</div>
+                <div className='utlx-pb-zone utlx-pb-left'>
+                    <span className='utlx-pb-label'>Project</span>
+                    <div className='utlx-project-bar-items'>{group('project')}</div>
+                    <span className='utlx-pb-divider' />
+                    <span className='utlx-pb-label'>UTLX Archive</span>
+                    <div className='utlx-project-bar-items'>{group('config')}</div>
+                </div>
+                <div className='utlx-pb-zone utlx-pb-center'>
+                    <span className='utlx-pb-label'>Transformation</span>
+                    <div className='utlx-project-bar-items'>{group('transformation')}</div>
+                </div>
+                <div className='utlx-pb-zone utlx-pb-right'>
+                    <span className='utlx-pb-label'>Edit</span>
+                    <div className='utlx-project-bar-items'>{group('edit')}</div>
+                </div>
             </div>
         );
     }

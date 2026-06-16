@@ -16,12 +16,44 @@
 
 .utlx-project-bar-container {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     width: 100%;
     height: 34px;
     box-sizing: border-box;
     padding: 0 8px;
+}
+
+/* Three equal zones so the centre zone lines up over the editor column. */
+.utlx-pb-zone {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1 1 0;
+    min-width: 0;
+}
+.utlx-pb-left   { justify-content: flex-start; }
+.utlx-pb-center { justify-content: flex-start; }  /* align to the LEFT of the mid section */
+.utlx-pb-right  { justify-content: flex-start; }  /* Edit group at the START of the Output column */
+
+/* Group label ("Project" / "Transformation") — makes the bar self-explanatory when the menu bar is
+   detached (Electron/macOS native menu). */
+.utlx-pb-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    opacity: 0.7;
+    color: var(--theia-foreground);
+    white-space: nowrap;
+    user-select: none;
+}
+
+/* Vertical divider between labelled groups (e.g. Project | UTLX Archive). */
+.utlx-pb-divider {
+    flex: 0 0 auto;
+    width: 1px;
+    height: 18px;
+    margin: 0 8px;
+    background: var(--theia-panel-border);
 }
 
 .utlx-project-bar-items {
