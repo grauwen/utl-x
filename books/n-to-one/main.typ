@@ -221,6 +221,11 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 #include "chapters/ch14-why-one-output.typ"
 #pagebreak()
 
+// ── Appendix: Axioms and Principles ──
+
+#include "chapters/ch-appendix-axioms.typ"
+#pagebreak()
+
 // ── Part V: The Classical Foundation ──
 
 #align(center)[

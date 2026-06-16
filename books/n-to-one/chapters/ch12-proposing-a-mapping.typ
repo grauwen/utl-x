@@ -35,7 +35,7 @@ The shape to notice is that AI appears at the *edges* of the analysis (role one,
 
 == Why This Order Is Forced
 
-The nine steps are not a matter of taste; they are a dependency chain, and almost none of them can be reordered, because each consumes what the one before it produced.
+The nine steps are not a matter of taste; they are a dependency chain, and almost none of them can be reordered, because each consumes what the one before it produced. Its root is axiomatic. That an input's type gates whether it has a graph at all is axiom A2 (schema is separable metadata); that every step serves one fixed target is axiom A4 (the asymmetry of the contract); that the whole chain is schema-reasoning prior to any run is axiom A6 (the separation of times). The order below is forced by those commitments of the Introduction, not chosen here — which is why the argument can be made by appeal to dependency alone.
 
 Typing comes first because it is the *gate*. Until an input's role is known, there is no deciding whether to build a graph for it at all — and handing a name–value parameter set to a structural matcher (step 4) is meaningless. Type, then decide what to do with the type. The graph (step 2) must precede structural alignment (step 4) for the plainest of reasons: alignment is reachability *over* the graph, and there is nothing to traverse until the graph exists.
 

@@ -54,4 +54,24 @@ The two lineages converge here. The practitioner's visual mapper and the researc
 
 If there is one habit of mind to carry into the rest of the book, it is this: *a mapping is an object to be reasoned about, not merely a script to be written.* The practitioner tradition, for all its tools, has largely treated mapping as authorship — you sit down and write the assignments. The research tradition treats it as something with structure, completeness, and provenance — something you can analyse, score, and check. This book sides firmly with the second view, while keeping the first view's hard-won practicality. The reward is the ability to say, precisely, what a mapping *does* and whether it is *right* — before a single byte of real data has flowed.
 
-With that, the subject proper can begin. Chapter 1 states the N:1 problem; Chapter 2 builds the common model that makes "all formats" mean something; Chapter 3 draws the line between reasoning about schemas and transforming data. Everything after is consequence.
+== The Axioms
+
+A theory should say what it assumes. The chapters ahead argue at length, but they rest on a small number of commitments that are not themselves argued — taken as the ground on which everything else is built. Stating them once, plainly, is the most honest thing this introduction can do.
+
+These are *axioms* in the strict sense: assumed truths about the domain, not rules of method. The rules of method this book is known by — _deterministic-first_, _structure-before-names_, _declare-don't-infer_, _author-not-executor_ — are not on this list, because they are not assumptions. They are *consequences*, derived from these axioms together with one goal: integration that can be reproduced and audited. The appendix collects axioms and derived principles side by side; here are the axioms alone.
+
+#block(
+  fill: luma(245), inset: 12pt, radius: 4pt, width: 100%,
+)[
+  - #strong[A1 · Unity of representation.] Every input and the output can be carried in a single data model — which is what lets "all formats" be a fact and the $N$ inputs be compared at all. _(Chapter 2.)_
+  - #strong[A2 · Schema is metadata, separable from data.] Every datum has a shape describable independently of its values. _(Chapter 2.)_
+  - #strong[A3 · The formalisation precondition.] Mapping is possible only between a formalised source and a formalised target; the step into formalisation is parsing, not mapping. _(this introduction.)_
+  - #strong[A4 · Asymmetry of the contract.] The output is fixed and privileged; the inputs are the variables. _(Chapter 1.)_
+  - #strong[A5 · N:1 is the general form.] The problem is posed with $N >= 1$ inputs and exactly one output; 1:1 is the case $N = 1$. _(Why *exactly one*, and how a genuine need for two decomposes, is defended in Chapter 14.)_
+  - #strong[A6 · Separation of times.] Reasoning about schemas (design time) is a distinct act from transforming data (run time). _(Chapter 3.)_
+  - #strong[A7 · Total provenance.] Every element of a mapping has a basis: it is either a *fact* derived from structure or a *hypothesis* resting on fallible evidence. _(Chapter 7.)_
+]
+
+Three things about the list are deliberate. It is *small* — seven commitments, and the book resists adding an eighth. None of it is *novel*; each axiom is the distilled form of something the database and integration traditions already hold. And it is *load-bearing*: where a later result feels forced rather than chosen — the order of the pipeline in Chapter 12, most of all — the force traces straight back to these axioms, which that chapter names by number.
+
+With that, the subject proper can begin. Chapter 1 states the N:1 problem; Chapter 2 builds the common model that makes "all formats" mean something; Chapter 3 draws the line between reasoning about schemas and transforming data. Everything after is consequence of what stands above.
