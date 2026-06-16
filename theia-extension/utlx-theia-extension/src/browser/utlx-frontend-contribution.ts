@@ -36,6 +36,7 @@ import { UTLXCommands, UTLXService, UTLX_SERVICE_SYMBOL, UTLXMode, InputDocument
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
 import { OutputPanelWidget } from './output-panel/output-panel-widget';
+import { UtlxApplicationShell } from './shell/utlx-application-shell';
 import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { DocsDialog } from './docs/docs-dialog';
 import { UTLXEventService } from './events/utlx-event-service';
@@ -168,7 +169,8 @@ export class UTLXFrontendContribution implements
         // Subscribe to execute/evaluate events
         this.subscribeToExecuteEvents();
 
-        // Open toolbar at top
+        // Open the Action Bar (UTLXToolbarWidget) at area:'top'. (Placing it as a shell row instead
+        // crashed the renderer via a shell↔toolbar DI cycle — IF24 note.)
         await this.openToolbar();
 
         // Relabel the built-in @theia/workspace "Open Recent Workspace…" File-menu entry to
@@ -1180,11 +1182,14 @@ output json
         try {
             const toolbar = await this.widgetManager.getOrCreateWidget('utlx-toolbar');
 
-            if (!toolbar.isAttached) {
+            // IF24 (option A — deferred attach): mount the Action Bar into its own full-width shell row
+            // (UtlxApplicationShell.actionBarSlot). Resolving the toolbar HERE (post-startup) avoids the
+            // shell↔toolbar construction cycle. Fall back to area:'top' if the custom shell isn't active.
+            if (this.shell instanceof UtlxApplicationShell) {
+                this.shell.mountActionBar(toolbar);
+            } else if (!toolbar.isAttached) {
                 this.shell.addWidget(toolbar, { area: 'top', rank: 100 });
             }
-
-            this.shell.activateWidget(toolbar.id);
 
             console.log('UTL-X toolbar opened');
         } catch (error) {

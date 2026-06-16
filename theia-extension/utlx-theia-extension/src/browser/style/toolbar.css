@@ -2,16 +2,22 @@
  * UTLX Toolbar Styles
  */
 
+/* IF24 (option A): the Action Bar's full-width shell-row slot. min-height drives the box-row height. */
+.utlx-action-bar-slot {
+    min-height: 45px;
+}
+
 .utlx-toolbar {
     width: 100%;
     height: 45px;
-    background: var(--theia-toolbar-background, #2d2d30);
+    min-height: 45px;   /* fills the slot row */
+    background: #000000; /* keep BLACK for the Action Bar (distinct from the Project Bar) */
     border-bottom: 1px solid var(--theia-panel-border, #3c3c3c);
 }
 
 .utlx-toolbar-container {
     display: flex;
-    align-items: center;
+    align-items: center;       /* the mode toggle/badge stays centred (a little black space is fine) */
     justify-content: center;   /* mode block centred (right section is empty now) */
     height: 100%;
     padding: 0 16px;
@@ -20,9 +26,7 @@
 
 /* Left Section */
 .utlx-toolbar-left {
-    display: flex;
-    align-items: center;
-    gap: 16px;
+    flex: 1;   /* spacer — balances the right section so the centre control is truly centred */
 }
 
 .utlx-mode-indicator {
@@ -123,23 +127,29 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
 
 /* Center Section */
 .utlx-toolbar-center {
-    flex: 0 1 auto;   /* don't fill the middle — let the whole group centre (mode block + description) */
+    flex: 0 0 auto;          /* content width → centred between the two flex:1 spacers */
     display: flex;
-    justify-content: center;
-    align-items: center;
+    align-items: flex-end;   /* glue the mode badge + toggle to the bottom (onto the Project Bar) */
+    align-self: stretch;     /* take FULL bar height so flex-end reaches the bottom edge */
+    gap: 16px;
 }
 
-.utlx-mode-description {
+/* Scoped to the Action Bar so it beats the generic `.utlx-mode-description` in index.css (which loads
+   after toolbar.css and was forcing a grey --theia-descriptionForeground). */
+.utlx-toolbar .utlx-mode-description {
     font-size: 13px;
-    color: #ffffff;   /* true white (the theme --theia-foreground was a faint grey) */
+    color: #ffffff;   /* true white */
     opacity: 1;
     font-weight: 600;
+    margin: 0;        /* index.css adds margin-bottom: 8px — neutralise it here */
 }
 
-/* Right Section */
+/* Right Section — holds the mode description, vertically CENTRED, left-aligned beside the centre. */
 .utlx-toolbar-right {
+    flex: 1;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     gap: 10px;
 }
 

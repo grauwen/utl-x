@@ -12,7 +12,8 @@
 // defined here. (Same pattern as @theia/toolbar / Arduino's ToolbarApplicationShell.)
 
 import { injectable, inject } from 'inversify';
-import { ApplicationShell } from '@theia/core/lib/browser';
+import { ApplicationShell, Widget } from '@theia/core/lib/browser';
+import { Panel } from '@theia/core/shared/@lumino/widgets';
 import { TheiaSplitPanel } from '@theia/core/lib/browser/shell/theia-split-panel';
 import { UtlxProjectBar } from '../toolbar/utlx-project-bar';
 
@@ -21,6 +22,12 @@ export class UtlxApplicationShell extends ApplicationShell {
 
     @inject(UtlxProjectBar)
     protected readonly utlxProjectBar!: UtlxProjectBar;
+
+    // An EMPTY slot row for the Action Bar. We must NOT inject UTLXToolbarWidget here — it injects
+    // ApplicationShell, so referencing it during shell construction cycles → renderer crash. Instead the
+    // slot is a plain Panel created in createLayout(); the Action Bar is mounted into it AFTER startup
+    // (mountActionBar), once the shell is fully built (no cycle).
+    protected actionBarSlot!: Panel;
 
     protected override createLayout() {
         const bottomSplitLayout = this.createSplitLayout(
@@ -36,10 +43,25 @@ export class UtlxApplicationShell extends ApplicationShell {
         const panelForSideAreas = new TheiaSplitPanel({ layout: leftRightSplitLayout });
         panelForSideAreas.id = 'theia-left-right-split-panel';
 
-        // [menu/top panel] → [Project Bar row, fixed height] → [left|main|right] → [status bar]
+        this.actionBarSlot = new Panel();
+        this.actionBarSlot.id = 'utlx-action-bar-slot';
+        this.actionBarSlot.addClass('utlx-action-bar-slot');
+
+        // [menu/top panel] → [Action Bar slot] → [Project Bar] → [left|main|right] → [status bar]
+        // Both toolbar rows are fixed-height (stretch 0); the side areas take the rest (stretch 1).
         return this.createBoxLayout(
-            [this.topPanel, this.utlxProjectBar, panelForSideAreas, this.statusBar],
-            [0, 0, 1, 0],
+            [this.topPanel, this.actionBarSlot, this.utlxProjectBar, panelForSideAreas, this.statusBar],
+            [0, 0, 0, 1, 0],
             { direction: 'top-to-bottom', spacing: 0 });
+    }
+
+    /**
+     * Mount the Action Bar into its slot. Called AFTER startup (from the frontend contribution) so the
+     * Action Bar — which injects ApplicationShell — is resolved only once the shell is fully built,
+     * avoiding the construction cycle. Panel.addWidget handles attach lifecycle/timing.
+     */
+    mountActionBar(widget: Widget): void {
+        if (widget.parent === this.actionBarSlot) { return; }
+        this.actionBarSlot.addWidget(widget);
     }
 }

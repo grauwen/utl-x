@@ -251,8 +251,11 @@ export class UTLXToolbarWidget extends ReactWidget {
 
         return (
             <div className='utlx-toolbar-container'>
-                {/* Left section: Mode indicator and switcher */}
-                <div className='utlx-toolbar-left'>
+                {/* Left: spacer — keeps the mode control centred. */}
+                <div className='utlx-toolbar-left' />
+
+                {/* Centre: the mode control (badge + toggle) — truly centred, glued to the bottom. */}
+                <div className='utlx-toolbar-center'>
                     <div className='utlx-mode-indicator'>
                         <span className={`utlx-mode-badge ${currentMode === UTLXMode.EXECUTION ? 'execution' : 'message-contract'}`}>
                             {currentMode === UTLXMode.EXECUTION ? '▶️ Execution Mode' : '📋 Message Contract Mode'}
@@ -276,15 +279,12 @@ export class UTLXToolbarWidget extends ReactWidget {
                     </div>
                 </div>
 
-                {/* Center section: Info */}
-                <div className='utlx-toolbar-center'>
+                {/* Right: mode description, glued to the bottom, just right of the centred control. */}
+                <div className='utlx-toolbar-right'>
                     <span className='utlx-mode-description'>
                         {this.getModeDescription(currentMode)}
                     </span>
                 </div>
-
-                {/* Right section — AI Assist + Execute moved to the Project Bar (IF24). */}
-                <div className='utlx-toolbar-right' />
 
                 {/* MCP Dialog */}
                 {showMCPDialog && (
@@ -628,9 +628,9 @@ export class UTLXToolbarWidget extends ReactWidget {
     private getModeDescription(mode: UTLXMode): string {
         switch (mode) {
             case UTLXMode.MESSAGE_CONTRACT:
-                return 'Contract validation • Type checking • No data execution';
+                return 'Schema to schema mapping • Type checking • No data execution';
             case UTLXMode.EXECUTION:
-                return 'Data transformation • Real execution • Performance metrics';
+                return 'Data transformation • Real execution • T1 & T2 → T1 | T2';
         }
     }
 

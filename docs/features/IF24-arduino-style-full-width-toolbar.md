@@ -38,6 +38,28 @@ prominent, full-width bar (like Arduino IDE), without disturbing the existing to
 
 ---
 
+## Update — both toolbars are full-width shell rows (via DEFERRED ATTACH)
+
+The layout is now two stacked full-width bars — **Action Bar (row 1, black background, the E/MC mode
+switch)** then **Project Bar (row 2)** — above the input|editor|output area, so the Action Bar is visible
+in **Electron/macOS** too (the `area:'top'` placement would hide with the native menu). Execute and AI
+Assist moved from the Action Bar to the Project Bar (the AI Assist button fires `onOpenAiAssist`; the MCP
+dialog stays owned by the Action Bar).
+
+**Failed first attempt — direct injection (do NOT do this):** injecting `UTLXToolbarWidget` into
+`UtlxApplicationShell` cycled (`shell → ActionBar → ApplicationShell → shell`). Even as property
+injections on singletons, inversify recursed during construction → **renderer crash ("Aw, Snap!", code
+5)**.
+
+**Working approach — deferred attach:** `createLayout()` lays out an **empty `Panel` slot row**
+(`actionBarSlot`) with **no** reference to the Action Bar (no cycle). After startup, `openToolbar()`
+resolves the Action Bar via `WidgetManager` and calls `shell.mountActionBar(toolbar)` →
+`actionBarSlot.addWidget(...)`. Because the Action Bar is resolved *after* the shell is fully built, its
+`@inject(ApplicationShell)` gets the complete shell — no cycle. Files: `shell/utlx-application-shell.ts`
+(`actionBarSlot` + `mountActionBar`), `utlx-frontend-contribution.ts` (`openToolbar` mounts into the
+slot), `style/toolbar.css` (`.utlx-action-bar-slot { min-height: 45px }`). `UTLXToolbarWidget` stays
+non-singleton (`WidgetManager` caches the one instance).
+
 ## Goal & decision
 
 Keep the **existing** toolbar **exactly as-is** (same buttons, same place) and **add a second** toolbar
