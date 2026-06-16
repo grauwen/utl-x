@@ -12,10 +12,13 @@
 import * as React from 'react';
 import { injectable, inject, postConstruct } from 'inversify';
 import { ReactWidget, Widget, Message } from '@theia/core/lib/browser';
+import { MessageService } from '@theia/core';
 import { TabBarToolbarRegistry, TabBarToolbarAction } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 // `TabBarToolbarItem` (the runtime item interface) is not re-exported from the barrel in 1.64.
 import { TabBarToolbarItem } from '@theia/core/lib/browser/shell/tab-bar-toolbar/tab-toolbar-item';
 import { CommandRegistry } from '@theia/core/lib/common';
+import { UTLXEventService } from '../events/utlx-event-service';
+import { UTLXMode } from '../../common/protocol';
 
 @injectable()
 export class UtlxProjectBar extends ReactWidget {
@@ -27,7 +30,17 @@ export class UtlxProjectBar extends ReactWidget {
     @inject(CommandRegistry)
     protected readonly commands!: CommandRegistry;
 
+    @inject(UTLXEventService)
+    protected readonly eventService!: UTLXEventService;
+
+    @inject(MessageService)
+    protected readonly messageService!: MessageService;
+
     protected items: TabBarToolbarItem[] = [];
+
+    // The Execute button mirrors the Action Bar (kept distinctive from the icon buttons). It follows
+    // the mode so it shows "Execute" (Execution) vs "Validate" (Message Contract).
+    protected currentMode: UTLXMode = UTLXMode.EXECUTION;
 
     /** Type guard so items can target this bar in their `isVisible`. */
     static is(widget?: Widget | null): widget is UtlxProjectBar {
@@ -43,7 +56,16 @@ export class UtlxProjectBar extends ReactWidget {
         // Re-collect when items are (un)registered; re-render when the command set changes.
         this.toDispose.push(this.registry.onDidChange(() => this.refresh()));
         this.toDispose.push(this.commands.onCommandsChanged(() => this.update()));
+        // Follow the mode so the Execute button relabels (Execute ↔ Validate).
+        this.toDispose.push(this.eventService.onModeChanged(e => { this.currentMode = e.mode; this.update(); }));
     }
+
+    /** Same behaviour as the Action Bar's Execute: fire execute/evaluate per the current mode. */
+    protected readonly handleExecute = (): void => {
+        const mode = this.currentMode === UTLXMode.EXECUTION ? 'execute' : 'evaluate';
+        this.messageService.info(`${mode === 'execute' ? '▶️' : '✅'} ${mode === 'execute' ? 'Executing' : 'Validating'} transformation...`);
+        this.eventService.fireExecuteTransformation({ mode });
+    };
 
     protected override onAfterAttach(msg: Message): void {
         super.onAfterAttach(msg);
@@ -84,7 +106,16 @@ export class UtlxProjectBar extends ReactWidget {
                     <span className='utlx-pb-label'>Edit</span>
                     <div className='utlx-project-bar-items'>{group('edit')}</div>
                 </div>
-                <div className='utlx-pb-zone utlx-pb-right' />
+                <div className='utlx-pb-zone utlx-pb-right'>
+                    <button
+                        data-testid='utlx-pb-execute'
+                        className='utlx-toolbar-button utlx-pb-execute'
+                        onClick={this.handleExecute}
+                        title={this.currentMode === UTLXMode.EXECUTION ? 'Execute transformation' : 'Validate output schema'}
+                    >
+                        {this.currentMode === UTLXMode.EXECUTION ? '▶️ Execute' : '✅ Validate'}
+                    </button>
+                </div>
             </div>
         );
     }

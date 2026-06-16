@@ -33,7 +33,13 @@
 }
 .utlx-pb-left   { justify-content: flex-start; }
 .utlx-pb-center { justify-content: flex-start; }  /* align to the LEFT of the mid section */
-.utlx-pb-right  { justify-content: flex-start; }  /* Edit group at the START of the Output column */
+.utlx-pb-right  { justify-content: flex-end; }    /* Execute on the far right (as in the Action Bar) */
+
+/* Execute button — reuses the Action Bar's .utlx-toolbar-button look, sized for the 34px bar. */
+.utlx-pb-execute {
+    padding: 3px 12px;
+    font-size: 12px;
+}
 
 /* Group label ("Project" / "Transformation") — makes the bar self-explanatory when the menu bar is
    detached (Electron/macOS native menu). */
