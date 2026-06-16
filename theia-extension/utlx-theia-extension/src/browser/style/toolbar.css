@@ -12,7 +12,7 @@
 .utlx-toolbar-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;   /* mode block centred (right section is empty now) */
     height: 100%;
     padding: 0 16px;
     gap: 20px;
@@ -123,16 +123,17 @@ input:not(:checked) + .utlx-toggle-slider .utlx-toggle-label-right {
 
 /* Center Section */
 .utlx-toolbar-center {
-    flex: 1;
+    flex: 0 1 auto;   /* don't fill the middle — let the whole group centre (mode block + description) */
     display: flex;
     justify-content: center;
     align-items: center;
 }
 
 .utlx-mode-description {
-    font-size: 12px;
-    color: var(--theia-foreground, #cccccc);
-    opacity: 0.8;
+    font-size: 13px;
+    color: #ffffff;   /* true white (the theme --theia-foreground was a faint grey) */
+    opacity: 1;
+    font-weight: 600;
 }
 
 /* Right Section */

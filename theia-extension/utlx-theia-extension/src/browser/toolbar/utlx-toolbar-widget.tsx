@@ -283,27 +283,8 @@ export class UTLXToolbarWidget extends ReactWidget {
                     </span>
                 </div>
 
-                {/* Right section: Actions */}
-                <div className='utlx-toolbar-right'>
-                    <button
-                        data-testid='utlx-ai-assist'
-                        className='utlx-toolbar-button utlx-mcp-button'
-                        onClick={() => this.openMCPDialog()}
-                        title='Ask AI to help write UTLX transformation'
-                        disabled={mcpLoading}
-                    >
-                        🤖 AI Assist
-                    </button>
-
-                    <button
-                        data-testid='utlx-execute'
-                        className='utlx-toolbar-button'
-                        onClick={() => this.handleExecute()}
-                        title={currentMode === UTLXMode.EXECUTION ? 'Execute transformation' : 'Validate output schema'}
-                    >
-                        {currentMode === UTLXMode.EXECUTION ? '▶️ Execute' : '✅ Validate'}
-                    </button>
-                </div>
+                {/* Right section — AI Assist + Execute moved to the Project Bar (IF24). */}
+                <div className='utlx-toolbar-right' />
 
                 {/* MCP Dialog */}
                 {showMCPDialog && (
