@@ -28,7 +28,8 @@ import {
     CommandContribution,
     CommandRegistry,
     MenuContribution,
-    MenuModelRegistry
+    MenuModelRegistry,
+    MAIN_MENU_BAR
 } from '@theia/core/lib/common';
 import { KeybindingContribution, KeybindingRegistry } from '@theia/core/lib/browser';
 import { MessageService } from '@theia/core';
@@ -324,6 +325,46 @@ export class UTLXFrontendContribution implements
             { id: 'utlx.demo.ide', label: 'UTL-X: Demo IDE (walkthrough)' },
             { execute: () => this.runInTerminal('UTL-X IDE Demo', `bash "${DEMO_DIR}/run-demo.sh" --once`) }
         );
+
+        // ── "UTLX IDE" app-menu commands (the first top-level menu, à la macOS/Arduino app menu) ──
+        commands.registerCommand(
+            { id: 'utlx.app.about', label: 'UTL-X: About UTLX' },
+            { execute: () => this.showAbout() }
+        );
+        commands.registerCommand(
+            { id: 'utlx.app.keyboardShortcuts', label: 'UTL-X: Keyboard Shortcuts' },
+            { execute: () => this.showKeyboardShortcuts() }
+        );
+        commands.registerCommand(
+            { id: 'utlx.app.quit', label: 'UTL-X: Quit UTLX IDE' },
+            { execute: () => this.quitApp() }
+        );
+    }
+
+    private async showAbout(): Promise<void> {
+        await new AlertDialog('About UTLX IDE',
+            'UTLX IDE\n\n' +
+            'UTL-X — a format-agnostic transformation language (JSON · XML · CSV · YAML · …).\n' +
+            'Data transformation • Real execution • All-formats mapping.\n\n' +
+            'https://utlx-lang.org'
+        ).open();
+    }
+
+    private async showKeyboardShortcuts(): Promise<void> {
+        // @theia/keymaps (the full shortcuts editor) isn't installed; show the UTL-X keybindings.
+        await new AlertDialog('UTLX Keyboard Shortcuts',
+            'Execute transformation     ⌘/Ctrl + Shift + E\n' +
+            'Validate code              ⌘/Ctrl + Shift + V\n' +
+            'Toggle Execution / Contract ⌘/Ctrl + Shift + M\n' +
+            'Clear panels               ⌘/Ctrl + Shift + C\n\n' +
+            'All commands are also in the Command Palette (⌘/Ctrl + Shift + P).'
+        ).open();
+    }
+
+    private quitApp(): void {
+        // Browser: closes a script-opened window (otherwise a no-op). On the future Electron build this
+        // closes the app window. A native "quit" command will replace this once the Electron app exists.
+        try { window.close(); } catch { /* no-op */ }
     }
 
     /** Run a shell command in a fresh integrated terminal (Help → Demo commands). The scripts live in
@@ -394,6 +435,32 @@ export class UTLXFrontendContribution implements
     }
 
     registerMenus(menus: MenuModelRegistry): void {
+        // ── "UTLX IDE" — the FIRST top-level menu (à la the macOS/Arduino app menu). '0_utlx' sorts
+        //    before File ('1_file'). Three groups → dividers between them:
+        //      About UTLX │ Settings · Keyboard Shortcuts │ Quit UTLX IDE
+        const UTLX_IDE_MENU = [...MAIN_MENU_BAR, '0_utlx'];
+        menus.registerSubmenu(UTLX_IDE_MENU, 'UTLX IDE');
+        menus.registerMenuAction([...UTLX_IDE_MENU, '1_about'], {
+            commandId: 'utlx.app.about',
+            label: 'About UTLX',
+            order: 'a1'
+        });
+        menus.registerMenuAction([...UTLX_IDE_MENU, '2_prefs'], {
+            commandId: 'preferences:open',   // @theia/preferences — Open Settings (UI)
+            label: 'Settings',
+            order: 'a1'
+        });
+        menus.registerMenuAction([...UTLX_IDE_MENU, '2_prefs'], {
+            commandId: 'utlx.app.keyboardShortcuts',
+            label: 'Keyboard Shortcuts',
+            order: 'a2'
+        });
+        menus.registerMenuAction([...UTLX_IDE_MENU, '3_quit'], {
+            commandId: 'utlx.app.quit',
+            label: 'Quit UTLX IDE',
+            order: 'a1'
+        });
+
         // File menu (IF18 + bundle-format §7), grouped — Theia draws a separator between distinct
         // groups:
         //   • PROJECT commands       → FILE_OPEN ('2_open'), beside Theia's Open Workspace/Recent.

@@ -21,6 +21,7 @@ import { UTLXEditorWidget } from './editor/utlx-editor-widget';
 import { HealthMonitorWidget } from './health-monitor/health-monitor-widget';
 import { UTLXToolbarWidget } from './toolbar/utlx-toolbar-widget';
 import { UTLXFrontendContribution } from './utlx-frontend-contribution';
+import { UtlxMenuPruneContribution } from './utlx-menu-prune-contribution';
 import { UTLXEventService } from './events/utlx-event-service';
 import { UTLXLanguageGrammarContribution } from './language/utlx-language';
 import { UTLXOpenHandler } from './utlx-open-handler';
@@ -150,6 +151,9 @@ export default new ContainerModule((bind, _unbind, _isBound, rebind) => {
         bind(CommandContribution).toService(UTLXFrontendContribution);
         bind(MenuContribution).toService(UTLXFrontendContribution);
         bind(KeybindingContribution).toService(UTLXFrontendContribution);
+
+        // Prune default Theia menus that don't apply to the UTL-X UI (Go, Edit, Selection, View).
+        bind(MenuContribution).to(UtlxMenuPruneContribution).inSingletonScope();
         console.log('[UTLX Frontend Module] ✓ Frontend contribution bound');
 
         // IF24 (Architecture B) — the Project Bar: a full-width row under the menu + Action Bar, placed
