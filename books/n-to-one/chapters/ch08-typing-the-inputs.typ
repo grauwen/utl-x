@@ -49,7 +49,7 @@ The `meta-schema` row deserves a note in the vocabulary of Chapter 2. If a schem
 
 == A Concrete Instance: the Open-M Inputs
 
-Theory is easier to trust against a real example. UTL-X's production pipeline, _Open-M_, hands a transformation a fixed set of seven named inputs — and they sort, without forcing, into exactly the two camps the taxonomy predicts.
+Theory is easier to trust against a real example. UTLX's production pipeline, _Open-M_, hands a transformation a fixed set of seven named inputs — and they sort, without forcing, into exactly the two camps the taxonomy predicts.
 
 #figure(
   image("../diagrams/open-m-context.svg", width: 100%),

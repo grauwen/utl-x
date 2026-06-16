@@ -1,15 +1,15 @@
 = Function Inference
 
-To know that an output field maps from a source is half of an answer. The other half is *which UTL-X construct* realises the mapping — a field reference, a `map`, a `findBy`, a `sum`. Function inference supplies that half, and the argument of this chapter is that it is not a separate layer bolted onto the analysis but the *completion* of it. A correspondence without an inferred function is an unfinished Message Contract result. The schema graph, read correctly, names most of these functions on its own; where it cannot, it says so.
+To know that an output field maps from a source is half of an answer. The other half is *which UTLX construct* realises the mapping — a field reference, a `map`, a `findBy`, a `sum`. Function inference supplies that half, and the argument of this chapter is that it is not a separate layer bolted onto the analysis but the *completion* of it. A correspondence without an inferred function is an unfinished Message Contract result. The schema graph, read correctly, names most of these functions on its own; where it cannot, it says so.
 
 == The Mapping Class Is the Unit
 
-The carrier of the inference is the *mapping class* introduced in Chapter 7. Each correspondence is assigned one, and each class is bound to a UTL-X construct and a completion status:
+The carrier of the inference is the *mapping class* introduced in Chapter 7. Each correspondence is assigned one, and each class is bound to a UTLX construct and a completion status:
 
 #table(
   columns: (auto, auto, auto),
   align: (left, left, left),
-  [*Mapping class*], [*UTL-X*], [*Status*],
+  [*Mapping class*], [*UTLX*], [*Status*],
   [direct], [field reference], [complete],
   [array-transform], [`map` / `mapBy`], [complete],
   [lookup-join], [`findBy` / `filterBy`], [complete],

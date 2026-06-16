@@ -1,6 +1,6 @@
 = Two Modes: Execution and Message Contract
 
-The previous chapter ended on a claim with large consequences: because UDM separates shape from data, a mapping can be reasoned about before any data exists. UTL-X turns that claim into an architectural fact by running in two distinct modes. _Execution mode_ transforms real data. _Message Contract mode_ reasons about schemas. They are not two views of one engine; they are two analyses with different inputs, different questions, and different notions of correctness. Conflating them is the single most common way to get confident, wrong answers about a mapping. This chapter keeps them apart.
+The previous chapter ended on a claim with large consequences: because UDM separates shape from data, a mapping can be reasoned about before any data exists. UTLX turns that claim into an architectural fact by running in two distinct modes. _Execution mode_ transforms real data. _Message Contract mode_ reasons about schemas. They are not two views of one engine; they are two analyses with different inputs, different questions, and different notions of correctness. Conflating them is the single most common way to get confident, wrong answers about a mapping. This chapter keeps them apart.
 
 == The Distinction in One Sentence
 
@@ -17,7 +17,7 @@ It is tempting to treat Message Contract mode as "Execution mode without data" �
 
 A mapping can be *schema-complete but instance-incomplete*: structurally every output field has a source, yet on a particular input a lookup finds no matching row and a required field comes out empty. And a mapping can be *instance-adequate but schema-unsound*: it happens to produce valid output for the three samples you tried, while violating the contract for inputs you have not seen. These two failure modes are independent. Neither analysis can detect the other's failures, because they are asking different questions of different objects.
 
-This is not a UTL-X peculiarity. It is the oldest distinction in the schema-matching literature — Rahm and Bernstein's _schema-only versus instance-based_ axis — and it is older still in logic, as the difference between a property that holds by form and one that holds in a particular model. The practical upshot is firm: Message Contract analysis must be *schema-based*, computed from the schema graphs and their constraints; it must not smuggle in evidence from a sample instance and call the result a proof.
+This is not a UTLX peculiarity. It is the oldest distinction in the schema-matching literature — Rahm and Bernstein's _schema-only versus instance-based_ axis — and it is older still in logic, as the difference between a property that holds by form and one that holds in a particular model. The practical upshot is firm: Message Contract analysis must be *schema-based*, computed from the schema graphs and their constraints; it must not smuggle in evidence from a sample instance and call the result a proof.
 
 == What Each Mode Sees
 

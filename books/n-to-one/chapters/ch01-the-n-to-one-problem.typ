@@ -19,7 +19,7 @@ Four inputs. One invoice. The invoice's `lineItems` come from the payload's line
 
 The naive view is that an N:1 mapping is simply several 1:1 mappings stacked together — source each output field from whichever input happens to have it. That view fails for three reasons, and naming them frames the rest of the book.
 
-#strong[The inputs are not symmetric.] A 1:1 framing treats every input as an equal candidate source for every output field. But a lookup table is not a co-equal source; it is a dimension joined by a foreign key. Treating the catalogue as "just another place to find fields" misses that the relationship between payload and catalogue is a *join*, with a key, producing exactly one UTL-X construct — and the wrong framing will never reach for it.
+#strong[The inputs are not symmetric.] A 1:1 framing treats every input as an equal candidate source for every output field. But a lookup table is not a co-equal source; it is a dimension joined by a foreign key. Treating the catalogue as "just another place to find fields" misses that the relationship between payload and catalogue is a *join*, with a key, producing exactly one UTLX construct — and the wrong framing will never reach for it.
 
 #strong[Some outputs have no source at all.] `orderTotal` is not present anywhere; it is a *derivation* — a sum over the line items. A field-matching view reports it as an unmatched gap or, worse, as matched to some unrelated numeric field. Neither is correct. The output field is real and producible; it simply requires computation, not copying.
 
@@ -58,7 +58,7 @@ The remainder of the book builds, piece by piece, an answer to the N:1 problem:
 - Make the mapping a *formal object* — a set of source-to-target dependencies — that can be reasoned about (Chapter 6).
 - Record the analysis as a scored *correspondence set* (Chapter 7).
 - *Type* the inputs by role and the outputs by derivation (Chapters 8 and 9).
-- *Infer* the UTL-X function each correspondence needs (Chapter 10).
+- *Infer* the UTLX function each correspondence needs (Chapter 10).
 - Generate the transformation *strategy-first*, choosing the shape before filling the fields (Chapter 11).
 
 None of these steps is new to computer science. The contribution is in assembling them into a single, coherent account of how many inputs become one output — and in grounding that account on a data model and a mode distinction that actually ship.

@@ -36,7 +36,7 @@ digraph open_m_context {
   }
 
   // ── the mapping (UTLXe) ──
-  mapping [label=<<b>UTL-X mapping</b><br/><font point-size="8" color="#475569">UTLXe · JVM · stdio-proto<br/>compiled once, cached per message</font>>,
+  mapping [label=<<b>UTLX mapping</b><br/><font point-size="8" color="#475569">UTLXe · JVM · stdio-proto<br/>compiled once, cached per message</font>>,
            shape=box, style="rounded,filled", color="#334155", fillcolor="#f8fafc", penwidth=1.6];
 
   // ── outputs: two delivery modes ──

@@ -8,7 +8,7 @@ Picture the moment a model is asked to help. There are, in fact, two such moment
 
 #strong[Role one — AI as assistant in the analysis (prepare).] Long before any mapping is drafted, the analysis runs into small, local questions that deterministic rules cannot settle: is this bare `customerId` an implicit foreign key? which branch of this choice is the intended target? does `netDue` denote an aggregate? is `clientRef` the same thing as `customerId`? Each is a narrow question about a single node, with a checkable answer, and each is exactly where a model's world knowledge earns its keep. Used this way, AI does not write the mapping; it *sharpens the picture the mapping will be drawn from*. Its answers feed back into the typed inputs and the correspondence set, each tagged `ai-inferred` so its provenance is never lost.
 
-#strong[Role two — AI as author of the proposal (propose).] Once the analysis is complete, there is a second, larger request: given everything now known, draft the mapping. The model receives the typed inputs, the scored correspondences, the output-field kinds, and the explicit list of gaps, and it returns a transformation — filling the derivation gaps, resolving the residual ambiguities, and drafting idiomatic UTL-X. This is one request, about the whole mapping, not many requests about individual fields.
+#strong[Role two — AI as author of the proposal (propose).] Once the analysis is complete, there is a second, larger request: given everything now known, draft the mapping. The model receives the typed inputs, the scored correspondences, the output-field kinds, and the explicit list of gaps, and it returns a transformation — filling the derivation gaps, resolving the residual ambiguities, and drafting idiomatic UTLX. This is one request, about the whole mapping, not many requests about individual fields.
 
 The two roles differ on every axis that matters. Role one is *narrow* (one node), *frequent* (many small calls), and *validated locally* (does this single inference hold?). Role two is *broad* (the whole mapping), *singular* (one grounded call), and *validated globally* (does the proposal satisfy the contract?). They take different prompts, carry different risks, and demand different checks. Collapsing them — treating "AI in the pipeline" as one thing — is how teams end up either trusting too much or using AI too little.
 
@@ -27,7 +27,7 @@ With the two roles named, the full Message Contract workflow enumerates as nine 
   [5 · name refinement], [residual semantic correspondences (Ch. 5)], [role one — AI-primary],
   [6 · function inference], [a mapping class per output field (Ch. 10)], [det.; AI proposes gap expressions],
   [7 · assemble the request], [structured context: typed inputs + correspondences + output kinds + gaps (Ch. 7)], [no AI — pure assembly],
-  [8 · propose], [a draft mapping in idiomatic UTL-X], [role two — the proposal],
+  [8 · propose], [a draft mapping in idiomatic UTLX], [role two — the proposal],
   [9 · ground & validate], [a verified mapping; gaps flagged for review], [no AI — verification],
 )
 

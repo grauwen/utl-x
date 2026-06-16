@@ -98,7 +98,7 @@ First edition, 2026.
 
 No part of this publication may be reproduced, stored in a retrieval system, or transmitted in any form or by any means without the prior written permission of the author, except for brief quotations in reviews and critical articles.
 
-UTL-X is open source software. The language specification, CLI tool, and standard library are freely available at `https://github.com/grauwen/utl-x`.
+UTLX is open source software. The language specification, CLI tool, and standard library are freely available at `https://github.com/grauwen/utl-x`.
 
 This is a companion volume to *UTL-X: One Language, All Formats*. Where that book teaches the language, this one develops the underlying theory of mapping many inputs to one output.
 
@@ -117,7 +117,7 @@ Typeset with Typst in New Computer Modern.
 
 He has designed and built integration solutions on Tibco BusinessWorks, MuleSoft, SAP CPI, Azure Logic Apps, and IBM Integration Bus, and grew increasingly frustrated with the fundamental limitation they all shared: format-specific transformation logic tied to vendor platforms.
 
-UTL-X was born from that frustration — one transformation language that works on all data formats, runs anywhere, and belongs to no vendor. Marcel designed the language, built the runtime (CLI, IDE daemon, and production engine), wrote the standard library, and created the USDL schema-classification system. This book grew out of the design work behind the Message Contract mode and the Open-M multi-input pipeline: the recurring question of *how a transformation that merges many inputs into one contract can be reasoned about, not just written.*
+UTLX was born from that frustration — one transformation language that works on all data formats, runs anywhere, and belongs to no vendor. Marcel designed the language, built the runtime (CLI, IDE daemon, and production engine), wrote the standard library, and created the USDL schema-classification system. This book grew out of the design work behind the Message Contract mode and the Open-M multi-input pipeline: the recurring question of *how a transformation that merges many inputs into one contract can be reasoned about, not just written.*
 
 Marcel holds an Ir. degree (Master of Science in Engineering) and is based in the Netherlands.
 
@@ -262,7 +262,7 @@ This book develops that theory. It treats a mapping not as a pile of field assig
 
 #v(0.4cm)
 
-A companion to *UTL-X: One Language, All Formats* — for the architect who wants to understand *why* an N:1 mapping is correct, not just that it runs.
+A companion to *UTLX: One Language, All Formats* — for the architect who wants to understand *why* an N:1 mapping is correct, not just that it runs.
 
 #v(1fr)
 

@@ -8,7 +8,7 @@ Imagine generating an N:1 mapping with a single instruction: "fill every output 
 
 It *enumerates*. Asked to fill each field, a generator writes an assignment per field — two hundred lines where `...$payload` and a handful of overrides would do. The structure of the instruction bakes in per-leaf copying, and the result is verbose where it should be terse.
 
-It *ignores the language*. Spread, pipelines, `map`, `groupBy`, `reduce`, joins — the expressive constructs that make UTL-X worth using — are rarely produced, because the task has been framed as field-filling and field-filling has no place for them.
+It *ignores the language*. Spread, pipelines, `map`, `groupBy`, `reduce`, joins — the expressive constructs that make UTLX worth using — are rarely produced, because the task has been framed as field-filling and field-filling has no place for them.
 
 It *flattens the inputs*. "A source" treats every input as an equal candidate, and so misses that the second input is a lookup joined by key, not a co-equal place to find fields. The join shape — the very thing Chapter 4 worked to recover — never appears.
 

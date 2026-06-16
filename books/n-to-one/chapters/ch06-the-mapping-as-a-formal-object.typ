@@ -1,6 +1,6 @@
 = The Mapping as a Formal Object
 
-So far a mapping has been a collection of correspondences — pairings of source nodes to target nodes, found in the graph and scored. That is enough to *describe* a mapping but not to *reason* about one. To ask whether a mapping is complete, whether it is sound, whether it produces a minimal output, the mapping itself must be a formal object with a definition. The data-exchange literature supplies exactly such an object, and this chapter introduces it — together with a clear statement of where UTL-X transformations outrun it.
+So far a mapping has been a collection of correspondences — pairings of source nodes to target nodes, found in the graph and scored. That is enough to *describe* a mapping but not to *reason* about one. To ask whether a mapping is complete, whether it is sound, whether it produces a minimal output, the mapping itself must be a formal object with a definition. The data-exchange literature supplies exactly such an object, and this chapter introduces it — together with a clear statement of where UTLX transformations outrun it.
 
 == A Schema Mapping Is a Triple
 
@@ -10,7 +10,7 @@ $ M = (S, T, Sigma) $
 
 where $S$ is the source schema, $T$ is the target schema, and $Sigma$ is a set of logical constraints that relate them. The mapping is not the data and not the transformation code; it is this triple — a specification of *what must hold* between source and target, against which any concrete transformation can be checked.
 
-The N:1 case, which a casual reading of the matching literature would think exotic, is already contained here. Nothing in the definition requires $S$ to be a single schema. In the relational setting $S$ is a *set* of relations to begin with, and the constraints in $Sigma$ range freely over all of them. For UTL-X this means $S$ is simply the union of the input schema graphs; the dependencies still span source to target. The many-inputs problem does not break the formalism — it is the formalism's default, briefly disguised by a tradition of drawing one source box.
+The N:1 case, which a casual reading of the matching literature would think exotic, is already contained here. Nothing in the definition requires $S$ to be a single schema. In the relational setting $S$ is a *set* of relations to begin with, and the constraints in $Sigma$ range freely over all of them. For UTLX this means $S$ is simply the union of the input schema graphs; the dependencies still span source to target. The many-inputs problem does not break the formalism — it is the formalism's default, briefly disguised by a tradition of drawing one source box.
 
 == Source-to-Target Dependencies
 
@@ -43,9 +43,9 @@ The heterogeneous inputs of Chapter 1 are not symmetric, and the formal object m
 
 The third class earns its separation. A name–value input — a configuration set, a bag of pipeline variables — carries no structure to align: no entities, no keys, no foreign keys. It is not a source schema in the matching sense at all; it is what data-exchange theory would call a set of *constants* and what a programming language would call parameters. Running structural matching over it is meaningless. Such inputs are recorded as *bindings* — direct value injections — not as scored correspondences. The formal object keeps them in a separate compartment, and so will the artifact of Chapter 7.
 
-== Where UTL-X Exceeds the Theory
+== Where UTLX Exceeds the Theory
 
-It would be convenient if every UTL-X transformation were expressible as a set of tgds. It is not, and the gap is precisely the interesting part. A tgd moves and reshapes values; by explicit design in the data-exchange literature, it does *not* compute, aggregate, or invent values by calculation. Lay the UTL-X function space against that boundary:
+It would be convenient if every UTLX transformation were expressible as a set of tgds. It is not, and the gap is precisely the interesting part. A tgd moves and reshapes values; by explicit design in the data-exchange literature, it does *not* compute, aggregate, or invent values by calculation. Lay the UTLX function space against that boundary:
 
 #table(
   columns: (auto, auto),
@@ -62,7 +62,7 @@ It would be convenient if every UTL-X transformation were expressible as a set o
   [`orderBy`], [no — ordering is outside relational semantics],
 )
 
-The tgds cover the structural skeleton of a mapping — the copies, the joins, the reshapings, the iterations. Everything below the line — grouping, aggregation, derivation, ordering — lies outside what the schema-matching and data-exchange literature models. These are not gaps in UTL-X; they are gaps in the *theory*, and naming them is what lets the analysis be honest. A target field that needs a `sum` is, formally, a labelled null the tgds cannot fill: a *derivation gap*. The next chapters give those gaps a first-class place in the analysis rather than letting them hide as false matches.
+The tgds cover the structural skeleton of a mapping — the copies, the joins, the reshapings, the iterations. Everything below the line — grouping, aggregation, derivation, ordering — lies outside what the schema-matching and data-exchange literature models. These are not gaps in UTLX; they are gaps in the *theory*, and naming them is what lets the analysis be honest. A target field that needs a `sum` is, formally, a labelled null the tgds cannot fill: a *derivation gap*. The next chapters give those gaps a first-class place in the analysis rather than letting them hide as false matches.
 
 == What the Formal Object Buys
 

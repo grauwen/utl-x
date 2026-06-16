@@ -23,7 +23,7 @@ Interpose a single neutral model and the quadratic collapses to linear. Each for
   caption: [One model in the middle turns $F^2$ format-to-format paths into $2F$ parse/serialize pieces. The transformation never touches a raw format.],
 )
 
-This is not a UTL-X invention; it is the *canonical data model* pattern from enterprise integration, and before that the pivot representation of any multi-format compiler. What matters for the theory is the consequence: a mapping is a function from UDM to UDM. Formats live only at the edges.
+This is not a UTLX invention; it is the *canonical data model* pattern from enterprise integration, and before that the pivot representation of any multi-format compiler. What matters for the theory is the consequence: a mapping is a function from UDM to UDM. Formats live only at the edges.
 
 == UDM as a Value Algebra
 
@@ -54,7 +54,7 @@ Here the theory makes a distinction that the rest of the book leans on constantl
 
 Read for its *values*, a UDM tree is an *instance* — concrete data, the parsed content of one document. Read for its *shape* — the names, the nesting, the types, the cardinalities, with the particular values abstracted away — it describes a *schema*.
 
-This is why UDM can represent both the data flowing through a transformation and the schemas a mapping is reasoned about. A node is the same kind of node in both readings; what differs is whether you care about the value at a leaf or only its type and obligations (required, optional, repeating). In the UTL-X tooling this appears as a single node type for both: the schema-field node is literally an extension of the data-field node, adding only schema-specific annotations such as "required" and "constraint." Shape is data with the values forgotten and the obligations remembered.
+This is why UDM can represent both the data flowing through a transformation and the schemas a mapping is reasoned about. A node is the same kind of node in both readings; what differs is whether you care about the value at a leaf or only its type and obligations (required, optional, repeating). In the UTLX tooling this appears as a single node type for both: the schema-field node is literally an extension of the data-field node, adding only schema-specific annotations such as "required" and "constraint." Shape is data with the values forgotten and the obligations remembered.
 
 Keeping this distinction explicit pays off immediately. A *schema graph* — the object Part II reasons over — is the shape reading of UDM, enriched with keys and foreign keys. A *data UDM* — the object a transformation actually produces — is the value reading. They share a coordinate system (the same paths address both), which is what lets a tool align an instance onto its schema without either holding a pointer to the other. We will use that alignment in Chapter 3 and again when we visualise mappings.
 

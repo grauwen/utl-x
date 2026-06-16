@@ -29,7 +29,7 @@
 <g id="node8" class="node">
 <title>mapping</title>
 <path fill="#f8fafc" stroke="#334155" stroke-width="1.6" d="M460.79,-208.76C460.79,-208.76 332,-208.76 332,-208.76 326,-208.76 320,-202.76 320,-196.76 320,-196.76 320,-183.24 320,-183.24 320,-177.24 326,-171.24 332,-171.24 332,-171.24 460.79,-171.24 460.79,-171.24 466.79,-171.24 472.79,-177.24 472.79,-183.24 472.79,-183.24 472.79,-196.76 472.79,-196.76 472.79,-202.76 466.79,-208.76 460.79,-208.76"/>
-<text xml:space="preserve" text-anchor="start" x="359.64" y="-194.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">UTL&#45;X mapping</text>
+<text xml:space="preserve" text-anchor="start" x="361.14" y="-194.5" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="10.00">UTLX mapping</text>
 <text xml:space="preserve" text-anchor="start" x="349.89" y="-186.4" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#475569">UTLXe · JVM · stdio&#45;proto</text>
 <text xml:space="preserve" text-anchor="start" x="331.52" y="-178.4" font-family="Helvetica,sans-Serif" font-size="8.00" fill="#475569">compiled once, cached per message</text>
 </g>

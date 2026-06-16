@@ -15,7 +15,7 @@ The organising work is Rahm and Bernstein's survey of automatic schema matching,
   [signal], [linguistic — names — versus constraint-based — keys, foreign keys, cardinalities, types],
 )
 
-Each axis has already appeared in this book, which is the point: the classical taxonomy is not an analogy for UTL-X's design but its skeleton.
+Each axis has already appeared in this book, which is the point: the classical taxonomy is not an analogy for UTLX's design but its skeleton.
 
 The *granularity* axis is the element/structure split that motivated Chapter 4: a credible matcher must work at the structure level, which is why the schema graph must precede element comparison. The *evidence* axis is the Execution-versus-Message-Contract distinction of Chapter 3: Message Contract analysis is schema-only and constraint-based; instance evidence belongs to the other mode. The *signal* axis is the names-versus-structure judgement of Chapter 4: constraint-based signals outrank linguistic ones. Reading the taxonomy is reading the architecture.
 
