@@ -80,11 +80,11 @@ export class UtlxProjectBar extends ReactWidget {
                 <div className='utlx-pb-zone utlx-pb-center'>
                     <span className='utlx-pb-label'>Transformation</span>
                     <div className='utlx-project-bar-items'>{group('transformation')}</div>
-                </div>
-                <div className='utlx-pb-zone utlx-pb-right'>
+                    <span className='utlx-pb-divider' />
                     <span className='utlx-pb-label'>Edit</span>
                     <div className='utlx-project-bar-items'>{group('edit')}</div>
                 </div>
+                <div className='utlx-pb-zone utlx-pb-right' />
             </div>
         );
     }
