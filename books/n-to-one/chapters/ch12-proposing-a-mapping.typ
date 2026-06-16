@@ -69,6 +69,44 @@ Second, the spreadsheet is *unformalised*. It is free text in merged cells, with
 
 This is not a new idea so much as an old one returning. The Clio system of Chapter 4 took, as its input, *user-supplied value correspondences* — a human's pairings of source elements to target elements — and derived the full mapping from them using the schema's keys and structure. The analyst's spreadsheet is that input, arriving in the wild: messier, free-format, and decades-deployed. "A human draws the correspondences, the system completes them" is the founding move of schema mapping; the only modern additions are that a model can now *read* the human's draft out of an Excel sheet, and that the draft must be *validated* against schemas the analyst may not have re-checked.
 
+== Formalising the Request
+
+Both roles so far have assumed the request was understood — that "the mapping" everyone is drafting is already agreed. Often it is not. A user arrives not with a spreadsheet but with a sentence: _add Dutch VAT — high, low, and all the levels._ That sentence is a third intent artifact, and the rawest of the three. The output contract is fully formal; the analyst's spreadsheet is semi-structured; a free-text prompt is unstructured intent. By the precondition of the Introduction, it cannot drive the pipeline as it stands. Before role one can prepare or role two can propose, the request itself must be *formalised* into an exact, grounded, checkable specification. This is a front-end stage, logically prior to the nine steps — and, tellingly, it is *itself an N:1 problem*: its inputs are the user's text, the output schema, the current inputs, any existing mapping, and the model's world knowledge; its single output is the specification. The book's own pattern recurs one level up.
+
+#strong[The prompt can demand additions.] This is what sets it apart from the other two artifacts, and it is the whole of the difficulty. The schemas bound what is *possible*; the spreadsheet pairs fields that already *exist*. A prompt can require what is present nowhere: a new output field, a new derivation, and — most sharply — *constants drawn from world knowledge*. That Dutch VAT is 21% standard, 9% reduced, 0% zero-rated is a fact in neither the input nor the output; the model must supply it. This is the value invention of Chapter 6 at its limit: not merely "a value must exist here," but "a value must exist here, and it comes from knowledge the request invoked." A prompt, uniquely, can make $N$ grow.
+
+#strong[Where the injected knowledge lives is a constrained choice — its visibility is not.] It is tempting to rule that such constants must always be materialised as a typed input — a `lookup` or `enumeration` from Chapter 8 — never inlined as a bare `0.21`. That rule is too strong, because the input set is not always open. Some deployments are *sealed*: a fixed roster of slots — Open-M's seven, say — that admits no eighth input. A sealed set, or a stable-enough constant, can make inlining the only available or the most sensible placement; and Chapter 8 already sanctions exactly this, allowing `config` to be inlined at init time. So placement bends to two facts:
+
+#table(
+  columns: (auto, auto, auto),
+  align: (left, left, left),
+  [], [*Input set open*], [*Input set sealed*],
+  [*volatile* (rates, code maps)], [materialise as `lookup` / `enumeration` — best audit], [carry in an existing binding (e.g. `config`); else *inline + a "revisit on change" flag*],
+  [*stable* (a fixed scalar)], [`enumeration` or `config`], [*inline* — a legitimate compile-time constant],
+)
+
+What does *not* bend is the discipline. Wherever the constant lands, it must be *surfaced* in the specification, *tagged* with a `basis` (`ai-world-knowledge` for a fact the model supplied, `user-requested` for one the prompt fixed), and *confirmed* by the user. The fault was never a `0.21` in the transformation; it is a `0.21` that is *silent* — unprovenanced, unconfirmed, and unfindable the day the rate changes by law. Inlining is honest when the constant is visible; materialising is worthless if no one reviews it. The placement is negotiable; the provenance is not.
+
+#strong[Surface the interpretation; do not act on a guess.] "All the levels" has a closure the user left implicit, and the front-end must make it *explicit* rather than silently choosing a set. This is the priority-cascade rule of Chapter 8 — _surface, don't guess_ — moved to the front of the pipeline. The formalised request should read back the rates it intends to add, the field it will compute, the input it proposes to inject, and the questions it cannot answer alone (per line or per document? as of which date? which category takes which rate?), and it should wait for confirmation before a single correspondence is drawn.
+
+That last move is borrowed, deliberately, from agentic coding assistants, which have already learned this front-end. The techniques transfer almost directly:
+
+#table(
+  columns: (auto, auto),
+  align: (left, left),
+  [*Assistant technique*], [*Request-formalisation analogue*],
+  [plan, approve, *then* act], [emit the spec as a plan; confirm before the proposal runs],
+  [clarify what is underspecified], [ask the per-line / as-of-date / category questions],
+  [gather context before editing], [interpret the prompt *against* the loaded schemas and current mapping, never in a vacuum],
+  [decompose into discrete steps], [split "add VAT" into field, lookup, derivation, summary],
+  [augment with tools / knowledge], [recall the rates and place them as a provenanced constant],
+  [expand a terse instruction], [the "build a prompt first" move: a one-line request becomes a full, grounded specification],
+  [verify after acting], [re-run coverage and validation; confirm still schema-complete],
+  [reversible, auditable edits], [every injected fact carries a `basis`; the spec is a diffable artifact the user can correct],
+)
+
+The unifying move is the first one: turn a vague wish into an *explicit interpretation the user signs off on*. That is plan-mode by another name, and it is the same validate-gate the next chapter argues for — relocated to the very front, so that the request a model is finally asked to satisfy is one a human has already agreed to.
+
 == Keeping It Honest
 
 One discipline governs both roles and is worth stating once, plainly. Every AI step — the narrow assists and the broad proposal alike — is *targeted* (asked a specific question), *grounded* (given the structural facts, never raw schemas alone), and *recorded* (its output tagged with `basis` so a human knows what rests on inference). The pipeline is deterministic-first throughout: AI is consulted only where deterministic methods provably run out. And the proposal is a *proposal* — it is validated against the contract and reviewed before it is allowed to become a mapping. Nothing a model produces, in either role, is trusted without a check.
