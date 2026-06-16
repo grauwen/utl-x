@@ -345,20 +345,48 @@ export class UTLXFrontendContribution implements
      * highlighting + schema validation on the opened file.
      */
     private async openConfigInBottom(which: 'transform.yaml' | 'engine.yaml'): Promise<void> {
-        const uri = which === 'transform.yaml'
-            ? this.currentTxDir?.resolve('transform.yaml')
-            : this.currentProjectRoot?.resolve('engine.yaml');
+        // Resolve the project root + current transformation dir, FALLING BACK to the workspace if the
+        // tracked fields aren't set (e.g. the project wasn't opened via loadProjectFromRoot this session).
+        let root = this.currentProjectRoot;
+        let txDir = this.currentTxDir;
+        if (!root) {
+            await this.workspaceService.ready;
+            const roots = this.workspaceService.tryGetRoots();
+            root = roots && roots[0] ? roots[0].resource : undefined;
+        }
+        // Require an OPEN UTL-X project (a root whose workspace is a .utlxp — has transformations/).
+        let isProject = false;
+        if (root) {
+            try { await this.fileService.resolve(root.resolve('transformations')); isProject = true; } catch { /* not a project */ }
+        }
+        if (!root || !isProject) {
+            await this.warnDialog(
+                'No UTL-X project open',
+                `Can't edit ${which} — there is no UTL-X project open.\n\n` +
+                'Open one (File → Open UTLX Project…) or create one (File → New UTLX Project…) first.');
+            return;
+        }
+        if (which === 'transform.yaml' && !txDir) {
+            try {
+                const txParent = await this.fileService.resolve(root.resolve('transformations'));
+                txDir = (txParent.children || []).filter(c => c.isDirectory)
+                    .sort((a, b) => a.resource.path.base.localeCompare(b.resource.path.base))[0]?.resource;
+            } catch { /* no transformations */ }
+        }
+        const uri = which === 'transform.yaml' ? txDir?.resolve('transform.yaml') : root.resolve('engine.yaml');
+        console.log('[UTLX] openConfigInBottom', which, '→', uri?.toString());
         if (!uri) {
-            this.messageService.warn('Open a UTLX Project first (File → Open UTLX Project…).');
+            await this.warnDialog('No transformation', `The open project has no transformation to hold ${which}.`);
             return;
         }
         try {
             if (!(await this.fileService.exists(uri))) {
-                this.messageService.warn(`No ${which} in the open project.`);
+                this.messageService.warn(`No ${which} found at ${uri.path.toString()}.`);
                 return;
             }
             await this.editorManager.open(uri, { widgetOptions: { area: 'bottom' } });
         } catch (err) {
+            console.error('[UTLX] openConfigInBottom failed:', err);
             this.messageService.error(`Could not open ${which}: ${err instanceof Error ? err.message : String(err)}`);
         }
     }
