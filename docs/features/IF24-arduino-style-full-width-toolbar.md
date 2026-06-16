@@ -1,153 +1,184 @@
 # IF24: IDE — a second, **Arduino-style full-width toolbar** under the menu bar (the **Project Bar**, alongside the existing **Action Bar**)
 
-**Status:** **Designed — not yet implemented** (findings captured; code pending approval).
+**Status:** **Designed — not yet implemented.** Two architectures documented below; **Architecture A
+("the Arduino way") is the chosen approach**, with Architecture B kept as the robust fallback.
 **Priority:** Medium — UX/affordance: surfaces high-frequency project/transformation/run actions on a
 prominent, full-width bar (like Arduino IDE), without disturbing the existing toolbar.
 **Created:** June 2026
-**Component:** IDE (Theia) — the **application shell layout** (`ApplicationShell` subclass), a new
-toolbar **widget**, frontend-module bindings. **Not** the engine/daemon/CLI.
+**Component:** IDE (Theia) — a new toolbar **widget** + **`TabBarToolbarContribution`** (Arch A), or an
+**`ApplicationShell` subclass** (Arch B); frontend-module bindings; CSS. **Not** the engine/daemon/CLI.
 **Depends on / relates to:** **IF16** (workbench shell), the existing toolbar
-(`toolbar/utlx-toolbar-widget.tsx`), **IF18** (menu — the commands this bar would surface),
-**IF22** (project/transformation commands: New/Open/Switch).
+(`toolbar/utlx-toolbar-widget.tsx`), **IF18** (the commands this bar surfaces), **IF22**
+(project/transformation commands: New/Open/Switch).
 
 ---
 
-## Goal
+## Goal & decision
 
-Keep the **existing** toolbar exactly as-is, and add a **second** toolbar that behaves like Arduino
-IDE's: a horizontal strip **directly under the menu bar**, spanning the **full window width**
-(left↔right), independent of the menu row.
+Keep the **existing** toolbar **exactly as-is** (same buttons, same place) and **add a second** toolbar
+that behaves like Arduino IDE 2.x's: a horizontal strip **directly under the menu bar**, spanning the
+**full window width** (left↔right). **Two toolbars, both present (A *and* B):**
 
-**Names (agreed) — used in docs, code ids, and conversation:**
-- **Action Bar** = the **existing** toolbar (`UTLXToolbarWidget`, id `utlx-toolbar`, `area: 'top'`):
-  mode toggle (E / MC), Execute/Run, Generate — *what you DO to the transformation*. Rendered **inside
-  the top panel, in the same horizontal row as the menu bar**. (Id kept as-is to avoid churn.)
-- **Project Bar** = the **new** Arduino-style toolbar (id `utlx-project-bar`): a full-width row **below**
-  the menu — project name · transformation switcher · New Transformation · (Run) — *which project /
-  transformation you're in*. A separate widget; left-group / right-group with
-  `justify-content: space-between`.
+- **Action Bar (A)** = the **existing** toolbar — `UTLXToolbarWidget`, id `utlx-toolbar`, `area: 'top'`:
+  mode toggle (E / MC), Execute/Run, Generate — *what you DO to the transformation*. **Unchanged.**
+- **Project Bar (B)** = the **new** Arduino-style toolbar — id `utlx-project-bar`: full-width row **below
+  the menu** — project name · transformation switcher · New Transformation · (Run) — *which project /
+  transformation you're in*. Left-group / right-group with `justify-content: space-between`.
 
-**Is two toolbars possible? Yes.** They occupy different layout slots — the **Action Bar** is a child of
-the top panel (menu row); the **Project Bar** is its own row in the shell's top-to-bottom box layout. No
-conflict.
+**Chosen architecture: A — "the Arduino way"** (`TabBarToolbarRegistry` items + `area:'top'` + a CSS
+flex-wrap so it forms its own full-width row). Architecture B (`ApplicationShell` subclass) is the
+fallback if the CSS-wrap placement proves flaky.
 
-## Why the current toolbar "shares space with the menu"
+## Shared grounding — verified facts about this shell (Theia 1.64.0)
 
-`UTLXFrontendContribution.openToolbar()` does:
-```ts
-this.shell.addWidget(toolbar, { area: 'top', rank: 100 });
+- **The menu bar is itself a top-area widget.** `BrowserMenuBarContribution` does
+  `shell.addWidget(menu, { area: 'top' })` (and a logo) — `browser-menu-plugin.js`.
+- **`area: 'top'` is the `topPanel`** (`theia-top-panel`), a **Lumino `Panel`** (`createTopPanel()` →
+  `new Panel()`), styled by CSS **`#theia-top-panel { display: flex }`** (default direction **row**).
+  ⇒ widgets added to `area:'top'` are **flex children in the menu's row** — which is exactly why the
+  Action Bar currently "shares space with the menu."
+- **Because it's CSS flex (not a Lumino absolute `BoxLayout`), `flex-wrap` works** — a top widget with
+  `flex: 1 0 100%` **wraps onto a full-width second line** under the menu. *(This corrects an earlier
+  note in this doc that dismissed CSS-wrap; it is in fact the mechanism Arch A relies on, and the most
+  likely way Arduino does it.)*
+- The shell's **top-level vertical layout** is
+  `createBoxLayout([this.topPanel, panelForSideAreas, this.statusBar], [0,1,0], {direction:'top-to-bottom'})`
+  in the **`protected createLayout()`** method — the seam Arch B uses.
+- `createLayout()` runs from `initializeShell()` ← **`@postConstruct init()`** (app-shell.js ~L1996), so
+  by the time it runs, inversify has already set **property-injected** fields → a subclass can `@inject`
+  the toolbar widget as a field and use it in the override (Arch B relies on this).
+
+---
+
+## Architecture A — **the Arduino way** (CHOSEN): `TabBarToolbarRegistry` items + `area:'top'` + CSS wrap
+
+The key design choice — the same one Arduino made — is **not to invent a new item-registration
+system**. The Project Bar widget pulls its items from Theia's **`TabBarToolbarRegistry`**.
+
+**Item model**
+- Register items with the standard **`TabBarToolbarContribution.registerToolbarItems(registry)`**.
+- The widget renders **`registry.visibleItems(this)`**, sorts by
+  **`TabBarToolbarItem.PRIORITY_COMPARATOR`**, and re-renders on **`registry.onDidChange`**.
+- Items pick a **side** by checking the host widget in their own `isVisible`:
+  `UtlxToolbar.is(w) && w.side === 'left'` (a left widget and a right widget; one registry, two sides).
+- Clicks run the bound command through **`CommandRegistry`**; **`isEnabled` / `isToggled`** drive the
+  disabled / toggled styling (re-evaluated each render; re-render on `commands.onDidChange`).
+- A **dropdown** ("board/port-style", e.g. the transformation switcher) is a **custom-render item** —
+  in Theia 1.64 a `RenderedToolbarItem` with a `render(widget)` method (the spec's older name was
+  `ReactTabBarToolbarItem`; same capability). The widget detects it and calls `item.render(this)`.
+
+So everything we know about Theia commands / context keys / toolbar items applies — items just render
+in a top bar instead of a view tab bar.
+
+**Placement (the full-width-under-menu part)**
+- `UtlxToolbarContribution` (a `FrontendApplicationContribution`) mounts a container into the shell in
+  `onStart()`: `app.shell.addWidget(container, { area: 'top' })`.
+- The container holds the **left** and **right** `ReactWidget` sides.
+- CSS makes it its own row: **`#theia-top-panel { flex-wrap: wrap }`** + container
+  **`flex: 1 0 100%`** ⇒ the menu stays on row 1, the Project Bar wraps to a **full-width** row 2.
+
+**Architecture diagram (from the spec):**
 ```
-Theia's **`'top'` area is the `topPanel`** (`theia-top-panel`), a horizontal `BoxLayout` that **also
-holds the menu bar**. So any `area:'top'` widget lines up **in the menu's row** — hence the shared
-width. Full-width-under-the-menu is **not** one of Theia's named areas (`top`/`left`/`right`/`main`/
-`bottom`); it requires inserting a widget into the shell's **top-level vertical layout**.
+FrontendApplicationContribution            TabBarToolbarContribution
+  UtlxToolbarContribution                    UtlxToolbarCommands
+        |  onStart()                               |  registerCommands()
+        |  app.shell.addWidget(.., {area:'top'})   |  registerToolbarItems()
+        v                                          v
+  UtlxToolbarContainer (Widget)            TabBarToolbarRegistry  <-- shared data source
+     |  attaches                                   ^
+     +-- UtlxToolbar 'left'  (ReactWidget) --------+  registry.visibleItems(this)
+     +-- UtlxToolbar 'right' (ReactWidget) --------+  + onDidChange -> re-render
+```
 
-## How the shell builds its vertical layout (Theia 1.64.0)
+**Files (Arch A)**
+| File | Role |
+|------|------|
+| `browser/toolbar/utlx-toolbar.tsx` | `ReactWidget` rendering one side of the bar (`side: 'left'|'right'`) |
+| `browser/toolbar/utlx-toolbar-contribution.ts` | Mounts the container into `shell` area `top` (+ CSS-wrap) |
+| `browser/toolbar/utlx-commands-contribution.ts` | Commands + `registerToolbarItems` (left/right placement) |
+| `browser/style/utlx-toolbar.css` | Theme-aware styling via `--theia-*`; `#theia-top-panel{flex-wrap:wrap}` |
+| `frontend-module.ts` | Bindings (`TabBarToolbarContribution`, `FrontendApplicationContribution`, widgets) |
 
-`ApplicationShell.createLayout()` (`@theia/core/lib/browser/shell/application-shell.js`):
-```js
-createLayout() {
-  const bottomSplitLayout = this.createSplitLayout([this.mainPanel, this.bottomPanel], [1, 0],
-    { orientation: 'vertical', spacing: 0 });
-  const panelForBottomArea = new TheiaSplitPanel({ layout: bottomSplitLayout });
-  panelForBottomArea.id = 'theia-bottom-split-panel';
-  const leftRightSplitLayout = this.createSplitLayout(
-    [this.leftPanelHandler.container, panelForBottomArea, this.rightPanelHandler.container],
-    [0, 1, 0], { orientation: 'horizontal', spacing: 0 });
-  const panelForSideAreas = new TheiaSplitPanel({ layout: leftRightSplitLayout });
-  panelForSideAreas.id = 'theia-left-right-split-panel';
-  return this.createBoxLayout([this.topPanel, panelForSideAreas, this.statusBar], [0, 1, 0],
-    { direction: 'top-to-bottom', spacing: 0 });
+**Project Bar items (initial)** — reuse existing commands (IF18/IF22), no new behavior:
+`utlx.project.switchTransformation` (as a render-item dropdown) · `utlx.project.newTransformation` ·
+`utlx.project.new` · `utlx.project.open` · Execute (`UTLXCommands.EXECUTE_TRANSFORMATION`). A live
+project/transformation **context** label needs a small event (e.g. `onProjectContextChanged` fired from
+`loadProjectFromRoot` with `{ projectName, txName, txNames }`) for the dropdown options + current value.
+
+**Pros:** standard Theia mechanism (commands, context keys, enablement/toggle for free); extensible
+(render-item dropdowns); **no `ApplicationShell` rebind**; matches the provided spec; original/from-scratch
+(license-clean — see note). **Cons:** the full-width-under-menu look depends on **`flex-wrap`** behaving
+across themes / menu widths (mitigated by `flex: 1 0 100%`); needs verification.
+
+## Architecture B — **fallback**: `ApplicationShell` subclass inserts a guaranteed row
+
+Place the Project Bar as its **own box row** in the shell's vertical layout — CSS-independent and
+guaranteed separate from the menu row.
+
+```ts
+@injectable()
+export class UtlxApplicationShell extends ApplicationShell {
+  @inject(UtlxProjectBarWidget) protected readonly utlxProjectBar!: UtlxProjectBarWidget;
+  protected override createLayout(): Layout {
+    // …replicate base createLayout faithfully (panel ids, stretch arrays, spacing:0)…
+    return this.createBoxLayout(
+      [this.topPanel, this.utlxProjectBar, panelForSideAreas, this.statusBar],
+      [0, 0, 1, 0],                 // Project Bar = stretch 0 (fixed height), side areas = stretch 1
+      { direction: 'top-to-bottom', spacing: 0 });
+  }
 }
 ```
-The vertical stack is **`[topPanel, panelForSideAreas, statusBar]`**. The **Project Bar** goes **between
-`topPanel` and `panelForSideAreas`**:
-```js
-return this.createBoxLayout(
-  [this.topPanel, this.utlxProjectBar, panelForSideAreas, this.statusBar],
-  [0, 0, 1, 0],                 // Project Bar = stretch 0 (fixed height), side areas = stretch 1
-  { direction: 'top-to-bottom', spacing: 0 });
-```
+- Bindings: `bind(UtlxProjectBarWidget).toSelf().inSingletonScope();`
+  `bind(UtlxApplicationShell).toSelf().inSingletonScope(); rebind(ApplicationShell).toService(UtlxApplicationShell);`
+  (inversify 6.2.2; `ContainerModule` callback is positional → `(bind, _unbind, _isBound, rebind) => …`).
+- Imports: `ApplicationShell` (`@theia/core/lib/browser`), `TheiaSplitPanel`
+  (`.../shell/theia-split-panel`), `Layout` (`@theia/core/shared/@lumino/widgets`).
+- The widget can **still use the Arch-A item model** internally (`TabBarToolbarRegistry`) — B only
+  changes *placement*, not the item system. So A and B share most code; only the mount differs.
 
-## Why a subclass works (the timing detail that makes it safe)
+**Pros:** guaranteed full-width row, no CSS-wrap dependency. **Cons:** rebinds `ApplicationShell`
+(structural — though well-trodden: `@theia/toolbar`, Arduino); must **replicate `createLayout`
+faithfully** (panel ids, stretch arrays, `spacing:0`) and re-sync on Theia upgrades; the box row needs
+an explicit widget height in CSS (like the Action Bar's `.utlx-toolbar { height: 45px }`) or it
+collapses.
 
-`createLayout()` runs inside `initializeShell()`, which is called from **`init()`**, and `init()` is
-decorated **`@postConstruct`** (application-shell.js ~line 1996). Inversify sets **property-injected
-fields before `@postConstruct`** runs — so a subclass can `@inject` the toolbar widget as a **field**
-and it **will be defined** when the overridden `createLayout()` executes. (If `createLayout` ran in the
-raw constructor, the field would still be undefined — it doesn't.) This is the same pattern Theia's own
-`@theia/toolbar` package and the Arduino IDE use (`ToolbarApplicationShell` / `ArduinoToolbar`).
+---
 
-`createLayout()` and the helpers `createBoxLayout()` / `createSplitLayout()` are `protected` →
-overridable. `this.topPanel`, `mainPanel`, `bottomPanel`, `left/rightPanelHandler`, `statusBar` are all
-assigned **before** `createLayout()` in `initializeShell()`, so the override can use them.
+## Plan of record
 
-## Implementation plan (4 touch points)
+1. Implement **Architecture A**. Keep the **Action Bar untouched** (`openToolbar()` still adds it to
+   `area:'top'`); **add the Project Bar** as a second `area:'top'` element that flex-wraps to its own
+   full-width row.
+2. Build the Project Bar from `TabBarToolbarRegistry` items (left/right sides), reusing IF18/IF22
+   commands; add `onProjectContextChanged` for the live project/transformation context + switcher list.
+3. **If the CSS-wrap placement is flaky**, switch *only the mount* to **Architecture B**
+   (`UtlxApplicationShell.createLayout`) — the item model stays identical.
 
-1. **New widget — `toolbar/utlx-project-bar-widget.tsx`** (`ReactWidget`, class `UtlxProjectBarWidget`)
-   - `id = 'utlx-project-bar'`, `addClass('utlx-project-bar')`.
-   - Fixed height (e.g. **34px**) on the widget node so the `stretch:0` box row sizes correctly
-     (mirrors the existing Action Bar `.utlx-toolbar { height: 45px }`).
-   - Root `.utlx-project-bar-container { display:flex; justify-content:space-between; width:100% }` with
-     a **left** item group and a **right** item group (per the CSS sketch the user provided).
-   - Content (initial): project name · **transformation switcher** (calls
-     `utlx.project.switchTransformation`) · **New Transformation** · **Run**. Reuses existing commands.
-
-2. **New shell — `shell/utlx-application-shell.ts`**
-   ```ts
-   @injectable()
-   export class UtlxApplicationShell extends ApplicationShell {
-     @inject(UtlxProjectBarWidget) protected readonly utlxProjectBar!: UtlxProjectBarWidget;
-     protected override createLayout(): Layout { /* base body + insert Project Bar as row 2 */ }
-   }
-   ```
-   - Imports: `ApplicationShell` (`@theia/core/lib/browser`), `TheiaSplitPanel`
-     (`@theia/core/lib/browser/shell/theia-split-panel`), `Layout`
-     (`@theia/core/shared/@lumino/widgets`).
-
-3. **`frontend-module.ts`** (inversify 6.2.2; `ContainerModule` callback is positional →
-   `(bind, _unbind, _isBound, rebind) => …`)
-   - `bind(UtlxProjectBarWidget).toSelf().inSingletonScope();` (singleton — the shell injects the
-     **same** instance; no `WidgetFactory`/`addWidget` needed for the Project Bar).
-   - `bind(UtlxApplicationShell).toSelf().inSingletonScope();`
-     `rebind(ApplicationShell).toService(UtlxApplicationShell);`
-
-4. **CSS — `style/toolbar.css`** add `.utlx-project-bar` (height + full-width container, left/right
-   groups). The user-supplied sketch (space-between, 34px, `--theia-titleBar-*` colors,
-   `.utlx-toolbar-item` 28×28 hover/disabled/toggled) is the visual target.
-
-**The Action Bar is untouched** — `openToolbar()` still adds it to `area:'top'`. No changes to its widget.
-
-## Risks / notes
-
-- **Rebinding `ApplicationShell`** is structural but well-trodden (`@theia/toolbar`, Arduino). The
-  subclass only adds one injected field + overrides `createLayout()`; everything else inherited. Keep it
-  a **singleton** and `toService` so exactly one shell exists.
-- **Replicate `createLayout` faithfully** — including `panelForBottomArea.id` /
-  `panelForSideAreas.id`, the stretch arrays, and `spacing:0`; only add the toolbar row. (If a future
-  Theia upgrade changes `createLayout`, re-sync this override.)
-- **Sizing:** box row is `stretch:0`; the widget needs an explicit height in CSS (like A's 45px) or it
-  collapses.
-- **Two top elements now**: menu + **Action Bar** share the top panel row; the **Project Bar** is the
-  next row. Confirm combined vertical height is acceptable (menu ~ + Action Bar 45px + Project Bar 34px).
-  Could later move the Action Bar's controls into the Project Bar and retire the Action Bar — out of
-  scope; the ask is **both**.
-
-## Alternatives considered (rejected for this ask)
+## Alternatives considered (rejected)
 
 - **`@theia/toolbar` (official, not installed)** — a user-customizable command strip under the menu.
-  Would give "full-width under menu" for free, but it's generic command-buttons (drag-to-arrange), not
-  our custom React UI (switcher dropdown, project context), and adds a dependency. Good fallback if we
-  want end-user customization instead of a curated bar.
-- **CSS-only wrap of the top panel** — make `area:'top'` widgets wrap to a second line. Fails: the top
-  panel is a Lumino `BoxLayout` (absolute positioning), not CSS flow — wrapping is unreliable.
-- **Put Toolbar B in `area:'main'`/a docked widget** — wouldn't span across the left/right side panels.
+  Gives "full-width under menu" for free, but it's generic drag-to-arrange command buttons, not our
+  curated bar with a context dropdown, and adds a dependency. Good only if end-user customization becomes
+  a goal.
+- **Put the Project Bar in `area:'main'` / a docked widget** — wouldn't span across the left/right side
+  panels.
 
-## Code pointers (for implementation)
+## Licensing note (from the spec)
 
-- `browser/utlx-frontend-contribution.ts` — `openToolbar()` (Toolbar A, unchanged); commands
-  `utlx.project.switchTransformation` / `utlx.project.newTransformation` / execute (Toolbar B reuses).
-- `browser/toolbar/utlx-toolbar-widget.tsx` — Toolbar A (reference for widget shape + CSS conventions).
+From-scratch is **not required for license reasons** — Arduino IDE 2.x and UTLX are both AGPL-3.0, so
+copying would be permitted; writing original text simply keeps provenance unambiguous. Theia is
+EPL-2.0 / GPL-2.0-with-classpath-exception; building an AGPL-3.0 app on Theia's APIs is fine
+(classpath exception). General APIs/patterns aren't copyrightable; specific source text is. *Not legal
+advice — confirm with counsel if AGPL's network-use clause matters for distribution.*
+
+## Code pointers
+
+- `browser/toolbar/utlx-toolbar-widget.tsx` — Action Bar A (reference for widget shape + CSS).
+- `browser/utlx-frontend-contribution.ts` — `openToolbar()` (A, unchanged); `loadProjectFromRoot`
+  (fire `onProjectContextChanged`); commands `utlx.project.*` + `UTLXCommands.EXECUTE_TRANSFORMATION`.
+- `@theia/core/.../tab-bar-toolbar/` — `TabBarToolbarRegistry.visibleItems/onDidChange`,
+  `TabBarToolbarContribution.registerToolbarItems`, `PRIORITY_COMPARATOR`, `RenderedToolbarItem` (Arch A).
 - `@theia/core/lib/browser/shell/application-shell.{js,d.ts}` — `createLayout` (protected),
-  `initializeShell`, `@postConstruct init`.
-- `browser/style/toolbar.css` — `.utlx-toolbar` (45px) as the height precedent for `.utlx-fw-toolbar`.
+  `initializeShell`, `@postConstruct init`; `theia-split-panel` (Arch B).
+- `@theia/core/lib/browser/menu/browser-menu-plugin.js` — proof the menu is an `area:'top'` widget.
+- `browser/style/` — `.utlx-toolbar { height:45px }` (height precedent); `#theia-top-panel{display:flex}`.
