@@ -35,8 +35,9 @@
 .utlx-pb-center { justify-content: flex-start; }  /* align to the LEFT of the mid section */
 .utlx-pb-right  { justify-content: flex-end; }    /* Execute on the far right (as in the Action Bar) */
 
-/* Execute button — reuses the Action Bar's .utlx-toolbar-button look, sized for the 34px bar. */
-.utlx-pb-execute {
+/* Execute / AI Assist buttons — reuse the Action Bar's .utlx-toolbar-button look, sized for 34px. */
+.utlx-pb-execute,
+.utlx-pb-aiassist {
     padding: 3px 12px;
     font-size: 12px;
 }

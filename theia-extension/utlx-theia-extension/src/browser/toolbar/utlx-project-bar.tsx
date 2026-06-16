@@ -67,6 +67,11 @@ export class UtlxProjectBar extends ReactWidget {
         this.eventService.fireExecuteTransformation({ mode });
     };
 
+    /** AI Assist — opens the MCP dialog owned by the Action Bar (via an event). */
+    protected readonly handleAiAssist = (): void => {
+        this.eventService.fireOpenAiAssist();
+    };
+
     protected override onAfterAttach(msg: Message): void {
         super.onAfterAttach(msg);
         // By attach time the registry/contributions are populated — re-collect so the bar isn't empty
@@ -102,6 +107,14 @@ export class UtlxProjectBar extends ReactWidget {
                 <div className='utlx-pb-zone utlx-pb-center'>
                     <span className='utlx-pb-label'>Transformation</span>
                     <div className='utlx-project-bar-items'>{group('transformation')}</div>
+                    <button
+                        data-testid='utlx-pb-aiassist'
+                        className='utlx-toolbar-button utlx-mcp-button utlx-pb-aiassist'
+                        onClick={this.handleAiAssist}
+                        title='Ask AI to help write the UTLX transformation'
+                    >
+                        🤖 AI Assist
+                    </button>
                     <span className='utlx-pb-divider' />
                     <span className='utlx-pb-label'>Edit</span>
                     <div className='utlx-project-bar-items'>{group('edit')}</div>

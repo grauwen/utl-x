@@ -163,6 +163,9 @@ export class UTLXToolbarWidget extends ReactWidget {
             });
         });
 
+        // The Project Bar's "AI Assist" button fires this; the MCP dialog stays owned here.
+        this.eventService.onOpenAiAssist(() => this.openMCPDialog());
+
         // Sync the toolbar (badge + backend) when the mode is changed EXTERNALLY — e.g. opening a
         // .utlxp project forces Message-Contract (IF03). The toolbar emits onModeChanged from its own
         // toggle, so the guard ignores its own echo (event.mode already equals currentMode by then).

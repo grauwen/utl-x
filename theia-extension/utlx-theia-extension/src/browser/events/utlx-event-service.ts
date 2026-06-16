@@ -433,6 +433,19 @@ export class UTLXEventService {
         this.onRequestCurrentUdmEmitter.fire();
     }
 
+    private readonly onOpenAiAssistEmitter = new Emitter<void>();
+    /**
+     * Event fired to open the AI Assist (MCP) dialog. Lets the Project Bar surface an "AI Assist"
+     * button while the dialog itself stays owned by the Action Bar (UTLXToolbarWidget).
+     */
+    readonly onOpenAiAssist: Event<void> = this.onOpenAiAssistEmitter.event;
+
+    /** Fire a request to open the AI Assist dialog. */
+    fireOpenAiAssist(): void {
+        console.log('[UTLXEventService] Open AI Assist requested');
+        this.onOpenAiAssistEmitter.fire();
+    }
+
     private readonly onInputInstanceContentChangedEmitter = new Emitter<InputInstanceContentChangedEvent>();
     /**
      * Event fired when input instance content changes
