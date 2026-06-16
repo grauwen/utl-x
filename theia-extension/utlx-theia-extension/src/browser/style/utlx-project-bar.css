@@ -1,0 +1,52 @@
+/* SPDX-License-Identifier: AGPL-3.0-or-later */
+/* Copyright (C) 2026 The UTLX IDE Authors */
+/* IF24 (Architecture B) — the Project Bar: its own full-width row under the menu + Action Bar. */
+/* NOTE: no #theia-top-panel changes here — placement is done by the shell layout, so the menu and the
+   Action Bar are untouched. */
+
+/* The widget node IS the row. min-height drives the box-layout allocation (stretch 0). */
+.utlx-project-bar {
+    min-height: 34px;
+    background: var(
+        --theia-titleBar-activeBackground,
+        var(--theia-editorGroupHeader-tabsBackground, var(--theia-editor-background))
+    );
+    border-bottom: 1px solid var(--theia-panel-border);
+}
+
+.utlx-project-bar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    height: 34px;
+    box-sizing: border-box;
+    padding: 0 8px;
+}
+
+.utlx-project-bar-items {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 2px;
+}
+
+.utlx-project-bar-items .codicon {
+    font-size: 16px;
+}
+
+/* The Theia-rendered items are bare; give them a comfortable hit area + hover. */
+.utlx-project-bar-items > * {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    cursor: pointer;
+    color: var(--theia-icon-foreground);
+}
+
+.utlx-project-bar-items > *:hover {
+    background: var(--theia-toolbar-hoverBackground, rgba(127, 127, 127, 0.18));
+}

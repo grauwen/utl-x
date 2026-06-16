@@ -1,7 +1,25 @@
 # IF24: IDE — a second, **Arduino-style full-width toolbar** under the menu bar (the **Project Bar**, alongside the existing **Action Bar**)
 
-**Status:** **Designed — not yet implemented.** Two architectures documented below; **Architecture A
-("the Arduino way") is the chosen approach**, with Architecture B kept as the robust fallback.
+**Status:** **Architecture B implemented (v1).** Architecture A (CSS `flex-wrap` on `area:'top'`) was
+tried first and **broke the layout** — the global `#theia-top-panel { flex-wrap: wrap }` collided with
+the **Action Bar's own `width:100%`**, so the Action Bar's buttons vanished and the Project Bar rendered
+as an empty stripe. Per the documented fallback, placement switched to **Architecture B**: a custom
+`ApplicationShell` subclass (`UtlxApplicationShell`) inserts the Project Bar as its **own fixed-height
+row** in the shell's vertical layout — **no global top-panel CSS**, so the menu + Action Bar are
+untouched. The bar is a **single** injectable `ReactWidget` rendering both sides (items pick a side via
+`group: 'left'|'right'`), built on `TabBarToolbarRegistry`, Theia-1.64-correct. **v1 = action buttons**
+(Switch/New Transformation left; New/Open Project right) reusing existing IF18/IF22 commands. **Deferred (v2):** a live project /
+transformation **context label + inline switcher dropdown** (needs an `onProjectContextChanged` event +
+`switchTransformation(txName)` direct-switch); a **Run** item (needs `EXECUTE_TRANSFORMATION` to gain a
+command handler — today execution goes through `fireExecuteTransformation`).
+
+**Ported from the parallel-session scaffold** (`docs/architecture/files.zip`), which targeted an **older
+Theia** toolbar API. 1.64 fixes applied: render via `item.render(this)` (the runtime `TabBarToolbarItem`
+now carries `render`, so no manual icon/click/enabled code); `TabBarToolbarAction.PRIORITY_COMPARATOR`
+(namespace moved); `TabBarToolbarItem` imported from `.../tab-bar-toolbar/tab-toolbar-item` (not the
+barrel); `CommandRegistry.onCommandsChanged` (not `onDidChange`); dropped the non-existent
+`ReactTabBarToolbarItem`/`RenderedToolbarItem` imports; namespaced everything `utlx-project-bar*` to
+avoid colliding with the Action Bar's `utlx-toolbar*` classes.
 **Priority:** Medium — UX/affordance: surfaces high-frequency project/transformation/run actions on a
 prominent, full-width bar (like Arduino IDE), without disturbing the existing toolbar.
 **Created:** June 2026
@@ -90,14 +108,14 @@ FrontendApplicationContribution            TabBarToolbarContribution
      +-- UtlxToolbar 'right' (ReactWidget) --------+  + onDidChange -> re-render
 ```
 
-**Files (Arch A)**
+**Files (Arch A — as implemented)**
 | File | Role |
 |------|------|
-| `browser/toolbar/utlx-toolbar.tsx` | `ReactWidget` rendering one side of the bar (`side: 'left'|'right'`) |
-| `browser/toolbar/utlx-toolbar-contribution.ts` | Mounts the container into `shell` area `top` (+ CSS-wrap) |
-| `browser/toolbar/utlx-commands-contribution.ts` | Commands + `registerToolbarItems` (left/right placement) |
-| `browser/style/utlx-toolbar.css` | Theme-aware styling via `--theia-*`; `#theia-top-panel{flex-wrap:wrap}` |
-| `frontend-module.ts` | Bindings (`TabBarToolbarContribution`, `FrontendApplicationContribution`, widgets) |
+| `browser/toolbar/utlx-project-bar.tsx` | `ReactWidget` rendering one side (`side: 'left'|'right'`); items via `registry.visibleItems(this)`, render via `item.render(this)` |
+| `browser/toolbar/utlx-project-bar-contribution.ts` | `FrontendApplicationContribution`: mounts the container into `shell` area `'top'` |
+| `browser/toolbar/utlx-project-bar-commands.ts` | `TabBarToolbarContribution.registerToolbarItems` — left/right items reusing IF18/IF22 commands |
+| `browser/style/utlx-project-bar.css` | `#theia-top-panel{flex-wrap:wrap}` + container `flex:1 0 100%; order:100`; theme-aware via `--theia-*` |
+| `browser/frontend-module.ts` | Bindings folded in (`UtlxProjectBarContribution`→`FrontendApplicationContribution`, `UtlxProjectBarItems`→`TabBarToolbarContribution`) + CSS import |
 
 **Project Bar items (initial)** — reuse existing commands (IF18/IF22), no new behavior:
 `utlx.project.switchTransformation` (as a render-item dropdown) · `utlx.project.newTransformation` ·

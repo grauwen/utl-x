@@ -5,9 +5,14 @@
  */
 
 import './style/index.css';
+import './style/utlx-project-bar.css';
 import { ContainerModule } from 'inversify';
-import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler, KeybindingContribution } from '@theia/core/lib/browser';
+import { WebSocketConnectionProvider, FrontendApplicationContribution, WidgetFactory, OpenHandler, KeybindingContribution, ApplicationShell } from '@theia/core/lib/browser';
+import { TabBarToolbarContribution } from '@theia/core/lib/browser/shell/tab-bar-toolbar';
 import { CommandContribution, MenuContribution } from '@theia/core/lib/common';
+import { UtlxProjectBar } from './toolbar/utlx-project-bar';
+import { UtlxProjectBarItems } from './toolbar/utlx-project-bar-commands';
+import { UtlxApplicationShell } from './shell/utlx-application-shell';
 import { LanguageGrammarDefinitionContribution } from '@theia/monaco/lib/browser/textmate';
 import { UTLXService, UTLX_SERVICE_PATH, UTLX_SERVICE_SYMBOL } from '../common/protocol';
 import { MultiInputPanelWidget } from './input-panel/multi-input-panel-widget';
@@ -20,7 +25,7 @@ import { UTLXEventService } from './events/utlx-event-service';
 import { UTLXLanguageGrammarContribution } from './language/utlx-language';
 import { UTLXOpenHandler } from './utlx-open-handler';
 
-export default new ContainerModule(bind => {
+export default new ContainerModule((bind, _unbind, _isBound, rebind) => {
     console.log('[UTLX Frontend Module] ===== LOADING STARTED =====');
 
     try {
@@ -146,6 +151,19 @@ export default new ContainerModule(bind => {
         bind(MenuContribution).toService(UTLXFrontendContribution);
         bind(KeybindingContribution).toService(UTLXFrontendContribution);
         console.log('[UTLX Frontend Module] ✓ Frontend contribution bound');
+
+        // IF24 (Architecture B) — the Project Bar: a full-width row under the menu + Action Bar, placed
+        // by a custom ApplicationShell subclass (no global top-panel CSS, so the menu + Action Bar are
+        // untouched). The bar's items come from Theia's TabBarToolbarRegistry (UtlxProjectBarItems) and
+        // reuse the existing project/transformation commands. The existing Action Bar (UTLXToolbarWidget,
+        // area:'top') is left exactly as-is.
+        console.log('[UTLX Frontend Module] Binding Project Bar (IF24)...');
+        bind(UtlxProjectBar).toSelf().inSingletonScope();
+        bind(UtlxProjectBarItems).toSelf().inSingletonScope();
+        bind(TabBarToolbarContribution).toService(UtlxProjectBarItems);
+        bind(UtlxApplicationShell).toSelf().inSingletonScope();
+        rebind(ApplicationShell).toService(UtlxApplicationShell);
+        console.log('[UTLX Frontend Module] ✓ Project Bar bound');
 
         // Bind language grammar contribution for Monaco syntax highlighting
         console.log('[UTLX Frontend Module] Binding language grammar contribution...');
