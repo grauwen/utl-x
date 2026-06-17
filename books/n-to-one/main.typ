@@ -214,17 +214,20 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
   #v(0.5cm)
   #text(size: 18pt, fill: rgb("#666666"))[Scope & Rationale]
   #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[Why a single output, and the boundaries of the model]
+  #text(size: 12pt, fill: rgb("#999999"))[Why a single output, the cost of a mapping, and the boundaries of the model]
 ]
 #pagebreak()
 
 #include "chapters/ch14-why-one-output.typ"
+#pagebreak()
+#include "chapters/ch15-cost-of-a-mapping.typ"
 #pagebreak()
 
 // ── Appendix: Axioms and Principles ──
 
 #include "chapters/ch-appendix-axioms.typ"
 #pagebreak()
+#show heading: set heading(numbering: "1.1")  // re-enable after the appendix's numbering: none
 
 // ── Part V: The Classical Foundation ──
 
@@ -238,9 +241,9 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 ]
 #pagebreak()
 
-#include "chapters/ch15-theory-of-one-to-one-mapping.typ"
+#include "chapters/ch16-theory-of-one-to-one-mapping.typ"
 #pagebreak()
-#include "chapters/ch16-bibliography.typ"
+#include "chapters/ch17-bibliography.typ"
 #pagebreak()
 
 // ── Back Page ──
