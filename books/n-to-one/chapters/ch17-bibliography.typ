@@ -2,7 +2,7 @@
 
 #show heading: set heading(numbering: none)
 
-A plain, alphabetical list of the works cited. Annotated entries — with an abstract and a one-line contribution for each — appear in the preceding chapter, _The Classical Theory of 1:1 Mapping_.
+A plain, alphabetical list of the works cited. Annotated entries — with an abstract and a one-line contribution for each — appear in Appendix A, _The Classical Theory of 1:1 Mapping_.
 
 #set par(hanging-indent: 1.6em, justify: false)
 #set text(size: 9.5pt)

@@ -1,6 +1,8 @@
-= The Classical Theory of 1:1 Mapping
+#heading(numbering: none)[Appendix A · The Classical Theory of 1:1 Mapping]
 
-This book has been about *many* inputs becoming one output. The literature it draws on was, almost without exception, written about *one* source and one target. That is not a defect to apologise for; it is the foundation to build on. The classical theory of 1:1 mapping — how a single source schema relates to a single target schema — is mature, peer-reviewed, and, as Chapter 6 showed, generalises to N:1 by the simple act of letting the source be a union. This closing chapter narrates that foundation and annotates its canon, so that the references scattered through the preceding chapters stand together as a reading list.
+#show heading: set heading(numbering: none)
+
+This book has been about *many* inputs becoming one output. The literature it draws on was, almost without exception, written about *one* source and one target. That is not a defect to apologise for; it is the foundation to build on. The classical theory of 1:1 mapping — how a single source schema relates to a single target schema — is mature, peer-reviewed, and, as Chapter 6 showed, generalises to N:1 by the simple act of letting the source be a union. This back-matter study narrates that foundation and annotates its canon, so that the references scattered through the preceding chapters stand together as a reading list.
 
 Each entry below gives a citation, a short abstract, and a one-line _Brings_ — the single thing the work contributes to this book's argument.
 

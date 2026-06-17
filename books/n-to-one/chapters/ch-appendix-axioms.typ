@@ -1,4 +1,4 @@
-#heading(numbering: none)[Appendix · Axioms and Principles]
+#heading(numbering: none)[Appendix B · Axioms and Principles]
 
 #show heading: set heading(numbering: none)
 

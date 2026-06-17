@@ -223,25 +223,16 @@ Marcel holds an Ir. degree (Master of Science in Engineering) and is based in th
 #include "chapters/ch15-cost-of-a-mapping.typ"
 #pagebreak()
 
-// ── Appendix: Axioms and Principles ──
+// ── Conclusion ──
 
-#include "chapters/ch-appendix-axioms.typ"
+#include "chapters/ch-conclusion.typ"
 #pagebreak()
-#show heading: set heading(numbering: "1.1")  // re-enable after the appendix's numbering: none
 
-// ── Part V: The Classical Foundation ──
-
-#align(center)[
-  #v(6cm)
-  #text(size: 28pt, weight: "bold", fill: rgb("#003366"))[Part V]
-  #v(0.5cm)
-  #text(size: 18pt, fill: rgb("#666666"))[The Classical Foundation]
-  #v(1cm)
-  #text(size: 12pt, fill: rgb("#999999"))[The theory of 1:1 mapping, and an annotated bibliography]
-]
-#pagebreak()
+// ── Back Matter: Appendix A, Appendix B, Bibliography ──
 
 #include "chapters/ch16-theory-of-one-to-one-mapping.typ"
+#pagebreak()
+#include "chapters/ch-appendix-axioms.typ"
 #pagebreak()
 #include "chapters/ch17-bibliography.typ"
 #pagebreak()
