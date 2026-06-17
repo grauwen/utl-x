@@ -28,6 +28,7 @@ Beyond *how* confident, the set records *where each correspondence came from*. A
   [*basis*], [*Meaning*],
   [`fk-reachable`], [derived from a foreign-key path in the schema graph — high confidence, deterministic],
   [`name-heuristic`], [proposed by name similarity among structurally plausible candidates — review],
+  [`doc-derived`], [drawn from schema documentation — a human description of the element; stronger than a name guess, but unverified],
   [`ai-inferred`], [supplied by a language model for a gap deterministic rules could not close],
   [`analyst-spec`], [extracted from a human mapping specification — documented intent, but unverified against the live schema],
   [`user-confirmed`], [accepted or corrected by a human — locked],

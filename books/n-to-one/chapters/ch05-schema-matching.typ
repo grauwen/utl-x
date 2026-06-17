@@ -29,6 +29,16 @@ At the element level, three signals compare a single source field to a single ta
 
 *Value domain*, where a sample is available, compares the ranges and enumerations the two fields draw from. In Message Contract mode this is used cautiously — it is instance evidence, and Chapter 3 warned against letting it masquerade as schema proof — but as a tie-breaker it is legitimate.
 
+== Documentation as a Semantic Signal
+
+There is a fourth element-level signal, and it is the strongest of them when present. Schemas often carry *documentation* — an `xs:documentation` annotation in XSD, a `description` or `title` in JSON Schema, a `doc` field in Avro — a human sentence saying what an element means. This is precisely the world knowledge the bare name lacks: where `KUNNR` defeats every string metric, the annotation "Customer number (SAP debtor)" resolves it outright. Documentation is to a schema what the analyst's mapping sheet is to a mapping — human-authored intent, in natural language, sitting on the exact semantic axis the element level otherwise cannot cross.
+
+Three things fix its place in the method. First, it is *preserved*, not lost. A UDM data tree does drop an instance's stray comments — those describe one document, not the contract — but *schema* documentation is lifted into the model as the schema is parsed, and normalised across formats into one representation (USDL's `%documentation` and `%description`). The many ways formats spell documentation collapse to one, which is why the matcher need never know which format a schema came from.
+
+Second, it is a *linguistic* signal, and so it obeys the rule the next sections make strict: it *proposes*, it does not *dispose*. A description is far better evidence than a cryptic identifier — within the linguistic layer it outranks the name — but it never overrides the graph. A sentence claiming a field "holds the customer record" is a hypothesis the foreign keys can still refute. Documentation lifts the ceiling on names; it does not lift names above structure.
+
+Third, it is a *hypothesis*, recorded as such. Documentation can be stale, boilerplate, written in another language, or simply wrong — a comment that outlived the field it describes. A correspondence drawn from it therefore carries its own provenance, `doc-derived` (Chapter 7): stronger than a guess from string similarity, because a human wrote the sentence, yet weaker than a structural fact, and so subject to the same validation as any other claim about meaning. And like all such evidence it is *optional* — present, it is the best shortcut across the semantic gap; absent, the analysis falls back to names, structure, and a model's world knowledge, exactly as before.
+
 == Structure-Level Signals
 
 Structure-level matching asks the larger question: can this source *subtree* satisfy this target *subtree*? Its signals come from the graph.

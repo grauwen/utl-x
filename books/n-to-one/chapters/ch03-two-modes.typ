@@ -115,6 +115,8 @@ USDL also clarifies a structural point the rest of the book leans on. A single t
 
 One boundary closes the loop. USDL is an *execution-side, schema-level* facility — it is how schemas are read, transformed, and produced — and its payoff is largely a payoff of *Execution* mode on T2 payloads. In the N:1 *data* mapping this book is about, USDL appears only as the form in which a contract is read; it is not a participant in the Message Contract correspondence analysis. Its benefit is real, and it lives mostly on the other side of the mode line from where the rest of these pages work.
 
+One thread of it does cross the line, and it is worth flagging. Among the things USDL normalises is the schema's *documentation* — `%documentation`, `%description` — and documentation is human-authored *meaning*, which is exactly what the correspondence analysis is shortest of. So the one part of USDL that genuinely aids Message Contract mode is not its machinery but its prose; that thread is picked up in Chapter 5.
+
 == Where This Book Stands
 
 Almost everything that follows is Message Contract mode. Part II's schema graphs, matchers, and correspondence sets are design-time objects in the shape reading. Execution mode appears only at the edges: as the thing whose correctness Message Contract mode cannot fully guarantee (instance-adequacy is its province), and as the run-time path that must be kept pristine.
