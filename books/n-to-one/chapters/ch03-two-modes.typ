@@ -74,6 +74,17 @@ A schema graph (shape) and an instance (data) addressed by the *same paths*. The
 
 This matters for N:1 mapping specifically. In Message Contract mode the analysis lives entirely in the shape reading: input schema graphs on one side, the output contract on the other, correspondences between them. Sample instances, when present, are projected onto those graphs for human insight, but they never define the correspondences. The mapping is a relationship between *shapes*; data is how you check it later, in the other mode.
 
+A concrete instance of this projection is worth seeing, because the tooling already ships it. For any input, the IDE can compute a *deterministic abstract* — a no-AI summary that walks the UDM and reports only what is there: the root entity, the section fields, the array cardinalities, the nesting depth. For the running order it reads roughly:
+
+```
+root: Order  (object)
+sections: orderId, orderDate, customer, lineItems
+arrays: lineItems[*]  — cardinality: many
+depth: 3  (Order -> lineItems -> product)
+```
+
+Because it reports only what the tree contains, it cannot hallucinate; it produces *facts*. But *which* facts depends on the source, and the distinction is the same mode boundary drawn above. Built from a *schema*, the abstract is the declared contract — authoritative shape. Built from a *sample instance*, it is a *lower bound*: it shows what appeared in that one message, not what the schema requires, makes optional, or permits but the sample happened to omit. A deterministic abstract of a sample is genuine evidence about shape; it is never, on its own, the contract. Honest tooling labels the two — "from schema" versus "from sample" — so the reader never mistakes a lower bound for a guarantee.
+
 == Two Tiers: When the Data Is a Schema
 
 The one-sentence gloss — _Execution mode transforms data_ — is a useful first approximation that now needs widening, because UTLX transforms more than instance data. Its formats fall into two tiers. *Tier 1* (T1) are the _data formats_ — XML, JSON, YAML, CSV, OData — the instances moved and reshaped every day. *Tier 2* (T2) are the _schema formats_ — XSD, JSON Schema, Avro, Protobuf, EDMX, Table Schema — the definitions that say what a T1 instance must look like.

@@ -58,6 +58,16 @@ This is why UDM can represent both the data flowing through a transformation and
 
 Keeping this distinction explicit pays off immediately. A *schema graph* — the object Part II reasons over — is the shape reading of UDM, enriched with keys and foreign keys. A *data UDM* — the object a transformation actually produces — is the value reading. They share a coordinate system (the same paths address both), which is what lets a tool align an instance onto its schema without either holding a pointer to the other. We will use that alignment in Chapter 3 and again when we visualise mappings.
 
+It helps to fix one term before it sprawls. The shape reading of a UDM tree is its *schema*, and this book meets it at three granularities — the same object seen at increasing scope:
+
+#block(fill: luma(245), inset: 10pt, radius: 4pt, width: 100%)[
+  - A *schema-field node* — a data node plus its obligations (`required`, a constraint, a cardinality). The building block.
+  - A *schema graph* — those nodes joined by key and foreign-key edges into a navigable whole. The object the matchers reason over; built in full in Chapter 4.
+  - A *schema document* — the entire schema as one envelope, which also records facts about the schema itself, such as the input's role and type. Developed in Chapter 8.
+]
+
+Node, graph, document: not three things but one, addressed at the level of a field, of the connected structure, and of the whole. Where this book says "schema" without qualification, the granularity is whichever the context needs.
+
 == Schema Is Metadata
 
 The shape reading has a more familiar name: *metadata* — data about data. A schema is exactly that: a formal description of a *class* of data instances — their names, types, cardinalities, and constraints — with no particular instance's values. To say UDM has a shape reading and a data reading is to say it can be read as metadata or as data: the schema graph of Part II is metadata; the instance a transformation produces is data; and they share one node model because metadata is, in the end, data with the values abstracted and the obligations retained.
