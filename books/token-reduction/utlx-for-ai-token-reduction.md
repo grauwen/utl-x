@@ -16,6 +16,20 @@ Two industrial disciplines name this problem precisely:
 
 This article maps both onto UTLX. The pitch in one line: **UTLX turns a payload into the leanest representation the model still understands, deterministically where it can and by measurement where it must.**
 
+### 1.1 How Tokenizers Count — BPE in One Minute
+
+Everything that follows rests on one fact about how models read. An LLM does not see characters or words — it sees **tokens**, and you pay per token, on the input *and* the output. A *tokenizer* maps text to tokens, and modern ones are **subword** tokenizers, most commonly **BPE — Byte-Pair Encoding**. BPE starts from individual bytes and, over a huge training corpus, repeatedly merges the most frequent adjacent pair into a single token. The result is a vocabulary in which *common* strings — frequent words, frequent substrings — are a single token, while *rare or unusual* strings fragment into many small pieces. (GPT models use BPE variants like `tiktoken`; Claude and others use their own subword tokenizers of the same family. The exact merges differ; the principle does not.)
+
+Five consequences drive the rest of this article:
+
+- **Token count ≠ character count ≠ word count.** A *shorter* string can cost *more* tokens if it is unusual.
+- **Common is cheap, ad-hoc is dear.** `preserve` may be one token; `prsrv` may be three. This is why vowel-stripping and cryptic abbreviations (§5) often *cost* tokens instead of saving them.
+- **camelCase splits.** Composite names like `preserveNullValues` typically break at the case boundaries into several tokens — what makes verbose keys expensive and *meaningful* abbreviation occasionally worthwhile.
+- **Repetition repeats the cost.** Every occurrence of a key or tag is re-tokenized, so structure that repeats — JSON/YAML keys per record, XML's paired tags — pays its token cost again and again. This is the heart of the format argument (§3).
+- **Punctuation and whitespace are tokens too.** Braces, quotes, commas, indentation all count — which is why YAML beats JSON, and CSV beats both on the right shape.
+
+Whenever a claim in this article seems counter-intuitive — *why would a shorter string cost more?* — the answer is always here: **the tokenizer rewards what it has seen often, not what is short.** If you take one tool away, take this: run your real field names and sample payloads through a token counter (`tiktoken` or your provider's) and measure, rather than reasoning from character counts.
+
 ---
 
 ## 2. The Map of the Territory
