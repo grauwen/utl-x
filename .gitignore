@@ -57,6 +57,9 @@ htmlcov/
 *.swo
 *~
 
+# Microsoft Office owner/lock files (e.g. ~$report.docx, ~$sheet.xlsx)
+~$*
+
 # Package files
 *.tgz
 *.zip
