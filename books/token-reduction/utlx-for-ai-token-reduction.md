@@ -265,3 +265,59 @@ The control chart on output drift is the heart of it: a flip is safe and needs o
 > **Lossless first, lossy by measurement, abbreviation last.** Flip the format wherever the deterministic test says it's safe — that's free waste removal and it ships today, reusing the archetype machinery UTLX already has — leaning the *input* to CSV/YAML while still asking the model to *output* JSON for reliability. Prune fields only for prompts run often enough to fund the measurement, only with guardrails against the edge cases, and only as a *controlled* process you keep re-measuring. Abbreviate last, on what survives the prune, preferring meaningful aliases over cryptic codes and a reversible alias table over an edited schema. UTLX is the right transform for all of it because it is format-agnostic, path-addressable, and deterministic — the same three properties that make a mapping trustworthy make a prompt lean.
 
 From a full payload, the leanest the model still understands. Many tokens, fewer.
+
+---
+
+## 11. Theoretical Grounding & Related Work
+
+Token reduction is not a novelty; it is a meeting point of several mature fields. Naming them turns the recipes above into something with a foundation — and shows where UTLX's contribution actually sits.
+
+**Compression and information theory — the lossless/lossy split itself.** The distinction this article is built on is the classical boundary between *source coding* and *rate–distortion* (Shannon, 1948). The lossless format-flip is source coding: re-encoding identical information toward its **entropy** floor — which is why CSV's removal of repeated keys has a hard limit, and why nothing compresses below the data's information content. The lossy field-pruning is rate–distortion: trading *rate* (tokens) for *distortion* (output-quality loss), so an ablation study is empirically tracing a rate–distortion curve and the relevance threshold is an operating point on it. The pruning *objective* has a precise name — the **Information Bottleneck** (Tishby, Pereira & Bialek, 1999; Tishby & Zaslavsky, 2015): compress input $X$ into $Z$ minimising $I(X;Z)$ while preserving $I(Z;Y)$ for output $Y$. A field's relevance is an estimate of $I(\text{field}; \text{output})$, and pruning is the Information Bottleneck applied to a payload.
+
+**Interpretability and attribution — the measurement layer.** Every relevance method of §4 is feature attribution from interpretable machine learning: **Shapley-value attribution** (Lundberg & Lee, 2017) underlies the SHAP-style sampling; **LIME** (Ribeiro et al., 2016) is the perturbation lineage; **Integrated Gradients** (Sundararajan et al., 2017) is the gradient-saliency method; **attention rollout** (Abnar & Zuidema, 2020) aggregates attention flow. The article's caution — *confirm attention maps with ablation* — is the "Attention is not Explanation" debate made operational (Jain & Wallace, 2019; Wiegreffe & Pinter, 2019).
+
+**Prompt-compression systems — the applied prior art, and where UTLX differs.** A fast-moving line compresses prompts directly: **LLMLingua** and its successors (Jiang et al., 2023–2024) drop low-perplexity tokens; **Selective Context** (Li et al., 2023) prunes by self-information; **Gist tokens** (Mu et al., 2023) and **AutoCompressors** (Chevalier et al., 2023) learn soft compressions; **Lost in the Middle** (Liu et al., 2023) studies where surviving content should sit. These compress *free text, statistically, token by token* — lossy, learned, and hard to audit. UTLX occupies the complementary niche: *structured data, at the path level, deterministically* — a provably-lossless flip and a measured, reviewable pruning mapping, where the compression "codebook" is a UTLX transform you can diff, version, and reverse. **Auditable structured-data compression, not statistical free-text compression.**
+
+**Tokenization — why §1.1 holds.** BPE began as a data-compression algorithm (Gage, 1994) and entered NLP as subword units (Sennrich, Haddow & Birch, 2016); the cost asymmetries the article exploits — common strings cheap, ad-hoc strings dear — are properties of that construction.
+
+**Quality engineering — the process framing.** The Lean / Six-Sigma loop is statistical process control (Shewhart, 1931; Deming, 1986) with a measure of robust design (Taguchi): the ablation harness with a drift control chart is SPC applied to prompt quality, and the recurrence gate is the economics of when measurement pays.
+
+**Where UTLX sits.** UTLX is the *transformation* layer; this body of theory is the *measurement and decision* layer, and they compose. Path-addressability makes $I(\text{path}; \text{output})$ a per-rule score; determinism and reversibility supply the auditability the lossless half guarantees and the lossy half records; the rate–distortion view gives a principled stopping rule. It is the same move the companion theory of N:1 mapping makes — grounding an engineering practice in established theory, so the tools have somewhere to stand.
+
+## Bibliography
+
+Abnar, S. & Zuidema, W. (2020). Quantifying Attention Flow in Transformers. _ACL._
+
+Chevalier, A., Wettig, A., Ajith, A. & Chen, D. (2023). Adapting Language Models to Compress Contexts (AutoCompressors). _EMNLP._
+
+Deming, W. E. (1986). _Out of the Crisis._ MIT Press.
+
+Gage, P. (1994). A New Algorithm for Data Compression. _The C Users Journal_ 12(2).
+
+Jain, S. & Wallace, B. C. (2019). Attention is not Explanation. _NAACL._
+
+Jiang, H., Wu, Q., Lin, C.-Y., Yang, Y. & Qiu, L. (2023). LLMLingua: Compressing Prompts for Accelerated Inference of Large Language Models. _EMNLP._ (See also LongLLMLingua and LLMLingua-2, 2024.)
+
+Li, Y., Dong, B., Guerin, F. & Lin, C. (2023). Compressing Context to Enhance Inference Efficiency of Large Language Models (Selective Context). _EMNLP._
+
+Liu, N. F., Lin, K., Hewitt, J., Paranjape, A., Bevilacqua, M., Petroni, F. & Liang, P. (2023). Lost in the Middle: How Language Models Use Long Contexts. _TACL._
+
+Lundberg, S. M. & Lee, S.-I. (2017). A Unified Approach to Interpreting Model Predictions (SHAP). _NeurIPS._
+
+Mu, J., Li, X. L. & Goodman, N. (2023). Learning to Compress Prompts with Gist Tokens. _NeurIPS._
+
+Ribeiro, M. T., Singh, S. & Guestrin, C. (2016). "Why Should I Trust You?": Explaining the Predictions of Any Classifier (LIME). _KDD._
+
+Sennrich, R., Haddow, B. & Birch, A. (2016). Neural Machine Translation of Rare Words with Subword Units (BPE). _ACL._
+
+Shannon, C. E. (1948). A Mathematical Theory of Communication. _Bell System Technical Journal_ 27.
+
+Shewhart, W. A. (1931). _Economic Control of Quality of Manufactured Product._ Van Nostrand.
+
+Sundararajan, M., Taly, A. & Yan, Q. (2017). Axiomatic Attribution for Deep Networks (Integrated Gradients). _ICML._
+
+Tishby, N., Pereira, F. C. & Bialek, W. (1999). The Information Bottleneck Method. _Allerton Conf. on Communication, Control, and Computing._
+
+Tishby, N. & Zaslavsky, N. (2015). Deep Learning and the Information Bottleneck Principle. _IEEE Information Theory Workshop._
+
+Wiegreffe, S. & Pinter, Y. (2019). Attention is not not Explanation. _EMNLP._
