@@ -130,7 +130,7 @@ documented individually with examples. Use as a lookup reference.
 
 ## A Note on Versions
 
-This book covers UTL-X v1.1.0. The CLI tool (`utlx`) and its 650+
+This book covers UTL-X v1.3.0. The CLI tool (`utlx`) and its 650+
 standard library functions are stable. The production engine (`utlxe`)
 and IDE daemon (`utlxd`) are in active development; chapters covering
 those components reflect their state at time of writing and may evolve.

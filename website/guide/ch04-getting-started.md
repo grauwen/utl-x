@@ -20,7 +20,7 @@ Verify:
 
 ``` bash
 utlx --version
-# UTL-X CLI v1.1.0
+# UTL-X CLI v1.3.0
 # Universal Transformation Language Extended
 ```
 
@@ -54,17 +54,17 @@ Native binaries are available from GitHub Releases for every platform:
 
 ``` bash
 # macOS (Apple Silicon)
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-macos-arm64 -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.3.0/utlx-macos-arm64 -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 
 # Linux (x64)
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.1.0/utlx-linux-x64 -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.3.0/utlx-linux-x64 -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 
 # Windows: download utlx-windows-x64.exe from
-# https://github.com/grauwen/utl-x/releases/tag/v1.1.0
+# https://github.com/grauwen/utl-x/releases/tag/v1.3.0
 # and place in a directory on your PATH
 ```
 

@@ -176,6 +176,10 @@ data — the schema structure becomes the transformation input.
 | 1.0.1 | April 2026 | CLI enhancements: `-e` expression mode, identity flip, `--from`/`--to` flags. |
 | 1.0.2 | April 2026 | Bug fixes: XML text unwrapping in UDM, `_text` leaking into JSON/YAML output. New: `writeAttributes` option, `#text` key for text content, `@` prefix consistency for JSON and YAML. |
 | 1.1.0 | May 2026 | Major feature release. Newline separators (commas optional in multi-line objects and match cases). Data restructuring functions: nestBy, lookupBy, chunkBy, unnest. USDL enrichment for all 6 Tier 2 parsers. groupBy returns Object + mapGroups. `#text` alias for `_text`. `xs:decimal` type mapping with JSON Schema `"format": "decimal"`. GraalVM native binary fixes — 650+ stdlib functions work in native image. Native binary startup  7ms. |
+| 1.2.0 | May 2026 | Non-UTF-8 encoding support (B20) across core, formats, and CLI — read and write data in legacy encodings, not just UTF-8. |
+| 1.2.1 | May 2026 | Security library merged into the standard library (F11). JSON Patch — RFC 6902 (F15). Systematic Gradle test coverage for every stdlib function (F19). IDE XSLT Migration Assistant (IF02). |
+| 1.2.2 | June 2026 | New `convert` command for quick, script-free format conversion (F20). Stdlib functions now work inside `map`/`filter`/`reduce` (B25). CLI error-handling fixes: no more double-printed errors, stack-trace dumps, or hangs on missing input (B26). |
+| 1.3.0 | July 2026 | **Breaking** — package namespace migration. Every package moved from `org.apache.utlx.*` to `com.glomidco.utlx.*` and the Maven group changed to `com.glomidco.utlx`. Library consumers: find/replace imports and update the dependency groupId; genuine Apache dependencies are unaffected. No functional or API changes — names only; the CLI and native binaries are drop-in. |
 
 ## Appendix G: License
 
