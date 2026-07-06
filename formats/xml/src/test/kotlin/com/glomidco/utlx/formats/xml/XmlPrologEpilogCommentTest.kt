@@ -100,4 +100,15 @@ class XmlPrologEpilogCommentTest {
         ).parse()
         assertEquals(noDecl, XMLParser(xml).parse())
     }
+
+    @Test
+    fun `truncated declaration yields a clean parse error, not IndexOutOfBounds`() {
+        val ex = assertThrows(XMLParseException::class.java) {
+            XMLParser("""<?xml version="1.0"""").parse()
+        }
+        assertTrue(
+            ex.message!!.contains("Unterminated XML declaration"),
+            "expected a clean 'Unterminated XML declaration', got: ${ex.message}"
+        )
+    }
 }

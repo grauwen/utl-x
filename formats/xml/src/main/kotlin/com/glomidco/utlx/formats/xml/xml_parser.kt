@@ -70,6 +70,11 @@ class XMLParser(
             // Read the entire declaration to extract encoding
             val declarationStart = current
             skipUntil("?>")
+            // B27: a truncated declaration (no closing "?>") would otherwise run the advance()
+            // calls below past end-of-input and throw a raw IndexOutOfBounds — surface a clean error.
+            if (isAtEnd()) {
+                throw XMLParseException("Unterminated XML declaration", line, column)
+            }
             val declarationEnd = current
 
             // Extract the declaration text
