@@ -63,7 +63,7 @@ The interpreter converts attribute values to strings during object literal evalu
 
 ### Exact Fix Location **[IDENTIFIED]**
 
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
 **Line**: 232
 
 **Current Code (WRONG):**
@@ -87,7 +87,7 @@ This matches the logic already used in `xml_serializer.kt:354-356` for element c
 
 ### Resolution (2025-10-31)
 
-**Fixed in**: `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt:228-268`
+**Fixed in**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt:228-268`
 
 The fix properly handles both `RuntimeValue.NumberValue` (literals) and `RuntimeValue.UDMValue` (from input) by checking actual types instead of using coercion methods:
 
@@ -180,12 +180,12 @@ echo '{"quantity": 42}' | ./utlx transform /tmp/test_int_attr.yaml
 ## Related Files
 
 ### Implementation
-- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` - Bug #2 fixed (lines 228-268), Auto-unwrapping logic (line 473-474)
-- `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt` - Creates `_text` property (line 201)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` - Bug #2 fixed (lines 228-268), Auto-unwrapping logic (line 473-474)
+- `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt` - Creates `_text` property (line 201)
 
 ### Tests
 - `conformance-suite/tests/formats/xml/attributes/*.yaml` - 9 conformance tests (8 passing)
-- `formats/xml/src/test/kotlin/org/apache/utlx/formats/xml/xml_tests.kt` - Unit tests (XMLAttributeSyntaxTest, 8/9 passing)
+- `formats/xml/src/test/kotlin/com/glomidco/utlx/formats/xml/xml_tests.kt` - Unit tests (XMLAttributeSyntaxTest, 8/9 passing)
 
 ### Documentation
 - `docs/xml/xml_readme.md` - Documents `_text` convention and `@attribute` syntax

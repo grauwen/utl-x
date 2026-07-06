@@ -2,7 +2,7 @@ plugins {
     kotlin("jvm")
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.2.2"
 
 dependencies {

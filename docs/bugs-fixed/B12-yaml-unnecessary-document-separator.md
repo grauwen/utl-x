@@ -31,7 +31,7 @@ city: Edinburgh
 
 ## Root Cause
 
-In `formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLSerializer.kt`, the `SerializeOptions` data class defaulted `explicitStart` to `true`:
+In `formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLSerializer.kt`, the `SerializeOptions` data class defaulted `explicitStart` to `true`:
 
 ```kotlin
 // BEFORE
@@ -47,7 +47,7 @@ Changed the default to `false`:
 val explicitStart: Boolean = false,
 ```
 
-**File:** `formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLSerializer.kt`, line 35
+**File:** `formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLSerializer.kt`, line 35
 
 The `---` separator can still be enabled via header options if needed for multi-document YAML.
 

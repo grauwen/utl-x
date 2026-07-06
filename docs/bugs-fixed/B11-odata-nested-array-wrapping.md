@@ -53,7 +53,7 @@ A JSON-to-OData transformation produces incorrect output for any property that c
 
 ## Root Cause
 
-In `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONSerializer.kt`, the `annotateArray()` method checked `wrapCollection` without checking `isRoot`:
+In `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/ODataJSONSerializer.kt`, the `annotateArray()` method checked `wrapCollection` without checking `isRoot`:
 
 ```kotlin
 // BEFORE (broken)
@@ -75,7 +75,7 @@ if (wrapCollection && isRoot) {
 }
 ```
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONSerializer.kt`, line 110
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/ODataJSONSerializer.kt`, line 110
 
 ## Testing
 

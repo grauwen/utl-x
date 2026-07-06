@@ -16,19 +16,19 @@ UTL-X provides comprehensive BOM (Byte Order Mark, U+FEFF) support across all te
 All parsers automatically detect and strip BOMs:
 
 ### JSON Parser
-- **File**: `formats/json/src/main/kotlin/org/apache/utlx/formats/json/json_parser.kt`
+- **File**: `formats/json/src/main/kotlin/com/glomidco/utlx/formats/json/json_parser.kt`
 - **Implementation**: Lines 30-34
 - **Behavior**: Strips BOM before parsing per RFC 8259
 - **Status**: ✅ Fully compliant
 
 ### YAML Parser
-- **File**: `formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLParser.kt`
+- **File**: `formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLParser.kt`
 - **Implementation**: Lines 48-54, 61-68
 - **Behavior**: Strips BOM from String and InputStream inputs
 - **Status**: ✅ Fully implemented
 
 ### CSV Parser
-- **File**: `formats/csv/src/main/kotlin/formats/csv/org/apache/utlx/formats/csv/csv_parser.kt`
+- **File**: `formats/csv/src/main/kotlin/formats/csv/com/glomidco/utlx/formats/csv/csv_parser.kt`
 - **Implementation**: Lines 37-45
 - **Behavior**: Strips BOM during text initialization
 - **Status**: ✅ Fully implemented

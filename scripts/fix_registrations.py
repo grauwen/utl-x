@@ -6,7 +6,7 @@ Bulk fix all remaining lambda wrapper registrations in Functions.kt
 import re
 
 # Read the Functions.kt file
-with open('/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt', 'r') as f:
+with open('/Users/magr/Library/CloudStorage/OneDrive-GLOMIDCOB.V/experiments/mapping/github-git/utl-x/stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt', 'r') as f:
     content = f.read()
 
 # Pattern to match lambda wrapper registrations

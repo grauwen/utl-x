@@ -5,7 +5,7 @@ echo "=== UTL-X Function Annotation Enhancement (v3) ==="
 echo ""
 
 # Find all *Functions.kt files
-FILES=$(find stdlib/src/main/kotlin/org/apache/utlx/stdlib -name "*Functions.kt" -type f | grep -v "^stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt$" | sort)
+FILES=$(find stdlib/src/main/kotlin/com/glomidco/utlx/stdlib -name "*Functions.kt" -type f | grep -v "^stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt$" | sort)
 
 TOTAL=$(echo "$FILES" | wc -l | tr -d ' ')
 COUNT=0

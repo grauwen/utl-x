@@ -135,7 +135,7 @@ Success rate: 100.0%
 
 - **Language Guide**: `docs/language-guide/spread-operator.md`
 - **XML Serialization**: `formats/xml/README.md`
-- **Encoding Functions**: `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/`
+- **Encoding Functions**: `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/`
 
 ## Test History
 

@@ -68,7 +68,7 @@ The user is told the function does not exist, while the real problem is that
 
 ### 1. `StringFunctions.substring` -- no bounds clamping
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/StringFunctions.kt` line 135
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/StringFunctions.kt` line 135
 
 ```kotlin
 fun substring(args: List<UDM>): UDM {
@@ -95,7 +95,7 @@ internally.
 
 ### 2. `Interpreter.tryLoadStdlibFunction` -- exception swallowed
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` lines 1008-1032
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` lines 1008-1032
 
 ```kotlin
 } catch (ex: Exception) {

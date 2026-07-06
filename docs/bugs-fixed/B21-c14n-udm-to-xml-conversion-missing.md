@@ -2,7 +2,7 @@
 
 **Status:** Open  
 **Severity:** High (all c14n/canonicalization functions are non-functional)  
-**Scope:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt`  
+**Scope:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt`  
 **Affects:** JVM and native binary — not a GraalVM issue  
 **Created:** May 2026  
 **Discovered during:** v1.2.0 native binary validation

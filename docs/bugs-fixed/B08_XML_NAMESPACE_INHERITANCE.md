@@ -82,7 +82,7 @@ let custRequest = $input["soap:Envelope"]["soap:Body"]["cust:GetCustomerRequest"
 
 ## Root Cause
 
-### File: `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt`
+### File: `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`
 
 **Line 36:** The `inheritNamespaces` parameter defaults to `false`:
 ```kotlin
@@ -107,7 +107,7 @@ val finalAttributes = if (inheritNamespaces) {
 
 ### Secondary Issue: `namespaceUri()` function
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/QNameFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/QNameFunctions.kt`
 **Lines 104-108:**
 
 ```kotlin
@@ -138,7 +138,7 @@ The `namespaceUri()` function only looks at the element's own attributes. Withou
 
 ### Option 1: Change default `inheritNamespaces` to `true` (Recommended)
 
-**File:** `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt`
+**File:** `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`
 **Line 36:**
 
 ```kotlin
@@ -188,12 +188,12 @@ This approach keeps JSON output clean (no repeated `@xmlns:*` on every element) 
 
 ### Changes Made:
 
-1. **`formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt`**
+1. **`formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`**
    - Added `buildNsContextMetadata()` helper function
    - Each `UDM.Object` now stores `__nsContext` in metadata with format: `"prefix1=uri1|prefix2=uri2|..."`
    - Empty string `""` key used for default namespace
 
-2. **`stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/QNameFunctions.kt`**
+2. **`stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/QNameFunctions.kt`**
    - Added `parseNsContext()` helper function to parse the metadata format
    - Updated `namespaceUri()` to check `__nsContext` metadata first (before falling back to attributes)
    - Updated `hasNamespace()` to check `__nsContext` metadata first
@@ -220,8 +220,8 @@ This approach keeps JSON output clean (no repeated `@xmlns:*` on every element) 
 ## Related Files
 
 ### Implementation
-- `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt` - XMLParser with `inheritNamespaces` parameter
-- `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/QNameFunctions.kt` - `namespaceUri()` function
+- `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt` - XMLParser with `inheritNamespaces` parameter
+- `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/QNameFunctions.kt` - `namespaceUri()` function
 
 ### Tests
 - `conformance-suite/utlx/tests/examples/intermediate/xml_namespace_handling.yaml`

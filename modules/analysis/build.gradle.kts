@@ -5,7 +5,7 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-group = "org.apache.utlx.analysis"
+group = "com.glomidco.utlx.analysis"
 version = "1.2.2"
 
 // Repositories managed in settings.gradle.kts

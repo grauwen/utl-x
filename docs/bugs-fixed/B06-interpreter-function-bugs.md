@@ -10,7 +10,7 @@ Parser bug where `let ... in` syntax inside object literals caused a ClassCastEx
 
 ### Error Message
 ```
-class org.apache.utlx.core.ast.Expression$FunctionCall cannot be cast to class org.apache.utlx.core.ast.Expression$LetBinding
+class com.glomidco.utlx.core.ast.Expression$FunctionCall cannot be cast to class com.glomidco.utlx.core.ast.Expression$LetBinding
 ```
 
 ### Affected Transformations
@@ -47,7 +47,7 @@ The interpreter may be confusing `FunctionCall` nodes with `LetBinding` nodes du
 
 ### Fix Applied
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 
 **Line 1008:** Changed unsafe cast to handle both `LetBinding` and `FunctionCall` returns:
 

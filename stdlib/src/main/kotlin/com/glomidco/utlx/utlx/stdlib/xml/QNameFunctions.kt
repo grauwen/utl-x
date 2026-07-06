@@ -1,0 +1,580 @@
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/QNameFunctions.kt
+package com.glomidco.utlx.stdlib.xml
+
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.FunctionArgumentException
+import com.glomidco.utlx.stdlib.annotations.UTLXFunction
+
+/**
+ * XML QName (Qualified Name) functions for namespace handling
+ * 
+ * These functions are XML-specific and handle namespace operations
+ * essential for enterprise XML transformations.
+ */
+object QNameFunctions {
+    
+    @UTLXFunction(
+        description = "Get local name (without namespace prefix) from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "local-name(element) => \"Envelope\" (from \"soap:Envelope\")",
+        notes = "For non-XML data, returns the property name.",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Get local name (without namespace prefix) from XML element
+     * Usage: local-name(element) => "Envelope" (from "soap:Envelope")
+     * 
+     * For non-XML data, returns the property name.
+     */
+    fun localName(args: List<UDM>): UDM {
+        requireArgs(args, 1, "local-name")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Get element name: check __nodeName property first (test format), then .name field (parser format)
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+
+                // Extract local name from qualified name (after colon)
+                val localName = if (nameStr.contains(":")) {
+                    nameStr.substringAfter(":")
+                } else {
+                    nameStr
+                }
+
+                UDM.Scalar(localName)
+            }
+            else -> throw FunctionArgumentException(
+                "local-name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "Hint: Ensure you're passing an XML element/node."
+            )
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Get namespace URI from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "empty string if no namespace.",
+        example = "namespace-uri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\"",
+        notes = "Returns empty string if no namespace.",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
+    /**
+     * Get namespace URI from XML element
+     * Usage: namespace-uri(element) => "http://schemas.xmlsoap.org/soap/envelope/"
+     *
+     * Returns empty string if no namespace.
+     * Supports inherited namespaces via __nsContext metadata from XMLParser.
+     */
+    fun namespaceUri(args: List<UDM>): UDM {
+        requireArgs(args, 1, "namespace-uri")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Check for __namespaceUri property first (test format)
+                val nsUriProp = element.properties["__namespaceUri"] as? UDM.Scalar
+                if (nsUriProp != null) {
+                    return UDM.Scalar(nsUriProp.value?.toString() ?: "")
+                }
+
+                // Extract prefix from element name
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+                val prefix = if (nameStr.contains(":")) {
+                    nameStr.substringBefore(":")
+                } else {
+                    "" // No prefix, check for default namespace
+                }
+
+                // Check __nsContext metadata first (includes inherited namespaces from parser)
+                val nsContext = element.metadata["__nsContext"]
+                if (nsContext != null) {
+                    val nsMap = parseNsContext(nsContext)
+                    val uri = nsMap[prefix]
+                    if (uri != null) {
+                        return UDM.Scalar(uri)
+                    }
+                }
+
+                // Fallback: Look up namespace URI from xmlns attributes (local declarations only)
+                val namespaceUri = if (prefix.isNotEmpty()) {
+                    element.attributes["xmlns:$prefix"] ?: ""
+                } else {
+                    element.attributes["xmlns"] ?: ""
+                }
+
+                UDM.Scalar(namespaceUri)
+            }
+            else -> UDM.Scalar("")
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Get qualified name (with prefix) from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Result of the operation",
+        example = "name(element) => \"soap:Envelope\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Get qualified name (with prefix) from XML element
+     * Usage: name(element) => "soap:Envelope"
+     */
+    fun qualifiedName(args: List<UDM>): UDM {
+        requireArgs(args, 1, "name")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Get element name: check __nodeName property first (test format), then .name field (parser format)
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+                UDM.Scalar(nameStr)
+            }
+            else -> throw FunctionArgumentException(
+                "name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "Hint: Ensure you're passing an XML element/node."
+            )
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Get namespace prefix from XML element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "context: Context value"
+        ],
+        returns = "empty string if no prefix.",
+        example = "namespace-prefix(element) => \"soap\" (from \"soap:Envelope\")",
+        notes = "Returns empty string if no prefix.",
+        tags = ["cleanup", "xml"],
+        since = "1.0"
+    )
+    /**
+     * Get namespace prefix from XML element
+     * Usage: namespace-prefix(element) => "soap" (from "soap:Envelope")
+     * 
+     * Returns empty string if no prefix.
+     */
+    fun namespacePrefix(args: List<UDM>): UDM {
+        requireArgs(args, 1, "namespace-prefix")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Get element name: check __nodeName property first (test format), then .name field (parser format)
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+
+                // Extract prefix (before colon)
+                val prefix = if (nameStr.contains(":")) {
+                    nameStr.substringBefore(":")
+                } else {
+                    ""
+                }
+
+                UDM.Scalar(prefix)
+            }
+            else -> UDM.Scalar("")
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Resolve QName string to full qualified name with namespace",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "qnameStr: Qnamestr value",
+        "context: Context value"
+        ],
+        returns = "Result of the operation",
+        example = "resolve-qname(\"soap:Envelope\", context)",
+        notes = """=> { localName: "Envelope", prefix: "soap", uri: "http://..." }
+Context provides namespace bindings.""",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Resolve QName string to full qualified name with namespace
+     * Usage: resolve-qname("soap:Envelope", context) 
+     *        => { localName: "Envelope", prefix: "soap", uri: "http://..." }
+     * 
+     * Context provides namespace bindings.
+     */
+    fun resolveQName(args: List<UDM>): UDM {
+        requireArgs(args, 2, "resolve-qname")
+        val qnameStr = args[0].asString()
+        val context = args[1]
+
+        val (prefix, localName) = if (qnameStr.contains(":")) {
+            qnameStr.split(":", limit = 2).let { it[0] to it[1] }
+        } else {
+            "" to qnameStr
+        }
+
+        // Look up namespace URI from context
+        val namespaceUri = when (context) {
+            is UDM.Object -> {
+                // Check if context is a namespace map (test format: properties are prefix->uri mappings)
+                val nsFromProps = if (prefix.isNotEmpty()) {
+                    (context.properties[prefix] as? UDM.Scalar)?.value?.toString()
+                } else null
+
+                nsFromProps ?: context.attributes["xmlns:$prefix"] ?: ""
+            }
+            else -> ""
+        }
+
+        return UDM.Object(
+            mapOf(
+                "localName" to UDM.Scalar(localName),
+                "prefix" to UDM.Scalar(prefix),
+                "namespaceUri" to UDM.Scalar(namespaceUri),
+                "qualifiedName" to UDM.Scalar(qnameStr)
+            ),
+            emptyMap()
+        )
+    }
+    
+    @UTLXFunction(
+        description = "Create QName string from local name and namespace URI",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "XML",
+        parameters = [
+            "localName: Localname value",
+        "namespaceUri: Namespaceuri value"
+        ],
+        returns = "Result of the operation",
+        example = "create-qname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
+        notes = "=> \"soap:Envelope\"",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Create QName string from local name and namespace URI
+     * Usage: create-qname("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
+     *        => "soap:Envelope"
+     */
+    fun createQName(args: List<UDM>): UDM {
+        requireArgs(args, 2..3, "create-qname")
+        val localName = args[0].asString()
+        val namespaceUri = args[1].asString()
+        val prefix = if (args.size > 2) args[2].asString() else ""
+
+        val qname = if (prefix.isNotEmpty()) {
+            "$prefix:$localName"
+        } else {
+            localName
+        }
+
+        // Return structured QName object (test expects this format)
+        return UDM.Object(
+            mapOf(
+                "localName" to UDM.Scalar(localName),
+                "namespaceUri" to UDM.Scalar(namespaceUri),
+                "prefix" to UDM.Scalar(prefix),
+                "qualifiedName" to UDM.Scalar(qname)
+            ),
+            emptyMap()
+        )
+    }
+    
+    @UTLXFunction(
+        description = "Check if element has namespace",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value"
+        ],
+        returns = "Boolean indicating the result",
+        example = "has-namespace(element) => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Check if element has namespace
+     * Usage: has-namespace(element) => true
+     *
+     * Supports inherited namespaces via __nsContext metadata from XMLParser.
+     */
+    fun hasNamespace(args: List<UDM>): UDM {
+        requireArgs(args, 1, "has-namespace")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Check for __namespaceUri property first (test format)
+                val nsUriProp = element.properties["__namespaceUri"] as? UDM.Scalar
+                if (nsUriProp != null) {
+                    val nsUri = nsUriProp.value?.toString() ?: ""
+                    return UDM.Scalar(nsUri.isNotEmpty())
+                }
+
+                // Extract prefix from element name
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+                val hasPrefix = nameStr.contains(":")
+                val prefix = if (hasPrefix) nameStr.substringBefore(":") else ""
+
+                // Check __nsContext metadata first (includes inherited namespaces)
+                val nsContext = element.metadata["__nsContext"]
+                if (nsContext != null) {
+                    val nsMap = parseNsContext(nsContext)
+                    if (hasPrefix) {
+                        // Has prefix, check if it's in namespace context
+                        if (nsMap.containsKey(prefix)) {
+                            return UDM.Scalar(true)
+                        }
+                    } else {
+                        // No prefix, check for default namespace
+                        if (nsMap.containsKey("")) {
+                            return UDM.Scalar(true)
+                        }
+                    }
+                }
+
+                // Fallback: check xmlns attributes (local declarations only)
+                if (!hasPrefix) {
+                    UDM.Scalar(element.attributes.containsKey("xmlns"))
+                } else {
+                    UDM.Scalar(element.attributes.containsKey("xmlns:$prefix"))
+                }
+            }
+            else -> UDM.Scalar(false)
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Get all namespace declarations from element",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "qnamePattern: Qnamepattern value"
+        ],
+        returns = "Result of the operation",
+        example = "get-namespaces(element)",
+        notes = "=> { \"soap\": \"http://...\", \"wsa\": \"http://...\" }",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Get all namespace declarations from element
+     * Usage: get-namespaces(element) 
+     *        => { "soap": "http://...", "wsa": "http://..." }
+     */
+    fun getNamespaces(args: List<UDM>): UDM {
+        requireArgs(args, 1, "get-namespaces")
+        val element = args[0]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Check for __namespaces property first (test format)
+                val namespacesProperty = element.properties["__namespaces"]
+                if (namespacesProperty is UDM.Object) {
+                    return namespacesProperty
+                }
+
+                // Otherwise extract from xmlns attributes (parser format)
+                val namespaces = mutableMapOf<String, UDM>()
+
+                // Extract all xmlns: attributes
+                for ((key, value) in element.attributes) {
+                    if (key.startsWith("xmlns:")) {
+                        val prefix = key.substringAfter("xmlns:")
+                        namespaces[prefix] = UDM.Scalar(value)
+                    }
+                }
+
+                // Add default namespace if present
+                element.attributes["xmlns"]?.let {
+                    namespaces[""] = UDM.Scalar(it)
+                }
+
+                UDM.Object(namespaces, emptyMap())
+            }
+            else -> UDM.Object(emptyMap(), emptyMap())
+        }
+    }
+    
+    @UTLXFunction(
+        description = "Match element by qualified name",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "XML",
+        parameters = [
+            "element: Element value",
+        "qnamePattern: Qnamepattern value"
+        ],
+        returns = "Result of the operation",
+        example = "matches-qname(element, \"soap:Envelope\") => true",
+        tags = ["xml"],
+        since = "1.0"
+    )
+    /**
+     * Match element by qualified name
+     * Usage: matches-qname(element, "soap:Envelope") => true
+     */
+    fun matchesQName(args: List<UDM>): UDM {
+        requireArgs(args, 2, "matches-qname")
+        val element = args[0]
+        val qnamePattern = args[1]
+
+        return when (element) {
+            is UDM.Object -> {
+                // Get element's local name and namespace URI
+                val nodeNameProp = element.properties["__nodeName"] as? UDM.Scalar
+                val nameStr = nodeNameProp?.value?.toString() ?: element.name ?: ""
+                val elementLocalName = if (nameStr.contains(":")) {
+                    nameStr.substringAfter(":")
+                } else {
+                    nameStr
+                }
+
+                val nsUriProp = element.properties["__namespaceUri"] as? UDM.Scalar
+                val elementNsUri = nsUriProp?.value?.toString() ?: ""
+
+                // Check if qnamePattern is a string or QName object
+                val matches = when (qnamePattern) {
+                    is UDM.Scalar -> {
+                        // String pattern - compare full qualified name
+                        val patternStr = qnamePattern.value?.toString() ?: ""
+                        nameStr == patternStr
+                    }
+                    is UDM.Object -> {
+                        // QName object - compare local name and namespace URI
+                        val patternLocalName = (qnamePattern.properties["localName"] as? UDM.Scalar)?.value?.toString() ?: ""
+                        val patternNsUri = (qnamePattern.properties["namespaceUri"] as? UDM.Scalar)?.value?.toString() ?: ""
+                        elementLocalName == patternLocalName && elementNsUri == patternNsUri
+                    }
+                    else -> false
+                }
+
+                UDM.Scalar(matches)
+            }
+            else -> UDM.Scalar(false)
+        }
+    }
+    
+    /**
+     * Parse namespace context string from __nsContext metadata.
+     * Format: "prefix1=uri1|prefix2=uri2|..." (empty string "" key for default namespace)
+     * Handles escaped characters: \\ for \, \| for |, \= for =
+     */
+    private fun parseNsContext(nsContext: String): Map<String, String> {
+        if (nsContext.isEmpty()) return emptyMap()
+
+        val result = mutableMapOf<String, String>()
+        var i = 0
+        val entries = mutableListOf<String>()
+        val current = StringBuilder()
+
+        // Split by | handling escapes
+        while (i < nsContext.length) {
+            when {
+                nsContext[i] == '\\' && i + 1 < nsContext.length -> {
+                    current.append(nsContext[i + 1])
+                    i += 2
+                }
+                nsContext[i] == '|' -> {
+                    entries.add(current.toString())
+                    current.clear()
+                    i++
+                }
+                else -> {
+                    current.append(nsContext[i])
+                    i++
+                }
+            }
+        }
+        if (current.isNotEmpty()) {
+            entries.add(current.toString())
+        }
+
+        // Parse each entry as prefix=uri
+        for (entry in entries) {
+            val eqIndex = entry.indexOf('=')
+            if (eqIndex >= 0) {
+                val prefix = entry.substring(0, eqIndex)
+                val uri = entry.substring(eqIndex + 1)
+                    .replace("\\=", "=")
+                    .replace("\\|", "|")
+                    .replace("\\\\", "\\")
+                result[prefix] = uri
+            }
+        }
+
+        return result
+    }
+
+    private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
+        if (args.size != expected) {
+            throw FunctionArgumentException("$functionName expects $expected argument(s), got ${args.size}")
+        }
+    }
+    
+    private fun requireArgs(args: List<UDM>, range: IntRange, functionName: String) {
+        if (args.size !in range) {
+            throw FunctionArgumentException("$functionName expects ${range.first}..${range.last} arguments, got ${args.size}")
+        }
+    }
+    
+    private fun UDM.asString(): String = when (this) {
+        is UDM.Scalar -> value?.toString() ?: ""
+        else -> throw FunctionArgumentException(
+            "Expected string value, but got ${getTypeDescription(this)}. " +
+            "Hint: Use toString() to convert values to strings."
+        )
+    }
+
+    private fun getTypeDescription(udm: UDM): String {
+        return when (udm) {
+            is UDM.Scalar -> {
+                when (val value = udm.value) {
+                    is String -> "string"
+                    is Number -> "number"
+                    is Boolean -> "boolean"
+                    null -> "null"
+                    else -> value.javaClass.simpleName
+                }
+            }
+            is UDM.Array -> "array"
+            is UDM.Object -> "object"
+            is UDM.Binary -> "binary"
+            is UDM.DateTime -> "datetime"
+            is UDM.Date -> "date"
+            is UDM.LocalDateTime -> "localdatetime"
+            is UDM.Time -> "time"
+            is UDM.Lambda -> "lambda"
+            else -> udm.javaClass.simpleName
+        }
+    }
+}

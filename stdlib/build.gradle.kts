@@ -4,7 +4,7 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.2.2"
 
 // Repository management is handled in settings.gradle.kts
@@ -61,7 +61,7 @@ tasks.register<JavaExec>("generateFunctionRegistry") {
     description = "Generate UTL-X function registry for external tools"
     
     classpath = sourceSets.main.get().runtimeClasspath
-    mainClass.set("org.apache.utlx.stdlib.buildtools.FunctionRegistryGeneratorKt")
+    mainClass.set("com.glomidco.utlx.stdlib.buildtools.FunctionRegistryGeneratorKt")
     
     val outputDir = file("$buildDir/generated/function-registry")
     args(outputDir.absolutePath)

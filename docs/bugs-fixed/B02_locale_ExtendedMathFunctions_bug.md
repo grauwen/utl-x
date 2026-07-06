@@ -36,7 +36,7 @@ All tests hardcode US format expectations (e.g., `assertEquals("1,234.56", resul
 
 ## Root Cause
 
-**File**: `stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/ExtendedMathFunctions.kt`
+**File**: `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/math/ExtendedMathFunctions.kt`
 
 **Line**: 40 (before fix)
 
@@ -131,7 +131,7 @@ Output varies by system locale:
 
 ### Code Changes
 
-**File**: `stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/ExtendedMathFunctions.kt`
+**File**: `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/math/ExtendedMathFunctions.kt`
 
 **Added Imports** (lines 7-8):
 ```kotlin
@@ -264,7 +264,7 @@ For locale-specific formatting, users should use the regional formatting functio
 
 - **Java Documentation**: [DecimalFormat](https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormat.html)
 - **Java Documentation**: [DecimalFormatSymbols](https://docs.oracle.com/javase/8/docs/api/java/text/DecimalFormatSymbols.html)
-- **Related Tests**: `stdlib/src/test/kotlin/org/apache/utlx/stdlib/math/ExtendedMathFunctionsTest.kt`
+- **Related Tests**: `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/math/ExtendedMathFunctionsTest.kt`
 - **Regional Formatting**: See `stdlib/regional` functions for locale-specific formatting
 
 ## Reporter Credits

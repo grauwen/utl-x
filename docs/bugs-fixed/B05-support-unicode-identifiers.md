@@ -27,7 +27,7 @@ should the utlx parser support unicode identifiers? Is it a bug?
 
  Root Cause
 
- File: modules/core/src/main/kotlin/org/apache/utlx/core/lexer/lexer_impl.kt
+ File: modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/lexer_impl.kt
 
  Line 218: The initial identifier character check uses ASCII-only ranges:
  in 'a'..'z', in 'A'..'Z', '_' -> {

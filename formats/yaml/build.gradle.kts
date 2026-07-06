@@ -4,7 +4,7 @@ plugins {
     id("org.jetbrains.dokka")
 }
 
-group = "org.apache.utlx.formats"
+group = "com.glomidco.utlx.formats"
 version = "1.2.2"
 
 // Repository management is handled in settings.gradle.kts

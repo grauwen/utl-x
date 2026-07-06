@@ -1,0 +1,740 @@
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt
+package com.glomidco.utlx.cli.commands
+
+import com.glomidco.utlx.cli.service.TransformationService
+import com.glomidco.utlx.cli.capture.TestCaptureService
+import com.glomidco.utlx.cli.CommandResult
+import com.glomidco.utlx.core.debug.DebugConfig
+import java.io.File
+
+/**
+ * Transform command - CLI wrapper for TransformationService
+ * Handles file I/O and delegates transformation logic to TransformationService
+ *
+ * Usage:
+ *   utlx transform <input-file> <script-file> [options]
+ *   utlx transform <script-file> [options]  # reads from stdin
+ *   cat data.xml | utlx                     # identity mode: auto-detect input, smart flip output
+ *   cat data.xml | utlx --to json           # identity mode with explicit output format
+ */
+object TransformCommand {
+
+    // Create service instance
+    private val transformationService = TransformationService()
+
+    data class TransformOptions(
+        val namedInputs: Map<String, File> = emptyMap(),        // Named inputs: input1=file1.xml, input2=file2.json
+        val namedOutputs: Map<String, File> = emptyMap(),       // Named outputs: summary=out.json, details=out.xml
+        val scriptFile: File? = null,                           // null = identity mode (passthrough)
+        val expression: String? = null,                         // -e inline expression
+        val inputFormat: String? = null,
+        val outputFormat: String? = null,
+        val verbose: Boolean = false,
+        val pretty: Boolean = true,
+        val rawOutput: Boolean = false,                         // -r strip quotes from string output
+        val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
+        val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
+        val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
+        val strictTypes: Boolean = false,  // Enforce type checking (fail on type errors)
+        val identityMode: Boolean = false,  // true = no script, passthrough with smart format flip
+        val charset: String? = null  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
+    ) {
+        // Backward compatibility properties
+        val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
+        val outputFile: File? get() = namedOutputs["output"] ?: namedOutputs.values.firstOrNull()
+        val hasMultipleInputs: Boolean get() = namedInputs.size > 1
+        val hasMultipleOutputs: Boolean get() = namedOutputs.size > 1
+    }
+
+    /**
+     * Detect format from data content (same logic as TransformationService auto-detect)
+     */
+    private fun detectFormatFromContent(data: String): String {
+        val trimmed = data.trim()
+        return when {
+            trimmed.startsWith("<") -> "xml"
+            trimmed.startsWith("{") || trimmed.startsWith("[") -> "json"
+            trimmed.startsWith("---") || trimmed.contains(":\n") || trimmed.contains(": ") -> "yaml"
+            trimmed.contains(",") && trimmed.lines().size > 1 -> {
+                val lines = trimmed.lines().filter { it.isNotBlank() }
+                val firstLineCommas = lines.firstOrNull()?.count { it == ',' } ?: 0
+                if (firstLineCommas > 0 && lines.take(3).all { it.count { c -> c == ',' } == firstLineCommas }) {
+                    "csv"
+                } else {
+                    "json"
+                }
+            }
+            else -> "json"
+        }
+    }
+
+    /**
+     * Smart format flip: choose the most useful output format based on detected input.
+     * XML↔JSON is the #1 use case; everything else defaults to JSON.
+     */
+    private fun inferOutputFormat(detectedInputFormat: String): String {
+        return when (detectedInputFormat) {
+            "xml"  -> "json"
+            "json" -> "xml"
+            else   -> "json"
+        }
+    }
+
+    /**
+     * Expand dot shorthand to $input references in -e expressions.
+     * This is a pre-processing step before the expression is wrapped in a UTL-X script.
+     *
+     * Rules:
+     * - "." alone → "$input" (identity)
+     * - ".name" at start → "$input.name"
+     * - "..name" at start → "$input..name" (recursive descent)
+     * - ".name" after (, =>, , or whitespace → "$input.name"
+     * - Dots inside strings are not touched
+     * - "$input.name" is left unchanged
+     */
+    private fun expandDotShorthand(expression: String): String {
+        if (!expression.contains('.')) return expression
+        if (expression.contains("\$input")) return expression // already explicit
+
+        val result = StringBuilder()
+        var i = 0
+        var inString = false
+        var stringChar = ' '
+
+        while (i < expression.length) {
+            val ch = expression[i]
+
+            // Track string boundaries
+            if (!inString && (ch == '"' || ch == '\'')) {
+                inString = true
+                stringChar = ch
+                result.append(ch)
+                i++
+                continue
+            }
+            if (inString) {
+                if (ch == stringChar && (i == 0 || expression[i - 1] != '\\')) {
+                    inString = false
+                }
+                result.append(ch)
+                i++
+                continue
+            }
+
+            // Check for dot that should be expanded
+            if (ch == '.') {
+                // Is this a dot at a position where it starts a path expression?
+                val prevChar = if (i > 0) expression[i - 1] else ' '
+                val isPathStart = i == 0 ||
+                    prevChar == '(' || prevChar == ',' || prevChar == ' ' || prevChar == '\t' ||
+                    prevChar == '\n' || prevChar == '>' // => arrow
+
+                if (isPathStart) {
+                    // Check for .. (recursive descent)
+                    if (i + 1 < expression.length && expression[i + 1] == '.') {
+                        result.append("\$input..")
+                        i += 2
+                    } else if (i + 1 < expression.length && (expression[i + 1].isLetterOrDigit() || expression[i + 1] == '@' || expression[i + 1] == '*')) {
+                        // .name or .@attr or .*
+                        result.append("\$input.")
+                        i++
+                    } else if (i + 1 >= expression.length || expression[i + 1] == ')' || expression[i + 1] == ',' || expression[i + 1] == ' ') {
+                        // Standalone dot = $input
+                        result.append("\$input")
+                        i++
+                    } else {
+                        result.append(ch)
+                        i++
+                    }
+                } else {
+                    // Regular dot (part of a path like obj.name) — leave as-is
+                    result.append(ch)
+                    i++
+                }
+            } else {
+                result.append(ch)
+                i++
+            }
+        }
+
+        return result.toString()
+    }
+    
+    fun execute(args: Array<String>, identityMode: Boolean = false): CommandResult {
+        val options = try {
+            parseOptions(args, allowIdentityMode = identityMode)
+        } catch (e: IllegalStateException) {
+            // Special case: --help was requested
+            if (e.message == "HELP_REQUESTED") {
+                return CommandResult.Success
+            }
+            return CommandResult.Failure(e.message ?: "Unknown error", 1)
+        } catch (e: IllegalArgumentException) {
+            // B26: argument-parsing errors carry their message here; Main.kt prints it once as
+            // "Error: <message>". parseOptions no longer prints the message itself (only usage).
+            return CommandResult.Failure(e.message ?: "Invalid arguments", 1)
+        }
+
+        // Apply debug settings from CLI flags
+        options.debugLevel?.let { level ->
+            DebugConfig.setGlobalLogLevel(level)
+        }
+        options.debugComponents.forEach { component ->
+            DebugConfig.enableComponent(component)
+        }
+
+        if (options.verbose) {
+            if (options.expression != null) {
+                println("UTL-X Expression Mode")
+                println("Expression: ${options.expression}")
+            } else if (options.identityMode) {
+                println("UTL-X Identity Transform (passthrough with format conversion)")
+            } else {
+                println("UTL-X Transform")
+                println("Script: ${options.scriptFile!!.absolutePath}")
+            }
+            options.inputFile?.let { println("Input: ${it.absolutePath}") }
+            options.outputFile?.let { println("Output: ${it.absolutePath}") }
+        }
+
+        // Track execution time for capture
+        val startTime = System.currentTimeMillis()
+        var captureSuccess = false
+        var captureError: String? = null
+        var captureOutputData = ""
+
+        try {
+            // Step 2: Read input files and create InputData map
+            val inputs = if (options.namedInputs.isNotEmpty()) {
+                // Named inputs from --input flags
+                options.namedInputs.mapValues { (name, file) ->
+                    val inputFormat = options.inputFormat
+                    val charsetHint = options.charset?.let {
+                        try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
+                    }
+
+                    if (options.verbose && inputFormat != null) {
+                        println("Input '$name' format: $inputFormat (from CLI option)")
+                    }
+
+                    // B20: read raw bytes when charset is specified (non-UTF-8 safe)
+                    if (charsetHint != null) {
+                        TransformationService.InputData(
+                            content = file.readText(charsetHint),  // String fallback for backward compat
+                            format = inputFormat,
+                            bytes = file.readBytes(),
+                            charset = charsetHint
+                        )
+                    } else {
+                        TransformationService.InputData(
+                            content = file.readText(),
+                            format = inputFormat
+                        )
+                    }
+                }
+            } else {
+                // No named inputs - read from stdin (backward compat).
+                // B26: guard against blocking forever on an interactive terminal. readStdin() calls
+                // readLine(), which waits indefinitely for typed input + EOF when nothing is piped.
+                // System.console() != null means stdin is a TTY (not redirected) — same heuristic
+                // Main.kt uses to detect a pipe. In that case there is no input to read: fail fast.
+                // The `utlx.stdin.interactive` property is a test seam: a subprocess has no real
+                // console, so tests set it to drive this branch; production leaves it unset.
+                val stdinIsInteractive = System.getProperty("utlx.stdin.interactive")
+                    ?.toBooleanStrictOrNull() ?: (System.console() != null)
+                if (stdinIsInteractive) {
+                    // Verb-neutral: this code path is shared by `transform` and `convert`, so the
+                    // message names neither a verb nor a script — just the two ways to supply input.
+                    return CommandResult.Failure(
+                        "No input provided. Pass an input file (-i/--input FILE) " +
+                        "or pipe data via stdin.", 1)
+                }
+                val inputFormat = options.inputFormat
+                val charsetHint = options.charset?.let {
+                    try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
+                }
+
+                if (options.verbose && inputFormat != null) {
+                    println("Input format: $inputFormat (from CLI option)")
+                }
+
+                // B20: read raw bytes from stdin when --charset is set (non-UTF-8 safe)
+                if (charsetHint != null) {
+                    val stdinBytes = System.`in`.readBytes()
+                    mapOf("input" to TransformationService.InputData(
+                        content = String(stdinBytes, charsetHint),
+                        format = inputFormat,
+                        bytes = stdinBytes,
+                        charset = charsetHint
+                    ))
+                } else {
+                    val inputData = readStdin()
+                    mapOf("input" to TransformationService.InputData(
+                        content = inputData,
+                        format = inputFormat
+                    ))
+                }
+            }
+
+            // Step 1: Determine script content (file, expression, or identity)
+            val scriptContent: String
+            val effectiveOutputFormat: String?
+
+            if (options.expression != null) {
+                // Expression mode: synthesize script from inline expression
+                val primaryInput = inputs.values.first()
+                val expandedExpression = expandDotShorthand(options.expression)
+
+                // Expression mode defaults to JSON output
+                effectiveOutputFormat = options.outputFormat ?: "json"
+
+                if (options.verbose) {
+                    println("Expression (expanded): $expandedExpression")
+                    println("Output format: $effectiveOutputFormat" +
+                        if (options.outputFormat != null) " (explicit)" else " (default json)")
+                }
+
+                scriptContent = """%utlx 1.0
+input auto
+output $effectiveOutputFormat
+---
+$expandedExpression"""
+            } else if (options.identityMode) {
+                // Identity mode: synthesize a passthrough script with smart format flip
+                val primaryInput = inputs.values.first()
+                val detectedInputFormat = options.inputFormat
+                    ?: detectFormatFromContent(primaryInput.content)
+
+                // User-specified output format wins; otherwise smart flip
+                effectiveOutputFormat = options.outputFormat
+                    ?: inferOutputFormat(detectedInputFormat)
+
+                if (options.verbose) {
+                    println("Detected input format: $detectedInputFormat")
+                    println("Output format: $effectiveOutputFormat" +
+                        if (options.outputFormat != null) " (explicit)" else " (smart flip)")
+                }
+
+                scriptContent = """%utlx 1.0
+input auto
+output $effectiveOutputFormat
+---
+${"$"}input"""
+            } else {
+                // Normal mode: read script from file
+                scriptContent = options.scriptFile!!.readText()
+                // B26: friendly message for an empty script, instead of the parser-internal
+                // "Expected '---' separator after header" the user would otherwise see.
+                if (scriptContent.isBlank()) {
+                    return CommandResult.Failure(
+                        "Script file is empty: ${options.scriptFile!!.absolutePath}", 1)
+                }
+                effectiveOutputFormat = options.outputFormat
+            }
+
+            // Step 3: Call TransformationService
+            val serviceOptions = TransformationService.TransformOptions(
+                verbose = options.verbose,
+                pretty = options.pretty,
+                strictTypes = options.strictTypes,
+                overrideOutputFormat = effectiveOutputFormat
+            )
+
+            val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
+            captureOutputData = outputData
+            captureSuccess = true
+
+            if (options.verbose) {
+                println("Output format: $outputFormat")
+            }
+
+            // Write output (apply raw mode if requested)
+            val finalOutput = if (options.rawOutput) {
+                // Strip surrounding quotes from JSON string values
+                val trimmed = outputData.trim()
+                if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
+                    trimmed.substring(1, trimmed.length - 1)
+                        .replace("\\\"", "\"")
+                        .replace("\\n", "\n")
+                        .replace("\\t", "\t")
+                        .replace("\\\\", "\\")
+                } else {
+                    trimmed
+                }
+            } else {
+                outputData
+            }
+
+            val outputFilePath = options.outputFile
+            if (outputFilePath != null) {
+                outputFilePath.writeText(finalOutput)
+                if (options.verbose) {
+                    println("✓ Transformation complete: ${outputFilePath.absolutePath}")
+                }
+            } else {
+                println(finalOutput)
+            }
+
+            // Step 4: Capture successful execution (for single input only, skip identity/expression mode)
+            val durationMs = System.currentTimeMillis() - startTime
+            if (!options.hasMultipleInputs && !options.identityMode && options.expression == null && options.scriptFile != null) {
+                val primaryInputData = inputs.values.firstOrNull()
+                val captureInputFormat = primaryInputData?.format ?: "json"
+
+                TestCaptureService.captureExecution(
+                    transformation = scriptContent,
+                    inputData = primaryInputData?.content ?: "",
+                    inputFormat = captureInputFormat,
+                    outputData = outputData,
+                    outputFormat = outputFormat,
+                    success = true,
+                    error = null,
+                    durationMs = durationMs,
+                    scriptFile = options.scriptFile!!,
+                    overrideEnabled = options.captureEnabled
+                )
+            }
+
+            return CommandResult.Success
+
+        } catch (e: Exception) {
+            // Capture failed execution
+            captureError = e.message ?: "Unknown error"
+            val durationMs = System.currentTimeMillis() - startTime
+
+            // Try to capture the failure (only for single input, skip identity mode)
+            if (!options.hasMultipleInputs && !options.identityMode && options.scriptFile != null) {
+                try {
+                    val scriptContent = options.scriptFile.readText()
+                    val inputFilePath = options.inputFile
+                    val inputData = if (inputFilePath != null) {
+                        inputFilePath.readText()
+                    } else {
+                        "" // Can't capture stdin after error
+                    }
+                    val inputFormat = options.inputFormat ?: "json"
+
+                    TestCaptureService.captureExecution(
+                        transformation = scriptContent,
+                        inputData = inputData,
+                        inputFormat = inputFormat,
+                        outputData = captureError,
+                        outputFormat = options.outputFormat ?: inputFormat,
+                        success = false,
+                        error = captureError,
+                        durationMs = durationMs,
+                        scriptFile = options.scriptFile!!,
+                        overrideEnabled = options.captureEnabled
+                    )
+                } catch (captureException: Exception) {
+                    // Silently fail capture on error
+                    if (options.verbose) {
+                        System.err.println("  [Capture] Failed to capture error: ${captureException.message}")
+                    }
+                }
+            }
+
+            // Return failure with error message
+            return CommandResult.Failure(e.message ?: "Transformation failed", 1)
+        }
+    }
+    
+    private fun detectFormat(data: String, extension: String?): String {
+        // Try extension first
+        extension?.lowercase()?.let {
+            if (it in listOf("xml", "json", "csv", "yaml", "yml", "xsd", "jsch", "avro", "avsc", "proto")) {
+                return when (it) {
+                    "yml" -> "yaml"
+                    "jsch" -> "jsch"  // JSON Schema files
+                    "avsc" -> "avro"  // Avro schema files (.avsc extension)
+                    "proto" -> "proto"  // Protocol Buffers schema files
+                    else -> it
+                }
+            }
+        }
+        
+        // Auto-detect from content
+        val trimmed = data.trim()
+        return when {
+            trimmed.startsWith("<") -> "xml"
+            trimmed.startsWith("{") || trimmed.startsWith("[") || trimmed.startsWith("\"") -> "json"
+            trimmed.contains("---") || trimmed.contains(":") && !trimmed.contains(",") -> "yaml"
+            trimmed.contains(",") && !trimmed.startsWith("<") -> "csv"
+            else -> {
+                System.err.println("Warning: Could not detect format, assuming JSON")
+                "json"
+            }
+        }
+    }
+    
+    private fun readStdin(): String {
+        return generateSequence { readLine() }.joinToString("\n")
+    }
+    
+    /**
+     * Parse options - supports both normal mode (with script file) and identity mode (no script).
+     * @param allowIdentityMode if true, missing script file triggers identity mode instead of error.
+     *                          Set to true when invoked from Main.kt's implicit routing.
+     */
+    fun parseOptions(args: Array<String>, allowIdentityMode: Boolean = false): TransformOptions {
+        // Identity mode: no args at all means passthrough (read stdin, smart flip output)
+        if (args.isEmpty() && allowIdentityMode) {
+            return TransformOptions(identityMode = true)
+        }
+        if (args.isEmpty()) {
+            printUsage()
+            throw IllegalArgumentException("No arguments provided")
+        }
+
+        val namedInputs = mutableMapOf<String, File>()
+        val namedOutputs = mutableMapOf<String, File>()
+        var scriptFile: File? = null
+        var expression: String? = null
+        var inputFormat: String? = null
+        var outputFormat: String? = null
+        var verbose = false
+        var pretty = true
+        var rawOutput = false
+        var captureEnabled: Boolean? = null
+        var debugLevel: DebugConfig.LogLevel? = null
+        val debugComponents = mutableSetOf<DebugConfig.Component>()
+        var strictTypes = false
+        var charset: String? = null
+
+        var i = 0
+        while (i < args.size) {
+            when (args[i]) {
+                "-o", "--output" -> {
+                    val arg = args[++i]
+                    // Parse: either "file.xml" or "name=file.xml"
+                    if (arg.contains("=")) {
+                        val (name, path) = arg.split("=", limit = 2)
+                        namedOutputs[name] = File(path)
+                    } else {
+                        namedOutputs["output"] = File(arg)
+                    }
+                }
+                "-i", "--input" -> {
+                    val arg = args[++i]
+                    // Parse: either "file.xml" or "name=file.xml"
+                    if (arg.contains("=")) {
+                        val (name, path) = arg.split("=", limit = 2)
+                        namedInputs[name] = File(path)
+                    } else {
+                        namedInputs["input"] = File(arg)
+                    }
+                }
+                "-e", "--expression" -> {
+                    expression = args[++i]
+                }
+                "-r", "--raw-output" -> {
+                    rawOutput = true
+                }
+                "--input-format", "--from" -> {
+                    inputFormat = args[++i]
+                }
+                "--output-format", "--to" -> {
+                    outputFormat = args[++i]
+                }
+                "-v", "--verbose" -> {
+                    verbose = true
+                }
+                "--no-pretty" -> {
+                    pretty = false
+                }
+                "--charset" -> {
+                    charset = args[++i]
+                }
+                "--strict-types" -> {
+                    strictTypes = true
+                }
+                "--capture" -> {
+                    captureEnabled = true
+                }
+                "--no-capture" -> {
+                    captureEnabled = false
+                }
+                "--debug" -> {
+                    debugLevel = DebugConfig.LogLevel.DEBUG
+                }
+                "--debug-parser" -> {
+                    debugComponents.add(DebugConfig.Component.PARSER)
+                }
+                "--debug-lexer" -> {
+                    debugComponents.add(DebugConfig.Component.LEXER)
+                }
+                "--debug-interpreter" -> {
+                    debugComponents.add(DebugConfig.Component.INTERPRETER)
+                }
+                "--debug-types" -> {
+                    debugComponents.add(DebugConfig.Component.TYPE_SYSTEM)
+                }
+                "--debug-all" -> {
+                    debugLevel = DebugConfig.LogLevel.DEBUG
+                }
+                "--trace" -> {
+                    debugLevel = DebugConfig.LogLevel.TRACE
+                }
+                "-h", "--help" -> {
+                    printUsage()
+                    // Special case: help is a successful operation
+                    throw IllegalStateException("HELP_REQUESTED")
+                }
+                else -> {
+                    if (!args[i].startsWith("-")) {
+                        if (scriptFile == null) {
+                            scriptFile = File(args[i])
+                        } else if (namedInputs.isEmpty()) {
+                            // Positional input file (backward compat)
+                            namedInputs["input"] = File(args[i])
+                        }
+                    } else {
+                        // B26: don't print the message here; printUsage() gives context and Main.kt
+                        // prints "Error: <message>" once from the thrown exception.
+                        printUsage()
+                        throw IllegalArgumentException("Unknown option: ${args[i]}")
+                    }
+                }
+            }
+            i++
+        }
+
+        // Expression mode: -e provided, no script file needed
+        if (expression != null) {
+            if (expression.isBlank()) {
+                throw IllegalArgumentException("Expression cannot be empty. Usage: utlx -e '<expression>'")
+            }
+            if (scriptFile != null) {
+                throw IllegalArgumentException("Cannot use -e/--expression with a script file. Use one or the other.")
+            }
+            return TransformOptions(
+                namedInputs = namedInputs,
+                namedOutputs = namedOutputs,
+                scriptFile = null,
+                expression = expression,
+                inputFormat = inputFormat,
+                outputFormat = outputFormat,
+                verbose = verbose,
+                pretty = pretty,
+                rawOutput = rawOutput,
+                captureEnabled = captureEnabled,
+                debugLevel = debugLevel,
+                debugComponents = debugComponents,
+                strictTypes = strictTypes,
+                charset = charset
+            )
+        }
+
+        // If no script file: identity mode (when allowed) or error
+        if (scriptFile == null) {
+            if (allowIdentityMode) {
+                return TransformOptions(
+                    namedInputs = namedInputs,
+                    namedOutputs = namedOutputs,
+                    scriptFile = null,
+                    inputFormat = inputFormat,
+                    outputFormat = outputFormat,
+                    verbose = verbose,
+                    pretty = pretty,
+                    rawOutput = rawOutput,
+                    captureEnabled = captureEnabled,
+                    debugLevel = debugLevel,
+                    debugComponents = debugComponents,
+                    strictTypes = strictTypes,
+                    charset = charset,
+                    identityMode = true
+                )
+            }
+            // B26: single output channel — printUsage() for context, Main.kt prints the error once.
+            printUsage()
+            throw IllegalArgumentException("Script file is required")
+        }
+
+        if (!scriptFile.exists()) {
+            // B26: was printed here AND again by Main.kt → duplicate. Throw only; Main.kt prints once.
+            throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
+        }
+
+        // Validate all input files exist
+        namedInputs.forEach { (name, file) ->
+            if (!file.exists()) {
+                // B26: throw only (was duplicated by Main.kt). Keep the "(input: name)" detail in the message.
+                throw IllegalArgumentException("Input file not found: ${file.absolutePath} (input: $name)")
+            }
+        }
+
+        return TransformOptions(
+            namedInputs = namedInputs,
+            namedOutputs = namedOutputs,
+            scriptFile = scriptFile,
+            inputFormat = inputFormat,
+            outputFormat = outputFormat,
+            verbose = verbose,
+            pretty = pretty,
+            rawOutput = rawOutput,
+            captureEnabled = captureEnabled,
+            debugLevel = debugLevel,
+            debugComponents = debugComponents,
+            strictTypes = strictTypes,
+            charset = charset
+        )
+    }
+    
+    private fun printUsage() {
+        println("""
+            |Transform data using UTL-X scripts
+            |
+            |Usage:
+            |  utlx -e '<expression>'                     Inline expression (no script needed)
+            |  utlx transform <script-file> [input-file]  Script-based transformation
+            |  cat data.xml | utlx                        Identity mode (format conversion)
+            |
+            |Expression mode (-e):
+            |  echo '{"name":"Alice"}' | utlx -e '.name'           Extract field
+            |  echo '{"name":"Alice"}' | utlx -e '.name' -r        Raw output (no quotes)
+            |  cat data.xml | utlx -e '.person.name' -r            Extract from XML
+            |  cat data.json | utlx -e '. |> filter(x => x.active)' Filter array
+            |  cat data.json | utlx -e 'count(.)'                   Count elements
+            |  cat data.json | utlx -e 'upper(.name)' -r            String functions
+            |
+            |  In -e mode, '.' is shorthand for '${"$"}input':
+            |    .name       = ${"$"}input.name
+            |    .            = ${"$"}input (identity)
+            |    ..field      = ${"$"}input..field (recursive)
+            |
+            |Identity mode (no script, format conversion):
+            |  cat data.xml | utlx                        XML to JSON (smart flip)
+            |  cat data.json | utlx                       JSON to XML (smart flip)
+            |  cat data.csv | utlx                        CSV to JSON
+            |  cat data.xml | utlx --to yaml              Override with --to
+            |
+            |Script mode:
+            |  utlx transform script.utlx input.xml -o output.json
+            |  utlx script.utlx input.xml                 Implicit transform
+            |
+            |Options:
+            |  -e, --expression EXPR      Inline UTL-X expression (no script file needed)
+            |  -r, --raw-output           Strip quotes from string output
+            |  -o, --output FILE          Write output to FILE (default: stdout)
+            |  -i, --input FILE           Read input from FILE (default: stdin)
+            |  --from FORMAT              Force input format (xml, json, csv, yaml, odata)
+            |  --to FORMAT                Force output format
+            |  --no-pretty                Disable pretty-printing
+            |  --strict-types             Enforce type checking (fail on type errors)
+            |  --capture / --no-capture   Override test capture config
+            |  -v, --verbose              Verbose output
+            |  -h, --help                 Show this help message
+            |
+            |Debug:
+            |  --debug                    DEBUG logging (all components)
+            |  --debug-parser             DEBUG for parser only
+            |  --debug-lexer              DEBUG for lexer only
+            |  --debug-interpreter        DEBUG for interpreter only
+            |  --debug-types              DEBUG for type system only
+            |  --trace                    TRACE level (most verbose)
+            |
+            |Multi-input:
+            |  utlx transform script.utlx --input orders=orders.xml --input customers=customers.json
+        """.trimMargin())
+    }
+}

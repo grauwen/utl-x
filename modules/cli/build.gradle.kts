@@ -5,7 +5,7 @@ plugins {
     id("org.graalvm.buildtools.native") version "0.10.2"
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.2.2"
 
 dependencies {
@@ -49,7 +49,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.apache.utlx.cli.Main")
+    mainClass.set("com.glomidco.utlx.cli.Main")
     
     // Set JVM args for better performance
     applicationDefaultJvmArgs = listOf(
@@ -61,7 +61,7 @@ application {
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to "org.apache.utlx.cli.Main",
+            "Main-Class" to "com.glomidco.utlx.cli.Main",
             "Implementation-Title" to "UTL-X CLI",
             "Implementation-Version" to project.version
         )
@@ -80,12 +80,12 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set("utlx")
-            mainClass.set("org.apache.utlx.cli.Main")
+            mainClass.set("com.glomidco.utlx.cli.Main")
             
             buildArgs.addAll(
                 "--no-fallback",
                 "--strict-image-heap",
-                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax,org.apache.xml.security,org.apache.utlx.stdlib",
+                "--initialize-at-build-time=kotlin,kotlinx,ch.qos.logback,org.slf4j,org.xml.sax,org.apache.xml.security,com.glomidco.utlx.stdlib",
                 "--report-unsupported-elements-at-runtime",
                 "-H:+ReportExceptionStackTraces",
                 "-H:+AddAllCharsets",

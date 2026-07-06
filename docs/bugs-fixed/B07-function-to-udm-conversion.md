@@ -69,8 +69,8 @@ is Expression.Lambda -> {
 This returned a FunctionValue instead of the object `{ Name: "..." }`.
 
 ## Files Modified
-- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
-- `modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt` (CLI bug fix: error messages weren't displayed)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
+- `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt` (CLI bug fix: error messages weren't displayed)
 
 ## Additional Fix: CLI Error Display
 

@@ -36,7 +36,7 @@ The unifying fix is **one error-output channel**: throw the message, let `Main.k
 `Main.kt` renders every failed command's message:
 
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt:118
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt:118
 when (result) {
     is CommandResult.Success -> exitProcess(0)
     is CommandResult.Failure -> {
@@ -65,7 +65,7 @@ Error: Script file not found: D:\test\utlx\.\transformations\order-to-invoice.ut
 
 ### Root cause
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt:630
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt:630
 if (!scriptFile.exists()) {
     System.err.println("Error: Script file not found: ${scriptFile.absolutePath}")   // print #1
     throw IllegalArgumentException("Script file not found: ${scriptFile.absolutePath}")
@@ -101,9 +101,9 @@ also makes the throw-only cases consistent.
 ### Reproduction (from the issue — an empty script file)
 ```
 19:17:37.237 ERROR o.a.utlx.core.parser.Parser_impl - Parse exception: Expected '---' separator after header (not found in script)
-org.apache.utlx.core.parser.ParseException: Expected '---' separator after header (not found in script)
-        at org.apache.utlx.core.parser.Parser.error(parser_impl.kt:1634)
-        at org.apache.utlx.core.parser.Parser.parseProgram(parser_impl.kt:85)
+com.glomidco.utlx.core.parser.ParseException: Expected '---' separator after header (not found in script)
+        at com.glomidco.utlx.core.parser.Parser.error(parser_impl.kt:1634)
+        at com.glomidco.utlx.core.parser.Parser.parseProgram(parser_impl.kt:85)
         ... (full stack trace) ...
 Parse errors:
   Expected '---' separator after header (not found in script) at Location(line=1, column=1)
@@ -113,7 +113,7 @@ Error: Parse errors:
 
 ### Root cause 2a — parser logs an expected error with the throwable
 ```kotlin
-// modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt:60
+// modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt:60
 } catch (e: ParseException) {
     logger.error(e) { "Parse exception: ${e.message}" }   // ← passes the throwable → logback prints the stack trace
     val enhancedError = ParseErrorEnhancer.enhance(e, source, tokens, current)
@@ -123,12 +123,12 @@ Error: Parse errors:
 ```
 A parse failure is an **expected user error** — `parse()` converts it into a `ParseResult.Failure`
 that the caller handles cleanly. Logging it at `error` level *with the exception object* is what emits
-the `org.apache.utlx.core.parser.ParseException: … at Parser.error(parser_impl.kt:1634) …` dump to the
+the `com.glomidco.utlx.core.parser.ParseException: … at Parser.error(parser_impl.kt:1634) …` dump to the
 console.
 
 ### Root cause 2b — "Parse errors:" printed twice (double channel)
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/service/TransformationService.kt:171
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/service/TransformationService.kt:171
 is ParseResult.Failure -> {
     val errorMessages = parseResult.errors.joinToString("\n") { "  ${it.message} at ${it.location}" }
     System.err.println("Parse errors:")              // print #1
@@ -159,7 +159,7 @@ utlx-windows-x64.exe transform .\transformations\order-to-invoice.utlx
 ### Root cause
 With a script but **no** input file, `namedInputs` is empty, so `execute` falls into the stdin branch:
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt:255
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt:255
 val inputData = readStdin()
 // :448
 private fun readStdin(): String =
@@ -221,7 +221,7 @@ No transformation-semantics impact.
 
 ### Regression tests (added)
 
-`modules/cli/src/test/kotlin/org/apache/utlx/cli/CliErrorHandlingTest.kt` — 7 **integration** cases
+`modules/cli/src/test/kotlin/com/glomidco/utlx/cli/CliErrorHandlingTest.kt` — 7 **integration** cases
 that spawn the assembled fat JAR as a subprocess (the only level where these process-behavior bugs
 are observable) and assert on exit code + stdout/stderr + a hard timeout:
 

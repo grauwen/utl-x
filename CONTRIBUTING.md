@@ -531,7 +531,7 @@ var mutable = "Can change"  // ⚠️ Use only when necessary
  * @throws UnsupportedFormatException if the output format is not supported
  * @throws TransformationException if the transformation fails
  *
- * @sample org.apache.utlx.samples.basicTransformation
+ * @sample com.glomidco.utlx.samples.basicTransformation
  * @see UDM
  * @see Format
  * @since 0.1.0

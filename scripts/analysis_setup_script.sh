@@ -18,15 +18,15 @@ BASE_DIR="modules/analysis"
 # ============================================
 echo "📁 Creating directory structure..."
 
-mkdir -p "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/types"
-mkdir -p "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/schema"
-mkdir -p "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/validation"
-mkdir -p "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/cli"
+mkdir -p "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/types"
+mkdir -p "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/schema"
+mkdir -p "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/validation"
+mkdir -p "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/cli"
 
-mkdir -p "$BASE_DIR/src/test/kotlin/org/apache/utlx/analysis/types"
-mkdir -p "$BASE_DIR/src/test/kotlin/org/apache/utlx/analysis/schema"
-mkdir -p "$BASE_DIR/src/test/kotlin/org/apache/utlx/analysis/validation"
-mkdir -p "$BASE_DIR/src/test/kotlin/org/apache/utlx/analysis/integration"
+mkdir -p "$BASE_DIR/src/test/kotlin/com/glomidco/utlx/analysis/types"
+mkdir -p "$BASE_DIR/src/test/kotlin/com/glomidco/utlx/analysis/schema"
+mkdir -p "$BASE_DIR/src/test/kotlin/com/glomidco/utlx/analysis/validation"
+mkdir -p "$BASE_DIR/src/test/kotlin/com/glomidco/utlx/analysis/integration"
 
 echo "✅ Directory structure created"
 echo ""
@@ -42,7 +42,7 @@ plugins {
     kotlin("plugin.serialization") version "1.9.22"
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.0.0"
 
 repositories {
@@ -92,11 +92,11 @@ echo ""
 echo "📝 Creating interface files..."
 
 # InputSchemaParser.kt
-cat > "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/schema/InputSchemaParser.kt" << 'EOF'
-package org.apache.utlx.analysis.schema
+cat > "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/schema/InputSchemaParser.kt" << 'EOF'
+package com.glomidco.utlx.analysis.schema
 
-import org.apache.utlx.analysis.types.TypeDefinition
-import org.apache.utlx.analysis.types.SchemaFormat
+import com.glomidco.utlx.analysis.types.TypeDefinition
+import com.glomidco.utlx.analysis.types.SchemaFormat
 
 /**
  * Interface for parsing schema formats to TypeDefinition
@@ -107,11 +107,11 @@ interface InputSchemaParser {
 EOF
 
 # OutputSchemaGenerator.kt
-cat > "$BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/schema/OutputSchemaGenerator.kt" << 'EOF'
-package org.apache.utlx.analysis.schema
+cat > "$BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/schema/OutputSchemaGenerator.kt" << 'EOF'
+package com.glomidco.utlx.analysis.schema
 
-import org.apache.utlx.analysis.types.TypeDefinition
-import org.apache.utlx.analysis.types.SchemaFormat
+import com.glomidco.utlx.analysis.types.TypeDefinition
+import com.glomidco.utlx.analysis.types.SchemaFormat
 
 /**
  * Generator options
@@ -221,14 +221,14 @@ echo ""
 echo "📌 Next Steps:"
 echo ""
 echo "1. Copy the created artifacts to their respective files:"
-echo "   - TypeDefinition.kt → $BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/types/"
-echo "   - TypeContext.kt → $BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/types/"
-echo "   - FunctionRegistry.kt → $BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/types/"
-echo "   - JSONSchemaParser.kt → $BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/schema/"
-echo "   - XSDSchemaParser.kt → $BASE_DIR/src/main/kotlin/org/apache/utlx/analysis/schema/"
+echo "   - TypeDefinition.kt → $BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/types/"
+echo "   - TypeContext.kt → $BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/types/"
+echo "   - FunctionRegistry.kt → $BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/types/"
+echo "   - JSONSchemaParser.kt → $BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/schema/"
+echo "   - XSDSchemaParser.kt → $BASE_DIR/src/main/kotlin/com/glomidco/utlx/analysis/schema/"
 echo ""
 echo "2. Copy all test files to:"
-echo "   - Test files → $BASE_DIR/src/test/kotlin/org/apache/utlx/analysis/[schema|types|validation]/"
+echo "   - Test files → $BASE_DIR/src/test/kotlin/com/glomidco/utlx/analysis/[schema|types|validation]/"
 echo ""
 echo "3. Implement remaining generators:"
 echo "   - JSONSchemaGenerator.kt (partial implementation provided)"

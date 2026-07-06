@@ -1,0 +1,1715 @@
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt
+package com.glomidco.utlx.stdlib
+
+import com.glomidco.utlx.core.udm.UDM
+import kotlin.reflect.full.*
+import com.glomidco.utlx.stdlib.array.*
+import com.glomidco.utlx.stdlib.string.*
+import com.glomidco.utlx.stdlib.math.*
+import com.glomidco.utlx.stdlib.date.*
+import com.glomidco.utlx.stdlib.type.*
+import com.glomidco.utlx.stdlib.objects.*
+import com.glomidco.utlx.stdlib.restructuring.*
+import com.glomidco.utlx.stdlib.core.*
+import com.glomidco.utlx.stdlib.encoding.*
+import com.glomidco.utlx.stdlib.xml.*
+import com.glomidco.utlx.stdlib.logical.*
+import com.glomidco.utlx.stdlib.url.*
+import com.glomidco.utlx.stdlib.util.*
+import com.glomidco.utlx.stdlib.binary.*
+import com.glomidco.utlx.stdlib.serialization.*
+import com.glomidco.utlx.stdlib.finance.*
+import com.glomidco.utlx.stdlib.geo.*
+import com.glomidco.utlx.stdlib.jwt.*
+import com.glomidco.utlx.stdlib.json.*
+import com.glomidco.utlx.stdlib.jws.*
+import com.glomidco.utlx.stdlib.csv.*
+import com.glomidco.utlx.stdlib.yaml.*
+import com.glomidco.utlx.stdlib.regional.*
+import com.glomidco.utlx.stdlib.schema.*
+import com.glomidco.utlx.stdlib.crypto.*
+
+
+
+/**
+ * UTL-X Standard Library Function Registry
+ * 
+ * ENTERPRISE EDITION: 188+ functions - Industry-leading transformation library
+ * Includes comprehensive XML/QName support for enterprise XML transformations
+ */
+object StandardLibrary {
+    
+    private val functions = mutableMapOf<String, UTLXFunction>()
+
+    private val registry = mutableMapOf<String, (List<UDM>) -> UDM>()
+
+    // Alias tracking for function registry and discoverability
+    private data class AliasInfo(
+        val aliasName: String,
+        val canonicalName: String,
+        val reason: String
+    )
+    private val aliases = mutableMapOf<String, AliasInfo>()
+
+    init {
+        registerAllFunctions()
+    }
+    
+    fun getFunction(name: String): UTLXFunction? = functions[name]
+    fun hasFunction(name: String): Boolean = functions.containsKey(name)
+    fun getFunctionNames(): Set<String> = functions.keys
+    fun getAllFunctions(): Map<String, UTLXFunction> = functions.toMap()
+    fun registerFunction(name: String, function: UTLXFunction) { functions[name] = function }
+    
+    private fun registerAllFunctions() {
+        // Core control flow functions
+        registerCoreFunctions()
+        
+        // String functions
+        registerStringFunctions()
+        
+        // Array functions
+        registerArrayFunctions()
+        
+        // Math functions
+        registerMathFunctions()
+        
+        // Date functions
+        registerDateFunctions()
+        
+        // Type functions
+        registerTypeFunctions()
+        
+        // Object functions
+        registerObjectFunctions()
+        
+        // Encoding functions
+        registerEncodingFunctions()
+        
+        // XML & QName functions
+        registerXmlFunctions()
+
+        // Canonicalization of XML (often abbreviated as XML C14N)
+        registerC14NFunctions()
+        
+        // Logical functions
+        registerLogicalFunctions()
+
+        //Conversion functions
+        registerConversionFunctions()
+
+        //URL funcions
+        registerURLFunctions() 
+
+        // JWT functions
+        registerJWTFunctions()
+
+        // JSON Canonicalization functions (RFC 8785)
+        registerJSONFunctions()
+        
+        // JWS (JSON Web Signature) functions
+        registerJWSFunctions()
+
+        // Tree functions
+        registerTreeFunctions() 
+
+        // CoercionFunctions
+        registerCoercionFunctions()     
+
+        //TimerFunctions
+        registerTimerFunctions()    
+
+        // Value functions
+        registerValueFunctions()     
+
+        //Diff functions
+        registerDiffFunctions()    
+
+        //Mime functions
+        registerMimeFunctions()      
+
+        //MultiPart functions
+        registerMultipartFunctions()
+
+        //Binary functions
+        registerBinaryFunctions()
+
+        //Debug functions
+        registerDebugFunctions()
+
+        //Serialization
+        registerSerializationFunctions()
+
+        // Collection JOIN operations
+        registerJoinFunctions()  
+
+        // Runtime/system information
+        registerRuntimeFunctions()   
+
+        // UUID v7 support
+        registerUUIDFunctions()        
+
+        //Compression support alike gunzip
+        registerCompressionFunctions()
+
+        // Advanced math functions
+        registerAdvancedMathFunctions()
+    
+        // Enhanced object functions
+        registerEnhancedObjectFunctions()
+    
+       // Character classification functions
+       registerCharacterFunctions()
+    
+       // Enhanced array functions
+       registerEnhancedArrayFunctions()
+
+       // Data restructuring functions (groupBy, mapGroups, lookupBy)
+       registerDataRestructuringFunctions()
+
+       // Financial functions
+       registerFinancialFunctions()
+
+       //geo
+       registerGeospatialFunctions()
+
+       // Regional number parsing
+       registerRegionalFunctions()
+
+      //AdvancedRegex
+       registerAdvancedRegexFunctions()
+
+       // CSV functions
+       registerCSVFunctions()
+
+       // YAML functions
+       registerYAMLFunctions()
+
+       // F11: RSA cryptographic functions
+       registerRSAFunctions()
+
+       // F11: JWS signing (signJWS)
+       registerJWSSigningFunctions()
+
+       // F11: XMLDSig verification (Peppol/WS-Security)
+       registerXMLDSigFunctions()
+
+    }
+
+    private fun registerAdvancedRegexFunctions() {
+        // Core regex analysis
+        register("analyzeString", AdvancedRegexFunctions::analyzeString)
+        // register("analyze-string", AdvancedRegexFunctions::analyzeString) // XSLT compatibility
+        
+        // Group extraction
+        register("regexGroups", AdvancedRegexFunctions::regexGroups)
+        // register("regex-groups", AdvancedRegexFunctions::regexGroups)
+        register("regexNamedGroups", AdvancedRegexFunctions::regexNamedGroups)
+        // register("regex-named-groups", AdvancedRegexFunctions::regexNamedGroups)
+        
+        // Advanced matching
+        register("findAllMatches", AdvancedRegexFunctions::findAllMatches)
+        // register("find-all-matches", AdvancedRegexFunctions::findAllMatches)
+        register("splitWithMatches", AdvancedRegexFunctions::splitWithMatches)
+        // register("split-with-matches", AdvancedRegexFunctions::splitWithMatches)
+        
+        // Validation and replacement
+        register("matchesWhole", AdvancedRegexFunctions::matchesWhole)
+        // register("matches-whole", AdvancedRegexFunctions::matchesWhole)
+        register("replaceWithFunction", AdvancedRegexFunctions::replaceWithFunction)
+        //register("replace-with-function", AdvancedRegexFunctions::replaceWithFunction)
+    }
+    
+    private fun registerGeospatialFunctions() {
+        // Distance calculations
+        register("distance", GeospatialFunctions::distance)
+        register("geoDistance", GeospatialFunctions::distance) // Alias
+        // register("geo-distance", GeospatialFunctions::distance)
+        
+        register("bearing", GeospatialFunctions::bearing)
+        register("geoBearing", GeospatialFunctions::bearing)
+        // register("geo-bearing", GeospatialFunctions::bearing)
+        
+        // Geofencing
+        register("isPointInCircle", GeospatialFunctions::isPointInCircle)
+        // register("is-point-in-circle", GeospatialFunctions::isPointInCircle)
+        register("inCircle", GeospatialFunctions::isPointInCircle) // Short alias
+        
+        register("isPointInPolygon", GeospatialFunctions::isPointInPolygon)
+        // register("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
+        register("inPolygon", GeospatialFunctions::isPointInPolygon) // Short alias
+        
+        // Utilities
+        register("midpoint", GeospatialFunctions::midpoint)
+        register("geoMidpoint", GeospatialFunctions::midpoint)
+        // register("geo-midpoint", GeospatialFunctions::midpoint)
+        
+        register("destinationPoint", GeospatialFunctions::destinationPoint)
+        // register("destination-point", GeospatialFunctions::destinationPoint)
+        register("geoDestination", GeospatialFunctions::destinationPoint)
+        
+        register("boundingBox", GeospatialFunctions::boundingBox)
+        // register("bounding-box", GeospatialFunctions::boundingBox)
+        register("geoBounds", GeospatialFunctions::boundingBox)
+        
+        // Validation
+        register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
+        // register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates)
+        register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
+    }
+
+    private fun registerRegionalFunctions() {
+        // Regional number parsing functions
+        register("parseUSNumber", RegionalNumberFunctions::parseUSNumber)
+        register("parseEUNumber", RegionalNumberFunctions::parseEUNumber)
+        register("parseFrenchNumber", RegionalNumberFunctions::parseFrenchNumber)
+        register("parseSwissNumber", RegionalNumberFunctions::parseSwissNumber)
+
+        // Regional number rendering/formatting functions
+        register("renderUSNumber", RegionalNumberFunctions::renderUSNumber)
+        register("renderEUNumber", RegionalNumberFunctions::renderEUNumber)
+        register("renderFrenchNumber", RegionalNumberFunctions::renderFrenchNumber)
+        register("renderSwissNumber", RegionalNumberFunctions::renderSwissNumber)
+    }
+
+    private fun registerCoreFunctions() {
+        // CoreFunctions already use List<UDM> signature, so these work directly
+        register("if", CoreFunctions::ifThenElse)
+        register("coalesce", CoreFunctions::coalesce)
+        // generateUuid moved to registerUUIDFunctions (was duplicate of generateUuidV4)
+        register("default", CoreFunctions::default)
+        register("isEmpty", CoreFunctions::isEmpty)
+        register("isNotEmpty", CoreFunctions::isNotEmpty)
+        register("contains", CoreFunctions::contains)
+        register("concat", CoreFunctions::concat)
+     
+    }
+
+    private fun registerDebugFunctions() {
+        // Configuration
+        register("setLogLevel", DebugFunctions::setLogLevel)
+        register("setConsoleLogging", DebugFunctions::setConsoleLogging)
+        
+        // Basic logging
+        register("log", DebugFunctions::log)
+        register("trace", DebugFunctions::trace)
+        register("debug", DebugFunctions::debug)
+        register("info", DebugFunctions::info)
+        register("warn", DebugFunctions::warn)
+        register("error", DebugFunctions::error)
+        
+        // Inspection
+        register("logType", DebugFunctions::logType)
+        register("logSize", DebugFunctions::logSize)
+        register("logPretty", DebugFunctions::logPretty)
+        
+        // Timing
+        register("startDebugTimer", DebugFunctions::startTimer)
+        register("endDebugTimer", DebugFunctions::endTimer)
+        
+        // Log management
+        register("getLogs", DebugFunctions::getLogs)
+        register("clearLogs", DebugFunctions::clearLogs)
+        register("logCount", DebugFunctions::logCount)
+        
+        // Assertions
+        register("assert", DebugFunctions::assert)
+        register("assertEqual", DebugFunctions::assertEqual)
+    }
+    
+    private fun registerStringFunctions() {
+        // Basic string operations
+        register("upperCase", StringFunctions::upperCase)
+        registerAlias("upper", "upperCase", "Legacy naming - use upperCase")
+        register("lowerCase", StringFunctions::lowerCase)
+        registerAlias("lower", "lowerCase", "Legacy naming - use lowerCase")
+        register("toTitleCase", StringFunctions::toTitleCase)
+        register("trim", StringFunctions::trim)
+        register("substring", StringFunctions::substring)
+        //register("concat", StringFunctions::concat) // concat now resides in coreFunctions to handel concat of string, array, obejct, binary etc
+        register("split", StringFunctions::split)
+        register("joinBy", StringFunctions::join)  //join used in SQL style join, rename to joinBy according to DW style
+        register("replace", StringFunctions::replace)
+        //register("contains", StringFunctions::contains)//contains function moved to UDM layer so now it can work with Strings and Arrays, with convention: objects check keys only
+        register("startsWith", StringFunctions::startsWith)
+        register("endsWith", StringFunctions::endsWith)
+        register("length", StringFunctions::length)
+        
+        // Regex functions
+        register("matches", RegexFunctions::matches)
+        register("replaceRegex", RegexFunctions::replaceRegex)
+        
+        // Extended string functions
+        register("substringBefore", ExtendedStringFunctions::substringBefore)
+        register("substringAfter", ExtendedStringFunctions::substringAfter)
+        register("substringBeforeLast", ExtendedStringFunctions::substringBeforeLast)
+        register("substringAfterLast", ExtendedStringFunctions::substringAfterLast)
+        register("pad", ExtendedStringFunctions::pad)
+        registerAlias("padLeft", "pad", "Explicit left padding - pad() defaults to left")
+        register("padRight", ExtendedStringFunctions::padRight)
+        register("normalizeSpace", ExtendedStringFunctions::normalizeSpace)
+        register("repeat", ExtendedStringFunctions::repeat)
+        register("extractBetween", ExtendedStringFunctions::extractBetween)
+
+        // More string functions
+        register("leftTrim", MoreStringFunctions::leftTrim)
+        register("rightTrim", MoreStringFunctions::rightTrim)
+        register("translate", MoreStringFunctions::translate)
+        register("reverseString", MoreStringFunctions::reverse) // Renamed to avoid conflict with array reverse
+        //register("isEmpty", MoreStringFunctions::isEmpty)// now generic UDM isEmpty check for all types: strings, arrays, objects, binary, numbers, datetime
+        register("isBlank", MoreStringFunctions::isBlank)
+        register("charAt", MoreStringFunctions::charAt)
+        register("charCodeAt", MoreStringFunctions::charCodeAt)
+        register("fromCharCode", MoreStringFunctions::fromCharCode)
+        register("capitalize", MoreStringFunctions::capitalize)
+        // register("titleCase", MoreStringFunctions::titleCase) // DUPLICATE: titleCase already registered in CaseFunctions
+
+        // Case conversion functions (to various formats)
+        register("camelCase", CaseFunctions::camelCase)
+        registerAlias("camelize", "camelCase", "Legacy naming - use camelCase")
+        register("pascalCase", CaseFunctions::pascalCase)
+        register("kebabCase", CaseFunctions::kebabCase)
+        register("snakeCase", CaseFunctions::snakeCase)
+        register("constantCase", CaseFunctions::constantCase)
+        register("titleCase", CaseFunctions::titleCase)
+        register("dotCase", CaseFunctions::dotCase)
+        register("pathCase", CaseFunctions::pathCase)
+        register("wordCase", CaseConversionFunctions::wordCase)
+
+        // Reverse case conversion functions (from various formats to words)
+        register("fromCamelCase", CaseConversionFunctions::fromCamelCase)
+        registerAlias("uncamelize", "fromCamelCase", "Legacy naming - use fromCamelCase")
+        register("fromPascalCase", CaseConversionFunctions::fromPascalCase)
+        register("fromKebabCase", CaseConversionFunctions::fromKebabCase)
+        register("fromSnakeCase", CaseConversionFunctions::fromSnakeCase)
+        register("fromConstantCase", CaseConversionFunctions::fromConstantCase)
+        register("fromTitleCase", CaseConversionFunctions::fromTitleCase)
+        register("fromDotCase", CaseConversionFunctions::fromDotCase)
+        register("fromPathCase", CaseConversionFunctions::fromPathCase)
+
+        // Utilities
+        register("slugify", CaseConversionFunctions::slugify)
+        register("truncate", CaseConversionFunctions::truncate)
+
+        // Pluralization functions
+        register("pluralize", PluralizationFunctions::pluralize)
+        register("singularize", PluralizationFunctions::singularize)
+        register("pluralizeWithCount", PluralizationFunctions::pluralizeWithCount)
+        register("isPlural", PluralizationFunctions::isPlural)
+        register("isSingular", PluralizationFunctions::isSingular)
+        register("formatPlural", PluralizationFunctions::formatPlural)
+                 
+    }
+    
+    private fun registerArrayFunctions() {
+        // Functional operations
+        register("map", ArrayFunctions::map)
+        register("filter", CoreFunctions::filter)
+        register("reduce", ArrayFunctions::reduce)
+        register("find", ArrayFunctions::find)
+        register("findIndex", ArrayFunctions::findIndex)
+        register("every", ArrayFunctions::every)
+        register("some", ArrayFunctions::some)
+        
+        // Array manipulation
+        register("flatten", ArrayFunctions::flatten)
+        register("reverse", ArrayFunctions::reverse)
+        register("sort", ArrayFunctions::sort)
+        register("sortBy", ArrayFunctions::sortBy)
+        register("first", ArrayFunctions::first)
+        register("head", ArrayFunctions::first) //alias for first
+        register("last", ArrayFunctions::last)
+        register("take", ArrayFunctions::take)
+        register("drop", ArrayFunctions::drop)
+        register("unique", ArrayFunctions::unique)
+        register("zip", ArrayFunctions::zip) //not related to gzip or gunzip, pure array operations
+        
+        // Additional array functions
+        register("size", ArrayFunctions::size)
+        register("get", ArrayFunctions::get)
+        register("tail", ArrayFunctions::tail)
+        register("distinct", ArrayFunctions::distinct)
+        register("distinctBy", ArrayFunctions::distinctBy)
+        register("union", ArrayFunctions::union)
+        register("intersect", ArrayFunctions::intersect)
+        register("difference", ArrayFunctions::difference)
+        register("symmetricDifference", ArrayFunctions::symmetricDifference)
+        register("flatMap", ArrayFunctions::flatMap)
+        register("flattenDeep", ArrayFunctions::flattenDeep)
+        register("chunk", ArrayFunctions::chunk)
+        register("joinToString", ArrayFunctions::joinToString)
+        
+        // Zip/Unzip operations
+        register("unzip", UnzipFunctions::unzip)
+        register("unzipN", UnzipFunctions::unzipN)
+        register("transpose", UnzipFunctions::transpose)
+        register("zipWith", UnzipFunctions::zipWith)
+        register("zipWithIndex", UnzipFunctions::zipWithIndex)
+        
+        // More array functions (Priority 2)
+        register("remove", MoreArrayFunctions::remove)
+        register("insertBefore", MoreArrayFunctions::insertBefore)
+        register("insertAfter", MoreArrayFunctions::insertAfter)
+        register("indexOf", MoreArrayFunctions::indexOf)
+        register("lastIndexOf", MoreArrayFunctions::lastIndexOf)
+        register("includes", MoreArrayFunctions::includes)
+        register("slice", MoreArrayFunctions::slice)
+        // register("concat", MoreArrayFunctions::concat) // DUPLICATE: concat already registered in CoreFunctions with generic implementation
+        
+        // Aggregation functions
+        register("sum", Aggregations::sum)
+        register("avg", Aggregations::avg)
+        register("min", Aggregations::min)
+        register("max", Aggregations::max)
+        register("count", Aggregations::count)
+
+        // Critical array utilities
+        register("compact", CriticalArrayFunctions::compact)
+        // register("findIndex", CriticalArrayFunctions::findIndex) // DUPLICATE: findIndex already registered in ArrayFunctions
+        register("findLastIndex", CriticalArrayFunctions::findLastIndex)
+ 
+       // Advanced functional operations
+       register("scan", CriticalArrayFunctions::scan)
+       register("windowed", CriticalArrayFunctions::windowed)
+       register("zipAll", CriticalArrayFunctions::zipAll)
+    }
+    
+    private fun registerMathFunctions() {
+        // Basic math
+        register("abs", MathFunctions::abs)
+        register("round", MathFunctions::round)
+        register("ceil", MathFunctions::ceil)
+        register("floor", MathFunctions::floor)
+        register("pow", MathFunctions::pow)
+        register("sqrt", MathFunctions::sqrt)
+        register("random", MathFunctions::random)
+        
+        // Extended math
+        register("formatNumber", ExtendedMathFunctions::formatNumber)
+        register("parseInt", ExtendedMathFunctions::parseInt)
+        // parseFloat is registered in registerConversionFunctions() alongside parseNumber/parseDouble.
+
+        // Statistical functions
+        register("median", StatisticalFunctions::median)
+        register("mode", StatisticalFunctions::mode)
+        register("stdDev", StatisticalFunctions::stdDev)
+        register("variance", StatisticalFunctions::variance)
+        register("percentile", StatisticalFunctions::percentile)
+        register("quartiles", StatisticalFunctions::quartiles)
+        register("iqr", StatisticalFunctions::iqr)
+    }
+    
+    private fun registerDateFunctions() {
+        // Basic date functions
+        register("now", DateFunctions::now)
+        register("parseDate", DateFunctions::parseDate)
+        register("toDate", DateFunctions::toDate)  // Conversion alias
+        register("formatDate", DateFunctions::formatDate)
+        register("addDays", DateFunctions::addDays)
+        register("addHours", DateFunctions::addHours)
+        register("diffDays", DateFunctions::diffDays)
+        registerAlias("daysBetween", "diffDays", "DataWeave compatibility")
+
+        // Extended date functions
+        register("day", ExtendedDateFunctions::day)
+        registerAlias("dayOfMonth", "day", "Common alias for day-of-month extraction")
+        register("month", ExtendedDateFunctions::month)
+        register("year", ExtendedDateFunctions::year)
+        register("hours", ExtendedDateFunctions::hours)
+        register("minutes", ExtendedDateFunctions::minutes)
+        register("seconds", ExtendedDateFunctions::seconds)
+        register("compareDates", ExtendedDateFunctions::compareDates)
+        register("validateDate", ExtendedDateFunctions::validateDate)
+        
+        // More date functions
+        register("addMonths", MoreDateFunctions::addMonths)
+        register("addYears", MoreDateFunctions::addYears)
+        register("addMinutes", MoreDateFunctions::addMinutes)
+        register("addSeconds", MoreDateFunctions::addSeconds)
+        register("getTimezone", MoreDateFunctions::getTimezone)
+        register("diffHours", MoreDateFunctions::diffHours)
+        register("diffMinutes", MoreDateFunctions::diffMinutes)
+        register("diffSeconds", MoreDateFunctions::diffSeconds)
+        register("currentDate", MoreDateFunctions::currentDate)
+        register("currentTime", MoreDateFunctions::currentTime)
+        
+        // Timezone functions
+        register("convertTimezone", TimezoneFunctions::convertTimezone)
+        register("getTimezoneName", TimezoneFunctions::getTimezoneName)
+        register("getTimezoneOffsetSeconds", TimezoneFunctions::getTimezoneOffsetSeconds)
+        register("getTimezoneOffsetHours", TimezoneFunctions::getTimezoneOffsetHours)
+        register("parseDateTimeWithTimezone", TimezoneFunctions::parseDateTimeWithTimezone)
+        register("formatDateTimeInTimezone", TimezoneFunctions::formatDateTimeInTimezone)
+        register("isValidTimezone", TimezoneFunctions::isValidTimezone)
+        register("toUTC", TimezoneFunctions::toUTC)
+        register("fromUTC", TimezoneFunctions::fromUTC)
+        
+        // Rich date arithmetic
+        register("addWeeks", RichDateFunctions::addWeeks)
+        register("addQuarters", RichDateFunctions::addQuarters)
+        register("diffWeeks", RichDateFunctions::diffWeeks)
+        register("diffMonths", RichDateFunctions::diffMonths)
+        register("diffYears", RichDateFunctions::diffYears)
+        
+        // Start/end of period
+        register("startOfDay", RichDateFunctions::startOfDay)
+        register("endOfDay", RichDateFunctions::endOfDay)
+        register("startOfWeek", RichDateFunctions::startOfWeek)
+        register("endOfWeek", RichDateFunctions::endOfWeek)
+        register("startOfMonth", RichDateFunctions::startOfMonth)
+        register("endOfMonth", RichDateFunctions::endOfMonth)
+        register("startOfYear", RichDateFunctions::startOfYear)
+        register("endOfYear", RichDateFunctions::endOfYear)
+        register("startOfQuarter", RichDateFunctions::startOfQuarter)
+        register("endOfQuarter", RichDateFunctions::endOfQuarter)
+        
+        // Date information
+        register("dayOfWeek", RichDateFunctions::dayOfWeek)
+        register("dayOfWeekName", RichDateFunctions::dayOfWeekName)
+        register("dayOfYear", RichDateFunctions::dayOfYear)
+        register("weekOfYear", RichDateFunctions::weekOfYear)
+        register("quarter", RichDateFunctions::quarter)
+        register("monthName", RichDateFunctions::monthName)
+        register("isLeapYear", RichDateFunctions::isLeapYearFunc)
+        register("daysInMonth", RichDateFunctions::daysInMonth)
+        register("daysInYear", RichDateFunctions::daysInYear)
+        
+        // Date comparisons
+        register("isBefore", RichDateFunctions::isBefore)
+        register("isAfter", RichDateFunctions::isAfter)
+        register("isSameDay", RichDateFunctions::isSameDay)
+        register("isBetween", RichDateFunctions::isBetween)
+        register("isToday", RichDateFunctions::isToday)
+        register("isWeekend", RichDateFunctions::isWeekend)
+        register("isWeekday", RichDateFunctions::isWeekday)
+        
+        // Age calculation
+        register("age", RichDateFunctions::age)
+    }
+    
+    private fun registerTypeFunctions() {
+        register("getType", TypeFunctions::getType)
+        registerAlias("typeof", "getType", "JavaScript/TypeScript compatibility")
+        registerAlias("typeOf", "getType", "UTL-X camelCase naming convention")
+        register("isString", TypeFunctions::isString)
+        register("isNumber", TypeFunctions::isNumber)
+        register("isBoolean", TypeFunctions::isBoolean)
+        register("isArray", TypeFunctions::isArray)
+        register("isObject", TypeFunctions::isObject)
+        register("isNull", TypeFunctions::isNull)
+        register("isDefined", TypeFunctions::isDefined)
+        register("isDate", TypeFunctions::isDate)
+        register("isDateTime", TypeFunctions::isDateTime)
+        register("isLocalDateTime", TypeFunctions::isLocalDateTime)
+        register("isTime", TypeFunctions::isTime)
+    }
+    
+    private fun registerObjectFunctions() {
+        register("keys", ObjectFunctions::keys)
+        register("values", ObjectFunctions::values)
+        register("entries", ObjectFunctions::entries)
+        register("fromEntries", ObjectFunctions::fromEntries)
+        register("merge", ObjectFunctions::merge)
+        register("pick", ObjectFunctions::pick)
+        register("omit", ObjectFunctions::omit)
+        register("containsKey", ObjectFunctions::containsKey)
+        registerAlias("hasKey", "containsKey", "Common object method name")
+        register("containsValue", ObjectFunctions::containsValue)
+        //added
+        register("invert", CriticalObjectFunctions::invert)
+        register("deepMerge", CriticalObjectFunctions::deepMerge)
+        register("deepMergeAll", CriticalObjectFunctions::deepMergeAll)
+        register("deepClone", CriticalObjectFunctions::deepClone)
+        register("getPath", CriticalObjectFunctions::getPath)
+        register("setPath", CriticalObjectFunctions::setPath)
+    }
+    
+    private fun registerEncodingFunctions() {
+        register("base64Encode", EncodingFunctions::base64Encode)
+        register("base64Decode", EncodingFunctions::base64Decode)
+        register("urlEncode", EncodingFunctions::urlEncode)
+        register("urlDecode", EncodingFunctions::urlDecode)
+        register("urlEncodeComponent", EncodingFunctions::urlEncodeComponent)
+        register("urlDecodeComponent", EncodingFunctions::urlDecodeComponent)
+        register("hexEncode", EncodingFunctions::hexEncode)
+        register("hexDecode", EncodingFunctions::hexDecode)
+       // basic crypto
+        register("md5", EncodingFunctions::md5)
+        register("sha256", EncodingFunctions::sha256)
+        register("sha512", EncodingFunctions::sha512)
+        register("sha1", EncodingFunctions::sha1)
+        register("hash", EncodingFunctions::hash)
+        register("hmac", EncodingFunctions::hmac)
+
+        //AdvancedCryptoFunctions
+         
+        // HMAC functions
+        register("hmacMD5", AdvancedCryptoFunctions::hmacMD5)
+        register("hmacSHA1", AdvancedCryptoFunctions::hmacSHA1)
+        register("hmacSHA256", AdvancedCryptoFunctions::hmacSHA256)
+        register("hmacSHA384", AdvancedCryptoFunctions::hmacSHA384)
+        register("hmacSHA512", AdvancedCryptoFunctions::hmacSHA512)
+        register("hmacBase64", AdvancedCryptoFunctions::hmacBase64)
+        
+        // Encryption
+        register("encryptAES", AdvancedCryptoFunctions::encryptAES)
+        register("decryptAES", AdvancedCryptoFunctions::decryptAES)
+        register("encryptAES256", AdvancedCryptoFunctions::encryptAES256)
+        register("decryptAES256", AdvancedCryptoFunctions::decryptAES256)
+        
+        // Additional hashes
+        register("sha224", AdvancedCryptoFunctions::sha224)
+        register("sha384", AdvancedCryptoFunctions::sha384)
+        register("sha3_256", AdvancedCryptoFunctions::sha3_256)
+        register("sha3_512", AdvancedCryptoFunctions::sha3_512)
+        
+        // Utilities
+        register("generateIV", AdvancedCryptoFunctions::generateIV)
+        register("generateKey", AdvancedCryptoFunctions::generateKey)
+    }
+    
+    private fun registerXmlFunctions() {
+        // QName functions
+        register("localName", QNameFunctions::localName)
+        register("namespaceUri", QNameFunctions::namespaceUri)
+        register("qualifiedName", QNameFunctions::qualifiedName)
+        register("namespacePrefix", QNameFunctions::namespacePrefix)
+        register("resolveQname", QNameFunctions::resolveQName)
+        register("createQname", QNameFunctions::createQName)
+        register("hasNamespace", QNameFunctions::hasNamespace)
+        register("getNamespaces", QNameFunctions::getNamespaces)
+        register("matchesQname", QNameFunctions::matchesQName)
+        
+        // XML utility functions
+        register("nodeType", XmlUtilityFunctions::nodeType)
+        register("textContent", XmlUtilityFunctions::textContent)
+        register("attributes", XmlUtilityFunctions::attributes)
+        register("attribute", XmlUtilityFunctions::attribute)
+        register("hasAttribute", XmlUtilityFunctions::hasAttribute)
+        register("childCount", XmlUtilityFunctions::childCount)
+        register("childNames", XmlUtilityFunctions::childNames)
+        register("parent", XmlUtilityFunctions::parent)
+        register("elementPath", XmlUtilityFunctions::elementPath)
+        register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
+        register("hasContent", XmlUtilityFunctions::hasContent)
+        register("xmlEscape", XmlUtilityFunctions::xmlEscape)
+        register("xmlUnescape", XmlUtilityFunctions::xmlUnescape)
+        
+        // XML Serialization Options functions
+        register("enforceNamespacePrefixes", XMLSerializationOptionsFunctions::enforceNamespacePrefixes)
+        register("formatEmptyElements", XMLSerializationOptionsFunctions::formatEmptyElements)
+        register("addNamespaceDeclarations", XMLSerializationOptionsFunctions::addNamespaceDeclarations)
+        register("createSOAPEnvelope", XMLSerializationOptionsFunctions::createSOAPEnvelope)
+        
+        // CDATA functions
+        register("createCDATA", CDATAFunctions::createCDATA)
+        register("isCDATA", CDATAFunctions::isCDATA)
+        register("extractCDATA", CDATAFunctions::extractCDATA)
+        register("unwrapCDATA", CDATAFunctions::unwrapCDATA)
+        register("shouldUseCDATA", CDATAFunctions::shouldUseCDATA)
+        register("wrapIfNeeded", CDATAFunctions::wrapIfNeeded)
+        register("escapeXML", CDATAFunctions::escapeXML)
+        register("unescapeXML", CDATAFunctions::unescapeXML)
+
+        // XML Encoding and BOM functions
+        register("detectXMLEncoding", XMLEncodingBomFunctions::detectXMLEncoding)
+        register("convertXMLEncoding", XMLEncodingBomFunctions::convertXMLEncoding)
+        register("updateXMLEncoding", XMLEncodingBomFunctions::updateXMLEncoding)
+        register("validateEncoding", XMLEncodingBomFunctions::validateEncoding)
+        register("normalizeXMLEncoding", XMLEncodingBomFunctions::normalizeXMLEncoding)
+        register("detectBOM", XMLEncodingBomFunctions::detectBOM)
+        register("addBOM", XMLEncodingBomFunctions::addBOM)
+        register("removeBOM", XMLEncodingBomFunctions::removeBOM)
+        register("hasBOM", XMLEncodingBomFunctions::hasBOM)
+        register("getBOMBytes", XMLEncodingBomFunctions::getBOMBytes)
+        register("stripBOM", XMLEncodingBomFunctions::stripBOM)
+        register("normalizeBOM", XMLEncodingBomFunctions::normalizeBOM)
+    }
+
+    private fun registerC14NFunctions() {
+        // Canonicalization of XML (often abbreviated as XML C14N)
+        // C14N 1.0
+        register("c14n", XMLCanonicalizationFunctions::c14n)
+        register("c14nWithComments", XMLCanonicalizationFunctions::c14nWithComments)
+        
+        // Exclusive C14N
+        register("excC14n", XMLCanonicalizationFunctions::excC14n)
+        register("excC14nWithComments", XMLCanonicalizationFunctions::excC14nWithComments)
+        
+        // C14N 1.1
+        register("c14n11", XMLCanonicalizationFunctions::c14n11)
+        register("c14n11WithComments", XMLCanonicalizationFunctions::c14n11WithComments)
+        
+        // Physical C14N
+        register("c14nPhysical", XMLCanonicalizationFunctions::c14nPhysical)
+        
+        // Generic
+        register("canonicalizeWithAlgorithm", XMLCanonicalizationFunctions::canonicalizeWithAlgorithm)
+        
+        // XPath subset
+        register("c14nSubset", XMLCanonicalizationFunctions::c14nSubset)
+        
+        // Hash and comparison
+        register("c14nHash", XMLCanonicalizationFunctions::c14nHash)
+        register("c14nEquals", XMLCanonicalizationFunctions::c14nEquals)
+        register("c14nFingerprint", XMLCanonicalizationFunctions::c14nFingerprint)
+        
+        // Digital signatures
+        register("prepareForSignature", XMLCanonicalizationFunctions::prepareForSignature)
+        register("validateDigest", XMLCanonicalizationFunctions::validateDigest)
+    }
+    
+    private fun registerLogicalFunctions() {
+        // Basic logical operations
+        register("not", LogicalFunctions::not)
+        register("xor", LogicalFunctions::xor)
+        register("and", LogicalFunctions::and)
+        register("or", LogicalFunctions::or)
+        
+        // Advanced logical gates
+        register("nand", LogicalFunctions::nand)
+        register("nor", LogicalFunctions::nor)
+        register("xnor", LogicalFunctions::xnor)
+        register("implies", LogicalFunctions::implies)
+        
+        // Array boolean operations
+        register("all", LogicalFunctions::all)
+        register("any", LogicalFunctions::any)
+        register("none", LogicalFunctions::none)
+    }
+    
+
+
+    private fun registerConversionFunctions() {
+    // CRITICAL: Number parsing (used in examples!)
+         register("parseNumber", ConversionFunctions::parseNumber)
+         register("toNumber", ConversionFunctions::toNumber)
+         // register("parseInt", ConversionFunctions::parseInt) // DUPLICATE: parseInt already registered in ExtendedMathFunctions
+         // B25: parseFloat lives here with its conversion siblings; delegates to parseNumber so it
+         // strips grouping/currency separators ("1,234.56"). (Was previously registered from
+         // ExtendedMathFunctions with a plain toDouble() that failed on commas.)
+         register("parseFloat", ConversionFunctions::parseFloat)
+         register("parseDouble", ConversionFunctions::parseDouble)
+         
+         // String conversion
+         register("toString", ConversionFunctions::toString)
+       
+         // Boolean conversion
+         register("parseBoolean", ConversionFunctions::parseBoolean)
+         register("toBoolean", ConversionFunctions::toBoolean)
+       
+         // Date conversion
+         // register("parseDate", ConversionFunctions::parseDate) // DUPLICATE: parseDate already registered in DateFunctions
+       
+         // Collection conversion
+         register("toArray", ConversionFunctions::toArray)
+         register("toObject", ConversionFunctions::toObject)
+       
+         // Safe conversion with defaults
+         register("numberOrDefault", ConversionFunctions::numberOrDefault)
+         register("stringOrDefault", ConversionFunctions::stringOrDefault)
+     }
+
+    // Add new registration method
+    private fun registerURLFunctions() {
+        // URL parsing
+        register("parseURL", URLFunctions::parseURL)
+        register("getProtocol", URLFunctions::getProtocol)
+        register("getHost", URLFunctions::getHost)
+        register("getPort", URLFunctions::getPort)
+        register("getURLPath", URLFunctions::getPath) // Renamed to avoid conflict with object getPath
+        register("getQuery", URLFunctions::getQuery)
+        register("getFragment", URLFunctions::getFragment)
+        register("getQueryParams", URLFunctions::getQueryParams)
+        register("getBaseURL", URLFunctions::getBaseURL)
+        
+        // Query string handling
+        register("parseQueryString", URLFunctions::parseQueryString)
+        register("buildQueryString", URLFunctions::buildQueryString)
+        
+        // URL construction
+        register("buildURL", URLFunctions::buildURL)
+        
+        // URL manipulation
+        register("addQueryParam", URLFunctions::addQueryParam)
+        register("removeQueryParam", URLFunctions::removeQueryParam)
+        register("isValidURL", URLFunctions::isValidURL)
+    }
+
+    private fun registerJWTFunctions() {
+        // JWT decoding and parsing
+        register("decodeJWT", JWTFunctions::decodeJWT)
+        register("getJWTClaims", JWTFunctions::getJWTClaims)
+        register("getJWTClaim", JWTFunctions::getJWTClaim)
+        
+        // JWT validation
+        register("isJWTExpired", JWTFunctions::isJWTExpired)
+        
+        // Standard JWT claims
+        register("getJWTSubject", JWTFunctions::getJWTSubject)
+        register("getJWTIssuer", JWTFunctions::getJWTIssuer)
+        register("getJWTAudience", JWTFunctions::getJWTAudience)
+        
+        // JWT verification and creation functions (F11 — merged from stdlib-security)
+        register("createJWT", JWTVerification::createJWT)
+        register("verifyJWT", JWTVerification::verifyJWT)
+        register("validateJWTStructure", JWTVerification::validateJWTStructure)
+        register("verifyJWTWithJWKS", JWTVerification::verifyJWTWithJWKS)
+
+        // Multi-algorithm JWT signing (HS256/384/512) via JWSSigningFunctions
+        register("createJWTSigned", JWSSigningFunctions::createJWTSigned)
+        register("verifyJWTSignature", JWSSigningFunctions::verifyJWTSignature)
+    }
+
+      private fun registerTreeFunctions() {
+          register("treeMap", TreeFunctions::treeMap)
+          register("treeFilter", TreeFunctions::treeFilter)
+          register("treeFlatten", TreeFunctions::treeFlatten)
+          register("treeDepth", TreeFunctions::treeDepth)
+          register("treePaths", TreeFunctions::treePaths)
+          register("treeFind", TreeFunctions::treeFind)
+      }
+
+     private fun registerCoercionFunctions() {
+          register("coerce", CoercionFunctions::coerce)
+          register("tryCoerce", CoercionFunctions::tryCoerce)
+          register("canCoerce", CoercionFunctions::canCoerce)
+          register("coerceAll", CoercionFunctions::coerceAll)
+          register("smartCoerce", CoercionFunctions::smartCoerce)
+     }
+
+    private fun registerTimerFunctions() {
+          register("timerStart", TimerFunctions::timerStart)
+          register("timerStop", TimerFunctions::timerStop)
+          register("timerCheck", TimerFunctions::timerCheck)
+          register("timerReset", TimerFunctions::timerReset)
+          register("timerStats", TimerFunctions::timerStats)
+          register("timerList", TimerFunctions::timerList)
+          register("timerClear", TimerFunctions::timerClear)
+          register("timestamp", TimerFunctions::timestamp)
+          register("measure", TimerFunctions::measure)
+     }
+
+      private fun registerValueFunctions() {
+          register("update", ValueFunctions::update)
+          register("mask", ValueFunctions::mask)
+          // register("pick", ValueFunctions::pick) // DUPLICATE: pick already registered in ObjectFunctions
+          // register("omit", ValueFunctions::omit) // DUPLICATE: omit already registered in ObjectFunctions
+          register("defaultValue", ValueFunctions::defaultValue)
+      }
+     
+      private fun registerDiffFunctions() {
+          register("diff", DiffFunctions::diff)
+          register("deepEquals", DiffFunctions::deepEquals)
+          register("patch", DiffFunctions::patch)
+     }
+     
+      private fun registerMimeFunctions() {
+         register("getMimeType", MimeFunctions::getMimeType)
+         register("getExtension", MimeFunctions::getExtension)
+         register("parseContentType", MimeFunctions::parseContentType)
+         register("buildContentType", MimeFunctions::buildContentType)
+      }
+      
+      private fun registerMultipartFunctions() {
+          register("parseBoundary", MultipartFunctions::parseBoundary)
+          register("buildMultipart", MultipartFunctions::buildMultipart)
+          register("generateBoundary", MultipartFunctions::generateBoundary)
+          register("createPart", MultipartFunctions::createPart)
+     }
+
+     private fun registerBinaryFunctions() {
+          // Binary creation
+          register("toBinary", BinaryFunctions::toBinary)
+          register("fromBytes", BinaryFunctions::fromBytes)
+          register("fromBase64", BinaryFunctions::fromBase64)
+          register("fromHex", BinaryFunctions::fromHex)
+          
+          // Binary conversion
+          register("binaryToString", BinaryFunctions::binaryToString)
+          register("toBytes", BinaryFunctions::toBytes)
+          register("toBase64", BinaryFunctions::toBase64)
+          register("toHex", BinaryFunctions::toHex)
+          
+          // Binary operations
+          register("binaryLength", BinaryFunctions::binaryLength)
+          register("binaryConcat", BinaryFunctions::binaryConcat)
+          register("binarySlice", BinaryFunctions::binarySlice)
+          register("binaryEquals", BinaryFunctions::binaryEquals)
+          
+          // Binary reading
+          register("readInt16", BinaryFunctions::readInt16)
+          register("readInt32", BinaryFunctions::readInt32)
+          register("readInt64", BinaryFunctions::readInt64)
+          register("readFloat", BinaryFunctions::readFloat)
+          register("readDouble", BinaryFunctions::readDouble)
+          register("readByte", BinaryFunctions::readByte)
+          
+          // Binary writing
+          register("writeInt16", BinaryFunctions::writeInt16)
+          register("writeInt32", BinaryFunctions::writeInt32)
+          register("writeInt64", BinaryFunctions::writeInt64)
+          register("writeFloat", BinaryFunctions::writeFloat)
+          register("writeDouble", BinaryFunctions::writeDouble)
+          register("writeByte", BinaryFunctions::writeByte)
+
+          //bit operation
+          register("bitwiseAnd", BinaryFunctions::bitwiseAnd)
+          register("bitwiseOr", BinaryFunctions::bitwiseOr)
+          register("bitwiseXor", BinaryFunctions::bitwiseXor)
+          register("bitwiseNot", BinaryFunctions::bitwiseNot)
+          register("shiftLeft", BinaryFunctions::shiftLeft)
+          register("shiftRight", BinaryFunctions::shiftRight)
+
+           // BINARY COMPARISON
+          register("equalsBinary", BinaryFunctions::equals)
+      }
+
+
+    private fun  registerSerializationFunctions(){
+        //
+        register("parseJson", SerializationFunctions::parseJson)
+        register("renderJson", SerializationFunctions::renderJson)
+        register("parseXml", SerializationFunctions::parseXml)
+        register("renderXml", SerializationFunctions::renderXml)
+        register("parseYaml", SerializationFunctions::parseYaml)
+        register("renderYaml", SerializationFunctions::renderYaml)
+        register("parseCsv", SerializationFunctions::parseCsv)
+        register("renderCsv", SerializationFunctions::renderCsv)
+        register("parseOdata", SerializationFunctions::parseOdata)
+        register("renderOdata", SerializationFunctions::renderOdata)
+        register("parse", SerializationFunctions::parse)
+        register("render", SerializationFunctions::render)
+
+        // JSON Patch (RFC 6902), JSON Merge Patch (RFC 7396), JSON Diff
+        register("jsonPatch", com.glomidco.utlx.stdlib.json.JsonPatchFunctions::jsonPatch)
+        register("jsonMergePatch", com.glomidco.utlx.stdlib.json.JsonPatchFunctions::jsonMergePatch)
+        register("jsonDiff", com.glomidco.utlx.stdlib.json.JsonPatchFunctions::jsonDiff)
+        register("validateJsonPatch", com.glomidco.utlx.stdlib.json.JsonPatchFunctions::validateJsonPatch)
+
+        // Aliases for compatibility with Tibco BW\
+        register("tibco_parse", SerializationFunctions::parse)
+        register("tibco_render", SerializationFunctions::render)
+
+        // Schema Serialization functions (Tier 2)
+        register("parseAvroSchema", SchemaSerializationFunctions::parseAvroSchema)
+        register("renderAvroSchema", SchemaSerializationFunctions::renderAvroSchema)
+        register("parseXSDSchema", SchemaSerializationFunctions::parseXSDSchema)
+        register("renderXSDSchema", SchemaSerializationFunctions::renderXSDSchema)
+        register("parseJSONSchema", SchemaSerializationFunctions::parseJSONSchema)
+        register("renderJSONSchema", SchemaSerializationFunctions::renderJSONSchema)
+        register("parseProtobufSchema", SchemaSerializationFunctions::parseProtobufSchema)
+        register("renderProtobufSchema", SchemaSerializationFunctions::renderProtobufSchema)
+
+        // Pretty-Print functions
+        register("prettyPrintJSON", PrettyPrintFunctions::prettyPrintJSON)
+        register("udmToJSON", PrettyPrintFunctions::udmToJSON)
+        register("compactJSON", PrettyPrintFunctions::compactJSON)
+        register("prettyPrintXML", PrettyPrintFunctions::prettyPrintXML)
+        register("udmToXML", PrettyPrintFunctions::udmToXML)
+        register("compactXML", PrettyPrintFunctions::compactXML)
+        register("prettyPrintYAML", PrettyPrintFunctions::prettyPrintYAML)
+        register("udmToYAML", PrettyPrintFunctions::udmToYAML)
+        register("prettyPrintCSV", PrettyPrintFunctions::prettyPrintCSV)
+        register("compactCSV", PrettyPrintFunctions::compactCSV)
+        register("prettyPrint", PrettyPrintFunctions::prettyPrint)
+        register("prettyPrintFormat", PrettyPrintFunctions::prettyPrintFormat)
+        register("debugPrint", PrettyPrintFunctions::debugPrint)
+        register("debugPrintCompact", PrettyPrintFunctions::debugPrintCompact)
+    }
+
+/**
+     * Register collection JOIN functions
+     * SQL-style joins for combining arrays based on key matching
+     */
+    private fun registerJoinFunctions() {
+        register("join", JoinFunctions::join)
+        register("leftJoin", JoinFunctions::leftJoin)
+        register("rightJoin", JoinFunctions::rightJoin)
+        register("fullOuterJoin", JoinFunctions::fullOuterJoin)
+        register("crossJoin", JoinFunctions::crossJoin)
+        register("joinWith", JoinFunctions::joinWith)
+    }
+    
+    /**
+     * Register runtime and system information functions
+     * Environment variables, system properties, platform info
+     */
+    private fun registerRuntimeFunctions() {
+        // Environment variables
+        register("env", RuntimeFunctions::env)
+        register("envOrDefault", RuntimeFunctions::envOrDefault)
+        register("envAll", RuntimeFunctions::envAll)
+        register("hasEnv", RuntimeFunctions::hasEnv)
+        
+        // System properties
+        register("systemProperty", RuntimeFunctions::systemProperty)
+        register("systemPropertyOrDefault", RuntimeFunctions::systemPropertyOrDefault)
+        register("systemPropertiesAll", RuntimeFunctions::systemPropertiesAll)
+        
+        // Version and platform
+        register("version", RuntimeFunctions::version)
+        register("platform", RuntimeFunctions::platform)
+        register("osVersion", RuntimeFunctions::osVersion)
+        register("osArch", RuntimeFunctions::osArch)
+        register("javaVersion", RuntimeFunctions::javaVersion)
+        
+        // System resources
+        register("availableProcessors", RuntimeFunctions::availableProcessors)
+        register("memoryInfo", RuntimeFunctions::memoryInfo)
+        
+        // Directories
+        register("currentDir", RuntimeFunctions::currentDir)
+        register("homeDir", RuntimeFunctions::homeDir)
+        register("tempDir", RuntimeFunctions::tempDir)
+        
+        // User info
+        register("username", RuntimeFunctions::username)
+        
+        // Runtime info
+        register("uptime", RuntimeFunctions::uptime)
+        register("runtimeInfo", RuntimeFunctions::runtimeInfo)
+        
+        // Helpers
+        register("isDebugMode", RuntimeFunctions::isDebugMode)
+        register("environment", RuntimeFunctions::environment)
+    }
+    
+    /**
+     * Register UUID generation functions
+     * UUID v4 (random) and UUID v7 (time-ordered)
+     */
+    private fun registerUUIDFunctions() {
+        // UUID v7 generation (time-ordered, sortable)
+        register("generateUuidV7", UUIDFunctions::generateUuidV7)
+        register("generateUuidV7Batch", UUIDFunctions::generateUuidV7Batch)
+        
+        // UUID utilities
+        register("extractTimestampFromUuidV7", UUIDFunctions::extractTimestampFromUuidV7)
+        register("isUuidV7", UUIDFunctions::isUuidV7)
+        register("getUuidVersion", UUIDFunctions::getUuidVersion)
+        register("isValidUuid", UUIDFunctions::isValidUuid)
+        
+        // UUID v4 generation (random) — canonical name + alias
+        register("generateUuidV4", UUIDFunctions::generateUuidV4)
+        register("generateUuid", UUIDFunctions::generateUuidV4) // alias — backwards compatible
+    }
+
+    private fun registerCompressionFunctions() {
+    // Gzip compression
+    register("gzip", CompressionFunctions::gzip)
+    register("gunzip", CompressionFunctions::gunzip)
+    register("isGzipped", CompressionFunctions::isGzipped)
+    
+    // Deflate compression
+    register("deflate", CompressionFunctions::deflate)
+    register("inflate", CompressionFunctions::inflate)
+    
+    // Generic compression
+    register("compress", CompressionFunctions::compress)
+    register("decompress", CompressionFunctions::decompress)
+    
+    // Zip archive operations
+    register("zipArchive", CompressionFunctions::zipArchive)
+    register("unzipArchive", CompressionFunctions::unzipArchive)
+    register("readZipEntry", CompressionFunctions::readZipEntry)
+    register("listZipEntries", CompressionFunctions::listZipEntries)
+    register("isZipArchive", CompressionFunctions::isZipArchive)
+    
+    // JAR file operations
+    register("readJarEntry", CompressionFunctions::readJarEntry)
+    register("listJarEntries", CompressionFunctions::listJarEntries)
+    register("isJarFile", CompressionFunctions::isJarFile)
+    register("readJarManifest", CompressionFunctions::readJarManifest)
+}
+
+    //******
+/**
+     * Register advanced mathematical functions
+     * Trigonometric, logarithmic, hyperbolic, and angle conversions
+     */
+    private fun registerAdvancedMathFunctions() {
+        // Trigonometric functions
+        register("sin", AdvancedMathFunctions::sin)
+        register("cos", AdvancedMathFunctions::cos)
+        register("tan", AdvancedMathFunctions::tan)
+        register("asin", AdvancedMathFunctions::asin)
+        register("acos", AdvancedMathFunctions::acos)
+        register("atan", AdvancedMathFunctions::atan)
+        register("atan2", AdvancedMathFunctions::atan2)
+        
+        // Hyperbolic functions
+        register("sinh", AdvancedMathFunctions::sinh)
+        register("cosh", AdvancedMathFunctions::cosh)
+        register("tanh", AdvancedMathFunctions::tanh)
+        
+        // Logarithmic functions
+        register("ln", AdvancedMathFunctions::ln)
+        register("logBase", AdvancedMathFunctions::log) // Renamed to avoid conflict with debug log
+        register("log10", AdvancedMathFunctions::log10)
+        register("log2", AdvancedMathFunctions::log2)
+        register("exp", AdvancedMathFunctions::exp)
+        
+        // Angle conversion
+        register("toRadians", AdvancedMathFunctions::toRadians)
+        register("toDegrees", AdvancedMathFunctions::toDegrees)
+        
+        // Mathematical constants
+        register("pi", AdvancedMathFunctions::pi)
+        register("e", AdvancedMathFunctions::e)
+        register("goldenRatio", AdvancedMathFunctions::goldenRatio)
+    }
+    
+    /**
+     * Register enhanced object functions
+     * Advanced object introspection and manipulation
+     */
+    private fun registerEnhancedObjectFunctions() {
+        register("divideBy", EnhancedObjectFunctions::divideBy)
+        register("someEntry", EnhancedObjectFunctions::someEntry)
+        register("everyEntry", EnhancedObjectFunctions::everyEntry)
+        register("mapEntries", EnhancedObjectFunctions::mapEntries)
+        register("filterEntries", EnhancedObjectFunctions::filterEntries)
+        register("reduceEntries", EnhancedObjectFunctions::reduceEntries)
+        register("countEntries", EnhancedObjectFunctions::countEntries)
+        register("mapKeys", EnhancedObjectFunctions::mapKeys)
+        register("mapValues", EnhancedObjectFunctions::mapValues)
+        register("mapTree", EnhancedObjectFunctions::mapTree)
+    }
+    
+    /**
+     * Register character classification functions
+     * String character class tests for validation
+     */
+    private fun registerCharacterFunctions() {
+        register("isAlpha", CharacterFunctions::isAlpha)
+        register("isNumeric", CharacterFunctions::isNumeric)
+        register("isAlphanumeric", CharacterFunctions::isAlphanumeric)
+        register("isWhitespace", CharacterFunctions::isWhitespace)
+        register("isUpperCase", CharacterFunctions::isUpperCase)
+        register("isLowerCase", CharacterFunctions::isLowerCase)
+        register("isPrintable", CharacterFunctions::isPrintable)
+        register("isAscii", CharacterFunctions::isAscii)
+        register("isHexadecimal", CharacterFunctions::isHexadecimal)
+        register("hasAlpha", CharacterFunctions::hasAlpha)
+        register("hasNumeric", CharacterFunctions::hasNumeric)
+    }
+    
+    /**
+     * Register enhanced array aggregation functions
+     */
+    private fun registerEnhancedArrayFunctions() {
+        register("partition", EnhancedArrayFunctions::partition)
+        register("countBy", EnhancedArrayFunctions::countBy)
+        register("sumBy", EnhancedArrayFunctions::sumBy)
+        register("maxBy", EnhancedArrayFunctions::maxBy)
+        register("minBy", EnhancedArrayFunctions::minBy)
+        // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
+        register("avgBy", EnhancedArrayFunctions::avgBy)
+    }
+
+    /**
+     * Register data restructuring functions (category: Data Restructuring)
+     * These change the SHAPE of data — grouping, lookup, nesting
+     */
+    private fun registerDataRestructuringFunctions() {
+        register("groupBy", DataRestructuringFunctions::groupBy)       // Array → Object (keyed map for O(1) lookup)
+        register("mapGroups", DataRestructuringFunctions::mapGroups)   // Array → Array (group + transform each group)
+        register("lookupBy", DataRestructuringFunctions::lookupBy)     // Array → Object or null (find one match by key)
+        register("nestBy", DataRestructuringFunctions::nestBy)         // (parents, children, pKey, cKey, prop) → parents with nested children
+        register("chunkBy", DataRestructuringFunctions::chunkBy)       // (array, predicate) → Array of Arrays (positional grouping)
+        register("unnest", DataRestructuringFunctions::unnest)         // (array, childProp) → flat Array (reverse of nestBy)
+    }
+    
+    /**
+     * Register financial functions
+     * UNIQUE FEATURE: The only transformation language with built-in financial functions
+     */
+    private fun registerFinancialFunctions() {
+        // Currency formatting
+        register("formatCurrency", FinancialFunctions::formatCurrency)
+        register("parseCurrency", FinancialFunctions::parseCurrency)
+        
+        // Rounding
+        register("roundToDecimalPlaces", FinancialFunctions::roundToDecimalPlaces)
+        register("roundToCents", FinancialFunctions::roundToCents)
+        
+        // Tax calculations
+        register("calculateTax", FinancialFunctions::calculateTax)
+        register("addTax", FinancialFunctions::addTax)
+        register("removeTax", FinancialFunctions::removeTax)
+        
+        // Discount and percentage
+        register("calculateDiscount", FinancialFunctions::calculateDiscount)
+        register("percentageChange", FinancialFunctions::percentageChange)
+        
+        // Time value of money
+        register("presentValue", FinancialFunctions::presentValue)
+        register("futureValue", FinancialFunctions::futureValue)
+        register("compoundInterest", FinancialFunctions::compoundInterest)
+        register("simpleInterest", FinancialFunctions::simpleInterest)
+        
+        // Validation
+        register("isValidCurrency", FinancialFunctions::isValidCurrency)
+        register("getCurrencyDecimals", FinancialFunctions::getCurrencyDecimals)
+        register("isValidAmount", FinancialFunctions::isValidAmount)
+    }
+
+    //******
+    
+    private fun register(name: String, impl: (List<UDM>) -> UDM) {
+        functions[name] = UTLXFunction(name, impl)
+    }
+
+    /**
+     * Register a function alias for discoverability and compatibility.
+     *
+     * Aliases allow the same function to be called by different names, useful for:
+     * - DataWeave compatibility (e.g., daysBetween → diffDays)
+     * - Alternative naming conventions (e.g., hasKey → containsKey)
+     * - Legacy support
+     *
+     * Aliases are included in the function registry and are discoverable via `utlx functions --search`
+     *
+     * @param aliasName The alias name to register
+     * @param canonicalName The canonical function name that the alias points to
+     * @param reason Optional description of why the alias exists (e.g., "DataWeave compatibility")
+     * @throws IllegalArgumentException if canonical function doesn't exist
+     */
+    private fun registerAlias(aliasName: String, canonicalName: String, reason: String = "") {
+        // Validate that canonical function exists
+        require(functions.containsKey(canonicalName)) {
+            "Cannot create alias '$aliasName' for non-existent function '$canonicalName'"
+        }
+
+        // Store alias metadata for function registry
+        aliases[aliasName] = AliasInfo(aliasName, canonicalName, reason)
+
+        // Register the alias to work at runtime (delegates to canonical function)
+        functions[aliasName] = functions[canonicalName]!!
+    }
+
+    /**
+     * Looks up a function by name.
+     */
+    fun lookup(name: String): ((List<UDM>) -> UDM)? = functions[name]?.implementation
+
+    /**
+     * Returns all registered function names.
+     */
+    fun getAllFunctionNames(): Set<String> = functions.keys.toSet()
+    
+    /**
+     * Returns the total number of registered functions.
+     */
+    fun getFunctionCount(): Int = functions.size
+
+    /**
+     * Export function registry for CLI tools and IDE plugins
+     *
+     * Scans all @UTLXFunction annotations across stdlib and builds a comprehensive registry
+     * with metadata for documentation, autocomplete, and function discovery.
+     */
+    fun exportRegistry(): FunctionRegistry {
+        val allFunctions = mutableListOf<FunctionInfo>()
+
+        // List of all function object classes to scan
+        val functionClasses = listOf(
+            // Core functions
+            com.glomidco.utlx.stdlib.core.CoreFunctions::class,
+            com.glomidco.utlx.stdlib.core.DebugFunctions::class,
+            com.glomidco.utlx.stdlib.core.RuntimeFunctions::class,
+
+            // String functions
+            com.glomidco.utlx.stdlib.string.StringFunctions::class,
+            com.glomidco.utlx.stdlib.string.RegexFunctions::class,
+            com.glomidco.utlx.stdlib.string.ExtendedStringFunctions::class,
+            com.glomidco.utlx.stdlib.string.MoreStringFunctions::class,
+            com.glomidco.utlx.stdlib.string.CaseFunctions::class,
+            com.glomidco.utlx.stdlib.string.CaseConversionFunctions::class,
+            com.glomidco.utlx.stdlib.string.PluralizationFunctions::class,
+            com.glomidco.utlx.stdlib.string.CharacterFunctions::class,
+            com.glomidco.utlx.stdlib.string.AdvancedRegexFunctions::class,
+
+            // Array functions
+            com.glomidco.utlx.stdlib.array.ArrayFunctions::class,
+            com.glomidco.utlx.stdlib.array.MoreArrayFunctions::class,
+            com.glomidco.utlx.stdlib.array.Aggregations::class,
+            com.glomidco.utlx.stdlib.array.CriticalArrayFunctions::class,
+            com.glomidco.utlx.stdlib.array.UnzipFunctions::class,
+            com.glomidco.utlx.stdlib.array.EnhancedArrayFunctions::class,
+            com.glomidco.utlx.stdlib.array.JoinFunctions::class,
+
+            // Data restructuring functions
+            com.glomidco.utlx.stdlib.restructuring.DataRestructuringFunctions::class,
+
+            // Math functions
+            com.glomidco.utlx.stdlib.math.MathFunctions::class,
+            com.glomidco.utlx.stdlib.math.ExtendedMathFunctions::class,
+            com.glomidco.utlx.stdlib.math.StatisticalFunctions::class,
+            com.glomidco.utlx.stdlib.math.AdvancedMathFunctions::class,
+
+            // Date functions
+            com.glomidco.utlx.stdlib.date.DateFunctions::class,
+            com.glomidco.utlx.stdlib.date.ExtendedDateFunctions::class,
+            com.glomidco.utlx.stdlib.date.MoreDateFunctions::class,
+            com.glomidco.utlx.stdlib.date.TimezoneFunctions::class,
+            com.glomidco.utlx.stdlib.date.RichDateFunctions::class,
+
+            // Type functions
+            com.glomidco.utlx.stdlib.type.TypeFunctions::class,
+            com.glomidco.utlx.stdlib.type.ConversionFunctions::class,
+
+            // Object functions
+            com.glomidco.utlx.stdlib.objects.ObjectFunctions::class,
+            com.glomidco.utlx.stdlib.objects.CriticalObjectFunctions::class,
+            com.glomidco.utlx.stdlib.objects.EnhancedObjectFunctions::class,
+
+            // Encoding functions
+            com.glomidco.utlx.stdlib.encoding.EncodingFunctions::class,
+            com.glomidco.utlx.stdlib.encoding.AdvancedCryptoFunctions::class,
+
+            // XML functions
+            com.glomidco.utlx.stdlib.xml.QNameFunctions::class,
+            com.glomidco.utlx.stdlib.xml.XmlUtilityFunctions::class,
+            com.glomidco.utlx.stdlib.xml.XMLSerializationOptionsFunctions::class,
+            com.glomidco.utlx.stdlib.xml.CDATAFunctions::class,
+            com.glomidco.utlx.stdlib.xml.XMLEncodingBomFunctions::class,
+            com.glomidco.utlx.stdlib.xml.XMLCanonicalizationFunctions::class,
+
+            // Logical functions
+            com.glomidco.utlx.stdlib.logical.LogicalFunctions::class,
+
+            // URL functions
+            com.glomidco.utlx.stdlib.url.URLFunctions::class,
+
+            // JWT functions
+            com.glomidco.utlx.stdlib.jwt.JWTFunctions::class,
+
+            // JSON functions
+            com.glomidco.utlx.stdlib.json.JSONCanonicalizationFunctions::class,
+
+            // JWS functions
+            com.glomidco.utlx.stdlib.jws.JWSBasicFunctions::class,
+
+            // Binary functions
+            com.glomidco.utlx.stdlib.binary.BinaryFunctions::class,
+            com.glomidco.utlx.stdlib.binary.CompressionFunctions::class,
+
+            // Serialization functions
+            com.glomidco.utlx.stdlib.serialization.SerializationFunctions::class,
+            com.glomidco.utlx.stdlib.serialization.PrettyPrintFunctions::class,
+
+            // Util functions
+            com.glomidco.utlx.stdlib.util.UUIDFunctions::class,
+            com.glomidco.utlx.stdlib.util.TimerFunctions::class,
+            com.glomidco.utlx.stdlib.util.MimeFunctions::class,
+            com.glomidco.utlx.stdlib.util.MultipartFunctions::class,
+            com.glomidco.utlx.stdlib.util.CoercionFunctions::class,
+            com.glomidco.utlx.stdlib.util.ValueFunctions::class,
+            com.glomidco.utlx.stdlib.util.TreeFunctions::class,
+            com.glomidco.utlx.stdlib.util.DiffFunctions::class,
+
+            // Finance functions
+            com.glomidco.utlx.stdlib.finance.FinancialFunctions::class,
+
+            // Geo functions
+            com.glomidco.utlx.stdlib.geo.GeospatialFunctions::class,
+
+            // CSV functions
+            com.glomidco.utlx.stdlib.csv.CSVFunctions::class,
+
+            // YAML functions
+            com.glomidco.utlx.stdlib.yaml.YAMLFunctions::class,
+
+            // Regional functions
+            com.glomidco.utlx.stdlib.regional.RegionalNumberFunctions::class,
+
+            // Schema serialization functions
+            com.glomidco.utlx.stdlib.schema.SchemaSerializationFunctions::class,
+
+            // JSON Patch functions (F15)
+            com.glomidco.utlx.stdlib.json.JsonPatchFunctions::class,
+
+            // Crypto functions (F11)
+            com.glomidco.utlx.stdlib.crypto.RSAFunctions::class,
+            com.glomidco.utlx.stdlib.crypto.JWSSigningFunctions::class,
+            com.glomidco.utlx.stdlib.crypto.JWTVerification::class,
+            com.glomidco.utlx.stdlib.crypto.XMLDSigFunctions::class
+        )
+
+        // Scan each class for @UTLXFunction annotations
+        for (klass in functionClasses) {
+            for (member in klass.members) {
+                val annotation = member.annotations
+                    .filterIsInstance<com.glomidco.utlx.stdlib.annotations.UTLXFunction>()
+                    .firstOrNull()
+
+                if (annotation != null) {
+                    allFunctions.add(convertAnnotationToFunctionInfo(member.name, annotation))
+                }
+            }
+        }
+
+        // Add alias entries to the registry
+        for ((aliasName, aliasInfo) in aliases) {
+            // Find the canonical function's info
+            val canonicalFunc = allFunctions.find { it.name == aliasInfo.canonicalName }
+            if (canonicalFunc != null) {
+                // Create alias entry with same metadata but marked as alias
+                val aliasDescription = if (aliasInfo.reason.isNotEmpty()) {
+                    "${canonicalFunc.description} (${aliasInfo.reason})"
+                } else {
+                    canonicalFunc.description
+                }
+
+                allFunctions.add(
+                    canonicalFunc.copy(
+                        name = aliasName,
+                        isAlias = true,
+                        aliasOf = aliasInfo.canonicalName,
+                        description = aliasDescription
+                    )
+                )
+            }
+        }
+
+        // Group by category
+        val categories = allFunctions
+            .groupBy { it.category }
+            .mapValues { it.value.sortedBy { func -> func.name } }
+
+        return FunctionRegistry(
+            version = "1.0.0",
+            generatedAt = java.time.Instant.now().toString(),
+            totalFunctions = allFunctions.size,
+            functions = allFunctions.sortedBy { it.name },
+            categories = categories
+        )
+    }
+
+    private fun convertAnnotationToFunctionInfo(
+        functionName: String,
+        annotation: com.glomidco.utlx.stdlib.annotations.UTLXFunction
+    ): FunctionInfo {
+        // Parse parameters from annotation string array
+        val parameters = annotation.parameters.map { paramStr ->
+            // Expected format: "paramName: type - description"
+            val parts = paramStr.split(":", limit = 2)
+            val name = parts.getOrNull(0)?.trim() ?: ""
+
+            val rest = parts.getOrNull(1)?.trim() ?: ""
+            val typeParts = rest.split("-", limit = 2)
+            val type = typeParts.getOrNull(0)?.trim() ?: "Any"
+            val description = typeParts.getOrNull(1)?.trim() ?: ""
+
+            ParameterInfo(
+                name = name,
+                type = type,
+                description = description
+            )
+        }
+
+        // Parse return value
+        val returns = if (annotation.returns.isNotBlank()) {
+            // Expected format: "type - description" or just "description"
+            val parts = annotation.returns.split("-", limit = 2)
+            if (parts.size == 2) {
+                ReturnInfo(
+                    type = parts[0].trim(),
+                    description = parts[1].trim()
+                )
+            } else {
+                ReturnInfo(
+                    type = "Any",
+                    description = annotation.returns.trim()
+                )
+            }
+        } else {
+            null
+        }
+
+        // Collect all examples
+        val examples = mutableListOf<String>()
+        if (annotation.example.isNotBlank()) {
+            examples.add(annotation.example)
+        }
+        examples.addAll(annotation.additionalExamples.filter { it.isNotBlank() })
+
+        // Build signature from parameters
+        val paramSignature = parameters.joinToString(", ") { "${it.name}: ${it.type}" }
+        val returnType = returns?.type ?: "Any"
+        val signature = "$functionName($paramSignature) => $returnType"
+
+        return FunctionInfo(
+            name = functionName,
+            category = annotation.category.ifBlank { "Core" },
+            description = annotation.description,
+            signature = signature,
+            minArgs = if (annotation.minArgs >= 0) annotation.minArgs else -1,
+            maxArgs = if (annotation.maxArgs >= 0) annotation.maxArgs else -1,
+            parameters = parameters,
+            returns = returns,
+            examples = examples,
+            notes = annotation.notes.ifBlank { null },
+            tags = annotation.tags.toList(),
+            seeAlso = annotation.seeAlso.toList(),
+            since = annotation.since.ifBlank { "1.0" },
+            deprecated = annotation.deprecated,
+            deprecationMessage = annotation.deprecationMessage.ifBlank { null }
+        )
+    }
+    
+    /**
+     * Register JSON Canonicalization functions
+     * RFC 8785 - JSON Canonicalization Scheme for digital signatures and cryptographic operations
+     */
+    private fun registerJSONFunctions() {
+        register("canonicalizeJSON", JSONCanonicalizationFunctions::canonicalizeJSON)
+        register("jcs", JSONCanonicalizationFunctions::jcs)
+        register("canonicalJSONHash", JSONCanonicalizationFunctions::canonicalJSONHash)
+        register("jsonEquals", JSONCanonicalizationFunctions::jsonEquals)
+        register("isCanonicalJSON", JSONCanonicalizationFunctions::isCanonicalJSON)
+        register("canonicalJSONSize", JSONCanonicalizationFunctions::canonicalJSONSize)
+    }
+    
+    /**
+     * Register JWS (JSON Web Signature) functions
+     * RFC 7515 - Decoding and inspection of JWS tokens (no signature verification)
+     */
+    private fun registerJWSFunctions() {
+        register("decodeJWS", JWSBasicFunctions::decodeJWS)
+        register("getJWSPayload", JWSBasicFunctions::getJWSPayload)
+        register("getJWSHeader", JWSBasicFunctions::getJWSHeader)
+        register("getJWSAlgorithm", JWSBasicFunctions::getJWSAlgorithm)
+        register("getJWSKeyId", JWSBasicFunctions::getJWSKeyId)
+        register("getJWSTokenType", JWSBasicFunctions::getJWSTokenType)
+        register("isJWSFormat", JWSBasicFunctions::isJWSFormat)
+        register("getJWSSigningInput", JWSBasicFunctions::getJWSSigningInput)
+        register("getJWSInfo", JWSBasicFunctions::getJWSInfo)
+    }
+    
+    /**
+     * Register CSV Functions
+     * Advanced CSV data manipulation and analysis functions
+     */
+    private fun registerCSVFunctions() {
+        // Structure access functions
+        register("csvRows", CSVFunctions::csvRows)
+        register("csvColumns", CSVFunctions::csvColumns)
+        register("csvColumn", CSVFunctions::csvColumn)
+        register("csvRow", CSVFunctions::csvRow)
+        register("csvCell", CSVFunctions::csvCell)
+        
+        // Transformation functions
+        register("csvTranspose", CSVFunctions::csvTranspose)
+        
+        // Filter and sort functions
+        register("csvFilter", CSVFunctions::csvFilter)
+        register("csvSort", CSVFunctions::csvSort)
+        
+        // Column operations
+        register("csvAddColumn", CSVFunctions::csvAddColumn)
+        register("csvRemoveColumns", CSVFunctions::csvRemoveColumns)
+        register("csvSelectColumns", CSVFunctions::csvSelectColumns)
+        
+        // Aggregation functions
+        register("csvSummarize", CSVFunctions::csvSummarize)
+    }
+    
+    /**
+     * Register YAML Functions
+     * YAML-specific operations for transformation scenarios
+     */
+    private fun registerYAMLFunctions() {
+        // Multi-document operations
+        register("yamlSplitDocuments", YAMLFunctions::yamlSplitDocuments)
+        register("yamlMergeDocuments", YAMLFunctions::yamlMergeDocuments)
+        register("yamlGetDocument", YAMLFunctions::yamlGetDocument)
+        
+        // Path operations
+        register("yamlPath", YAMLFunctions::yamlPath)
+        register("yamlSet", YAMLFunctions::yamlSet)
+        register("yamlDelete", YAMLFunctions::yamlDelete)
+        register("yamlExists", YAMLFunctions::yamlExists)
+        
+        // Dynamic key operations
+        register("yamlKeys", YAMLFunctions::yamlKeys)
+        register("yamlValues", YAMLFunctions::yamlValues)
+        register("yamlEntries", YAMLFunctions::yamlEntries)
+        register("yamlFilterByKeyPattern", YAMLFunctions::yamlFilterByKeyPattern)
+        register("yamlSelectKeys", YAMLFunctions::yamlSelectKeys)
+        register("yamlOmitKeys", YAMLFunctions::yamlOmitKeys)
+        register("yamlFromEntries", YAMLFunctions::yamlFromEntries)
+        
+        // Deep merge operations
+        register("yamlMerge", YAMLFunctions::yamlMerge)
+        register("yamlMergeAll", YAMLFunctions::yamlMergeAll)
+        
+        // Structural query operations
+        register("yamlFindByField", YAMLFunctions::yamlFindByField)
+        register("yamlFindObjectsWithField", YAMLFunctions::yamlFindObjectsWithField)
+        
+        // Formatting and validation
+        register("yamlSort", YAMLFunctions::yamlSort)
+        register("yamlValidate", YAMLFunctions::yamlValidate)
+        register("yamlValidateKeyPattern", YAMLFunctions::yamlValidateKeyPattern)
+        register("yamlHasRequiredFields", YAMLFunctions::yamlHasRequiredFields)
+    }
+
+    /**
+     * F11: RSA Cryptographic Functions
+     * Sign, verify, encrypt, decrypt, key generation — all JDK built-in.
+     */
+    private fun registerRSAFunctions() {
+        register("generateRSAKeyPair", RSAFunctions::generateRSAKeyPair)
+        register("rsaSign", RSAFunctions::rsaSign)
+        register("rsaVerify", RSAFunctions::rsaVerify)
+        register("rsaEncrypt", RSAFunctions::rsaEncrypt)
+        register("rsaDecrypt", RSAFunctions::rsaDecrypt)
+    }
+
+    /**
+     * F11: JWS Signing Functions
+     * Sign arbitrary data as JWS compact serialization (HS256/384/512).
+     */
+    private fun registerJWSSigningFunctions() {
+        register("signJWS", JWSSigningFunctions::signJWS)
+    }
+
+    /**
+     * F11: XMLDSig Verification Functions
+     * Verify XML digital signatures (Peppol, WS-Security, SAML).
+     */
+    private fun registerXMLDSigFunctions() {
+        register("signXML", XMLDSigFunctions::signXML)
+        register("verifyXMLSignature", XMLDSigFunctions::verifyXMLSignature)
+        register("getXMLSignatureInfo", XMLDSigFunctions::getXMLSignatureInfo)
+        register("verifyXMLSignatureWithCert", XMLDSigFunctions::verifyXMLSignatureWithCert)
+    }
+}
+
+/**
+ * UTL-X Function wrapper
+ */
+data class UTLXFunction(
+    val name: String,
+    val implementation: (List<UDM>) -> UDM,
+    val minArgs: Int? = null,
+    val maxArgs: Int? = null,
+    val description: String? = null
+) {
+    fun execute(args: List<UDM>): UDM {
+        if (minArgs != null && args.size < minArgs) {
+            throw IllegalArgumentException("$name expects at least $minArgs arguments, got ${args.size}")
+        }
+        if (maxArgs != null && args.size > maxArgs) {
+            throw IllegalArgumentException("$name expects at most $maxArgs arguments, got ${args.size}")
+        }
+        return implementation(args)
+    }
+}
+
+// FunctionArgumentException is now in core module
+typealias FunctionArgumentException = com.glomidco.utlx.core.FunctionArgumentException
+class FunctionExecutionException(message: String, cause: Throwable? = null) : RuntimeException(message, cause)

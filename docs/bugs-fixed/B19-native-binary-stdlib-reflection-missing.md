@@ -12,7 +12,7 @@
 After fixing B17 (resource bundle crash), the native binary no longer crashes at startup. However, most stdlib functions fail at runtime with:
 
 ```
-NoSuchMethodException: org.apache.utlx.stdlib.UTLXFunction.execute(java.util.List)
+NoSuchMethodException: com.glomidco.utlx.stdlib.UTLXFunction.execute(java.util.List)
 ```
 
 The interpreter loads stdlib functions reflectively via `Class.getMethod("execute", List::class.java)`. GraalVM native-image cannot resolve these reflection calls because the function wrapper classes are not registered in the reflection configuration.
@@ -35,7 +35,7 @@ The interpreter loads stdlib functions reflectively via `Class.getMethod("execut
 In `interpreter.kt` lines 1029-1040:
 
 ```kotlin
-val stdlibClass = Class.forName("org.apache.utlx.stdlib.StandardLibrary")
+val stdlibClass = Class.forName("com.glomidco.utlx.stdlib.StandardLibrary")
 val instanceField = stdlibClass.getField("INSTANCE")
 val stdlibInstance = instanceField.get(null)
 val getAllFunctionsMethod = stdlibClass.getMethod("getAllFunctions")
@@ -51,7 +51,7 @@ The `stdlibFunction.javaClass` returns anonymous/lambda wrapper classes generate
 
 ### Commit 1: Reflection + resource config
 1. Added `StandardLibrary`, `Functions`, `UTLXFunction`, `Interpreter` to `reflect-config.json`
-2. Added `org.apache.utlx.stdlib` to `--initialize-at-build-time` in `build.gradle.kts`
+2. Added `com.glomidco.utlx.stdlib` to `--initialize-at-build-time` in `build.gradle.kts`
 3. Added Apache XML Security resource bundle to `resource-config.json` (B17)
 
 ### Commit 2: Remove broken build arg
