@@ -70,7 +70,7 @@ utlx schema document \
 
 ```kotlin
 plugins {
-    id("org.apache.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "0.9.0-beta"
 }
 
 utlxSchema {
@@ -95,7 +95,7 @@ utlxSchema {
 
 ```xml
 <plugin>
-    <groupId>org.apache.utlx</groupId>
+    <groupId>com.glomidco.utlx</groupId>
     <artifactId>utlx-maven-plugin</artifactId>
     <executions>
         <execution>

@@ -40,13 +40,13 @@ Created new `schema/` module with directive catalog and validation:
 
 #### Files Created
 - `schema/build.gradle.kts` - Module configuration
-- `schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt` (710 lines)
+- `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt` (710 lines)
   - **81 USDL 1.0 directives** with tier classification
   - Scope validation (TOP_LEVEL, TYPE_DEFINITION, FIELD_DEFINITION, etc.)
   - Format support matrix (9 languages tracked)
   - Lookup methods by name, tier, scope, format
 
-- `schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveValidator.kt` (380 lines)
+- `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveValidator.kt` (380 lines)
   - Validates USDL schemas against catalog
   - Typo detection using Levenshtein distance
   - Format-specific warnings
@@ -301,25 +301,25 @@ output xsd %usdl 1.0  // or: output jsch %usdl 1.0
 
 ### Schema Module (Created)
 1. `schema/build.gradle.kts`
-2. `schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt` (710 lines)
-3. `schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveValidator.kt` (380 lines)
-4. `schema/src/test/kotlin/org/apache/utlx/schema/USDL10Test.kt` (140 lines)
-5. `schema/src/test/kotlin/org/apache/utlx/schema/DirectiveValidatorTest.kt` (260 lines)
+2. `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt` (710 lines)
+3. `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveValidator.kt` (380 lines)
+4. `schema/src/test/kotlin/com/glomidco/utlx/schema/USDL10Test.kt` (140 lines)
+5. `schema/src/test/kotlin/com/glomidco/utlx/schema/DirectiveValidatorTest.kt` (260 lines)
 
 ### Core Module (Modified)
-1. `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt` (+11 lines)
-2. `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` (+45 lines)
-3. `modules/core/src/test/kotlin/org/apache/utlx/core/USDLParserTest.kt` (created, 168 lines)
+1. `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt` (+11 lines)
+2. `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt` (+45 lines)
+3. `modules/core/src/test/kotlin/com/glomidco/utlx/core/USDLParserTest.kt` (created, 168 lines)
 
 ### XSD Format Module (Modified)
 1. `formats/xsd/build.gradle.kts` (+3 lines)
-2. `formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDSerializer.kt` (~150 lines modified)
-3. `formats/xsd/src/test/kotlin/org/apache/utlx/formats/xsd/USDLToXSDTest.kt` (created, 299 lines)
+2. `formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDSerializer.kt` (~150 lines modified)
+3. `formats/xsd/src/test/kotlin/com/glomidco/utlx/formats/xsd/USDLToXSDTest.kt` (created, 299 lines)
 
 ### JSON Schema Format Module (Modified)
 1. `formats/jsch/build.gradle.kts` (+3 lines)
-2. `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaSerializer.kt` (~170 lines added)
-3. `formats/jsch/src/test/kotlin/org/apache/utlx/formats/jsch/USDLToJSONSchemaTest.kt` (created, 350 lines)
+2. `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaSerializer.kt` (~170 lines added)
+3. `formats/jsch/src/test/kotlin/com/glomidco/utlx/formats/jsch/USDLToJSONSchemaTest.kt` (created, 350 lines)
 
 ### Conformance Tests (Created)
 1. `conformance-suite/tests/formats/xsd/usdl/generate_customer_schema.yaml` (81 lines)

@@ -106,7 +106,7 @@ Jane,25,LA
 The `UDM.Object` type already has a `metadata` field:
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt
 // Line: 60-64
 
 data class Object(
@@ -132,7 +132,7 @@ data class Object(
 
 ### XML Parser - Active Comment Removal
 
-**File:** `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt`
+**File:** `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`
 
 ```kotlin
 // Line 156: Comment detection
@@ -163,7 +163,7 @@ private fun skipComment() {
 
 ### YAML Parser - Library Limitation
 
-**File:** `formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLParser.kt`
+**File:** `formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLParser.kt`
 
 ```kotlin
 // Line 32: Uses SnakeYAML library
@@ -961,10 +961,10 @@ UDM.Object (32 bytes base) +
 ## 15. References
 
 ### Internal References
-- `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` (lines 60-89) - UDM.Object definition
-- `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt` (lines 156, 344-357) - XML comment handling
-- `formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLParser.kt` (lines 32, 79) - YAML parser
-- `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt` (lines 47, 56, 61) - c14n comment handling
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` (lines 60-89) - UDM.Object definition
+- `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt` (lines 156, 344-357) - XML comment handling
+- `formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLParser.kt` (lines 32, 79) - YAML parser
+- `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt` (lines 47, 56, 61) - c14n comment handling
 
 ### External References
 - [RFC 8259 - JSON Specification](https://tools.ietf.org/html/rfc8259) - JSON does not support comments

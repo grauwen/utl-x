@@ -46,7 +46,7 @@ All stdio-based modes use standard process I/O — fully cross-platform with no 
 ### 3.1 New File Structure
 
 ```
-modules/engine/src/main/kotlin/org/apache/utlx/engine/
+modules/engine/src/main/kotlin/com/glomidco/utlx/engine/
 ├── Main.kt                          # MODIFIED: add --mode flag
 ├── UtlxEngine.kt                    # MODIFIED: multi-transformation, transport-agnostic
 ├── EngineState.kt                   # UNCHANGED

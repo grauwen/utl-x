@@ -157,7 +157,7 @@ the data there, or reference each input by its declared name (use identifier-saf
 `enterpriseOrder`, not `enterprise-order`).
 
 ## Code pointers
-- Core: `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt:215-226`
+- Core: `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt:215-226`
   (the fallback) and `:202` (header already in scope).
 - Engine (strict, for parity): `modules/engine/.../strategy/CompiledStrategy.kt:130-175`,
   `CopyStrategy.kt`.

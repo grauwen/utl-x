@@ -82,7 +82,7 @@ Based on comprehensive analysis of:
 ### New Files to Create
 
 ```
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/
 ├── array/
 │   ├── UnzipFunctions.kt          ← CREATE (artifact 1)
 │   └── CriticalArrayFunctions.kt  ← CREATE (artifact 6)
@@ -100,7 +100,7 @@ stdlib/src/main/kotlin/org/apache/utlx/stdlib/
 ### Test Files to Create
 
 ```
-stdlib/src/test/kotlin/org/apache/utlx/stdlib/
+stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/
 ├── array/
 │   ├── UnzipFunctionsTest.kt          ← CREATE (artifact 2)
 │   └── CriticalArrayFunctionsTest.kt  ← TODO
@@ -125,22 +125,22 @@ stdlib/src/test/kotlin/org/apache/utlx/stdlib/
 cd ~/path/to/utl-x
 
 # Array functions
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/UnzipFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/UnzipFunctions.kt
 # Paste artifact 1 content
 
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/CriticalArrayFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/CriticalArrayFunctions.kt
 # Paste artifact 6 content
 
 # String functions
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/CaseConversionFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/CaseConversionFunctions.kt
 # Paste artifact 5 content
 
 # Object functions
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/CriticalObjectFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/CriticalObjectFunctions.kt
 # Paste artifact 7 content
 
 # Math functions
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/StatisticalFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/math/StatisticalFunctions.kt
 # Paste artifact 8 content
 ```
 
@@ -148,7 +148,7 @@ cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/StatisticalFunctions.kt
 
 ```bash
 # Unzip tests (provided)
-cat > stdlib/src/test/kotlin/org/apache/utlx/stdlib/array/UnzipFunctionsTest.kt
+cat > stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/array/UnzipFunctionsTest.kt
 # Paste artifact 2 content
 
 # Other test files (create similarly)
@@ -157,14 +157,14 @@ cat > stdlib/src/test/kotlin/org/apache/utlx/stdlib/array/UnzipFunctionsTest.kt
 
 ### Step 3: Register Functions in Functions.kt (15 min)
 
-**Location:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`
+**Location:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`
 
 ```kotlin
-import org.apache.utlx.stdlib.array.UnzipFunctions
-import org.apache.utlx.stdlib.array.CriticalArrayFunctions
-import org.apache.utlx.stdlib.string.CaseConversionFunctions
-import org.apache.utlx.stdlib.objects.CriticalObjectFunctions
-import org.apache.utlx.stdlib.math.StatisticalFunctions
+import com.glomidco.utlx.stdlib.array.UnzipFunctions
+import com.glomidco.utlx.stdlib.array.CriticalArrayFunctions
+import com.glomidco.utlx.stdlib.string.CaseConversionFunctions
+import com.glomidco.utlx.stdlib.objects.CriticalObjectFunctions
+import com.glomidco.utlx.stdlib.math.StatisticalFunctions
 
 private fun registerArrayFunctions() {
     // ... existing registrations ...

@@ -16,7 +16,7 @@ A systematic audit of all TODO/FIXME/Placeholder comments in the codebase reveal
 
 ## Category 1: Lambda never invoked (array functions)
 
-All in `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/EnhancedArrayFunctions.kt`:
+All in `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/EnhancedArrayFunctions.kt`:
 
 | Function | Expected | Actual | Placeholder |
 |---|---|---|---|
@@ -30,7 +30,7 @@ All in `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/EnhancedArrayFunctio
 
 ## Category 2: Lambda never invoked (critical array functions)
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/CriticalArrayFunctions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/CriticalArrayFunctions.kt`:
 
 | Function | Expected | Actual | Placeholder |
 |---|---|---|---|
@@ -40,7 +40,7 @@ In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/CriticalArrayFunctions.k
 
 ## Category 3: Tree operations — lambda never invoked
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/util/UtilityFunctions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/util/UtilityFunctions.kt`:
 
 | Function | Expected | Actual | Placeholder |
 |---|---|---|---|
@@ -50,7 +50,7 @@ In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/util/UtilityFunctions.kt`:
 
 ## Category 4: Serialization — wrong output
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/serialization/SerializationFunctions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/serialization/SerializationFunctions.kt`:
 
 | Function | Expected | Actual | Placeholder |
 |---|---|---|---|
@@ -62,7 +62,7 @@ Note: These may not be registered in the function table — they fail with "Unde
 
 ## Category 5: Regex — lambda never invoked
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/AdvancedRegexFunctions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/AdvancedRegexFunctions.kt`:
 
 | Function | Expected | Actual | Placeholder |
 |---|---|---|---|
@@ -70,7 +70,7 @@ In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/AdvancedRegexFunctions.
 
 ## Category 6: Join functions — lambda partially broken
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/JoinFunctions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/JoinFunctions.kt`:
 
 | Function | Issue | Placeholder |
 |---|---|---|
@@ -79,7 +79,7 @@ In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/JoinFunctions.kt`:
 
 ## Category 7: JWT — unverified result
 
-In `stdlib-security/src/main/kotlin/org/apache/utlx/stdlib/jwt/JWTVerification.kt`:
+In `stdlib-security/src/main/kotlin/com/glomidco/utlx/stdlib/jwt/JWTVerification.kt`:
 
 | Function | Issue |
 |---|---|

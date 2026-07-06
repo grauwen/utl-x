@@ -20,10 +20,10 @@ Detect when reserved keywords (`input`, `output`) are used without the `$` prefi
 ### Tasks
 
 #### 1.1 Define Reserved Keywords
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/types/ReservedKeywords.kt` (new)
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/types/ReservedKeywords.kt` (new)
 
 ```kotlin
-package org.apache.utlx.core.types
+package com.glomidco.utlx.core.types
 
 /**
  * Reserved keywords in UTL-X that have special meaning
@@ -76,7 +76,7 @@ object ReservedKeywords {
 ---
 
 #### 1.2 Enhance Type Checker
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/types/type_system.kt` (modify)
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/types/type_system.kt` (modify)
 
 **Current code** (approximate location based on typical type checker):
 ```kotlin
@@ -140,7 +140,7 @@ fun checkVariableReference(name: String, location: Location): Type {
 ---
 
 #### 1.3 Add Error Severity Levels
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/types/type_system.kt` (modify)
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/types/type_system.kt` (modify)
 
 Add severity to TypeError:
 ```kotlin
@@ -165,7 +165,7 @@ data class TypeError(
 ---
 
 #### 1.4 Update ValidateCommand Error Handling
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt` (modify)
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt` (modify)
 
 Current code treats all type errors as warnings. Need to separate:
 - `ErrorSeverity.ERROR` → Exit code 1

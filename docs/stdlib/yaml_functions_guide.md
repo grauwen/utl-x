@@ -758,7 +758,7 @@ output yaml
 ## Function Registration
 
 ```kotlin
-// In stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt
+// In stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt
 
 // Multi-Document
 register("yamlSplitDocuments") { args ->

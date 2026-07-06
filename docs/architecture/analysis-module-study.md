@@ -577,7 +577,7 @@ val isValid = AvroValidator.validate(data, avroSchema)
 ```
 modules/analysis/
 │
-├── src/main/kotlin/org/apache/utlx/analysis/
+├── src/main/kotlin/com/glomidco/utlx/analysis/
 │   │
 │   ├── transformation/              # Schema format conversion
 │   │   ├── SchemaTransformer.kt    # Main interface
@@ -620,7 +620,7 @@ modules/analysis/
 ### CLI Integration
 
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/SchemaCommand.kt
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/SchemaCommand.kt
 
 object SchemaCommand {
     fun execute(args: Array<String>) {

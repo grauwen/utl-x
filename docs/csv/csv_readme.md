@@ -20,7 +20,7 @@ CSV parser and serializer for UTL-X transformation language.
 ### Parsing CSV
 
 ```kotlin
-import org.apache.utlx.formats.csv.CSV
+import com.glomidco.utlx.formats.csv.CSV
 
 // Parse CSV with headers (default)
 val csv = """
@@ -46,8 +46,8 @@ val udm = CSV.parse(csv, hasHeaders = false)  // Returns UDM.Array of UDM.Array
 ### Serializing to CSV
 
 ```kotlin
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.csv.CSVFormat
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.csv.CSVFormat
 
 // Create data structure
 val data = UDM.Array(listOf(
@@ -73,12 +73,12 @@ val csvNoHeaders = CSVFormat.stringifyWithoutHeaders(data)
 ### Complete Transformation Example
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
-import org.apache.utlx.core.interpreter.Interpreter
-import org.apache.utlx.formats.csv.CSV
-import org.apache.utlx.formats.json.JSON
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.formats.csv.CSV
+import com.glomidco.utlx.formats.json.JSON
 
 // Input CSV
 val inputCSV = """
@@ -123,7 +123,7 @@ val data = CSV.parse(csv)
 ### Tab-Separated Values (TSV)
 
 ```kotlin
-import org.apache.utlx.formats.csv.CSVDialect
+import com.glomidco.utlx.formats.csv.CSVDialect
 
 val tsv = "Name\tAge\nAlice\t30"
 val data = CSV.parse(tsv, dialect = CSVDialect.TSV)
@@ -345,8 +345,8 @@ output json
 ## Error Handling
 
 ```kotlin
-import org.apache.utlx.formats.csv.CSV
-import org.apache.utlx.formats.csv.CSVParseException
+import com.glomidco.utlx.formats.csv.CSV
+import com.glomidco.utlx.formats.csv.CSVParseException
 
 try {
     val udm = CSV.parse(invalidCSV)

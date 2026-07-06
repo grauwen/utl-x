@@ -70,7 +70,7 @@ USDL operates as a **schema abstraction layer** that:
 4. Integrates with the LSP daemon for IDE support
 
 **Current Integration Points**:
-- `modules/core/src/main/kotlin/org/apache/utlx/core/usdl/` - USDL core
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/usdl/` - USDL core
 - Format parsers reference USDL schemas for validation
 - Type system leverages USDL for inference
 - LSP daemon uses USDL for autocomplete and diagnostics
@@ -255,7 +255,7 @@ schema input.schema.json    // Current schema validation support
 ### 2.2 Universal Data Model (UDM)
 
 UTL-X's core abstraction layer:
-- **Location**: `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+- **Location**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
 - **Purpose**: Format-agnostic representation of data
 - **Key Types**: UdmValue, UdmObject, UdmArray, UdmScalar, UdmNull
 
@@ -273,7 +273,7 @@ CSV + tsch → UDM ← JSON + jsch
 ### 2.3 Type System
 
 UTL-X includes type inference and checking:
-- **Location**: `modules/core/src/main/kotlin/org/apache/utlx/core/types/type_system.kt`
+- **Location**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/types/type_system.kt`
 - **Current Capabilities**: Basic type checking for transformations
 - **Enhancement Opportunity**: Schema-driven type inference
 
@@ -831,7 +831,7 @@ validate strict    // Options: none, lenient, strict, pedantic
 - Support CSV Dialect Description Format
 
 **Deliverables**:
-- `modules/core/src/main/kotlin/org/apache/utlx/core/usdl/`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/usdl/`
   - `frictionless_parser.kt` - Parse Table Schema JSON
   - `frictionless_mapper.kt` - Map to UDM types
   - `csv_dialect_handler.kt` - Handle dialect specifications
@@ -851,7 +851,7 @@ validate strict    // Options: none, lenient, strict, pedantic
 - Add missing value handling
 
 **Deliverables**:
-- Enhanced `formats/csv/src/main/kotlin/org/apache/utlx/formats/csv/`
+- Enhanced `formats/csv/src/main/kotlin/com/glomidco/utlx/formats/csv/`
   - Update CSV parser to use Table Schemas
   - Implement validation during parsing
   - Add constraint checking (required, min/max, pattern, enum)

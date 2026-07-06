@@ -7,7 +7,7 @@ The UTL-X CLI has been successfully implemented and integrated with the core and
 ## What Was Implemented
 
 ### 1. CLI Main Entry Point
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt`
 
 - Command routing and dispatch
 - Help system and usage documentation
@@ -15,7 +15,7 @@ The UTL-X CLI has been successfully implemented and integrated with the core and
 - Support for command aliases (e.g., `t` for `transform`)
 
 ### 2. Transform Command (Primary Feature)
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
 
 **Features**:
 - ✅ Full integration with core (lexer, parser, type checker, interpreter)
@@ -43,7 +43,7 @@ utlx transform input.xml script.utlx -v -o output.json
 ```
 
 ### 3. Validate Command
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt`
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt`
 
 **Features**:
 - ✅ Lexical analysis validation
@@ -69,7 +69,7 @@ utlx validate script.utlx --strict
 ```
 
 ### 4. Additional Commands
-**Files**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/`
+**Files**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/`
 - `CompileCommand.kt` - Placeholder for future bytecode compilation
 - `FormatCommand.kt` - Script formatting and style checking
 - `MigrateCommand.kt` - Placeholder for XSLT/DataWeave migration
@@ -102,7 +102,7 @@ sudo ./gradlew :modules:cli:installNative
 ```
 
 ### 6. Comprehensive Testing
-**File**: `modules/cli/src/test/kotlin/org/apache/utlx/cli/TransformCommandTest.kt`
+**File**: `modules/cli/src/test/kotlin/com/glomidco/utlx/cli/TransformCommandTest.kt`
 
 **Test Coverage**:
 - ✅ XML to JSON transformation
@@ -237,7 +237,7 @@ utlx transform mydata.xml script.utlx -o output.json
 ### Development Workflow
 ```bash
 # Make changes to CLI
-vim modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt
+vim modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt
 
 # Rebuild quickly
 ./gradlew :modules:cli:jar
@@ -257,7 +257,7 @@ utl-x/
 │   ├── core/                    # Language core (existing)
 │   └── cli/                     # NEW: CLI implementation
 │       ├── src/
-│       │   ├── main/kotlin/org/apache/utlx/cli/
+│       │   ├── main/kotlin/com/glomidco/utlx/cli/
 │       │   │   ├── Main.kt                          # ✅ Entry point
 │       │   │   └── commands/
 │       │   │       ├── TransformCommand.kt          # ✅ Main command
@@ -266,7 +266,7 @@ utl-x/
 │       │   │       ├── FormatCommand.kt             # ✅ Formatting
 │       │   │       ├── MigrateCommand.kt            # ✅ Migration
 │       │   │       └── VersionCommand.kt            # ✅ Version info
-│       │   ├── test/kotlin/org/apache/utlx/cli/
+│       │   ├── test/kotlin/com/glomidco/utlx/cli/
 │       │   │   ├── TransformCommandTest.kt          # ✅ Integration tests
 │       │   │   └── ValidateCommandTest.kt           # ✅ Validation tests
 │       │   └── resources/META-INF/native-image/     # ✅ GraalVM config

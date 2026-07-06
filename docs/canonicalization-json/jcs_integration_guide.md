@@ -10,7 +10,7 @@ JSON Canonicalization Scheme (JCS), defined in **RFC 8785**, provides a standard
 - **Cache Keys** - Deterministic identifiers
 - **Data Comparison** - Reliable JSON equality
 
-**Module:** `org.apache.utlx.stdlib.json.JSONCanonicalization`
+**Module:** `com.glomidco.utlx.stdlib.json.JSONCanonicalization`
 
 **RFC Reference:** [RFC 8785 - JSON Canonicalization Scheme](https://www.rfc-editor.org/rfc/rfc8785)
 
@@ -21,8 +21,8 @@ JSON Canonicalization Scheme (JCS), defined in **RFC 8785**, provides a standard
 ### Basic Canonicalization
 
 ```kotlin
-import org.apache.utlx.stdlib.json.canonicalizeJSON
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.json.canonicalizeJSON
+import com.glomidco.utlx.core.udm.UDM
 
 // Create JSON object
 val data = UDM.Object(mutableMapOf(

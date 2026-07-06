@@ -101,7 +101,7 @@ The core of the transpiler is converting XPath 1.0 expressions to UTL-X:
 ```
 modules/migrate/
   build.gradle.kts                         depends on: core, formats/xml
-  src/main/kotlin/org/apache/utlx/migrate/
+  src/main/kotlin/com/glomidco/utlx/migrate/
     MigrateCommand.kt                      CLI command handler
     XSLTTranspiler.kt                      Main transpiler orchestrator
     XPathConverter.kt                      XPath 1.0 → UTL-X expression converter

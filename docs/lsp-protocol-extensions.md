@@ -346,13 +346,13 @@ Common error codes:
 
 | Component | File |
 |-----------|------|
-| Mode Tracking | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/state/StateManager.kt` |
-| Schema Loading | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt:handleLoadSchema()` |
-| Mode Switching | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt:handleSetMode()` |
-| Output Inference | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/schema/OutputSchemaInferenceService.kt` |
-| Mode-Aware Diagnostics | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/diagnostics/DiagnosticsPublisher.kt` |
-| Mode-Aware Hover | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/hover/HoverService.kt` |
-| Schema Factory | `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/schema/SchemaTypeContextFactory.kt` |
+| Mode Tracking | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/state/StateManager.kt` |
+| Schema Loading | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt:handleLoadSchema()` |
+| Mode Switching | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt:handleSetMode()` |
+| Output Inference | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/schema/OutputSchemaInferenceService.kt` |
+| Mode-Aware Diagnostics | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/diagnostics/DiagnosticsPublisher.kt` |
+| Mode-Aware Hover | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/hover/HoverService.kt` |
+| Schema Factory | `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/schema/SchemaTypeContextFactory.kt` |
 
 ---
 

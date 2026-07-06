@@ -218,7 +218,7 @@ When multiple configuration methods are used, this is the priority order (highes
 For tests or embedded usage:
 
 ```kotlin
-import org.apache.utlx.core.debug.DebugConfig
+import com.glomidco.utlx.core.debug.DebugConfig
 
 // Set global level
 DebugConfig.setGlobalLogLevel(DebugConfig.LogLevel.DEBUG)
@@ -358,8 +358,8 @@ $ ./utlx transform bad-script.utlx $input.json --debug-parser
 
 11:35:09.793 DEBUG o.a.utlx.core.parser.Parser_impl - Starting parse, 24 tokens
 11:35:09.802 ERROR o.a.utlx.core.parser.Parser_impl - Parse exception: Expected ':' after property name
-org.apache.utlx.core.parser.ParseException: Expected ':' after property name
-    at org.apache.utlx.core.parser.Parser.consume(parser_impl.kt:790)
+com.glomidco.utlx.core.parser.ParseException: Expected ':' after property name
+    at com.glomidco.utlx.core.parser.Parser.consume(parser_impl.kt:790)
     ...
 ```
 
@@ -383,7 +383,7 @@ real    0m6.045s
 
 ```bash
 $ cat > /tmp/test-debug.kts <<'EOF'
-import org.apache.utlx.core.debug.DebugConfig
+import com.glomidco.utlx.core.debug.DebugConfig
 DebugConfig.printConfiguration()
 EOF
 

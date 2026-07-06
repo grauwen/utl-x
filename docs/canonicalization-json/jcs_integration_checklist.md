@@ -3,7 +3,7 @@
 ## Files Created
 
 ### ✅ Implementation
-- **File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/json/JSONCanonicalization.kt`
+- **File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/json/JSONCanonicalization.kt`
 - **Status:** Complete implementation with RFC 8785 compliance
 - **Functions:**
   - `canonicalizeJSON()` - Primary function
@@ -13,7 +13,7 @@
   - Helper utilities
 
 ### ✅ Tests
-- **File:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/json/JSONCanonicalizationTest.kt`
+- **File:** `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/json/JSONCanonicalizationTest.kt`
 - **Status:** Comprehensive test suite
 - **Coverage:**
   - RFC 8785 test vectors
@@ -42,9 +42,9 @@ Place files in UTL-X project:
 ```
 stdlib/
 ├── src/
-│   ├── main/kotlin/org/apache/utlx/stdlib/json/
+│   ├── main/kotlin/com/glomidco/utlx/stdlib/json/
 │   │   └── JSONCanonicalization.kt          ← NEW
-│   └── test/kotlin/org/apache/utlx/stdlib/json/
+│   └── test/kotlin/com/glomidco/utlx/stdlib/json/
 │       └── JSONCanonicalizationTest.kt      ← NEW
 └── docs/
     └── jcs_integration_guide.md             ← NEW
@@ -92,14 +92,14 @@ Add to `stdlib/stlib_complete_reference.md`:
 
 ### Step 5: Add to Function Registry
 
-Update `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`:
+Update `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`:
 
 ```kotlin
 // Import JSON canonicalization functions
-import org.apache.utlx.stdlib.json.canonicalizeJSON
-import org.apache.utlx.stdlib.json.jcs
-import org.apache.utlx.stdlib.json.canonicalJSONHash
-import org.apache.utlx.stdlib.json.jsonEquals
+import com.glomidco.utlx.stdlib.json.canonicalizeJSON
+import com.glomidco.utlx.stdlib.json.jcs
+import com.glomidco.utlx.stdlib.json.canonicalJSONHash
+import com.glomidco.utlx.stdlib.json.jsonEquals
 
 // Register in function map
 val standardLibrary = mapOf(

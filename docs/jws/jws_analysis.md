@@ -72,7 +72,7 @@ eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0IiwibmFtZSI6IkpvaG4ifQ.sign
 **Include in core stdlib** - Safe, read-only operations:
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/jws/JWSFunctions.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/jws/JWSFunctions.kt
 
 /**
  * Decodes JWS token WITHOUT signature verification
@@ -112,7 +112,7 @@ fun getJWSAlgorithm(token: String): String {
 **Separate module** - Security-sensitive operations:
 
 ```kotlin
-// stdlib-security/src/main/kotlin/org/apache/utlx/stdlib/jws/JWSSignature.kt
+// stdlib-security/src/main/kotlin/com/glomidco/utlx/stdlib/jws/JWSSignature.kt
 
 /**
  * Creates a JWS token with signature
@@ -211,13 +211,13 @@ val jws = createJWS(payload, secret, "HS256")
 
 ```
 stdlib/
-├── src/main/kotlin/org/apache/utlx/stdlib/
+├── src/main/kotlin/com/glomidco/utlx/stdlib/
 │   └── jws/
 │       ├── JWSBasicFunctions.kt          ✅ CORE (decode only)
 │       └── README.md                      (security warnings)
 │
 stdlib-security/                           ⚠️ OPTIONAL MODULE
-├── src/main/kotlin/org/apache/utlx/stdlib/jws/
+├── src/main/kotlin/com/glomidco/utlx/stdlib/jws/
 │   ├── JWSSignature.kt                    (sign & verify)
 │   ├── JWSAlgorithms.kt                   (algorithm implementations)
 │   ├── JWKSProvider.kt                    (JWKS support)

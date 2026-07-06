@@ -166,7 +166,7 @@ key: value  # End-of-line comment
 ### Existing Infrastructure (Unchanged from v1)
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt
 // Line: 60-64
 
 data class Object(

@@ -21,7 +21,7 @@ XML parser and serializer for UTL-X transformation language.
 ### Parsing XML
 
 ```kotlin
-import org.apache.utlx.formats.xml.XML
+import com.glomidco.utlx.formats.xml.XML
 
 // Parse XML string to UDM
 val xml = """
@@ -37,8 +37,8 @@ val udm = XML.parse(xml)
 ### Serializing to XML
 
 ```kotlin
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.xml.XMLFormat
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.xml.XMLFormat
 
 // Create UDM structure
 val order = UDM.Object(
@@ -66,12 +66,12 @@ val compactXml = XMLFormat.stringifyCompact(order)
 ### Complete Transformation Example
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
-import org.apache.utlx.core.interpreter.Interpreter
-import org.apache.utlx.formats.xml.XML
-import org.apache.utlx.formats.xml.XMLFormat
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.formats.xml.XML
+import com.glomidco.utlx.formats.xml.XMLFormat
 
 // Input XML
 val inputXML = """
@@ -219,7 +219,7 @@ input.Order.Items.Item[*]  // All items
 ### Custom Serialization Options
 
 ```kotlin
-import org.apache.utlx.formats.xml.XMLSerializer
+import com.glomidco.utlx.formats.xml.XMLSerializer
 
 // Create custom serializer
 val serializer = XMLSerializer(
@@ -243,8 +243,8 @@ val text = "Tom & Jerry <heroes>"
 ### Error Handling
 
 ```kotlin
-import org.apache.utlx.formats.xml.XML
-import org.apache.utlx.formats.xml.XMLParseException
+import com.glomidco.utlx.formats.xml.XML
+import com.glomidco.utlx.formats.xml.XMLParseException
 
 try {
     val udm = XML.parse("<invalid>xml")

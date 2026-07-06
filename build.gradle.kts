@@ -3,7 +3,7 @@ plugins {
     id("org.jetbrains.dokka") version "1.9.10"
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "0.1.0-SNAPSHOT"
 
 allprojects {

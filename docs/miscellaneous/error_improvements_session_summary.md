@@ -147,21 +147,21 @@ All conformance tests passing:
 
 ## Files Modified
 
-1. `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 919-940)
+1. `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 919-940)
    - Unwraps InvocationTargetException
    - Throws user-friendly errors directly
    - Suppresses stack traces for user errors
 
-2. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/DateFunctions.kt`
+2. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/DateFunctions.kt`
    - 7 error messages improved
    
-3. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/StringFunctions.kt`
+3. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/StringFunctions.kt`
    - 4 error messages improved
    
-4. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/ArrayFunctions.kt`
+4. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/ArrayFunctions.kt`
    - 48 error messages improved
    
-5. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/MathFunctions.kt`
+5. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/math/MathFunctions.kt`
    - 3 error messages improved
 
 ## Next Steps

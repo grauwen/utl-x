@@ -37,14 +37,14 @@
 
 ### Task 1.1: Advanced Math Functions ⭐⭐⭐
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/math/AdvancedMathFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/math/AdvancedMathFunctions.kt`
 
 **New Functions (12):**
 
 ```kotlin
-package org.apache.utlx.stdlib.math
+package com.glomidco.utlx.stdlib.math
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 import kotlin.math.*
 
 object AdvancedMathFunctions {
@@ -140,7 +140,7 @@ private fun registerAdvancedMathFunctions() {
 
 **Tests:**
 ```kotlin
-// stdlib/src/test/kotlin/org/apache/utlx/stdlib/math/AdvancedMathFunctionsTest.kt
+// stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/math/AdvancedMathFunctionsTest.kt
 class AdvancedMathFunctionsTest {
     @Test
     fun testTrigFunctions() {
@@ -179,12 +179,12 @@ Returns the angle theta from the conversion of rectangular coordinates (x, y) to
 
 ### Task 1.2: Enhanced Object Functions ⭐⭐
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt`
 
 **New Functions (4):**
 
 ```kotlin
-package org.apache.utlx.stdlib.objects
+package com.glomidco.utlx.stdlib.objects
 
 object EnhancedObjectFunctions {
     
@@ -271,7 +271,7 @@ object EnhancedObjectFunctions {
 
 ### Task 1.3: String Character Classes ⭐⭐
 
-**File:** Add to `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/CharacterFunctions.kt`
+**File:** Add to `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/CharacterFunctions.kt`
 
 **New Functions (4):**
 
@@ -316,7 +316,7 @@ object CharacterFunctions {
 
 ### Task 1.4: Array Partition and Enhanced Aggregation ⭐⭐
 
-**File:** Add to `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/EnhancedArrayFunctions.kt`
+**File:** Add to `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/EnhancedArrayFunctions.kt`
 
 **New Functions (5):**
 
@@ -416,12 +416,12 @@ object EnhancedArrayFunctions {
 
 ### Task 2.1: Financial Functions Module ⭐⭐⭐ (UNIQUE)
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/finance/FinancialFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/finance/FinancialFunctions.kt`
 
 **New Module (10 functions):**
 
 ```kotlin
-package org.apache.utlx.stdlib.finance
+package com.glomidco.utlx.stdlib.finance
 
 import java.text.NumberFormat
 import java.util.*
@@ -551,7 +551,7 @@ object FinancialFunctions {
 
 ### Task 2.2: Advanced Regex Functions ⭐
 
-**File:** Add to `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/AdvancedRegexFunctions.kt`
+**File:** Add to `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/AdvancedRegexFunctions.kt`
 
 **New Functions (3):**
 
@@ -641,12 +641,12 @@ regexNamedGroups("user@example.com", "(?<user>\\w+)@(?<domain>[\\w.]+)")
 
 ### Task 3.1: Geospatial Functions ⭐⭐ (UNIQUE)
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/geo/GeospatialFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/geo/GeospatialFunctions.kt`
 
 **New Module (6 functions):**
 
 ```kotlin
-package org.apache.utlx.stdlib.geo
+package com.glomidco.utlx.stdlib.geo
 
 import kotlin.math.*
 

@@ -222,9 +222,9 @@ getScalarValue(udm, "properties.providers.address.street") → undefined
 ## Compliance Statement
 
 The IDE's TypeScript UDM implementation is **fully compliant** with the Kotlin reference implementation as defined in:
-- `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageParser.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageParser.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt`
 
 ### Validation Method
 - ✅ Source code ported line-by-line from Kotlin

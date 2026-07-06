@@ -5,7 +5,7 @@
 The JSON parser correctly handles UTF-8 BOM (Byte Order Mark, U+FEFF) per RFC 8259.
 
 ### Implementation
-- Location: `formats/json/src/main/kotlin/org/apache/utlx/formats/json/json_parser.kt` Line 30-34
+- Location: `formats/json/src/main/kotlin/com/glomidco/utlx/formats/json/json_parser.kt` Line 30-34
 - The parser strips BOM if present at the start of JSON input
 - RFC 8259 compliance: Parsers MUST tolerate and ignore BOM
 

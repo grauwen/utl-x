@@ -631,10 +631,10 @@ utlx design graph "$NEW" -f svg -o new.svg
 Use the visualizer API in Kotlin code:
 
 ```kotlin
-import org.apache.utlx.analysis.visualization.GraphvizASTVisualizer
-import org.apache.utlx.analysis.visualization.VisualizationOptions
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.lexer.Lexer
+import com.glomidco.utlx.analysis.visualization.GraphvizASTVisualizer
+import com.glomidco.utlx.analysis.visualization.VisualizationOptions
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.lexer.Lexer
 
 fun visualizeTransformation(utlxCode: String): String {
     // Parse transformation

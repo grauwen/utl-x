@@ -80,7 +80,7 @@ OData JSON is declared via the UTLX header `input odata` (or `input json` with a
 
 ### 1.2 Backend: OData JSON Parser Extension
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONParser.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/ODataJSONParser.kt`
 
 ```
 Extends JSONParser with:
@@ -99,7 +99,7 @@ Extends JSONParser with:
 
 ### 1.3 Backend: OData JSON Serializer Extension
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataJSONSerializer.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/ODataJSONSerializer.kt`
 
 ```
 Extends JSONSerializer with:
@@ -230,7 +230,7 @@ In OData v4.0, CSDL is only available inside an EDMX XML wrapper. In v4.01, CSDL
 
 **New module:** `formats/odata/`
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/EDMXParser.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/EDMXParser.kt`
 
 ```
 Parses EDMX/CSDL XML (v4.0) to UDM:
@@ -289,7 +289,7 @@ Parsing flow:
 
 ### 2.2 Backend: EDMX Serializer
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/EDMXSerializer.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/EDMXSerializer.kt`
 
 ```
 Serializes UDM (with USDL directives) to EDMX/CSDL XML (v4.0):
@@ -331,7 +331,7 @@ USDL mode transformation:
 
 ### 2.3 Backend: OData Model Types
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/ODataModel.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/ODataModel.kt`
 
 Intermediate model for clean EDMX↔UDM conversion:
 
@@ -393,7 +393,7 @@ data class ODataAnnotation(
 
 ### 2.4 Backend: JSON CSDL Parser (v4.01)
 
-**File:** `formats/odata/src/main/kotlin/org/apache/utlx/formats/odata/JSONCSDLParser.kt`
+**File:** `formats/odata/src/main/kotlin/com/glomidco/utlx/formats/odata/JSONCSDLParser.kt`
 
 OData v4.01 introduced JSON-based CSDL as an alternative to XML EDMX. Since it's JSON, parsing is simpler:
 
@@ -501,7 +501,7 @@ The 5 existing OData directives cover basic entity modeling. For full v4 support
 
 ### 3.2 Directive Registration
 
-**File:** `schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt`
+**File:** `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt`
 
 Add new directives to the OData section of the registry, following existing patterns. Mark as `tier: "format_specific"`, `supportedFormats: ["odata"]`.
 
@@ -654,7 +654,7 @@ Generate EDMX/CSDL from USDL-annotated UDM.
 formats/odata/
 ├── build.gradle.kts
 └── src/
-    ├── main/kotlin/org/apache/utlx/formats/odata/
+    ├── main/kotlin/com/glomidco/utlx/formats/odata/
     │   ├── ODataModel.kt              # Intermediate model types
     │   ├── ODataJSONParser.kt         # OData JSON → UDM (extends JSONParser)
     │   ├── ODataJSONSerializer.kt     # UDM → OData JSON (extends JSONSerializer)
@@ -663,7 +663,7 @@ formats/odata/
     │   ├── JSONCSDLParser.kt          # JSON CSDL (v4.01) → ODataSchema → UDM
     │   ├── JSONCSDLSerializer.kt      # UDM → JSON CSDL (v4.01)
     │   └── EdmTypeMapper.kt           # Edm.* ↔ UTLX type mapping
-    └── test/kotlin/org/apache/utlx/formats/odata/
+    └── test/kotlin/com/glomidco/utlx/formats/odata/
         ├── ODataJSONParserTest.kt
         ├── ODataJSONSerializerTest.kt
         ├── EDMXParserTest.kt

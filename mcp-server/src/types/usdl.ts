@@ -2,7 +2,7 @@
  * TypeScript type definitions for USDL Directive Registry
  *
  * These types match the Kotlin data classes in:
- * schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveRegistry.kt
+ * schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveRegistry.kt
  */
 
 /**

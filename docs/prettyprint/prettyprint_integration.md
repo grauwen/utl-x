@@ -1,15 +1,15 @@
 # PrettyPrint Functions - Integration Guide
 
 ## Location
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/serialization/PrettyPrintFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/serialization/PrettyPrintFunctions.kt`
 
 ## Functions.kt Registration
 
-Add the following to `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`:
+Add the following to `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`:
 
 ```kotlin
 // ==================== IMPORTS ====================
-import org.apache.utlx.stdlib.serialization.PrettyPrintFunctions
+import com.glomidco.utlx.stdlib.serialization.PrettyPrintFunctions
 
 // ==================== INSIDE registerAllFunctions() ====================
 

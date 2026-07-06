@@ -65,7 +65,7 @@ Complete the `Functions.kt` registry with all 120+ function registrations.
 
 **Tasks:**
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt
 
 private fun registerStringFunctions() {
     // Register all 33 string functions
@@ -95,7 +95,7 @@ Ensure stdlib functions can be called from UTL-X scripts:
 **Tasks:**
 ```kotlin
 // Create runtime bridge
-// modules/core/src/main/kotlin/org/apache/utlx/core/runtime/FunctionCaller.kt
+// modules/core/src/main/kotlin/com/glomidco/utlx/core/runtime/FunctionCaller.kt
 
 class FunctionCaller(private val functions: Functions) {
     fun call(name: String, args: List<UDM>): UDM {
@@ -104,7 +104,7 @@ class FunctionCaller(private val functions: Functions) {
 }
 
 // Update interpreter to use stdlib
-// modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt
+// modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt
 
 class Interpreter(private val stdlib: Functions) {
     fun evaluate(ast: ASTNode): UDM {
@@ -238,7 +238,7 @@ Create `docs/comparison/stdlib-migration.md`:
 Create benchmarks comparing stdlib performance:
 
 ```kotlin
-// stdlib/src/test/kotlin/org/apache/utlx/stdlib/benchmarks/StdlibBenchmarks.kt
+// stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/benchmarks/StdlibBenchmarks.kt
 
 @State(Scope.Thread)
 class StringFunctionsBenchmark {

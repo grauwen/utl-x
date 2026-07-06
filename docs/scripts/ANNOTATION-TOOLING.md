@@ -40,7 +40,7 @@ The following files have been removed as they are superseded by v3:
 
 ### Annotate a Single File
 ```bash
-python3 scripts/enhance-annotations-v3.py stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/ArrayFunctions.kt
+python3 scripts/enhance-annotations-v3.py stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/ArrayFunctions.kt
 ```
 
 ### Annotate All Files

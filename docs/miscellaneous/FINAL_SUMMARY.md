@@ -380,9 +380,9 @@ input xsd { arrays: ["xs:element"] }
 ## Files Modified
 
 ### Core Implementation
-1. `formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDParser.kt`
-2. `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
-3. `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+1. `formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDParser.kt`
+2. `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
+3. `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
 4. `conformance-suite/runners/cli-runner/simple-runner.py`
 
 ### Tests Created

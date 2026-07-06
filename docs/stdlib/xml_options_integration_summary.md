@@ -22,7 +22,7 @@ These functions solve **real-world XML integration problems** that standard seri
 ### Add to Existing Structure:
 
 ```
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/
 ├── XMLCanonicalizationFunctions.kt        ← Already exists (C14N)
 ├── XmlUtilityFunctions.kt                 ← Already exists (utilities)
 ├── XMLSerializationOptions.kt             ← NEW (this implementation)
@@ -40,7 +40,7 @@ stdlib/docs/
 ### Add Tests:
 
 ```
-stdlib/src/test/kotlin/org/apache/utlx/stdlib/xml/
+stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/xml/
 ├── XMLCanonicalizationTest.kt             ← Already exists
 └── XMLSerializationOptionsTest.kt         ← NEW
 ```
@@ -420,8 +420,8 @@ Generate Kdoc for all new functions.
 
 ### File Locations:
 
-- **Implementation:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/XMLSerializationOptions.kt`
-- **Tests:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/xml/XMLSerializationOptionsTest.kt`
+- **Implementation:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/XMLSerializationOptions.kt`
+- **Tests:** `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/xml/XMLSerializationOptionsTest.kt`
 - **Docs:** `stdlib/docs/xml_serialization_options_guide.md`
 
 **This fills a critical gap in UTL-X for real-world XML integration!** 🎯

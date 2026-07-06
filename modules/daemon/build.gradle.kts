@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.0.0-SNAPSHOT"
 
 dependencies {
@@ -77,7 +77,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.apache.utlx.daemon.Main")
+    mainClass.set("com.glomidco.utlx.daemon.Main")
 
     // Set JVM args for better performance
     applicationDefaultJvmArgs = listOf(
@@ -89,7 +89,7 @@ application {
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to "org.apache.utlx.daemon.Main",
+            "Main-Class" to "com.glomidco.utlx.daemon.Main",
             "Implementation-Title" to "UTL-X Daemon (UTLXD)",
             "Implementation-Version" to project.version
         )

@@ -358,7 +358,7 @@ context $input["@context"] type:jsonld
 **JSON parser with JSON-LD detection**:
 
 ```kotlin
-// formats/json/src/main/kotlin/org/apache/utlx/formats/json/
+// formats/json/src/main/kotlin/com/glomidco/utlx/formats/json/
 
 class JsonFormatHandler : FormatHandler {
     
@@ -415,7 +415,7 @@ $input.email                    // No conflict
 **Add JSON-LD helper functions**:
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/jsonld/
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/jsonld/
 
 object JsonLdFunctions {
     

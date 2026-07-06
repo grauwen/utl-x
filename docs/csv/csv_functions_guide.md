@@ -882,7 +882,7 @@ See `CSVFunctionsTest.kt` for comprehensive tests:
 
 ---
 
-**Location:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/csv/CSVFunctions.kt`  
-**Dependencies:** `org.apache.utlx.core.udm.UDM`  
+**Location:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/csv/CSVFunctions.kt`  
+**Dependencies:** `com.glomidco.utlx.core.udm.UDM`  
 **Status:** ✅ Ready for Implementation  
 **Priority:** High (enables critical enterprise use cases)

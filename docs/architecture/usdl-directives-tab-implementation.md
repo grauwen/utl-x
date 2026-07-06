@@ -927,8 +927,8 @@ try {
 
 - REST API Endpoint: `/api/usdl/directives` (already implemented)
 - OpenAPI Spec: `/docs/api/openapi.yaml` (lines 96-170, 1019-1199)
-- Directive Registry Tests: `/schema/src/test/kotlin/org/apache/utlx/schema/usdl/DirectiveRegistryTest.kt`
-- Integration Tests: `/modules/daemon/src/test/kotlin/org/apache/utlx/daemon/rest/RestApiIntegrationTest.kt` (lines 678-903)
+- Directive Registry Tests: `/schema/src/test/kotlin/com/glomidco/utlx/schema/usdl/DirectiveRegistryTest.kt`
+- Integration Tests: `/modules/daemon/src/test/kotlin/com/glomidco/utlx/daemon/rest/RestApiIntegrationTest.kt` (lines 678-903)
 - USDL Documentation: `/docs/usdl/USDL-DIRECTIVES-REFERENCE.md`
 
 ---

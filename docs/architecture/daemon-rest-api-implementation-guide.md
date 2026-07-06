@@ -61,10 +61,10 @@ dependencies {
 
 #### Task 2: Create REST API Server (4-6 hours)
 
-**File:** `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/api/RestApiServer.kt`
+**File:** `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/api/RestApiServer.kt`
 
 ```kotlin
-package org.apache.utlx.daemon.api
+package com.glomidco.utlx.daemon.api
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -79,11 +79,11 @@ import io.ktor.serialization.kotlinx.json.*
 import io.ktor.http.*
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import org.apache.utlx.daemon.state.StateManager
-import org.apache.utlx.core.parser.UTLXParser
-import org.apache.utlx.core.runtime.TransformationExecutor
-import org.apache.utlx.analysis.schema.SchemaParser
-import org.apache.utlx.analysis.types.TypeInference
+import com.glomidco.utlx.daemon.state.StateManager
+import com.glomidco.utlx.core.parser.UTLXParser
+import com.glomidco.utlx.core.runtime.TransformationExecutor
+import com.glomidco.utlx.analysis.schema.SchemaParser
+import com.glomidco.utlx.analysis.types.TypeInference
 import org.slf4j.LoggerFactory
 
 /**
@@ -424,7 +424,7 @@ data class ErrorResponse(
 
 #### Task 3: Update Daemon Server to Run Both LSP and REST API (2 hours)
 
-**File:** `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt`
+**File:** `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt`
 
 ```kotlin
 class UTLXDaemon(
@@ -527,7 +527,7 @@ class UTLXDaemon(
 
 #### Task 4: Add Command-Line Arguments (1 hour)
 
-**File:** `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/Main.kt`
+**File:** `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/Main.kt`
 
 ```kotlin
 import com.github.ajalt.clikt.core.CliktCommand
@@ -706,7 +706,7 @@ Savings: 1.6-3ms per request
 
 **Test each REST endpoint in isolation**
 
-**File:** `modules/daemon/src/test/kotlin/org/apache/utlx/daemon/api/RestApiServerTest.kt`
+**File:** `modules/daemon/src/test/kotlin/com/glomidco/utlx/daemon/api/RestApiServerTest.kt`
 
 ```kotlin
 import io.ktor.client.request.*
@@ -844,7 +844,7 @@ class RestApiServerTest {
 
 **Test with actual HTTP requests**
 
-**File:** `modules/daemon/src/test/kotlin/org/apache/utlx/daemon/api/RestApiIntegrationTest.kt`
+**File:** `modules/daemon/src/test/kotlin/com/glomidco/utlx/daemon/api/RestApiIntegrationTest.kt`
 
 ```kotlin
 import io.ktor.client.*

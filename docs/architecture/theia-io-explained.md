@@ -317,7 +317,7 @@ async request(method: string, params?: any): Promise<any> {
 
 On the daemon side (Kotlin/JVM), the code reads from `System.in`:
 
-**Location:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DaemonCommand.kt`
+**Location:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DaemonCommand.kt`
 
 ```kotlin
 class StdioDaemonServer {

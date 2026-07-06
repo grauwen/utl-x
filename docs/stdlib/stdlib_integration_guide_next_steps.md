@@ -10,7 +10,7 @@ stdlib/
 ├── build.gradle.kts                              ✅ Created
 ├── README.md                                     ✅ Created
 └── src/
-    ├── main/kotlin/org/apache/utlx/stdlib/
+    ├── main/kotlin/com/glomidco/utlx/stdlib/
     │   ├── Functions.kt                          ✅ Core registry
     │   ├── string/
     │   │   ├── StringFunctions.kt                ✅ 14 functions
@@ -26,7 +26,7 @@ stdlib/
     │   │   └── TypeFunctions.kt                  ✅ 8 functions
     │   └── objects/
     │       └── ObjectFunctions.kt                ✅ 6 functions
-    └── test/kotlin/org/apache/utlx/stdlib/
+    └── test/kotlin/com/glomidco/utlx/stdlib/
         └── (tests to be added)
 ```
 
@@ -42,10 +42,10 @@ include(":stdlib")
 
 ### Step 2: Update Core Interpreter
 
-The interpreter needs to call stdlib functions. Update `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`:
+The interpreter needs to call stdlib functions. Update `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`:
 
 ```kotlin
-import org.apache.utlx.stdlib.StandardLibrary
+import com.glomidco.utlx.stdlib.StandardLibrary
 
 class Interpreter {
     fun executeFunctionCall(name: String, args: List<UDM>): UDM {
@@ -75,7 +75,7 @@ dependencies {
 
 ### Step 4: Add Lambda Support to UDM
 
-Update `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`:
+Update `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`:
 
 ```kotlin
 sealed class UDM {

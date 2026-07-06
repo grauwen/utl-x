@@ -2,10 +2,10 @@
   "resources": {
     "includes": [
       {
-        "pattern": "org/apache/utlx/.*\\.properties"
+        "pattern": "com/glomidco/utlx/.*\\.properties"
       },
       {
-        "pattern": "org/apache/utlx/.*\\.utlx"
+        "pattern": "com/glomidco/utlx/.*\\.utlx"
       },
       {
         "pattern": "META-INF/services/.*"

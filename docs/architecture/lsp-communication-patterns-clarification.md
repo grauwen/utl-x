@@ -306,7 +306,7 @@ class DaemonClient {
 **Daemon currently ONLY supports LSP/JSON-RPC:**
 
 ```kotlin
-// modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt
+// modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt
 
 private fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
     return try {
@@ -345,7 +345,7 @@ private fun handleRequest(request: JsonRpcRequest): JsonRpcResponse {
 **Add Express/Ktor HTTP server alongside LSP server:**
 
 ```kotlin
-// modules/daemon/src/main/kotlin/org/apache/utlx/daemon/api/RestApiServer.kt
+// modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/api/RestApiServer.kt
 
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -457,7 +457,7 @@ data class ParseSchemaRequest(
 ### Updated Daemon Startup: Both LSP and REST API
 
 ```kotlin
-// modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt
+// modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt
 
 class UTLXDaemon(
     private val lspTransportType: TransportType = TransportType.STDIO,

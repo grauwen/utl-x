@@ -11,7 +11,7 @@ Successfully implemented **Phase 1** of UDM Language: a meta-format for preservi
 ## ✅ Completed (Phase 1)
 
 ### 1. ANTLR4 Grammar
-**File**: `/modules/core/src/main/antlr4/org/apache/utlx/core/udm/UDMLang.g4`
+**File**: `/modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
 
 **Status**: ✅ Complete
 
@@ -23,7 +23,7 @@ Successfully implemented **Phase 1** of UDM Language: a meta-format for preservi
 - Version marker support
 
 ### 2. UDMLanguageSerializer
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt`
 
 **Status**: ✅ Complete and Tested
 
@@ -86,7 +86,7 @@ Successfully generates human-readable `.udm` files:
 ## ✅ Completed (Phase 2)
 
 ### 1. UDMLanguageParser
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageParser.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageParser.kt`
 
 **Status**: ✅ Complete and Tested
 
@@ -105,7 +105,7 @@ Successfully generates human-readable `.udm` files:
 - Shorthand and explicit syntax support
 
 ### 2. Round-Trip Tests
-**File**: `/modules/core/src/test/kotlin/org/apache/utlx/core/udm/UDMLanguageRoundTripTest.kt`
+**File**: `/modules/core/src/test/kotlin/com/glomidco/utlx/core/udm/UDMLanguageRoundTripTest.kt`
 
 **Status**: ✅ Complete - All Tests Passing
 
@@ -152,8 +152,8 @@ utlx udm format <file.udm>                   # Pretty-print/reformat
 ```
 
 **Files Created**:
-- ✅ `/modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/UDMCommand.kt` (760+ lines)
-- ✅ Updated `/modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
+- ✅ `/modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/UDMCommand.kt` (760+ lines)
+- ✅ Updated `/modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt`
 
 **Features**:
 - **export**: Export parsed data to .udm format (with optional transformation)
@@ -214,7 +214,7 @@ utlx udm format <file.udm>                   # Pretty-print/reformat
 **1. Serialize UDM to .udm file**:
 
 ```kotlin
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 import java.io.File
 
 // Create UDM structure
@@ -269,7 +269,7 @@ println("Saved to output.udm")
 **2. Parse .udm file back to UDM**:
 
 ```kotlin
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 import java.io.File
 
 // Load .udm file
@@ -397,7 +397,7 @@ Generate documentation with exact UDM structures:
 
 ### Serializer Tests
 
-**Command**: `./gradlew :modules:core:test --tests "org.apache.utlx.core.udm.UDMLanguageSerializerTest"`
+**Command**: `./gradlew :modules:core:test --tests "com.glomidco.utlx.core.udm.UDMLanguageSerializerTest"`
 
 **Results**: ✅ **18/18 tests passing (100%)**
 
@@ -564,9 +564,9 @@ The UDM Language implementation is fully functional with serialization, parsing,
 ## References
 
 **Implementation Files**:
-- Grammar: `/modules/core/src/main/antlr4/org/apache/utlx/core/udm/UDMLang.g4`
-- Serializer: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt`
-- Tests: `/modules/core/src/test/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializerTest.kt`
+- Grammar: `/modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
+- Serializer: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt`
+- Tests: `/modules/core/src/test/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializerTest.kt`
 
 **Documentation**:
 - Architecture: `/docs/architecture/udm-as-a-language.md`

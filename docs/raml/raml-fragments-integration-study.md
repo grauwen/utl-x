@@ -803,7 +803,7 @@ formats/raml/
 ### Fragment Serializer Factory
 
 ```kotlin
-package org.apache.utlx.formats.raml.fragments
+package com.glomidco.utlx.formats.raml.fragments
 
 enum class RAMLFragmentType {
     DATATYPE,

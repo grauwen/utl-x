@@ -499,7 +499,7 @@ For those interested in the implementation details:
 
 ### Current Parser Logic
 
-From `formats/xml/src/main/kotlin/org/apache/utlx/formats/xml/xml_parser.kt`:
+From `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`:
 
 ```kotlin
 // Line 211-224

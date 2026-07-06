@@ -43,12 +43,12 @@ Created new `schema/` module at project root:
 schema/
 ├── build.gradle.kts
 └── src/
-    ├── main/kotlin/org/apache/utlx/schema/
+    ├── main/kotlin/com/glomidco/utlx/schema/
     │   ├── usdl/
     │   │   ├── USDL10.kt              # 81 directives, tier classification
     │   │   └── DirectiveValidator.kt   # Validation with typo detection
     │   └── mappings/                   # (Future: type mappers)
-    └── test/kotlin/org/apache/utlx/schema/
+    └── test/kotlin/com/glomidco/utlx/schema/
         ├── USDL10Test.kt               # 14 tests ✅
         └── DirectiveValidatorTest.kt   # 11 tests ✅
 ```
@@ -80,12 +80,12 @@ val results = DirectiveValidator.quickValidate(schema, targetFormat = "xsd")
 
 Updated core parser to support USDL syntax:
 
-#### AST Changes (`modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt`)
+#### AST Changes (`modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt`)
 - Added `Dialect` data class for dialect specification
 - Updated `FormatSpec` to include optional `dialect: Dialect?`
 - Maintains backward compatibility
 
-#### Parser Changes (`modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`)
+#### Parser Changes (`modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`)
 - **Dialect parsing**: `output xsd %usdl 1.0`
   ```kotlin
   if (match(TokenType.PERCENT)) {
@@ -261,17 +261,17 @@ None. All changes are additive:
 
 ### Schema Module
 - `schema/build.gradle.kts` (created)
-- `schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt` (created, 710 lines)
-- `schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveValidator.kt` (created, 380 lines)
-- `schema/src/test/kotlin/org/apache/utlx/schema/USDL10Test.kt` (created, 140 lines)
-- `schema/src/test/kotlin/org/apache/utlx/schema/DirectiveValidatorTest.kt` (created, 260 lines)
+- `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt` (created, 710 lines)
+- `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveValidator.kt` (created, 380 lines)
+- `schema/src/test/kotlin/com/glomidco/utlx/schema/USDL10Test.kt` (created, 140 lines)
+- `schema/src/test/kotlin/com/glomidco/utlx/schema/DirectiveValidatorTest.kt` (created, 260 lines)
 
 ### Core Module
-- `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt` (modified, +11 lines)
-- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` (modified, +45 lines)
-- `modules/core/src/test/kotlin/org/apache/utlx/core/USDLParserTest.kt` (created, 150 lines)
-- `modules/core/src/test/kotlin/org/apache/utlx/core/core_test.kt` (modified, -1 line)
-- `modules/core/src/test/kotlin/org/apache/utlx/core/type_and_interpreter_tests.kt` (modified, +2 lines)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt` (modified, +11 lines)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt` (modified, +45 lines)
+- `modules/core/src/test/kotlin/com/glomidco/utlx/core/USDLParserTest.kt` (created, 150 lines)
+- `modules/core/src/test/kotlin/com/glomidco/utlx/core/core_test.kt` (modified, -1 line)
+- `modules/core/src/test/kotlin/com/glomidco/utlx/core/type_and_interpreter_tests.kt` (modified, +2 lines)
 
 ### Configuration
 - `settings.gradle.kts` (modified, +3 lines)

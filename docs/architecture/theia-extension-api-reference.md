@@ -2011,7 +2011,7 @@ See `packages/common/src/types.ts` for complete type definitions.
 
 ## Appendix B: JSON-RPC Full Protocol Specification
 
-See daemon implementation in `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DaemonCommand.kt`
+See daemon implementation in `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DaemonCommand.kt`
 
 ---
 

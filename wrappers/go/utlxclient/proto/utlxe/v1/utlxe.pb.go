@@ -2452,7 +2452,7 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\fExecuteBatch\x12\x1d.utlxe.v1.ExecuteBatchRequest\x1a\x1e.utlxe.v1.ExecuteBatchResponse\x12V\n" +
 	"\x0fExecutePipeline\x12 .utlxe.v1.ExecutePipelineRequest\x1a!.utlxe.v1.ExecutePipelineResponse\x12;\n" +
 	"\x06Health\x12\x17.utlxe.v1.HealthRequest\x1a\x18.utlxe.v1.HealthResponseB,\n" +
-	"\x1corg.apache.utlx.engine.protoB\n" +
+	"\x1ccom.glomidco.utlx.engine.protoB\n" +
 	"UtlxeProtoP\x01b\x06proto3"
 
 var (

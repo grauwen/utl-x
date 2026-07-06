@@ -441,12 +441,12 @@ formats/
 **Architecture:**
 
 ```kotlin
-package org.apache.utlx.formats.openapi
+package com.glomidco.utlx.formats.openapi
 
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.json.JSONSerializer
-import org.apache.utlx.formats.yaml.YAMLSerializer
-import org.apache.utlx.formats.jsch.JSONSchemaSerializer
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.json.JSONSerializer
+import com.glomidco.utlx.formats.yaml.YAMLSerializer
+import com.glomidco.utlx.formats.jsch.JSONSchemaSerializer
 import java.io.Writer
 import java.io.StringWriter
 
@@ -577,7 +577,7 @@ class OpenAPISchemaSerializer(
         val jsonSchemaString = jsonSchemaSerializer.serialize(usdlSchema)
 
         // Parse back to UDM
-        val jsonParser = org.apache.utlx.formats.json.JSONParser()
+        val jsonParser = com.glomidco.utlx.formats.json.JSONParser()
         val jsonSchemaUdm = jsonParser.parse(jsonSchemaString)
 
         // Extract $defs section → components/schemas

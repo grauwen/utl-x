@@ -8,7 +8,7 @@ Implemented USDL (Universal Schema Definition Language) support in XSDSerializer
 
 ### 1. Updated XSDSerializer for USDL Support ✅
 
-#### Changes to `formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDSerializer.kt`
+#### Changes to `formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDSerializer.kt`
 
 **Mode Detection (lines 121-138)**
 - Updated `detectMode()` to check for `%types` directive instead of plain `types`
@@ -48,7 +48,7 @@ Implemented USDL (Universal Schema Definition Language) support in XSDSerializer
 
 ### 3. Comprehensive Test Suite ✅
 
-**Created `formats/xsd/src/test/kotlin/org/apache/utlx/formats/xsd/USDLToXSDTest.kt`**
+**Created `formats/xsd/src/test/kotlin/com/glomidco/utlx/formats/xsd/USDLToXSDTest.kt`**
 
 8 comprehensive tests covering:
 1. ✅ Basic USDL schema transformation
@@ -223,14 +223,14 @@ UDM.Object(
 
 ### Source Code
 - `formats/xsd/build.gradle.kts` (+3 lines) - Added schema module dependency
-- `formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDSerializer.kt` (~150 lines changed)
+- `formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDSerializer.kt` (~150 lines changed)
   - Updated detectMode() to check for %types
   - Rewrote transformUniversalDSL() with % directive support
   - Fixed attribute key handling (removed @ prefixes)
   - Added comprehensive documentation
 
 ### Tests
-- `formats/xsd/src/test/kotlin/org/apache/utlx/formats/xsd/USDLToXSDTest.kt` (created, 299 lines)
+- `formats/xsd/src/test/kotlin/com/glomidco/utlx/formats/xsd/USDLToXSDTest.kt` (created, 299 lines)
   - 8 comprehensive tests
   - All passing ✅
 

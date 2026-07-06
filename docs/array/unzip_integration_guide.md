@@ -18,7 +18,7 @@ Adding the missing `unzip` function and related array transformations to complet
 
 ### 1. Add Implementation Code
 
-**Location:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/MoreArrayFunctions.kt`
+**Location:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/MoreArrayFunctions.kt`
 
 ```kotlin
 // At the end of MoreArrayFunctions.kt, add the UnzipFunctions object
@@ -27,13 +27,13 @@ Adding the missing `unzip` function and related array transformations to complet
 
 ### 2. Add Tests
 
-**Location:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/array/UnzipFunctionsTest.kt`
+**Location:** `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/array/UnzipFunctionsTest.kt`
 
 Create new file with comprehensive test suite (See artifact "UnzipFunctionsTest.kt").
 
 ### 3. Register Functions
 
-**Location:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`
+**Location:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`
 
 In the `registerArrayFunctions()` method, add:
 
@@ -150,7 +150,7 @@ let records = zipWith(ids, names, scores, active)
 ./gradlew :stdlib:test --tests UnzipFunctionsTest.unzip*
 
 # Run all array function tests
-./gradlew :stdlib:test --tests "org.apache.utlx.stdlib.array.*"
+./gradlew :stdlib:test --tests "com.glomidco.utlx.stdlib.array.*"
 ```
 
 ## ✨ Quick Verification

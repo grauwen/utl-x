@@ -93,7 +93,7 @@ reflection fallback succeeds, which is why this was invisible until someone ran 
 ```
 ```
 DEBUG: Failed to execute stdlib function 'parseNumber':
-  NoSuchMethodException: org.apache.utlx.stdlib.UTLXFunction.execute(java.util.List)
+  NoSuchMethodException: com.glomidco.utlx.stdlib.UTLXFunction.execute(java.util.List)
         at ...Interpreter.tryLoadStdlibFunction(interpreter.kt:1093)
         at ...Interpreter.evaluateFunctionCall(interpreter.kt:1058)
         at ...Interpreter.evaluate(interpreter.kt:455)
@@ -173,7 +173,7 @@ should follow B.
 **C. Fallback hardening (low priority).** The reflection branch in `tryLoadStdlibFunction` cannot work
 on native and only turns a clean "Undefined function" into a misleading `NoSuchMethodException`. Either
 remove it, or at least fix the stale `reflect-config.json` entry
-(`org.apache.utlx.stdlib.Functions$UTLXFunction` → the real top-level `org.apache.utlx.stdlib.UTLXFunction`).
+(`com.glomidco.utlx.stdlib.Functions$UTLXFunction` → the real top-level `com.glomidco.utlx.stdlib.UTLXFunction`).
 After fix A this path should no longer be reached.
 
 **D. Regression guard.** Add a test that runs a stdlib function **inside `map`** end-to-end (ideally

@@ -262,7 +262,7 @@ For Russian Doll schemas that need transformation:
 
 ## See Also
 
-- [XSD Parser Implementation](/formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDParser.kt)
-- [XSD Serializer Implementation](/formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDSerializer.kt)
+- [XSD Parser Implementation](/formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDParser.kt)
+- [XSD Serializer Implementation](/formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDSerializer.kt)
 - [Universal Schema DSL](/docs/language-guide/universal-schema-dsl.md)
 - [XSD Conformance Tests](/conformance-suite/tests/formats/xsd/patterns/)

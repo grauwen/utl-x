@@ -4,8 +4,8 @@
 echo "📝 Creating sample source files..."
 
 # Core: Lexer sample
-cat > modules/core/src/main/kotlin/org/apache/utlx/core/lexer/Token.kt << 'EOF'
-package org.apache.utlx.core.lexer
+cat > modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/Token.kt << 'EOF'
+package com.glomidco.utlx.core.lexer
 
 /**
  * Represents a token in the UTL-X language.
@@ -50,8 +50,8 @@ EOF
 echo "✅ Created Token.kt"
 
 # JVM: API sample
-cat > modules/jvm/src/main/kotlin/org/apache/utlx/jvm/api/UTLXEngine.kt << 'EOF'
-package org.apache.utlx.jvm.api
+cat > modules/jvm/src/main/kotlin/com/glomidco/utlx/jvm/api/UTLXEngine.kt << 'EOF'
+package com.glomidco.utlx.jvm.api
 
 import java.io.File
 import java.io.InputStream
@@ -129,8 +129,8 @@ EOF
 echo "✅ Created UTLXEngine.kt"
 
 # CLI: Main sample
-cat > modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt << 'EOF'
-package org.apache.utlx.cli
+cat > modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt << 'EOF'
+package com.glomidco.utlx.cli
 
 import com.github.ajalt.clikt.core.CliktCommand
 import com.github.ajalt.clikt.core.subcommands
@@ -156,8 +156,8 @@ EOF
 echo "✅ Created Main.kt"
 
 # Test sample
-cat > modules/core/src/test/kotlin/org/apache/utlx/core/lexer/TokenTest.kt << 'EOF'
-package org.apache.utlx.core.lexer
+cat > modules/core/src/test/kotlin/com/glomidco/utlx/core/lexer/TokenTest.kt << 'EOF'
+package com.glomidco.utlx.core.lexer
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*

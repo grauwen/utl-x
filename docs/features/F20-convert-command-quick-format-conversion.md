@@ -83,7 +83,7 @@ Help/usage updated in `Main.kt` (command list + examples).
 
 ## Tests
 
-`modules/cli/src/test/kotlin/org/apache/utlx/cli/ConvertCommandTest.kt` — 4 subprocess integration
+`modules/cli/src/test/kotlin/com/glomidco/utlx/cli/ConvertCommandTest.kt` — 4 subprocess integration
 cases: the issue's exact `convert --input X --output Y`, explicit `--to`/`-o` file output, stdin →
 stdout, and the `conv` alias smart flip. All green; full `:modules:cli:test` passes.
 

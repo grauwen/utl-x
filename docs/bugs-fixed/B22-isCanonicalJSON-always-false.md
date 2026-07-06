@@ -2,7 +2,7 @@
 
 **Status:** Open  
 **Severity:** Low (validation helper, not a core function)  
-**Scope:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/json/JSONCanonicalizationFunctions.kt`  
+**Scope:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/json/JSONCanonicalizationFunctions.kt`  
 **Affects:** JVM and native binary  
 **Created:** May 2026  
 **Discovered during:** v1.2.0 release validation

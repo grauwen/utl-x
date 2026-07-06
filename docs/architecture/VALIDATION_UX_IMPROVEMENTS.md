@@ -87,7 +87,7 @@ Transformation Validation:
 
 #### Parser Enhancement
 
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 
 Add section tracking:
 ```kotlin
@@ -134,7 +134,7 @@ fun error(message: String): ParseError {
 
 #### ValidateCommand Enhancement
 
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt`
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt`
 
 Group errors by section:
 ```kotlin

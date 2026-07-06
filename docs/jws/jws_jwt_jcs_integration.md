@@ -489,7 +489,7 @@ dependencies {
 
 ```
 stdlib/
-├── src/main/kotlin/org/apache/utlx/stdlib/
+├── src/main/kotlin/com/glomidco/utlx/stdlib/
 │   ├── json/
 │   │   └── JSONCanonicalization.kt        ✅ JCS (RFC 8785)
 │   │
@@ -500,7 +500,7 @@ stdlib/
 │       └── JWTFunctions.kt                ✅ JWT decode (RFC 7519)
 │
 stdlib-security/                           ⚠️ OPTIONAL MODULE
-└── src/main/kotlin/org/apache/utlx/stdlib/
+└── src/main/kotlin/com/glomidco/utlx/stdlib/
     ├── jws/
     │   ├── JWSSignature.kt                ⚠️ Sign & verify
     │   ├── JWSAlgorithms.kt               ⚠️ Algorithm implementations

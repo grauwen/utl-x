@@ -195,11 +195,11 @@ column(parsed, "age")
 ### CSVFunctions.kt Imports:
 
 ```kotlin
-package org.apache.utlx.stdlib.csv
+package com.glomidco.utlx.stdlib.csv
 
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.stdlib.serialization.parseCsv   // ← Use existing
-import org.apache.utlx.stdlib.serialization.renderCsv  // ← Use existing
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.serialization.parseCsv   // ← Use existing
+import com.glomidco.utlx.stdlib.serialization.renderCsv  // ← Use existing
 
 // Internal helper to convert UDM to CSVData
 private fun udmToCSVData(udm: UDM): CSVData {
@@ -312,7 +312,7 @@ output json
 ### Serialization Functions (Already Registered)
 
 ```kotlin
-// In stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt
+// In stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt
 
 // Serialization Functions (already exist)
 register("parseCsv") { args ->
@@ -368,7 +368,7 @@ register("cell") { args ->
 
 ```
 stdlib/
-├── src/main/kotlin/org/apache/utlx/stdlib/
+├── src/main/kotlin/com/glomidco/utlx/stdlib/
 │   ├── Functions.kt                    # Central registry
 │   │
 │   ├── serialization/
@@ -398,7 +398,7 @@ stdlib/
 │       │
 │       └── CSVHelpers.kt               # Optional utilities
 │
-└── src/test/kotlin/org/apache/utlx/stdlib/
+└── src/test/kotlin/com/glomidco/utlx/stdlib/
     ├── serialization/
     │   └── SerializationFunctionsTest.kt  # Existing tests
     │

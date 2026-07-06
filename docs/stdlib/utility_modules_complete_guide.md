@@ -591,20 +591,20 @@ output json
 ```bash
 cd ~/path/to/utl-x
 
-mkdir -p stdlib/src/main/kotlin/org/apache/utlx/stdlib/util
+mkdir -p stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/util
 
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/util/UtilityFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/util/UtilityFunctions.kt
 # Paste artifact content
 ```
 
 ### 2. Register Functions (3 min)
 
-**Edit:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`
+**Edit:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`
 
 ```kotlin
-import org.apache.utlx.stdlib.util.TreeFunctions
-import org.apache.utlx.stdlib.util.CoercionFunctions
-import org.apache.utlx.stdlib.util.TimerFunctions
+import com.glomidco.utlx.stdlib.util.TreeFunctions
+import com.glomidco.utlx.stdlib.util.CoercionFunctions
+import com.glomidco.utlx.stdlib.util.TimerFunctions
 
 private fun registerTreeFunctions() {
     register("treeMap", TreeFunctions::treeMap)

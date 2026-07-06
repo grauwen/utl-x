@@ -209,7 +209,7 @@ utlx schema diff \
 ### Basic Usage
 
 ```kotlin
-import org.apache.utlx.analysis.schema.*
+import com.glomidco.utlx.analysis.schema.*
 
 // Parse input schema
 val xsdParser = XSDSchemaParser()
@@ -267,7 +267,7 @@ if (!result.isValid) {
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("org.apache.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "0.9.0-beta"
 }
 
 utlxSchema {
@@ -286,7 +286,7 @@ utlxSchema {
 
 ```xml
 <plugin>
-    <groupId>org.apache.utlx</groupId>
+    <groupId>com.glomidco.utlx</groupId>
     <artifactId>utlx-maven-plugin</artifactId>
     <version>0.9.0-beta</version>
     <executions>

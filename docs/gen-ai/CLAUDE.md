@@ -1238,10 +1238,10 @@ make clean
 ### Running a Single Test
 ```bash
 # Run specific test class
-./gradlew :modules:core:test --tests "org.apache.utlx.core.TypeSystemTest"
+./gradlew :modules:core:test --tests "com.glomidco.utlx.core.TypeSystemTest"
 
 # Run specific test method
-./gradlew :modules:core:test --tests "org.apache.utlx.core.TypeSystemTest.testBasicTypes"
+./gradlew :modules:core:test --tests "com.glomidco.utlx.core.TypeSystemTest.testBasicTypes"
 ```
 
 ### Running the Conformance Suite
@@ -1355,12 +1355,12 @@ utl-x/
 
 ### Key Components
 
-1. **Universal Data Model (UDM)** (`modules/core/src/main/kotlin/org/apache/utlx/core/udm/`)
+1. **Universal Data Model (UDM)** (`modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/`)
    - Central abstraction for all data formats
    - Allows format-agnostic transformations
    - Located in `udm_core.kt`
 
-2. **Parser Pipeline** (`modules/core/src/main/kotlin/org/apache/utlx/core/`)
+2. **Parser Pipeline** (`modules/core/src/main/kotlin/com/glomidco/utlx/core/`)
    - Lexer (`lexer/lexer_impl.kt`) - Tokenization
    - Parser (`parser/parser_impl.kt`) - AST construction
    - Type System (`types/type_system.kt`) - Type checking
@@ -1498,10 +1498,10 @@ cd conformance-suite/lsp
 
 ## Important Files to Understand
 
-- `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` - Universal Data Model
-- `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt` - AST structure
-- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` - Main parser logic
-- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` - Execution engine
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` - Universal Data Model
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt` - AST structure
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt` - Main parser logic
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` - Execution engine
 
 ## Language Syntax (UTL-X)
 

@@ -1032,4 +1032,4 @@ USDL 1.0 provides **119 directives** organized in 4 tiers for comprehensive sche
 
 **Document Status**: Official Reference
 **Maintained by**: UTL-X Core Team
-**Source of Truth**: `schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt`
+**Source of Truth**: `schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt`

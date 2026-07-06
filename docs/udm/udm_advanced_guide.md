@@ -18,9 +18,9 @@
 ### XML Parser Deep Dive
 
 ```kotlin
-package org.apache.utlx.formats.xml
+package com.glomidco.utlx.formats.xml
 
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 import org.dom4j.Document
 import org.dom4j.Element
 import org.dom4j.io.SAXReader
@@ -110,10 +110,10 @@ class XMLParser : FormatParser {
 ### JSON Parser Deep Dive
 
 ```kotlin
-package org.apache.utlx.formats.json
+package com.glomidco.utlx.formats.json
 
 import kotlinx.serialization.json.*
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 
 class JSONParser : FormatParser {
     
@@ -184,9 +184,9 @@ class JSONParser : FormatParser {
 ### CSV Parser Deep Dive
 
 ```kotlin
-package org.apache.utlx.formats.csv
+package com.glomidco.utlx.formats.csv
 
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 import java.io.BufferedReader
 import java.io.StringReader
 
@@ -295,10 +295,10 @@ class CSVParser : FormatParser {
 ### JSON Serializer Deep Dive
 
 ```kotlin
-package org.apache.utlx.formats.json
+package com.glomidco.utlx.formats.json
 
 import kotlinx.serialization.json.*
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 
 class JSONSerializer : FormatSerializer {
     
@@ -357,9 +357,9 @@ class JSONSerializer : FormatSerializer {
 ### XML Serializer Deep Dive
 
 ```kotlin
-package org.apache.utlx.formats.xml
+package com.glomidco.utlx.formats.xml
 
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 import org.dom4j.Document
 import org.dom4j.DocumentHelper
 import org.dom4j.Element
@@ -457,7 +457,7 @@ class XMLSerializer : FormatSerializer {
 ### Path Expression Parser
 
 ```kotlin
-package org.apache.utlx.core.udm
+package com.glomidco.utlx.core.udm
 
 sealed class PathSegment {
     data class Property(val name: String) : PathSegment()
@@ -651,7 +651,7 @@ class AdvancedNavigator(private val root: UDMNode) {
 ## Type Coercion & Conversion
 
 ```kotlin
-package org.apache.utlx.core.udm
+package com.glomidco.utlx.core.udm
 
 object TypeCoercion {
     
@@ -733,7 +733,7 @@ object TypeCoercion {
 ## Streaming & Large Files
 
 ```kotlin
-package org.apache.utlx.core.udm
+package com.glomidco.utlx.core.udm
 
 interface StreamingParser {
     fun parseStream(input: InputStream): Sequence<UDMNode>

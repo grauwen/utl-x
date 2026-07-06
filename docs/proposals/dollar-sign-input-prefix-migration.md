@@ -150,7 +150,7 @@ $orders.Order[0].@id
 
 **Add `$` support to lexer:**
 ```kotlin
-// modules/core/src/main/kotlin/org/apache/utlx/core/lexer/lexer_impl.kt
+// modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/lexer_impl.kt
 enum class TokenType {
     // ...existing tokens...
     DOLLAR,           // $ for input references
@@ -304,7 +304,7 @@ Run: `utlx migrate --at-to-dollar myfile.utlx`
 
 ### Parser Changes
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 
 ```kotlin
 // Add to Parser class
@@ -357,7 +357,7 @@ private fun parseAtExpression(): ASTNode {
 
 ### AST Node Updates
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt`
 
 ```kotlin
 // Existing node (update)
@@ -384,7 +384,7 @@ data class MemberAccess(
 
 ### Lexer Changes
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/lexer_impl.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/lexer_impl.kt`
 
 ```kotlin
 class Lexer(private val input: String) {
@@ -405,7 +405,7 @@ class Lexer(private val input: String) {
 **File:** `tools/migrate-at-to-dollar/src/main/kotlin/Main.kt`
 
 ```kotlin
-package org.apache.utlx.tools.migrate
+package com.glomidco.utlx.tools.migrate
 
 import java.io.File
 

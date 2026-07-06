@@ -125,7 +125,7 @@ node lib/browser/udm/__tests__/udm-roundtrip.test.js
 
 # Run Kotlin ↔ TypeScript interop tests
 cd ../..
-./gradlew :modules:core:test --tests "org.apache.utlx.core.udm.TypeScriptInteropTest"
+./gradlew :modules:core:test --tests "com.glomidco.utlx.core.udm.TypeScriptInteropTest"
 
 # Run comprehensive test suite
 node examples/udm/comprehensive-test-suite.js
@@ -271,7 +271,7 @@ Total: 8/8 PASSED
 
 ### Kotlin Reference Implementation
 
-**Location**: `modules/core/src/main/kotlin/org/apache/utlx/core/udm/`
+**Location**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/`
 
 **Files**:
 - `udm_core.kt` - UDM sealed class hierarchy
@@ -430,8 +430,8 @@ None! All tests passing.
 ## 📚 References
 
 - **Architecture Document**: `/docs/architects/udm-parsing-at-ide.md`
-- **ANTLR4 Grammar**: `/modules/core/src/main/antlr4/org/apache/utlx/core/udm/UDMLang.g4`
-- **Kotlin Implementation**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/`
+- **ANTLR4 Grammar**: `/modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
+- **Kotlin Implementation**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/`
 - **TypeScript Implementation**: `/theia-extension/utlx-theia-extension/src/browser/udm/`
 
 ## 🤝 Contributing

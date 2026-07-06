@@ -481,7 +481,7 @@ val id = order.metadata.attributes["id"]
 ### Core Classes
 
 ```kotlin
-package org.apache.utlx.core.udm
+package com.glomidco.utlx.core.udm
 
 // Base interface
 sealed class UDMNode {

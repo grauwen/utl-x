@@ -17,27 +17,27 @@ Complete URL parsing and manipulation module for UTL-X, providing functionality 
 ```bash
 cd ~/path/to/utl-x
 
-mkdir -p stdlib/src/main/kotlin/org/apache/utlx/stdlib/url
+mkdir -p stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/url
 
-cat > stdlib/src/main/kotlin/org/apache/utlx/stdlib/url/URLFunctions.kt
+cat > stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/url/URLFunctions.kt
 # Paste artifact "URL Parsing & Manipulation Functions" content
 ```
 
 ### Step 2: Create Test File (2 min)
 
 ```bash
-mkdir -p stdlib/src/test/kotlin/org/apache/utlx/stdlib/url
+mkdir -p stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/url
 
-cat > stdlib/src/test/kotlin/org/apache/utlx/stdlib/url/URLFunctionsTest.kt
+cat > stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/url/URLFunctionsTest.kt
 # Paste artifact "URLFunctionsTest.kt" content
 ```
 
 ### Step 3: Register Functions (3 min)
 
-**Edit:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`
+**Edit:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`
 
 ```kotlin
-import org.apache.utlx.stdlib.url.URLFunctions
+import com.glomidco.utlx.stdlib.url.URLFunctions
 
 // Add new registration method
 private fun registerURLFunctions() {

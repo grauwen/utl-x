@@ -184,13 +184,13 @@ Copy the following artifacts to your project:
 
 ```bash
 # Core types
-TypeDefinition.kt       → modules/analysis/src/main/kotlin/org/apache/utlx/analysis/types/
-TypeContext.kt          → modules/analysis/src/main/kotlin/org/apache/utlx/analysis/types/
-FunctionRegistry.kt     → modules/analysis/src/main/kotlin/org/apache/utlx/analysis/types/
+TypeDefinition.kt       → modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/types/
+TypeContext.kt          → modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/types/
+FunctionRegistry.kt     → modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/types/
 
 # Schema parsing
-JSONSchemaParser.kt     → modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/
-XSDSchemaParser.kt      → modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/
+JSONSchemaParser.kt     → modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/
+XSDSchemaParser.kt      → modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/
 
 # Copy all 9 test files to their respective directories
 ```

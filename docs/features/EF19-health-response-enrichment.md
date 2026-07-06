@@ -157,7 +157,7 @@ val generateBuildInfo by tasks.registering {
         val file = outputDir.get().file("BuildInfo.kt").asFile
         file.parentFile.mkdirs()
         file.writeText("""
-            package org.apache.utlx.engine
+            package com.glomidco.utlx.engine
             object BuildInfo {
                 const val VERSION = "${project.version}"
             }

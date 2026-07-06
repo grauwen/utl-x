@@ -1135,7 +1135,7 @@ formats/toon/
 ├── src/
 │   ├── main/
 │   │   └── kotlin/
-│   │       └── org/apache/utlx/formats/toon/
+│   │       └── com/glomidco/utlx/formats/toon/
 │   │           ├── TOONParser.kt              # Parse TOON → UDM
 │   │           ├── TOONSerializer.kt          # Serialize UDM → TOON
 │   │           ├── TOONLexer.kt               # Tokenizer
@@ -1144,7 +1144,7 @@ formats/toon/
 │   │           └── TOONDialect.kt             # Dialect configuration (optional)
 │   └── test/
 │       └── kotlin/
-│           └── org/apache/utlx/formats/toon/
+│           └── com/glomidco/utlx/formats/toon/
 │               ├── TOONParserTest.kt          # Parser unit tests
 │               ├── TOONSerializerTest.kt      # Serializer unit tests
 │               ├── TOONRoundTripTest.kt       # Round-trip tests
@@ -1968,9 +1968,9 @@ JSON5 is "JSON with comments":
 
 ```kotlin
 // TOONParser.kt - Complete implementation
-package org.apache.utlx.formats.toon
+package com.glomidco.utlx.formats.toon
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 import java.io.Reader
 import java.io.StringReader
 
@@ -2216,9 +2216,9 @@ class TOONParseException(
 
 ```kotlin
 // TOONSerializer.kt - Complete implementation
-package org.apache.utlx.formats.toon
+package com.glomidco.utlx.formats.toon
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 
 class TOONSerializer(
     private val prettyPrint: Boolean = true,

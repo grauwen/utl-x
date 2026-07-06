@@ -163,7 +163,7 @@ INPUT → Format Parser → UDM → Format Functions → UDM → Format Serializ
 
 ```
 stdlib/
-├── src/main/kotlin/org/apache/utlx/stdlib/
+├── src/main/kotlin/com/glomidco/utlx/stdlib/
 │   ├── Functions.kt                       # Central registry
 │   │
 │   ├── serialization/
@@ -179,7 +179,7 @@ stdlib/
 │   └── yaml/                               # NEW
 │       └── YAMLFunctions.kt               # 18 functions
 │
-└── src/test/kotlin/org/apache/utlx/stdlib/
+└── src/test/kotlin/com/glomidco/utlx/stdlib/
     ├── csv/
     │   └── CSVFunctionsTest.kt
     └── yaml/

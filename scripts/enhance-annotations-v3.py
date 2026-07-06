@@ -368,7 +368,7 @@ def add_import_if_needed(lines: List[str]) -> Tuple[List[str], int]:
     """Add UTLXFunction import if not present, return (lines, offset)"""
     # Check if import already exists
     for line in lines:
-        if 'import org.apache.utlx.stdlib.annotations.UTLXFunction' in line:
+        if 'import com.glomidco.utlx.stdlib.annotations.UTLXFunction' in line:
             return lines, 0  # Already has import
 
     # Find package line
@@ -385,7 +385,7 @@ def add_import_if_needed(lines: List[str]) -> Tuple[List[str], int]:
                     break
 
             # Insert import
-            lines.insert(insert_pos, 'import org.apache.utlx.stdlib.annotations.UTLXFunction')
+            lines.insert(insert_pos, 'import com.glomidco.utlx.stdlib.annotations.UTLXFunction')
             return lines, 1  # Added 1 line
 
     return lines, 0

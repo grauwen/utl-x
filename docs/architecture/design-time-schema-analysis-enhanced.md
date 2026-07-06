@@ -271,7 +271,7 @@ The daemon is a **long-running LSP server** that communicates via **JSON-RPC 2.0
 - Handles standard LSP methods + UTL-X extensions
 
 ```kotlin
-// modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt
+// modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt
 
 /**
  * UTL-X Daemon: Long-running LSP server for design-time analysis
@@ -478,7 +478,7 @@ output json
 #### Path Completion Algorithm
 
 ```kotlin
-// modules/daemon/src/main/kotlin/org/apache/utlx/daemon/completion/PathCompleter.kt
+// modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/completion/PathCompleter.kt
 
 class PathCompleter(
     private val typeEnvironment: TypeEnvironment
@@ -757,7 +757,7 @@ enum CompletionItemKind {
 ### Graph Structure
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/graph/UDMGraph.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/graph/UDMGraph.kt
 
 data class UDMGraph(
     val nodes: Map<String, GraphNode>,
@@ -1068,7 +1068,7 @@ Transform type environment graphs into visual representations for:
 #### 1. Graphviz DOT Format
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/visualization/DotGenerator.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/visualization/DotGenerator.kt
 
 class DotGenerator {
 

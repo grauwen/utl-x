@@ -321,4 +321,4 @@ This makes UTL-X **uniquely positioned** for financial data transformations wher
 
 **Tested on:** 2025-10-24
 **UTL-X Version:** 1.0
-**Functions Module:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/finance/FinancialFunctions.kt`
+**Functions Module:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/finance/FinancialFunctions.kt`

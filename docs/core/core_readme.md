@@ -9,7 +9,7 @@ The core module contains the format-agnostic language implementation for UTL-X.
 The UDM is the foundation that abstracts all data formats (XML, JSON, CSV, etc.) into a unified representation.
 
 ```kotlin
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 
 // Create scalar values
 val name = UDM.Scalar.string("Alice")
@@ -41,7 +41,7 @@ println(personName?.asScalar()?.asString()) // "Alice"
 Tokenizes UTL-X source code into tokens.
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.lexer.Lexer
 
 val source = """
     input.Customer.Name
@@ -58,8 +58,8 @@ tokens.forEach { println(it) }
 Builds an Abstract Syntax Tree (AST) from tokens.
 
 ```kotlin
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
 
 val source = """
     %utlx 1.0
@@ -94,7 +94,7 @@ when (val result = parser.parse()) {
 Represents the structure of UTL-X programs.
 
 ```kotlin
-import org.apache.utlx.core.ast.*
+import com.glomidco.utlx.core.ast.*
 
 // AST nodes represent the parsed program structure
 // Example: { name: "Alice", age: 30 }

@@ -266,10 +266,10 @@ renderJson(input.udmObject, { prettyPrint: true })
 ### Dependencies
 ```kotlin
 // Requires format modules
-import org.apache.utlx.formats.json.*
-import org.apache.utlx.formats.xml.*
-import org.apache.utlx.formats.yaml.*
-import org.apache.utlx.formats.csv.*
+import com.glomidco.utlx.formats.json.*
+import com.glomidco.utlx.formats.xml.*
+import com.glomidco.utlx.formats.yaml.*
+import com.glomidco.utlx.formats.csv.*
 ```
 
 ### Registration in Functions.kt

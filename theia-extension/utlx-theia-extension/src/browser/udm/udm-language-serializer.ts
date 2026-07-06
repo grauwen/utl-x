@@ -2,7 +2,7 @@
  * UDM Language Serializer
  *
  * Serializes UDM structures to UDM Language format (.udm files)
- * Ported from modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt
+ * Ported from modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt
  *
  * UDM Language is a meta-format that preserves complete UDM model state including:
  * - Type information (Scalar, Array, Object, DateTime, etc.)

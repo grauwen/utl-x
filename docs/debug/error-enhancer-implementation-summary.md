@@ -10,7 +10,7 @@ Successfully implemented **smart, context-aware error enhancement** in the UTLX 
 
 ### 1. Input Metadata Extraction (`InputMetadataExtractor.kt`)
 
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InputMetadataExtractor.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InputMetadataExtractor.kt`
 
 **Purpose**: Extract metadata from parsed input data (UDM) to enable smart error messages.
 
@@ -115,7 +115,7 @@ fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
 
 ### 3. InterpreterErrorEnhancer Updates
 
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InterpreterErrorEnhancer.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InterpreterErrorEnhancer.kt`
 
 **Changes**:
 - Fixed imports (ASTNode → Node)
@@ -292,16 +292,16 @@ Future support needed for:
 ## Files Modified
 
 1. **New Files**:
-   - `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InputMetadataExtractor.kt`
+   - `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InputMetadataExtractor.kt`
    - `/examples/csv/test-error-enhancement.utlx`
    - `/examples/csv/test-typo-error.utlx`
    - `/docs/gen-ai/error-enhancer-implementation-summary.md` (this file)
 
 2. **Modified Files**:
-   - `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+   - `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
      - Environment class (constructor, get(), createChild())
      - Interpreter.execute() method
-   - `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InterpreterErrorEnhancer.kt`
+   - `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InterpreterErrorEnhancer.kt`
      - Fixed imports (Node)
      - Fixed string template escaping
      - Simplified hasInputVariables()

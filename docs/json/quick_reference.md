@@ -254,11 +254,11 @@ max(5, 10)                  // 10
 ### Programmatic API
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
-import org.apache.utlx.core.interpreter.Interpreter
-import org.apache.utlx.formats.json.JSON
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.formats.json.JSON
 
 // 1. Parse transformation
 val source = """

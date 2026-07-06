@@ -209,7 +209,7 @@ graalvmNative {
     binaries {
         named("main") {
             imageName.set("utlx")
-            mainClass.set("org.apache.utlx.cli.MainKt")
+            mainClass.set("com.glomidco.utlx.cli.MainKt")
             
             buildArgs.addAll(
                 "--no-fallback",                    // No JVM fallback
@@ -582,7 +582,7 @@ graalvmNative {
 
 ```kotlin
 buildArgs.add("-H:Name=utlx-custom")
-buildArgs.add("-H:Class=org.apache.utlx.CustomMain")
+buildArgs.add("-H:Class=com.glomidco.utlx.CustomMain")
 ```
 
 ### Resource Bundles
@@ -591,7 +591,7 @@ buildArgs.add("-H:Class=org.apache.utlx.CustomMain")
 // resource-config.json
 {
   "bundles": [
-    {"name": "org.apache.utlx.messages"}
+    {"name": "com.glomidco.utlx.messages"}
   ]
 }
 ```

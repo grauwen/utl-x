@@ -11,8 +11,8 @@ See [Grammar](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.
 - **Why**: Prevents header parsing from "bleeding" into content, provides accurate line numbers
 - **Impact**: Better error messages with correct locations
 - **Files Modified**:
-  - `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt` - Added `ScriptSection` enum, two-pass parsing
-  - `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt` - Section-grouped error display
+  - `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt` - Added `ScriptSection` enum, two-pass parsing
+  - `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt` - Section-grouped error display
 
 ### Section-Aware Error Categorization
 - **Status**: ✅ COMPLETED
@@ -27,7 +27,7 @@ See [Grammar](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.
 - **Why**: IDE users get same quality error reporting as CLI users
 - **Impact**: Live syntax checking in IDEs with accurate line numbers and section information
 - **Files Modified**:
-  - `modules/daemon/src/main/kotlin/org/apache/utlx/daemon/diagnostics/DiagnosticsPublisher.kt` - Added parser invocation
+  - `modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/diagnostics/DiagnosticsPublisher.kt` - Added parser invocation
 
 ### Improved Validation & Lint Commands
 - **Status**: ✅ COMPLETED
@@ -50,8 +50,8 @@ See [Grammar](https://github.com/grauwen/utl-x/blob/main/docs/reference/grammar.
   - ✅ TRY/CATCH keywords - WAS listed as "missing", ARE implemented in lexer
   - ✅ QUESTION/COLON tokens - WAS listed as "missing for ternary", ARE implemented
 - **Evidence**:
-  - Parser: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt:693-1129` (try-catch), `:450-459` (ternary)
-  - Lexer: `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/token_types.kt` (TRY, CATCH, QUESTION, COLON tokens)
+  - Parser: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt:693-1129` (try-catch), `:450-459` (ternary)
+  - Lexer: `modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/token_types.kt` (TRY, CATCH, QUESTION, COLON tokens)
   - Tests: `examples/basic/try_catch_basic.yaml`, `examples/intermediate/try_catch_with_error_variable.yaml`, `examples/intermediate/ternary_operator.yaml`
 - **Impact**: Operator precedence coverage: 92% → 100% (13/13), Documentation now accurate
 

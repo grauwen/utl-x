@@ -208,17 +208,17 @@ yarn install
 
 ### 3.1 Add Daemon Command to CLI
 
-**Location:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DaemonCommand.kt`
+**Location:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DaemonCommand.kt`
 
 ```kotlin
-package org.apache.utlx.cli.commands
+package com.glomidco.utlx.cli.commands
 
 import picocli.CommandLine.*
 import java.io.*
 import java.util.concurrent.*
 import kotlinx.serialization.json.*
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.interpreter.Interpreter
 import java.util.concurrent.ConcurrentHashMap
 
 @Command(
@@ -261,16 +261,16 @@ class DaemonCommand : Callable<Int> {
 
 ### 3.2 Implement Stdio Daemon Server
 
-**Location:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/daemon/StdioDaemonServer.kt`
+**Location:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/daemon/StdioDaemonServer.kt`
 
 ```kotlin
-package org.apache.utlx.cli.daemon
+package com.glomidco.utlx.cli.daemon
 
 import kotlinx.serialization.*
 import kotlinx.serialization.json.*
-import org.apache.utlx.core.parser.*
-import org.apache.utlx.core.interpreter.*
-import org.apache.utlx.core.types.TypeChecker
+import com.glomidco.utlx.core.parser.*
+import com.glomidco.utlx.core.interpreter.*
+import com.glomidco.utlx.core.types.TypeChecker
 import java.io.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -545,7 +545,7 @@ data class JsonRpcError(
 
 ### 3.3 Add Daemon Command to Main
 
-**Location:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
+**Location:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt`
 
 ```kotlin
 @Command(

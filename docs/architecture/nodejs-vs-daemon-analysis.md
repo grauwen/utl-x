@@ -168,7 +168,7 @@ This document analyzes two architectural approaches for integrating UTL-X with t
 **New CLI Command: `utlx daemon`**
 
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DaemonCommand.kt
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DaemonCommand.kt
 @Command(name = "daemon", description = "Run UTL-X as daemon server")
 class DaemonCommand : Callable<Int> {
 

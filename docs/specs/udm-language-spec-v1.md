@@ -531,7 +531,7 @@ assert(original == parsed)  // Must be true
 ### 8.1 Serialization (Available Now)
 
 ```kotlin
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 
 // Create UDM structure
 val udm = UDM.Object(
@@ -704,17 +704,17 @@ An implementation conforms to this specification if:
 
 ## 13. References
 
-- **UDM Core**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+- **UDM Core**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
 - **Architecture Doc**: `/docs/architecture/udm-as-a-language.md`
-- **Serializer**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt`
-- **Grammar**: `/modules/core/src/main/antlr4/org/apache/utlx/core/udm/UDMLang.g4`
+- **Serializer**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt`
+- **Grammar**: `/modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
 - **Examples**: `/docs/examples/udm-language-example.udm`
 
 ---
 
 ## Appendix A: Complete ANTLR4 Grammar
 
-See `/modules/core/src/main/antlr4/org/apache/utlx/core/udm/UDMLang.g4`
+See `/modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
 
 ---
 

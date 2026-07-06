@@ -915,7 +915,7 @@ SAP IDocs are **already fully supported** through UTL-X's existing XML infrastru
 
 ### 11.2 UTL-X Resources
 
-- **XML Parsing:** `modules/core/src/main/kotlin/org/apache/utlx/core/formats/xml/`
+- **XML Parsing:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/formats/xml/`
 - **XSD Validation:** `formats/xsd/src/main/kotlin/`
 - **Examples:** `examples/IDOC/`
 - **USDL Specification:** `docs/language-guide/universal-schema-dsl.md`

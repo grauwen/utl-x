@@ -22,7 +22,7 @@ java.lang.reflect.InvocationTargetException
 
 ### Change 1: Unwrap InvocationTargetException
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 919-925)
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 919-925)
 
 ```kotlin
 // Unwrap InvocationTargetException to get the real cause
@@ -37,11 +37,11 @@ val actualException = if (ex is java.lang.reflect.InvocationTargetException && e
 
 ### Change 2: Throw User-Friendly Errors Directly
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 927-934)
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 927-934)
 
 ```kotlin
 // For user-friendly errors, throw them directly with better message
-if (actualException is org.apache.utlx.core.FunctionArgumentException ||
+if (actualException is com.glomidco.utlx.core.FunctionArgumentException ||
     actualException is IllegalArgumentException) {
     throw RuntimeError(
         "Error in function '$functionName': ${actualException.message}",
@@ -54,7 +54,7 @@ if (actualException is org.apache.utlx.core.FunctionArgumentException ||
 
 ### Change 3: Suppress Stack Traces for User Errors
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 936-939)
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 936-939)
 
 ```kotlin
 // For other errors, show debug info
@@ -67,7 +67,7 @@ actualException.printStackTrace(System.err)
 
 ### Change 4: Improve Function Error Messages
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/DateFunctions.kt` (lines 257-260)
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/DateFunctions.kt` (lines 257-260)
 
 ```kotlin
 else -> throw FunctionArgumentException(
@@ -92,18 +92,18 @@ java.lang.reflect.InvocationTargetException
     at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:77)
     at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
     at java.base/java.lang.reflect.Method.invoke(Method.java:569)
-    at org.apache.utlx.core.interpreter.Interpreter.tryLoadStdlibFunction(interpreter.kt:914)
-    at org.apache.utlx.core.interpreter.Interpreter.evaluateFunctionCall(interpreter.kt:880)
-    at org.apache.utlx.core.interpreter.Interpreter.evaluate(interpreter.kt:333)
-    at org.apache.utlx.core.interpreter.Interpreter.evaluate(interpreter.kt:210)
-    at org.apache.utlx.core.interpreter.Interpreter.execute(interpreter.kt:145)
-    at org.apache.utlx.cli.commands.TransformCommand.execute(TransformCommand.kt:114)
-    at org.apache.utlx.cli.Main.main(Main.kt:31)
-Caused by: org.apache.utlx.stdlib.FunctionArgumentException: addDays requires a Date or DateTime value
-    at org.apache.utlx.stdlib.date.DateFunctions.addDays(DateFunctions.kt:257)
-    at org.apache.utlx.stdlib.StandardLibrary$registerDateFunctions$5.invoke(Functions.kt:460)
-    at org.apache.utlx.stdlib.StandardLibrary$registerDateFunctions$5.invoke(Functions.kt:460)
-    at org.apache.utlx.stdlib.UTLXFunction.execute(Functions.kt:1572)
+    at com.glomidco.utlx.core.interpreter.Interpreter.tryLoadStdlibFunction(interpreter.kt:914)
+    at com.glomidco.utlx.core.interpreter.Interpreter.evaluateFunctionCall(interpreter.kt:880)
+    at com.glomidco.utlx.core.interpreter.Interpreter.evaluate(interpreter.kt:333)
+    at com.glomidco.utlx.core.interpreter.Interpreter.evaluate(interpreter.kt:210)
+    at com.glomidco.utlx.core.interpreter.Interpreter.execute(interpreter.kt:145)
+    at com.glomidco.utlx.cli.commands.TransformCommand.execute(TransformCommand.kt:114)
+    at com.glomidco.utlx.cli.Main.main(Main.kt:31)
+Caused by: com.glomidco.utlx.stdlib.FunctionArgumentException: addDays requires a Date or DateTime value
+    at com.glomidco.utlx.stdlib.date.DateFunctions.addDays(DateFunctions.kt:257)
+    at com.glomidco.utlx.stdlib.StandardLibrary$registerDateFunctions$5.invoke(Functions.kt:460)
+    at com.glomidco.utlx.stdlib.StandardLibrary$registerDateFunctions$5.invoke(Functions.kt:460)
+    at com.glomidco.utlx.stdlib.UTLXFunction.execute(Functions.kt:1572)
     ... 11 more
 Error: Undefined function: addDays
 ```
@@ -270,8 +270,8 @@ To:
 ---
 
 **Changes Made:**
-- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 919-940)
-- `stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/DateFunctions.kt` (line 257-260)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 919-940)
+- `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/DateFunctions.kt` (line 257-260)
 
 **Impact:** All stdlib function errors will now be clear and helpful!
 

@@ -254,7 +254,7 @@ function getTaxRate(state: String): Number {
 **build.gradle.kts**:
 ```kotlin
 plugins {
-    id("org.apache.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "0.9.0-beta"
 }
 
 repositories {
@@ -263,8 +263,8 @@ repositories {
 }
 
 dependencies {
-    implementation("org.apache.utlx:core:0.9.0-beta")
-    implementation("org.apache.utlx:analysis:0.9.0-beta")
+    implementation("com.glomidco.utlx:core:0.9.0-beta")
+    implementation("com.glomidco.utlx:analysis:0.9.0-beta")
 }
 
 utlxSchema {
@@ -462,7 +462,7 @@ The transformation can be deployed in multiple ways:
 
 ```kotlin
 // OrderTransformService.kt
-import org.apache.utlx.core.runtime.UTLXRuntime
+import com.glomidco.utlx.core.runtime.UTLXRuntime
 
 @RestController
 @RequestMapping("/api/orders")

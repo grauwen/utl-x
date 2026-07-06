@@ -2,7 +2,7 @@
  * UDM Core Type Definitions
  *
  * This module defines the Universal Data Model (UDM) type hierarchy in TypeScript,
- * mirroring the Kotlin implementation from modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt
+ * mirroring the Kotlin implementation from modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt
  *
  * Key concepts:
  * - UDM represents data in a format-agnostic way

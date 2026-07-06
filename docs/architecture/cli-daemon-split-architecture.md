@@ -58,7 +58,7 @@
 
 4. **Mixed Concerns**: `DesignCommand` in CLI uses daemon features
    ```kotlin
-   // modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt:42
+   // modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt:42
    "design", "d" -> DesignCommand.execute(commandArgs)  // Uses daemon!
    ```
 
@@ -247,7 +247,7 @@ dependencies {
 // JAR configuration for lightweight CLI
 tasks.jar {
     manifest {
-        attributes["Main-Class"] = "org.apache.utlx.cli.Main"
+        attributes["Main-Class"] = "com.glomidco.utlx.cli.Main"
     }
     archiveBaseName.set("utlx-cli")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -283,7 +283,7 @@ plugins {
 }
 
 application {
-    mainClass.set("org.apache.utlx.server.Main")
+    mainClass.set("com.glomidco.utlx.server.Main")
 }
 
 dependencies {
@@ -333,7 +333,7 @@ dependencies {
 // JAR configuration for daemon server
 tasks.jar {
     manifest {
-        attributes["Main-Class"] = "org.apache.utlx.server.Main"
+        attributes["Main-Class"] = "com.glomidco.utlx.server.Main"
     }
     archiveBaseName.set("utlxd")
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
@@ -588,8 +588,8 @@ jobs:
 
 1. **Create module structure** (1 hour)
    ```bash
-   mkdir -p modules/server/src/main/kotlin/org/apache/utlx/server
-   mkdir -p modules/server/src/test/kotlin/org/apache/utlx/server
+   mkdir -p modules/server/src/main/kotlin/com/glomidco/utlx/server
+   mkdir -p modules/server/src/test/kotlin/com/glomidco/utlx/server
    ```
 
 2. **Create build.gradle.kts** (30 minutes)
@@ -599,11 +599,11 @@ jobs:
 
 3. **Create Main.kt entry point** (2 hours)
    ```kotlin
-   // modules/server/src/main/kotlin/org/apache/utlx/server/Main.kt
-   package org.apache.utlx.server
+   // modules/server/src/main/kotlin/com/glomidco/utlx/server/Main.kt
+   package com.glomidco.utlx.server
 
-   import org.apache.utlx.daemon.DaemonServer
-   import org.apache.utlx.server.rest.RestApiServer
+   import com.glomidco.utlx.daemon.DaemonServer
+   import com.glomidco.utlx.server.rest.RestApiServer
 
    fun main(args: Array<String>) {
        val command = args.getOrNull(0) ?: "help"
@@ -620,7 +620,7 @@ jobs:
 
 4. **Implement StartCommand** (4 hours)
    ```kotlin
-   // modules/server/src/main/kotlin/org/apache/utlx/server/commands/StartCommand.kt
+   // modules/server/src/main/kotlin/com/glomidco/utlx/server/commands/StartCommand.kt
    object StartCommand {
        fun execute(args: List<String>): CommandResult {
            val options = parseOptions(args)
@@ -652,8 +652,8 @@ jobs:
    ```
 
 5. **Move DesignCommand from CLI to server** (2 hours)
-   - Copy `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DesignCommand.kt`
-   - Update package to `org.apache.utlx.server.commands`
+   - Copy `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DesignCommand.kt`
+   - Update package to `com.glomidco.utlx.server.commands`
    - Update references
 
 6. **Update settings.gradle.kts** (5 minutes)
@@ -685,7 +685,7 @@ jobs:
 
 2. **Update Main.kt** (30 minutes)
    ```kotlin
-   // modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt
+   // modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt
    when (command.lowercase()) {
        "transform", "t" -> TransformCommand.execute(commandArgs)
        "validate", "v" -> ValidateCommand.execute(commandArgs)
@@ -706,7 +706,7 @@ jobs:
 
 3. **Delete DesignCommand.kt from CLI** (5 minutes)
    ```bash
-   rm modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/DesignCommand.kt
+   rm modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/DesignCommand.kt
    ```
 
 4. **Update HelpCommand** (15 minutes)
@@ -934,7 +934,7 @@ jobs:
 
 5. **Integration testing** (4 hours)
    ```kotlin
-   // modules/server/src/test/kotlin/org/apache/utlx/server/IntegrationTest.kt
+   // modules/server/src/test/kotlin/com/glomidco/utlx/server/IntegrationTest.kt
 
    @Test
    fun `daemon starts with both LSP and REST API`() {
@@ -1095,13 +1095,13 @@ const response = await axios.post('http://localhost:7778/api/validate', {
 ### Unit Tests
 
 ```kotlin
-// modules/cli/src/test/kotlin/org/apache/utlx/cli/MainTest.kt
+// modules/cli/src/test/kotlin/com/glomidco/utlx/cli/MainTest.kt
 
 @Test
 fun `CLI does not include daemon classes`() {
     // Verify daemon classes are not in classpath
     assertThrows<ClassNotFoundException> {
-        Class.forName("org.apache.utlx.daemon.DaemonServer")
+        Class.forName("com.glomidco.utlx.daemon.DaemonServer")
     }
 }
 
@@ -1115,7 +1115,7 @@ fun `design command redirects to utlxd`() {
 ```
 
 ```kotlin
-// modules/server/src/test/kotlin/org/apache/utlx/server/StartCommandTest.kt
+// modules/server/src/test/kotlin/com/glomidco/utlx/server/StartCommandTest.kt
 
 @Test
 fun `daemon starts with LSP and REST API`() {

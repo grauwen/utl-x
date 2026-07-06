@@ -318,9 +318,9 @@ env.lookupNested("input.Order.Customer.Name")  // Returns: UDMType.StringType
 ### Complete Type Hierarchy
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/types/UDMType.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/types/UDMType.kt
 
-package org.apache.utlx.analysis.types
+package com.glomidco.utlx.analysis.types
 
 /**
  * Type-level representation of UDM for static analysis.
@@ -444,7 +444,7 @@ data class PropertyInfo(
 ### Type Utilities
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/types/TypeUtils.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/types/TypeUtils.kt
 
 object TypeUtils {
 
@@ -522,7 +522,7 @@ object TypeUtils {
 ### XSD to UDMType Conversion
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/XSDAnalyzer.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/XSDAnalyzer.kt
 
 class XSDAnalyzer {
 
@@ -657,7 +657,7 @@ val typeEnv = analyzer.buildTypeEnvironment(xsd)
 ### JSON Schema to UDMType Conversion
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/JSONSchemaAnalyzer.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/JSONSchemaAnalyzer.kt
 
 class JSONSchemaAnalyzer {
 
@@ -758,7 +758,7 @@ class JSONSchemaAnalyzer {
 ### Avro Schema to UDMType Conversion
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/AvroSchemaAnalyzer.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/AvroSchemaAnalyzer.kt
 
 class AvroSchemaAnalyzer {
 
@@ -818,7 +818,7 @@ class AvroSchemaAnalyzer {
 ### Expression Type Inference
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/inference/TypeInferenceEngine.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/inference/TypeInferenceEngine.kt
 
 class TypeInferenceEngine(
     private val typeEnv: TypeEnvironment,
@@ -1067,7 +1067,7 @@ class TypeInferenceException(
 ### Function Signature Registry
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/functions/FunctionRegistry.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/functions/FunctionRegistry.kt
 
 data class FunctionSignature(
     val name: String,
@@ -1304,7 +1304,7 @@ class FunctionRegistry {
 ### UDMType to JSON Schema
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/JSONSchemaGenerator.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/JSONSchemaGenerator.kt
 
 class JSONSchemaGenerator(
     private val schemaVersion: String = "https://json-schema.org/draft/2020-12/schema"
@@ -1394,7 +1394,7 @@ data class JSONSchemaNode(
 ### UDMType to XSD
 
 ```kotlin
-// modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/XSDGenerator.kt
+// modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/XSDGenerator.kt
 
 class XSDGenerator(
     private val targetNamespace: String? = null
@@ -1706,7 +1706,7 @@ utlx schema types \
 ### Implementation
 
 ```kotlin
-// modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/SchemaCommand.kt
+// modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/SchemaCommand.kt
 
 object SchemaCommand {
 

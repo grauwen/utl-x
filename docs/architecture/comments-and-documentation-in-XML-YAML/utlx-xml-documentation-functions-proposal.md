@@ -1171,10 +1171,10 @@ stdlib/xml/
 
 ```kotlin
 // stdlib/xml/comments.kt
-package org.apache.utlx.stdlib.xml
+package com.glomidco.utlx.stdlib.xml
 
-import org.apache.utlx.core.udm.*
-import org.apache.utlx.core.types.*
+import com.glomidco.utlx.core.udm.*
+import com.glomidco.utlx.core.types.*
 
 object XmlCommentFunctions {
     

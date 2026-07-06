@@ -75,7 +75,7 @@ expected:
 The JSCH parser has a `detectSchemaVersion()` function that extracts version information from the `$schema` field:
 
 ```kotlin
-// File: formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaParser.kt
+// File: formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaParser.kt
 // Lines 132-142
 
 private fun detectSchemaVersion(schema: UDM.Object): String {
@@ -113,7 +113,7 @@ This follows the established pattern for internal metadata that should not be se
 A fix was recently implemented in `udm_core.kt` to make metadata access work with the `^` operator:
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt
 // Lines 68-71
 
 fun getMetadata(key: String): String? {
@@ -266,16 +266,16 @@ UDM.Object
 ### Parser Implementation
 | File | Lines | Purpose |
 |------|-------|---------|
-| `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaParser.kt` | 132-142 | Version detection logic |
-| `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaParser.kt` | 122-125 | Metadata population |
-| `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaModel.kt` | 38-41 | Metadata key constants |
+| `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaParser.kt` | 132-142 | Version detection logic |
+| `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaParser.kt` | 122-125 | Metadata population |
+| `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaModel.kt` | 38-41 | Metadata key constants |
 
 ### Core UDM System
 | File | Lines | Purpose |
 |------|-------|---------|
-| `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` | 68-71 | `getMetadata()` with `__` prefix support |
-| `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` | 74 | `hasMetadata()` with `__` prefix support |
-| `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` | 423-426 | Metadata access in expression evaluator |
+| `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` | 68-71 | `getMetadata()` with `__` prefix support |
+| `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` | 74 | `hasMetadata()` with `__` prefix support |
+| `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` | 423-426 | Metadata access in expression evaluator |
 
 ### Failing Tests
 | File | Test Name | Issue |
@@ -439,7 +439,7 @@ This regression analysis revealed that the failing JSCH tests were due to a **mi
 
 **Changes Made**:
 
-1. **Parser** (`formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaParser.kt`):
+1. **Parser** (`formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaParser.kt`):
    - Lines 137-146: Changed `detectSchemaVersion()` to return `"undefined"` instead of `"draft-07"` when no `$schema` field present
    - Lines 118-122: Parser always sets `__version` metadata (either detected version or `"undefined"`)
 
@@ -450,7 +450,7 @@ This regression analysis revealed that the failing JSCH tests were due to a **mi
    - `conformance-suite/tests/formats/jsch/real-world/customer_order.yaml` - changed expected version from `null` to `"2020-12"`
    - `conformance-suite/tests/formats/jsch/real-world/payment_transaction.yaml` - changed expected version from `null` to `"draft-07"`
 
-3. **Unit Test** (`formats/jsch/src/test/kotlin/org/apache/utlx/formats/jsch/JSONSchemaParserTest.kt`):
+3. **Unit Test** (`formats/jsch/src/test/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaParserTest.kt`):
    - Line 105: Updated test "default to draft-07 when no $schema field" to expect `"undefined"` instead of `"draft-07"`
 
 **Test Results Before**: 451/456 tests passing (98.9%)

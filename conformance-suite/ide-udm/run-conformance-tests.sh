@@ -70,7 +70,7 @@ run_test_suite \
 # ============================================================================
 run_test_suite \
     "Kotlin ↔ TypeScript Interop Tests" \
-    "cd $PROJECT_ROOT && ./gradlew :modules:core:test --tests 'org.apache.utlx.core.udm.TypeScriptInteropTest' --quiet"
+    "cd $PROJECT_ROOT && ./gradlew :modules:core:test --tests 'com.glomidco.utlx.core.udm.TypeScriptInteropTest' --quiet"
 
 # ============================================================================
 # Test Suite 3: Generate Node.js Examples

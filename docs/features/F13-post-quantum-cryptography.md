@@ -92,7 +92,7 @@ Hybrid mode ensures backward compatibility during the transition period where no
 
 ## Implementation Location
 
-**Module:** `stdlib` (package `org.apache.utlx.stdlib.crypto`)
+**Module:** `stdlib` (package `com.glomidco.utlx.stdlib.crypto`)
 
 This follows the existing architecture:
 - Core stdlib has read-only/decode functions (JWT decode, hashing)
@@ -160,7 +160,7 @@ Prioritize F13 when any of these occur:
 
 - [F11: Advanced Security Functions](F11-advanced-security-functions.md) — prerequisite
 - [JWS Analysis](../jws/jws_analysis.md) — JWS architecture decisions
-- [stdlib/crypto package](/stdlib/src/main/kotlin/org/apache/utlx/stdlib/crypto/) — implementation target
+- [stdlib/crypto package](/stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/crypto/) — implementation target
 - NIST PQC standards: [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final), [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final)
 
 ---

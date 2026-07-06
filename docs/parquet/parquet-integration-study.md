@@ -241,9 +241,9 @@ class SchemaSerializer(
 ### Proposed Architecture (Phase 1 - Schema Only)
 
 ```kotlin
-package org.apache.utlx.formats.parquet
+package com.glomidco.utlx.formats.parquet
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 import org.apache.parquet.schema.MessageType
 import org.apache.parquet.schema.Types
 import java.io.File

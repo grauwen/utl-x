@@ -185,12 +185,12 @@ runtimeInfo(): Map                           // All runtime info
 
 ### Priority 1: Add Collection JOIN (CRITICAL)
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/array/JoinFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/JoinFunctions.kt`
 
 ```kotlin
-package org.apache.utlx.stdlib.array
+package com.glomidco.utlx.stdlib.array
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 
 /**
  * SQL-style JOIN operations for combining arrays
@@ -410,7 +410,7 @@ let orders = [
 
 ### Priority 2: Add UUID v7 Support
 
-**File:** Enhance `stdlib/src/main/kotlin/org/apache/utlx/stdlib/core/CoreFunctions.kt`
+**File:** Enhance `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/core/CoreFunctions.kt`
 
 ```kotlin
 import java.time.Instant
@@ -476,12 +476,12 @@ private fun registerCoreFunctions() {
 
 ### Priority 3: Add Runtime/System Info
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/core/RuntimeFunctions.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/core/RuntimeFunctions.kt`
 
 ```kotlin
-package org.apache.utlx.stdlib.core
+package com.glomidco.utlx.stdlib.core
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 
 object RuntimeFunctions {
     /**

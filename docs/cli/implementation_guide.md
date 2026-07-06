@@ -45,21 +45,21 @@ cp modules/cli/build.gradle.kts modules/cli/build.gradle.kts.backup
 ## Step 2: Implement CLI Commands
 
 ### 2.1 Create/Update Main.kt
-Location: `modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`
+Location: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt`
 
 ```bash
 # Create directory if needed
-mkdir -p modules/cli/src/main/kotlin/org/apache/utlx/cli
+mkdir -p modules/cli/src/main/kotlin/com/glomidco/utlx/cli
 
 # Add the Main.kt file (from artifact "cli_main")
 ```
 
 ### 2.2 Create TransformCommand.kt
-Location: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
+Location: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
 
 ```bash
 # Create commands directory
-mkdir -p modules/cli/src/main/kotlin/org/apache/utlx/cli/commands
+mkdir -p modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands
 
 # Add TransformCommand.kt (from artifact "transform_command")
 ```
@@ -71,14 +71,14 @@ This is the most important command - it integrates everything:
 - Handles CLI options and I/O
 
 ### 2.3 Create ValidateCommand.kt
-Location: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt`
+Location: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt`
 
 ```bash
 # Add ValidateCommand.kt (from artifact "validate_command")
 ```
 
 ### 2.4 Create Other Commands
-Location: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/`
+Location: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/`
 
 ```bash
 # Add all other commands (from artifact "other_commands")
@@ -92,7 +92,7 @@ Location: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/`
 
 ### 3.1 Create Test Directory
 ```bash
-mkdir -p modules/cli/src/test/kotlin/org/apache/utlx/cli
+mkdir -p modules/cli/src/test/kotlin/com/glomidco/utlx/cli
 ```
 
 ### 3.2 Add Test Files

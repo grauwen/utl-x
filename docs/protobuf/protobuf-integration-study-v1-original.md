@@ -374,9 +374,9 @@ formats/
 **Goal:** Enable `.proto` file generation from USDL and parsing existing `.proto` files
 
 ```kotlin
-package org.apache.utlx.formats.protobuf
+package com.glomidco.utlx.formats.protobuf
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 import java.io.Writer
 import java.io.StringWriter
 

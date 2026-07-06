@@ -63,7 +63,7 @@ unitPrice: parseNumber(item.@price),      // ← DOESN'T WORK!
 
 **Why it matters:** String case conversion is a fundamental transformation. Having `kebabCase` but not `camelize` creates an incomplete API.
 
-**Implementation needed in:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/StringFunctions.kt`
+**Implementation needed in:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/StringFunctions.kt`
 
 ---
 
@@ -275,29 +275,29 @@ Before implementing, verify these exist:
 cd ~/path/to/utl-x/stdlib/src/main/kotlin
 
 # Check String functions
-grep -r "fun camelize" org/apache/utlx/stdlib/string/
-grep -r "fun snakeCase" org/apache/utlx/stdlib/string/
-grep -r "fun titleCase" org/apache/utlx/stdlib/string/
+grep -r "fun camelize" com/glomidco/utlx/stdlib/string/
+grep -r "fun snakeCase" com/glomidco/utlx/stdlib/string/
+grep -r "fun titleCase" com/glomidco/utlx/stdlib/string/
 
 # Check Array functions  
-grep -r "fun findIndex" org/apache/utlx/stdlib/array/
-grep -r "fun compact" org/apache/utlx/stdlib/array/
-grep -r "fun scan" org/apache/utlx/stdlib/array/
+grep -r "fun findIndex" com/glomidco/utlx/stdlib/array/
+grep -r "fun compact" com/glomidco/utlx/stdlib/array/
+grep -r "fun scan" com/glomidco/utlx/stdlib/array/
 
 # Check Object functions
-grep -r "fun invert" org/apache/utlx/stdlib/objects/
-grep -r "fun deepMerge" org/apache/utlx/stdlib/objects/
+grep -r "fun invert" com/glomidco/utlx/stdlib/objects/
+grep -r "fun deepMerge" com/glomidco/utlx/stdlib/objects/
 
 # Check Math functions
-grep -r "fun median" org/apache/utlx/stdlib/math/
-grep -r "fun stdDev" org/apache/utlx/stdlib/math/
+grep -r "fun median" com/glomidco/utlx/stdlib/math/
+grep -r "fun stdDev" com/glomidco/utlx/stdlib/math/
 ```
 
 ### Function Count Verification
 
 ```bash
 # Count registered functions
-grep -r "register(" stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt | wc -l
+grep -r "register(" stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt | wc -l
 ```
 
 ---

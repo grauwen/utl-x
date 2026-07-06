@@ -23,7 +23,7 @@ EF15 introduced heap backpressure to prevent OOM crashes. The implementation has
 
 `UtlxEngine` spawns a daemon thread (`heap-monitor`) at construction time that polls heap usage every 100ms. The `stop()` method shuts down transports, strategies, and the health endpoint — but never interrupts the heap monitor thread.
 
-**File:** `modules/engine/src/main/kotlin/org/apache/utlx/engine/UtlxEngine.kt`
+**File:** `modules/engine/src/main/kotlin/com/glomidco/utlx/engine/UtlxEngine.kt`
 
 ```kotlin
 // Line 50-65 — thread starts at construction, runs forever

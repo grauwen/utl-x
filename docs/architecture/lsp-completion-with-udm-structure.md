@@ -32,7 +32,7 @@ CompletionService → PathCompleter
 ### Key Components
 
 #### 1. UDM (Universal Data Model)
-**Location**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+**Location**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
 
 The UDM represents all data formats uniformly:
 
@@ -56,7 +56,7 @@ sealed class UDM {
 - **XML elements**: Element/attribute names as property keys
 
 #### 2. InputMetadataExtractor
-**Location**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InputMetadataExtractor.kt`
+**Location**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InputMetadataExtractor.kt`
 
 Already exists! Can extract field names from UDM:
 
@@ -81,7 +81,7 @@ private fun extractFieldNames(udm: UDM): List<String>? {
 ```
 
 #### 3. LSP Daemon
-**Location**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt`
+**Location**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt`
 
 Current LSP methods:
 - `initialize` - Client initialization
@@ -92,7 +92,7 @@ Current LSP methods:
 - `textDocument/diagnostic` - Diagnostics
 
 #### 4. StateManager
-**Location**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/state/StateManager.kt`
+**Location**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/state/StateManager.kt`
 
 Currently stores:
 ```kotlin
@@ -105,7 +105,7 @@ private val documentModes: ConcurrentHashMap<String, DocumentMode>
 **Missing**: Cache for actual input data (UDM or InputMetadata)
 
 #### 5. CompletionService
-**Location**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/completion/CompletionService.kt`
+**Location**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/completion/CompletionService.kt`
 
 Current flow:
 1. Extract partial path at cursor position (e.g., `input.Order.Cust`)
@@ -246,7 +246,7 @@ Add schema-based completion for Message Contract mode validation workflows
 
 #### Step 1: Add LSP Method `utlx/registerInputData`
 
-**File**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt`
+**File**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt`
 
 Add new method handler:
 
@@ -319,7 +319,7 @@ private fun parseContentToUDM(content: String, format: String): UDM {
 
 #### Step 2: Extend StateManager
 
-**File**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/state/StateManager.kt`
+**File**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/state/StateManager.kt`
 
 Add input data cache:
 
@@ -399,7 +399,7 @@ class StateManager {
 
 #### Step 3: Enhance CompletionService
 
-**File**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/completion/CompletionService.kt`
+**File**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/completion/CompletionService.kt`
 
 Modify to use input data:
 
@@ -857,11 +857,11 @@ When user types `$input1.` inside context of `$input2`, suggest join patterns
 
 ### Existing Code:
 
-- **UDM Definition**: `/modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
-- **InputMetadataExtractor**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/InputMetadataExtractor.kt`
-- **LSP Daemon**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/DaemonServer.kt`
-- **StateManager**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/state/StateManager.kt`
-- **CompletionService**: `/modules/daemon/src/main/kotlin/org/apache/utlx/daemon/completion/CompletionService.kt`
+- **UDM Definition**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
+- **InputMetadataExtractor**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/InputMetadataExtractor.kt`
+- **LSP Daemon**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt`
+- **StateManager**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/state/StateManager.kt`
+- **CompletionService**: `/modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/completion/CompletionService.kt`
 - **Multi-Input Widget**: `/theia-extension/utlx-theia-extension/src/browser/input-panel/multi-input-panel-widget.tsx`
 - **Editor Widget**: `/theia-extension/utlx-theia-extension/src/browser/editor/utlx-editor-widget.tsx`
 

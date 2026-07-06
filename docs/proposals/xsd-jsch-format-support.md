@@ -91,7 +91,7 @@ transformSchema($input)
 
 ### Core Enumeration
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt:73`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt:73`
 
 ```kotlin
 enum class FormatType {
@@ -106,7 +106,7 @@ enum class FormatType {
 
 ### File Extension Detection
 
-**File:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt:299`
+**File:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt:299`
 
 ```kotlin
 private fun detectFormat(data: String, extension: String?): String {
@@ -345,7 +345,7 @@ If format options not specified:
 
 ### Grammar Extension
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 
 ```kotlin
 // Existing: input json, input xml
@@ -396,7 +396,7 @@ formats/
 ├── xsd/                              # NEW: XSD format module
 │   ├── build.gradle.kts
 │   └── src/
-│       ├── main/kotlin/org/apache/utlx/formats/xsd/
+│       ├── main/kotlin/com/glomidco/utlx/formats/xsd/
 │       │   ├── XSDParser.kt          # Parse .xsd → UDM
 │       │   ├── XSDSerializer.kt      # UDM → .xsd (with pattern support)
 │       │   ├── XSDValidator.kt       # Validate XSD structure
@@ -410,7 +410,7 @@ formats/
 ├── jsch/                             # NEW: JSON Schema module
 │   ├── build.gradle.kts
 │   └── src/
-│       ├── main/kotlin/org/apache/utlx/formats/jsch/
+│       ├── main/kotlin/com/glomidco/utlx/formats/jsch/
 │       │   ├── JSONSchemaParser.kt   # Parse JSON Schema → UDM
 │       │   ├── JSONSchemaSerializer.kt # UDM → JSON Schema
 │       │   ├── JSONSchemaValidator.kt  # Validate schema structure
@@ -427,7 +427,7 @@ formats/
 ### Standard Library Structure
 
 ```
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/
 ├── xsd/                              # NEW: XSD functions
 │   ├── XSDNavigationFunctions.kt     # getElements, getTypes, getAnnotations
 │   ├── XSDDocumentationFunctions.kt  # extractDocs, getDocumentation

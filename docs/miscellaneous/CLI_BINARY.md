@@ -167,7 +167,7 @@ output json
 - **Target JVM**: 17
 - **Gradle Version**: 8.5
 - **Fat JAR**: All dependencies included
-- **Main Class**: `org.apache.utlx.cli.Main`
+- **Main Class**: `com.glomidco.utlx.cli.Main`
 
 ### Dependencies Included
 - UTL-X Core interpreter and parser

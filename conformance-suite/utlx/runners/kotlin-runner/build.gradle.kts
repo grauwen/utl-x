@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-group = "org.apache.utlx.conformance"
+group = "com.glomidco.utlx.conformance"
 version = "1.0.0-SNAPSHOT"
 
 repositories {
@@ -31,7 +31,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.apache.utlx.conformance.utlx.UTLXTestRunnerKt")
+    mainClass.set("com.glomidco.utlx.conformance.utlx.UTLXTestRunnerKt")
 }
 
 tasks.test {
@@ -46,7 +46,7 @@ kotlin {
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
-        attributes["Main-Class"] = "org.apache.utlx.conformance.utlx.UTLXTestRunnerKt"
+        attributes["Main-Class"] = "com.glomidco.utlx.conformance.utlx.UTLXTestRunnerKt"
     }
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }

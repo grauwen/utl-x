@@ -184,7 +184,7 @@ modules/analysis/
 ├── build.gradle.kts                                    # Build configuration
 ├── README.md                                           # This file
 └── src/
-    ├── main/kotlin/org/apache/utlx/analysis/
+    ├── main/kotlin/com/glomidco/utlx/analysis/
     │   ├── types/                                      # Core Type System
     │   │   ├── TypeDefinition.kt                      ✅ Internal type model
     │   │   ├── TypeContext.kt                         ✅ Type environment
@@ -206,7 +206,7 @@ modules/analysis/
     │       ├── SchemaValidator.kt                     📋 Validate data
     │       └── SchemaDiffer.kt                        📋 Compare schemas
     │
-    └── test/kotlin/org/apache/utlx/analysis/
+    └── test/kotlin/com/glomidco/utlx/analysis/
         ├── schema/
         │   ├── XSDSchemaParserTest.kt                 ✅ 18 test cases
         │   ├── JSONSchemaGeneratorTest.kt             ✅ 12 test cases
@@ -258,8 +258,8 @@ modules/analysis/
 ### Example 1: Parse XSD and Generate JSON Schema
 
 ```kotlin
-import org.apache.utlx.analysis.schema.*
-import org.apache.utlx.analysis.types.*
+import com.glomidco.utlx.analysis.schema.*
+import com.glomidco.utlx.analysis.types.*
 
 // Input XSD
 val xsd = """
@@ -310,7 +310,7 @@ println(jsonSchema)
 ### Example 2: Validate Type Compatibility
 
 ```kotlin
-import org.apache.utlx.analysis.types.*
+import com.glomidco.utlx.analysis.types.*
 
 val context = TypeContext(
     inputType = TypeDefinition.Object(
@@ -342,7 +342,7 @@ println(result.isValid()) // true
 ### Example 3: Compare Schemas for Breaking Changes
 
 ```kotlin
-import org.apache.utlx.analysis.validation.*
+import com.glomidco.utlx.analysis.validation.*
 
 val oldSchema = TypeDefinition.Object(
     properties = mapOf(

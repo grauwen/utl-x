@@ -23,7 +23,7 @@ bytes → Parser(ByteArray, charset?) → UDM → Interpreter → UDM → Serial
 
 ### Phase 1: PayloadBytes data class (core)
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
 
 Add:
 ```kotlin
@@ -63,7 +63,7 @@ Schema parsers (XSD, JSON Schema, Avro, Protobuf) delegate to XML/JSON parsers �
 
 ### Phase 4: TransformationService — wire ByteArray through
 
-**File:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/service/TransformationService.kt`
+**File:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/service/TransformationService.kt`
 
 Changes:
 - `InputData` (line 76): add `bytes: ByteArray?` field alongside existing `content: String`
@@ -74,7 +74,7 @@ Changes:
 
 ### Phase 5: CLI — read raw bytes
 
-**File:** `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
+**File:** `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
 
 Changes:
 - `File.readText()` (lines 209, 284) → `File.readBytes()` when format supports non-UTF-8

@@ -3,7 +3,7 @@ plugins {
     application
 }
 
-group = "org.apache.utlx.conformance"
+group = "com.glomidco.utlx.conformance"
 version = "1.0.0-SNAPSHOT"
 
 repositories {
@@ -31,7 +31,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.apache.utlx.conformance.lsp.LSPTestRunnerKt")
+    mainClass.set("com.glomidco.utlx.conformance.lsp.LSPTestRunnerKt")
 }
 
 tasks.test {
@@ -46,7 +46,7 @@ kotlin {
 tasks.jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     manifest {
-        attributes["Main-Class"] = "org.apache.utlx.conformance.lsp.LSPTestRunnerKt"
+        attributes["Main-Class"] = "com.glomidco.utlx.conformance.lsp.LSPTestRunnerKt"
     }
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
 }

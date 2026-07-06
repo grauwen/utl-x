@@ -68,17 +68,17 @@ dependencies {
 
 ```bash
 # Create the file
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt
 ```
 
 (Use the code artifact provided above)
 
 ### Step 3: Register Functions
 
-Edit `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`:
+Edit `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`:
 
 ```kotlin
-import org.apache.utlx.stdlib.xml.XMLCanonicalizationFunctions
+import com.glomidco.utlx.stdlib.xml.XMLCanonicalizationFunctions
 
 private fun registerAllFunctions() {
     // ... existing registrations ...

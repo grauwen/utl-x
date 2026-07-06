@@ -2,7 +2,7 @@
  * UDM Language Parser
  *
  * Simple recursive descent parser for UDM Language (.udm files)
- * Ported from modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageParser.kt
+ * Ported from modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageParser.kt
  *
  * Parses .udm format back into UDM objects, enabling round-trip serialization:
  * UDM → .udm (via UDMLanguageSerializer) → UDM (via this parser)

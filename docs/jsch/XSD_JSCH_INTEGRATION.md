@@ -16,8 +16,8 @@ Successfully integrated XSD (XML Schema Definition) and JSCH (JSON Schema) forma
 ### 1. **CLI Integration** ✅
 
 **Files Modified:**
-- `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
-- `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ReplCommand.kt`
+- `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
+- `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ReplCommand.kt`
 - `modules/cli/build.gradle.kts`
 
 **Changes:**
@@ -377,8 +377,8 @@ output jsch
 ## Files Modified
 
 ### CLI Files
-- `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt` (3 changes)
-- `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ReplCommand.kt` (3 changes)
+- `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt` (3 changes)
+- `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ReplCommand.kt` (3 changes)
 - `modules/cli/build.gradle.kts` (2 new dependencies)
 
 ### Test Files

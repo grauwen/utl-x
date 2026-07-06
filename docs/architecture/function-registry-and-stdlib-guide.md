@@ -48,11 +48,11 @@ Generated files:
 Create or add to a Kotlin `object` in the appropriate package:
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/restructuring/DataRestructuringFunctions.kt
-package org.apache.utlx.stdlib.restructuring
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/restructuring/DataRestructuringFunctions.kt
+package com.glomidco.utlx.stdlib.restructuring
 
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.stdlib.annotations.UTLXFunction
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 
 object DataRestructuringFunctions {
 
@@ -94,7 +94,7 @@ object DataRestructuringFunctions {
 
 ### Step 3: Register in Functions.kt
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`:
 
 ```kotlin
 // In the appropriate register method (or create a new one):
@@ -116,7 +116,7 @@ val annotatedClasses = listOf(
     // ... existing classes ...
     
     // Data restructuring functions
-    org.apache.utlx.stdlib.restructuring.DataRestructuringFunctions::class,
+    com.glomidco.utlx.stdlib.restructuring.DataRestructuringFunctions::class,
 )
 ```
 
@@ -127,10 +127,10 @@ This tells the `FunctionRegistryGenerator` to scan your class for `@UTLXFunction
 Create a test file in the matching test package:
 
 ```kotlin
-// stdlib/src/test/kotlin/org/apache/utlx/stdlib/restructuring/DataRestructuringFunctionsTest.kt
-package org.apache.utlx.stdlib.restructuring
+// stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/restructuring/DataRestructuringFunctionsTest.kt
+package com.glomidco.utlx.stdlib.restructuring
 
-import org.apache.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.UDM
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

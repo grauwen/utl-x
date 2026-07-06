@@ -11,5 +11,5 @@
     </root>
 
     <!-- More verbose logging for our packages -->
-    <logger name="org.apache.utlx.conformance" level="DEBUG" />
+    <logger name="com.glomidco.utlx.conformance" level="DEBUG" />
 </configuration>

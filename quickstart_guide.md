@@ -42,9 +42,9 @@ output json
 ### 2. Use the Core Components Programmatically
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
 
 fun main() {
     val source = """
@@ -83,7 +83,7 @@ fun main() {
 ### 3. Working with the Universal Data Model (UDM)
 
 ```kotlin
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.core.udm.*
 
 fun main() {
     // Create an order structure (simulating parsed XML)
@@ -219,7 +219,7 @@ utl-x/
 ├── modules/
 │   └── core/                    ✅ Implemented
 │       ├── src/main/kotlin/
-│       │   └── org/apache/utlx/core/
+│       │   └── com/glomidco/utlx/core/
 │       │       ├── ast/         # AST nodes
 │       │       ├── lexer/       # Tokenization
 │       │       ├── parser/      # Parsing

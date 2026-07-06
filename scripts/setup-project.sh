@@ -17,11 +17,11 @@ mkdir -p .vscode
 
 # Create core module structure
 echo "📦 Creating core module..."
-mkdir -p modules/core/src/{main,test}/kotlin/org/apache/utlx/core/{ast,lexer,parser,types,optimizer,codegen,udm}
+mkdir -p modules/core/src/{main,test}/kotlin/com/glomidco/utlx/core/{ast,lexer,parser,types,optimizer,codegen,udm}
 
 # Create JVM module structure
 echo "☕ Creating JVM module..."
-mkdir -p modules/jvm/src/{main,test}/kotlin/org/apache/utlx/jvm/{runtime,compiler,api,integration/{spring,camel,kafka}}
+mkdir -p modules/jvm/src/{main,test}/kotlin/com/glomidco/utlx/jvm/{runtime,compiler,api,integration/{spring,camel,kafka}}
 
 # Create JavaScript module structure
 echo "📜 Creating JavaScript module..."
@@ -30,31 +30,31 @@ mkdir -p modules/javascript/test
 
 # Create Native module structure
 echo "⚡ Creating Native module..."
-mkdir -p modules/native/src/{main,test}/kotlin/org/apache/utlx/native/{compiler,runtime,ffi}
+mkdir -p modules/native/src/{main,test}/kotlin/com/glomidco/utlx/native/{compiler,runtime,ffi}
 
 # Create CLI module structure
 echo "🖥️  Creating CLI module..."
-mkdir -p modules/cli/src/{main,test}/kotlin/org/apache/utlx/cli/{commands,options,utils}
+mkdir -p modules/cli/src/{main,test}/kotlin/com/glomidco/utlx/cli/{commands,options,utils}
 
 # Create format modules
 echo "📄 Creating format modules..."
 for format in xml json csv yaml; do
-    mkdir -p formats/$format/src/{main,test}/kotlin/org/apache/utlx/formats/$format
+    mkdir -p formats/$format/src/{main,test}/kotlin/com/glomidco/utlx/formats/$format
 done
-mkdir -p formats/plugin/src/{main,test}/kotlin/org/apache/utlx/formats/plugin
+mkdir -p formats/plugin/src/{main,test}/kotlin/com/glomidco/utlx/formats/plugin
 
 # Create stdlib structure
 echo "📚 Creating standard library..."
-mkdir -p stdlib/src/{main,test}/kotlin/org/apache/utlx/stdlib/{string,array,math,date,object,type}
+mkdir -p stdlib/src/{main,test}/kotlin/com/glomidco/utlx/stdlib/{string,array,math,date,object,type}
 
 # Create tool structures
 echo "🔧 Creating tools..."
 mkdir -p tools/vscode-extension/src/{language,debugger}
 mkdir -p tools/vscode-extension/syntaxes
 mkdir -p tools/intellij-plugin/src/main/{kotlin,resources}
-mkdir -p tools/maven-plugin/src/main/java/org/apache/utlx/maven
-mkdir -p tools/gradle-plugin/src/main/kotlin/org/apache/utlx/gradle
-mkdir -p tools/benchmarks/src/main/kotlin/org/apache/utlx/benchmarks
+mkdir -p tools/maven-plugin/src/main/java/com/glomidco/utlx/maven
+mkdir -p tools/gradle-plugin/src/main/kotlin/com/glomidco/utlx/gradle
+mkdir -p tools/benchmarks/src/main/kotlin/com/glomidco/utlx/benchmarks
 
 # Create Gradle wrapper directory
 mkdir -p gradle/wrapper
@@ -155,7 +155,7 @@ plugins {
 }
 
 allprojects {
-    group = "org.apache.utlx"
+    group = "com.glomidco.utlx"
     version = "1.0.0-SNAPSHOT"
     
     repositories {
@@ -328,7 +328,7 @@ cat > .vscode/launch.json << 'EOF'
       "request": "launch",
       "name": "Run CLI",
       "projectName": "utl-x",
-      "mainClass": "org.apache.utlx.cli.MainKt",
+      "mainClass": "com.glomidco.utlx.cli.MainKt",
       "args": "transform test.utlx input.json"
     },
     {

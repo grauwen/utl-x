@@ -445,7 +445,7 @@ utlx transform mapping.utlx order.avro -o order.json
 **Goal:** Enable `.proto` file generation from USDL and parsing of existing `.proto` files for type extraction.
 
 ```kotlin
-package org.apache.utlx.formats.protobuf
+package com.glomidco.utlx.formats.protobuf
 
 /**
  * Protobuf Schema Serializer - Converts UDM to .proto file (Proto3 Only)

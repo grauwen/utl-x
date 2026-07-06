@@ -245,7 +245,7 @@ output json
 
 ### Immediate: Fix Property Access Bug
 
-**Location**: `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+**Location**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
 
 **Investigation Needed**:
 1. Check how `Expression.PropertyAccess` is evaluated
@@ -364,11 +364,11 @@ Property access on nested objects/arrays returns `null`, preventing all meaningf
 
 ## Files Modified
 
-1. `formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDParser.kt`
+1. `formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDParser.kt`
    - Added `arrayHints` parameter to constructors
    - Pass hints to XMLParser
 
-2. `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/TransformCommand.kt`
+2. `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.kt`
    - Extract `arrays` option from format spec
    - Pass array hints to XSDParser
 

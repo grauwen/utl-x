@@ -35,20 +35,20 @@ The `utlx functions` command provides a comprehensive interface for exploring th
 
 ### Files Created
 
-1. **`stdlib/src/main/kotlin/org/apache/utlx/stdlib/FunctionRegistry.kt`**
+1. **`stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/FunctionRegistry.kt`**
    - Data classes for registry structure
    - `FunctionRegistry` - top-level registry
    - `FunctionInfo` - individual function metadata
    - `ParameterInfo` - parameter details
    - `ReturnInfo` - return value details
 
-2. **`modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/FunctionsCommand.kt`**
+2. **`modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/FunctionsCommand.kt`**
    - Main command implementation
    - Subcommands: list, search, info, stats, categories
    - Output formats: text, json, json-compact, yaml
    - Loads bundled registry from JAR resources
 
-3. **`modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt`** (updated)
+3. **`modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt`** (updated)
    - Wired up `functions` and `fn` commands to `FunctionsCommand`
 
 ## Usage

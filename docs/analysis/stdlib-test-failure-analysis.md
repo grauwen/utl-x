@@ -84,7 +84,7 @@ return UDM.Scalar(count.toInt())  // Return Int instead of Double
 
 **Pattern:**
 ```
-org.opentest4j.AssertionFailedError: Expected org.apache.utlx.core.FunctionArgumentException
+org.opentest4j.AssertionFailedError: Expected com.glomidco.utlx.core.FunctionArgumentException
 to be thrown, but nothing was thrown.
 ```
 
@@ -147,7 +147,7 @@ fun min(args: List<UDM>): UDM {
 
 **Pattern:**
 ```
-org.apache.utlx.core.FunctionArgumentException: diffDays requires Date, DateTime,
+com.glomidco.utlx.core.FunctionArgumentException: diffDays requires Date, DateTime,
 or LocalDateTime values, but got string. Hint: Use parseDate() to create date values.
 ```
 
@@ -329,7 +329,7 @@ If function count doesn't need bounds checking, remove the test.
 
 ### Example 1: Fix Int/Double Mismatch
 
-**File:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/ArrayFunctionsTest.kt`
+**File:** `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/ArrayFunctionsTest.kt`
 
 ```kotlin
 // Before (FAILS)
@@ -355,7 +355,7 @@ fun testSize() {
 
 ### Example 2: Add Validation
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/aggregations/Aggregations.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/aggregations/Aggregations.kt`
 
 ```kotlin
 // Before (NO VALIDATION)
@@ -426,7 +426,7 @@ fun min(args: List<UDM>): UDM {
 
 ### Example 3: Fix Date Conversion
 
-**File:** `stdlib/src/test/kotlin/org/apache/utlx/stdlib/DataWeaveAliasesTest.kt`
+**File:** `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/DataWeaveAliasesTest.kt`
 
 ```kotlin
 // Before (FAILS - passes strings instead of dates)

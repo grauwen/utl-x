@@ -166,7 +166,7 @@ StringWriter -> UDM.Scalar (rendered text)
 
 Key implementation class:
 ```kotlin
-// stdlib-templates/src/main/kotlin/org/apache/utlx/stdlib/template/FreeMarkerFunctions.kt
+// stdlib-templates/src/main/kotlin/com/glomidco/utlx/stdlib/template/FreeMarkerFunctions.kt
 
 class UDMObjectWrapper : ObjectWrapper {
     fun wrap(udm: UDM): TemplateModel = when (udm) {

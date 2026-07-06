@@ -5,7 +5,7 @@ plugins {
     antlr
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "0.1.0-SNAPSHOT"
 
 // Repository management is handled in settings.gradle.kts
@@ -39,7 +39,7 @@ tasks.test {
 tasks.generateGrammarSource {
     maxHeapSize = "64m"
     arguments = arguments + listOf("-visitor", "-long-messages")
-    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/org/apache/utlx/core/udm/parser")
+    outputDirectory = file("${project.buildDir}/generated-src/antlr/main/com/glomidco/utlx/core/udm/parser")
 }
 
 // Ensure generated sources are included

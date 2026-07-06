@@ -8,7 +8,7 @@
 
 ## Overview
 
-This test suite comprehensively validates all 8 lambda-based object transformation functions implemented in `stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt`.
+This test suite comprehensively validates all 8 lambda-based object transformation functions implemented in `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt`.
 
 ### Purpose
 

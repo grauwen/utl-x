@@ -81,7 +81,7 @@ UTL-X's **Universal Data Model (UDM)** naturally handles dynamic keys:
 
 **YAMLParser** (already implemented):
 ```kotlin
-// From: formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLParser.kt
+// From: formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLParser.kt
 is Map<*, *> -> {
     obj.forEach { (key, value) ->
         val keyStr = key?.toString() ?: ""
@@ -97,7 +97,7 @@ is Map<*, *> -> {
 
 **YAMLSerializer** (already implemented):
 ```kotlin
-// From: formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/YAMLSerializer.kt
+// From: formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLSerializer.kt
 is UDM.Object -> {
     val map = LinkedHashMap<String, Any?>()
     udm.properties.forEach { (key, value) ->

@@ -405,7 +405,7 @@ utlx transform data.xml transform.utlx -o schema.xsd --xsd-version 1.0
 
 **Implementation:**
 
-**File:** `modules/core/src/main/kotlin/org/apache/utlx/core/config/ConfigLoader.kt`
+**File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/config/ConfigLoader.kt`
 
 ```kotlin
 data class UTLXConfig(

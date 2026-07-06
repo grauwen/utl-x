@@ -297,5 +297,5 @@ UTL-X **lacks support** for alternative calendar systems:
 
 **Assessment Date:** 2025-10-24
 **UTL-X Version:** 1.0
-**Functions Module:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/`
+**Functions Module:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/`
 **Status:** Gregorian-only, no alternative calendar support

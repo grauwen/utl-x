@@ -8,7 +8,7 @@ Implemented USDL (Universal Schema Definition Language) support in JSONSchemaSer
 
 ### 1. Updated JSONSchemaSerializer for USDL Support ✅
 
-#### Changes to `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaSerializer.kt`
+#### Changes to `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaSerializer.kt`
 
 **Added SerializationMode Enum (lines 61-64)**
 - LOW_LEVEL - User provides JSON Schema structure
@@ -51,7 +51,7 @@ Implemented USDL (Universal Schema Definition Language) support in JSONSchemaSer
 
 ### 3. Comprehensive Test Suite ✅
 
-**Created `formats/jsch/src/test/kotlin/org/apache/utlx/formats/jsch/USDLToJSONSchemaTest.kt`**
+**Created `formats/jsch/src/test/kotlin/com/glomidco/utlx/formats/jsch/USDLToJSONSchemaTest.kt`**
 
 9 comprehensive tests covering:
 1. ✅ Basic USDL schema transformation
@@ -212,7 +212,7 @@ JSONSchemaSerializer(draft = "2020-12")
 
 ### Source Code
 - `formats/jsch/build.gradle.kts` (+3 lines) - Added schema module dependency
-- `formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaSerializer.kt` (~170 lines added)
+- `formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaSerializer.kt` (~170 lines added)
   - Added SerializationMode enum
   - Implemented detectMode()
   - Implemented transformUniversalDSL()
@@ -220,7 +220,7 @@ JSONSchemaSerializer(draft = "2020-12")
   - Updated serialize() flow
 
 ### Tests
-- `formats/jsch/src/test/kotlin/org/apache/utlx/formats/jsch/USDLToJSONSchemaTest.kt` (created, 350 lines)
+- `formats/jsch/src/test/kotlin/com/glomidco/utlx/formats/jsch/USDLToJSONSchemaTest.kt` (created, 350 lines)
   - 9 comprehensive tests
   - All passing ✅
 

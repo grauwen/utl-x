@@ -41,7 +41,7 @@ utl-x/
 │   ├── core/                               # Language core
 │   │   ├── build.gradle.kts
 │   │   └── src/
-│   │       ├── main/kotlin/org/apache/utlx/core/
+│   │       ├── main/kotlin/com/glomidco/utlx/core/
 │   │       │   ├── ast/                    # Abstract Syntax Tree
 │   │       │   ├── lexer/                  # Tokenization
 │   │       │   ├── parser/                 # Parsing
@@ -54,7 +54,7 @@ utl-x/
 │   ├── jvm/                                # JVM runtime
 │   │   ├── build.gradle.kts
 │   │   └── src/
-│   │       ├── main/kotlin/org/apache/utlx/jvm/
+│   │       ├── main/kotlin/com/glomidco/utlx/jvm/
 │   │       │   ├── runtime/
 │   │       │   ├── compiler/
 │   │       │   ├── api/
@@ -65,7 +65,7 @@ utl-x/
 │   │   ├── build.gradle.kts
 │   │   ├── README.md
 │   │   └── src/
-│   │       ├── main/kotlin/org/apache/utlx/analysis/
+│   │       ├── main/kotlin/com/glomidco/utlx/analysis/
 │   │       │   ├── schema/
 │   │       │   │   ├── SchemaGenerator.kt
 │   │       │   │   ├── InputSchemaParser.kt
@@ -85,7 +85,7 @@ utl-x/
 │   │       │       ├── SchemaValidator.kt
 │   │       │       ├── SchemaDiffer.kt
 │   │       │       └── ValidationResult.kt
-│   │       └── test/kotlin/org/apache/utlx/analysis/
+│   │       └── test/kotlin/com/glomidco/utlx/analysis/
 │   │           ├── schema/
 │   │           │   ├── XSDSchemaParserTest.kt
 │   │           │   ├── JSONSchemaGeneratorTest.kt
@@ -99,7 +99,7 @@ utl-x/
 │   └── cli/                                # Command-line interface
 │       ├── build.gradle.kts
 │       └── src/
-│           ├── main/kotlin/org/apache/utlx/cli/
+│           ├── main/kotlin/com/glomidco/utlx/cli/
 │           │   ├── Main.kt
 │           │   └── commands/
 │           │       ├── TransformCommand.kt
@@ -124,7 +124,7 @@ utl-x/
 │       ├── yaml_readme.md
 │       ├── quick_reference.md
 │       └── src/
-│           ├── main/kotlin/org/apache/utlx/formats/yaml/
+│           ├── main/kotlin/com/glomidco/utlx/formats/yaml/
 │           │   ├── YAMLParser.kt
 │           │   └── YAMLSerializer.kt
 │           └── test/
@@ -138,12 +138,12 @@ utl-x/
 │   ├── intellij-plugin/
 │   ├── maven-plugin/
 │   │   └── src/main/java/
-│   │       └── org/apache/utlx/maven/
+│   │       └── com/glomidco/utlx/maven/
 │   │           ├── GenerateSchemaMojo.java  # NEW: Schema generation
 │   │           └── ValidateSchemaMojo.java  # NEW: Schema validation
 │   ├── gradle-plugin/
 │   │   └── src/main/kotlin/
-│   │       └── org/apache/utlx/gradle/
+│   │       └── com/glomidco/utlx/gradle/
 │   │           ├── SchemaGenerationTask.kt  # NEW
 │   │           └── SchemaValidationTask.kt  # NEW
 │   └── benchmarks/
@@ -229,7 +229,7 @@ include(
 
 1. **modules/analysis/build.gradle.kts** - Build configuration
 2. **modules/analysis/README.md** - Module documentation
-3. **modules/analysis/src/main/kotlin/org/apache/utlx/analysis/**
+3. **modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/**
    - `schema/SchemaGenerator.kt` - Main generator
    - `schema/XSDSchemaParser.kt` - XSD parser
    - `schema/JSONSchemaParser.kt` - JSON Schema parser
@@ -243,7 +243,7 @@ include(
 
 ### CLI Extensions
 
-4. **modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/SchemaCommand.kt**
+4. **modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/SchemaCommand.kt**
    - `schema generate` command
    - `schema validate` command
    - `schema infer` command
@@ -252,7 +252,7 @@ include(
 ### YAML Format Support
 
 5. **formats/yaml/build.gradle.kts**
-6. **formats/yaml/src/main/kotlin/org/apache/utlx/formats/yaml/**
+6. **formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/**
    - `YAMLParser.kt`
    - `YAMLSerializer.kt`
 
@@ -272,11 +272,11 @@ include(
 
 ### Build Tool Plugins
 
-9. **tools/maven-plugin/src/main/java/org/apache/utlx/maven/**
+9. **tools/maven-plugin/src/main/java/com/glomidco/utlx/maven/**
    - `GenerateSchemaMojo.java`
    - `ValidateSchemaMojo.java`
 
-10. **tools/gradle-plugin/src/main/kotlin/org/apache/utlx/gradle/**
+10. **tools/gradle-plugin/src/main/kotlin/com/glomidco/utlx/gradle/**
     - `SchemaGenerationTask.kt`
     - `SchemaValidationTask.kt`
 
@@ -321,7 +321,7 @@ java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema validate \
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("org.apache.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "0.9.0-beta"
 }
 
 utlxSchema {
@@ -343,15 +343,15 @@ utlxSchema {
 ```kotlin
 // your-project/build.gradle.kts
 dependencies {
-    implementation("org.apache.utlx:analysis:0.9.0-beta")
-    implementation("org.apache.utlx:core:0.9.0-beta")
+    implementation("com.glomidco.utlx:analysis:0.9.0-beta")
+    implementation("com.glomidco.utlx:core:0.9.0-beta")
 }
 ```
 
 ### 2. Use Programmatically
 
 ```kotlin
-import org.apache.utlx.analysis.schema.*
+import com.glomidco.utlx.analysis.schema.*
 
 val schemaGen = SchemaGenerator()
 val outputSchema = schemaGen.generate(

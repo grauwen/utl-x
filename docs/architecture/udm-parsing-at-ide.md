@@ -61,7 +61,7 @@ if (obj.attributes.isNotEmpty() || needsAnnotation) {
 
 ### 2. The UDM Object Model
 
-From `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`:
+From `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`:
 
 ```kotlin
 data class Object(
@@ -78,7 +78,7 @@ data class Object(
 
 ### 3. How Path Resolution Works in CLI
 
-From `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 439-498):
+From `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 439-498):
 
 ```kotlin
 private fun evaluateMemberAccess(expr: Expression.MemberAccess, env: Environment): RuntimeValue {
@@ -163,7 +163,7 @@ function parseFieldValue(name: string, value: string): UdmField | null {
 
 This is a clean data model that supports multiple input formats (JSON, XML, CSV, etc.)
 
-**Reference:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` lines 58-79
+**Reference:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` lines 58-79
 
 ### Q3: Is the IDE TypeScript parser wrong?
 
@@ -374,10 +374,10 @@ $input.customer.name   ✅ (matches CLI)
 ## Related Code References
 
 1. **UDM Language Spec:** `/docs/specs/udm-language-spec-v1.md` (lines 116-154)
-2. **UDM Core Model:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` (lines 58-79)
-3. **UDM Serializer:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageSerializer.kt` (lines 130-143)
-4. **UDM Parser:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/UDMLanguageParser.kt` (lines 289-307)
-5. **CLI Interpreter:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (lines 439-498)
+2. **UDM Core Model:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` (lines 58-79)
+3. **UDM Serializer:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageSerializer.kt` (lines 130-143)
+4. **UDM Parser:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/UDMLanguageParser.kt` (lines 289-307)
+5. **CLI Interpreter:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (lines 439-498)
 6. **IDE TypeScript Parser:** `theia-extension/utlx-theia-extension/src/browser/function-builder/udm-parser.ts`
 
 ## Conclusion

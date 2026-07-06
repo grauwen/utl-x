@@ -3,18 +3,18 @@
 ## File Location
 
 ```
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/serialization/SerializationFunctions.kt
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/serialization/SerializationFunctions.kt
 ```
 
 ## Integration into Functions.kt
 
 ### Step 1: Add Import Statement
 
-In `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt`, add:
+In `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt`, add:
 
 ```kotlin
 // Near the top of the file with other imports
-import org.apache.utlx.stdlib.serialization.*
+import com.glomidco.utlx.stdlib.serialization.*
 ```
 
 ### Step 2: Register Functions in Function Map
@@ -320,10 +320,10 @@ dependencies {
 
 ## Step 6: Add Unit Tests
 
-Create `stdlib/src/test/kotlin/org/apache/utlx/stdlib/serialization/SerializationFunctionsTest.kt`:
+Create `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/serialization/SerializationFunctionsTest.kt`:
 
 ```kotlin
-package org.apache.utlx.stdlib.serialization
+package com.glomidco.utlx.stdlib.serialization
 
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
@@ -387,11 +387,11 @@ class SerializationFunctionsTest {
 ## Summary of Changes
 
 ### Files Created:
-1. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/serialization/SerializationFunctions.kt`
-2. `stdlib/src/test/kotlin/org/apache/utlx/stdlib/serialization/SerializationFunctionsTest.kt`
+1. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/serialization/SerializationFunctions.kt`
+2. `stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/serialization/SerializationFunctionsTest.kt`
 
 ### Files Modified:
-1. `stdlib/src/main/kotlin/org/apache/utlx/stdlib/Functions.kt` - Add imports and function registrations
+1. `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Functions.kt` - Add imports and function registrations
 2. `stdlib/stlib_complete_refernce.md` - Add documentation section
 3. `stdlib/build.gradle.kts` - Add format parser dependencies
 

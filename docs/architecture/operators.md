@@ -517,15 +517,15 @@ export const UTLX_OPERATORS: OperatorInfo[] = [ /* 20 operators */ ];
 
 **Locations:**
 
-1. **Lexer** - `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/token_types.kt`
+1. **Lexer** - `modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/token_types.kt`
    - Token type definitions for each operator
    - Example: `PLUS`, `MINUS`, `STAR`, `SLASH`, `PERCENT`, etc.
 
-2. **AST** - `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt`
+2. **AST** - `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt`
    - `BinaryOperator` enum: PLUS, MINUS, MULTIPLY, DIVIDE, MODULO, EXPONENT, etc.
    - `UnaryOperator` enum: MINUS, NOT
 
-3. **Parser** - `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+3. **Parser** - `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
    - Operator precedence defined implicitly via parsing method hierarchy
    - Recursive descent parsing determines evaluation order
    - Lines 788-850: expression → term → factor → exponentiation → unary
@@ -625,14 +625,14 @@ Create a backend API endpoint `/api/operators` that exposes operator metadata, f
 
 #### 1. Create Operator Registry
 
-**File:** `stdlib/src/main/kotlin/org/apache/utlx/stdlib/OperatorRegistry.kt`
+**File:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/OperatorRegistry.kt`
 
 ```kotlin
-package org.apache.utlx.stdlib
+package com.glomidco.utlx.stdlib
 
-import org.apache.utlx.core.ast.BinaryOperator
-import org.apache.utlx.core.ast.UnaryOperator
-import org.apache.utlx.core.lexer.TokenType
+import com.glomidco.utlx.core.ast.BinaryOperator
+import com.glomidco.utlx.core.ast.UnaryOperator
+import com.glomidco.utlx.core.lexer.TokenType
 
 /**
  * Registry of all UTLX operators with metadata for tooling and documentation.
@@ -911,6 +911,6 @@ VS Code, IntelliJ, or other IDE extensions can:
 **Date:** 2025-01-15
 **Related Files:**
 - `theia-extension/utlx-theia-extension/src/browser/function-builder/operators-data.ts`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/token_types.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/token_types.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`

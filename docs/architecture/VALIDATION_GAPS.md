@@ -58,7 +58,7 @@ Type Warnings:
 
 The type checker treats `input` as a regular undefined variable reference rather than recognizing it as a misused reserved keyword.
 
-**Location**: `modules/core/src/main/kotlin/org/apache/utlx/core/types/type_system.kt`
+**Location**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/types/type_system.kt`
 
 The type checker needs:
 1. A list of reserved keywords (`input`, `output`, and potentially others)

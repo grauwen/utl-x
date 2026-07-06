@@ -10,7 +10,7 @@
 
 ### 1. Enhanced Kotlin Data Structures ✅
 
-**File: `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt`**
+**File: `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt`**
 
 Added three new data classes:
 
@@ -39,7 +39,7 @@ Extended `Directive` data class with 15 new fields:
 
 ### 2. Enhanced DirectiveRegistry ✅
 
-**File:** `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveRegistry.kt`**
+**File:** `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveRegistry.kt`**
 
 Added matching data classes for JSON serialization:
 - `CompleteExample` - JSON-serializable version with @JsonProperty annotations
@@ -209,12 +209,12 @@ The `DirectivesTree` React component needs updates to display:
 
 ### Modified Files (3):
 
-1. `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt`
+1. `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt`
    - Added CompleteExample, DirectiveCombination data classes
    - Extended Directive with 15 new fields
    - Populated %namespace directive with full guidance
 
-2. `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveRegistry.kt`
+2. `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveRegistry.kt`
    - Added CompleteExample, DirectiveCombination with JSON annotations
    - Extended DirectiveInfo with 15 new fields
    - Updated toDirectiveInfo() mapping function
@@ -365,6 +365,6 @@ These can be used as reference when populating the `completeExamples` field for 
 - Format-specific: `/examples/usdl/{xsd,avro,proto,jsch,odata,etc}/`
 
 ### Code Locations:
-- Kotlin backend: `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/`
+- Kotlin backend: `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/`
 - TypeScript types: `/theia-extension/utlx-theia-extension/src/common/usdl-types.ts`
 - UI component: `/theia-extension/utlx-theia-extension/src/browser/function-builder/directives-tree.tsx`

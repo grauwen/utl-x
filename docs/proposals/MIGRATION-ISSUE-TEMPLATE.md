@@ -54,9 +54,9 @@ $customers |> filter(c => c.@id == $orders[0].@customerId)
 - [ ] Update error messages to suggest `$` syntax
 
 **Files to modify:**
-- `modules/core/src/main/kotlin/org/apache/utlx/core/lexer/lexer_impl.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
-- `modules/core/src/main/kotlin/org/apache/utlx/core/ast/ast_nodes.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/lexer/lexer_impl.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/ast/ast_nodes.kt`
 
 ### Phase 2: Migration Tooling (v1.5)
 - [ ] Create migration script: `scripts/migrate-at-to-dollar.sh`

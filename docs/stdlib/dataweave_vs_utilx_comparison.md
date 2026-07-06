@@ -323,7 +323,7 @@
 **1. Add Missing Critical Functions:**
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/string/ExtendedStringFunctions.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/string/ExtendedStringFunctions.kt
 
 /**
  * Convert string to camelCase
@@ -384,7 +384,7 @@ fun snakeCase(str: UDM): UDM {
 For easier migration from DataWeave to UTL-X:
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/Aliases.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/Aliases.kt
 
 /**
  * DataWeave compatibility aliases

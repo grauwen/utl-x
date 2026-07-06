@@ -1411,9 +1411,9 @@ Apache Avro integration into UTL-X is a **high-value, moderate-effort** initiati
 - [Universal Schema DSL (USDL)](../language-guide/universal-schema-dsl.md)
 - [USDL Syntax Rationale](../design/usdl-syntax-rationale.md)
 - [Universal Data Model (UDM)](../architecture/universal-data-model.md)
-- [XSD Serializer Implementation](../../formats/xsd/src/main/kotlin/org/apache/utlx/formats/xsd/XSDSerializer.kt)
-- [JSON Schema Serializer Implementation](../../formats/jsch/src/main/kotlin/org/apache/utlx/formats/jsch/JSONSchemaSerializer.kt)
-- [USDL 1.0 Directive Catalog](../../schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt)
+- [XSD Serializer Implementation](../../formats/xsd/src/main/kotlin/com/glomidco/utlx/formats/xsd/XSDSerializer.kt)
+- [JSON Schema Serializer Implementation](../../formats/jsch/src/main/kotlin/com/glomidco/utlx/formats/jsch/JSONSchemaSerializer.kt)
+- [USDL 1.0 Directive Catalog](../../schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt)
 
 ### 15.3 Comparison Resources
 

@@ -51,7 +51,7 @@ This document describes how the UTLX error enhancers integrate with the LSP diag
 
 ### ParseErrorEnhancer.kt
 
-**Location**: `/modules/core/src/main/kotlin/org/apache/utlx/core/parser/ParseErrorEnhancer.kt`
+**Location**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/ParseErrorEnhancer.kt`
 
 **Integrated Diagnostics**:
 - **UTLX-001**: Lambda `fn()` wrapper detection
@@ -84,7 +84,7 @@ See: https://utlx-lang.org/docs/functions#lambda-expressions
 
 ### RuntimeErrorEnhancer.kt
 
-**Location**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/RuntimeErrorEnhancer.kt`
+**Location**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/RuntimeErrorEnhancer.kt`
 
 **Integrated Diagnostics**:
 - **UTLX-002**: Undefined variable in lambda context
@@ -128,7 +128,7 @@ See: https://utlx-lang.org/docs/variables#scoping
 
 ### 1. Parser Integration
 
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 
 The parser should call `ParseErrorEnhancer.enhance()` when catching exceptions:
 
@@ -143,7 +143,7 @@ try {
 
 ### 2. Interpreter Integration
 
-**File**: `/modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+**File**: `/modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
 
 The Environment class now uses `RuntimeErrorEnhancer` for undefined variables:
 

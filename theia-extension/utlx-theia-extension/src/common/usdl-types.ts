@@ -2,7 +2,7 @@
  * USDL Directive Registry types matching REST API response
  *
  * These types correspond to the DirectiveRegistry, DirectiveInfo, and FormatInfo
- * data classes in the Kotlin backend (schema/src/main/kotlin/org/apache/utlx/schema/usdl/)
+ * data classes in the Kotlin backend (schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/)
  */
 
 /**

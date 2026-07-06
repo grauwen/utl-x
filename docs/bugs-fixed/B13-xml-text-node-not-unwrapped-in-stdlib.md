@@ -7,8 +7,8 @@
 **Fixed:** 2026-04-24  
 **Branch:** development  
 **Fixes applied:**  
-1. **Option A (UDM core):** `unwrapXmlTextNode()` added to `UDM.asString()`, `UDM.asNumber()`, `UDM.asBoolean()` in `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt` — covers all 361 call sites across all executables (CLI, daemon, engine)  
-2. **Option B (RuntimeOps):** `unwrapXmlTextNode()` in `RuntimeOps.getProperty()` in `modules/engine/src/main/kotlin/org/apache/utlx/engine/strategy/compiled/RuntimeOps.kt` — belt-and-suspenders, unwraps at property access before values reach stdlib  
+1. **Option A (UDM core):** `unwrapXmlTextNode()` added to `UDM.asString()`, `UDM.asNumber()`, `UDM.asBoolean()` in `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt` — covers all 361 call sites across all executables (CLI, daemon, engine)  
+2. **Option B (RuntimeOps):** `unwrapXmlTextNode()` in `RuntimeOps.getProperty()` in `modules/engine/src/main/kotlin/com/glomidco/utlx/engine/strategy/compiled/RuntimeOps.kt` — belt-and-suspenders, unwraps at property access before values reach stdlib  
 **Stdlib changes needed:** None  
 **Test results after fix:** 467 CLI + 207 engine Kotlin + 49 engine conformance = **723 tests, all passing**
 
@@ -115,7 +115,7 @@ COMPILED/COPY PATH (WAS BROKEN, NOW FIXED):
 
 ### Fix 1: Option A — UDM Core (primary fix)
 
-**File changed:** `modules/core/src/main/kotlin/org/apache/utlx/core/udm/udm_core.kt`
+**File changed:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/udm/udm_core.kt`
 
 Added `unwrapXmlTextNode()` method to the `UDM` sealed class. Updated `asString()`, `asNumber()`, and `asBoolean()` to auto-unwrap XML text nodes before conversion. This covers all 361 call sites across all executables — any code anywhere that calls these methods automatically benefits.
 
@@ -136,7 +136,7 @@ fun asString(): String {
 
 ### Fix 2: Option B — RuntimeOps.getProperty() (belt-and-suspenders)
 
-**File changed:** `modules/engine/src/main/kotlin/org/apache/utlx/engine/strategy/compiled/RuntimeOps.kt`
+**File changed:** `modules/engine/src/main/kotlin/com/glomidco/utlx/engine/strategy/compiled/RuntimeOps.kt`
 
 Also added `unwrapXmlTextNode()` to `RuntimeOps.getProperty()` — the compiled bytecode property access chokepoint. This unwraps at the property access level before values even reach stdlib functions. Together with Fix 1, XML text nodes are unwrapped at two layers — the first one that hits wins, the second is a harmless no-op.
 

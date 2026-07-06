@@ -2,7 +2,7 @@
 <configuration>
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <!-- Show only the meaningful part of the logger name after org.apache.utlx. -->
+            <!-- Show only the meaningful part of the logger name after com.glomidco.utlx. -->
             <pattern>%d{HH:mm:ss.SSS} %-5level %logger{0} - %msg%n</pattern>
         </encoder>
     </appender>
@@ -12,5 +12,5 @@
     </root>
 
     <!-- More verbose logging for our packages -->
-    <logger name="org.apache.utlx.conformance" level="INFO" />
+    <logger name="com.glomidco.utlx.conformance" level="INFO" />
 </configuration>

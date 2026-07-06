@@ -13,7 +13,7 @@ Successfully implemented lambda argument support for stdlib functions, enabling 
 ### What Was Fixed
 
 **1. Interpreter Lambda Conversion**
-- **File:** `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt`
+- **File:** `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt`
 - **Line:** 1101-1116
 - **Change:** Added `RuntimeValue.FunctionValue → UDM.Lambda` conversion
 
@@ -27,7 +27,7 @@ is RuntimeValue.FunctionValue ->
 ```kotlin
 is RuntimeValue.FunctionValue -> {
     val fnValue = value
-    org.apache.utlx.core.udm.UDM.Lambda { udmArgs ->
+    com.glomidco.utlx.core.udm.UDM.Lambda { udmArgs ->
         val lambdaEnv = fnValue.closure.createChild()
         for ((param, arg) in fnValue.parameters.zip(udmArgs)) {
             lambdaEnv.define(param, RuntimeValue.UDMValue(arg))
@@ -40,7 +40,7 @@ is RuntimeValue.FunctionValue -> {
 
 ### Functions Implemented
 
-**All 8 lambda-based object functions in `stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt`:**
+**All 8 lambda-based object functions in `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt`:**
 
 #### 1. mapEntries(obj, mapper) - Line 251
 **Purpose:** Transform object keys and/or values
@@ -343,8 +343,8 @@ All lambda-based object functions are now fully implemented and tested. The fix 
 - 🎯 No performance degradation
 
 **Files Changed:**
-- `modules/core/src/main/kotlin/org/apache/utlx/core/interpreter/interpreter.kt` (1 critical fix)
-- `stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt` (8 implementations)
+- `modules/core/src/main/kotlin/com/glomidco/utlx/core/interpreter/interpreter.kt` (1 critical fix)
+- `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt` (8 implementations)
 
 **Lines of Code:** ~200 lines added/modified
 

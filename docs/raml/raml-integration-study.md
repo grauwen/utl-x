@@ -366,10 +366,10 @@ formats/
 **Architecture:**
 
 ```kotlin
-package org.apache.utlx.formats.raml
+package com.glomidco.utlx.formats.raml
 
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.yaml.YAMLSerializer
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.yaml.YAMLSerializer
 import java.io.Writer
 import java.io.StringWriter
 

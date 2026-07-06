@@ -16,8 +16,8 @@ Quick reference for working with YAML in UTL-X transformations.
 ### Import
 
 ```kotlin
-import org.apache.utlx.formats.yaml.*
-import org.apache.utlx.core.udm.*
+import com.glomidco.utlx.formats.yaml.*
+import com.glomidco.utlx.core.udm.*
 ```
 
 ## Parsing YAML

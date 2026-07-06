@@ -394,15 +394,15 @@ let cleanXML = stripBOM(normalizedXML)
 ### New Files to Create
 
 ```
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/encoding/
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/encoding/
 ├── EncodingFunctions.kt           # XML encoding functions
 ├── BOMFunctions.kt                # BOM handling functions
 └── CharsetUtils.kt                # Helper utilities
 
-stdlib/src/main/kotlin/org/apache/utlx/stdlib/xml/
+stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/
 └── XMLSerializationOptions.kt     # Updated with encoding options
 
-stdlib/src/test/kotlin/org/apache/utlx/stdlib/encoding/
+stdlib/src/test/kotlin/com/glomidco/utlx/stdlib/encoding/
 ├── EncodingFunctionsTest.kt
 └── BOMFunctionsTest.kt
 ```

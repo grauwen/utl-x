@@ -70,7 +70,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/core/
+│   │   │   │       └── com/glomidco/utlx/core/
 │   │   │   │           ├── ast/            # Abstract Syntax Tree
 │   │   │   │           │   ├── Node.kt
 │   │   │   │           │   ├── Expression.kt
@@ -107,7 +107,7 @@ utl-x/
 │   │   │   │               └── Navigator.kt
 │   │   │   └── test/
 │   │   │       └── kotlin/
-│   │   │           └── org/apache/utlx/core/
+│   │   │           └── com/glomidco/utlx/core/
 │   │   │               ├── lexer/
 │   │   │               │   └── LexerTest.kt
 │   │   │               ├── parser/
@@ -121,7 +121,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/jvm/
+│   │   │   │       └── com/glomidco/utlx/jvm/
 │   │   │   │           ├── runtime/        # Runtime execution
 │   │   │   │           │   ├── JVMRuntime.kt
 │   │   │   │           │   ├── ExecutionContext.kt
@@ -144,7 +144,7 @@ utl-x/
 │   │   │   │                   └── UTLXTransformer.kt
 │   │   │   └── test/
 │   │   │       └── kotlin/
-│   │   │           └── org/apache/utlx/jvm/
+│   │   │           └── com/glomidco/utlx/jvm/
 │   │   │               ├── runtime/
 │   │   │               │   └── JVMRuntimeTest.kt
 │   │   │               └── integration/
@@ -184,7 +184,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/native/
+│   │   │   │       └── com/glomidco/utlx/native/
 │   │   │   │           ├── compiler/
 │   │   │   │           │   ├── NativeCompiler.kt
 │   │   │   │           │   ├── LLVMCodeGen.kt
@@ -202,7 +202,7 @@ utl-x/
 │       ├── src/
 │       │   ├── main/
 │       │   │   └── kotlin/
-│       │   │       └── org/apache/utlx/cli/
+│       │   │       └── com/glomidco/utlx/cli/
 │       │   │           ├── Main.kt
 │       │   │           ├── commands/
 │       │   │           │   ├── TransformCommand.kt
@@ -218,7 +218,7 @@ utl-x/
 │       │   │               └── ProgressBar.kt
 │       │   └── test/
 │       │       └── kotlin/
-│       │           └── org/apache/utlx/cli/
+│       │           └── com/glomidco/utlx/cli/
 │       │               └── CommandTest.kt
 │       ├── build.gradle.kts
 │       └── README.md
@@ -228,7 +228,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/formats/xml/
+│   │   │   │       └── com/glomidco/utlx/formats/xml/
 │   │   │   │           ├── XMLParser.kt
 │   │   │   │           ├── XMLSerializer.kt
 │   │   │   │           ├── NamespaceHandler.kt
@@ -241,7 +241,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/formats/json/
+│   │   │   │       └── com/glomidco/utlx/formats/json/
 │   │   │   │           ├── JSONParser.kt
 │   │   │   │           ├── JSONSerializer.kt
 │   │   │   │           └── StreamingJSONParser.kt
@@ -253,7 +253,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/formats/csv/
+│   │   │   │       └── com/glomidco/utlx/formats/csv/
 │   │   │   │           ├── CSVParser.kt
 │   │   │   │           ├── CSVSerializer.kt
 │   │   │   │           └── Dialect.kt
@@ -265,7 +265,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   ├── main/
 │   │   │   │   └── kotlin/
-│   │   │   │       └── org/apache/utlx/formats/yaml/
+│   │   │   │       └── com/glomidco/utlx/formats/yaml/
 │   │   │   │           ├── YAMLParser.kt
 │   │   │   │           └── YAMLSerializer.kt
 │   │   │   └── test/
@@ -276,7 +276,7 @@ utl-x/
 │       ├── src/
 │       │   ├── main/
 │       │   │   └── kotlin/
-│       │   │       └── org/apache/utlx/formats/plugin/
+│       │   │       └── com/glomidco/utlx/formats/plugin/
 │       │   │           ├── FormatParser.kt
 │       │   │           ├── FormatSerializer.kt
 │       │   │           └── FormatRegistry.kt
@@ -288,7 +288,7 @@ utl-x/
 │   ├── src/
 │   │   ├── main/
 │   │   │   └── kotlin/
-│   │   │       └── org/apache/utlx/stdlib/
+│   │   │       └── com/glomidco/utlx/stdlib/
 │   │   │           ├── Functions.kt
 │   │   │           ├── string/
 │   │   │           │   ├── StringFunctions.kt
@@ -306,7 +306,7 @@ utl-x/
 │   │   │               └── TypeFunctions.kt
 │   │   └── test/
 │   │       └── kotlin/
-│   │           └── org/apache/utlx/stdlib/
+│   │           └── com/glomidco/utlx/stdlib/
 │   │               ├── StringFunctionsTest.kt
 │   │               ├── ArrayFunctionsTest.kt
 │   │               └── DateFunctionsTest.kt
@@ -339,7 +339,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   └── main/
 │   │   │       └── java/
-│   │   │           └── org/apache/utlx/maven/
+│   │   │           └── com/glomidco/utlx/maven/
 │   │   │               └── UTLXMojo.java
 │   │   ├── pom.xml
 │   │   └── README.md
@@ -348,7 +348,7 @@ utl-x/
 │   │   ├── src/
 │   │   │   └── main/
 │   │   │       └── kotlin/
-│   │   │           └── org/apache/utlx/gradle/
+│   │   │           └── com/glomidco/utlx/gradle/
 │   │   │               └── UTLXPlugin.kt
 │   │   ├── build.gradle.kts
 │   │   └── README.md
@@ -357,7 +357,7 @@ utl-x/
 │       ├── src/
 │       │   └── main/
 │       │       └── kotlin/
-│       │           └── org/apache/utlx/benchmarks/
+│       │           └── com/glomidco/utlx/benchmarks/
 │       │               ├── ParserBenchmark.kt
 │       │               ├── RuntimeBenchmark.kt
 │       │               └── TransformBenchmark.kt
@@ -434,7 +434,7 @@ plugins {
 }
 
 allprojects {
-    group = "org.apache.utlx"
+    group = "com.glomidco.utlx"
     version = "1.0.0-SNAPSHOT"
     
     repositories {

@@ -63,7 +63,7 @@ grep -r 'version = "' --include="build.gradle.kts" | grep -v kotlin | grep -v do
 ## Step 2: Source Code Version Constant
 
 ```
-modules/cli/src/main/kotlin/org/apache/utlx/cli/Main.kt
+modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt
     Line: private const val VERSION = "X.Y.Z"
 ```
 

@@ -1,0 +1,209 @@
+package com.glomidco.utlx.engine.strategy
+
+import com.glomidco.utlx.cli.service.TransformationService
+import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.types.StandardLibrary
+import com.glomidco.utlx.core.types.TypeCheckResult
+import com.glomidco.utlx.core.types.TypeChecker
+import com.glomidco.utlx.engine.config.TransformConfig
+import com.glomidco.utlx.engine.strategy.compiled.ASTCompiler
+import com.glomidco.utlx.engine.strategy.compiled.TransformFunction
+import org.slf4j.LoggerFactory
+
+/**
+ * COMPILED Strategy — compiles .utlx expressions to JVM bytecode for direct execution.
+ *
+ * Init-time:
+ *   1. Compile .utlx source → AST (same as TEMPLATE)
+ *   2. Compile AST body → JVM bytecode via ASM → TransformFunction class
+ *   3. If compilation fails (unsupported AST nodes), fall back to interpreter
+ *
+ * Runtime (per message):
+ *   1. Parse input (same as TEMPLATE)
+ *   2. Call TransformFunction.execute(inputs) — direct method invocation, no AST walking
+ *   3. Serialize output (same as TEMPLATE)
+ *
+ * Falls back to TEMPLATE (interpreter) if the expression contains nodes
+ * the bytecode compiler doesn't support yet.
+ */
+class CompiledStrategy : ExecutionStrategy {
+
+    private val logger = LoggerFactory.getLogger(CompiledStrategy::class.java)
+    private val transformationService = TransformationService()
+    override val name: String = "COMPILED"
+
+    override fun getHeaderSchemaInfo(): HeaderSchemaInfo? {
+        if (!::compiledProgram.isInitialized) return null
+        val header = compiledProgram.header
+        val inputSpec = header.inputFormat
+        val outputSpec = header.outputFormat
+        val allInputs = header.inputs.associate { (name, spec) ->
+            name to InputSchemaRef(
+                format = spec.type.name.lowercase(),
+                schemaRef = spec.options["schema"] as? String
+            )
+        }
+        return HeaderSchemaInfo(
+            inputFormat = inputSpec.type.name.lowercase(),
+            inputSchemaRef = inputSpec.options["schema"] as? String,
+            outputFormat = outputSpec.type.name.lowercase(),
+            outputSchemaRef = outputSpec.options["schema"] as? String,
+            allInputSchemas = allInputs
+        )
+    }
+
+    private lateinit var compiledProgram: Program
+    private lateinit var utlxSource: String
+    private lateinit var transformConfig: TransformConfig
+
+    // The compiled function — null if fallback to interpreter
+    private var transformFunction: TransformFunction? = null
+    private var usingFallback = false
+
+    override fun initialize(source: String, config: TransformConfig) {
+        this.utlxSource = source
+        this.transformConfig = config
+
+        logger.info("Compiling transformation (COMPILED strategy)...")
+        compiledProgram = compileSource(source)
+
+        // Try to compile AST body to bytecode
+        try {
+            val compiler = ASTCompiler()
+            transformFunction = compiler.compile(compiledProgram)
+
+            if (transformFunction != null) {
+                logger.info("Transformation compiled to JVM bytecode — direct execution enabled")
+            } else {
+                usingFallback = true
+                logger.info("Transformation uses unsupported AST nodes — falling back to interpreter")
+            }
+        } catch (e: Exception) {
+            // Bytecode generation or class loading failed — fall back to interpreter
+            usingFallback = true
+            logger.warn("Bytecode compilation failed ({}), falling back to interpreter", e.message)
+        }
+    }
+
+    override fun execute(input: String): ExecutionResult {
+        val declaredInputs = compiledProgram.header.inputs
+
+        if (declaredInputs.size > 1) {
+            return executeMultiInput(input)
+        }
+
+        val inputName = transformConfig.inputs.firstOrNull()?.name
+            ?: declaredInputs.firstOrNull()?.first
+            ?: "input"
+        val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase()
+
+        // Parse input to UDM
+        val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json")
+
+        if (transformFunction != null && !usingFallback) {
+            // ── Compiled path: direct method invocation ──
+            val outputUDM = transformFunction!!.execute(mapOf(inputName to inputUDM))
+
+            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
+            val outputData = transformationService.serializeOutputPublic(
+                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
+            )
+            return ExecutionResult(output = outputData)
+        } else {
+            // ── Fallback: interpreter (same as TEMPLATE) ──
+            val inputs = mapOf(
+                inputName to TransformationService.InputData(content = input, format = declaredFormat)
+            )
+            val (output, _) = transformationService.transform(utlxSource, inputs)
+            return ExecutionResult(output = output)
+        }
+    }
+
+    /**
+     * Multi-input: payload is a JSON envelope where each key maps to a declared input name.
+     * Non-JSON values are stored as JSON strings in the envelope and extracted as raw text.
+     */
+    private fun executeMultiInput(input: String): ExecutionResult {
+        val declaredInputs = compiledProgram.header.inputs
+        val mapper = com.fasterxml.jackson.databind.ObjectMapper()
+        val envelope = mapper.readTree(input)
+
+        if (transformFunction != null && !usingFallback) {
+            // ── Compiled path: parse each input per declared format, call compiled function ──
+            val inputUDMs = declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope.get(name)
+                    ?: throw IllegalArgumentException(
+                        "Envelope missing required input '$name'. " +
+                        "Expected keys: ${declaredInputs.map { it.first }}"
+                    )
+                val declaredFormat = formatSpec.type.name.lowercase()
+                val content = if (declaredFormat != "json" && node.isTextual) {
+                    node.asText()
+                } else {
+                    mapper.writeValueAsString(node)
+                }
+                name to transformationService.parseInputPublic(content, declaredFormat)
+            }
+
+            logger.debug("Envelope split into {} named inputs: {}", inputUDMs.size, inputUDMs.keys)
+            val outputUDM = transformFunction!!.execute(inputUDMs)
+
+            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
+            val outputData = transformationService.serializeOutputPublic(
+                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
+            )
+            return ExecutionResult(output = outputData)
+        } else {
+            // ── Fallback: interpreter via TransformationService.transform() ──
+            val inputs = declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope.get(name)
+                    ?: throw IllegalArgumentException(
+                        "Envelope missing required input '$name'. " +
+                        "Expected keys: ${declaredInputs.map { it.first }}"
+                    )
+                val declaredFormat = formatSpec.type.name.lowercase()
+                val content = if (declaredFormat != "json" && node.isTextual) {
+                    node.asText()
+                } else {
+                    mapper.writeValueAsString(node)
+                }
+                name to TransformationService.InputData(content = content, format = declaredFormat)
+            }
+
+            logger.debug("Envelope split into {} named inputs (fallback): {}", inputs.size, inputs.keys)
+            val (output, _) = transformationService.transform(utlxSource, inputs)
+            return ExecutionResult(output = output)
+        }
+    }
+
+    override fun shutdown() {
+        // Clear the reference so the classloader + generated class can be GC'd
+        // The compilationCache in ASTCompiler is a static cache — we don't clear it here
+        // because other strategies may reuse the same compiled function.
+        // The cache is bounded by unique source hashes (number of distinct transformations).
+        transformFunction = null
+        logger.info("COMPILED strategy shutdown (fallback={})", usingFallback)
+    }
+
+    private fun compileSource(source: String): Program {
+        val lexer = Lexer(source)
+        val tokens = lexer.tokenize()
+        val parser = Parser(tokens, source)
+        val parseResult = parser.parse()
+        val program = when (parseResult) {
+            is ParseResult.Success -> parseResult.program
+            is ParseResult.Failure -> {
+                val errors = parseResult.errors.joinToString("\n") { "  ${it.message} at ${it.location}" }
+                throw IllegalStateException("Parse errors:\n$errors")
+            }
+        }
+        val stdlib = StandardLibrary()
+        val typeChecker = TypeChecker(stdlib)
+        typeChecker.check(program)
+        return program
+    }
+}

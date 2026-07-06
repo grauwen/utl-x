@@ -3,7 +3,7 @@ plugins {
     `java-library`
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "0.1.0-SNAPSHOT"
 
 dependencies {

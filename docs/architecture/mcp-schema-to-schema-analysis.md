@@ -566,7 +566,7 @@ Content-Type: application/json
 
 ### Implementation in Daemon
 
-**Location**: `modules/analysis/src/main/kotlin/org/apache/utlx/analysis/schema/SchemaCompatibilityAnalyzer.kt`
+**Location**: `modules/analysis/src/main/kotlin/com/glomidco/utlx/analysis/schema/SchemaCompatibilityAnalyzer.kt`
 
 ```kotlin
 object SchemaCompatibilityAnalyzer {

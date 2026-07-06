@@ -304,7 +304,7 @@ location. **Not yet verified end-to-end** with auto-start actually on.
 
 ```bash
 # from the repo root
-./gradlew :modules:daemon:test --tests 'org.apache.utlx.daemon.ParentWatchdogTest'
+./gradlew :modules:daemon:test --tests 'com.glomidco.utlx.daemon.ParentWatchdogTest'
 # or run the whole daemon suite
 ./gradlew :modules:daemon:test
 ```

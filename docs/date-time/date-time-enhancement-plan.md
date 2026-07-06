@@ -185,7 +185,7 @@ data class DateTime(
 ### UDM Type Additions
 
 ```kotlin
-package org.apache.utlx.core.udm
+package com.glomidco.utlx.core.udm
 
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -265,7 +265,7 @@ sealed class UDM {
 **JSON Serializer Updates:**
 
 ```kotlin
-// formats/json/src/main/kotlin/org/apache/utlx/formats/json/json_serializer.kt
+// formats/json/src/main/kotlin/com/glomidco/utlx/formats/json/json_serializer.kt
 
 when (udm) {
     is UDM.Date -> writer.write("\"${udm.toISOString()}\"")
@@ -862,9 +862,9 @@ fun resolveLocale(requestedLocale: String): Locale {
 **Core Implementation:**
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/DateTimeFormatter.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/DateTimeFormatter.kt
 
-package org.apache.utlx.stdlib.date
+package com.glomidco.utlx.stdlib.date
 
 import java.time.format.DateTimeFormatter as JavaDTF
 import java.time.format.FormatStyle
@@ -936,7 +936,7 @@ class DateTimeFormatter(
 **CLDR Data Provider Interface:**
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/CldrDataProvider.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/CldrDataProvider.kt
 
 interface CldrDataProvider {
     /**
@@ -976,7 +976,7 @@ interface CldrDataProvider {
 **JVM Implementation (Using java.time):**
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/JvmCldrProvider.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/JvmCldrProvider.kt
 
 class JvmCldrProvider : CldrDataProvider {
     private val cache = ConcurrentHashMap<String, Any>()
@@ -1292,7 +1292,7 @@ config {
 ```
 utl-x/
 ├── stdlib/
-│   ├── src/main/kotlin/org/apache/utlx/stdlib/
+│   ├── src/main/kotlin/com/glomidco/utlx/stdlib/
 │   │   ├── date/
 │   │   │   ├── DateFunctions.kt           # Core date functions
 │   │   │   ├── DateTimeFormatter.kt       # CLDR-aware formatter
@@ -1313,7 +1313,7 @@ utl-x/
 │               └── time-patterns.json    # Common time patterns
 │
 ├── modules/core/
-│   └── src/main/kotlin/org/apache/utlx/core/
+│   └── src/main/kotlin/com/glomidco/utlx/core/
 │       ├── parser/
 │       │   └── ConfigParser.kt           # Parse config block in UTL-X
 │       └── config/
@@ -1400,7 +1400,7 @@ tasks {
 **Lazy loading with caching:**
 
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/date/LocaleManager.kt
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/date/LocaleManager.kt
 
 object LocaleManager {
     private val providers = ConcurrentHashMap<String, CldrDataProvider>()

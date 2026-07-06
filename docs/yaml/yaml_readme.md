@@ -23,7 +23,7 @@ This module provides bidirectional conversion between YAML documents and the Uni
 
 ```kotlin
 dependencies {
-    implementation("org.apache.utlx.formats:yaml:0.9.0-beta")
+    implementation("com.glomidco.utlx.formats:yaml:0.9.0-beta")
 }
 ```
 
@@ -31,7 +31,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'org.apache.utlx.formats:yaml:0.9.0-beta'
+    implementation 'com.glomidco.utlx.formats:yaml:0.9.0-beta'
 }
 ```
 
@@ -39,7 +39,7 @@ dependencies {
 
 ```xml
 <dependency>
-    <groupId>org.apache.utlx.formats</groupId>
+    <groupId>com.glomidco.utlx.formats</groupId>
     <artifactId>yaml</artifactId>
     <version>0.9.0-beta</version>
 </dependency>
@@ -50,7 +50,7 @@ dependencies {
 ### Parsing YAML
 
 ```kotlin
-import org.apache.utlx.formats.yaml.*
+import com.glomidco.utlx.formats.yaml.*
 
 // Simple parsing
 val yaml = """
@@ -65,8 +65,8 @@ val udm = YAMLParser.parseYAML(yaml)
 ### Serializing to YAML
 
 ```kotlin
-import org.apache.utlx.core.udm.*
-import org.apache.utlx.formats.yaml.*
+import com.glomidco.utlx.core.udm.*
+import com.glomidco.utlx.formats.yaml.*
 
 // Create UDM structure
 val udm = UDMObject(mapOf(

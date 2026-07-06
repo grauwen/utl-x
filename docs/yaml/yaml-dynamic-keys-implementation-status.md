@@ -26,7 +26,7 @@ While UTL-X has complete **theoretical support** for dynamic keys in both INPUT 
 ## Critical Discovery
 
 ### Location
-`stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt`
+`stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt`
 
 ### Affected Functions
 
@@ -77,8 +77,8 @@ The interpreter cannot convert lambda functions to UDM for passing to stdlib fun
 
 ```
 Runtime error: Cannot convert FunctionValue to UDM for stdlib function call
-	at org.apache.utlx.core.interpreter.Interpreter.runtimeValueToUDM(interpreter.kt:1101)
-	at org.apache.utlx.core.interpreter.Interpreter.tryLoadStdlibFunction(interpreter.kt:926)
+	at com.glomidco.utlx.core.interpreter.Interpreter.runtimeValueToUDM(interpreter.kt:1101)
+	at com.glomidco.utlx.core.interpreter.Interpreter.tryLoadStdlibFunction(interpreter.kt:926)
 ```
 
 **Key Issue:** `runtimeValueToUDM()` in `interpreter.kt` cannot handle `FunctionValue`.
@@ -138,7 +138,7 @@ RuntimeError: Cannot convert FunctionValue to UDM for stdlib function call
 
 ### fromEntries (✅ Works)
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/ObjectFunctions.kt:302
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/ObjectFunctions.kt:302
 fun fromEntries(args: List<UDM>): UDM {
     requireArgs(args, 1, "fromEntries")
     val array = args[0].asArray() ?: throw FunctionArgumentException(...)
@@ -163,7 +163,7 @@ fun fromEntries(args: List<UDM>): UDM {
 
 ### mapEntries (❌ Doesn't Work)
 ```kotlin
-// stdlib/src/main/kotlin/org/apache/utlx/stdlib/objects/EnhancedObjectFunctions.kt:251
+// stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/objects/EnhancedObjectFunctions.kt:251
 fun mapEntries(args: List<UDM>): UDM {
     if (args.size < 2) {
         throw IllegalArgumentException("mapEntries() requires 2 arguments: object, mapper")

@@ -18,7 +18,7 @@ JSON parser and serializer for UTL-X transformation language.
 ### Parsing JSON
 
 ```kotlin
-import org.apache.utlx.formats.json.JSON
+import com.glomidco.utlx.formats.json.JSON
 
 // Parse JSON string to UDM
 val json = """
@@ -35,8 +35,8 @@ val udm = JSON.parse(json)
 ### Serializing to JSON
 
 ```kotlin
-import org.apache.utlx.core.udm.UDM
-import org.apache.utlx.formats.json.JSON
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.json.JSON
 
 // Create UDM structure
 val data = UDM.Object.of(
@@ -54,11 +54,11 @@ val compactJson = JSON.stringifyCompact(data)
 ### Complete Transformation Example
 
 ```kotlin
-import org.apache.utlx.core.lexer.Lexer
-import org.apache.utlx.core.parser.Parser
-import org.apache.utlx.core.parser.ParseResult
-import org.apache.utlx.core.interpreter.Interpreter
-import org.apache.utlx.formats.json.JSON
+import com.glomidco.utlx.core.lexer.Lexer
+import com.glomidco.utlx.core.parser.Parser
+import com.glomidco.utlx.core.parser.ParseResult
+import com.glomidco.utlx.core.interpreter.Interpreter
+import com.glomidco.utlx.formats.json.JSON
 
 // Input JSON
 val inputJSON = """
@@ -126,7 +126,7 @@ Output:
 ### Custom Serialization Options
 
 ```kotlin
-import org.apache.utlx.formats.json.JSONSerializer
+import com.glomidco.utlx.formats.json.JSONSerializer
 
 // Create custom serializer
 val serializer = JSONSerializer(
@@ -140,7 +140,7 @@ val json = serializer.serialize(udm)
 ### Streaming Parser (for large files)
 
 ```kotlin
-import org.apache.utlx.formats.json.StreamingJSONParser
+import com.glomidco.utlx.formats.json.StreamingJSONParser
 import java.io.FileReader
 
 // Parse large JSON file
@@ -151,8 +151,8 @@ val udm = parser.parse()
 ### Error Handling
 
 ```kotlin
-import org.apache.utlx.formats.json.JSON
-import org.apache.utlx.formats.json.JSONParseException
+import com.glomidco.utlx.formats.json.JSON
+import com.glomidco.utlx.formats.json.JSONParseException
 
 try {
     val udm = JSON.parse("{invalid json}")

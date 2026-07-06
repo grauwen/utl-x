@@ -1,129 +1,129 @@
 [
   {
-    "name": "org.apache.utlx.cli.MainKt",
+    "name": "com.glomidco.utlx.cli.MainKt",
     "methods": [
       {"name": "main", "parameterTypes": ["java.lang.String[]"]}
     ]
   },
   {
-    "name": "org.apache.utlx.core.ast.Node",
+    "name": "com.glomidco.utlx.core.ast.Node",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.ast.Expression",
+    "name": "com.glomidco.utlx.core.ast.Expression",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM",
+    "name": "com.glomidco.utlx.core.udm.UDM",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Scalar",
+    "name": "com.glomidco.utlx.core.udm.UDM$Scalar",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Scalar$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Scalar$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Array",
+    "name": "com.glomidco.utlx.core.udm.UDM$Array",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Array$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Array$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Object",
+    "name": "com.glomidco.utlx.core.udm.UDM$Object",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Object$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Object$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$DateTime",
+    "name": "com.glomidco.utlx.core.udm.UDM$DateTime",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$DateTime$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$DateTime$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Date",
+    "name": "com.glomidco.utlx.core.udm.UDM$Date",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Date$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Date$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$LocalDateTime",
+    "name": "com.glomidco.utlx.core.udm.UDM$LocalDateTime",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$LocalDateTime$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$LocalDateTime$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Time",
+    "name": "com.glomidco.utlx.core.udm.UDM$Time",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Time$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Time$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Binary",
+    "name": "com.glomidco.utlx.core.udm.UDM$Binary",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Binary$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Binary$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Lambda",
+    "name": "com.glomidco.utlx.core.udm.UDM$Lambda",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Lambda$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Lambda$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.core.udm.UDM$Companion",
+    "name": "com.glomidco.utlx.core.udm.UDM$Companion",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true
   },
@@ -137,25 +137,25 @@
     "allDeclaredMethods": true
   },
   {
-    "name": "org.apache.utlx.stdlib.StandardLibrary",
+    "name": "com.glomidco.utlx.stdlib.StandardLibrary",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.stdlib.Functions",
+    "name": "com.glomidco.utlx.stdlib.Functions",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.stdlib.Functions$UTLXFunction",
+    "name": "com.glomidco.utlx.stdlib.Functions$UTLXFunction",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.core.interpreter.Interpreter",
+    "name": "com.glomidco.utlx.core.interpreter.Interpreter",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
@@ -227,25 +227,25 @@
     "allDeclaredConstructors": true
   },
   {
-    "name": "org.apache.utlx.stdlib.FunctionRegistry",
+    "name": "com.glomidco.utlx.stdlib.FunctionRegistry",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.stdlib.FunctionInfo",
+    "name": "com.glomidco.utlx.stdlib.FunctionInfo",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.stdlib.ParameterInfo",
+    "name": "com.glomidco.utlx.stdlib.ParameterInfo",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true
   },
   {
-    "name": "org.apache.utlx.stdlib.ReturnInfo",
+    "name": "com.glomidco.utlx.stdlib.ReturnInfo",
     "allDeclaredConstructors": true,
     "allDeclaredMethods": true,
     "allDeclaredFields": true

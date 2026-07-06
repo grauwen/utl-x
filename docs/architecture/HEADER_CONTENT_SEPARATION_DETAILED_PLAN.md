@@ -176,7 +176,7 @@ class Parser(private val tokens: List<Token>) {
 **Step 1**: Add section tracking to ParseError
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt
 // Line: ~1210
 
 // Add before ParseError
@@ -203,7 +203,7 @@ data class ParseError(
 **Step 2**: Track current section in Parser
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt
 // Line: ~33 (in Parser class)
 
 class Parser(private val tokens: List<Token>) {
@@ -220,7 +220,7 @@ class Parser(private val tokens: List<Token>) {
 **Step 3**: Update section as we parse
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt
 // Modify parseProgram() (line 58)
 
 private fun parseProgram(): Program {
@@ -252,7 +252,7 @@ private fun parseProgram(): Program {
 **Step 4**: Update error() method to include section
 
 ```kotlin
-// File: modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt
+// File: modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt
 // Modify error() method (around line 1197)
 
 private fun error(message: String): Nothing {
@@ -269,7 +269,7 @@ private fun error(message: String): Nothing {
 **Step 5**: Update ValidateCommand to group by section
 
 ```kotlin
-// File: modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt
+// File: modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt
 // Modify around line 89-100
 
 is ParseResult.Failure -> {
@@ -441,7 +441,7 @@ Consider Option 1 or 3 if:
 ### Phase 1: Core Changes (4 hours)
 
 #### Task 1.1: Add ScriptSection enum
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 **Location**: Before line 1212
 **Code**: (as shown above in Option 2, Step 1)
 **Test**: Compile successfully
@@ -449,7 +449,7 @@ Consider Option 1 or 3 if:
 ---
 
 #### Task 1.2: Modify ParseError
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 **Location**: Line 1212
 **Code**: (as shown above in Option 2, Step 1)
 **Test**: All existing tests still pass (default section)
@@ -457,7 +457,7 @@ Consider Option 1 or 3 if:
 ---
 
 #### Task 1.3: Add currentSection field
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 **Location**: Line 35 (in Parser class)
 **Code**: (as shown above in Option 2, Step 2)
 **Test**: Compile successfully
@@ -465,7 +465,7 @@ Consider Option 1 or 3 if:
 ---
 
 #### Task 1.4: Update parseProgram()
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 **Location**: Lines 58-92
 **Code**: (as shown above in Option 2, Step 3)
 **Test**: Parser still works, section is tracked
@@ -473,7 +473,7 @@ Consider Option 1 or 3 if:
 ---
 
 #### Task 1.5: Update error() method
-**File**: `modules/core/src/main/kotlin/org/apache/utlx/core/parser/parser_impl.kt`
+**File**: `modules/core/src/main/kotlin/com/glomidco/utlx/core/parser/parser_impl.kt`
 **Location**: Around line 1197
 **Code**: (as shown above in Option 2, Step 4)
 **Test**: Errors include correct section
@@ -483,7 +483,7 @@ Consider Option 1 or 3 if:
 ### Phase 2: ValidateCommand Integration (3 hours)
 
 #### Task 2.1: Group errors by section
-**File**: `modules/cli/src/main/kotlin/org/apache/utlx/cli/commands/ValidateCommand.kt`
+**File**: `modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/ValidateCommand.kt`
 **Location**: Lines 89-100
 **Code**: (as shown above in Option 2, Step 5)
 **Test**: Errors grouped correctly
@@ -503,7 +503,7 @@ printErrors("Transformation Errors", contentErrors, ...)
 ### Phase 3: Testing (3 hours)
 
 #### Task 3.1: Unit tests for ScriptSection
-**File**: `modules/core/src/test/kotlin/org/apache/utlx/core/parser/ScriptSectionTest.kt` (new)
+**File**: `modules/core/src/test/kotlin/com/glomidco/utlx/core/parser/ScriptSectionTest.kt` (new)
 ```kotlin
 class ScriptSectionTest {
     @Test
@@ -529,7 +529,7 @@ class ScriptSectionTest {
 ---
 
 #### Task 3.2: Integration tests for ValidateCommand
-**File**: `modules/cli/src/test/kotlin/org/apache/utlx/cli/commands/ValidateCommandSectionTest.kt` (new)
+**File**: `modules/cli/src/test/kotlin/com/glomidco/utlx/cli/commands/ValidateCommandSectionTest.kt` (new)
 ```kotlin
 class ValidateCommandSectionTest {
     @Test

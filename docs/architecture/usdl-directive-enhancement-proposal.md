@@ -162,14 +162,14 @@ object DirectiveRegistry {
 
 #### Phase 1: Update Data Structures (Week 1)
 
-**File: `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/DirectiveRegistry.kt`**
+**File: `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/DirectiveRegistry.kt`**
 
 1. Add new fields to `DirectiveInfo` with defaults
 2. Create `CompleteExample` data class
 3. Create `DirectiveCombination` data class
 4. Update `toDirectiveInfo()` to populate new fields
 
-**File: `/schema/src/main/kotlin/org/apache/utlx/schema/usdl/USDL10.kt`**
+**File: `/schema/src/main/kotlin/com/glomidco/utlx/schema/usdl/USDL10.kt`**
 
 5. Add new fields to `Directive` data class
 6. Update tier directive definitions with enhanced guidance

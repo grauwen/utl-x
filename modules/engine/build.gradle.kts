@@ -5,7 +5,7 @@ plugins {
     application
 }
 
-group = "org.apache.utlx"
+group = "com.glomidco.utlx"
 version = "1.0.0-SNAPSHOT"
 
 dependencies {
@@ -92,7 +92,7 @@ dependencies {
 }
 
 application {
-    mainClass.set("org.apache.utlx.engine.MainKt")
+    mainClass.set("com.glomidco.utlx.engine.MainKt")
 
     applicationDefaultJvmArgs = listOf(
         "-Xmx3072m",
@@ -105,7 +105,7 @@ application {
 tasks.jar {
     manifest {
         attributes(
-            "Main-Class" to "org.apache.utlx.engine.MainKt",
+            "Main-Class" to "com.glomidco.utlx.engine.MainKt",
             "Implementation-Title" to "UTL-X Engine (UTLXE)",
             "Implementation-Version" to project.version
         )
