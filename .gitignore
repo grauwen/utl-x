@@ -21,6 +21,11 @@ out/
 *.egg-info/
 node_modules/
 
+# VitePress site build output & cache (generated — never tracked, on any branch)
+website/.vitepress/dist/
+website/.vitepress/dist-*/
+website/.vitepress/cache/
+
 # IDE files
 .idea/
 .vscode/
@@ -55,6 +60,9 @@ htmlcov/
 *.swp
 *.swo
 *~
+
+# Microsoft Office lock/owner files (created while a document is open)
+~$*
 
 # Package files
 *.tgz
