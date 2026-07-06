@@ -1,6 +1,6 @@
 # B27: XML prolog/epilog comments crash the core XML→UDM parse
 
-**Status:** Root cause **CONFIRMED** by source analysis + a reproduced core-CLI failure. **Fix DESIGNED, not yet implemented.**
+**Status:** Root cause **CONFIRMED** by source analysis + a reproduced core-CLI failure. **Fix IMPLEMENTED + TESTED** on `development` — `:formats:xml` compiles clean, an 8-case `XmlPrologEpilogCommentTest` passes, full `:formats:xml:test` green, and `examples/xml/00-healthcare-claim.xml` parses end-to-end via the CLI (`$input.HealthcareClaim.@claimId` → `"CLM-2024-789456"`). **Pending:** cherry-pick to `main`.
 **Priority:** **High** — a comment before or after the root element is valid, extremely common XML (schema headers, license banners, generator stamps). Any such instance fails to reach UDM at all, so *no* transformation can run against it.
 **Created:** July 2026
 **Reported:** IDE — `examples/xml/00-healthcare-claim.xml` "does not parse to UDM." The IDE only surfaces the failure; the defect is in core.
@@ -21,9 +21,9 @@ and the root element. A `<!--` in the **prolog** (or **epilog**) is therefore ha
 
 | # | Symptom | Root cause | File:line | Status |
 |---|---|---|---|---|
-| 1 | `XML parse error at 2:2 - Invalid name start: !` on a prolog comment | `parse()` skips only whitespace before the root; no misc-skip | `xml_parser.kt:85→89` | ⏳ fix designed |
-| 2 | Trailing comment after root → `Content after root element` | same gap on the epilog side | `xml_parser.kt:92-93` | ⏳ fix designed |
-| 3 | `<?xml-stylesheet?>` PI mis-consumed as the XML declaration | decl match `peek(5) == "<?xml"` also matches `<?xml-stylesheet` | `xml_parser.kt:69` | ⏳ fix designed (latent, related) |
+| 1 | `XML parse error at 2:2 - Invalid name start: !` on a prolog comment | `parse()` skips only whitespace before the root; no misc-skip | `xml_parser.kt:85→89` | ✅ fixed (`skipMisc` prolog) |
+| 2 | Trailing comment after root → `Content after root element` | same gap on the epilog side | `xml_parser.kt:92-93` | ✅ fixed (`skipMisc` epilog) |
+| 3 | `<?xml-stylesheet?>` PI mis-consumed as the XML declaration | decl match `peek(5) == "<?xml"` also matches `<?xml-stylesheet` | `xml_parser.kt:69` | ✅ fixed (`isXmlDeclaration`) |
 
 The unifying fix: a **`skipMisc()`** loop (whitespace + `<!-- -->` + `<?PI?>` + `<!DOCTYPE>`) applied
 in the prolog **and** the epilog, plus a tightened declaration match.
@@ -307,12 +307,12 @@ B27 implements exactly half of that principle — *stop crashing, skip the comme
 
 ## Checklist
 
-- [ ] `skipMisc()` (+ `skipProcessingInstruction`, `skipDoctype`) added; prolog & epilog call sites updated
-- [ ] Declaration match tightened (bug #3)
-- [ ] `XmlPrologEpilogCommentTest` added (cases 1–7 above)
-- [ ] `:formats:xml:test` + `:modules:core:test` green
-- [ ] `examples/xml/00-healthcare-claim.xml` parses via CLI end-to-end
-- [ ] Cherry-picked to `main`; `formats:xml` tests green there
+- [x] `skipMisc()` (+ `skipProcessingInstruction`, `skipDoctype`) added; prolog & epilog call sites updated
+- [x] Declaration match tightened (bug #3) — `isXmlDeclaration()`
+- [x] `XmlPrologEpilogCommentTest` added (8 cases) — all passing
+- [x] `:formats:xml:test` green
+- [x] `examples/xml/00-healthcare-claim.xml` parses via CLI end-to-end
+- [ ] Cherry-picked to `main`; `formats:xml` tests green there (yours to commit + cherry-pick)
 - [ ] (separate feature) schema-doc → USDL `%documentation` enrichment across all schema formats
       (XSD `<xs:documentation>`, JSCH `description`/`title`, Avro `doc`, OSCH `Documentation`,
       TSCH `description`, Protobuf leading `//`)
