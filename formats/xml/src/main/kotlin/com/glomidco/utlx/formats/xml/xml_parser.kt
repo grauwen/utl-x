@@ -66,7 +66,7 @@ class XMLParser(
 
         // Extract encoding from XML declaration if present
         var xmlEncoding: String? = null
-        if (peek(5) == "<?xml") {
+        if (isXmlDeclaration()) {
             // Read the entire declaration to extract encoding
             val declarationStart = current
             skipUntil("?>")
@@ -82,13 +82,18 @@ class XMLParser(
 
             advance() // ?
             advance() // >
-            skipWhitespace()
         }
+
+        // B27: Skip prolog "misc" — comments, processing instructions, DOCTYPE (plus whitespace)
+        // between the XML declaration and the root element. Previously only whitespace was skipped,
+        // so a prolog comment reached parseName and threw "Invalid name start: !".
+        skipMisc()
 
         // Parse root element with empty namespace context
         val root = parseElement(emptyMap())
 
-        skipWhitespace()
+        // B27: Skip epilog "misc" — trailing comments / PIs after the root element.
+        skipMisc()
         if (!isAtEnd()) {
             throw XMLParseException("Content after root element", line, column)
         }
@@ -387,7 +392,66 @@ class XMLParser(
         
         repeat(3) { advance() } // Skip -->
     }
-    
+
+    /**
+     * B27: True only for a genuine XML declaration `<?xml` followed by whitespace or `?`.
+     * Prevents a processing instruction such as `<?xml-stylesheet ...?>` (which also starts
+     * with the five chars "<?xml") from being mis-consumed as the declaration.
+     */
+    private fun isXmlDeclaration(): Boolean {
+        if (peek(5) != "<?xml") return false
+        val next = if (current + 5 < text.length) text[current + 5] else ' '
+        return next == ' ' || next == '\t' || next == '\r' || next == '\n' || next == '?'
+    }
+
+    /**
+     * B27: Skip XML "misc" content permitted in the prolog and epilog:
+     * whitespace, comments (`<!-- -->`), processing instructions (`<?...?>`), and DOCTYPE.
+     * The in-element child loop already handles comments; this closes the same gap at the
+     * document level, where previously only whitespace was skipped.
+     */
+    private fun skipMisc() {
+        while (!isAtEnd()) {
+            skipWhitespace()
+            when {
+                peek(4) == "<!--"      -> skipComment()
+                peek(9) == "<!DOCTYPE" -> skipDoctype()
+                peek(2) == "<?"        -> skipProcessingInstruction()
+                else                   -> return
+            }
+        }
+    }
+
+    private fun skipProcessingInstruction() {
+        // <?...?>
+        repeat(2) { advance() } // Skip <?
+        while (peek(2) != "?>") {
+            if (isAtEnd()) {
+                throw XMLParseException("Unterminated processing instruction", line, column)
+            }
+            if (advance() == '\n') {
+                line++
+                column = 1
+            }
+        }
+        repeat(2) { advance() } // Skip ?>
+    }
+
+    private fun skipDoctype() {
+        // <!DOCTYPE ... [ internal subset ] >
+        repeat(9) { advance() } // Skip <!DOCTYPE
+        var depth = 0 // bracket depth of an internal subset — a '>' inside it is not the end
+        while (!isAtEnd()) {
+            when (val c = advance()) {
+                '['  -> depth++
+                ']'  -> if (depth > 0) depth--
+                '>'  -> if (depth == 0) return
+                '\n' -> { line++; column = 1 }
+            }
+        }
+        throw XMLParseException("Unterminated DOCTYPE", line, column)
+    }
+
     private fun skipUntil(target: String) {
         while (peek(target.length) != target && !isAtEnd()) {
             advance()
