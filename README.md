@@ -3,7 +3,7 @@
 **An open-source, format-agnostic functional transformation language for data transformation.**
 
 [![License: AGPL-3.0](https://img.shields.io/badge/License-AGPL%20v3-blue.svg)](LICENSE.md)
-[![Version](https://img.shields.io/badge/version-1.2.2-green)](https://github.com/grauwen/utl-x/releases)
+[![Version](https://img.shields.io/badge/version-1.3.0-green)](https://github.com/grauwen/utl-x/releases)
 [![Website](https://img.shields.io/badge/website-utlx.dev-blue)](https://utlx.dev)
 [![Documentation](https://img.shields.io/badge/docs-utlx--lang.org-brightgreen)](https://utlx-lang.org)
 [![GitHub stars](https://img.shields.io/github/stars/grauwen/utl-x)](https://github.com/grauwen/utl-x)
@@ -246,7 +246,7 @@ Available on the [Chocolatey community repository](https://community.chocolatey.
 
 **Direct download (any distro):**
 ```bash
-curl -L https://github.com/grauwen/utl-x/releases/download/v1.2.2/utlx-linux-x64.bin -o utlx
+curl -L https://github.com/grauwen/utl-x/releases/download/v1.3.0/utlx-linux-x64.bin -o utlx
 chmod +x utlx
 sudo mv utlx /usr/local/bin/
 ```
@@ -262,7 +262,7 @@ brew install utlx
 
 ### Download Pre-Built Binaries
 
-Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.2.2):
+Native binaries (no JVM required) are available from [GitHub Releases](https://github.com/grauwen/utl-x/releases/tag/v1.3.0):
 
 | Platform | Binary |
 |----------|--------|
@@ -294,7 +294,7 @@ Windows: use `utlx.bat` or `.\utlx.ps1` instead of `./utlx`.
 
 ```bash
 utlx --version
-# UTL-X CLI v1.2.2
+# UTL-X CLI v1.3.0
 ```
 
 ## Quick Start
@@ -580,7 +580,12 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 ## Project Status
 
-**Current Version**: 1.2.2
+**Current Version**: 1.3.0
+
+### What's in 1.3.0
+
+- **Breaking — package namespace migration:** every package moved from `org.apache.utlx.*` to **`com.glomidco.utlx.*`**, and the published Maven coordinates changed to `group = "com.glomidco.utlx"`. `org.apache.*` is the Apache Software Foundation's reverse-DNS namespace and UTL-X is not an ASF project, so the code now lives under a domain the project controls.
+- **Consumer migration:** if you depend on UTL-X as a library, find/replace `org.apache.utlx` → `com.glomidco.utlx` in your imports and set your Maven/Gradle dependency `groupId` to `com.glomidco.utlx`. Genuine Apache dependencies (Avro, XML Security, …) are unaffected. No functional or API changes — **names only**.
 
 ### What's in 1.2.2
 
@@ -603,7 +608,7 @@ All contributors must agree to the [AGPL-3.0 license](LICENSE.md) terms.
 
 | Component | Description | Status |
 |-----------|-------------|--------|
-| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.2.2 Released** |
+| **UTL-X CLI** (`utlx`) | Transformation engine, format conversion, REPL, 652 stdlib functions | **1.3.0 Released** |
 | **UTL-X Engine** (`utlxe`) | Pipeline orchestration for multi-step transformations and bundle execution | In Development |
 | **UTL-X IDE Support** (`utlxd`) | Language Server Protocol daemon for VS Code and IDE integration | In Development |
 | **JavaScript Runtime** | Browser/Node.js runtime (~75% stdlib coverage, all major formats) | Future |

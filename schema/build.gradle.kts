@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx"
-version = "1.2.2"
+version = "1.3.0"
 
 dependencies {
     // Core module (for UDM)
