@@ -62,7 +62,7 @@ export class UTLXDaemonClient extends EventEmitter {
         // Use default options - no parameters needed for DI
         const options: DaemonClientOptions = {};
         this.options = {
-            daemonJarPath: options.daemonJarPath || '/Users/magr/data/mapping/github-git/utl-x/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+            daemonJarPath: options.daemonJarPath || '/Users/magr/data/mapping/github-git/utl-x/modules/daemon/build/libs/utlxd-1.3.0.jar',
             lspPort: options.lspPort || parseInt(process.env.UTLXD_LSP_PORT || '7777', 10),
             apiPort: options.apiPort || parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
             requestTimeout: options.requestTimeout || 30000,

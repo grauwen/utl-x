@@ -371,7 +371,7 @@ The MCP-assisted generation system enables users to create UTL-X transformations
    ./gradlew :modules:daemon:jar
 
    # Start daemon
-   java -jar modules/daemon/build/libs/daemon-1.0.0-SNAPSHOT.jar \
+   java -jar modules/daemon/build/libs/daemon-1.3.0.jar \
      --socket 7778 --verbose
    ```
 

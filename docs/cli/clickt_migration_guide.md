@@ -59,7 +59,7 @@ class UtlxCli : CliktCommand(
     help = "UTL-X - Universal Transformation Language Extended"
 ) {
     init {
-        versionOption("1.0.0-SNAPSHOT")
+        versionOption("1.3.0")
     }
     
     override fun run() = Unit

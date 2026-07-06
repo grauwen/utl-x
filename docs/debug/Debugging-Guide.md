@@ -387,7 +387,7 @@ import com.glomidco.utlx.core.debug.DebugConfig
 DebugConfig.printConfiguration()
 EOF
 
-$ kotlin -cp modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar /tmp/test-debug.kts
+$ kotlin -cp modules/cli/build/libs/cli-1.3.0.jar /tmp/test-debug.kts
 
 === UTL-X Debug Configuration ===
   LEXER               : INFO

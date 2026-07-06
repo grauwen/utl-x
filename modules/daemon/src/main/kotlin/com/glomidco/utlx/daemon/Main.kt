@@ -10,7 +10,7 @@ import kotlin.system.exitProcess
  * Long-running server providing LSP and REST API for IDE integration and MCP server.
  */
 object Main {
-    private const val VERSION = "1.0.0-SNAPSHOT"
+    private const val VERSION = "1.3.0"
 
     @JvmStatic
     fun main(args: Array<String>) {

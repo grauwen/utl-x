@@ -9,7 +9,7 @@ End-to-end transformation tests for the UTLXe production engine. Tests run again
 ./gradlew :modules:engine:jar
 
 # Run all tests (stdio-proto mode, default)
-export UTLXE_JAR_PATH=modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+export UTLXE_JAR_PATH=modules/engine/build/libs/utlxe-1.3.0.jar
 python3 conformance-suite/utlxe/runners/engine-runner.py
 
 # Run specific category

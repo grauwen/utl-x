@@ -212,7 +212,7 @@ cd utl-x
 ./scripts/build-cli.sh
 
 # 2. Try the example
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform \
     examples/cli-test/input.json \
     examples/cli-test/transform.utlx \
@@ -243,7 +243,7 @@ vim modules/cli/src/main/kotlin/com/glomidco/utlx/cli/commands/TransformCommand.
 ./gradlew :modules:cli:jar
 
 # Test
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar transform test.xml script.utlx
+java -jar modules/cli/build/libs/cli-1.3.0.jar transform test.xml script.utlx
 
 # Run tests
 ./gradlew :modules:cli:test
@@ -321,12 +321,12 @@ utl-x/
 ./scripts/build-cli.sh
 
 # Transform
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform examples/cli-test/input.json \
     examples/cli-test/transform.utlx
 
 # Validate
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     validate examples/cli-test/transform.utlx
 ```
 

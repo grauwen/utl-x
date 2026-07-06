@@ -102,7 +102,7 @@ mvn archetype:generate -B \
   -Dscheme=utlxe \
   -DgroupId=com.yourco.cpi \
   -DartifactId=utlxe-cpi-adapter \
-  -Dversion=1.0.0-SNAPSHOT
+  -Dversion=1.3.0
 ```
 
 The archetype produces an OSGi project. Inside it you write a Camel

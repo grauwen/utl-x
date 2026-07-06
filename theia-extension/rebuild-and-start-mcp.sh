@@ -176,7 +176,7 @@ echo "Step 8.5/9: Starting backend services (utlxd + MCP)..."
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 UTLXD_API_PORT="${UTLXD_REST_PORT:-7779}"
 UTLXD_LSP_PORT="${UTLXD_LSP_PORT:-7777}"
-UTLXD_JAR="${UTLXD_JAR_PATH:-$REPO_ROOT/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar}"
+UTLXD_JAR="${UTLXD_JAR_PATH:-$REPO_ROOT/modules/daemon/build/libs/utlxd-1.3.0.jar}"
 MCP_PORT="${UTLX_MCP_PORT:-7780}"
 
 # --- utlxd: ensure running (idempotent — reuse if already healthy, don't restart the heavy JVM) ---

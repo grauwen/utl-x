@@ -176,7 +176,7 @@ class UTLXDaemon(
             ),
             "serverInfo" to mapOf(
                 "name" to "UTL-X Language Server",
-                "version" to "1.0.0-SNAPSHOT"
+                "version" to "1.3.0"
             )
         )
 

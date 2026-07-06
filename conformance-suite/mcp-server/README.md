@@ -86,7 +86,7 @@ mcp-server/
 - Node.js 18+
 - Built MCP Server: `mcp-server/dist/index.js`
 - Running daemon with REST API on port 7779
-- Built daemon JAR: `modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar`
+- Built daemon JAR: `modules/server/build/libs/utlxd-1.3.0.jar`
 
 ### Quick Start
 
@@ -119,7 +119,7 @@ cd ../../
 ./gradlew :modules:server:jar
 
 # 2. Start daemon with REST API
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-rest --daemon-rest-port 7779 &
 
 # 3. Build MCP server
@@ -293,7 +293,7 @@ Start the daemon with REST API:
 
 ```bash
 cd ../../
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-rest --daemon-rest-port 7779
 ```
 

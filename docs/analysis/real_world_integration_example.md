@@ -254,7 +254,7 @@ function getTaxRate(state: String): Number {
 **build.gradle.kts**:
 ```kotlin
 plugins {
-    id("com.glomidco.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "1.3.0"
 }
 
 repositories {
@@ -263,8 +263,8 @@ repositories {
 }
 
 dependencies {
-    implementation("com.glomidco.utlx:core:0.9.0-beta")
-    implementation("com.glomidco.utlx:analysis:0.9.0-beta")
+    implementation("com.glomidco.utlx:core:1.3.0")
+    implementation("com.glomidco.utlx:analysis:1.3.0")
 }
 
 utlxSchema {

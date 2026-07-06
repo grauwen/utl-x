@@ -23,7 +23,7 @@ This module provides bidirectional conversion between YAML documents and the Uni
 
 ```kotlin
 dependencies {
-    implementation("com.glomidco.utlx.formats:yaml:0.9.0-beta")
+    implementation("com.glomidco.utlx.formats:yaml:1.3.0")
 }
 ```
 
@@ -31,7 +31,7 @@ dependencies {
 
 ```groovy
 dependencies {
-    implementation 'com.glomidco.utlx.formats:yaml:0.9.0-beta'
+    implementation 'com.glomidco.utlx.formats:yaml:1.3.0'
 }
 ```
 
@@ -41,7 +41,7 @@ dependencies {
 <dependency>
     <groupId>com.glomidco.utlx.formats</groupId>
     <artifactId>yaml</artifactId>
-    <version>0.9.0-beta</version>
+    <version>1.3.0</version>
 </dependency>
 ```
 
@@ -360,7 +360,7 @@ output json
 
 - **Kotlin Standard Library**: 1.9+
 - **SnakeYAML**: 2.2
-- **UTL-X Core**: 0.9.0-beta
+- **UTL-X Core**: 1.3.0
 
 ## Contributing
 

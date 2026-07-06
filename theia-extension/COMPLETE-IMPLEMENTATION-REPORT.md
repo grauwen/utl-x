@@ -416,7 +416,7 @@ describe('End-to-End', () => {
    ./gradlew :modules:server:build
 
    # Start daemon
-   java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+   java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
      --daemon-lsp --daemon-rest
 
    # Test extension

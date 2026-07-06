@@ -28,7 +28,7 @@ class McpService(
     private val interpreter = Interpreter()
 
     companion object {
-        private const val VERSION = "1.0.0-SNAPSHOT"
+        private const val VERSION = "1.3.0"
 
         /**
          * List of available MCP tools

@@ -18,7 +18,7 @@ The UTL-X CLI is a practical command-line tool for transforming data between for
 ./gradlew :modules:cli:jar
 ```
 
-The JAR will be created at `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`
+The JAR will be created at `modules/cli/build/libs/cli-1.3.0.jar`
 
 ### Build Native Binary (requires GraalVM)
 ```bash
@@ -37,7 +37,7 @@ The native binary will be created at `modules/cli/build/native/nativeCompile/utl
 
 ### Using JAR
 ```bash
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar transform input.xml script.utlx
+java -jar modules/cli/build/libs/cli-1.3.0.jar transform input.xml script.utlx
 ```
 
 ### Using Helper Script
@@ -184,7 +184,7 @@ dependencies {
 
 ### Debug mode
 ```bash
-java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar transform input.xml script.utlx
+java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.3.0.jar transform input.xml script.utlx
 ```
 
 ## Troubleshooting

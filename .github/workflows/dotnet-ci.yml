@@ -51,7 +51,7 @@ jobs:
       - name: Run tests
         working-directory: wrappers/dotnet
         env:
-          UTLXE_JAR_PATH: ${{ github.workspace }}/modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+          UTLXE_JAR_PATH: ${{ github.workspace }}/modules/engine/build/libs/utlxe-1.3.0.jar
         run: dotnet test --configuration Release --logger "trx;LogFileName=results.trx" --results-directory ./test-results
 
       # Upload test results

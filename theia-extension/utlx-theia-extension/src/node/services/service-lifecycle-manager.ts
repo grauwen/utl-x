@@ -92,7 +92,7 @@ export class ServiceLifecycleManager implements BackendApplicationContribution {
         return {
             // UTLXD defaults - projectRoot should now be the utl-x repository root
             utlxdJarPath: process.env.UTLXD_JAR_PATH ||
-                path.join(projectRoot, 'modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
+                path.join(projectRoot, 'modules/daemon/build/libs/utlxd-1.3.0.jar'),
             utlxdRestPort: parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
             utlxdLogFile: process.env.UTLXD_LOG_FILE || '/tmp/utlxd-theia.log',
 

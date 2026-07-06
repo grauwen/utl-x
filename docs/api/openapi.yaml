@@ -518,7 +518,7 @@ components:
           description: Server status
         version:
           type: string
-          example: 1.0.0-SNAPSHOT
+          example: 1.3.0
           description: Server version
         uptime:
           type: integer

@@ -70,7 +70,7 @@ utlx schema document \
 
 ```kotlin
 plugins {
-    id("com.glomidco.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "1.3.0"
 }
 
 utlxSchema {

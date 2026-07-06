@@ -11,7 +11,7 @@ import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 private val logger = LoggerFactory.getLogger("com.glomidco.utlx.engine.Main")
-private const val VERSION = "1.0.1"
+private const val VERSION = "1.3.0"
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {

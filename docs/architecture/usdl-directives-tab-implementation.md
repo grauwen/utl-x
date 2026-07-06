@@ -274,7 +274,7 @@ Add a **4th tab "USDL Directives"** to the Function Builder that:
 ║                   Separate JVM Process (port 7779)                            ║
 ╠═══════════════════════════════════════════════════════════════════════════════╣
 ║                                                                               ║
-║  Started by: java -jar utlxd-1.0.0-SNAPSHOT.jar start --api --api-port 7779  ║
+║  Started by: java -jar utlxd-1.3.0.jar start --api --api-port 7779  ║
 ║                                                                               ║
 ║  ┌─────────────────────────────────────────────────────────────────────┐    ║
 ║  │  Ktor REST API Server  (RestApiServer.kt)                           │    ║

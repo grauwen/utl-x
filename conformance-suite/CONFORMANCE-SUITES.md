@@ -404,7 +404,7 @@ cd conformance-suite/daemon-rest-api
 utlxd start --daemon-rest --daemon-rest-port 7779
 
 # Or using Java directly
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --daemon-rest --daemon-rest-port 7779
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start --daemon-rest --daemon-rest-port 7779
 ```
 
 ### Features
@@ -529,7 +529,7 @@ npm start
 UTLX_MCP_TRANSPORT=http UTLX_MCP_PORT=3000 npm start
 
 # Ensure daemon REST API is running (backend dependency)
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start --daemon-rest --daemon-rest-port 7779
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start --daemon-rest --daemon-rest-port 7779
 ```
 
 ### Features (Planned)

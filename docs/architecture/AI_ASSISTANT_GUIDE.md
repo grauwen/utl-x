@@ -295,7 +295,7 @@ Create `start-theia-ai.sh`:
 # Step 1: Start UTLX Daemon
 echo "Starting UTLX Daemon..."
 cd /path/to/utl-x/modules/daemon/build/libs
-java -jar utlxd-1.0.0-SNAPSHOT.jar start --lsp --api &
+java -jar utlxd-1.3.0.jar start --lsp --api &
 DAEMON_PID=$!
 
 # Wait for daemon to be ready
@@ -437,7 +437,7 @@ nano ~/Library/Application\ Support/Claude/claude_desktop_config.json
 ```bash
 # Terminal 1: Start UTLX Daemon
 cd /path/to/utl-x/modules/daemon/build/libs
-java -jar utlxd-1.0.0-SNAPSHOT.jar start --lsp --api
+java -jar utlxd-1.3.0.jar start --lsp --api
 
 # Terminal 2: Start Claude Desktop
 # Launch from Applications or command line
@@ -481,7 +481,7 @@ fi
 # Step 2: Start UTLX Daemon
 echo "Starting UTLX Daemon..."
 cd /path/to/utl-x/modules/daemon/build/libs
-java -jar utlxd-1.0.0-SNAPSHOT.jar start --lsp --api &
+java -jar utlxd-1.3.0.jar start --lsp --api &
 DAEMON_PID=$!
 
 # Wait for daemon
@@ -937,11 +937,11 @@ curl http://localhost:7779/api/health
 # Check daemon status
 curl http://localhost:7779/api/health
 
-# Expected: {"status":"ok","version":"1.0.0-SNAPSHOT"}
+# Expected: {"status":"ok","version":"1.3.0"}
 
 # If not running, start daemon
 cd /path/to/utl-x/modules/daemon/build/libs
-java -jar utlxd-1.0.0-SNAPSHOT.jar start --lsp --api
+java -jar utlxd-1.3.0.jar start --lsp --api
 
 # Check MCP server logs
 # Claude Desktop → Settings → Developer → Show Logs

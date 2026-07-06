@@ -570,7 +570,7 @@ cd modules/cli
 ./gradlew jar
 
 # Test daemon manually
-echo '{"method":"ping","id":1}' | java -jar build/libs/cli-1.0.0-SNAPSHOT.jar daemon --stdio
+echo '{"method":"ping","id":1}' | java -jar build/libs/cli-1.3.0.jar daemon --stdio
 
 # Expected output:
 # {"jsonrpc":"2.0","id":1,"result":"pong","error":null}
@@ -1590,7 +1590,7 @@ java -version
 # Test daemon manually
 cd modules/cli
 ./gradlew jar
-echo '{"method":"ping","id":1}' | java -jar build/libs/cli-1.0.0-SNAPSHOT.jar daemon --stdio
+echo '{"method":"ping","id":1}' | java -jar build/libs/cli-1.3.0.jar daemon --stdio
 
 # Check daemon logs
 tail -f /tmp/utlx-daemon.log

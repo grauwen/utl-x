@@ -148,7 +148,7 @@ println(outputSchema)
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("com.glomidco.utlx.schema") version "0.9.0"
+    id("com.glomidco.utlx.schema") version "1.3.0"
 }
 
 utlxSchema {
@@ -169,7 +169,7 @@ utlxSchema {
 <plugin>
     <groupId>com.glomidco.utlx</groupId>
     <artifactId>utlx-maven-plugin</artifactId>
-    <version>0.9.0</version>
+    <version>1.3.0</version>
     <executions>
         <execution>
             <goals>

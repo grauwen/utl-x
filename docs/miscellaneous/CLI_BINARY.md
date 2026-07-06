@@ -7,9 +7,9 @@ The UTL-X Command Line Interface has been successfully built and is ready for us
 ## Available Binaries
 
 ### 1. JAR Binary (Cross-platform)
-- **Location**: `modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar`
+- **Location**: `modules/cli/build/libs/cli-1.3.0.jar`
 - **Size**: ~10MB (includes all dependencies)
-- **Usage**: `java -jar cli-1.0.0-SNAPSHOT.jar [command] [options]`
+- **Usage**: `java -jar cli-1.3.0.jar [command] [options]`
 - **Requirements**: Java 17+
 
 ### 2. Shell Wrapper Script
@@ -28,7 +28,7 @@ The UTL-X Command Line Interface has been successfully built and is ready for us
 
 ### Option 2: Direct JAR Execution
 ```bash
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar version
+java -jar modules/cli/build/libs/cli-1.3.0.jar version
 ```
 
 ### Option 3: Install to System PATH

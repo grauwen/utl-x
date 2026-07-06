@@ -80,7 +80,7 @@ jobs:
             fi
             
             # Validate transformation
-            if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema validate \
+            if java -jar modules/cli/build/libs/cli-1.3.0.jar schema validate \
                 --input-schema "$input_schema" \
                 --transform "$transform" \
                 $([ -f "$expected_output" ] && echo "--expected-output $expected_output") \
@@ -126,7 +126,7 @@ jobs:
             if [ -f "$input_schema" ]; then
               echo "Generating schema for: $transform_name"
               
-              if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema generate \
+              if java -jar modules/cli/build/libs/cli-1.3.0.jar schema generate \
                   --input-schema "$input_schema" \
                   --transform "$transform" \
                   --output-format json-schema \
@@ -250,7 +250,7 @@ jobs:
               if [ -f "$base_schema" ]; then
                 echo "Comparing: $schema_name"
                 
-                if java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema diff \
+                if java -jar modules/cli/build/libs/cli-1.3.0.jar schema diff \
                     --old-schema "$base_schema" \
                     --new-schema "$schema" \
                     --output "diff-$schema_name.txt"; then
@@ -321,7 +321,7 @@ jobs:
               echo "Generating OpenAPI spec for: $transform_name"
               
               # Generate spec (command to be implemented)
-              java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema document \
+              java -jar modules/cli/build/libs/cli-1.3.0.jar schema document \
                 --input-schema "$input_schema" \
                 --transform "$transform" \
                 --output-format openapi \

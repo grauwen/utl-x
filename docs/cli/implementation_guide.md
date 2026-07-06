@@ -136,17 +136,17 @@ Expected output:
   UTL-X CLI Build Script
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ...
-✓ JAR built successfully: modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar
+✓ JAR built successfully: modules/cli/build/libs/cli-1.3.0.jar
 ✓ Build complete!
 ```
 
 ### 5.2 Verify the JAR works
 ```bash
 # Test version command
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar version
+java -jar modules/cli/build/libs/cli-1.3.0.jar version
 
 # Should output:
-# UTL-X v1.0.0-SNAPSHOT
+# UTL-X v1.3.0
 ```
 
 ### 5.3 Test with examples
@@ -154,7 +154,7 @@ The build script creates example files in `examples/cli-test/`. Test them:
 
 ```bash
 # Transform JSON example
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform \
     examples/cli-test/input.json \
     examples/cli-test/transform.utlx \
@@ -233,7 +233,7 @@ utlx transform examples/cli-test/input.json examples/cli-test/transform.utlx
 ### 7.1 Test transform command variations
 
 ```bash
-JAR="modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar"
+JAR="modules/cli/build/libs/cli-1.3.0.jar"
 
 # Basic transform
 java -jar $JAR transform examples/cli-test/input.json examples/cli-test/transform.utlx
@@ -307,7 +307,7 @@ Build and run the CLI:
 
 ```bash
 ./scripts/build-cli.sh
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar transform input.xml script.utlx
+java -jar modules/cli/build/libs/cli-1.3.0.jar transform input.xml script.utlx
 ```
 
 See [CLI-QUICKSTART.md](CLI-QUICKSTART.md) for detailed usage.
@@ -368,7 +368,7 @@ output json
 EOF
 
 # Run transformation
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform /tmp/test-input.xml /tmp/test-transform.utlx -v
 
 # Should output:
@@ -447,7 +447,7 @@ cat modules/cli/src/main/resources/META-INF/native-image/native-image.properties
 ### CLI throws exceptions
 ```bash
 # Enable debug mode
-java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform input.xml script.utlx
 ```
 
@@ -456,7 +456,7 @@ java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
 You know it's working when:
 
 - ✅ `./scripts/build-cli.sh` completes successfully
-- ✅ `java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar version` works
+- ✅ `java -jar modules/cli/build/libs/cli-1.3.0.jar version` works
 - ✅ Example transformations produce correct output
 - ✅ All tests pass (`./gradlew :modules:cli:test`)
 - ✅ Native binary works (if built)

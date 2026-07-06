@@ -658,7 +658,7 @@ def main():
                        help='Test name pattern to filter')
     parser.add_argument('-v', '--verbose', action='store_true',
                        help='Verbose output (show JSON-RPC messages)')
-    parser.add_argument('--server-jar', default='../../../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+    parser.add_argument('--server-jar', default='../../../../modules/server/build/libs/utlxd-1.3.0.jar',
                        help='Path to server JAR (daemon is now in server module)')
 
     args = parser.parse_args()

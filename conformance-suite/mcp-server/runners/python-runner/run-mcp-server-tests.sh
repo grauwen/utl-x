@@ -45,7 +45,7 @@ if [ ! -f "$MCP_SERVER_DIR/dist/index.js" ]; then
 fi
 
 # Check daemon JAR (MCP server dependency)
-DAEMON_JAR="$PROJECT_ROOT/modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+DAEMON_JAR="$PROJECT_ROOT/modules/server/build/libs/utlxd-1.3.0.jar"
 if [ ! -f "$DAEMON_JAR" ]; then
     echo -e "${YELLOW}Daemon JAR not found. MCP server requires daemon REST API.${NC}"
     echo -e "${YELLOW}Building daemon...${NC}"

@@ -526,7 +526,7 @@ AUTO_START_SERVICES=true
 ```typescript
 const config = {
     utlxd: {
-        jarPath: 'modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+        jarPath: 'modules/daemon/build/libs/utlxd-1.3.0.jar',
         restPort: 7779,
         logFile: '/tmp/utlxd-theia.log'
     },

@@ -35,7 +35,7 @@ After building, try this example:
 
 ```bash
 # Using JAR
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform \
     examples/cli-test/input.json \
     examples/cli-test/transform.utlx \
@@ -78,7 +78,7 @@ output json
 ### 3. Run transformation
 ```bash
 # Using JAR
-java -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform input.xml transform.utlx -o output.json
 
 # Using helper script (after build)
@@ -183,7 +183,7 @@ utlx transform mydata.xml script.utlx
 2. Create batch file in PATH:
 ```batch
 @echo off
-java -jar C:\path\to\utl-x\modules\cli\build\libs\cli-1.0.0-SNAPSHOT.jar %*
+java -jar C:\path\to\utl-x\modules\cli\build\libs\cli-1.3.0.jar %*
 ```
 
 ## Troubleshooting
@@ -212,7 +212,7 @@ utlx transform input.dat script.utlx --input-format xml
 
 ### Debug mode
 ```bash
-java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.0.0-SNAPSHOT.jar \
+java -Dutlx.debug=true -jar modules/cli/build/libs/cli-1.3.0.jar \
     transform input.xml script.utlx
 ```
 

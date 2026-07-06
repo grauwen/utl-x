@@ -540,7 +540,7 @@ def main():
     )
     parser.add_argument(
         '--jar',
-        default='../../../../modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar',
+        default='../../../../modules/daemon/build/libs/utlxd-1.3.0.jar',
         help='Path to utlxd JAR file (relative to script directory)'
     )
     parser.add_argument(

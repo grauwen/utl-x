@@ -118,7 +118,7 @@ client.LoadTransformation("order-transform", newUtlxSource, "TEMPLATE")
 ./gradlew :modules:engine:jar
 
 # Run tests
-export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.3.0.jar
 cd wrappers/go/utlxclient
 go test -v ./...
 ```

@@ -933,7 +933,7 @@ class RestApiIntegrationTest {
 
 ```bash
 # 1. Start daemon
-java -jar modules/daemon/build/libs/daemon-1.0.0-SNAPSHOT.jar \
+java -jar modules/daemon/build/libs/daemon-1.3.0.jar \
   --lsp-transport=socket \
   --rest-api-port=7778 \
   --verbose

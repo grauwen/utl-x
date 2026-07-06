@@ -3,7 +3,7 @@
 
 set -e
 
-DAEMON_JAR="../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+DAEMON_JAR="../modules/server/build/libs/utlxd-1.3.0.jar"
 DAEMON_LOG="/tmp/utlxd.log"
 DAEMON_PID="/tmp/utlxd.pid"
 

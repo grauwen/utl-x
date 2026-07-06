@@ -25,7 +25,7 @@ Created `/Users/magr/data/mapping/github-git/utl-x/theia-extension/utlx-theia-ex
 **Configuration (Environment Variables):**
 ```bash
 # UTLXD Configuration
-UTLXD_JAR_PATH=/path/to/utlxd-1.0.0-SNAPSHOT.jar
+UTLXD_JAR_PATH=/path/to/utlxd-1.3.0.jar
 UTLXD_REST_PORT=7779
 UTLXD_LOG_FILE=/tmp/utlxd-theia.log
 
@@ -40,7 +40,7 @@ SERVICE_SHUTDOWN_TIMEOUT=5000  # Milliseconds
 ```
 
 **Default Paths (auto-detected):**
-- UTLXD: `../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar`
+- UTLXD: `../modules/server/build/libs/utlxd-1.3.0.jar`
 - MCP Server: `../mcp-server/dist/index.js`
 
 ### 2. Backend Module Updates
@@ -236,7 +236,7 @@ cd browser-app && yarn start
 Then manually start services:
 ```bash
 # Terminal 1: UTLXD
-java -jar ../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar ../../modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-lsp --daemon-rest --daemon-rest-port 7779
 
 # Terminal 2: MCP Server

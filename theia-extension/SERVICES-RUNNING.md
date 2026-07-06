@@ -94,7 +94,7 @@
 ```bash
 # 1. Start UTLXD (if not running)
 cd /Users/magr/data/mapping/github-git/utl-x
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-lsp --daemon-rest --daemon-rest-port 7779 \
   > /tmp/utlxd.log 2>&1 &
 
@@ -167,7 +167,7 @@ tail -f /tmp/utlxd.log
 
 # Restart
 kill 25961
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-lsp --daemon-rest --daemon-rest-port 7779 \
   > /tmp/utlxd.log 2>&1 &
 ```

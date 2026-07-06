@@ -27,10 +27,10 @@ cd /path/to/utl-x
 ./gradlew :modules:server:build
 
 # Verify build
-ls -lh modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar
+ls -lh modules/server/build/libs/utlxd-1.3.0.jar
 
 # Test daemon
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar --version
+java -jar modules/server/build/libs/utlxd-1.3.0.jar --version
 ```
 
 **Expected output**: Version information
@@ -105,7 +105,7 @@ In a **separate terminal**:
 cd /path/to/utl-x
 
 # Start daemon with LSP and REST API
-java -jar modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar start \
+java -jar modules/server/build/libs/utlxd-1.3.0.jar start \
   --daemon-lsp \
   --daemon-rest \
   --daemon-rest-port 7779 \
@@ -414,7 +414,7 @@ yarn start:debug    # Debug mode
 yarn rebuild        # Clean rebuild
 
 # Daemon
-java -jar .../utlxd-1.0.0-SNAPSHOT.jar start --daemon-lsp --daemon-rest
+java -jar .../utlxd-1.3.0.jar start --daemon-lsp --daemon-rest
 curl http://localhost:7779/api/health
 ```
 

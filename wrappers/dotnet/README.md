@@ -40,7 +40,7 @@ dotnet build
 ## Running the Demo
 
 ```bash
-export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.3.0.jar
 dotnet run --project samples/Demo/Demo.csproj
 ```
 
@@ -228,7 +228,7 @@ output xml              ← output format
 dotnet test --filter "FullyQualifiedName~VarintCodec"
 
 # Integration tests (requires UTLXe JAR)
-export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.0.0-SNAPSHOT.jar
+export UTLXE_JAR_PATH=../../modules/engine/build/libs/utlxe-1.3.0.jar
 dotnet test
 ```
 

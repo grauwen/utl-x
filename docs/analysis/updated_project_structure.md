@@ -300,7 +300,7 @@ include(
 
 ```bash
 # Using CLI
-java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema generate \
+java -jar modules/cli/build/libs/cli-1.3.0.jar schema generate \
   --input-schema examples/schema-examples/order-to-invoice/order-schema.xsd \
   --transform examples/schema-examples/order-to-invoice/order-to-invoice.utlx \
   --output-format json-schema \
@@ -310,7 +310,7 @@ java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema generate \
 ### 3. Validate Transformation
 
 ```bash
-java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema validate \
+java -jar modules/cli/build/libs/cli-1.3.0.jar schema validate \
   --input-schema examples/schema-examples/order-to-invoice/order-schema.xsd \
   --transform examples/schema-examples/order-to-invoice/order-to-invoice.utlx \
   --verbose
@@ -321,7 +321,7 @@ java -jar modules/cli/build/libs/utlx-cli-0.9.0-beta.jar schema validate \
 ```kotlin
 // build.gradle.kts
 plugins {
-    id("com.glomidco.utlx.schema") version "0.9.0-beta"
+    id("com.glomidco.utlx.schema") version "1.3.0"
 }
 
 utlxSchema {
@@ -343,8 +343,8 @@ utlxSchema {
 ```kotlin
 // your-project/build.gradle.kts
 dependencies {
-    implementation("com.glomidco.utlx:analysis:0.9.0-beta")
-    implementation("com.glomidco.utlx:core:0.9.0-beta")
+    implementation("com.glomidco.utlx:analysis:1.3.0")
+    implementation("com.glomidco.utlx:core:1.3.0")
 }
 ```
 

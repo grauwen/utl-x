@@ -13,7 +13,7 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # Check if server JAR exists (daemon is now in the server module)
-SERVER_JAR="$SCRIPT_DIR/../../../../modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+SERVER_JAR="$SCRIPT_DIR/../../../../modules/server/build/libs/utlxd-1.3.0.jar"
 if [ ! -f "$SERVER_JAR" ]; then
     echo "Error: Server JAR not found: $SERVER_JAR"
     echo "Run: ./gradlew :modules:server:jar"

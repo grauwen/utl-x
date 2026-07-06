@@ -94,7 +94,7 @@ function loadConfig(): ServiceConfig {
 
     return {
         utlxdJarPath: process.env.UTLXD_JAR_PATH ||
-            path.join(projectRoot, 'modules/server/build/libs/utlxd-1.0.0-SNAPSHOT.jar'),
+            path.join(projectRoot, 'modules/server/build/libs/utlxd-1.3.0.jar'),
         utlxdRestPort: parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
         utlxdLspPort: parseInt(process.env.UTLXD_LSP_PORT || '7777', 10),
         utlxdLogFile: process.env.UTLXD_LOG_FILE || '/tmp/utlxd-theia.log',

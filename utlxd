@@ -27,7 +27,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$SCRIPT_DIR"
 
 # Path to UTLXD JAR (now in daemon module)
-UTLXD_JAR="$PROJECT_ROOT/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+UTLXD_JAR="$PROJECT_ROOT/modules/daemon/build/libs/utlxd-1.3.0.jar"
 
 # Check if JAR exists
 if [ ! -f "$UTLXD_JAR" ]; then

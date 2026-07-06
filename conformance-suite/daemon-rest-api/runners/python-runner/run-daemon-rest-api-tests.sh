@@ -23,7 +23,7 @@ if ! python3 -c "import yaml; import requests" 2>/dev/null; then
 fi
 
 # Build daemon JAR if needed
-JAR_PATH="$PROJECT_ROOT/modules/daemon/build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+JAR_PATH="$PROJECT_ROOT/modules/daemon/build/libs/utlxd-1.3.0.jar"
 if [ ! -f "$JAR_PATH" ]; then
     echo -e "${YELLOW}Daemon JAR not found, building...${NC}"
     cd "$PROJECT_ROOT"

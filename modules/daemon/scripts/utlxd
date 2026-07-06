@@ -1,6 +1,6 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-JAR="$SCRIPT_DIR/../build/libs/utlxd-1.0.0-SNAPSHOT.jar"
+JAR="$SCRIPT_DIR/../build/libs/utlxd-1.3.0.jar"
 
 if [ ! -f "$JAR" ]; then
     echo "Error: JAR not found at $JAR"

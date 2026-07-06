@@ -839,4 +839,4 @@ This helps reviewers see structural changes over time.
 ---
 
 **Last Updated:** 2025-11-01
-**UTL-X Version:** 1.0.0-SNAPSHOT
+**UTL-X Version:** 1.3.0
