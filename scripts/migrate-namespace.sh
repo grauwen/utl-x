@@ -34,10 +34,13 @@ OLD_PATH="org/apache/utlx"; NEW_PATH="com/glomidco/utlx"
 GENUINE='org\.apache\.\(avro\|arrow\|camel\|hadoop\|parquet\|santuario\|tomcat\|velocity\|xerces\|xml\)'
 
 exclude_re='(^|/)(build|node_modules|\.gradle)/'
+# Meta files that legitimately CONTAIN the old string (this tool + the migration doc):
+# never rewrite them (they'd self-corrupt), never flag them in verify.
+meta_re='(scripts/migrate-namespace\.sh|RENAME-namespace)'
 
 verify() {
   echo "== VERIFY: remaining '$OLD_DOT' (expect 0 matches) =="
-  if git grep -n "$OLD_DOT" -- . ':(exclude)build' ':(exclude)node_modules' >/tmp/ns-left.txt 2>/dev/null && [ -s /tmp/ns-left.txt ]; then
+  if git grep -n "$OLD_DOT" -- . ':(exclude)build' ':(exclude)node_modules' ':(exclude)scripts/migrate-namespace.sh' ':(exclude)*RENAME-namespace*' >/tmp/ns-left.txt 2>/dev/null && [ -s /tmp/ns-left.txt ]; then
     cat /tmp/ns-left.txt; echo "  !! leftovers above — investigate before building"
   else
     echo "  none ✓"
@@ -50,7 +53,8 @@ verify() {
 if [ "$MODE" = "--verify" ]; then verify; exit 0; fi
 
 # ── Guard: clean working tree (renames must be an atomic, isolated commit) ──
-if [ -n "$(git status --porcelain)" ]; then
+# The migration script itself is allowed to be dirty (it is the tool, not the codebase).
+if [ -n "$(git status --porcelain | grep -vF 'scripts/migrate-namespace.sh')" ]; then
   echo "ERROR: working tree not clean. Commit or stash first (the rename must be one atomic change)."
   exit 1
 fi
@@ -72,7 +76,7 @@ while IFS= read -r d; do
 done < /tmp/ns-dirs.txt
 
 # ── 2. Anchored text rewrite across tracked text files (exclude build artifacts) ──
-git ls-files | grep -vE "$exclude_re" > /tmp/ns-files.txt
+git ls-files | grep -vE "$exclude_re" | grep -vE "$meta_re" > /tmp/ns-files.txt
 echo "== scanning $(wc -l < /tmp/ns-files.txt | tr -d ' ') tracked files for the anchored strings =="
 count=0
 while IFS= read -r f; do
@@ -81,7 +85,7 @@ while IFS= read -r f; do
   if grep -q -e "$OLD_DOT" -e "$OLD_PATH" "$f"; then
     count=$((count + 1))
     if [ "$MODE" = "--apply" ]; then
-      LC_ALL=C perl -pi -e "s/\\Q$OLD_DOT\\E/$NEW_DOT/g; s/\\Q$OLD_PATH\\E/$NEW_PATH/g" "$f"
+      LC_ALL=C perl -pi -e "s{\\Q$OLD_DOT\\E}{$NEW_DOT}g; s{\\Q$OLD_PATH\\E}{$NEW_PATH}g" "$f"
     else
       echo "  would rewrite: $f"
     fi
