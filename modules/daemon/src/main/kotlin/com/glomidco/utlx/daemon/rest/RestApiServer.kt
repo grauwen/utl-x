@@ -70,7 +70,8 @@ import java.util.UUID
 class RestApiServer(
     private val port: Int = 7779,
     private val host: String = "0.0.0.0",
-    private val shutdownCallback: (() -> Unit)? = null
+    private val shutdownCallback: (() -> Unit)? = null,
+    workspaceRoot: java.io.File? = BundleWorkspace.resolve()
 ) {
     private val logger = LoggerFactory.getLogger(RestApiServer::class.java)
     private var server: NettyApplicationEngine? = null
@@ -85,6 +86,10 @@ class RestApiServer(
     private val transformationService = TransformationService()
     private val udmService = UDMService()
     private val outputSchemaService = OutputSchemaInferenceService(stateManager)
+
+    // IF19: shared Bundle Management store — null unless a workspace root is configured
+    private val bundleStore: com.glomidco.utlx.bundle.BundleStore? =
+        workspaceRoot?.let { com.glomidco.utlx.bundle.BundleStore(it) }
 
     /**
      * Start the REST API server
@@ -184,6 +189,9 @@ class RestApiServer(
             }
 
             routing {
+                // IF19: Bundle Management CRUD (/api/bundle/*) — active only with a workspace root
+                registerBundleRoutes(bundleStore)
+
                 // Ping endpoint - simple liveness check
                 get("/api/ping") {
                     call.respond(
