@@ -22,13 +22,4 @@ object BundleNames {
 
     /** Transformation name — a safe segment, kept verbatim (§3 rule 1: no stripping). */
     fun requireTransformationName(name: String): String = requireSafeSegment(name)
-
-    /** Schema name — a safe segment that must carry an extension (`schemas/<name>.<ext>`). */
-    fun requireSchemaName(name: String): String {
-        requireSafeSegment(name)
-        require(name.substringAfterLast('.', "").isNotEmpty()) {
-            "schema name must include a file extension (e.g. order.json)"
-        }
-        return name
-    }
 }
