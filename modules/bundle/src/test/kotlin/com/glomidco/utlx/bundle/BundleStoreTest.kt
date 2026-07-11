@@ -49,9 +49,12 @@ class BundleStoreTest {
     }
 
     @Test
-    fun `schema name must carry an extension`(@TempDir root: File) {
+    fun `schema bytes round-trip (any text format, no charset loss)`(@TempDir root: File) {
         val store = BundleStore(root)
-        assertThrows(IllegalArgumentException::class.java) { store.putSchema("noext", "{}") }
+        val bytes = "<xs:schema>café</xs:schema>".toByteArray(Charsets.UTF_8)
+        store.putSchemaBytes("invoice.xsd", bytes)
+        assertArrayEquals(bytes, store.getSchemaBytes("invoice.xsd"))
+        assertEquals("<xs:schema>café</xs:schema>", store.getSchema("invoice.xsd"))
     }
 
     @Test

@@ -80,15 +80,20 @@ class BundleStore(root: File) {
         return files.sortedBy { it.name }.map { SchemaInfo(it.name, it.length()) }
     }
 
-    fun getSchema(name: String): String? {
+    fun getSchema(name: String): String? = getSchemaBytes(name)?.toString(Charsets.UTF_8)
+
+    /** Byte-fidelity read — schemas may be any (text) format; bytes avoid any charset round-tripping. */
+    fun getSchemaBytes(name: String): ByteArray? {
         val f = resolveSchema(name)
-        return if (f.isFile) f.readText() else null
+        return if (f.isFile) f.readBytes() else null
     }
 
-    fun putSchema(name: String, content: String) {
-        val f = resolveSchema(BundleNames.requireSchemaName(name))
+    fun putSchema(name: String, content: String) = putSchemaBytes(name, content.toByteArray(Charsets.UTF_8))
+
+    fun putSchemaBytes(name: String, content: ByteArray) {
+        val f = resolveSchema(name)   // confined() enforces the path-traversal guard
         f.parentFile.mkdirs()
-        f.writeText(content)
+        f.writeBytes(content)
     }
 
     /** @return true if the schema file existed and was removed. */

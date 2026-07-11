@@ -13,6 +13,7 @@ dependencies {
     implementation(project(":modules:core"))
     implementation(project(":modules:cli"))  // For TransformationService
     implementation(project(":modules:analysis"))
+    implementation(project(":modules:bundle"))  // IF19: shared file-level Bundle Management layer (EF03 lockstep)
 
     // Format parsers/serializers
     implementation(project(":formats:xml"))

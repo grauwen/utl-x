@@ -9,6 +9,7 @@ import com.glomidco.utlx.engine.health.HealthEndpoint
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import com.glomidco.utlx.engine.testutil.freeOrEnvPort
 import java.net.HttpURLConnection
 import java.net.URL
 import java.io.ByteArrayOutputStream
@@ -28,7 +29,8 @@ class AdminEndpointTest {
     private val mapper = ObjectMapper().apply { registerModule(kotlinModule()) }
     private lateinit var engine: UtlxEngine
     private lateinit var healthEndpoint: HealthEndpoint
-    private val adminPort = 18081
+    // Env override → preferred 18081 (only if free) → OS-assigned free port. Never a hard literal.
+    private val adminPort = freeOrEnvPort("UTLXE_TEST_ADMIN_PORT", preferred = 18081)
     private val adminKey = "test-admin-key"
 
     @BeforeEach

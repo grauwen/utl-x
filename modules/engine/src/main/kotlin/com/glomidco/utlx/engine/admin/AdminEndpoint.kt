@@ -9,6 +9,7 @@ import io.ktor.server.plugins.contentnegotiation.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import com.glomidco.utlx.bundle.BundleStore
 import com.glomidco.utlx.engine.UtlxEngine
 import com.glomidco.utlx.engine.config.TransformConfig
 import com.glomidco.utlx.engine.proto.*
@@ -49,6 +50,10 @@ fun configureAdmin(
     val registry = engine.registry
     val dataDirPath = dataDir?.let { Path.of(it) }
     val schemaStore = SchemaStore(dataDirPath)
+    // IF19: utlxe now persists bundle files through the SAME shared BundleStore utlxd uses —
+    // identical transformations/<name>/<name>.utlx + schemas/ layout, and a path-traversal guard
+    // the old inline File(...).resolve(name) writes lacked. Null unless a data dir is configured.
+    val bundleStore: BundleStore? = dataDirPath?.let { BundleStore(it.toFile()) }
     val validationOverrides = engine.validationOverrides
     val dapr = daprIntegration ?: DaprIntegration()
 
@@ -187,13 +192,12 @@ fun configureAdmin(
 
                 val compiledMs = (System.nanoTime() - startTime) / 1_000_000
 
-                // Persist to disk (if data dir configured)
-                if (dataDirPath != null) {
+                // IF19: persist via the shared BundleStore — same layout as utlxd, and the name
+                // is validated (the old inline resolve(name) accepted traversal in the path).
+                if (bundleStore != null) {
                     try {
-                        val txDir = dataDirPath.resolve("transformations").resolve(name)
-                        Files.createDirectories(txDir)
-                        Files.writeString(txDir.resolve("$name.utlx"), source)
-                        logger.debug("Admin: persisted '{}' to {}", name, txDir)
+                        bundleStore.putTransformation(name, source, null)
+                        logger.debug("Admin: persisted '{}' via BundleStore", name)
                     } catch (e: Exception) {
                         logger.warn("Admin: failed to persist '{}' to disk: {}", name, e.message)
                         // Don't fail the upload — in-memory registration succeeded
@@ -225,13 +229,10 @@ fun configureAdmin(
                     ))
                     return@delete
                 }
-                // Remove from disk
-                if (dataDirPath != null) {
+                // IF19: remove from disk via the shared BundleStore
+                if (bundleStore != null) {
                     try {
-                        val txDir = dataDirPath.resolve("transformations").resolve(name)
-                        if (Files.exists(txDir)) {
-                            Files.walk(txDir).sorted(Comparator.reverseOrder()).forEach { Files.deleteIfExists(it) }
-                        }
+                        bundleStore.deleteTransformation(name)
                     } catch (e: Exception) {
                         logger.warn("Admin: failed to delete '{}' from disk: {}", name, e.message)
                     }
