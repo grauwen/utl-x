@@ -87,6 +87,21 @@ class AdminEndpointPersistenceTest {
         assertFalse(File(dataDir, "transformations/order-ack").exists())
     }
 
+    @Test
+    fun `schema upload persists via BundleStore and delete removes it`() {
+        val (postStatus, postBody) = adminRequest("POST", "/admin/schemas/order.json", """{"type":"object"}""")
+        assertTrue(postStatus in 200..299, "schema upload should succeed: $postStatus $postBody")
+
+        // Same shared BundleStore utlxd uses sees the persisted schema (SchemaStore → BundleStore).
+        val store = BundleStore(dataDir)
+        assertEquals("""{"type":"object"}""", store.getSchema("order.json"))
+        assertTrue(File(dataDir, "schemas/order.json").isFile)
+
+        val (delStatus, _) = adminRequest("DELETE", "/admin/schemas/order.json", null)
+        assertTrue(delStatus in 200..299)
+        assertNull(store.getSchema("order.json"))
+    }
+
     private fun adminRequest(method: String, path: String, body: String?): Pair<Int, String> {
         val conn = URL("http://localhost:$adminPort$path").openConnection() as HttpURLConnection
         conn.requestMethod = method

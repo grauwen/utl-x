@@ -96,4 +96,38 @@ class BundleStoreTest {
         assertThrows(IllegalArgumentException::class.java) { store.putSchema("../x.json", "{}") }
         assertThrows(IllegalArgumentException::class.java) { store.getSchema("..") }
     }
+
+    @Test
+    fun `concurrent deploys of one transformation never leave a mismatched source-config pair`(@TempDir root: File) {
+        // The utlxe multi-client race: two deploys write .utlx + transform.yaml; without per-name
+        // locking the pair can interleave (A's source with B's config). Each "version" here keeps
+        // its source and config tagged with the same letter — a correct store must never read back
+        // a source tagged differently from its config.
+        val store = BundleStore(root)
+        val violations = java.util.concurrent.ConcurrentLinkedQueue<String>()
+
+        val threads = (0 until 24).map { i ->
+            Thread {
+                try {
+                    repeat(50) { j ->
+                        val v = if ((i + j) % 2 == 0) "A" else "B"
+                        store.putTransformation("order-ack", "src-$v", "cfg-$v")
+                        store.getTransformation("order-ack")?.let { tx ->
+                            val s = tx.source?.removePrefix("src-")
+                            val c = tx.config?.removePrefix("cfg-")
+                            if (s != c) violations.add("source=$s config=$c")
+                        }
+                    }
+                } catch (e: Exception) {
+                    violations.add("exception: ${e.message}")
+                }
+            }
+        }
+        threads.forEach { it.start() }
+        threads.forEach { it.join() }
+
+        assertTrue(violations.isEmpty(), "concurrency violations (first few): ${violations.take(5)}")
+        val tx = store.getTransformation("order-ack")!!
+        assertEquals(tx.source!!.removePrefix("src-"), tx.config!!.removePrefix("cfg-"))
+    }
 }
