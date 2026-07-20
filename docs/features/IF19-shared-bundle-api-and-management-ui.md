@@ -1,8 +1,12 @@
 # IF19: Shared Bundle Management — API in utlxd + how the IDE drives it
 
-> **Status:** design / decision record. Explores giving **utlxd** a bundle-management API (shared
-> with **utlxe**) and three ways the IDE can present bundle management — to avoid rebuilding a
-> large management UI natively in Theia from scratch.
+> **Status:** decision record — **backend IMPLEMENTED** on `feature/utlxd-bundle-api` (July 2026).
+> Built + tested: the shared file-level layer (**`modules/bundle`**), utlxd's **`/api/bundle/*`
+> CRUD**, and the **EF03 → shared-layer refactor** (utlxe now persists through the same store).
+> Still deferred: the **IDE surface (A vs B)** — the API is UI-neutral — and a `--workspace` CLI
+> flag (utlxd resolves the workspace from `UTLX_WORKSPACE` / `-Dutlx.workspace` for now).
+> This doc gave **utlxd** a bundle-management API (shared with **utlxe**) and weighs three ways the
+> IDE can present bundle management — to avoid rebuilding a large management UI natively in Theia.
 >
 > **Pairs with:** IF18 (menu & chrome — which this may *shrink*), IF14 (cloud hardening), IF03
 > (bundle project model), EF03 (engine Bundle Management API), EF13 (engine admin web UI), and the
@@ -162,20 +166,29 @@ into the management surface), and unchanged in C.
 > the reuse of EF13's full page set proves decisive and the two-paradigm UX is acceptable.
 
 ## Risks / considerations
-- **State sync:** files are the single source of truth; need a watcher → IDE refresh + UI re-fetch;
-  define concurrent-edit rules.
-- **utlxd scope creep:** it becomes stateful (owns the workspace bundle) — appropriate but real.
+- **State sync:** files are the single source of truth; need a watcher → IDE refresh + UI re-fetch.
+  **Concurrent-edit safety is handled in the store** — `BundleStore` does atomic writes (temp +
+  rename) + per-name locking, so utlxe's multi-client admin API can't interleave a two-file deploy.
+- **Atomic-write file events:** because writes are temp-then-rename, a future file **watcher** sees
+  a replace (DELETE+CREATE), *not* an in-place MODIFY — it must treat rename-over as a content change.
+- **utlxd scope creep:** it becomes stateful (owns the workspace bundle) — appropriate but real. ✅ done.
 - **Cloud hardening (IF14):** the shared API and any embedded UI inherit per-tenant auth, workspace
-  jail, and webview/network limits.
-- **Extraction cost & migration:** refactoring EF03 onto the shared layer must not regress
-  production behavior (locked mode, registry, compile).
+  jail, and webview/network limits. *(Still open — the API has no auth layer yet.)*
+- **Extraction cost & migration:** ✅ **done** — EF03 refactored onto `modules/bundle`; engine
+  admin/bundle/loader tests + **49/49 utlxe conformance** green, no regression (locked mode, registry,
+  compile intact), byte-identical on-disk layout preserved.
+
+## Known follow-ups (not yet built)
+- IDE surface **A vs B** (§Recommendation) and the management-vs-authoring **boundary**.
+- A `--workspace` CLI flag threaded through `UTLXDaemon`→`DaemonServer` (env/sysprop works today).
+- **Auth** on `/api/bundle/*` (IF14) — the endpoints are currently unauthenticated.
+- Edge cases: symlinks in the workspace, `sourceFile` fallback, large/binary schemas.
 
 ## Open decisions
-1. **Shared layer home:** `core` vs new `modules/bundle`; refactor EF03 onto it now or converge later?
-2. **A vs B** (after spikes) — embedded web reuse vs native-editors-over-API.
-3. **Timing:** prototype this next on `feature/ide`, or land the IF18 native save/load slice first?
-4. **Boundary:** does the management surface also do *editing/fine-tuning* that overlaps the native
-   mapper, or strictly management?
+1. **Shared layer home:** ✅ **new `modules/bundle`** (dependency-light; utlxd + engine both depend on it).
+2. **A vs B** — **still open**; API built UI-neutral, decide after the IDE spikes.
+3. **Timing:** ✅ built on `feature/utlxd-bundle-api` (off `development`); EF03 refactored in the same slice.
+4. **Boundary:** **still open** — management vs authoring overlap; deferred alongside the A/B choice.
 
 ## References
 - **IF18** — IDE Menu & Chrome Structure (this may shrink the native menu in A/B).

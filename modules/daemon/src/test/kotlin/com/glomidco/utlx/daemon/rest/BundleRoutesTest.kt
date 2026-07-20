@@ -73,6 +73,29 @@ class BundleRoutesTest {
     }
 
     @Test
+    fun `engine-config GET then PUT round-trips`(@TempDir root: File) = withRoutes(store = BundleStore(root)) {
+        assertEquals(HttpStatusCode.NotFound, client.get("/api/bundle/engine-config").status)
+        val put = client.put("/api/bundle/engine-config") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"content":"threads: 4\n"}""")
+        }
+        assertEquals(HttpStatusCode.OK, put.status)
+        val got = client.get("/api/bundle/engine-config")
+        assertEquals(HttpStatusCode.OK, got.status)
+        assertTrue(got.bodyAsText().contains("threads: 4"))
+    }
+
+    @Test
+    fun `malformed body is a client error, not a server error`(@TempDir root: File) = withRoutes(store = BundleStore(root)) {
+        // missing the required "source" field → must be 4xx (a bad request), never 5xx
+        val resp = client.put("/api/bundle/transformations/x") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"config":"strategy: TEMPLATE"}""")
+        }
+        assertTrue(resp.status.value in 400..499, "expected 4xx, got ${resp.status}")
+    }
+
+    @Test
     fun `bundle info reflects a populated workspace`(@TempDir root: File) {
         File(root, "transformations/a").mkdirs()
         File(root, "transformations/a/a.utlx").writeText("src")

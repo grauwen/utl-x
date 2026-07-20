@@ -3,6 +3,7 @@ package com.glomidco.utlx.daemon.rest
 import com.glomidco.utlx.bundle.BundleStore
 import io.ktor.http.*
 import io.ktor.server.application.*
+import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -79,6 +80,11 @@ private suspend fun ApplicationCall.withBundleStore(store: BundleStore?, block: 
     }
     try {
         block(store)
+    } catch (e: BadRequestException) {
+        // Ktor wraps a failed request-body deserialization (bad JSON / missing required field) here.
+        respond(HttpStatusCode.BadRequest, BundleErrorDto(e.message ?: "malformed request body"))
+    } catch (e: io.ktor.serialization.ContentConvertException) {
+        respond(HttpStatusCode.BadRequest, BundleErrorDto("malformed or missing request body"))
     } catch (e: IllegalArgumentException) {
         respond(HttpStatusCode.BadRequest, BundleErrorDto(e.message ?: "invalid request"))
     } catch (e: Exception) {
