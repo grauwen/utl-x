@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx.analysis"
-version = "1.3.0"
+version = "1.3.1"
 
 // Repositories managed in settings.gradle.kts
 
