@@ -6,10 +6,16 @@
 **Reported:** Split out of the B27 review — spotted in the `main`..`development` diff of `xml_parser.kt` as a second, unrelated change riding inside the namespace-rename commit.
 **Related:** B27 (same file, XML prolog/epilog comments), B26 (also an error-message quality fix — precedent for a B-number on diagnostics).
 
-> **Classification: a DIAGNOSTIC improvement, not a wrong-output or crash bug.** The old behavior
-> was *technically correct* — XML genuinely expects `=` after an attribute name — but the message
-> was cryptic for the common real cause (a space inside an element name). B28 replaces it with a
-> message that names the likely mistake and the fix.
+> **Classification: a diagnostic-quality bug — the error pointed at the wrong cause.** This is a
+> defect in the error *path*, not merely a missing nicety: for `<Purchase Order>` the old message
+> named `=` (`Expected '='`), sending the reader to look at attribute syntax when the real problem
+> is a space in the element name. Reporting the wrong cause is a bug, so this is filed under **B**
+> — consistent with **B26** (CLI error-handling defects). It is **not** a correctness or crash bug
+> (the input was rejected either way — only the message changed), and it is **not** `IB`: the change
+> is in the **core** XML parser (`formats/xml`), which surfaces identically from the CLI, engine, and
+> IDE — `IB` is reserved for IDE-specific defects (IB01–IB06). If the project instead reserves `B`
+> strictly for correctness/crash bugs, the only defensible alternative label is a small *enhancement*
+> (friendlier XML parse diagnostics) — **not** `IB`.
 
 ---
 
