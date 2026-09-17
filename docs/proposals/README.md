@@ -50,6 +50,19 @@ $orders.Order[0].@id
 4. 6-month deprecation period
 5. Breaking change release (v2.0)
 
+### [COBOL Copybook & Fixed-Width (Flat File) Format Support](./copybook-flatfile-format-support.md)
+
+**Status:** Draft (2026-06-21)
+**Target Version:** v1.2 (text/positional) · v1.3 (binary/EBCDIC)
+**Type:** New format module (non-breaking)
+
+Proposes a `formats/copybook` module reading positional / fixed-width records into UDM, driven by a
+COBOL copybook (or inline layout) as schema — including **EBCDIC + packed/zoned/binary decimal**
+(mainframe z/OS and IBM i / **AS-400**). Complementary to the reverseXSL study: reverseXSL covers
+*text* EDI (regex-on-text); this module covers *binary* flat files (which regex cannot decode).
+Closes the DataWeave "Flat File (fixed-width, positional)" gap and Open-M inventory #161. Proposed by
+the Open-M peer project.
+
 ## Proposal Process
 
 ### 1. Draft Phase
