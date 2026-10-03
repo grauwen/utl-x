@@ -142,6 +142,29 @@ Keep large corpora out of the main repository. Fetch them with a script (pinned 
 
 ## 5. Testing Strategy for UTLX
 
+### 5.0 Suite architecture: which suite runs which layer
+
+The six layers in §5.1 are **not one test suite**. They differ on cadence, determinism, environment, and what a failure means — and those differences decide where each layer runs. Map them onto **three suites over one shared corpora store**, rather than folding everything into the conformance suite (which would make it slow and flaky) or into the performance suite (whose measurements need a stable, isolated environment).
+
+| Layer (§5.1) | Suite | Deterministic | Cadence | On failure |
+|---|---|---|---|---|
+| 1. Conformance | **Conformance** | yes | every PR, fast | block (correctness bug) |
+| 2. Roundtrip | **Conformance** | yes | every PR | block (serializer bug) |
+| 3. Cross-format equivalence | **Conformance** | yes | every PR | block (mapping bug) |
+| 5. Security (fixed attack inputs) | **Conformance** | yes | every PR | block (security bug) |
+| 4. Robustness / fuzzing | **Robustness & security** | no (random, long) | nightly / continuous | crash = security bug |
+| 6. Performance | **Performance** | no (HW-sensitive) | scheduled, stable HW | investigate regression (threshold-gated) |
+
+**1. Conformance suite (extend the existing one).** Absorbs the deterministic correctness layers — conformance, roundtrip, cross-format equivalence, and the *fixed* security-regression cases (billion-laughs and XXE must be rejected or bounded; alias bombs limited). Roundtrip and cross-format are conformance of the serializer and of the internal model. Fast, deterministic, blocking, runs on every PR.
+
+**2. Robustness & security suite (separate).** Coverage-guided and differential fuzzing (seeded from OSS-Fuzz; differential against a reference or receiving parser) plus polluted-input sets (Pollock). Non-deterministic and long-running, so it runs nightly or continuously, never in the PR gate. A crash, hang, or memory blow-up is a security bug, not a conformance miss.
+
+**3. Performance suite (separate).** Large real-world corpora (The Stack samples, simdjson large files) on stable, isolated hardware, tracking throughput and memory as **trends against a baseline** with regression thresholds. It is a measurement, not an exact-match pass/fail, so it is scheduled and non-blocking.
+
+**One shared corpora store, many consumers.** The suites do not each keep their own copy. `test-corpora/` (§4), pinned by `SOURCES.lock`, is a shared asset: the same large files feed both roundtrip (conformance) and performance; the same security cases feed both the fixed per-PR checks and the fuzz seeds.
+
+**Note — high-assurance / accreditation.** For high-assurance consumers (for example a content guard built on UTL-X), the **robustness & security suite is the primary evidence of parser and serializer hardening**. An accreditor wants its fuzzing campaign and security-corpus results reported *explicitly and reproducibly* — not collapsed into a single green/red conformance tick — so keep this suite first-class and separately reported, with corpora pinned by commit or date so the evidence can be regenerated.
+
 ### 5.1 Test layers
 
 | Layer | Input | Pass criterion |
@@ -200,6 +223,8 @@ Corpora come with different licenses, and some (notably The Stack) carry a separ
 ---
 
 ## 7. Quick Start Checklist
+
+_Items map to the three suites of §5.0: correctness → **conformance suite**; fuzzing → **robustness & security suite**; volume and throughput → **performance suite**; all read from the shared `test-corpora/` store._
 
 - [ ] Add JSONTestSuite, yaml-test-suite, W3C XML conformance, and csv-spectrum as layer 1 conformance tests.
 - [ ] Implement the generic roundtrip harness (layer 2) and run it over all conformance files.
