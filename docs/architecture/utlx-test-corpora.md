@@ -209,6 +209,43 @@ Property-based testing tools can generate structured random documents that are g
 - **jqwik** (Java/JVM): https://jqwik.net
 - **ScalaCheck** (Scala): https://scalacheck.org
 
+### 5.5 Compositional proof: N readers + N writers, not N² transcoders
+
+Every transcode factors through the UDM — `Fa → reader_a → UDM → writer_b → Fb`. There is no per-pair "json→xml" component: the path `json→xml` is `reader_json` composed with `writer_xml`. Readers and writers are **per-format, not per-pair**, so the proof obligation is the **2N** components, not the **N²** matrix — *provided* the decomposition is actually established. This section is what that takes.
+
+**Roundtrip is necessary but not sufficient.** `parse(serialize(parse(x))) == parse(x)` proves only that `reader_a ∘ writer_a = identity` on the UDM states format *a* can reach — i.e. the `(reader_a, writer_a)` pair is **self-consistent**. It is blind to the three failure modes that cross-format paths expose:
+
+1. **Compensating errors** — if `reader_a` and `writer_a` are both wrong in cancelling ways, roundtrip passes; feeding `writer_a` a UDM from a *different* reader removes the cancellation.
+2. **Readers disagreeing on the UDM** — per-format roundtrips never check that `reader_a` and `reader_b` produce the *same* UDM for the same data. If they diverge, both roundtrips are green and `a→b` is still wrong.
+3. **Writer coverage gap** — roundtrip exercises `writer_a` only on UDM states `reader_a` can produce. But `a→b` hands `writer_b` a UDM from `reader_a`, which may contain constructs `reader_b` never emits (e.g. an XML attribute node fed to the JSON writer). **Each writer must be proven on the union of what *any* reader can hand it**, not just its own roundtrip range.
+
+**What closes the gap: cross-format equivalence + a golden UDM.** Add layer-3 equivalence (§5.1) anchored to a reference, and the decomposition becomes a real proof:
+
+> If `reader_a(x_a) = reader_b(x_b) = U` (same data → same UDM) and `writer_b(reader_b(x_b)) = x_b` (roundtrip b),
+> then `writer_b(reader_a(x_a)) = writer_b(U) = x_b` — the transcode `a→b` is correct.
+
+Equivalence is **transitive through a pivot** (`equiv(a,P) ∧ equiv(b,P) ⇒ equiv(a,b)`), so you need **N−1** equivalences, not N². The strongest form is a **golden cross-format corpus**: one hand-verified canonical UDM rendered correctly in each format. It pins each **reader** and each **writer** to ground truth (defeating compensating errors), tests every writer on the **full shared UDM** (closing the coverage gap), and aligns all formats to one model (making composition valid).
+
+| Approach | Obligations | Sufficient? |
+|---|---|---|
+| Test every transcode pair directly | **N²** | yes, but does not scale |
+| Roundtrips only | N | **no** — blind to the three modes above |
+| **Roundtrips + golden / pivot cross-format corpus** | **~2N** (N roundtrips + N−1 equivalences + 1 golden anchor) | **yes**, modulo documented loss |
+
+The N² matrix then drops to a **spot-check** — a few representative pairs end-to-end as integration sanity — not the proof.
+
+**The irreducible part is expressiveness, not combinatorics.** Formats are not equi-expressive (XML attributes / mixed content / comments / namespaces; JSON none of these; YAML anchors / tags / the "Norway problem"). The UDM is the union of what all formats express; `a→b` is faithful only on the **intersection** of "what *a* produces" and "what *b* represents," and outside it there is **legitimate loss** (an XML comment has nowhere to go in JSON). That loss must be **declared** in `known-deviations.yaml` (§4), not discovered — cross-format correctness is always "correct **modulo documented loss**." This is the kernel of "each format needs its own proof": each format needs its own roundtrip, its row in the golden corpus, and its entries in the loss table; it does **not** need a proof per pair.
+
+**Recommended order.**
+
+1. Roundtrips for XML, JSON, YAML (cheap, no oracle — necessary, not sufficient).
+2. Build the golden cross-format corpus (the backbone: aligns readers, tests writers on the full UDM, defeats compensating errors).
+3. Pick a pivot (or use the golden UDM itself) so equivalence stays N−1.
+4. Maintain `known-deviations.yaml` for expressiveness losses — the irreducible per-format work.
+5. Spot-check a few N² pairs end-to-end as integration sanity.
+
+A real **mapping** (business logic transforming the UDM in the middle) is proven separately, on the UDM, independent of format; the format-fidelity proof here and the mapping proof **compose** — neither multiplies the other.
+
 ---
 
 ## 6. Licensing
@@ -229,6 +266,7 @@ _Items map to the three suites of §5.0: correctness → **conformance suite**; 
 - [ ] Add JSONTestSuite, yaml-test-suite, W3C XML conformance, and csv-spectrum as layer 1 conformance tests.
 - [ ] Implement the generic roundtrip harness (layer 2) and run it over all conformance files.
 - [ ] Add yaml-test-suite JSON equivalents and csv-spectrum JSON as the first cross-format tests (layer 3).
+- [ ] Build the **golden cross-format corpus** — a hand-verified canonical UDM rendered in XML, JSON and YAML — and seed **`known-deviations.yaml`** with the legitimate per-format losses (attributes vs elements, comments, anchors). This is the backbone that pins every reader and writer to ground truth, tests each writer on the full shared UDM, and makes transcoding a ~2N proof instead of N² (§5.5).
 - [ ] Harvest OData reference service fixtures and commit them.
 - [ ] Add the W3C XML Schema Test Suite and Pollock for volume and robustness.
 - [ ] Set up a fuzz target seeded with OSS-Fuzz corpora.
