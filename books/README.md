@@ -5,8 +5,8 @@ Source for the UTL-X book series. **One directory per book**; sources are [Typst
 | Directory | Book | Status |
 |-----------|------|--------|
 | `language/`       | *UTL-X — One Language, All Formats* | active |
-| `guard-civilian/`  | *UTL-X Guard — The Civilian Edition* (open-standards content guard) | active |
-| `mapper-civilian/` | *UTL-X — The Mapper (Civilian Edition)* (message-mapping component; short on-ramp) | active |
+| `guard/`           | *UTL-X Guard* (open-standards content guard) | active |
+| `mapper/`          | *UTL-X — The Mapper* (message-mapping component; short on-ramp) | active |
 | `engine-azure/`   | *UTLXe on Azure*                    | active |
 | `engine-gcp/`   | *UTLXe on GCP* (future)             | planned |
 | `engine-aws/`   | *UTLXe on AWS* (future)             | planned |

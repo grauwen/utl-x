@@ -1,8 +1,8 @@
-// UTL-X Guard — The Civilian Edition
-// Compile: typst compile main.typ "UTL-X Guard - Civilian Edition.pdf"
+// UTL-X Guard
+// Compile: typst compile main.typ "UTL-X Guard.pdf"
 
 #set document(
-  title: "UTL-X Guard — The Civilian Edition",
+  title: "UTL-X Guard",
   author: "Ir. Marcel A. Grauwen",
   date: datetime.today(),
 )
@@ -44,9 +44,7 @@
 #block(fill: luma(242), width: 100%, inset: (x: 1.5cm, top: 0.1cm, bottom: 0.4cm))[
   #align(center)[
     #text(size: 80pt, weight: "bold", font: "Arial", fill: rgb("#333333"))[UTL]#text(size: 80pt, weight: "bold", font: "Arial", fill: red-main)[X]#text(size: 30pt, weight: "bold", font: "Arial", fill: rgb("#333333"))[ Guard]
-    #v(0.3cm)
-    #text(size: 15pt, style: "italic", fill: rgb("#333333"))[The Civilian Edition]
-    #v(0.4cm)
+    #v(0.55cm)
     #image("pictures/utlx-knife-red-transparent.svg", width: 16cm)
   ]
 ]
@@ -74,7 +72,7 @@
 #set text(size: 9pt)
 #v(1fr)
 
-*UTL-X Guard — The Civilian Edition*
+*UTL-X Guard*
 
 Copyright \u{00A9} 2026 Ir. Marcel A. Grauwen. All rights reserved.
 

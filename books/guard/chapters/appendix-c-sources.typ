@@ -56,7 +56,7 @@ mapping in this book rest on these, not on our own definitions:
 #v(0.3cm)
 #align(center)[
   #text(size: 9pt, style: "italic", fill: luma(100))[
-    UTL-X Guard — The Civilian Edition · Exploratory edition, 2026 · MIL-ready by design, proven in
+    UTL-X Guard · Exploratory edition, 2026 · MIL-ready by design, proven in
     civilian service.
   ]
 ]
