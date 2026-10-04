@@ -246,6 +246,24 @@ The N² matrix then drops to a **spot-check** — a few representative pairs end
 
 A real **mapping** (business logic transforming the UDM in the middle) is proven separately, on the UDM, independent of format; the format-fidelity proof here and the mapping proof **compose** — neither multiplies the other.
 
+### 5.6 Prior art: how XSLT established conformance
+
+The strategy above is not novel — it is how XSLT, the most widely deployed transformation language, established correctness. The precedent is worth stating, both for confidence in the method and for the one place UTL-X's job is harder.
+
+**What happened.** XSLT 1.0 reached W3C Recommendation in November 1999. The language design came from the W3C XSL Working Group (James Clark as editor, who also wrote the first processor, XT), with DSSSL as its SGML-era ancestor. IBM's notable 1999 contribution was an early processor, **LotusXSL**, donated to Apache and continued as **Xalan** — an implementation and tooling contribution rather than the language groundwork.
+
+**How it was "proven" — empirically, not formally.** There was no shipped formal correctness proof. Conformance rested on three mechanisms:
+
+1. **A prose specification over a defined data model** — XSLT was specified against the XPath node-tree data model and XPath semantics; "correct" meant "conforms to the Recommendation."
+2. **Multiple independent implementations forced to agree** — XT, Xalan (IBM/Apache), MSXML (Microsoft), Saxon (Michael Kay), Oracle and others. When independently written engines produce the same result tree for the same stylesheet and input, that agreement *is* the proof, and divergences surfaced spec ambiguities to be fixed. This is cross-checking against an independent oracle — the same idea that defeats compensating errors in §5.5.
+3. **Conformance test suites** — the OASIS XSLT/XPath Conformance Technical Committee assembled thousands of `stylesheet + input + expected output` cases; the W3C later shipped official suites, most thoroughly for XSLT 2.0. The one formal-methods thread was academic (Philip Wadler's formal semantics of XSLT/XPath patterns, ~1999–2000), never part of the standard.
+
+**The precedent for UTL-X.** Our approach is the modern form of the same method: the **conformance suite** (§5.0) is OASIS's `stylesheet + input + expected output` idea; the **golden cross-format corpus** (§5.5) is those fixtures made format-neutral; **cross-format equivalence** is "independent implementations must agree" turned inward — independent *readers* must agree on the UDM.
+
+**Where UTL-X's job is harder.** XSLT is XML-family in, XML/HTML/text out, and everything pivots on *one* input model — the XPath node tree. It therefore never faced the N² cross-format problem of §5.5: its pivot was a given, not something to prove consistent across many readers. UTL-X must additionally show that the UDM is the *same* model whether reached via XML, JSON, YAML or a binary form-class. That extra obligation — the golden corpus and the cross-format equivalences — is exactly the price of being genuinely multi-format rather than XML-only.
+
+> The dates and names here (Nov-1999 Recommendation; XT / LotusXSL → Xalan; the OASIS TC; Saxon; Wadler's semantics) are from well-established history but should be verified against primary sources before being quoted.
+
 ---
 
 ## 6. Licensing
