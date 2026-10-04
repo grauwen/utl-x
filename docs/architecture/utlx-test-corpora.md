@@ -264,6 +264,38 @@ The strategy above is not novel — it is how XSLT, the most widely deployed tra
 
 > The dates and names here (Nov-1999 Recommendation; XT / LotusXSL → Xalan; the OASIS TC; Saxon; Wadler's semantics) are from well-established history but should be verified against primary sources before being quoted.
 
+### 5.7 Malformed, malicious, and the leniency profile
+
+Most tests target well-formed input, but a large share of real-world messages are *not* strictly well-formed, and they still have to be handled. The handling is often misframed as one spectrum ("the more broken, the more we reject"). It is really **three independent axes**, and separating them is the whole design:
+
+| Axis | Question | Example |
+|---|---|---|
+| **Conformance** | obeys the grammar? | unclosed tag, trailing comma = malformed; clean doc = well-formed |
+| **Resource** | cheap to process? | 10-deep JSON = bounded; 10 000-deep or billion-laughs = unbounded |
+| **Intent** | benign mess or crafted attack? | a human typo vs. a decompression bomb |
+
+**Malicious ≠ malformed.** The dangerous inputs are usually *well-formed*: billion-laughs XML, deeply nested JSON, a 4 GB string all parse fine. They are cut off by **resource bounds** (depth, size, expansion factor, time, memory), which are **orthogonal to the grammar check and fire on well-formed input too**. You cannot catch bombs on the conformance axis.
+
+**"Garbage in → garbage out" is not how a tree pivot works.** The UDM is a *normalizing* model — there is no node for "unclosed tag." Malformed input can only take one of three paths, none of which re-emits identical garbage:
+
+1. **Strict: reject** — structured error, no output (the guard profile).
+2. **Lenient: recover → clean** — a *documented* recovery rule builds a well-formed UDM, which serializes to **normalized** output (the garbage is repaired, not preserved).
+3. **Opaque passthrough** — carry unparsed bytes as a UDM `Binary` leaf and re-emit verbatim; but then nothing is *transformed* (no fields were parsed), and a guard blocks it (it cannot inspect an opaque blob).
+
+So the honest slogan is **"messy in → normalized out,"** not "garbage in → garbage out."
+
+**Two profiles, one engine.** Leniency is a per-deployment policy. A **lenient** profile (integration / mapper) applies Postel's Law — recover benign malformation. A **strict** profile (guard / security) rejects malformation and fails closed, because liberal acceptance is exactly what creates **parser-differential / smuggling** vulnerabilities (two parsers disagree on the same broken bytes). Tests are therefore **parameterized by profile**: the same malformed file has different expected outcomes under each.
+
+**Testing implications.**
+
+- **Malformed is a first-class category with a per-profile oracle** — not "parses correctly." Strict profile: clean rejection (structured error, no crash/hang, no partial output). Lenient profile: a *specific* recovered UDM, captured as **golden recovery fixtures** (`malformed-input → expected-recovered-UDM`). The corpora already hold the inputs (JSONTestSuite `n_`/`i_`, Pollock, CSV-Wrangling, libxml2 malformed cases).
+- **Resource bounds are a separate, always-on axis** that must include **well-formed bombs**. Criterion: bounded and killed early; limits enforced; always a result or a structured error; never crash, hang, or exhaust memory. Picture the matrix as *conformance × resource* — the worst cell, *well-formed × unbounded*, is the one "reject-malformed" testing never reaches.
+- **Lenient recovery must be deterministic and version-stable** — same garbage → same UDM, every release, or the change is recorded (cf. JSONTestSuite `i_` "documented implementation decision"). Non-deterministic recovery breaks reproducibility and audit. **Tolerance costs *more* test burden, not less**: every recovery rule needs a pinned fixture.
+- **Fuzzing covers the un-enumerable tail** — mostly-malformed generated input, checked only for liveness/safety (terminate with result-or-error, never die). This is the "don't fall over on garbage, cut off the abusive" property without an oracle.
+- **Lenient mode needs differential tests** — verify that *lenient-recover + canonical-re-serialize* yields something every target parser reads identically, so recovery cannot become a smuggling channel. (The strict/guard profile sidesteps this by rejecting ambiguity in the first place.)
+
+**Pass criterion for the whole malformed/malicious space:** never "parses correctly," but **"behaves as the profile specifies, and never crashes, hangs, or exhausts memory."**
+
 ---
 
 ## 6. Licensing
