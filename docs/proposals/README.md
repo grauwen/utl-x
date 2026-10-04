@@ -76,10 +76,13 @@ therefore supports `%utlx 1.1` out of the box; only the probabilistic `ai.*` of 
 **Key documents (this directory):**
 1. **[Semantic validation spec](./utlx-1_1-semantic-validation.md)** — the `validate.*` namespace and `ValidationResult`.
 2. **[`validate.*` naming & guard profile](./utlx-validate-naming-and-guard-profile.md)** — descriptive camelCase convention + the two-tier (core / guard-profile) vocabulary.
-3. **[Language versioning & validation](./utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model and engine-compatibility matrix.
+2a. **[`validate.*` vocabulary coverage](./utlx-validate-vocabulary-coverage.md)** — completeness audit vs Schematron & FEEL; the Phase-2 design gate for the function set.
+3. **[Language versioning & validation](./utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model, packaging (UTLXe vs UTLXS), and engine-compatibility matrix.
+4. **[Build plan](./utlx-1_1-build-plan.md)** — the phased implementation roadmap (spike → foundation → functions → conformance → routing → tooling).
 
 Testing for the 1.1 parsers/serializers and the `validate.*` layer is covered by
-[`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md).
+[`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md); the de-risking spike by
+[`../architecture/validate-module-spike.md`](../architecture/validate-module-spike.md).
 
 ## Proposal Process
 
