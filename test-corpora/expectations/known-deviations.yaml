@@ -1,0 +1,37 @@
+# known-deviations.yaml — legitimate, intended losses in cross-format transcoding (§5.5).
+# Cross-format correctness is always "correct MODULO documented loss." A deviation recorded here
+# is an accepted test outcome; a deviation NOT recorded here is a bug. Keep this file honest and
+# minimal — it is the irreducible per-format work, not a dumping ground for failures.
+#
+# Each entry: the construct, the direction it is lost in, and why it is unrepresentable.
+
+deviations:
+  - construct: "XML comment"
+    from: xml
+    to: [json, yaml, csv]
+    behaviour: dropped
+    why: "no comment node in the JSON/CSV data models"
+
+  - construct: "XML processing instruction"
+    from: xml
+    to: [json, yaml, csv]
+    behaviour: dropped
+    why: "no PI node outside XML"
+
+  - construct: "attribute vs element distinction"
+    from: xml
+    to: [json, yaml]
+    behaviour: "flattened to a keyed member (configurable prefix)"
+    why: "JSON/YAML have no attribute concept; mapping is a documented convention"
+
+  - construct: "YAML anchor / alias"
+    from: yaml
+    to: [json, xml, csv]
+    behaviour: "expanded (value inlined)"
+    why: "no shared-reference node in the other models; alias bombs are bounded by bounds.yaml"
+
+  - construct: "CSV: no nesting"
+    from: [json, xml, yaml]
+    to: csv
+    behaviour: "flattened / rejected if not tabular"
+    why: "CSV represents a flat table only"

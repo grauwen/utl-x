@@ -1,0 +1,65 @@
+# SOURCES.lock — provenance & integrity for every corpus.
+# One entry per corpus. `tier` is one of: vendor | mirror | fetch.
+# `pin` is a commit hash (preferred) or an ISO download date.
+# `hash` is a manifest SHA-256 (per-file manifest) or a single archive SHA-256.
+# `location` is the in-repo path (vendor), mirror URI (mirror), or upstream URL (fetch).
+#
+# `scripts/verify.sh` fails the build if recomputed hashes drift from this file.
+# Nothing in the accreditation path (security/, fuzz/) may use tier: fetch without a frozen snapshot.
+
+corpora:
+  # ── vendored: small, permissive, critical to a deterministic suite ──
+  - name: jsontestsuite
+    tier: vendor
+    upstream: https://github.com/nst/JSONTestSuite
+    pin: ""                       # <commit-hash>
+    license: MIT
+    location: corpora/conformance/json/jsontestsuite/
+    hash: ""                      # <manifest-sha256>
+    notes: "y_ must-accept / n_ must-reject / i_ documented decision"
+
+  - name: yaml-test-suite
+    tier: vendor
+    upstream: https://github.com/yaml/yaml-test-suite
+    pin: ""
+    license: MIT
+    location: corpora/conformance/yaml/yaml-test-suite/
+    hash: ""
+    notes: "includes JSON equivalents — feeds cross-format equivalence"
+
+  - name: csv-spectrum
+    tier: vendor
+    upstream: https://github.com/max-mapper/csv-spectrum
+    pin: ""
+    license: MIT
+    location: corpora/conformance/csv/csv-spectrum/
+    hash: ""
+
+  # ── mirrored: large but redistributable; held in our artifact store, hashed ──
+  - name: w3c-xsdtests
+    tier: mirror
+    upstream: https://github.com/w3c/xsdtests
+    pin: ""
+    license: "W3C Test Suite License — verify redistribution terms"
+    location: ""                  # <mirror-uri>
+    hash: ""
+    notes: "tens of thousands of schema/instance docs — too big for git"
+
+  - name: pollock
+    tier: mirror
+    upstream: https://github.com/HPI-Information-Systems/Pollock
+    pin: ""
+    license: "verify"
+    location: ""
+    hash: ""
+    notes: "~2000 polluted CSVs — robustness suite"
+
+  # ── fetch-on-demand + snapshot: huge and/or non-redistributable ──
+  - name: the-stack-v2
+    tier: fetch
+    upstream: https://huggingface.co/datasets/bigcode/the-stack-v2
+    pin: ""
+    license: "per-file — NOT redistributable; respect opt-outs"
+    location: ""                  # upstream only; store a sampled, hashed snapshot
+    hash: ""                      # hash of OUR sampled snapshot, not the full dataset
+    notes: "sample 10k+/format for nightly roundtrip; freeze the sample as evidence"

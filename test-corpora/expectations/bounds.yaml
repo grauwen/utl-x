@@ -1,0 +1,30 @@
+# bounds.yaml — resource limits per parser profile (§5.7).
+# Bounds are the ALWAYS-ON axis that cuts off abuse; they are orthogonal to the grammar check
+# and fire on well-formed input too (billion-laughs, deep nesting, huge values).
+# Exceeding a bound must terminate early with a structured error — never crash, hang, or OOM.
+#
+# The strict (guard) profile is tighter and fail-closed; the lenient (mapper) profile is wider
+# but still bounded. Values are indicative starting points — tune per deployment.
+
+profiles:
+  strict:          # guard / security — reject on ambiguity, fail-closed
+    max_depth:            64
+    max_bytes:            1048576        # 1 MiB
+    max_nodes:            100000
+    max_string_length:    65536
+    max_array_length:     100000
+    max_entity_expansion: 1              # XML: effectively no expansion
+    external_entities:    false          # XXE off
+    parse_timeout_ms:     1000
+    max_memory_mb:        64
+
+  lenient:         # mapper / integration — recover benign malformation, still bounded
+    max_depth:            256
+    max_bytes:            67108864        # 64 MiB
+    max_nodes:            5000000
+    max_string_length:    16777216
+    max_array_length:     5000000
+    max_entity_expansion: 1024
+    external_entities:    false
+    parse_timeout_ms:     30000
+    max_memory_mb:        1024
