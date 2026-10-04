@@ -103,7 +103,13 @@ No single corpus covers all five formats. The recommended approach combines thre
 
 ---
 
-## 4. Proposed Repository Layout
+## 4. Repository Layout
+
+> This layout is **scaffolded at `test-corpora/`** (repo root). Its `README.md` carries the full
+> tree and the local-vs-remote **storage policy** (vendor / mirror / fetch-on-demand), and
+> `expectations/` holds `known-deviations.yaml` (§5.5) and `bounds.yaml` (§5.7). The sketch below is
+> the original outline; the scaffold refines it with `malformed/`, `security/`, `performance/` and
+> per-profile expectation folders.
 
 ```
 test-corpora/
