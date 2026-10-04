@@ -102,11 +102,40 @@ Contrast the MIL edition, whose scale-up *is* a mountain: TEMPEST, certified hig
 certified verifier, rugged SOSA hardware, and a multi-year national/NATO accreditation campaign. The
 civilian product reaches revenue first, on software, and *funds* that later climb.
 
-== Next steps
+== Start with a proof of concept
 
-1. *Build the demonstrator* (weeks, public hardware and data) and show criteria 1–5.
-2. *Pick the wedge* — coast guard / CISE, critical-infrastructure OT, or government data sharing — for a
-   low-assurance first deployment with immediate value.
-3. *Engage* the assurance route (62443 or BSPA) and, for shape B, a diode vendor — early.
-4. *Scope the funded programme* against the civilian investment case above — then let its revenue and
-   references fund the MIL edition.
+If this is a fit for a boundary you own, the right first step is small and concrete — a *proof of concept
+on your terms*.
+
+*The offer.* A four-to-six-week joint PoC: we take one of your flows (or a public dataset standing in for
+it), build the split guard on two public eval boards, run your candidate rules, and show it end to end.
+
+*What you get:*
+
+- a working split-guard demonstrator on *your* use case;
+- a verdict log — `PASS` / `PASS-STRIPPED` / `REJECT` — over real or representative messages;
+- measured end-to-end latency and a rough throughput figure;
+- a short written *go / no-go*, mapping the approach to your formats, your rules and your wedge.
+
+*Why it is low-risk.* Weeks, not years. Public hardware you keep; your data stays yours. No sponsor, no
+restricted access, no accreditation commitment — it answers the feasibility question *before* any funded
+programme.
+
+*To start,* bring one flow, its formats, and a sketch of what "good" looks like (a candidate contract).
+From there the path is the roadmap of Chapter 9: pick the wedge, climb the assurance ladder, and let the
+civilian references fund the MIL edition.
+
+#v(0.6cm)
+#align(center)[
+  #block(fill: luma(244), inset: 14pt, radius: 6pt, width: 82%, stroke: 0.5pt + rgb("#CC0000"))[
+    #align(center)[
+      #text(size: 12pt, weight: "bold")[Reach out — commission a proof of concept]
+      #v(0.35cm)
+      Ir. Marcel A. Grauwen · GLOMIDCO B.V.
+      #v(0.15cm)
+      #link("mailto:marcel.grauwen@glomidco.com")[marcel.grauwen\@glomidco.com]
+      #linebreak()
+      #link("https://www.linkedin.com/in/marcelgrauwen")[linkedin.com/in/marcelgrauwen]
+    ]
+  ]
+]
