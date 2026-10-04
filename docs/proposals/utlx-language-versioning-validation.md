@@ -103,6 +103,55 @@ and applies the corresponding contract:
 with a lower major version. Breaking compatibility within a major version is
 never permitted.
 
+### 2.1 Release & packaging — engine version vs language version
+
+Two version axes must be kept separate, or packaging decisions go wrong:
+
+| Axis | Example | What it is |
+|---|---|---|
+| **Engine release version** | `v1.3.1 → v1.4.0 …` | the binary (UTLXe) you ship — bug fixes, new formats, performance |
+| **Language version** | `%utlx 1.0`, `%utlx 1.1` | what a *script* declares in its header (the version gate, §2) |
+
+**One engine supports multiple language versions.** A single UTLXe binary that implements `%utlx 1.1`
+runs both 1.0 and 1.1 scripts; a 1.0 script behaves identically whether or not the engine also knows
+`validate.*` — the header gates it. "Download both" is therefore satisfied by **one binary**: it *is*
+both. Publish an explicit **engine → language support matrix** in the release notes (e.g. "UTLXe v1.4
+supports `%utlx 1.0` and `%utlx 1.1`").
+
+**`1.1` ships in the same binary — do not split it out.** `validate.*` is **pure Kotlin with zero
+heavyweight dependencies** (§6; contrast `ai.*`, which pulls DJL/ONNX/TabPFN/GPU). Its native-image
+footprint is a handful of stdlib functions plus the `ValidationResult` node — kilobytes against a
+multi-MB image. Splitting it into a separate "validation" delivery would shave a rounding error of
+size while permanently doubling the build/test/sign/distribute matrix and creating a "I downloaded
+the small one and my `%utlx 1.1` script fails" support channel. The purity/dependency line — not the
+version number — decides what becomes a separate delivery; by that test `1.1` stays in, `2.0` stays
+out (a separate repo, `utl-x-infer`).
+
+**Maintaining 1.0 alongside 1.1 (one repo, no binary split):**
+
+1. Freeze 1.0 as a **tag / maintenance branch** (`v1.0.x` / `release/1.0`, the book's citable
+   baseline); develop 1.1 on `main`. Git gives a pristine 1.0 *and* a home for 1.1 — no repo split.
+2. Engine releases from `main` support `%utlx 1.0` **and** `1.1`; 1.0-only patches, if ever needed,
+   ship from the maintenance line.
+3. **CI runs the full 1.0 conformance suite on every build** (plus a 1.1 suite). This conformance
+   wall — not a separate binary — is the real guarantee that bundling 1.1 never disturbs 1.0.
+   (See `docs/architecture/utlx-test-corpora.md`.)
+
+**Where binary minimalism actually pays off — not `validate.*`.** If a small image / small TCB is a
+real goal (e.g. the MIL content guard), the levers that move the needle are **optional format
+modules** (a JSON-only mapper should not compile in the EDIFACT/BINF readers) and **excluding `ai.*`**
+(already achieved by the repo split) — applied via a build-time flag (Gradle property / GraalVM
+feature), producing a reduced artifact from the *same* codebase. Note the guard is the tell: it wants
+a minimal engine yet **needs `validate.*`** (it is the rule engine) and drops unused format readers and
+anything probabilistic. So `validate.*` belongs in the base; the modularity knob belongs on formats
+and `ai.*`.
+
+**When a separate `1.1` artifact *is* justified** — only for reasons other than size: a **commercial**
+model (validation sold as a closed add-on) or a **hard assurance policy** (a deployment that must be
+*incapable* of running `validate.*`). Enforce those with a **build-time flag** that excludes the
+`validate.*` module, not with a repo split — and measure the size delta first; for pure `validate.*`
+it will be small.
+
 ---
 
 ## 3. UTL-X 1.1 — validate.* stdlib (proposed)
