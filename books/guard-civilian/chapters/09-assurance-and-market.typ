@@ -40,6 +40,34 @@ require it. No rugged defence hardware is needed for the civilian edition.
   caption: [Illustrative appliance concept for multi-flow / OT sites: a 2U chassis in which every slot is a complete, independent guard on a power-only backplane — no shared data lanes. A later option, not needed for the software product.],
 )
 
+#figure(
+  image("../pictures/utlx-guard-module-swap-transparent-300dpi.png", width: 100%),
+  caption: [Hot-swap serviceability of the appliance concept: a single guard card withdrawn from the front. All data enters and leaves on the card itself; the power-only backplane means removing or inserting a card never bridges two networks. Slots mix send and receive cards.],
+)
+
+== A buildable demonstrator — proof of concept
+
+The whole civilian story can be *demonstrated now*, on public hardware and public data, because
+nothing in it is restricted. The demonstrator is a *split guard* (shape D) built from two SoC-FPGA
+evaluation boards (for example two ZCU106): each board is one owner's half, running the UTL-X guard
+over a one-way fibre interlink — and where request/response is needed, it is built as two separate
+one-way flows, never a session through the guard.
+
+#figure(
+  image("../pictures/utlx-split-guard-two-racks-300dpi.png", width: 100%),
+  caption: [The split guard (shape D) fielded: each half in its own rack, zone and ownership (A / B), enforcing its own policy and meeting only over a one-way fibre interlink. The proof of concept builds exactly this on two SoC-FPGA boards with public formats — already civilian.],
+)
+
+*What it proves:* the full pipeline — hardened parse → UDM → `validate.*` → canonical re-serialize —
+running end to end across an owned boundary; two-owner independence (each half enforces its own
+policy); a real protocol break on the interlink; and binary coverage, by decoding a public binary
+sample (AIS or ADS-B) through BINF on the FPGA fabric.
+
+*What it does not prove, honestly:* TEMPEST, certified crypto, a certified diode and scaling to
+line-rate production are *investment*, not a weekend — and for the civilian software product they are
+not needed at all. The civilian edition ships as *software*; the demonstrator exists only to make the
+pipeline and the two-owner split visible and testable, not to field rugged hardware.
+
 == Roadmap and effort
 
 Order of magnitude, one experienced developer:
