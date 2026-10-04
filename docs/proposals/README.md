@@ -63,6 +63,24 @@ COBOL copybook (or inline layout) as schema — including **EBCDIC + packed/zone
 Closes the DataWeave "Flat File (fixed-width, positional)" gap and Open-M inventory #161. Proposed by
 the Open-M peer project.
 
+### [UTL-X 1.1 — Semantic Validation (`validate.*`)](./utlx-1_1-semantic-validation.md)
+
+**Status:** Proposal · **Target Version:** v1.1 (`%utlx 1.1`) · **Type:** Additive (minor version)
+
+Adds the `validate.*` standard-library namespace and the `ValidationResult` UDM node — semantic
+validation that keeps every 1.0 guarantee (pure, stateless, deterministic, single-pass). **1.1 is
+core language and lives in this repo, alongside 1.0** (the `utl-x-infer` engine imports `utl-x` and
+therefore supports `%utlx 1.1` out of the box; only the probabilistic `ai.*` of 2.0 lives in
+`utl-x-infer`).
+
+**Key documents (this directory):**
+1. **[Semantic validation spec](./utlx-1_1-semantic-validation.md)** — the `validate.*` namespace and `ValidationResult`.
+2. **[`validate.*` naming & guard profile](./utlx-validate-naming-and-guard-profile.md)** — descriptive camelCase convention + the two-tier (core / guard-profile) vocabulary.
+3. **[Language versioning & validation](./utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model and engine-compatibility matrix.
+
+Testing for the 1.1 parsers/serializers and the `validate.*` layer is covered by
+[`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md).
+
 ## Proposal Process
 
 ### 1. Draft Phase
