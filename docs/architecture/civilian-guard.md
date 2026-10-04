@@ -188,6 +188,37 @@ MIL route, not a detour.
 *(Verify current BSPA scope and procedure with the NBV/NLNCSA before planning; credentials and
 levels above are indicative.)*
 
+### 6.1 Control-catalogue evidence — NIST SP 800-53 AC-4
+
+NIST 800-53 is used far beyond defence (FedRAMP, critical-infrastructure and government compliance), so
+its cross-domain control is a civilian selling point: *"our pipeline implements AC-4(14), (25), (27),
+(28) and (31)."* Control **AC-4 (Information Flow Enforcement)** describes the guard almost component by
+component — its enhancements (3)–(32) "primarily address cross-domain solution needs … such as
+high-assurance guards":
+
+| AC-4 enhancement | What NIST asks | UTL-X Guard |
+|---|---|---|
+| **AC-4(14)** | filters requiring fully enumerated formats; validating schema structures | schema allow-list (Message Contract), field + value rules |
+| **AC-4(19)** | security / privacy policy filters on metadata | label guard (STANAG 4774/4778); `^` metadata dropped |
+| **AC-4(25)** | sanitise to minimise malicious content, C2, malicious-code augmentation, steganography | canonical rebuild, no pass-through |
+| **AC-4(27)** | redundant, independent filtering per data type | guard parser + rules + independent verifier; split guard |
+| **AC-4(28)** | a linear content-filter pipeline | parse → caps → contract → label → rules → serialize |
+| **AC-4(30)** | content filtering using multiple processes | sandboxed parser (`mode: component`); separate stages |
+| **AC-4(31)** | prevent transfer of failed content to the receiving domain | fail-closed; reject → dead-letter; never repair (§2.3) |
+
+AC-4(31) directly underwrites the verdict policy of §2.3: failed content never reaches the receiving
+domain. (Classification: the guard is a **transfer** CDS in the DoDI 8540.01 / NCDSMO taxonomy — the
+tradition of the high-assurance *mail guard*, Smith 1994 — not a WAF. See the literature basis below.)
+
+### 6.2 Literature & standards basis
+
+- R. Smith, *Constructing a High Assurance Mail Guard*, 17th NCSC (1994) — store-and-forward guard;
+  allow-lists, label checks, attachment filtering; assured under attack and failure.
+- Sundaravarathan et al., *Cross-Domain Solutions (CDS): A Comprehensive Survey*, IEEE Access (2024) —
+  the access / transfer / MLS taxonomy; uni- vs bidirectional transfer.
+- NIST SP 800-53 Rev. 5, **AC-4**; US DoDI 8540.01 & NSA NCDSMO; CNSSI 1253 CDS Overlay; UK NCSC
+  cross-domain principles & 2026 guidance; NZ NZISM; AU ACSC introduction to CDS.
+
 ---
 
 ## 7. Hardware

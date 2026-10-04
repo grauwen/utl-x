@@ -36,6 +36,21 @@ sourced references._
 - *Security benchmark:* OWASP Top 10 / API Security Top 10 / Core Rule Set — used as coverage map and test
   corpus, never as a rule port.
 
+== Cross-domain literature & standards basis
+
+The guard concept, its taxonomy and its controls are well established — the classification and the AC-4
+mapping in this book rest on these, not on our own definitions:
+
+- R. Smith, *Constructing a High Assurance Mail Guard*, 17th National Computer Security Conference (1994)
+  — the store-and-forward mail guard: address allow-lists, label checks, attachment filtering; assurance
+  "even under attack and failure".
+- Sundaravarathan et al., *Cross-Domain Solutions (CDS): A Comprehensive Survey*, IEEE Access (2024) — the
+  access / transfer / MLS taxonomy; uni- vs bidirectional transfer.
+- *NIST SP 800-53 Rev. 5*, control AC-4 (Information Flow Enforcement) — the CDS / high-assurance-guard
+  control enhancements (Chapter 8).
+- US DoDI 8540.01 (CDS types) & NSA NCDSMO; CNSSI 1253 Cross Domain Solution Overlay; UK NCSC cross-domain
+  principles & 2026 guidance; NZ NZISM; AU ACSC introduction to cross-domain solutions.
+
 #v(1cm)
 #line(length: 100%, stroke: 0.5pt + luma(180))
 #v(0.3cm)

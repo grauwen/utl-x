@@ -104,3 +104,25 @@ a *coverage map* (recognised OWASP risk classes mapped to how the guard addresse
 failures → rebuild + CRC) for communication and gap-finding; and as a *test corpus* (OWASP CRS payloads
 fired at the guard as adversarial inputs — the hardened parser must fail-closed on every bomb; the
 allow-list must neutralise every injection). Never rules copied into the guard.
+
+== NIST 800-53 AC-4 — a control mapping
+
+Where OWASP is a *test corpus*, NIST SP 800-53 Rev. 5 control *AC-4 (Information Flow Enforcement)* is a
+*control catalogue* — and it describes the guard almost component by component. Its enhancements (3)–(32)
+"primarily address cross-domain solution needs … such as high-assurance guards." Because NIST 800-53 is
+used far beyond defence (FedRAMP, government and critical-infrastructure compliance), this mapping is
+direct accreditation and compliance evidence for a civilian buyer:
+
+#table(
+  columns: (5em, 1fr, 1fr),
+  [*AC-4(14)*], [filters requiring fully enumerated formats; validating schema structures], [schema allow-list (Message Contract), field + value rules],
+  [*AC-4(19)*], [policy filters on metadata], [label guard (STANAG 4774/4778); `^` metadata dropped],
+  [*AC-4(25)*], [sanitise to minimise malicious content, command-and-control, malicious-code augmentation, steganography], [canonical rebuild, no pass-through],
+  [*AC-4(27)*], [redundant, independent filtering per data type], [parser + rules + independent verifier; split guard],
+  [*AC-4(28)*], [a linear content-filter pipeline], [parse → caps → contract → label → rules → serialize],
+  [*AC-4(30)*], [content filtering using multiple processes], [sandboxed parser (`mode: component`); separate stages],
+  [*AC-4(31)*], [prevent transfer of failed content to the receiving domain], [fail-closed; reject → dead-letter; *never repair*],
+)
+
+AC-4(31) is the verdict policy of this chapter stated as a control: *failed content never reaches the
+receiving domain.* Isolate — do not clean and pass.

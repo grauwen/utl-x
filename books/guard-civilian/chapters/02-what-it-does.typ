@@ -58,6 +58,13 @@ A content guard passes only *known-good* content — an *allow-list*, fail-close
   [*UTL-X Guard*], [allow-list · any format · passes only approved content, rebuilt · fail-closed],
 )
 
+This is an *established classification*, not our own claim. In the cross-domain taxonomy of US DoDI
+8540.01 (adopted by the NCDSMO) — _access_, _transfer_, _multilevel_ — the guard is a *transfer*
+solution: message-oriented, store-and-forward, one verdict per message, in the tradition of the
+high-assurance *mail guard* (Smith, 1994), which — unlike a firewall — assured its control *even under
+attack and failure*. Where two-way traffic is needed it is built as two separate one-way flows, never a
+session through the guard. Chapter 8 maps the pipeline to the NIST 800-53 AC-4 control enhancements.
+
 == The gap it fills
 
 #align(center)[
