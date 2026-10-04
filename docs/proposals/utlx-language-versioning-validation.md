@@ -205,6 +205,55 @@ UDM output node type (`ValidationResult`) and a new stdlib namespace. Since a
 1.0 engine would produce wrong results if it silently ignored `validate.*` calls,
 a minor version bump is required.
 
+### Where `validate.*` runs — the UDM layer (no per-format parser/serializer change)
+
+`validate.*` is a **UDM-layer** concern. It runs *after* a reader has produced the UDM and *before*
+any writer runs:
+
+```
+bytes → reader(format) → UDM → [ validate.* ] → UDM → writer(format) → bytes
+                          ▲                         ▲
+                     already 1.0               already 1.0
+```
+
+It takes UDM nodes, checks them, and returns a `ValidationResult`; it never sees JSON, XML, or bytes.
+The consequence is important for scoping the work — and for the `:core ↛ :validate` module boundary
+(§2.1): **adding `validate.*` requires essentially no change to the per-format parsers and
+serializers.**
+
+- **Readers:** a check like `validate.inRange($lat, -90, 90)` needs a number in the UDM — which the
+  1.0 reader already produces (mapping needs it too). Validation *inspects* the tree the reader
+  already builds; it does not ask the reader to build anything new. **No reader change.**
+- **Serializers (happy path):** what gets serialized is the ordinary UDM payload in whatever format —
+  existing 1.0 serialization. **No writer change.** The *only* exposure is serializing the
+  `ValidationResult` **wrapper** itself (a verdict/error report); model it as a conventional UDM
+  `Object` and that too uses existing serialization, and a semantic component typically reports
+  verdicts in **one** format regardless of input — so at most one serializer is involved, never all.
+
+This has to hold, or UTL-X's core value collapses: "one rule set on the UDM, format-independent" and
+the N-readers-+-N-writers-not-N² proof (`docs/architecture/utlx-test-corpora.md` §5.5) both *depend*
+on validation being blind to format. If `validate.*` needed bespoke code per parser, it would just be
+a per-format validator again.
+
+**Do not confuse this with parse-time *hardening*, which is a different axis.** Two things are both
+loosely called "validation":
+
+| | Where it lives | Per-format? | What it is |
+|---|---|---|---|
+| **Semantic validation** (`validate.*`, 1.1) | UDM layer, post-parse | **No** | range / codelist / required / cross-field checks on the tree |
+| **Parse-time hardening** (bounds, strict mode) | *inside* each parser | **Yes** | resource limits, reject-on-ambiguity, XXE off, CRC-on-read — the content-guard parser profile |
+
+Parse-time hardening **does** touch every parser, format by format (see `utlx-mil/docs/guard-parser-profile.md`
+and the leniency/bounds axis in `docs/architecture/utlx-test-corpora.md` §5.7) — but that is **not**
+what `%utlx 1.1` brings. It is the strict-parsing profile, needed by the content guard for untrusted
+input regardless of `validate.*`, and good parsers want resource bounds anyway. A narrow related case:
+a few checks read format-specific decode facts off the `^` metadata channel (e.g. binary CRC validity),
+for which the *binary* parser must surface that fact — opt-in, only for formats/checks that need it,
+not a reader rewrite.
+
+So the two worries cancel: the per-format work (hardening) is not 1.1, and 1.1 (`validate.*`) is not
+per-format.
+
 ### Why 1.1 not 2.0
 
 The changes are **additive**:
