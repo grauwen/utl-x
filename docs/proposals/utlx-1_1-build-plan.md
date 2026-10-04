@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | utlx-1_1-build-plan |
-| Status | Plan — ready to execute after the spike |
+| Status | Plan — **foundation-first** (measure the parsers, then build); see Phase 0 |
 | Scope | Implement `%utlx 1.1`: the `validate.*` core (Tier 1) + `ValidationResult`, as a separate `:validate` module, delivered as the **UTLXS** profile alongside **UTLXe** |
 | Spec | `utlx-1_1-semantic-validation.md` (the what); this doc is the how/when |
 | Related | `utlx-language-versioning-validation.md` §2.1/§3 (packaging, version gate); `utlx-validate-naming-and-guard-profile.md` (names, two tiers); `docs/architecture/validate-module-spike.md`; `docs/architecture/utlx-test-corpora.md` (§5.5, §5.7) |
@@ -22,11 +22,35 @@
 
 ---
 
-## Phase 0 — Spike (de-risk) · ~0.5 day
+## Phase 0 — Foundation: test infra, parser baseline, hardening, spike · ~1–2 weeks (+ hardening as the baseline demands)
 
-Run `docs/architecture/validate-module-spike.md`.
-**Exit:** "no per-parser change" confirmed; size measured; `ValidationResult` shape chosen; the
-`:core ↛ :validate` architecture test is in place and proven to fail-then-pass.
+Build capability on a **verified** foundation, not on faith. `validate.*` sits *on top of* the parse —
+a verdict is only as sound as the parse beneath it ("validation on a shaky parser is theater") — so the
+parse is **measured and brought to a defined bar before 1.1 lands**. Crucially this is not a detour: the
+test harness built here *is* the Phase-3 conformance wall, reused.
+
+- **0a — Shared test infra.** Stand up `test-corpora/` + the conformance / roundtrip / cross-format /
+  fuzz harness (`docs/architecture/utlx-test-corpora.md`). Serves both hardening *and* 1.1's conformance
+  wall (Phase 3) — it is the common prerequisite, not throwaway work.
+- **0b — Parser baseline.** Run it against **today's 1.0 parsers/serializers**. Record the number
+  (conformance pass rate, roundtrip failures, fuzz crashes/hangs, parser-differentials). This turns
+  "how much hardening?" from a guess into data.
+- **0c — Harden to a bar (not a rabbit hole).** Fix what 0b surfaces, to a **defined exit bar** —
+  conformance green, *N* cpu-hours of fuzz with no new crash/hang/OOM, resource bounds enforced
+  (`bounds.yaml`, §5.7). **How much is required before Phase 1 depends on 1.1's first consumer:**
+
+  | 1.1's first consumer | Input | Hardening required before 1.1 |
+  |---|---|---|
+  | **Content guard** | untrusted (a boundary) | **Full** — the guard's security claim *is* the hardened parser; non-negotiable |
+  | **Open-M semantic component** (trusted zone) | trusted / internal | **Baseline only** — production-matured parsers are likely adequate; harden fully *before* any guard use |
+
+- **0d — Validate spike** (parallel; code-independent): run `docs/architecture/validate-module-spike.md`
+  — confirm "no per-parser change", measure size, choose the `ValidationResult` shape, land the
+  `:core ↛ :validate` architecture test (proven to fail-then-pass).
+
+**Exit:** test harness live and green on 1.0 (both would-be profiles); parser baseline recorded;
+hardening at the bar its first-consumer requires; spike findings in (shape chosen, no-per-parser-change
+confirmed).
 
 ## Phase 1 — Foundation: module, version gate, profiles · ~1 week
 
@@ -109,15 +133,24 @@ the **security library**, not `:validate` core; depend on the per-format **parse
 
 ## Sequencing & critical path
 
+**Foundation-first, by measurement not faith.** The one thing that is unambiguously first is the **test
+harness (0a)** — it is a shared prerequisite (it *is* the Phase-3 wall), and it *measures* the parsers so
+the rest of the order is set by data, not guesswork. Building 1.1 on an unverified parse is validation
+theater; but `0c` is **bar-limited**, not open-ended. Because `validate.*` needs no parser change,
+hardening is never wasted and never blocks 1.1 — every parser fix strengthens both UTLXe (shipping now)
+and the future UTLXS.
+
 ```
-P0 spike → P1 foundation → P2 functions → P4 output/routing → release
-                            └→ P3 conformance (stand up early, then continuous)
-                                             P5 tooling/docs (parallel from P2)
-P6 guard profile ── separate track, after base 1.1 ──────────────────────────▶
+P0 foundation: test-infra(0a) → measure(0b) → harden-to-bar(0c)   [spike 0d ∥]
+   → P1 module/gate/profiles → P2 functions → P4 output/routing → release
+                               └→ P3 conformance  (= the 0a harness, now continuous)
+                                                P5 tooling/docs (∥ from P2)
+P6 guard profile ── separate track, after base 1.1 ───────────────────────────────▶
 ```
 
-Critical path: **P0 → P1 → P2 → P4 → release.** P3 starts during P2 and runs continuously (test-first
-where practical). P5 parallels P2–P4. Rough base-1.1 estimate: **~6–7 weeks** of focused work.
+Critical path: **P0 → P1 → P2 → P4 → release.** P3 reuses the 0a harness and runs continuously from P2.
+P5 parallels P2–P4. Estimate: foundation **~1–2 weeks** (plus hardening if the 0b baseline is poor or the
+guard is the first consumer), then the base-1.1 build **~6–7 weeks** on top.
 
 ## Invariants that must hold throughout (CI-enforced)
 
@@ -132,6 +165,8 @@ where practical). P5 parallels P2–P4. Rough base-1.1 estimate: **~6–7 weeks*
 | Risk | Mitigation |
 |---|---|
 | `validate.*` leaks into a parser → breaks format-independence | Phase 0 spike + the diff-stat guard; escalate immediately if hit |
+| Building 1.1 on unverified parsers → validation theater / rework | **P0 measure-first**; harden to the bar before 1.1 (fully, if the guard is the first consumer) |
+| Hardening becomes an open-ended rabbit hole | **0c is bar-limited** — conformance green + *N* cpu-hrs fuzz clean + bounds enforced, not "until perfect" |
 | Bundling 1.1 regresses 1.0 | Full 1.0 suite on both profiles, every build |
 | `ValidationResult` node-type churns the core UDM | Model as `Object` (Phase 0 decision) — keep core frozen |
 | Cadence coupling (1.1 churn forces UTLXe re-release) | Module + profile split; UTLXe byte-invariant to 1.1 |
