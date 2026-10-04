@@ -7,7 +7,7 @@ are indicative; verify each against its primary source._
 
 #table(
   columns: (auto, 1fr),
-  [_UTL-X Guard — The Civilian Edition_], [the security counterpart: the same engine as a content guard — allow-list, fail-closed, the verdict policy, deployment shapes],
+  [_UTL-X Guard_], [the security counterpart: the same engine as a content guard — allow-list, fail-closed, the verdict policy, deployment shapes],
   [_UTL-X: One Language, All Formats_], [the complete UTL-X language specification],
   [_UTLXe on Azure — Deployment and Operations Guide_], [running the engine as a managed cloud component with Dapr],
 )
@@ -45,7 +45,7 @@ are a separately governed edition, not part of this book.
 #v(0.3cm)
 #align(center)[
   #text(size: 9pt, style: "italic", fill: luma(100))[
-    UTL-X — The Mapper · Civilian Edition · Exploratory edition, 2026 · An assured message-mapping
+    UTL-X — The Mapper · Exploratory edition, 2026 · An assured message-mapping
     component built on UTL-X 1.1.
   ]
 ]

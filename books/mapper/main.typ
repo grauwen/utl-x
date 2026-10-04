@@ -1,8 +1,8 @@
-// UTL-X — The Mapper (Civilian Edition)
-// Compile: typst compile main.typ "UTL-X Mapper - Civilian Edition.pdf"
+// UTL-X — The Mapper
+// Compile: typst compile main.typ "UTL-X Mapper.pdf"
 
 #set document(
-  title: "UTL-X — The Mapper (Civilian Edition)",
+  title: "UTL-X — The Mapper",
   author: "Ir. Marcel A. Grauwen",
   date: datetime.today(),
 )
@@ -43,9 +43,7 @@
 #block(fill: luma(242), width: 100%, inset: (x: 1.5cm, top: 0.1cm, bottom: 0.4cm))[
   #align(center)[
     #text(size: 80pt, weight: "bold", font: "Arial", fill: rgb("#333333"))[UTL]#text(size: 80pt, weight: "bold", font: "Arial", fill: red-main)[X]#text(size: 30pt, weight: "bold", font: "Arial", fill: rgb("#333333"))[ Mapper]
-    #v(0.3cm)
-    #text(size: 15pt, style: "italic", fill: rgb("#333333"))[The Civilian Edition]
-    #v(0.4cm)
+    #v(0.55cm)
     #image("pictures/utlx-knife-red-transparent.svg", width: 16cm)
   ]
 ]
@@ -73,7 +71,7 @@
 #set text(size: 9pt)
 #v(1fr)
 
-*UTL-X — The Mapper · Civilian Edition*
+*UTL-X — The Mapper*
 
 Copyright \u{00A9} 2026 Ir. Marcel A. Grauwen. All rights reserved.
 
@@ -84,7 +82,7 @@ This book depends on *UTL-X 1.1* (the `validate.*` semantic-validation extension
 
 This is the short, component-focused companion to _UTL-X: One Language, All Formats_ (the complete
 language specification) — for readers who want to understand UTL-X *as a mapping component* without
-reading the full language book. Its security counterpart is _UTL-X Guard — The Civilian Edition_;
+reading the full language book. Its security counterpart is _UTL-X Guard_;
 its defence sibling is _UTL-X MIL — The Mapper_ (restricted-format packs, higher assurance).
 
 *Status — exploratory.* This book is a capability study of an assured, open-standards message-mapping

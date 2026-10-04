@@ -42,7 +42,7 @@ before it is allowed out. That is the difference between a converter and an *ass
 
 == The Mapper and the Guard
 
-This book has a companion, _UTL-X Guard — The Civilian Edition_. The two share an engine but answer
+This book has a companion, _UTL-X Guard_. The two share an engine but answer
 different questions. The Guard asks *"may this data cross?"* — it is a security device on a
 boundary, allow-list and fail-closed. The Mapper asks *"what does this data become?"* — it is an
 integration component in a pipeline, turning one system's output into another's input.
