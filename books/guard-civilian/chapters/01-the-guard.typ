@@ -65,5 +65,6 @@ wrong, never repair.
 *Part I* is the product: what the guard is (this chapter), what it does and why it is different
 (Chapter 2), where it fits — markets and deployment (Chapter 3), and the open formats it speaks
 (Chapter 4). *Part II* is the mechanism for the technical evaluator: the language and model, binary
-decoding, validation and hardening, and the rules and verdict policy (Chapters 5–8). *Part III* is the
-business: assurance route, deployment and the path to market (Chapter 9).
+decoding, validation and hardening, and the rules and verdict policy (Chapters 5–8). *Part III* is
+fielding it: the assurance route, deployment and the path to market (Chapter 9), and a concrete,
+buildable proof of concept with the civilian investment case (Chapter 10).

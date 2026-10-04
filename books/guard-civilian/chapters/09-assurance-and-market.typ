@@ -45,46 +45,26 @@ require it. No rugged defence hardware is needed for the civilian edition.
   caption: [Hot-swap serviceability of the appliance concept: a single guard card withdrawn from the front. All data enters and leaves on the card itself; the power-only backplane means removing or inserting a card never bridges two networks. Slots mix send and receive cards.],
 )
 
-== A buildable demonstrator — proof of concept
+The split guard itself — a buildable proof of concept on two boards — is Chapter 10.
 
-The whole civilian story can be *demonstrated now*, on public hardware and public data, because
-nothing in it is restricted. The demonstrator is a *split guard* (shape D) built from two SoC-FPGA
-evaluation boards (for example two ZCU106): each board is one owner's half, running the UTL-X guard
-over a one-way fibre interlink — and where request/response is needed, it is built as two separate
-one-way flows, never a session through the guard.
+== Roadmap
 
-#figure(
-  image("../pictures/utlx-split-guard-two-racks-300dpi.png", width: 100%),
-  caption: [The split guard (shape D) fielded: each half in its own rack, zone and ownership (A / B), enforcing its own policy and meeting only over a one-way fibre interlink. The proof of concept builds exactly this on two SoC-FPGA boards with public formats — already civilian.],
-)
-
-*What it proves:* the full pipeline — hardened parse → UDM → `validate.*` → canonical re-serialize —
-running end to end across an owned boundary; two-owner independence (each half enforces its own
-policy); a real protocol break on the interlink; and binary coverage, by decoding a public binary
-sample (AIS or ADS-B) through BINF on the FPGA fabric.
-
-*What it does not prove, honestly:* TEMPEST, certified crypto, a certified diode and scaling to
-line-rate production are *investment*, not a weekend — and for the civilian software product they are
-not needed at all. The civilian edition ships as *software*; the demonstrator exists only to make the
-pipeline and the two-owner split visible and testable, not to field rugged hardware.
-
-== Roadmap and effort
-
-Order of magnitude, one experienced developer:
+A phased programme, each phase a usable increment:
 
 #table(
-  columns: (auto, auto, 1fr),
-  [*0 — Guard core*], [8–14 pw], [guard-profile parsers, canonical serializer, the seven rule categories, audit, dead-letter, no-pass-through — a software guard for JSON/XML/CSV/YAML/OData],
-  [*1 — Foundation*], [15–23 pw], [BINF, streaming runtime, transports, tests — a binary-capable engine],
-  [*2 — Tier A packs*], [18–30 pw], [AIS/NMEA, KLV, EDIFACT, CoT, CISE, geometry — coast-guard and dual-use scope],
-  [*3 — Tier B packs*], [16–27 pw], [ASTERIX, RIS, IVEF, S-100 products, DIS, C2SIM, Cospas-Sarsat — full open scope],
-  [*4 — Productisation*], [6–10 pw], [contract/policy UI/CLI, monitoring, packaging, docs — a sellable product],
-  [*5 — Assurance*], [external], [fuzzing campaign, pen test, 62443/BSPA preparation],
+  columns: (auto, 1fr),
+  [*0 — Guard core*], [guard-profile parsers, canonical serializer, the seven rule categories, audit, dead-letter, no-pass-through — a software guard for JSON/XML/CSV/YAML/OData],
+  [*1 — Foundation*], [BINF, streaming runtime, transports, tests — a binary-capable engine],
+  [*2 — Tier A packs*], [AIS/NMEA, KLV, EDIFACT, CoT, CISE, geometry — coast-guard and dual-use scope],
+  [*3 — Tier B packs*], [ASTERIX, RIS, IVEF, S-100 products, DIS, C2SIM, Cospas-Sarsat — full open scope],
+  [*4 — Productisation*], [contract/policy UI/CLI, monitoring, packaging, docs — a sellable product],
+  [*5 — Assurance*], [fuzzing campaign, pen test, 62443/BSPA preparation],
 )
 
 Order inside the phases follows the chosen wedge: a CISE-first wedge pulls CISE and AIS forward; an
-OT-first wedge prioritises guard core plus shape-B integration with one diode vendor. Full open scope is
-roughly 63–104 person-weeks — about 15–24 months for one developer, roughly half with two.
+OT-first wedge prioritises guard core plus shape-B integration with one diode vendor. The whole
+programme is a *bounded effort for a small team* — far short of the multi-year accreditation campaign the
+MIL edition requires. (Detailed effort estimates are held separately, for investment discussions.)
 
 == Legal, licensing, export
 

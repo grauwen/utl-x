@@ -137,8 +137,10 @@ Typeset with Typst in New Computer Modern.
 #include "chapters/08-rules-verdicts-coverage.typ"
 
 // ══ PART III — FIELDING & BUSINESS ══
-#part-divider("III", "Fielding It", "Assurance, deployment, and the path to market.")
+#part-divider("III", "Fielding It", "Assurance, the path to market, and a buildable proof of concept.")
 #include "chapters/09-assurance-and-market.typ"
+#pagebreak()
+#include "chapters/10-proof-of-concept.typ"
 
 #pagebreak()
 #include "chapters/appendix-a-quick-reference.typ"
