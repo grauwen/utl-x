@@ -158,6 +158,18 @@ core type**, maximal "core unchanged") or as an extension node type in an **open
 (first-class ergonomics, but the UDM node set must be extensible, not a sealed enum in core). The "core
 must not grow" goal favours the `Object` form.
 
+**`validate.*` is a stdlib *namespace*, in its own *module*.** Conceptually `validate.*` is standard
+library — a namespace like `string.*` / `array.*` — but it lives in its **own module** (`:validate`),
+not folded into the core stdlib, precisely so UTLXe can exclude it (the `:core ↛ :validate` rule above).
+This boundary is **requirement-driven, not a size decision**: you split it to pack with/without,
+independent of how big it turns out to be — size only sizes the saving, it does not flip the boundary.
+And the two tiers go to **two homes**: **core `validate.*`** (general data validation — `inRange`,
+`oneOf`, `required`, cross-field; like JSON Schema / Bean Validation) is a stdlib module and is **not**
+security; the **guard profile** (structural caps, `conformsTo`, hardened bounds) is the security tier and
+belongs with the security library. Don't file core `validate.*` under security just because the guard
+uses it. (A half-day spike to calibrate size and confirm "no per-parser change" is specced in
+`docs/architecture/validate-module-spike.md`.)
+
 The repo/codebase split stays reserved for `ai.*`/2.0 (heavy deps → `utl-x-infer`); 1.0 and 1.1 remain
 **one codebase in one repo**, differing only by build profile.
 
