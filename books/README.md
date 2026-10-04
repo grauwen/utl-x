@@ -4,8 +4,9 @@ Source for the UTL-X book series. **One directory per book**; sources are [Typst
 
 | Directory | Book | Status |
 |-----------|------|--------|
-| `language/`     | *UTL-X — One Language, All Formats* | active |
-| `engine-azure/` | *UTLXe on Azure*                    | active |
+| `language/`       | *UTL-X — One Language, All Formats* | active |
+| `guard-civilian/` | *UTL-X Guard — The Civilian Edition* (open-standards content guard) | active |
+| `engine-azure/`   | *UTLXe on Azure*                    | active |
 | `engine-gcp/`   | *UTLXe on GCP* (future)             | planned |
 | `engine-aws/`   | *UTLXe on AWS* (future)             | planned |
 | `cookbook/`     | *UTL-X Cookbook* (future)           | planned |

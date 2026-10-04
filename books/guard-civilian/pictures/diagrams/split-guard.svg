@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 430" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#333333"/>
+    </marker>
+    <marker id="arrowred" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#CC0000"/>
+    </marker>
+  </defs>
+
+  <!-- ===== Inputs ===== -->
+  <text x="18" y="70" font-size="13" font-weight="bold" fill="#333333">Inputs</text>
+  <text x="18" y="100" font-size="12" fill="#333333">JSON</text>
+  <text x="18" y="124" font-size="12" fill="#333333">XML</text>
+  <text x="18" y="148" font-size="12" fill="#333333">CSV</text>
+  <text x="18" y="178" font-size="12" fill="#333333">AIS / ADS-B</text>
+  <text x="18" y="194" font-size="10" fill="#777777">(binary)</text>
+  <line x1="110" y1="135" x2="182" y2="135" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ===== Board A ===== -->
+  <rect x="185" y="45" width="270" height="300" rx="10" fill="#f4f4f4" stroke="#333333" stroke-width="2"/>
+  <text x="320" y="70" font-size="14" font-weight="bold" text-anchor="middle" fill="#333333">Board A</text>
+  <text x="320" y="88" font-size="11" text-anchor="middle" fill="#666666">ingest / transform (low side)</text>
+
+  <rect x="205" y="110" width="230" height="95" rx="6" fill="#ffffff" stroke="#0078D4" stroke-width="1.5"/>
+  <text x="320" y="132" font-size="12" font-weight="bold" text-anchor="middle" fill="#0078D4">ARM — UTL-X</text>
+  <text x="320" y="152" font-size="11" text-anchor="middle" fill="#333333">parse &#8594; UDM</text>
+  <text x="320" y="170" font-size="11" text-anchor="middle" fill="#333333">validate.* (allow-list)</text>
+  <text x="320" y="188" font-size="11" text-anchor="middle" fill="#333333">&#8594; canonical simple form</text>
+
+  <rect x="205" y="225" width="230" height="95" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="320" y="247" font-size="12" font-weight="bold" text-anchor="middle" fill="#333333">FPGA fabric</text>
+  <text x="320" y="267" font-size="11" text-anchor="middle" fill="#333333">BINF decode + CRC</text>
+  <text x="320" y="285" font-size="11" text-anchor="middle" fill="#333333">structural caps</text>
+  <text x="320" y="303" font-size="11" text-anchor="middle" fill="#CC0000">fail-closed on parse</text>
+
+  <!-- ===== Protocol-break link ===== -->
+  <text x="547" y="150" font-size="12" font-weight="bold" text-anchor="middle" fill="#333333">simple form</text>
+  <line x1="458" y1="170" x2="632" y2="170" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="547" y="190" font-size="10.5" text-anchor="middle" fill="#666666">protocol break</text>
+  <text x="547" y="205" font-size="10.5" text-anchor="middle" fill="#666666">no TCP/IP state crosses</text>
+
+  <!-- ===== Board B ===== -->
+  <rect x="635" y="45" width="270" height="300" rx="10" fill="#f4f4f4" stroke="#333333" stroke-width="2"/>
+  <text x="770" y="70" font-size="14" font-weight="bold" text-anchor="middle" fill="#333333">Board B</text>
+  <text x="770" y="88" font-size="11" text-anchor="middle" fill="#666666">verify / egress (high side)</text>
+
+  <rect x="655" y="110" width="230" height="95" rx="6" fill="#ffffff" stroke="#333333" stroke-width="1.5"/>
+  <text x="770" y="132" font-size="12" font-weight="bold" text-anchor="middle" fill="#333333">FPGA fabric — VERIFIER</text>
+  <text x="770" y="155" font-size="11" text-anchor="middle" fill="#333333">check simple form vs</text>
+  <text x="770" y="173" font-size="11" text-anchor="middle" fill="#333333">form-class / schema</text>
+  <text x="770" y="193" font-size="11" text-anchor="middle" fill="#333333">(independent of Board A)</text>
+
+  <rect x="655" y="225" width="230" height="95" rx="6" fill="#ffffff" stroke="#0078D4" stroke-width="1.5"/>
+  <text x="770" y="247" font-size="12" font-weight="bold" text-anchor="middle" fill="#0078D4">ARM</text>
+  <text x="770" y="270" font-size="11" text-anchor="middle" fill="#333333">rebuild from verified data</text>
+  <text x="770" y="290" font-size="11" text-anchor="middle" fill="#333333">&#38; forward</text>
+
+  <!-- ===== Egress ===== -->
+  <line x1="905" y1="155" x2="938" y2="155" stroke="#333333" stroke-width="2"/>
+  <text x="865" y="340" font-size="11" text-anchor="middle" fill="#333333"></text>
+
+  <!-- verified egress arrow (down-right out of ARM box) -->
+  <line x1="770" y1="320" x2="770" y2="360" stroke="#333333" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="770" y="378" font-size="12" font-weight="bold" text-anchor="middle" fill="#333333">verified egress</text>
+
+  <!-- fail / dead-letter (down-left out of verifier box) -->
+  <line x1="700" y1="205" x2="700" y2="245" stroke="#CC0000" stroke-width="0" />
+  <path d="M655,157 L560,157 L560,360" fill="none" stroke="#CC0000" stroke-width="1.8" marker-end="url(#arrowred)" stroke-dasharray="5,4"/>
+  <text x="560" y="378" font-size="11.5" text-anchor="middle" fill="#CC0000">FAIL &#8594; dead-letter + audit</text>
+</svg>

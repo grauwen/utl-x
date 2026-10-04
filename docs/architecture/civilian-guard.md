@@ -69,6 +69,37 @@ untrusted bytes → hardened parse → UDM → validate.* rules → canonical se
 | **D — split guard** | two owners, two halves, one-way interlink (`interlink-protocol-v1.md`) | chain partners that will not host each other's box |
 | **C — hardsec transform stage** | only with a partner's verifier | mostly a MIL/high-assurance play; keep the hook |
 
+### 2.3 Verdict policy — rebuild what is clean, reject what is wrong
+
+A guard must **never "fish out" the malicious parts and pass the rest.** As soon as a message violates
+policy, the **whole message** goes to isolation (dead-letter or quarantine), with an audit record and an
+alert:
+
+> **Rebuild what is clean, reject what is wrong — never repair.**
+
+Not everything the guard drops is "malicious". Three categories:
+
+| Category | Examples | What the guard does |
+|---|---|---|
+| **1. Formatting noise** | comments, whitespace, BOM, odd-but-valid encodings, number formatting, `^` metadata | **dropped silently by the canonical serializer**; message passes. Normal rebuild, not fishing out malice. |
+| **2. Fields removed by policy** | internal / high-side-only fields (releasability), debug fields | **only if explicitly listed in the contract as "strip"**; message passes, audit records which fields were removed |
+| **3. Violations** | parse error, bomb, field off the allow-list (no strip rule), value out of range, wrong/missing/forged label, dirty word, CRC/signature error | **reject the whole message** → isolation + audit + alert |
+
+The default for unknown fields is **reject**; "strip" is an explicit, per-field contract choice, never a
+catch-all. **Repair-and-pass is refused** because it guesses intent, becomes an attack surface, can flip
+meaning, breaks label-binding/signature integrity, and discards a security signal. **Mark-and-pass** is
+IDS behaviour, not a guard's — the only exception is **monitor / shadow mode** (roadmap step 2:
+log verdicts, don't block; for evidence, not operation).
+
+**Rejected message:** *default* = hash + verdict in the audit record, original discarded; *optional
+quarantine* = a copy in an isolated, access-controlled, encrypted store **on the ingress side**, retained,
+never auto-released, never crossing — release only by a person, back through the guard.
+
+**Three verdict states:** `PASS` (clean; only formatting noise dropped) · `PASS-STRIPPED` (passed after
+explicitly approved field removal; removed fields listed) · `REJECT` (violation; whole message isolated;
+rule IDs, reason, hash, optional quarantine reference). Civilian customers who ask for "just clean it and
+pass it" get category 2 — allowed only as an explicit strip rule, never a default.
+
 ---
 
 ## 3. Format scope — open standards only
