@@ -103,6 +103,28 @@ and applies the corresponding contract:
 with a lower major version. Breaking compatibility within a major version is
 never permitted.
 
+### Two kinds of parser — format readers vs the language front-end
+
+"Parser" means two different things; do not conflate them when scoping version work:
+
+- **Format readers** (JSON / XML / YAML / CSV / BINF) parse the input **data** into the UDM — **one per
+  format**. A minor like 1.1 does **not** touch them (`validate.*` runs on the UDM, *after* them). This
+  is what "no per-parser change" refers to.
+- **The language front-end** parses the `.utlx` **script** (header + body) — **one, language-wide**. It
+  does evolve with the language, but as **one parser**, not a fork.
+
+**One parser, version-gated semantics — not two body parsers.** The header production already reads a
+version *value*; accepting `1.1` is another value, not a structural change. `validate.*` is **function
+calls, not new syntax**, so the body grammar is unchanged — `validate.inRange(...)` parses like any
+`namespace.fn(...)`, and `result.valid` is ordinary member access. The 1.0-vs-1.1 decision happens
+**later, at semantic analysis**: the **version gate** (declared version vs the build's advertised max)
+and **name resolution** (does `validate.*` resolve? — only if `:validate` is linked). Any *new* 1.1
+syntax (e.g. additive header fields) grows **one superset grammar**; it does not fork it, and a 1.0
+script simply omits it. The language front-end lives in `:core` and is **version-aware but not
+`validate`-aware**, so `:core ↛ :validate` (§2.1) still holds. A second body grammar would only be
+considered for an *incompatible syntax* change — which is a **major** (2.0) by definition, and even then
+a superset grammar is preferable to a fork.
+
 ### 2.1 Release & packaging — engine version vs language version
 
 Two version axes must be kept separate, or packaging decisions go wrong:

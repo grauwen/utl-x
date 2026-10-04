@@ -33,6 +33,10 @@ Run `docs/architecture/validate-module-spike.md`.
 - `:validate` module (depends on `:core`); the dependency-direction test wired into CI.
 - **Version-header handling:** engine parses `%utlx 1.1`; UTLXe (core profile) **rejects** it with a clear
   "engine too old / validation not in this build" error; UTLXS **accepts** it (spec §2 gate).
+  *(One language parser, not two — the header reads a version value, `validate.*` is function calls (no
+  new body syntax), and the 1.0/1.1 difference is decided at semantic analysis: version gate + name
+  resolution. The language front-end stays in `:core`, version-aware but not `validate`-aware. See
+  `utlx-language-versioning-validation.md` "Two kinds of parser".)*
 - `ValidationResult` data model (per Phase 0).
 - **Two build targets + CI**: `main` emits **UTLXe** and **UTLXS** from one codebase; both publish.
 - A no-op `%utlx 1.1` script runs on UTLXS, is rejected on UTLXe.
