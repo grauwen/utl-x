@@ -331,6 +331,17 @@ software guard (phases 0–4) ──▶ hardware PoC on own hardware (phase 5) �
 | Formats | JSON, XML, CSV and public AIS / ADS-B |
 | Housing | bench first; optionally two 2U micro-ATX cases (one per owner) for demonstrations |
 
+**What crosses, and the two transport modes.** The UDM never crosses the fibre — Board A serialises its
+export output into a bounded **canonical simple form** (a BINF form-class), and Board B parses that back
+into its *own* fresh UDM before applying its import policy (two mappings chained; only bytes on the wire;
+HMAC-authenticated for integrity, with confidentiality from the physical fibre or an approved encryptor —
+not encryption by default). Two transport modes exist (`interlink-protocol-v1.md` §6.1): **Mode 1 —
+simple-form** (bounded, hardware-verifiable; the **default**) and **Mode 2 — UDM transport** (a generic
+bounded UDM serialisation; a general software parser on B, *not* hardware-verifiable; lower assurance).
+For **civilian** boundaries Mode 2 is more often acceptable — intra-zone, agency ↔ agency, same-operator,
+or where setup speed matters more than a minimal gate — whereas a high-value civilian crossing (and every
+MIL crossing) stays on Mode 1.
+
 **Success criteria** (as in the book, Ch. 4): the same rule block passes a JSON position report and an
 AIS frame with identical output; bombs, forbidden fields and label failures are blocked fail-closed with
 audit records; an AIS frame is decoded in Board A's fabric; a tampered frame is rejected **by Board B's
