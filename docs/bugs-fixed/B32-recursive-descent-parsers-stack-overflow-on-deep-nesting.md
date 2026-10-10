@@ -55,6 +55,11 @@ Binary-searching the depth at which each reader stops cleanly accepting (default
 | **XML**  | 3778 | 3779 | **CRASH** (`StackOverflowError`) — unbounded |
 | **YAML** | 50   | 51   | **clean reject** — already bounded ✓ |
 
+*Measured at the default `-Xss` = **2 MB** (ThreadStackSize 2048 KB). Neither the CLI nor the engine
+sets `-Xss`; the engine's `-Xmx3072m` is irrelevant here — depth is **stack**-bound, not heap-bound.
+YAML's 50 is **SnakeYAML 2.2's `nestingDepthLimit` default** (`LoaderOptions`), so "allow deeper" =
+raise it to the profile's `max_depth`, not leave the framework default.*
+
 Two consequences:
 1. **JSON and XML are unbounded** — they recurse to a hard stack overflow (~5k / ~3.8k levels at the
    default `-Xss`; the absolute number scales with stack size). This is the crash.
@@ -86,9 +91,16 @@ from `crash` to `reject` at the configured limit, and all readers should agree o
 - Add `deep_nesting_100` + `deep_nesting_50000` as regressions (clean reject, **no crash**); re-run
   `scripts/find-crash-depth.py` — JSON/XML must flip `crash → reject`.
 
-**Bounds-config gap (do alongside):** `expectations/bounds.yaml` defines only `strict` and `lenient`
-profiles — there is **no `standard` row**. Bounds are the always-on axis for *every* profile; add a
-`standard` section (wider than strict, still finite) so deep/abusive input is bounded under `standard` too.
+**Bounds-config (addressed):** `expectations/bounds.yaml` now carries a `standard` row too
+(`max_depth` 64 / 128 / 256 for strict / standard / lenient), plus a rationale header documenting the
+full strategy — see that file. Key points:
+- **depth ⟂ memory:** `max_depth` → thread **stack** (`-Xss`), per-thread, *independent of concurrency*;
+  `max_bytes`/`max_nodes`/… → **heap** (`-Xmx`), *shared* → size them against concurrency
+  (`concurrency × max_bytes` must fit `-Xmx`).
+- **margin:** keep `max_depth` well below the shallowest crash (XML ~3778 @ 2 MB) — 64/128/256 give
+  ~59× / ~30× / ~15×; don't push toward ~1000 without raising `-Xss`.
+- **one budget:** `max_depth`, `-Xss`, `-Xmx`, concurrency-cap are chosen together (tighter depth →
+  smaller `-Xss` → more flows fit). Guard = tight+many; mapper = wider+fewer.
 
 ## Related
 - `test-corpora/expectations/bounds.yaml` (`max_depth`); `docs/architecture/parser-strictness-profiles.md`
