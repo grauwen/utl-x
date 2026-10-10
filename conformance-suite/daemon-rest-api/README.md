@@ -2,6 +2,12 @@
 
 This test suite validates the daemon REST API implementation in UTLXD (the UTL-X daemon server).
 
+> **Seeing failures?** A clean run is currently **12/14**. The 2 known failures and the
+> port-7779 collision ("all 14 timed out" = a daemon already on 7779) are tracked in
+> **[IB07](../../docs/bugs-fixed/IB07-utlxd-execute-multipart-multiple-named-inputs-500.md)**
+> (incl. the fixture fix and the ephemeral-port follow-up). Run with `--port <free>` if your own
+> utlxd is on 7779 — this suite will otherwise test against, and then kill, your daemon.
+
 ## Overview
 
 The Daemon REST API conformance suite tests the HTTP/REST API endpoints exposed by UTLXD. It verifies:

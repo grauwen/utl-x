@@ -3,8 +3,8 @@
 > **Status:** decision record — **backend IMPLEMENTED** on `feature/utlxd-bundle-api` (July 2026).
 > Built + tested: the shared file-level layer (**`modules/bundle`**), utlxd's **`/api/bundle/*`
 > CRUD**, and the **EF03 → shared-layer refactor** (utlxe now persists through the same store).
-> Still deferred: the **IDE surface (A vs B)** — the API is UI-neutral — and a `--workspace` CLI
-> flag (utlxd resolves the workspace from `UTLX_WORKSPACE` / `-Dutlx.workspace` for now).
+> Still deferred: the **IDE surface (A vs B)** — the API is UI-neutral. The **`--workspace` CLI
+> flag** is now implemented (precedence `--workspace` > `UTLX_WORKSPACE` > `-Dutlx.workspace`).
 > This doc gave **utlxd** a bundle-management API (shared with **utlxe**) and weighs three ways the
 > IDE can present bundle management — to avoid rebuilding a large management UI natively in Theia.
 >
@@ -178,9 +178,15 @@ into the management surface), and unchanged in C.
   admin/bundle/loader tests + **49/49 utlxe conformance** green, no regression (locked mode, registry,
   compile intact), byte-identical on-disk layout preserved.
 
-## Known follow-ups (not yet built)
+## Known follow-ups
+
+**Done on `feature/utlxd-bundle-api`:**
+- ✅ `--workspace` CLI flag on `utlxd start`, feeding `BundleWorkspace` (precedence `--workspace` >
+  `UTLX_WORKSPACE` > `-Dutlx.workspace`; parsed separately from config overrides, like `--parent-pid`).
+  Covered by `BundleWorkspaceTest`.
+
+**Not yet built:**
 - IDE surface **A vs B** (§Recommendation) and the management-vs-authoring **boundary**.
-- A `--workspace` CLI flag threaded through `UTLXDaemon`→`DaemonServer` (env/sysprop works today).
 - **Auth** on `/api/bundle/*` (IF14) — the endpoints are currently unauthenticated.
 - Edge cases: symlinks in the workspace, `sourceFile` fallback, large/binary schemas.
 

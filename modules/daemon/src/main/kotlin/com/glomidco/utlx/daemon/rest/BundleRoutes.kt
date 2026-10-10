@@ -17,16 +17,30 @@ import java.io.File
  * `/admin/transformations` + `schemas` so the later "EF03 onto the shared layer" refactor is clean.
  *
  * Availability is opt-in: endpoints are live only when a workspace root is configured
- * (UTLX_WORKSPACE env or -Dutlx.workspace); otherwise they answer 503. This keeps utlxd from
- * mutating whatever directory it happens to be launched in.
+ * (--workspace CLI flag, UTLX_WORKSPACE env or -Dutlx.workspace); otherwise they answer 503.
+ * This keeps utlxd from mutating whatever directory it happens to be launched in.
  */
 
 private val bundleLog = LoggerFactory.getLogger("com.glomidco.utlx.daemon.rest.BundleRoutes")
 
 object BundleWorkspace {
-    /** UTLX_WORKSPACE env → -Dutlx.workspace → null. Never defaults to cwd (explicit opt-in). */
+    /**
+     * `--workspace` CLI override (highest precedence). Set once by `StartCommand` before the
+     * daemon starts; null when the flag is absent. Kept here (not in DaemonConfig) because the
+     * bundle API resolves its root independently of daemon transport/config.
+     */
+    @Volatile
+    var cliOverride: String? = null
+
+    /**
+     * --workspace (CLI) → UTLX_WORKSPACE (env) → -Dutlx.workspace (sysprop) → null.
+     * Never defaults to cwd (explicit opt-in).
+     */
     fun resolve(): File? {
-        val path = System.getenv("UTLX_WORKSPACE") ?: System.getProperty("utlx.workspace") ?: return null
+        val path = cliOverride
+            ?: System.getenv("UTLX_WORKSPACE")
+            ?: System.getProperty("utlx.workspace")
+            ?: return null
         val dir = File(path)
         return if (dir.isDirectory) dir else null
     }
