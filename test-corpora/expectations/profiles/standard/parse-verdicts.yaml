@@ -1,0 +1,28 @@
+# standard profile — parse verdicts (SPEC; conformance for parser-strictness-profiles.md §4, standard column)
+# standard = spec-compliant: accept what the format spec ALLOWS, reject what it FORBIDS. Pragmatic default.
+profile: standard
+cases:
+  - { input: corpora/conformance/json/valid_object.json, verdict: accept }
+  - { input: corpora/conformance/xml/valid_doc.xml,       verdict: accept }
+  - { input: corpora/conformance/csv/valid_rows.csv,      verdict: accept }
+  - { input: corpora/conformance/yaml/valid_doc.yaml,     verdict: accept }
+  - { input: corpora/conformance/odata/valid_entity.json,     verdict: accept }  # OData-JSON entity
+  - { input: corpora/conformance/odata/valid_collection.json, verdict: accept }  # OData-JSON collection
+  # JSON: spec violations rejected; spec-allowed-but-benign accepted
+  - { input: corpora/malformed/json/trailing_comma.json, verdict: reject, reason: trailing-comma }   # JSON forbids
+  - { input: corpora/malformed/json/block_comment.json,  verdict: reject, reason: comment }          # JSON forbids
+  - { input: corpora/malformed/json/duplicate_key.json,  verdict: reject, reason: duplicate-key }    # ambiguous → reject
+  - { input: corpora/malformed/json/unquoted_key.json,   verdict: reject, reason: unquoted-key }     # JSON forbids
+  - { input: corpora/malformed/json/leading_bom.json,    verdict: accept }                           # strip & accept
+  - { input: corpora/malformed/json/control_char.json,   verdict: accept }                           # tolerated (only strict rejects)
+  # XML
+  - { input: corpora/malformed/xml/mismatched_tag.xml,   verdict: reject, reason: not-well-formed }
+  - { input: corpora/malformed/xml/undefined_entity.xml, verdict: reject, reason: undefined-entity } # well-formedness error
+  # CSV
+  - { input: corpora/malformed/csv/ragged_rows.csv,      verdict: accept }                           # common; RFC-tolerant
+  - { input: corpora/malformed/csv/unclosed_quote.csv,   verdict: reject, reason: unclosed-quote }   # genuinely broken
+  # YAML
+  - { input: corpora/malformed/yaml/tab_indent.yaml,     verdict: reject, reason: tab-indent }       # YAML forbids tabs
+  - { input: corpora/malformed/yaml/duplicate_key.yaml,  verdict: reject, reason: duplicate-key }    # YAML forbids
+  # security floor
+  - { input: corpora/security/xml/doctype_entity.xml,    verdict: reject, reason: doctype }

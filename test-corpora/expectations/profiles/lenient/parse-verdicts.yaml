@@ -1,0 +1,29 @@
+# lenient profile — parse verdicts (SPEC; conformance for parser-strictness-profiles.md §4, lenient column)
+# lenient = accept & normalise common benign deviations; maximise "it parses". Still bounded; XXE still off.
+# A reject here means even lenient refuses: the input is genuinely broken, not benignly deviant.
+profile: lenient
+cases:
+  - { input: corpora/conformance/json/valid_object.json, verdict: accept }
+  - { input: corpora/conformance/xml/valid_doc.xml,       verdict: accept }
+  - { input: corpora/conformance/csv/valid_rows.csv,      verdict: accept }
+  - { input: corpora/conformance/yaml/valid_doc.yaml,     verdict: accept }
+  - { input: corpora/conformance/odata/valid_entity.json,     verdict: accept }  # OData-JSON entity
+  - { input: corpora/conformance/odata/valid_collection.json, verdict: accept }  # OData-JSON collection
+  # JSON: benign deviations tolerated / normalised
+  - { input: corpora/malformed/json/trailing_comma.json, verdict: accept }   # strip
+  - { input: corpora/malformed/json/block_comment.json,  verdict: accept }   # strip
+  - { input: corpora/malformed/json/duplicate_key.json,  verdict: accept }   # last-wins
+  - { input: corpora/malformed/json/unquoted_key.json,   verdict: accept }   # tolerated
+  - { input: corpora/malformed/json/leading_bom.json,    verdict: accept }   # strip BOM
+  - { input: corpora/malformed/json/control_char.json,   verdict: accept }   # tolerated
+  # XML
+  - { input: corpora/malformed/xml/mismatched_tag.xml,   verdict: reject, reason: not-well-formed }   # genuinely broken
+  - { input: corpora/malformed/xml/undefined_entity.xml, verdict: accept }   # kept as literal (current behaviour; B29 debates this)
+  # CSV
+  - { input: corpora/malformed/csv/ragged_rows.csv,      verdict: accept }   # common real-world
+  - { input: corpora/malformed/csv/unclosed_quote.csv,   verdict: reject, reason: unclosed-quote }    # genuinely broken
+  # YAML
+  - { input: corpora/malformed/yaml/tab_indent.yaml,     verdict: reject, reason: tab-indent }        # hard YAML error
+  - { input: corpora/malformed/yaml/duplicate_key.yaml,  verdict: accept }   # last-wins
+  # security floor — reject even in lenient (not a leniency dial)
+  - { input: corpora/security/xml/doctype_entity.xml,    verdict: reject, reason: doctype }

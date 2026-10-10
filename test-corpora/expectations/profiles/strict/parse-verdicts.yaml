@@ -1,0 +1,29 @@
+# strict profile — parse verdicts (SPEC; conformance for parser-strictness-profiles.md §4, strict column)
+# strict = spec-compliant + hardening overlay: reject spec-allowed-but-risky constructs; fail-closed.
+profile: strict
+cases:
+  # ── well-formed baselines (accept everywhere) ──
+  - { input: corpora/conformance/json/valid_object.json, verdict: accept }
+  - { input: corpora/conformance/xml/valid_doc.xml,       verdict: accept }
+  - { input: corpora/conformance/csv/valid_rows.csv,      verdict: accept }
+  - { input: corpora/conformance/yaml/valid_doc.yaml,     verdict: accept }
+  - { input: corpora/conformance/odata/valid_entity.json,     verdict: accept }  # OData-JSON entity (@odata.* annotations)
+  - { input: corpora/conformance/odata/valid_collection.json, verdict: accept }  # OData-JSON {"value":[…]} collection
+  # ── JSON deviations ──
+  - { input: corpora/malformed/json/trailing_comma.json, verdict: reject, reason: trailing-comma }
+  - { input: corpora/malformed/json/block_comment.json,  verdict: reject, reason: comment }
+  - { input: corpora/malformed/json/duplicate_key.json,  verdict: reject, reason: duplicate-key }
+  - { input: corpora/malformed/json/unquoted_key.json,   verdict: reject, reason: unquoted-key }
+  - { input: corpora/malformed/json/leading_bom.json,    verdict: reject, reason: bom }
+  - { input: corpora/malformed/json/control_char.json,   verdict: reject, reason: control-char }
+  # ── XML deviations ──
+  - { input: corpora/malformed/xml/mismatched_tag.xml,   verdict: reject, reason: not-well-formed }
+  - { input: corpora/malformed/xml/undefined_entity.xml, verdict: reject, reason: undefined-entity }  # B29
+  # ── CSV deviations ──
+  - { input: corpora/malformed/csv/ragged_rows.csv,      verdict: reject, reason: ragged-rows }
+  - { input: corpora/malformed/csv/unclosed_quote.csv,   verdict: reject, reason: unclosed-quote }
+  # ── YAML deviations ──
+  - { input: corpora/malformed/yaml/tab_indent.yaml,     verdict: reject, reason: tab-indent }
+  - { input: corpora/malformed/yaml/duplicate_key.yaml,  verdict: reject, reason: duplicate-key }
+  # ── security floor (reject in EVERY profile) ──
+  - { input: corpora/security/xml/doctype_entity.xml,    verdict: reject, reason: doctype }  # B29

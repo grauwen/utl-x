@@ -96,6 +96,41 @@ the fail-closed posture collapses. Therefore:
   overridable per deployment — never per message.
 - **Always logged:** the active profile is recorded with every parse (see §8).
 
+### 5.1 Profile applicability — by consumer and by format *role*
+
+Which profile applies, and which formats matter, depends on the **consumer** and on the **role** a
+document plays — not on the format alone.
+
+**Role, not format.** A schema document (`xsd`, `jsch`, `osch`, `tsch`) can play either of two roles,
+and the *pipeline* decides which:
+- **schema-as-schema** (design-time): the document is *used to* validate/infer/drive a mapping —
+  provisioned, like form-classes and `validate.*` rules; not runtime traffic.
+- **schema-as-data** (runtime): a process **emits** metadata and a mapping must **transform** it
+  (XSD → a catalog, OpenAPI → docs, a `$metadata`/schema feed → a registry). Here the schema document
+  *is* the payload. This is real, first-class work — it is partly *why* the schema-format readers exist.
+
+So "schema formats are design-time" is **not** true in general; the role is what's design-time or runtime.
+
+**Applicability:**
+
+| Formats | Mapper (UTLXe) | Guard (strict hardening) |
+|---|---|---|
+| JSON, XML, CSV, YAML, **avro, protobuf** (+ restricted wire formats) | first-class, all profiles | **high** — the Phase-0c target; these are the messages that cross a guard |
+| OData-JSON | first-class | via its JSON layer |
+| **`jsch`, `xsd`, `osch`, `tsch`** (schema formats) | **first-class runtime** (schema-as-data mapping is real) | **deployment-dependent, usually low** — see below |
+
+**Why schema formats are *usually low* for the guard — but not excluded:**
+1. **Does this guard deployment carry metadata/schema payloads?** Usually no; occasionally yes.
+2. **Even when it does, hardening needs no schema-awareness.** A schema document crossing a guard is
+   hardened by its **underlying data layer** (a JSON Schema is JSON bytes → the JSON `strict` profile).
+   *Interpreting* it as a schema is a **Message-Contract / `validate.*`** concern, provisioned per
+   deployment — not raw parse hardening.
+
+So the guard's `strict` hardening **targets data/wire formats** (incl. `avro`/`protobuf`); schema-format
+*parse* hardening is **deployment-dependent and deferred**, not ruled out — and the schema formats remain
+**first-class for the mapper** at `standard`/`lenient`. (`avro`/`protobuf` are binary *data*, not schemas,
+so they stay guard-relevant regardless.)
+
 ## 6. The serializer side — strictness means *canonicalisation*
 
 Serializer "strictness" is a real axis, but it means **canonical output**:

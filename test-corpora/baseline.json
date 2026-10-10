@@ -1,0 +1,486 @@
+{
+  "note": "current un-profiled parser vs each profile's spec; mismatches = Phase-0c backlog",
+  "cli": "/Users/magr/data/mapping/github-git/utl-x/utlx",
+  "profiles": {
+    "lenient": {
+      "total": 19,
+      "match": 13,
+      "mismatch": 6,
+      "errors": 0,
+      "cases": [
+        {
+          "input": "corpora/conformance/json/valid_object.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/xml/valid_doc.xml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/csv/valid_rows.csv",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/yaml/valid_doc.yaml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_entity.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_collection.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/trailing_comma.json",
+          "expected": "accept",
+          "actual": "reject",
+          "match": false,
+          "reason": null,
+          "detail": "Error parsing input: JSON parse error at 1:47 - Unexpected character: ]\nError: JSON parse error at 1:47 - Unexpected character: ]\n"
+        },
+        {
+          "input": "corpora/malformed/json/block_comment.json",
+          "expected": "accept",
+          "actual": "reject",
+          "match": false,
+          "reason": null,
+          "detail": "Error parsing input: JSON parse error at 1:12 - Object key must be a string\nError: JSON parse error at 1:12 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/duplicate_key.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/unquoted_key.json",
+          "expected": "accept",
+          "actual": "reject",
+          "match": false,
+          "reason": null,
+          "detail": "Error parsing input: JSON parse error at 1:2 - Object key must be a string\nError: JSON parse error at 1:2 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/leading_bom.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/control_char.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/xml/mismatched_tag.xml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "not-well-formed",
+          "detail": "Error parsing input: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\nError: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\n"
+        },
+        {
+          "input": "corpora/malformed/xml/undefined_entity.xml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/ragged_rows.csv",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/unclosed_quote.csv",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "unclosed-quote",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/yaml/tab_indent.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "tab-indent",
+          "detail": "Error parsing input: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, column 1:\n    \tchild: x\n    ^\n\nError: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, c"
+        },
+        {
+          "input": "corpora/malformed/yaml/duplicate_key.yaml",
+          "expected": "accept",
+          "actual": "reject",
+          "match": false,
+          "reason": null,
+          "detail": "Error parsing input: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\nError: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\n"
+        },
+        {
+          "input": "corpora/security/xml/doctype_entity.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "doctype",
+          "detail": ""
+        }
+      ]
+    },
+    "standard": {
+      "total": 19,
+      "match": 15,
+      "mismatch": 4,
+      "errors": 0,
+      "cases": [
+        {
+          "input": "corpora/conformance/json/valid_object.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/xml/valid_doc.xml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/csv/valid_rows.csv",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/yaml/valid_doc.yaml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_entity.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_collection.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/trailing_comma.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "trailing-comma",
+          "detail": "Error parsing input: JSON parse error at 1:47 - Unexpected character: ]\nError: JSON parse error at 1:47 - Unexpected character: ]\n"
+        },
+        {
+          "input": "corpora/malformed/json/block_comment.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "comment",
+          "detail": "Error parsing input: JSON parse error at 1:12 - Object key must be a string\nError: JSON parse error at 1:12 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/duplicate_key.json",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "duplicate-key",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/unquoted_key.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "unquoted-key",
+          "detail": "Error parsing input: JSON parse error at 1:2 - Object key must be a string\nError: JSON parse error at 1:2 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/leading_bom.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/control_char.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/xml/mismatched_tag.xml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "not-well-formed",
+          "detail": "Error parsing input: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\nError: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\n"
+        },
+        {
+          "input": "corpora/malformed/xml/undefined_entity.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "undefined-entity",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/ragged_rows.csv",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/unclosed_quote.csv",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "unclosed-quote",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/yaml/tab_indent.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "tab-indent",
+          "detail": "Error parsing input: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, column 1:\n    \tchild: x\n    ^\n\nError: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, c"
+        },
+        {
+          "input": "corpora/malformed/yaml/duplicate_key.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "duplicate-key",
+          "detail": "Error parsing input: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\nError: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\n"
+        },
+        {
+          "input": "corpora/security/xml/doctype_entity.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "doctype",
+          "detail": ""
+        }
+      ]
+    },
+    "strict": {
+      "total": 19,
+      "match": 12,
+      "mismatch": 7,
+      "errors": 0,
+      "cases": [
+        {
+          "input": "corpora/conformance/json/valid_object.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/xml/valid_doc.xml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/csv/valid_rows.csv",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/yaml/valid_doc.yaml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_entity.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/conformance/odata/valid_collection.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/trailing_comma.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "trailing-comma",
+          "detail": "Error parsing input: JSON parse error at 1:47 - Unexpected character: ]\nError: JSON parse error at 1:47 - Unexpected character: ]\n"
+        },
+        {
+          "input": "corpora/malformed/json/block_comment.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "comment",
+          "detail": "Error parsing input: JSON parse error at 1:12 - Object key must be a string\nError: JSON parse error at 1:12 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/duplicate_key.json",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "duplicate-key",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/unquoted_key.json",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "unquoted-key",
+          "detail": "Error parsing input: JSON parse error at 1:2 - Object key must be a string\nError: JSON parse error at 1:2 - Object key must be a string\n"
+        },
+        {
+          "input": "corpora/malformed/json/leading_bom.json",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "bom",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/json/control_char.json",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "control-char",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/xml/mismatched_tag.xml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "not-well-formed",
+          "detail": "Error parsing input: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\nError: XML parse error at 1:14 - End tag </b> doesn't match start tag <a>\n"
+        },
+        {
+          "input": "corpora/malformed/xml/undefined_entity.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "undefined-entity",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/ragged_rows.csv",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "ragged-rows",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/csv/unclosed_quote.csv",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "unclosed-quote",
+          "detail": ""
+        },
+        {
+          "input": "corpora/malformed/yaml/tab_indent.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "tab-indent",
+          "detail": "Error parsing input: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, column 1:\n    \tchild: x\n    ^\n\nError: Failed to parse YAML: while scanning for the next token\nfound character '\\t(TAB)' that cannot start any token. (Do not use \\t(TAB) for indentation)\n in 'reader', line 2, c"
+        },
+        {
+          "input": "corpora/malformed/yaml/duplicate_key.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "duplicate-key",
+          "detail": "Error parsing input: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\nError: Failed to parse YAML: while constructing a mapping\n in 'reader', line 1, column 1:\n    id: 1\n    ^\nfound duplicate key id\n in 'reader', line 2, column 1:\n    id: 2\n    ^\n\n"
+        },
+        {
+          "input": "corpora/security/xml/doctype_entity.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "doctype",
+          "detail": ""
+        }
+      ]
+    }
+  }
+}
