@@ -45,6 +45,28 @@ depth bound at all** (strict wants it rejected at 64).
 > uncaught top-level exceptions as `error`, not `reject` — otherwise a crash is masked as a desirable
 > rejection (non-zero exit). This bug was initially hidden by that; the detection now surfaces it.
 
+## Measured crash depths (binary search — `scripts/find-crash-depth.py`)
+
+Binary-searching the depth at which each reader stops cleanly accepting (default JVM stack):
+
+| reader | deepest accepted | one level deeper | verdict |
+|---|---|---|---|
+| **JSON** | 5032 | 5033 | **CRASH** (`StackOverflowError`) — unbounded |
+| **XML**  | 3778 | 3779 | **CRASH** (`StackOverflowError`) — unbounded |
+| **YAML** | 50   | 51   | **clean reject** — already bounded ✓ |
+
+Two consequences:
+1. **JSON and XML are unbounded** — they recurse to a hard stack overflow (~5k / ~3.8k levels at the
+   default `-Xss`; the absolute number scales with stack size). This is the crash.
+2. **YAML already does the right thing** — a clean, bounded reject — so a **working model exists in this
+   same codebase** to copy. But YAML's limit (~50) is **inconsistent** with JSON/XML (unbounded) *and*
+   with the proposed `strict` `max_depth` of 64: YAML would reject a valid 51–64-deep document that
+   `strict` means to allow. So depth handling is both **missing** (JSON/XML) and **non-uniform** across
+   readers — the same cross-reader-consistency problem as B31.
+
+(`find-crash-depth.py` doubles as the **regression probe**: once a bound is added, JSON/XML should flip
+from `crash` to `reject` at the configured limit, and all readers should agree on it.)
+
 ## Impact
 
 - **DoS:** a small crafted input (100 KB here) crashes the parser process. On a **guard** this is both a
@@ -57,7 +79,12 @@ depth bound at all** (strict wants it rejected at 64).
   `max_depth` (`bounds.yaml`: strict 64 / lenient 256), **throw a structured, caught parse error**
   (clean `REJECT`) — do **not** recurse further.
 - The bound is the fix; catching `StackOverflowError` would be a band-aid (and unreliable).
-- Add `deep_nesting_100` + `deep_nesting_50000` as regressions (clean reject, **no crash**).
+- **YAML already implements exactly this** (bounded, clean reject at ~50 — see measured table): use it
+  as the in-repo reference, and **align every reader to the *same* profile `max_depth`** so the limit is
+  uniform (YAML's ~50 rises to the configured 64/256; JSON/XML gain a bound). Depth policy should be one
+  number per profile, enforced identically across readers (cf B31).
+- Add `deep_nesting_100` + `deep_nesting_50000` as regressions (clean reject, **no crash**); re-run
+  `scripts/find-crash-depth.py` — JSON/XML must flip `crash → reject`.
 
 **Bounds-config gap (do alongside):** `expectations/bounds.yaml` defines only `strict` and `lenient`
 profiles — there is **no `standard` row**. Bounds are the always-on axis for *every* profile; add a
