@@ -79,6 +79,7 @@ therefore supports `%utlx 1.1` out of the box; only the probabilistic `ai.*` of 
 2a. **[`validate.*` vocabulary coverage](./utlx-validate-vocabulary-coverage.md)** — completeness audit vs Schematron & FEEL; the Phase-2 design gate for the function set.
 3. **[Language versioning & validation](./utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model, packaging (UTLXe vs UTLXS), and engine-compatibility matrix.
 4. **[Build plan](./utlx-1_1-build-plan.md)** — the phased implementation roadmap (spike → foundation → functions → conformance → routing → tooling).
+5. **[Parser & serializer strictness profiles](../architecture/parser-strictness-profiles.md)** — the `lenient\|standard\|strict` parse/serialize posture; a deployment policy (locked `strict` for the guard), distinct from `validate.*`; drives the Phase-0 baseline (per profile) and hardening bar. *(lives in `architecture/` alongside `utlx-test-corpora.md`)*
 
 Testing for the 1.1 parsers/serializers and the `validate.*` layer is covered by
 [`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md); the de-risking spike by
