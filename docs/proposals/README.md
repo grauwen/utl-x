@@ -84,6 +84,11 @@ Testing for the 1.1 parsers/serializers and the `validate.*` layer is covered by
 [`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md); the de-risking spike by
 [`../architecture/validate-module-spike.md`](../architecture/validate-module-spike.md).
 
+**Interlink form-classes (split-guard transport):**
+- **[`udm-pos-v1` build plan](./udm-pos-v1-build-plan.md)** — foundation-first plan for the first bounded
+  binary form-class (position report) and the shared type library beneath it (elements → composites →
+  message forms) + the encode/verify toolchain. Spec: [`../hardware/interlink-protocol-v1.md`](../hardware/interlink-protocol-v1.md) §6 / §6.1 / §6.2.
+
 ## Proposal Process
 
 ### 1. Draft Phase

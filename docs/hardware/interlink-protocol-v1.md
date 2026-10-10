@@ -232,18 +232,129 @@ alert routing are B's local configuration (B's owner decides).
 - The same form-class definition is used by A's encoder and is the reference for B's
   verifier (HW9) — but B's verifier is implemented independently (principle 6).
 
+### 6.1 Two transport modes
+
+The payload format sets the **assurance tier**. Two modes are supported; **Mode 1 is the default.**
+Both are the same two-mapping, one-way, re-validate-on-B design (zero trust holds in both); they
+differ only in the *size of B's gate*, and therefore the assurance.
+
+- **Mode 1 — simple-form transport (default, high assurance).** The payload is a **bounded, per-type
+  BINF form-class** (the rows below). B's first gate is a **small, fixed-field verifier that runs in
+  hardware** (HW9), so what enters the protected domain has a minimal attack surface and is
+  independently *hardware-verifiable* (transform → verify). Cost: one BINF form-class must be defined
+  per message type, and A maps its output UDM into that form. **This is the only mode permitted for
+  high-assurance crossings.**
+- **Mode 2 — UDM transport (opt-in, lower assurance).** The payload is a **generic, bounded
+  serialisation of the UDM** (a canonical UDM encoding; `payload_format` 0x0200), so no per-type form
+  need be defined and A may carry an arbitrary-shaped output UDM. Trade-off: B must run a
+  **general-purpose UDM parser** — software only; it **cannot be hardware-verified**, because arbitrary
+  structure cannot be checked in fixed logic — a materially larger attack surface on the protected
+  side. B still bounds it (depth / size / node caps, per the guard parser profile) and still
+  re-applies its import policy, **but the assurance tier is lower.** Permit **only** where the threat
+  model allows a general parser on the receiver (intra-zone, same-owner, lower-differential, or
+  prototyping); **never for high-assurance crossings.**
+
+*Note on latency:* Mode 1 is usually also the **faster** mode — a fixed record verifies at line rate
+in the FPGA and parses with no branching, whereas a generic UDM stream is variable-size and
+software-only. **Do not** choose Mode 2 for throughput; choose it for *flexibility / less setup*, and
+accept the lower assurance.
+
 | `payload_format` | Simple form | Defined in | Notes |
 |---|---|---|---|
 | 0x0000 | none | — | Heartbeat only |
-| 0x0001 | *example:* track report (fixed binary) | `forms/track-report-v1` (BINF) | Bounded fields, no strings |
-| 0x0002 | *example:* AIS position report (canonical) | `forms/ais-pos-v1` (BINF) | Derived from AIS message types 1–3 |
-| 0x0100 | *example:* canonical JSON profile, bounded | `forms/json-bounded-v1` | Allowed only if B's verifier supports it; prefer binary simple forms |
+| 0x0001 | *example:* position report (fixed binary) | `forms/udm-pos-v1` (BINF) | **Mode 1.** Bounded fields, no strings |
+| 0x0002 | *example:* track report (fixed binary) | `forms/udm-track-v1` (BINF) | **Mode 1.** Bounded array of positions |
+| 0x0100 | *example:* canonical JSON profile, bounded | `forms/json-bounded-v1` | **Mode 1.** Allowed only if B's verifier supports it; prefer binary simple forms |
+| 0x0200 | UDM transport (generic canonical UDM) | `forms/udm-stream-v1` | **Mode 2 — lower assurance.** General parser on B, software-only verify, bounded by the guard profile; **not hardware-verifiable**; not for high-assurance crossings |
 
 (Entries are placeholders until the flows are agreed.)
 
-**Labels:** if the flow is labelled, the STANAG 4774 label travels inside the payload as a
+**Labels:** if the flow is labelled, the handling label travels inside the payload as a
 field of the simple form, and `label_digest` = SHA-256 of its canonical encoding. B
 recomputes and compares (HW8/SW2).
+
+### 6.2 Form-class type library — elements, composites and message forms
+
+A simple form such as `udm-pos-v1` is **not** written from scratch each time. Form-classes are
+built from a small, shared **type library**, exactly the way a trading floor keeps one dictionary
+of field, type and product definitions and composes each instrument's message from it. This keeps
+the forms consistent, cheap to add, and — importantly here — cheap to **verify in hardware**.
+
+**The three layers.** A form-class is composed, not invented:
+
+```
+ Elements     bounded primitives, defined once:
+              fixedpoint-lat, fixedpoint-lon, u32-bounded, utc-millis,
+              enum{…}, utf8(maxlen)                               ← the shared catalogue
+
+ Composites   reusable groups built from elements:
+              Position = { lat, lon, alt, t }     Identity = { id, kind }
+
+ Message      concrete, CLOSED compositions — one per payload_format:
+ forms        udm-pos-v1   = Identity + Position
+              udm-track-v1 = Identity + bounded-array<Position, N>
+```
+
+Each **message form** (the thing with a `payload_format` ID in §6) is a *fixed, closed*
+composition of composites; each composite is a fixed group of elements; each element is a bounded
+primitive. Nothing in a message form is open-ended.
+
+**The one rule that governs everything — share *definitions*, never *variability*.** There are two
+things people call "derive from a super-schema", and only one of them is safe on this link:
+
+| | What it means | Allowed on the interlink? |
+|---|---|---|
+| **Share definitions** (authoring-time reuse) | a message form *references* shared elements/composites; once composed it is a **fixed, closed** shape | ✅ yes — this is the whole point of the library |
+| **Share variability** (runtime polymorphism) | a "super form" carries a union / any-of / optional subset that the receiver resolves at runtime | ❌ no — a variable shape cannot be verified in fixed FPGA logic (HW9) |
+
+So the library is a set of definitions you *compile against*, not a runtime union a message *selects
+from*. Reuse happens when the forms are authored; every form on the wire is still one fixed shape.
+
+**Subsets and "lite" variants** follow directly: a smaller `udm-pos-lite-v1` that uses only some of
+`Position`'s fields is simply **another closed message form** composed from the same library, with
+its own `payload_format` ID and version. It is *not* `udm-pos-v1` sent with fields omitted — because
+optional/variable-length layout reintroduces the very variance HW9 cannot check, and it is
+ambiguous (is a missing field *absent* or *unknown*?). Where a field may or may not be present,
+make presence **explicit inside a fixed layout** (an always-present field with a defined
+null/sentinel), or split into two forms (`…-2d-v1` / `…-3d-v1`). **Optionality and variance are the
+enemy of hardware verification; push all variance into *which named form*, never into *the shape of
+a form*.**
+
+**Versioning.** Version the *composites*, and have each message form **pin** a composite version
+(`udm-pos-v1` embeds `Position-v1`). Changing `Position` → `Position-v2` then affects only the forms
+you deliberately re-cut; everything else is untouched. Adding or re-cutting a form is a
+configuration change under §10 (both owners sign), never a `version` bump of the frame itself.
+
+**Why this also shrinks the silicon.** Because `Position` is defined once and embedded by many
+message forms, B's verifier (HW9) implements **"verify a Position block" once** and reuses that
+logic across `udm-pos-v1`, `udm-track-v1`, and every other form that embeds it. The type library
+is not just an authoring convenience — shared composites become **shared verification primitives in
+gates**, so the hardware verifier stays small and composable as flows are added.
+
+**Prior art (this is a solved problem).** The pattern is proven exactly where low latency and fixed
+wire shapes meet:
+
+- **SBE (Simple Binary Encoding)** — the FIX community's low-latency encoding: a schema of shared
+  types/enums/composites compiled into **fixed-layout binary messages** for zero-copy / FPGA-friendly
+  decode. This is the closest match to what the interlink wants.
+- **ASN.1 modules + PER/UPER** — type modules composed into messages, packed into a compact binary
+  with a fixed layout. The other strong match.
+- **ISO 20022 / FpML** — excellent *modelling* discipline (one dictionary of components, messages
+  composed from it) but **self-describing on the wire** (XML, polymorphic). Keep their modelling
+  discipline; **do not** adopt their wire form here.
+- **FIX tag=value** — a shared dictionary but a variable, self-describing wire: a good example of
+  what the interlink must *not* look like.
+
+**Governance.** The type library and every message form are **write-once, human-authored,
+design-time artefacts**, reviewed and locked into both halves and into B's independent verifier
+(principle 6). Nothing is generated on the fly: an unprovisioned message type is rejected (`R_FORM`),
+or carried over the Mode-2 generic UDM stream (§6.1) at the lower assurance tier. Schema-from-samples
+(UTL-X Infer, `%utlx 2.0`) may *draft* a form in developer tooling, but the output is reviewed,
+corrected and locked by a human before it is provisioned — never a runtime function of the guard.
+
+> **In one line:** one shared catalogue of bounded *elements* and reusable *composites*, and N thin,
+> closed, versioned *message forms* composed from it (SBE / ASN.1-style). Reuse at authoring time;
+> every form on the wire is a fixed, hardware-verifiable shape.
 
 ---
 
