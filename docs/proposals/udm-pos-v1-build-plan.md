@@ -37,6 +37,31 @@ Build the ground the library stands on, and prove the **whole chain works on one
 before the real position form exists. This is not a detour: the harness and toolchain built here are what
 every later form reuses.
 
+### The UDM meta-model as type reference — `udm-pos-v1` is a *bounded projection*, not a grammar
+
+There is already an ANTLR grammar for UDM — `modules/core/src/main/antlr4/com/glomidco/utlx/core/udm/UDMLang.g4`
+— the **text serialization of the *generic* UDM value model**: a recursive `udmValue` =
+`scalar | array | object | dateTime | date | localDateTime | time | binary | lambda` (with explicit
+`@Scalar<Number>(…)`/`@Array[…]`/`@Object(…){…}` and shorthand forms). It is the **meta-model** (all
+possible UDM), unbounded and recursive. Use it two ways — and not a third:
+
+- **✅ Type-fidelity reference (0b).** It is the authoritative list of *what UDM types exist and how they
+  compose*. The element catalogue must map **1:1 onto those types** so the form encodes the output UDM
+  **losslessly** (the round-trip invariant below): `fixedpoint-lat` ← bounded `Number`, `utc-millis` ←
+  bounded `DateTime`, `utf8(maxlen)` ← `String`, etc.
+- **✅ Basis for the Mode-2 generic stream.** `UDMLang.g4` + a strict error strategy *is* essentially the
+  recognizer for the ICD's **Mode-2 "generic UDM stream"** (any-shape UDM, unbounded, software-only verify).
+- **❌ Not a template/generator for `udm-pos-v1`.** You do **not** transcribe the grammar into the form.
+  The form-class is a **bounded projection** of the meta-model: **pin every `udmValue` choice point, bound
+  every repetition and string length, exclude `lambda` (functions are never transportable data), and
+  binary-encode.** That collapse to one fixed, closed shape is the **Mode-1** specialization — the "simplest
+  possible language at the boundary" (LANGSEC), and the reason it is hardware-verifiable. The text grammar
+  says nothing about endianness/fixed-point/packing (0a's job) and nothing about *which* fields a position
+  has (Phase 1's job).
+
+> In one line: **the generic UDM grammar → Mode 2; a bounded per-type projection of it → Mode 1 (`udm-pos-v1`).**
+> Reference `UDMLang.g4` for the type alphabet; author the form in a binary schema (BINF/SBE/ASN.1, 0a) — **not** in ANTLR.
+
 - **0a — Form-class definition language + encoding-rules doc.** The single biggest prerequisite. Fix *how*
   forms are described and encoded before writing any: notation (**BINF** vs an ASN.1-/SBE-style schema —
   see §6.2 prior art), endianness (**match the frame: big-endian**), alignment/packing, fixed-point
