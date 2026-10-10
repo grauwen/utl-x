@@ -21,6 +21,7 @@ import com.glomidco.utlx.daemon.CommandResult
 import com.glomidco.utlx.daemon.ParentWatchdog
 import com.glomidco.utlx.daemon.config.DaemonConfig
 import com.glomidco.utlx.daemon.mcp.*
+import com.glomidco.utlx.daemon.rest.BundleWorkspace
 import com.glomidco.utlx.daemon.session.SessionManager
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -50,6 +51,11 @@ object StartCommand {
             // active for the whole lifetime. Parsed separately so it never leaks
             // into DaemonConfig overrides.
             parseParentPid(args)?.let { pid -> ParentWatchdog.start(pid) }
+
+            // IF19: --workspace points utlxd's Bundle Management API at its config/bundle store.
+            // Parsed separately (like --parent-pid) so it never leaks into DaemonConfig overrides.
+            // CLI flag takes precedence over UTLX_WORKSPACE / -Dutlx.workspace (see BundleWorkspace).
+            parseWorkspace(args)?.let { ws -> BundleWorkspace.cliOverride = ws }
 
             // Load configuration with CLI overrides
             val config = DaemonConfig.load(
@@ -503,6 +509,13 @@ object StartCommand {
         return if (idx >= 0 && idx + 1 < args.size) args[idx + 1].toLongOrNull() else null
     }
 
+    /** IF19: extract `--workspace <dir>`, or null if absent. Parsed outside the options map
+     *  (like --parent-pid) so it never reaches DaemonConfig overrides; feeds BundleWorkspace. */
+    private fun parseWorkspace(args: Array<String>): String? {
+        val idx = args.indexOf("--workspace")
+        return if (idx >= 0 && idx + 1 < args.size) args[idx + 1] else null
+    }
+
     /**
      * Build configuration overrides from CLI options
      */
@@ -528,6 +541,9 @@ object StartCommand {
             |  --lsp-port PORT         LSP socket port (default: 7777, ignored if --lsp-transport stdio)
             |  --lsp-transport TYPE    LSP transport: stdio|socket (default: socket)
             |
+            |  --workspace DIR         Bundle/config store for the Bundle Management API.
+            |                          Overrides UTLX_WORKSPACE / -Dutlx.workspace. Without any
+            |                          of these, /api/bundle/* answers 503 (never defaults to cwd).
             |  --log-level LEVEL       Logging level: DEBUG|INFO|WARN|ERROR (default: INFO)
             |  --config PATH           Configuration file path
             |  --help, -h              Show this help message

@@ -1,7 +1,7 @@
 package com.glomidco.utlx.engine.admin
 
+import com.glomidco.utlx.bundle.BundleStore
 import org.slf4j.LoggerFactory
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ConcurrentHashMap
 
@@ -9,11 +9,18 @@ import java.util.concurrent.ConcurrentHashMap
  * EF02: In-memory schema store with optional disk persistence.
  * Schemas are shared resources — referenced by multiple transformations.
  * Stored separately from transformations in {dataDir}/schemas/.
+ *
+ * IF19: disk persistence now goes through the shared [BundleStore] (modules/bundle), so utlxe and
+ * utlxd write the identical `schemas/` layout through the same code (and share its path-traversal
+ * guard). The in-memory cache is retained for fast runtime validation lookups.
  */
 class SchemaStore(private val dataDirPath: Path? = null) {
 
     private val logger = LoggerFactory.getLogger(SchemaStore::class.java)
     private val schemas = ConcurrentHashMap<String, SchemaEntry>()
+
+    /** Shared file layer; null when no data dir is configured (in-memory only). */
+    private val bundle: BundleStore? = dataDirPath?.let { BundleStore(it.toFile()) }
 
     data class SchemaEntry(
         val filename: String,
@@ -23,12 +30,10 @@ class SchemaStore(private val dataDirPath: Path? = null) {
 
     fun put(filename: String, content: ByteArray) {
         schemas[filename] = SchemaEntry(filename, content)
-        // Persist to disk
-        if (dataDirPath != null) {
+        // Persist to disk via the shared bundle layer
+        if (bundle != null) {
             try {
-                val schemasDir = dataDirPath.resolve("schemas")
-                Files.createDirectories(schemasDir)
-                Files.write(schemasDir.resolve(filename), content)
+                bundle.putSchemaBytes(filename, content)
                 logger.debug("Schema '{}' persisted to disk", filename)
             } catch (e: Exception) {
                 logger.warn("Failed to persist schema '{}': {}", filename, e.message)
@@ -44,9 +49,9 @@ class SchemaStore(private val dataDirPath: Path? = null) {
 
     fun remove(filename: String): Boolean {
         val removed = schemas.remove(filename) != null
-        if (removed && dataDirPath != null) {
+        if (removed && bundle != null) {
             try {
-                Files.deleteIfExists(dataDirPath.resolve("schemas").resolve(filename))
+                bundle.deleteSchema(filename)
             } catch (e: Exception) {
                 logger.warn("Failed to delete schema '{}' from disk: {}", filename, e.message)
             }
@@ -57,33 +62,26 @@ class SchemaStore(private val dataDirPath: Path? = null) {
     fun clear() {
         val names = schemas.keys.toList()
         schemas.clear()
-        if (dataDirPath != null) {
+        if (bundle != null) {
             names.forEach { name ->
                 try {
-                    Files.deleteIfExists(dataDirPath.resolve("schemas").resolve(name))
+                    bundle.deleteSchema(name)
                 } catch (_: Exception) {}
             }
         }
     }
 
-    /** Scan disk for previously persisted schemas and load into memory. */
+    /** Scan disk for previously persisted schemas and load into memory (via the shared bundle layer). */
     fun scanFromDisk() {
-        if (dataDirPath == null) return
-        val schemasDir = dataDirPath.resolve("schemas")
-        if (!Files.exists(schemasDir) || !Files.isDirectory(schemasDir)) return
-
+        val b = bundle ?: return
         var loaded = 0
-        Files.list(schemasDir).use { stream ->
-            stream.filter { Files.isRegularFile(it) }
-                .forEach { file ->
-                    val filename = file.fileName.toString()
-                    val content = Files.readAllBytes(file)
-                    schemas[filename] = SchemaEntry(filename, content)
-                    loaded++
-                }
+        for (schema in b.listSchemas()) {
+            val content = b.getSchemaBytes(schema.name) ?: continue
+            schemas[schema.name] = SchemaEntry(schema.name, content)
+            loaded++
         }
         if (loaded > 0) {
-            logger.info("Loaded {} schema(s) from {}", loaded, schemasDir)
+            logger.info("Loaded {} schema(s) from {}/schemas", loaded, dataDirPath)
         }
     }
 }

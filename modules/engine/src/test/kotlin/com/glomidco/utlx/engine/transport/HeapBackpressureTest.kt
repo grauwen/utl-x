@@ -88,14 +88,17 @@ class HeapBackpressureTest {
 
     @Test
     fun `heap monitor thread stops on engine shutdown`() {
-        val heapThread = Thread.getAllStackTraces().keys.find { it.name == "heap-monitor" }
-        assertTrue(heapThread != null && heapThread.isAlive, "heap-monitor thread should be running")
+        // Bind THIS engine's OWN monitor thread by reflection — the real flake source was the
+        // global name lookup (Thread.getAllStackTraces().find { it.name == "heap-monitor" }):
+        // under full-suite load many UtlxEngine instances each spawn an identically-named
+        // "heap-monitor" thread, so the lookup could pick a *different* engine's thread — one that
+        // this engine.stop() never interrupts — making join()/isAlive fail intermittently.
+        val heapField = engine.javaClass.getDeclaredField("heapMonitor").apply { isAccessible = true }
+        val heapThread = heapField.get(engine) as Thread
+        assertTrue(heapThread.isAlive, "heap-monitor thread should be running")
 
         engine.stop()
-        // Wait (up to a generous ceiling) for the interrupt to propagate. join() returns as soon as
-        // the thread dies, so this is fast in the common case but not flaky under full-suite load —
-        // a fixed Thread.sleep(300) intermittently fired before the monitor's poll loop noticed stop().
-        heapThread!!.join(5000)
+        heapThread.join(5000) // join() returns the instant the thread dies — fast, and now unambiguous
 
         assertFalse(heapThread.isAlive, "heap-monitor thread should have stopped after engine.stop()")
     }

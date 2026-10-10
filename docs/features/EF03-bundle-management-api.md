@@ -1,8 +1,10 @@
 # EF03: Bundle Management API
 
-> **See also:** **[IF19](IF19-shared-bundle-api-and-management-ui.md)** proposes extracting a
-> *shared, file-level* bundle layer that this API would be refactored onto, so **utlxd** (the IDE
-> daemon) and utlxe stay in lockstep. Today EF03 is engine-coupled (manages the live registry).
+> **See also:** **[IF19](IF19-shared-bundle-api-and-management-ui.md)** — EF03's **file persistence
+> is now refactored onto the shared `modules/bundle` layer** (July 2026, `feature/utlxd-bundle-api`):
+> `AdminEndpoint`'s transformation deploy/delete and `SchemaStore` write through the same
+> `BundleStore` that **utlxd** uses, so the two stay in lockstep (identical layout + path-traversal
+> guard). EF03 keeps its engine-coupled *runtime* concerns — compile → live registry, locked mode, Dapr.
 >
 > **Canonical bundle format:** the on-disk layout, naming rules, and structure are specified in
 > **[Bundle Format](../architecture/bundle-format.md)**. This doc owns the **REST management API**

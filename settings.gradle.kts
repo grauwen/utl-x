@@ -36,6 +36,7 @@ include("modules:cli")
 include("modules:analysis")
 include("modules:daemon")  // UTLXD - unified daemon with LSP + REST API + CLI
 include("modules:engine")  // UTLXE - production runtime engine
+include("modules:bundle")  // Shared file-level Bundle Management layer (IF19) — used by utlxd, later utlxe/EF03
 
 
 // Format parsers/serializers
