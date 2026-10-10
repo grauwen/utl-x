@@ -73,6 +73,12 @@ is finalised during Phase 0.)
 Note the one rule that holds across **every** profile: **external entity resolution (XXE) is always
 off** — that's a hard security floor, not a strictness dial.
 
+> **Spec ↔ conformance.** This matrix is the *spec*; the corpus is its proof. Every per-profile cell is
+> encoded as **profile-keyed expectations** in `utlx-test-corpora.md` §5.7
+> (`expectations/profiles/{strict,lenient}` + `known-deviations.yaml`) — the **same input, a different
+> expected verdict per profile**. Change a cell here ⇒ change its expected corpus verdicts there; a
+> corpus case that no cell covers ⇒ an unspecified policy decision to add here.
+
 ## 5. Policy model — the security-critical part
 
 > Strictness is a **policy set by the deployment/operator**. On a guard it is **locked to `strict`**

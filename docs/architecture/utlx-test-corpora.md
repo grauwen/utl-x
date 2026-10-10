@@ -279,6 +279,13 @@ The strategy above is not novel — it is how XSLT, the most widely deployed tra
 > `utlx-language-versioning-validation.md` §3 ("Where `validate.*` runs"). The two
 > worries cancel: the per-format work here is not 1.1; 1.1 is not per-format.
 
+> **Spec ↔ conformance.** The *policy* these tests encode is the profile matrix in
+> `parser-strictness-profiles.md` §4 (`lenient|standard|strict`). That matrix is the **spec**; this
+> section plus `expectations/profiles/{strict,lenient}` is its **executable conformance** — the **same
+> input, a different expected verdict per profile**. A toggle change there moves the expected verdicts
+> here; a corpus case no profile covers exposes a policy gap to fill there. So the baseline (Phase 0b)
+> is measured **per profile**, not as one number.
+
 Most tests target well-formed input, but a large share of real-world messages are *not* strictly well-formed, and they still have to be handled. The handling is often misframed as one spectrum ("the more broken, the more we reject"). It is really **three independent axes**, and separating them is the whole design:
 
 | Axis | Question | Example |
