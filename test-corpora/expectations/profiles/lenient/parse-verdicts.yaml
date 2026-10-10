@@ -27,3 +27,7 @@ cases:
   - { input: corpora/malformed/yaml/duplicate_key.yaml,  verdict: accept }   # last-wins
   # security floor — reject even in lenient (not a leniency dial)
   - { input: corpora/security/xml/doctype_entity.xml,    verdict: reject, reason: doctype }
+  # ── resource bounds (lenient = wider; bounds.yaml max_depth 256) ──
+  - { input: corpora/security/json/deep_nesting_100.json,   verdict: accept }                      # depth 100 < 256
+  - { input: corpora/security/json/deep_nesting_50000.json, verdict: reject, reason: dos-depth }   # > 256; must reject cleanly, NOT crash
+  - { input: corpora/security/xml/billion_laughs.xml,       verdict: reject, reason: entity-expansion }

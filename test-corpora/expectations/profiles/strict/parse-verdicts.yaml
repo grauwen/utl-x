@@ -27,3 +27,7 @@ cases:
   - { input: corpora/malformed/yaml/duplicate_key.yaml,  verdict: reject, reason: duplicate-key }
   # ── security floor (reject in EVERY profile) ──
   - { input: corpora/security/xml/doctype_entity.xml,    verdict: reject, reason: doctype }  # B29
+  # ── resource bounds (strict = tightest; expectations/bounds.yaml max_depth 64) ──
+  - { input: corpora/security/json/deep_nesting_100.json,   verdict: reject, reason: max-depth }   # depth 100 > 64
+  - { input: corpora/security/json/deep_nesting_50000.json, verdict: reject, reason: max-depth }   # DoS; must reject cleanly, NOT crash
+  - { input: corpora/security/xml/billion_laughs.xml,       verdict: reject, reason: entity-expansion }

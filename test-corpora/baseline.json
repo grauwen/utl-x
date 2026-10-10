@@ -3,10 +3,10 @@
   "cli": "/Users/magr/data/mapping/github-git/utl-x/utlx",
   "profiles": {
     "lenient": {
-      "total": 19,
-      "match": 13,
-      "mismatch": 6,
-      "errors": 0,
+      "total": 22,
+      "match": 14,
+      "mismatch": 8,
+      "errors": 1,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -159,14 +159,38 @@
           "match": false,
           "reason": "doctype",
           "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_100.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_50000.json",
+          "expected": "reject",
+          "actual": "error",
+          "match": false,
+          "reason": "dos-depth",
+          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+        },
+        {
+          "input": "corpora/security/xml/billion_laughs.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "entity-expansion",
+          "detail": ""
         }
       ]
     },
     "standard": {
-      "total": 19,
-      "match": 15,
-      "mismatch": 4,
-      "errors": 0,
+      "total": 22,
+      "match": 16,
+      "mismatch": 6,
+      "errors": 1,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -319,14 +343,38 @@
           "match": false,
           "reason": "doctype",
           "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_100.json",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_50000.json",
+          "expected": "reject",
+          "actual": "error",
+          "match": false,
+          "reason": "dos-depth",
+          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+        },
+        {
+          "input": "corpora/security/xml/billion_laughs.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "entity-expansion",
+          "detail": ""
         }
       ]
     },
     "strict": {
-      "total": 19,
+      "total": 22,
       "match": 12,
-      "mismatch": 7,
-      "errors": 0,
+      "mismatch": 10,
+      "errors": 1,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -478,6 +526,30 @@
           "actual": "accept",
           "match": false,
           "reason": "doctype",
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_100.json",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "max-depth",
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/json/deep_nesting_50000.json",
+          "expected": "reject",
+          "actual": "error",
+          "match": false,
+          "reason": "max-depth",
+          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+        },
+        {
+          "input": "corpora/security/xml/billion_laughs.xml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "entity-expansion",
           "detail": ""
         }
       ]

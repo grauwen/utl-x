@@ -102,7 +102,14 @@ def probe(cli, input_path, fmt, timeout_s):
             cli + [script_path, str(input_path)],
             capture_output=True, text=True, timeout=timeout_s,
         )
-        return (ACCEPT, "") if r.returncode == 0 else (REJECT, (r.stderr or r.stdout)[:400])
+        if r.returncode == 0:
+            return (ACCEPT, "")
+        err = r.stderr or r.stdout or ""
+        # A CRASH (uncaught Error) is NOT a clean reject — it's a robustness failure. A StackOverflow /
+        # OOM / uncaught top-level exception on deep or abusive input is a DoS the guard must not have.
+        if any(m in err for m in ("StackOverflowError", "OutOfMemoryError", 'Exception in thread "main"')):
+            return (ERROR, "crash: " + err.strip().splitlines()[0][:160])
+        return (REJECT, err[:400])
     except subprocess.TimeoutExpired:
         return (ERROR, f"timeout>{timeout_s}s")
     except Exception as e:  # crash / OSError
