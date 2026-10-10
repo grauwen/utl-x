@@ -1,30 +1,66 @@
 # bounds.yaml — resource limits per parser profile (§5.7).
-# Bounds are the ALWAYS-ON axis that cuts off abuse; they are orthogonal to the grammar check
-# and fire on well-formed input too (billion-laughs, deep nesting, huge values).
-# Exceeding a bound must terminate early with a structured error — never crash, hang, or OOM.
 #
-# The strict (guard) profile is tighter and fail-closed; the lenient (mapper) profile is wider
-# but still bounded. Values are indicative starting points — tune per deployment.
+# Bounds are the ALWAYS-ON axis that cuts off abuse; they are ORTHOGONAL to the grammar/leniency
+# check and fire on well-formed input too (billion-laughs, deep nesting, huge values). Exceeding a
+# bound must terminate early with a STRUCTURED ERROR — never crash, hang, or OOM (cf B32).
+#
+# ── These numbers are INDICATIVE, not a standard ──────────────────────────────────────────────
+# No standard mandates a depth/size limit:
+#   • JSON RFC 8259 §9 explicitly PERMITS depth limits but specifies no number.
+#   • W3C XML sets none; OWASP says only "set a reasonable limit".
+# Real-world anchors: .NET System.Text.Json default max depth = 64; Jackson (≥2.15) ≈ 1000;
+# JAXP maxElementDepth defaults to 0 (UNLIMITED — a cautionary gap); SnakeYAML nestingDepthLimit = 50.
+# → tune per deployment; keep finite; never default to unlimited.
+#
+# ── DEPTH ⟂ MEMORY: different resources — bound BOTH ──────────────────────────────────────────
+#   • max_depth  → the thread STACK (-Xss). PER-THREAD, so independent of concurrency (each flow is
+#                  its own thread with its own stack). Concurrency does NOT lower the depth ceiling.
+#   • max_bytes / max_nodes / max_array_length / max_string_length → the HEAP (-Xmx). SHARED across
+#                  concurrent flows → size these AGAINST CONCURRENCY: concurrency × max_bytes must fit
+#                  comfortably in -Xmx (effective per-flow budget ≈ -Xmx / concurrency).
+#
+# ── DEPTH MARGIN (why max_depth stays small) ─────────────────────────────────────────────────
+# Measured stack-overflow depth at the DEFAULT -Xss (2 MB): ~5032 (JSON) / ~3778 (XML) — see B32 and
+# scripts/find-crash-depth.py. Keep max_depth COMFORTABLY below the shallowest crasher (XML ~3778):
+# strict 64 ≈ 59× margin, standard 128 ≈ 30×, lenient 256 ≈ 15×. Do NOT push max_depth toward ~1000
+# unless you also raise -Xss (only ~3.8× margin at 2 MB). max_depth, -Xss, -Xmx and the concurrency
+# cap are ONE budget: a tighter max_depth lets you run a smaller -Xss → more concurrent flows fit
+# (N_threads × -Xss must fit RAM: 2 MB × 1000 flows = 2 GB of stacks alone — cap concurrency).
+#
+# POLICY: set by the deployment; LOCKED on a guard (like the strictness profile — see
+# parser-strictness-profiles.md §5). The three profiles below are a convenient default coupling of
+# bounds to the grammar profile; bounds may also be configured independently (they are orthogonal).
 
 profiles:
-  strict:          # guard / security — reject on ambiguity, fail-closed
-    max_depth:            64
-    max_bytes:            1048576        # 1 MiB
+  strict:          # guard / security — reject on ambiguity, fail-closed; many bounded flows
+    max_depth:            64               # ~59× below the XML ~3778 crash @ 2 MB stack
+    max_bytes:            1048576          # 1 MiB
     max_nodes:            100000
     max_string_length:    65536
     max_array_length:     100000
-    max_entity_expansion: 1              # XML: effectively no expansion
-    external_entities:    false          # XXE off
+    max_entity_expansion: 1                # XML: effectively no expansion
+    external_entities:    false            # XXE off (hard floor — all profiles)
     parse_timeout_ms:     1000
     max_memory_mb:        64
 
+  standard:        # pragmatic default (general mapping) — spec-compliant, mid bounds
+    max_depth:            128              # ~30× below the XML ~3778 crash @ 2 MB stack
+    max_bytes:            8388608          # 8 MiB
+    max_nodes:            1000000
+    max_string_length:    1048576          # 1 MiB
+    max_array_length:     1000000
+    max_entity_expansion: 64
+    external_entities:    false            # hard floor
+    parse_timeout_ms:     5000
+    max_memory_mb:        256
+
   lenient:         # mapper / integration — recover benign malformation, still bounded
-    max_depth:            256
-    max_bytes:            67108864        # 64 MiB
+    max_depth:            256              # ~15× below the XML ~3778 crash @ 2 MB stack
+    max_bytes:            67108864         # 64 MiB
     max_nodes:            5000000
     max_string_length:    16777216
     max_array_length:     5000000
     max_entity_expansion: 1024
-    external_entities:    false
+    external_entities:    false            # hard floor
     parse_timeout_ms:     30000
     max_memory_mb:        1024
