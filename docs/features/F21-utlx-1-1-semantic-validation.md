@@ -45,11 +45,11 @@ base 1.1. See *Scope* below.
 
 ## Design (do not duplicate — see proposals)
 
-- Spec: [`../proposals/utlx-1_1-semantic-validation.md`](../proposals/utlx-1_1-semantic-validation.md)
-- Naming + two-tier vocabulary: [`../proposals/utlx-validate-naming-and-guard-profile.md`](../proposals/utlx-validate-naming-and-guard-profile.md)
-- Vocabulary coverage (vs Schematron & FEEL): [`../proposals/utlx-validate-vocabulary-coverage.md`](../proposals/utlx-validate-vocabulary-coverage.md)
-- Versioning / packaging (UTLXe vs UTLXS, the version gate): [`../proposals/utlx-language-versioning-validation.md`](../proposals/utlx-language-versioning-validation.md) §2.1/§3
-- Build plan (phases): [`../proposals/utlx-1_1-build-plan.md`](../proposals/utlx-1_1-build-plan.md)
+- Spec: [`../architecture/utlx-1_1-semantic-validation.md`](../architecture/utlx-1_1-semantic-validation.md)
+- Naming + two-tier vocabulary: [`../architecture/utlx-validate-naming-and-guard-profile.md`](../architecture/utlx-validate-naming-and-guard-profile.md)
+- Vocabulary coverage (vs Schematron & FEEL): [`../architecture/utlx-validate-vocabulary-coverage.md`](../architecture/utlx-validate-vocabulary-coverage.md)
+- Versioning / packaging (UTLXe vs UTLXS, the version gate): [`../architecture/utlx-language-versioning-validation.md`](../architecture/utlx-language-versioning-validation.md) §2.1/§3
+- Build plan (phases): [`../architecture/utlx-1_1-build-plan.md`](../architecture/utlx-1_1-build-plan.md)
 - Testing: [`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md); spike: [`../architecture/validate-module-spike.md`](../architecture/validate-module-spike.md)
 
 ## Packaging

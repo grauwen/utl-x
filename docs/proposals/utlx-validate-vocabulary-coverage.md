@@ -5,7 +5,7 @@
 | Document | utlx-validate-vocabulary-coverage |
 | Status | Analysis — a design gate for the `%utlx 1.1` Phase-2 function set |
 | Purpose | Use **Schematron** and **FEEL** (two mature, battle-tested predicate languages) as a *completeness yardstick* for the `validate.*` vocabulary — not to build a translator, but to make the vocabulary complete-by-construction |
-| Related | `utlx-1_1-semantic-validation.md`, `utlx-validate-naming-and-guard-profile.md`, `utlx-1_1-build-plan.md` (Phase 2), `docs/architecture/utlx-test-corpora.md` (§5.5, §5.6) |
+| Related | `utlx-1_1-semantic-validation.md`, `utlx-validate-naming-and-guard-profile.md`, `utlx-1_1-build-plan.md` (Phase 2), `utlx-test-corpora.md` (§5.5, §5.6) |
 
 > **Why this exists.** The question "is our `validate.*` vocabulary rich enough?" is best answered by
 > checking it against languages that already solved this: Schematron (ISO/IEC 19757-3, XPath asserts

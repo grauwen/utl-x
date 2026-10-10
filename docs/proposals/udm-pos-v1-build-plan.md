@@ -6,7 +6,7 @@
 | Status | Plan — **foundation-first, one vertical slice before the real form**; see Phase 0 |
 | Scope | Build the first bounded binary **form-class** for the split-guard interlink (`udm-pos-v1`, a position report) **and** the shared type library it rests on (elements → composites → message forms) + the encode/verify toolchain |
 | Spec | `../hardware/interlink-protocol-v1.md` §6 (canonical simple forms), **§6.1** (two transport modes) and **§6.2** (form-class type library — elements/composites/message forms, the share-definitions-not-variability rule) |
-| Related | `../architecture/utlx-test-corpora.md` (§5.5, §5.7 — golden vectors, malformed); `utlx-1_1-build-plan.md` (the foundation-first pattern this mirrors); `../architecture/civilian-guard.md` (what crosses the link). *Defence deployments:* the bit-level **BINF** form notation and the content-guard detail live in the separately-governed `utlx-mil` repo. |
+| Related | `../architecture/utlx-test-corpora.md` (§5.5, §5.7 — golden vectors, malformed); `../architecture/utlx-1_1-build-plan.md` (the foundation-first pattern this mirrors); `../architecture/civilian-guard.md` (what crosses the link). *Defence deployments:* the bit-level **BINF** form notation and the content-guard detail live in the separately-governed `utlx-mil` repo. |
 
 > **The one reframing:** `udm-pos-v1` is the **last** thing built, not the first. It sits on a shared
 > element catalogue, two composites, an encoding spec, and a tool that can encode **and** independently

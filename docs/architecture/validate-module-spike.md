@@ -5,7 +5,7 @@
 | Document | validate-module-spike |
 | Status | Proposed spike (~half a day) |
 | Purpose | Settle three things the architecture decisions *can't eyeball*, before building `%utlx 1.1` for real |
-| Related | `docs/proposals/utlx-language-versioning-validation.md` §2.1, §3; `docs/architecture/utlx-test-corpora.md` §5.5, §5.7 |
+| Related | `utlx-language-versioning-validation.md` §2.1, §3; `docs/architecture/utlx-test-corpora.md` §5.5, §5.7 |
 
 > **What this spike is *not* for.** The **module boundary is already decided**: `validate.*` is its own
 > module (`:validate`), separate from core stdlib, so UTLXe can pack with/without it (`:core ↛ :validate`).

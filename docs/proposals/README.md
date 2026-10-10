@@ -63,7 +63,7 @@ COBOL copybook (or inline layout) as schema — including **EBCDIC + packed/zone
 Closes the DataWeave "Flat File (fixed-width, positional)" gap and Open-M inventory #161. Proposed by
 the Open-M peer project.
 
-### [UTL-X 1.1 — Semantic Validation (`validate.*`)](./utlx-1_1-semantic-validation.md)
+### [UTL-X 1.1 — Semantic Validation (`validate.*`)](../architecture/utlx-1_1-semantic-validation.md)
 
 **Status:** Proposal · **Target Version:** v1.1 (`%utlx 1.1`) · **Type:** Additive (minor version)
 
@@ -73,12 +73,12 @@ core language and lives in this repo, alongside 1.0** (the `utl-x-infer` engine 
 therefore supports `%utlx 1.1` out of the box; only the probabilistic `ai.*` of 2.0 lives in
 `utl-x-infer`).
 
-**Key documents (this directory):**
-1. **[Semantic validation spec](./utlx-1_1-semantic-validation.md)** — the `validate.*` namespace and `ValidationResult`.
-2. **[`validate.*` naming & guard profile](./utlx-validate-naming-and-guard-profile.md)** — descriptive camelCase convention + the two-tier (core / guard-profile) vocabulary.
-2a. **[`validate.*` vocabulary coverage](./utlx-validate-vocabulary-coverage.md)** — completeness audit vs Schematron & FEEL; the Phase-2 design gate for the function set.
-3. **[Language versioning & validation](./utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model, packaging (UTLXe vs UTLXS), and engine-compatibility matrix.
-4. **[Build plan](./utlx-1_1-build-plan.md)** — the phased implementation roadmap (spike → foundation → functions → conformance → routing → tooling).
+**Key documents** (the 1.1 design set now lives in [`../architecture/`](../architecture/)):
+1. **[Semantic validation spec](../architecture/utlx-1_1-semantic-validation.md)** — the `validate.*` namespace and `ValidationResult`.
+2. **[`validate.*` naming & guard profile](../architecture/utlx-validate-naming-and-guard-profile.md)** — descriptive camelCase convention + the two-tier (core / guard-profile) vocabulary.
+2a. **[`validate.*` vocabulary coverage](../architecture/utlx-validate-vocabulary-coverage.md)** — completeness audit vs Schematron & FEEL; the Phase-2 design gate for the function set.
+3. **[Language versioning & validation](../architecture/utlx-language-versioning-validation.md)** — the 1.0 / 1.1 / 2.0 version model, packaging (UTLXe vs UTLXS), and engine-compatibility matrix.
+4. **[Build plan](../architecture/utlx-1_1-build-plan.md)** — the phased implementation roadmap (spike → foundation → functions → conformance → routing → tooling).
 5. **[Parser & serializer strictness profiles](../architecture/parser-strictness-profiles.md)** — the `lenient\|standard\|strict` parse/serialize posture; a deployment policy (locked `strict` for the guard), distinct from `validate.*`; drives the Phase-0 baseline (per profile) and hardening bar. *(lives in `architecture/` alongside `utlx-test-corpora.md`)*
 
 Testing for the 1.1 parsers/serializers and the `validate.*` layer is covered by

@@ -12,7 +12,7 @@ sourced references._
   [`utlx-mil/docs/guard-rule-library.md`], [the seven `validate.*` rule categories + OWASP coverage map],
   [`utlx-mil/docs/guard-parser-profile.md`], [the hardened read profile + canonical low-fidelity serializer],
   [`utlx-mil/docs/BINF-bit-level-binary-format.md`], [the form-class / bit-level codec],
-  [`utl-x/docs/proposals/utlx-1_1-semantic-validation.md`], [the 1.1 `validate.*` namespace and `ValidationResult`],
+  [`utl-x/docs/architecture/utlx-1_1-semantic-validation.md`], [the 1.1 `validate.*` namespace and `ValidationResult`],
   [`utl-x/docs/architecture/utlx-test-corpora.md`], [the test doctrine for hardening the parsers and serializers],
 )
 

@@ -5,7 +5,7 @@
 | Document | parser-strictness-profiles |
 | Status | Proposal — draft (design); sibling to `%utlx 1.1`, feeds Phase 0 hardening |
 | Scope | A **named strictness profile** (`lenient \| standard \| strict`) that governs how tolerant each **parser** is of imperfect input, and how canonical each **serializer** is on output. Profile is a **deployment policy**, not language syntax or data; for a content guard it is pinned to `strict` and **locked**. |
-| Related | `../proposals/utlx-1_1-build-plan.md` (Phase 0b baseline, 0c hardening-to-a-bar); `utlx-test-corpora.md` (§5.7 malformed/leniency; `expectations/profiles/{strict,lenient}`); `../proposals/utlx-language-versioning-validation.md` §3 (parse-time hardening vs semantic validation); `../proposals/utlx-1_1-semantic-validation.md` (`validate.*`); `civilian-guard.md` (fail-closed, rebuild-clean / no pass-through) |
+| Related | `utlx-1_1-build-plan.md` (Phase 0b baseline, 0c hardening-to-a-bar); `utlx-test-corpora.md` (§5.7 malformed/leniency; `expectations/profiles/{strict,lenient}`); `utlx-language-versioning-validation.md` §3 (parse-time hardening vs semantic validation); `utlx-1_1-semantic-validation.md` (`validate.*`); `civilian-guard.md` (fail-closed, rebuild-clean / no pass-through) |
 
 > **One line:** one engine, three parse/serialize postures. A general mapping deployment needs to be
 > *liberal* in what it accepts (real-world interop); a guard needs to be *maximally strict and

@@ -16,9 +16,9 @@ are indicative; verify each against its primary source._
 
 #table(
   columns: (auto, 1fr),
-  [`utl-x/docs/proposals/utlx-1_1-semantic-validation.md`], [the UTL-X 1.1 `validate.*` namespace and `ValidationResult` — the validation this book depends on],
-  [`utl-x/docs/proposals/utlx-language-versioning-validation.md`], [versioning and packaging: why `validate.*` is 1.1 and `ai.*` is 2.0; UTLXe vs UTLXS],
-  [`utl-x/docs/proposals/utlx-validate-vocabulary-coverage.md`], [the `validate.*` vocabulary, audited against Schematron and FEEL],
+  [`utl-x/docs/architecture/utlx-1_1-semantic-validation.md`], [the UTL-X 1.1 `validate.*` namespace and `ValidationResult` — the validation this book depends on],
+  [`utl-x/docs/architecture/utlx-language-versioning-validation.md`], [versioning and packaging: why `validate.*` is 1.1 and `ai.*` is 2.0; UTLXe vs UTLXS],
+  [`utl-x/docs/architecture/utlx-validate-vocabulary-coverage.md`], [the `validate.*` vocabulary, audited against Schematron and FEEL],
   [`BINF-bit-level-binary-format.md`], [the BINF codec and form-class: binary decoding, named aliases, `^` metadata, UDM mapping decisions],
   [`formats-open/README.md`], [the encoding-grouped classification of the open formats and the proving order],
 )

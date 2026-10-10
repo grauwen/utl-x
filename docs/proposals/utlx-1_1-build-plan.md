@@ -6,7 +6,7 @@
 | Status | Plan — **foundation-first** (measure the parsers, then build); see Phase 0 |
 | Scope | Implement `%utlx 1.1`: the `validate.*` core (Tier 1) + `ValidationResult`, as a separate `:validate` module, delivered as the **UTLXS** profile alongside **UTLXe** |
 | Spec | `utlx-1_1-semantic-validation.md` (the what); this doc is the how/when |
-| Related | `utlx-language-versioning-validation.md` §2.1/§3 (packaging, version gate); `utlx-validate-naming-and-guard-profile.md` (names, two tiers); `docs/architecture/parser-strictness-profiles.md` (the `lenient\|standard\|strict` parse/serialize posture — Phase 0b measures baseline *per profile*, 0c hardens to `strict`); `docs/architecture/validate-module-spike.md`; `docs/architecture/utlx-test-corpora.md` (§5.5, §5.7) |
+| Related | `utlx-language-versioning-validation.md` §2.1/§3 (packaging, version gate); `utlx-validate-naming-and-guard-profile.md` (names, two tiers); `parser-strictness-profiles.md` (the `lenient\|standard\|strict` parse/serialize posture — Phase 0b measures baseline *per profile*, 0c hardens to `strict`); `validate-module-spike.md`; `utlx-test-corpora.md` (§5.5, §5.7) |
 
 ## Decisions this plan rests on (already made — not reopened)
 

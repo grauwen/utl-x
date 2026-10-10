@@ -276,7 +276,7 @@ The strategy above is not novel — it is how XSLT, the most widely deployed tra
 > abusive, or malicious bytes. That is a **per-format**, parser-level axis. Do **not** confuse it with
 > **semantic validation** (`validate.*`, `%utlx 1.1`), which is a **UDM-layer, format-agnostic** concern
 > that runs *after* parsing and requires essentially no per-parser change — see
-> `docs/proposals/utlx-language-versioning-validation.md` §3 ("Where `validate.*` runs"). The two
+> `utlx-language-versioning-validation.md` §3 ("Where `validate.*` runs"). The two
 > worries cancel: the per-format work here is not 1.1; 1.1 is not per-format.
 
 Most tests target well-formed input, but a large share of real-world messages are *not* strictly well-formed, and they still have to be handled. The handling is often misframed as one spectrum ("the more broken, the more we reject"). It is really **three independent axes**, and separating them is the whole design:
