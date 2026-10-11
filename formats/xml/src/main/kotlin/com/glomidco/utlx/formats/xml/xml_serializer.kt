@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.xml
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.interpreter.RuntimeValue
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Writer
 import java.io.StringWriter
 
@@ -422,7 +423,7 @@ object XMLFormat {
     /**
      * Parse XML string to UDM
      */
-    fun parse(xml: String): UDM {
-        return XML.parse(xml)
+    fun parse(xml: String, options: ParseOptions = ParseOptions.standard()): UDM {
+        return XML.parse(xml, options = options)
     }
 }

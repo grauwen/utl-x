@@ -1,6 +1,13 @@
 # B29: XML parser silently *skips* a DOCTYPE and passes *undefined* entity references through as literal text — accepts malformed XML that a strict/guard profile must reject
 
-**Status:** **OPEN** — found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
+**Status:** **ADDRESSED (XML profile-driven) — pending engine profile-selection.** The XML reader now
+takes its DOCTYPE + undefined-entity policy from `core/format/ParseOptions`: part A — `strict` rejects a
+DOCTYPE outright (`allowDoctype=false`); part B — `standard`/`strict` reject an undefined entity as a
+well-formedness error, `lenient` keeps it literal (`allowUndefinedEntities`). External-entity resolution
+stays off in all profiles (the parser never resolves). Validated: XML unit tests (per profile) + full
+gradle + **conformance 522/522** + harness (**standard 22/22**). The engine applies the STANDARD default
+until profile-selection is wired, so DOCTYPE-with-entities and undefined-entity docs now reject by
+default. Found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
 **Priority:** Medium (correctness + strict/guard fail-closed posture). **Not** a critical security vuln — see [Scope](#scope-this-is-not-xxe).
 **Created:** October 2026
 **Component:** `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`

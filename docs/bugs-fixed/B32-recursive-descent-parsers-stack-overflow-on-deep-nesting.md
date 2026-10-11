@@ -9,8 +9,9 @@ robustness-errors** (all profiles) with `deep_nesting_50000` now rejecting; **co
 Moderate nesting (100) still parses, so no legitimate-data regression — safe for a minor patch release.
 **Update (Phase-1 plumbing):** the **JSON** reader now takes its depth bound from `core/format/ParseOptions`
 (`maxDepth`, per-profile: strict 64 / standard 128 / lenient 256) instead of the hardcoded 1000 cap —
-the *proper* per-profile fix (unit-tested). The **XML** reader still uses the 1000 stop-gap until it is
-threaded onto `ParseOptions` (next increment).
+the *proper* per-profile fix (unit-tested). The **XML** reader is now threaded too: it uses
+`ParseOptions.maxDepth` clamped to a per-format safety ceiling `XML_MAX_SAFE_DEPTH = 1024` (§4.1) — the
+1000 stop-gap const is gone. JSON + XML are both per-profile now; YAML/CSV remain.
 **Permanent fix:** **F22** (iterative / indexed parsing) removes the *stack-bound* depth class entirely —
 depth becomes heap-bounded, so `max_depth` can be raised safely (match/exceed DataWeave's 4096) and
 StackOverflow is structurally impossible. The per-profile `ParseOptions.maxDepth` here is the bridge to it.

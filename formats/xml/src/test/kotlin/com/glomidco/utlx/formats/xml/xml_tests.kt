@@ -1,6 +1,7 @@
 package com.glomidco.utlx.formats.xml
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ParseOptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
@@ -40,7 +41,30 @@ class XMLParserTest {
     @Test
     fun `B32 regression - moderately nested XML still parses`() {
         val d = 100
-        XML.parse("<a>".repeat(d) + "x" + "</a>".repeat(d))  // must not throw
+        XML.parse("<a>".repeat(d) + "x" + "</a>".repeat(d))  // 100 < standard 256 — must not throw
+    }
+
+    @Test
+    fun `B29 strict rejects a DOCTYPE, standard-lenient skip it`() {
+        val doc = "<!DOCTYPE r><r>x</r>"
+        assertThrows<XMLParseException> { XML.parse(doc, options = ParseOptions.strict()) }
+        XML.parse(doc, options = ParseOptions.standard())   // skipped — must not throw
+        XML.parse(doc, options = ParseOptions.lenient())    // skipped — must not throw
+    }
+
+    @Test
+    fun `B29 undefined entity rejected under standard-strict, literal under lenient`() {
+        val doc = "<r>&foo;</r>"
+        assertThrows<XMLParseException> { XML.parse(doc, options = ParseOptions.strict()) }
+        assertThrows<XMLParseException> { XML.parse(doc, options = ParseOptions.standard()) }
+        XML.parse(doc, options = ParseOptions.lenient())    // kept as literal — must not throw
+    }
+
+    @Test
+    fun `per-profile depth - XML strict rejects what lenient accepts`() {
+        val xml = "<a>".repeat(100) + "x" + "</a>".repeat(100)
+        assertThrows<XMLParseException> { XML.parse(xml, options = ParseOptions.strict()) }  // 100 > strict 64
+        XML.parse(xml, options = ParseOptions.lenient())                                     // 100 < lenient 256
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.glomidco.utlx.formats.xml
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.io.Reader
@@ -33,16 +34,19 @@ import java.nio.charset.Charset
  * @param inheritNamespaces If true, namespace declarations are inherited to all child elements (causes pollution).
  *                          If false (default), namespace declarations stay only on declaring elements (clean output).
  */
-// B32: hard safety cap on nesting depth — prevents StackOverflowError (DoS) on deeply-nested input.
-// Shares the rationale/value with the JSON parser (duplicated here to avoid a cross-module const for
-// this patch; unify under a per-profile `max_depth` when parser profiles land). Measured XML crash
-// ~3778 @ 2 MB stack (B32); 1000 is safe there — lower it for a smaller -Xss.
-private const val MAX_NESTING_DEPTH = 1000
+// §4.1 per-format SAFETY CEILING for the (recursive) XML reader: the effective depth bound is
+// min(ParseOptions.maxDepth, this). XML crashes ~3778 @ 2 MB stack (B32); 1024 keeps ~3.7× margin.
+// This clamp guards against a high configured maxDepth; it never fires at the default 64/256.
+// F22 (iterative) removes the stack bound and this ceiling.
+private const val XML_MAX_SAFE_DEPTH = 1024
 
 class XMLParser(
     private val source: Reader,
     private val arrayHints: Set<String> = emptySet(),
-    private val inheritNamespaces: Boolean = false
+    private val inheritNamespaces: Boolean = false,
+    // Parse profile: per-profile depth bound (clamped to XML_MAX_SAFE_DEPTH, §4.1) + DOCTYPE and
+    // undefined-entity policy (B29). Deployment policy; default STANDARD. See core/format/ParseOptions.
+    private val options: ParseOptions = ParseOptions.standard()
 ) {
     private var current = 0
     private var line = 1
@@ -50,16 +54,16 @@ class XMLParser(
     private val text = source.readText()
     private var depth = 0
 
-    constructor(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
-        this(StringReader(xml), arrayHints, inheritNamespaces)
+    constructor(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false, options: ParseOptions = ParseOptions.standard()) :
+        this(StringReader(xml), arrayHints, inheritNamespaces, options)
 
     /**
      * B20: Construct from raw bytes. Detects encoding from BOM and XML declaration.
      * UTF-16LE (FF FE), UTF-16BE (FE FF), UTF-8 BOM (EF BB BF), or XML encoding="..." declaration.
      * Falls back to UTF-8 if no encoding is detected.
      */
-    constructor(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
-        this(InputStreamReader(ByteArrayInputStream(bytes), detectXmlCharset(bytes)), arrayHints, inheritNamespaces)
+    constructor(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false, options: ParseOptions = ParseOptions.standard()) :
+        this(InputStreamReader(ByteArrayInputStream(bytes), detectXmlCharset(bytes)), arrayHints, inheritNamespaces, options)
     
     /**
      * Parse XML to UDM
@@ -138,8 +142,10 @@ class XMLParser(
     // B32: depth-checked entry to every element — bounds recursion so deeply-nested XML is rejected
     // cleanly instead of overflowing the stack. All element parsing routes through here.
     private fun parseElementChecked(parentNamespaces: Map<String, String>): UDM {
-        if (depth >= MAX_NESTING_DEPTH) {
-            throw XMLParseException("Maximum nesting depth ($MAX_NESTING_DEPTH) exceeded", line, column)
+        // §4.1: per-profile bound, clamped to the XML safety ceiling while recursive (pre-F22).
+        val maxDepth = minOf(options.maxDepth, XML_MAX_SAFE_DEPTH)
+        if (depth >= maxDepth) {
+            throw XMLParseException("Maximum nesting depth ($maxDepth) exceeded", line, column)
         }
         depth++
         try {
@@ -378,9 +384,12 @@ class XMLParser(
                     } catch (e: NumberFormatException) {
                         "&$entity;"
                     }
-                } else {
-                    // Unknown entity - keep as is
+                } else if (options.allowUndefinedEntities) {
+                    // lenient: keep the undefined entity as literal text
                     "&$entity;"
+                } else {
+                    // B29: a reference to an undefined entity is a well-formedness error — reject (standard/strict)
+                    throw XMLParseException("Undefined entity reference: &$entity;", line, column)
                 }
             }
         }
@@ -464,6 +473,11 @@ class XMLParser(
     }
 
     private fun skipDoctype() {
+        // B29: strict rejects a DOCTYPE outright; standard/lenient skip it. (standard still rejects any
+        // undefined entity the body then references — see parseEntityReference.)
+        if (!options.allowDoctype) {
+            throw XMLParseException("DOCTYPE not allowed", line, column)
+        }
         // <!DOCTYPE ... [ internal subset ] >
         repeat(9) { advance() } // Skip <!DOCTYPE
         var depth = 0 // bracket depth of an internal subset — a '>' inside it is not the end
@@ -577,12 +591,12 @@ object XML {
      * @param inheritNamespaces If true, namespace declarations are inherited (causes pollution).
      *                          If false (default), only keeps declarations on declaring elements (clean).
      */
-    fun parse(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false): UDM {
-        return XMLParser(xml, arrayHints, inheritNamespaces).parse()
+    fun parse(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false, options: ParseOptions = ParseOptions.standard()): UDM {
+        return XMLParser(xml, arrayHints, inheritNamespaces, options).parse()
     }
 
-    fun parse(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false): UDM {
-        return XMLParser(bytes, arrayHints, inheritNamespaces).parse()
+    fun parse(bytes: ByteArray, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false, options: ParseOptions = ParseOptions.standard()): UDM {
+        return XMLParser(bytes, arrayHints, inheritNamespaces, options).parse()
     }
 }
 

@@ -64,7 +64,7 @@ is finalised during Phase 0.)
 | BOM | strip & accept | strip & accept | **reject** (require declared encoding) |
 | Encoding | sniff / best-effort | enforce declared | **enforce + reject invalid byte sequences** |
 | Control chars in strings | accept | accept | **reject** (`noControlChars`) |
-| XML DOCTYPE / DTD / external entities | **never resolve externally** (XXE off in *all* profiles) | DOCTYPE rejected; no entities | **DOCTYPE rejected outright** |
+| XML DOCTYPE / undefined entity (external resolution **off in all** profiles) | DOCTYPE skipped; undefined entity kept **literal** | DOCTYPE skipped; undefined entity **rejected** | **DOCTYPE rejected outright**; undefined entity rejected |
 | Number quirks (leading zeros, NaN/Inf, oversized ints) | coerce | spec rules | **reject non-conformant** |
 | Unknown / undeclared fields | accept | accept | **reject** (where a shape/allow-list is known) |
 | Resource bounds (depth / size / node-count) | bounded | bounded | **tightest configured bounds** (`bounds.yaml`) |
