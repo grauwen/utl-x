@@ -158,6 +158,34 @@ So the guard's `strict` hardening **targets data/wire formats** (incl. `avro`/`p
 **first-class for the mapper** at `standard`/`lenient`. (`avro`/`protobuf` are binary *data*, not schemas,
 so they stay guard-relevant regardless.)
 
+### 5.2 Related strictness axes — one locked bundle on a guard
+
+The parse profile is **not** the only strictness dial. There is a *family* of independent axes, each
+operating at a different **phase** and on a different **subject**. They are orthogonal — a mapper can mix
+them freely — but a **guard pins every one to its maximum and locks it** (same governance as §5: a
+deployment policy, never author- or data-reachable). Treat the guard/UTLXS profile as that bundle, not as
+a single dial.
+
+| Axis | Subject | Phase | Mapper default | Guard (locked) | Where |
+|---|---|---|---|---|---|
+| **Parse profile** | untrusted **input** bytes (grammar + bounds) | runtime, per message | `standard` | **`strict`** | this doc / F23 |
+| **Type strictness** (`--strict-types`) | the **mapping** (is it type-sound?) | **compile / deploy time**, once | off (silently coerces) | **on** (reject unsound mapping) | `TypeChecker`; `utlx-1_1-semantic-validation.md` |
+| **Semantic validation** (`validate.*`) | each message's **shape / schema** | runtime, per message | per deployment | **strict** | F21 (`utlx-1_1-semantic-validation.md`) |
+| **Serialize profile** | the **output** form | runtime, per message | readable | **canonical** | §6 / §6.1 (future `SerializeProfile`) |
+
+Two consequences worth stating plainly:
+
+- **`--strict-types` is a *deploy-time gate*, not a runtime message filter.** It checks the UTLX script
+  statically (before any input); it never inspects a message's data. So it answers "is this mapping
+  type-sound?" — not "does this message conform?" The latter is **semantic validation**. A guard needs
+  **both**: type-strict (the mapping is sound) *and* validate-strict (each message conforms). Its current
+  default — *silently continue past a type error* — is a fail-**open** posture a guard must invert.
+- **"Full recognition before acting, fail-closed" spans all four axes.** The guard doesn't just parse
+  strictly; it refuses an unsound mapping, rejects a non-conforming message, and emits only canonical
+  output. Each axis is a separate mechanism, but they share the §5 lock: pinned at max, not reachable
+  from the mapping or the data. F23's Phase-2 engine/daemon config is the single place that lock lives —
+  `--strict-types` rides it exactly as `parse.profile` does.
+
 ## 6. The serializer side — strictness means *canonicalisation*
 
 Serializer "strictness" is a real axis, but it means **canonical output**:
