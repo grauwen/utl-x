@@ -30,3 +30,5 @@ cases:
   - { input: corpora/security/json/deep_nesting_100.json,   verdict: accept }                      # spec-legal depth
   - { input: corpora/security/json/deep_nesting_50000.json, verdict: reject, reason: dos-depth }   # abuse; reject cleanly, NOT crash
   - { input: corpora/security/xml/billion_laughs.xml,       verdict: reject, reason: entity-expansion }
+  - { input: corpora/security/yaml/deep_nesting_100.yaml,   verdict: accept }                      # depth 100 < 256 (> SnakeYAML's old default 50 — proves the raise)
+  - { input: corpora/security/yaml/deep_nesting_300.yaml,   verdict: reject, reason: dos-depth }   # > 256; SnakeYAML limit = clean reject, NOT error

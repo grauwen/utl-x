@@ -3,8 +3,8 @@
   "cli": "utlx",
   "profiles": {
     "lenient": {
-      "total": 22,
-      "match": 14,
+      "total": 24,
+      "match": 16,
       "mismatch": 8,
       "errors": 0,
       "cases": [
@@ -183,12 +183,28 @@
           "match": false,
           "reason": null,
           "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_100.yaml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_300.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "dos-depth",
+          "detail": "Error parsing input: Failed to parse YAML: Nesting Depth exceeded max 256\nError: Failed to parse YAML: Nesting Depth exceeded max 256\n"
         }
       ]
     },
     "standard": {
-      "total": 22,
-      "match": 22,
+      "total": 24,
+      "match": 24,
       "mismatch": 0,
       "errors": 0,
       "cases": [
@@ -367,13 +383,29 @@
           "match": true,
           "reason": "entity-expansion",
           "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_100.yaml",
+          "expected": "accept",
+          "actual": "accept",
+          "match": true,
+          "reason": null,
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_300.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "dos-depth",
+          "detail": "Error parsing input: Failed to parse YAML: Nesting Depth exceeded max 256\nError: Failed to parse YAML: Nesting Depth exceeded max 256\n"
         }
       ]
     },
     "strict": {
-      "total": 22,
-      "match": 18,
-      "mismatch": 4,
+      "total": 24,
+      "match": 19,
+      "mismatch": 5,
       "errors": 0,
       "cases": [
         {
@@ -551,6 +583,22 @@
           "match": true,
           "reason": "entity-expansion",
           "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_100.yaml",
+          "expected": "reject",
+          "actual": "accept",
+          "match": false,
+          "reason": "max-depth",
+          "detail": ""
+        },
+        {
+          "input": "corpora/security/yaml/deep_nesting_300.yaml",
+          "expected": "reject",
+          "actual": "reject",
+          "match": true,
+          "reason": "max-depth",
+          "detail": "Error parsing input: Failed to parse YAML: Nesting Depth exceeded max 256\nError: Failed to parse YAML: Nesting Depth exceeded max 256\n"
         }
       ]
     }
