@@ -1,6 +1,6 @@
 {
   "note": "current un-profiled parser vs each profile's spec; mismatches = Phase-0c backlog",
-  "cli": "/Users/magr/data/mapping/github-git/utl-x/utlx",
+  "cli": "utlx",
   "profiles": {
     "lenient": {
       "total": 22,
