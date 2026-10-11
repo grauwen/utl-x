@@ -28,7 +28,21 @@ class XMLParserTest {
         assertEquals("root", result.name)
         assertEquals("Hello", result.get("_text")?.asScalar()?.asString())
     }
-    
+
+    @Test
+    fun `B32 deeply nested XML is rejected cleanly, not a stack overflow`() {
+        // Well past MAX_NESTING_DEPTH — must throw a clean parse error, never StackOverflowError.
+        val d = 5000
+        val xml = "<a>".repeat(d) + "x" + "</a>".repeat(d)
+        assertThrows<XMLParseException> { XML.parse(xml) }
+    }
+
+    @Test
+    fun `B32 regression - moderately nested XML still parses`() {
+        val d = 100
+        XML.parse("<a>".repeat(d) + "x" + "</a>".repeat(d))  // must not throw
+    }
+
     @Test
     fun `parse element with attributes`() {
         val xml = """<Order id="123" date="2025-10-01">Content</Order>"""

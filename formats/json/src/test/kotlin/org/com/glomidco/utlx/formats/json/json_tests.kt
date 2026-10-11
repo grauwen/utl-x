@@ -13,7 +13,20 @@ class JSONParserTest {
         assertTrue(result is UDM.Scalar)
         assertTrue((result as UDM.Scalar).isNull())
     }
-    
+
+    @Test
+    fun `B32 deeply nested JSON is rejected cleanly, not a stack overflow`() {
+        // Well past MAX_NESTING_DEPTH — must throw a clean parse error, never StackOverflowError.
+        val deep = "[".repeat(5000) + "1" + "]".repeat(5000)
+        assertThrows<JSONParseException> { JSONParser(deep).parse() }
+    }
+
+    @Test
+    fun `B32 regression - moderately nested JSON still parses`() {
+        val d = 100
+        JSONParser("[".repeat(d) + "1" + "]".repeat(d)).parse()  // must not throw
+    }
+
     @Test
     fun `parse boolean true`() {
         val result = JSONParser("true").parse()

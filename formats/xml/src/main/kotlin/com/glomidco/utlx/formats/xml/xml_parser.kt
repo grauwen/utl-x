@@ -33,6 +33,12 @@ import java.nio.charset.Charset
  * @param inheritNamespaces If true, namespace declarations are inherited to all child elements (causes pollution).
  *                          If false (default), namespace declarations stay only on declaring elements (clean output).
  */
+// B32: hard safety cap on nesting depth — prevents StackOverflowError (DoS) on deeply-nested input.
+// Shares the rationale/value with the JSON parser (duplicated here to avoid a cross-module const for
+// this patch; unify under a per-profile `max_depth` when parser profiles land). Measured XML crash
+// ~3778 @ 2 MB stack (B32); 1000 is safe there — lower it for a smaller -Xss.
+private const val MAX_NESTING_DEPTH = 1000
+
 class XMLParser(
     private val source: Reader,
     private val arrayHints: Set<String> = emptySet(),
@@ -42,6 +48,7 @@ class XMLParser(
     private var line = 1
     private var column = 1
     private val text = source.readText()
+    private var depth = 0
 
     constructor(xml: String, arrayHints: Set<String> = emptySet(), inheritNamespaces: Boolean = false) :
         this(StringReader(xml), arrayHints, inheritNamespaces)
@@ -95,7 +102,7 @@ class XMLParser(
         skipMisc()
 
         // Parse root element with empty namespace context
-        val root = parseElement(emptyMap())
+        val root = parseElementChecked(emptyMap())
 
         // B27: Skip epilog "misc" — trailing comments / PIs after the root element.
         skipMisc()
@@ -128,6 +135,20 @@ class XMLParser(
         return wrappedRoot
     }
     
+    // B32: depth-checked entry to every element — bounds recursion so deeply-nested XML is rejected
+    // cleanly instead of overflowing the stack. All element parsing routes through here.
+    private fun parseElementChecked(parentNamespaces: Map<String, String>): UDM {
+        if (depth >= MAX_NESTING_DEPTH) {
+            throw XMLParseException("Maximum nesting depth ($MAX_NESTING_DEPTH) exceeded", line, column)
+        }
+        depth++
+        try {
+            return parseElement(parentNamespaces)
+        } finally {
+            depth--
+        }
+    }
+
     private fun parseElement(parentNamespaces: Map<String, String>): UDM {
         consume('<', "Expected '<'")
 
@@ -203,7 +224,7 @@ class XMLParser(
                     textContent.append(cdata)
                 } else {
                     // Child element - pass down namespace context
-                    val child = parseElement(namespaces)
+                    val child = parseElementChecked(namespaces)
                     val childName = (child as? UDM.Object)?.name ?: "element"
                     children.add(childName to child)
                 }

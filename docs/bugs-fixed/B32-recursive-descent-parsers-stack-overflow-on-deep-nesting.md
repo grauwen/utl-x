@@ -1,6 +1,16 @@
 # B32: recursive-descent parsers stack-overflow on deeply-nested input (uncaught `StackOverflowError` — a DoS, not a clean reject)
 
-**Status:** **OPEN** — found 2026-10-10 by the `test-corpora` security/bounds baseline (Phase 0b).
+**Status:** **MITIGATED** (safety cap landed; pending commit) — a profile-independent hard cap
+`MAX_NESTING_DEPTH = 1000` now bounds recursion in the JSON (`parseValue`) and XML
+(`parseElementChecked`) readers: deeply-nested input throws a **clean** `JSONParseException`/
+`XMLParseException` instead of `StackOverflowError`. Verified: new module unit tests pass; the
+crash-depth probe flips JSON/XML from **crash → clean reject** (≈1000); the harness shows **0
+robustness-errors** (all profiles) with `deep_nesting_50000` now rejecting; **conformance 522/522**.
+Moderate nesting (100) still parses, so no legitimate-data regression — safe for a minor patch release.
+**Still OPEN (follow-up):** per-profile `max_depth` enforcement (strict 64 / standard 128 / lenient 256)
+needs the parser **profile plumbing** — until then the strict 64 bound isn't applied (e.g.
+`deep_nesting_100` is still accepted under the 1000 cap). Found 2026-10-10 by the `test-corpora`
+security/bounds baseline (Phase 0b).
 **Priority:** **High** — a **crash / denial-of-service** on crafted untrusted input; violates the
 `bounds.yaml` rule *"terminate early with a structured error — never crash, hang, or OOM."* Worse than
 a silent-accept bug (B29/B30): the process dies.

@@ -15,11 +15,18 @@ import java.io.StringReader
  * - array → UDM.Array
  * - object → UDM.Object
  */
+// B32: hard safety cap on nesting depth — prevents StackOverflowError (DoS) on deeply-nested input.
+// Profile-independent stop-gap; the per-profile `max_depth` (test-corpora/expectations/bounds.yaml)
+// supersedes it once parser profiles land. 1000 matches Jackson's default and is safe at the default
+// 2 MB JVM stack (measured crash ~5032 JSON / ~3778 XML, B32); lower it for a smaller -Xss.
+private const val MAX_NESTING_DEPTH = 1000
+
 class JSONParser(private val source: Reader) {
     private var current = 0
     private var line = 1
     private var column = 1
     private val text = source.readText()
+    private var depth = 0
 
     constructor(json: String) : this(StringReader(json))
 
@@ -51,16 +58,25 @@ class JSONParser(private val source: Reader) {
     }
     
     private fun parseValue(): UDM {
-        skipWhitespace()
-        
-        return when (peek()) {
-            '{' -> parseObject()
-            '[' -> parseArray()
-            '"' -> parseString()
-            't', 'f' -> parseBoolean()
-            'n' -> parseNull()
-            '-', in '0'..'9' -> parseNumber()
-            else -> throw JSONParseException("Unexpected character: ${peek()}", line, column)
+        // B32: bound recursion depth before descending (check-then-increment; decrement in finally).
+        if (depth >= MAX_NESTING_DEPTH) {
+            throw JSONParseException("Maximum nesting depth ($MAX_NESTING_DEPTH) exceeded", line, column)
+        }
+        depth++
+        try {
+            skipWhitespace()
+
+            return when (peek()) {
+                '{' -> parseObject()
+                '[' -> parseArray()
+                '"' -> parseString()
+                't', 'f' -> parseBoolean()
+                'n' -> parseNull()
+                '-', in '0'..'9' -> parseNumber()
+                else -> throw JSONParseException("Unexpected character: ${peek()}", line, column)
+            }
+        } finally {
+            depth--
         }
     }
     
