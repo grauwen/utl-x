@@ -164,6 +164,23 @@ class CSVParserTest {
         val first = result.get(0)?.asObject()
         assertEquals("Alice", first?.get("Names")?.asScalar()?.asString())
     }
+
+    @Test
+    fun `B30 unterminated quoted field is rejected, not silently accepted`() {
+        // A quoted field with no closing quote must be a parse error — not a partial field that
+        // swallows the rest of the input. (test-corpora: corpora/malformed/csv/unclosed_quote.csv)
+        val csv = "id,name\n1,\"alice\n"
+        assertThrows(CSVParseException::class.java) { CSV.parse(csv) }
+    }
+
+    @Test
+    fun `B30 regression - properly closed quoted field with embedded newline still parses`() {
+        // The fix must NOT reject legitimate quoted fields that contain a newline.
+        val csv = "id,name\n1,\"a\nb\"\n"
+        val result = CSV.parse(csv) as UDM.Array
+        assertEquals(1, result.size())
+        assertEquals("a\nb", result.get(0)?.asObject()?.get("name")?.asScalar()?.asString())
+    }
 }
 
 class CSVSerializerTest {

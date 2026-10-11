@@ -1,6 +1,11 @@
 # B30: CSV parser silently accepts an *unterminated* quoted field (reads to EOF instead of erroring)
 
-**Status:** **OPEN** — found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
+**Status:** **FIXED** (pending commit — user commits) — `parseQuotedField()` now tracks whether the
+closing quote was seen and throws `CSVParseException("Unterminated quoted field", …)` on EOF-before-close.
+Verified end-to-end: the harness flips `corpora/malformed/csv/unclosed_quote.csv` from **accept → reject**
+in all three profiles with no regression (`valid_rows`/`ragged_rows` unchanged), and two unit tests pass
+(`csv_tests.kt`: rejects the unterminated field; a legitimately-closed quoted field with an embedded
+newline still parses). Found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
 **Priority:** Medium (correctness; fails **all three** profiles — genuinely malformed, not benign).
 **Created:** October 2026
 **Component:** `formats/csv/src/main/kotlin/formats/csv/com/glomidco/utlx/formats/csv/csv_parser.kt`

@@ -152,19 +152,21 @@ class CSVParser(
         val sb = StringBuilder()
         
         advance() // opening quote
-        
+        var closed = false
+
         while (!isAtEnd()) {
             val c = peek()
-            
+
             if (c == dialect.quote) {
                 advance() // consume quote
-                
+
                 // Check for escaped quote (two quotes in a row)
                 if (peek() == dialect.quote) {
                     sb.append(dialect.quote)
                     advance()
                 } else {
                     // End of quoted field
+                    closed = true
                     break
                 }
             } else {
@@ -175,7 +177,13 @@ class CSVParser(
                 }
             }
         }
-        
+
+        // B30: an unterminated quoted field (EOF before the closing quote) is malformed CSV — reject
+        // it rather than silently returning the partial field (which would swallow following lines).
+        if (!closed) {
+            throw CSVParseException("Unterminated quoted field", line, column)
+        }
+
         return sb.toString()
     }
     
