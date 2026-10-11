@@ -11,7 +11,13 @@ Moderate nesting (100) still parses, so no legitimate-data regression — safe f
 (`maxDepth`, per-profile: strict 64 / standard 128 / lenient 256) instead of the hardcoded 1000 cap —
 the *proper* per-profile fix (unit-tested). The **XML** reader is now threaded too: it uses
 `ParseOptions.maxDepth` clamped to a per-format safety ceiling `XML_MAX_SAFE_DEPTH = 1024` (§4.1) — the
-1000 stop-gap const is gone. JSON + XML are both per-profile now; YAML/CSV remain.
+1000 stop-gap const is gone. **YAML** is now threaded too: `maxDepth` maps to SnakeYAML's
+`LoaderOptions.nestingDepthLimit`, raising its framework default (50) to the profile depth — and because
+SnakeYAML is iterative (not a hand-written recursive descent), a past-limit document (300-deep flow seq)
+throws SnakeYAML's **clean limit exception**, a bounded **reject, never a `StackOverflowError`**. Verified:
+new YAML unit tests + harness (`deep_nesting_300.yaml` → `actual=reject`, **0 robustness-errors** in all
+profiles; `deep_nesting_100.yaml` now accepts under standard — proving the 50→256 raise) + conformance
+522/522. JSON + XML + YAML are per-profile now; **CSV** remains (flat records — no depth axis, §4.1).
 **Permanent fix:** **F22** (iterative / indexed parsing) removes the *stack-bound* depth class entirely —
 depth becomes heap-bounded, so `max_depth` can be raised safely (match/exceed DataWeave's 4096) and
 StackOverflow is structurally impossible. The per-profile `ParseOptions.maxDepth` here is the bridge to it.

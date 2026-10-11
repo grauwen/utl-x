@@ -3,10 +3,13 @@
 **Status:** **PARTIALLY ADDRESSED** — JSON's duplicate-key handling is now **profile-driven** via the
 new `core/format/ParseOptions` (`allowDuplicateKeys`): it **rejects under standard/strict** and is
 **last-wins under lenient** (unit-tested in `json_tests.kt`; conformance 522/522 holds). This removes the
-JSON-vs-YAML *default* inconsistency (both now reject by default). **Still open:** thread YAML onto the
-same `ParseOptions` (today it uses SnakeYAML's own `allowDuplicateKeys`), and wire the engine/daemon's
-deployment-config → `ParseProfile` **selection** so a deployment can actually choose lenient/strict
-(the engine currently applies the STANDARD default uniformly). Found 2026-10-10 (Phase 0b).
+JSON-vs-YAML *default* inconsistency (both now reject by default). **YAML is now threaded onto the same
+profile** too: `YAMLParser.ParseOptions.fromProfile(core ParseOptions)` maps `allowDuplicateKeys` (and
+`maxDepth`→`nestingDepthLimit`) from the shared profile, so YAML rejects duplicates under standard/strict
+and is **last-wins under lenient** — the same policy, uniformly (unit-tested in `YAMLTests.kt`; harness
+standard 24/24; conformance 522/522). JSON + XML + YAML now share one profile. **Still open:** wire the
+engine/daemon's deployment-config → `ParseProfile` **selection** so a deployment can actually choose
+lenient/strict (the engine currently applies the STANDARD default uniformly). Found 2026-10-10 (Phase 0b).
 **Priority:** Medium (correctness + cross-reader consistency + strict/standard policy).
 **Created:** October 2026
 **Component:**

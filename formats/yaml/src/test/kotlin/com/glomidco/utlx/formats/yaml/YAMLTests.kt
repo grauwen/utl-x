@@ -11,7 +11,32 @@ import org.yaml.snakeyaml.DumperOptions
 import java.time.Instant
 
 class YAMLParserTest : DescribeSpec({
-    
+
+    describe("YAMLParser - parse profile (B31 dup-key + depth §4.1)") {
+
+        it("rejects duplicate keys by default (standard)") {
+            shouldThrow<Exception> { YAMLParser().parse("a: 1\na: 2\n") }
+        }
+
+        it("allows duplicate keys (last-wins) under lenient") {
+            val opts = YAMLParser.ParseOptions.fromProfile(com.glomidco.utlx.core.format.ParseOptions.lenient())
+            YAMLParser().parse("a: 1\na: 2\n", opts).shouldBeInstanceOf<UDM.Object>()
+        }
+
+        it("raises nesting depth above SnakeYAML's default 50 (profile 256)") {
+            // YAML flow sequence 100 deep: > SnakeYAML's default 50, < the profile's 256 → now parses.
+            val deep = "[".repeat(100) + "1" + "]".repeat(100)
+            YAMLParser().parse(deep).shouldBeInstanceOf<UDM.Array>()
+        }
+
+        it("rejects nesting past the profile depth cleanly (SnakeYAML limit, not a crash)") {
+            // 300 deep > the standard profile's 256: SnakeYAML's nestingDepthLimit throws its own
+            // clean limit exception — a bounded reject, never a StackOverflowError (cf B32 JSON/XML).
+            val tooDeep = "[".repeat(300) + "1" + "]".repeat(300)
+            shouldThrow<Exception> { YAMLParser().parse(tooDeep) }
+        }
+    }
+
     describe("YAMLParser - Basic Types") {
         
         it("should parse null values") {

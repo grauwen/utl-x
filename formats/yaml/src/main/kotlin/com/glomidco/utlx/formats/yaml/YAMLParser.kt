@@ -2,6 +2,7 @@
 package com.glomidco.utlx.formats.yaml
 
 import com.glomidco.utlx.core.udm.*
+import com.glomidco.utlx.core.format.ParseOptions as CoreParseOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.LoaderOptions
 import java.io.InputStream
@@ -36,6 +37,7 @@ class YAMLParser {
     private fun createYaml(options: ParseOptions): Yaml {
         val loaderOptions = LoaderOptions().apply {
             isAllowDuplicateKeys = options.allowDuplicateKeys
+            nestingDepthLimit = options.maxDepth   // §4.1: raise SnakeYAML's default (50) to the profile depth
         }
         return Yaml(loaderOptions)
     }
@@ -47,8 +49,18 @@ class YAMLParser {
         val multiDocument: Boolean = false,
         val preserveOrder: Boolean = true,
         val parseTimestamps: Boolean = true,
-        val allowDuplicateKeys: Boolean = false
-    )
+        val allowDuplicateKeys: Boolean = false,
+        val maxDepth: Int = 256   // §4.1: mapped to SnakeYAML nestingDepthLimit (raises its default 50)
+    ) {
+        companion object {
+            /** Map the shared parser profile onto YAML reader options (the policy fields it governs:
+             *  duplicate-key policy B31, nesting depth). YAML's own I/O options keep their defaults. */
+            fun fromProfile(p: CoreParseOptions) = ParseOptions(
+                allowDuplicateKeys = p.allowDuplicateKeys,
+                maxDepth = p.maxDepth,
+            )
+        }
+    }
     
     /**
      * Parse YAML from a string
