@@ -1,5 +1,15 @@
 # B32: recursive-descent parsers stack-overflow on deeply-nested input (uncaught `StackOverflowError` — a DoS, not a clean reject)
 
+> **⤴ Backport candidate for `main` / 1.3.2 (no rush — latent DoS, not an active incident).**
+> Released `main` (1.3.1) has **no** nesting-depth bound → it is still exposed to this stack-overflow DoS.
+> Backport commit **`5f9a0e6d`** — the *standalone* `MAX_NESTING_DEPTH = 1000` cap (no `ParseOptions`, no
+> grammar/behavior change). **Code-only:** cherry-pick the JSON + XML reader change + tests; **trim the
+> doc hunk** (its per-profile / `ParseOptions` / `bounds.yaml` references don't exist on `main`). `main`
+> is on the same `com.glomidco` namespace, so paths apply; expect at most trivial additive context
+> conflicts. Fold into the next `1.3.x` patch rather than cutting a release just for it. Do **not**
+> backport the stricter-by-default grammar changes (B29/B31) or the profile feature — those are a
+> minor-release concern, not patch-safe.
+
 **Status:** **MITIGATED** (safety cap landed; pending commit) — a profile-independent hard cap
 `MAX_NESTING_DEPTH = 1000` now bounds recursion in the JSON (`parseValue`) and XML
 (`parseElementChecked`) readers: deeply-nested input throws a **clean** `JSONParseException`/
