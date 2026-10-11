@@ -4,8 +4,8 @@
   "profiles": {
     "lenient": {
       "total": 22,
-      "match": 15,
-      "mismatch": 7,
+      "match": 14,
+      "mismatch": 8,
       "errors": 0,
       "cases": [
         {
@@ -115,10 +115,10 @@
         {
           "input": "corpora/malformed/xml/undefined_entity.xml",
           "expected": "accept",
-          "actual": "accept",
-          "match": true,
+          "actual": "reject",
+          "match": false,
           "reason": null,
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 1:12 - Undefined entity reference: &foo;\nError: XML parse error at 1:12 - Undefined entity reference: &foo;\n"
         },
         {
           "input": "corpora/malformed/csv/ragged_rows.csv",
@@ -154,11 +154,11 @@
         },
         {
           "input": "corpora/security/xml/doctype_entity.xml",
-          "expected": "reject",
-          "actual": "accept",
+          "expected": "accept",
+          "actual": "reject",
           "match": false,
-          "reason": "doctype",
-          "detail": ""
+          "reason": null,
+          "detail": "Error parsing input: XML parse error at 6:10 - Undefined entity reference: &b;\nError: XML parse error at 6:10 - Undefined entity reference: &b;\n"
         },
         {
           "input": "corpora/security/json/deep_nesting_100.json",
@@ -174,22 +174,22 @@
           "actual": "reject",
           "match": true,
           "reason": "dos-depth",
-          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\nError: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
-          "expected": "reject",
-          "actual": "accept",
+          "expected": "accept",
+          "actual": "reject",
           "match": false,
-          "reason": "entity-expansion",
-          "detail": ""
+          "reason": null,
+          "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
         }
       ]
     },
     "standard": {
       "total": 22,
-      "match": 19,
-      "mismatch": 3,
+      "match": 22,
+      "mismatch": 0,
       "errors": 0,
       "cases": [
         {
@@ -299,10 +299,10 @@
         {
           "input": "corpora/malformed/xml/undefined_entity.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "undefined-entity",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 1:12 - Undefined entity reference: &foo;\nError: XML parse error at 1:12 - Undefined entity reference: &foo;\n"
         },
         {
           "input": "corpora/malformed/csv/ragged_rows.csv",
@@ -339,10 +339,10 @@
         {
           "input": "corpora/security/xml/doctype_entity.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "doctype",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 6:10 - Undefined entity reference: &b;\nError: XML parse error at 6:10 - Undefined entity reference: &b;\n"
         },
         {
           "input": "corpora/security/json/deep_nesting_100.json",
@@ -358,22 +358,22 @@
           "actual": "reject",
           "match": true,
           "reason": "dos-depth",
-          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\nError: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "entity-expansion",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
         }
       ]
     },
     "strict": {
       "total": 22,
-      "match": 15,
-      "mismatch": 7,
+      "match": 18,
+      "mismatch": 4,
       "errors": 0,
       "cases": [
         {
@@ -483,10 +483,10 @@
         {
           "input": "corpora/malformed/xml/undefined_entity.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "undefined-entity",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 1:12 - Undefined entity reference: &foo;\nError: XML parse error at 1:12 - Undefined entity reference: &foo;\n"
         },
         {
           "input": "corpora/malformed/csv/ragged_rows.csv",
@@ -523,10 +523,10 @@
         {
           "input": "corpora/security/xml/doctype_entity.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "doctype",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 6:10 - Undefined entity reference: &b;\nError: XML parse error at 6:10 - Undefined entity reference: &b;\n"
         },
         {
           "input": "corpora/security/json/deep_nesting_100.json",
@@ -542,15 +542,15 @@
           "actual": "reject",
           "match": true,
           "reason": "max-depth",
-          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\nError: JSON parse error at 1:257 - Maximum nesting depth (256) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "entity-expansion",
-          "detail": ""
+          "detail": "Error parsing input: XML parse error at 9:13 - Undefined entity reference: &lol4;\nError: XML parse error at 9:13 - Undefined entity reference: &lol4;\n"
         }
       ]
     }
