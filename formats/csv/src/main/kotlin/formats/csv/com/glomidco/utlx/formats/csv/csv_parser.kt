@@ -1,6 +1,7 @@
 package com.glomidco.utlx.formats.csv
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.InputStreamReader
 import java.io.Reader
 import java.io.StringReader
@@ -31,7 +32,12 @@ import java.nio.charset.Charset
  */
 class CSVParser(
     private val source: Reader,
-    private val dialect: CSVDialect = CSVDialect.DEFAULT
+    private val dialect: CSVDialect = CSVDialect.DEFAULT,
+    // §4.1: CSV is a flat record format — none of the profile's knobs apply (no nesting depth, no
+    // object keys, no DOCTYPE/entities). Accepted for *uniform* profile threading across readers so the
+    // engine dispatch has no CSV special-case; intentionally inert. Grammar is governed by `dialect`,
+    // resource limits by the always-on bounds (both orthogonal to the leniency profile). See F23.
+    @Suppress("unused") private val options: ParseOptions = ParseOptions.standard()
 ) {
     private var current = 0
     private var line = 1
@@ -46,16 +52,16 @@ class CSVParser(
         }
     }
     
-    constructor(csv: String, dialect: CSVDialect = CSVDialect.DEFAULT) :
-        this(StringReader(csv), dialect)
+    constructor(csv: String, dialect: CSVDialect = CSVDialect.DEFAULT, options: ParseOptions = ParseOptions.standard()) :
+        this(StringReader(csv), dialect, options)
 
     /**
      * B20: Construct from raw bytes with explicit or detected charset.
      * CSV has no self-describing encoding — charset must come from Content-Type or caller hint.
      * Defaults to UTF-8 if no charset provided.
      */
-    constructor(bytes: ByteArray, charset: Charset? = null, dialect: CSVDialect = CSVDialect.DEFAULT) :
-        this(InputStreamReader(java.io.ByteArrayInputStream(bytes), charset ?: Charsets.UTF_8), dialect)
+    constructor(bytes: ByteArray, charset: Charset? = null, dialect: CSVDialect = CSVDialect.DEFAULT, options: ParseOptions = ParseOptions.standard()) :
+        this(InputStreamReader(java.io.ByteArrayInputStream(bytes), charset ?: Charsets.UTF_8), dialect, options)
     
     /**
      * Parse CSV to UDM
@@ -294,8 +300,9 @@ object CSV {
     /**
      * Parse CSV string to UDM (with headers by default)
      */
-    fun parse(csv: String, hasHeaders: Boolean = true, dialect: CSVDialect = CSVDialect.DEFAULT): UDM {
-        return CSVParser(csv, dialect).parse(hasHeaders)
+    fun parse(csv: String, hasHeaders: Boolean = true, dialect: CSVDialect = CSVDialect.DEFAULT,
+              options: ParseOptions = ParseOptions.standard()): UDM {
+        return CSVParser(csv, dialect, options).parse(hasHeaders)
     }
     
     /**
