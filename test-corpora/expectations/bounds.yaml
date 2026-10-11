@@ -22,7 +22,7 @@
 # ── DEPTH MARGIN (why max_depth stays small) ─────────────────────────────────────────────────
 # Measured stack-overflow depth at the DEFAULT -Xss (2 MB): ~5032 (JSON) / ~3778 (XML) — see B32 and
 # scripts/find-crash-depth.py. Keep max_depth COMFORTABLY below the shallowest crasher (XML ~3778):
-# strict 64 ≈ 59× margin, standard 128 ≈ 30×, lenient 256 ≈ 15×. Do NOT push max_depth toward ~1000
+# strict 64 ≈ 59× margin, standard 256 ≈ 15×, lenient 256 ≈ 15×. Do NOT push max_depth toward ~1000
 # unless you also raise -Xss (only ~3.8× margin at 2 MB). max_depth, -Xss, -Xmx and the concurrency
 # cap are ONE budget: a tighter max_depth lets you run a smaller -Xss → more concurrent flows fit
 # (N_threads × -Xss must fit RAM: 2 MB × 1000 flows = 2 GB of stacks alone — cap concurrency).
@@ -44,7 +44,7 @@ profiles:
     max_memory_mb:        64
 
   standard:        # pragmatic default (general mapping) — spec-compliant, mid bounds
-    max_depth:            128              # ~30× below the XML ~3778 crash @ 2 MB stack
+    max_depth:            256              # doubled from 128; ~15× below the XML ~3778 crash @ 2 MB stack
     max_bytes:            8388608          # 8 MiB
     max_nodes:            1000000
     max_string_length:    1048576          # 1 MiB

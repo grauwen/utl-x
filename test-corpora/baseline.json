@@ -4,8 +4,8 @@
   "profiles": {
     "lenient": {
       "total": 22,
-      "match": 16,
-      "mismatch": 6,
+      "match": 15,
+      "mismatch": 7,
       "errors": 0,
       "cases": [
         {
@@ -75,10 +75,10 @@
         {
           "input": "corpora/malformed/json/duplicate_key.json",
           "expected": "accept",
-          "actual": "accept",
-          "match": true,
+          "actual": "reject",
+          "match": false,
           "reason": null,
-          "detail": ""
+          "detail": "Error parsing input: JSON parse error at 1:18 - Duplicate object key: 'id'\nError: JSON parse error at 1:18 - Duplicate object key: 'id'\n"
         },
         {
           "input": "corpora/malformed/json/unquoted_key.json",
@@ -174,7 +174,7 @@
           "actual": "reject",
           "match": true,
           "reason": "dos-depth",
-          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
@@ -188,8 +188,8 @@
     },
     "standard": {
       "total": 22,
-      "match": 18,
-      "mismatch": 4,
+      "match": 19,
+      "mismatch": 3,
       "errors": 0,
       "cases": [
         {
@@ -259,10 +259,10 @@
         {
           "input": "corpora/malformed/json/duplicate_key.json",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "duplicate-key",
-          "detail": ""
+          "detail": "Error parsing input: JSON parse error at 1:18 - Duplicate object key: 'id'\nError: JSON parse error at 1:18 - Duplicate object key: 'id'\n"
         },
         {
           "input": "corpora/malformed/json/unquoted_key.json",
@@ -358,7 +358,7 @@
           "actual": "reject",
           "match": true,
           "reason": "dos-depth",
-          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
@@ -372,8 +372,8 @@
     },
     "strict": {
       "total": 22,
-      "match": 14,
-      "mismatch": 8,
+      "match": 15,
+      "mismatch": 7,
       "errors": 0,
       "cases": [
         {
@@ -443,10 +443,10 @@
         {
           "input": "corpora/malformed/json/duplicate_key.json",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "duplicate-key",
-          "detail": ""
+          "detail": "Error parsing input: JSON parse error at 1:18 - Duplicate object key: 'id'\nError: JSON parse error at 1:18 - Duplicate object key: 'id'\n"
         },
         {
           "input": "corpora/malformed/json/unquoted_key.json",
@@ -542,7 +542,7 @@
           "actual": "reject",
           "match": true,
           "reason": "max-depth",
-          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
+          "detail": "Error parsing input: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\nError: JSON parse error at 1:129 - Maximum nesting depth (128) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
