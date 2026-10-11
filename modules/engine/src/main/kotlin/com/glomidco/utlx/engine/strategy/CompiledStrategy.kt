@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.core.interpreter.Interpreter
 import com.glomidco.utlx.core.lexer.Lexer
 import com.glomidco.utlx.core.parser.ParseResult
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory
  * Falls back to TEMPLATE (interpreter) if the expression contains nodes
  * the bytecode compiler doesn't support yet.
  */
-class CompiledStrategy : ExecutionStrategy {
+class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDARD) : ExecutionStrategy {
 
     private val logger = LoggerFactory.getLogger(CompiledStrategy::class.java)
     private val transformationService = TransformationService()
@@ -102,7 +103,7 @@ class CompiledStrategy : ExecutionStrategy {
         val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase()
 
         // Parse input to UDM
-        val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json")
+        val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json", parseProfile = parseProfile)
 
         if (transformFunction != null && !usingFallback) {
             // ── Compiled path: direct method invocation ──
@@ -118,7 +119,8 @@ class CompiledStrategy : ExecutionStrategy {
             val inputs = mapOf(
                 inputName to TransformationService.InputData(content = input, format = declaredFormat)
             )
-            val (output, _) = transformationService.transform(utlxSource, inputs)
+            val (output, _) = transformationService.transform(utlxSource, inputs,
+                TransformationService.TransformOptions(parseProfile = parseProfile))
             return ExecutionResult(output = output)
         }
     }
@@ -146,7 +148,7 @@ class CompiledStrategy : ExecutionStrategy {
                 } else {
                     mapper.writeValueAsString(node)
                 }
-                name to transformationService.parseInputPublic(content, declaredFormat)
+                name to transformationService.parseInputPublic(content, declaredFormat, parseProfile = parseProfile)
             }
 
             logger.debug("Envelope split into {} named inputs: {}", inputUDMs.size, inputUDMs.keys)
@@ -175,7 +177,8 @@ class CompiledStrategy : ExecutionStrategy {
             }
 
             logger.debug("Envelope split into {} named inputs (fallback): {}", inputs.size, inputs.keys)
-            val (output, _) = transformationService.transform(utlxSource, inputs)
+            val (output, _) = transformationService.transform(utlxSource, inputs,
+                TransformationService.TransformOptions(parseProfile = parseProfile))
             return ExecutionResult(output = output)
         }
     }

@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.core.interpreter.Interpreter
 import com.glomidco.utlx.core.lexer.Lexer
 import com.glomidco.utlx.core.parser.ParseResult
@@ -12,7 +13,7 @@ import com.glomidco.utlx.core.types.TypeChecker
 import com.glomidco.utlx.engine.config.TransformConfig
 import org.slf4j.LoggerFactory
 
-class TemplateStrategy : ExecutionStrategy {
+class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDARD) : ExecutionStrategy {
 
     private val logger = LoggerFactory.getLogger(TemplateStrategy::class.java)
     private val transformationService = TransformationService()
@@ -88,7 +89,8 @@ class TemplateStrategy : ExecutionStrategy {
         }
 
         // Let exceptions propagate — ValidationOrchestrator handles error classification
-        val (output, _) = transformationService.transform(utlxSource, inputs)
+        val (output, _) = transformationService.transform(utlxSource, inputs,
+            TransformationService.TransformOptions(parseProfile = parseProfile))
         return ExecutionResult(output = output)
     }
 

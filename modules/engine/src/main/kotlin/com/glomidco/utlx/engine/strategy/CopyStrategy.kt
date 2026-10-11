@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.core.interpreter.Interpreter
 import com.glomidco.utlx.core.lexer.Lexer
 import com.glomidco.utlx.core.parser.ParseResult
@@ -44,7 +45,7 @@ import java.util.concurrent.atomic.AtomicLong
  *
  * Best for: schema-driven, high-volume, structured data (enterprise middleware).
  */
-class CopyStrategy : ExecutionStrategy {
+class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDARD) : ExecutionStrategy {
 
     private val logger = LoggerFactory.getLogger(CopyStrategy::class.java)
     private val transformationService = TransformationService()
@@ -170,7 +171,7 @@ class CopyStrategy : ExecutionStrategy {
     private fun parseSchemaToSkeleton(schemaSource: String, format: String): UDM {
         return try {
             // Parse the schema as data — this gives us the structural shape
-            val schemaUDM = transformationService.parseInputPublic(schemaSource, format)
+            val schemaUDM = transformationService.parseInputPublic(schemaSource, format, parseProfile = parseProfile)
             // Strip values, keep structure
             buildEmptySkeleton(schemaUDM)
         } catch (e: Exception) {
@@ -200,7 +201,7 @@ class CopyStrategy : ExecutionStrategy {
 
         try {
             // Parse input data
-            val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json")
+            val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json", parseProfile = parseProfile)
 
             // Merge input data into the skeleton structure
             val filledUDM = mergeDataIntoSkeleton(skeleton, inputUDM)
@@ -244,7 +245,7 @@ class CopyStrategy : ExecutionStrategy {
             }
 
             // Parse and merge into skeleton
-            val parsed = transformationService.parseInputPublic(content, declaredFormat)
+            val parsed = transformationService.parseInputPublic(content, declaredFormat, parseProfile = parseProfile)
             val skeleton = inputSkeletons[name]
             val filled = if (skeleton != null) {
                 mergeDataIntoSkeleton(deepClone(skeleton), parsed)

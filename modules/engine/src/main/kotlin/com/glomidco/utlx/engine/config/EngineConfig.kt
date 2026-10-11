@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.fasterxml.jackson.module.kotlin.readValue
+import com.glomidco.utlx.core.format.ParseProfile
+import com.glomidco.utlx.core.format.ParseProfilePolicy
 import java.nio.file.Path
 
 data class EngineConfig(
@@ -18,6 +20,26 @@ data class EngineConfig(
             )
         )
     )
+
+    // ── F23: parse strictness profile (parser-strictness-profiles.md §9/§9.1) ──
+
+    /** The configured parse profile. **Throws on an invalid value** — a typo must fail the engine, never
+     *  silently fall back to a weaker profile (that would be fail-open; cf. §7). */
+    fun parseProfile(): ParseProfile = when (engine.parse.profile.lowercase()) {
+        "strict" -> ParseProfile.STRICT
+        "standard" -> ParseProfile.STANDARD
+        "lenient" -> ParseProfile.LENIENT
+        else -> throw IllegalArgumentException(
+            "Invalid engine config parse.profile '${engine.parse.profile}' (expected: strict | standard | lenient)")
+    }
+
+    /** The lock floor: the configured profile when `locked` (a guard pins + forbids weakening), else null. */
+    fun parseLock(): ParseProfile? = if (engine.parse.locked) parseProfile() else null
+
+    /** Effective profile given an optional lower-precedence [requested] (bundle/CLI/request), per §9.1
+     *  "strictest wins, never weaken a lock." With no request, this is the configured profile. */
+    fun effectiveParseProfile(requested: ParseProfile? = null, rejectBelowLock: Boolean = false): ParseProfile =
+        ParseProfilePolicy.resolve(parseLock(), requested ?: parseProfile(), rejectBelowLock)
 
     companion object {
         private val yamlMapper = ObjectMapper(YAMLFactory()).apply {
@@ -39,7 +61,18 @@ data class EngineSettings(
     val threads: ThreadsConfig = ThreadsConfig(),
     val memory: MemoryConfig = MemoryConfig(),
     val monitoring: MonitoringConfig = MonitoringConfig(),
-    val defaultStrategy: String = "TEMPLATE"
+    val defaultStrategy: String = "TEMPLATE",
+    val parse: ParseConfig = ParseConfig()
+)
+
+/**
+ * F23: parser strictness policy for this deployment. `profile` is the selected profile
+ * (`strict | standard | lenient`); `locked` pins it as a floor that no bundle/request may weaken
+ * (a content guard sets `profile: strict, locked: true`). Default is the pragmatic `standard`, unlocked.
+ */
+data class ParseConfig(
+    val profile: String = "standard",
+    val locked: Boolean = false
 )
 
 data class ThreadsConfig(

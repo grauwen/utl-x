@@ -338,23 +338,25 @@ class UtlxEngine(val config: EngineConfig) {
      * Create an execution strategy by name. Used by both bundle loading and dynamic loading.
      */
     fun createStrategy(config: TransformConfig): ExecutionStrategy {
+        // F23: the deployment's effective parse profile (+ lock) applies to every strategy's input parsing.
+        val parseProfile = this.config.effectiveParseProfile()
         return when (config.strategy.uppercase()) {
-            "TEMPLATE", "INTERPRETED" -> TemplateStrategy()
-            "COPY" -> CopyStrategy()
-            "COMPILED" -> CompiledStrategy()
+            "TEMPLATE", "INTERPRETED" -> TemplateStrategy(parseProfile)
+            "COPY" -> CopyStrategy(parseProfile)
+            "COMPILED" -> CompiledStrategy(parseProfile)
             "AUTO" -> {
                 val hasSchema = config.inputs.any { it.schema != null }
                 if (hasSchema) {
                     logger.info("AUTO strategy: schema available → COPY")
-                    CopyStrategy()
+                    CopyStrategy(parseProfile)
                 } else {
                     logger.info("AUTO strategy: no schema → TEMPLATE")
-                    TemplateStrategy()
+                    TemplateStrategy(parseProfile)
                 }
             }
             else -> {
                 logger.warn("Strategy '{}' not yet implemented, falling back to TEMPLATE", config.strategy)
-                TemplateStrategy()
+                TemplateStrategy(parseProfile)
             }
         }
     }
