@@ -1,6 +1,7 @@
 package com.glomidco.utlx.core.format
 
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 import kotlin.test.assertFalse
@@ -63,5 +64,50 @@ class ParseOptionsTest {
         assertEquals(ParseOptions.lenient(), ParseOptions.of(ParseProfile.LENIENT))
         assertEquals(ParseOptions.standard(), ParseOptions.DEFAULT)
         assertEquals(ParseProfile.STANDARD, ParseOptions.DEFAULT.profile)
+    }
+}
+
+/**
+ * The governance resolver (F23 Phase 2 / §9.1): "strictest wins, never weaken a lock."
+ */
+class ParseProfilePolicyTest {
+    private val L = ParseProfile.LENIENT
+    private val S = ParseProfile.STANDARD
+    private val X = ParseProfile.STRICT
+    private fun r(lock: ParseProfile?, req: ParseProfile?, reject: Boolean = false) =
+        ParseProfilePolicy.resolve(lock, req, reject)
+
+    @Test fun `no lock - requested wins, null requested is standard`() {
+        assertEquals(S, r(null, null))
+        assertEquals(L, r(null, L))
+        assertEquals(X, r(null, X))
+    }
+
+    @Test fun `lock is a floor - a request at or above it is honoured (raising is safe)`() {
+        assertEquals(X, r(X, X))        // equal
+        assertEquals(X, r(S, X))        // raise standard→strict allowed
+        assertEquals(S, r(L, S))        // raise lenient→standard allowed
+    }
+
+    @Test fun `a weaker-than-lock request is clamped up to the lock (fail-safe)`() {
+        assertEquals(X, r(X, L))        // guard pinned strict; a lenient request can't weaken it
+        assertEquals(X, r(X, S))
+        assertEquals(S, r(S, L))
+    }
+
+    @Test fun `a guard-locked strict stays strict even with a null request`() {
+        assertEquals(X, r(X, null))
+    }
+
+    @Test fun `rejectBelowLock makes a weakening request a loud policy violation`() {
+        assertThrows<ParseProfilePolicy.PolicyViolation> { r(X, L, reject = true) }
+        // but an at-or-above request is still fine under reject mode
+        assertEquals(X, r(X, X, reject = true))
+        assertEquals(X, r(S, X, reject = true))
+    }
+
+    @Test fun `strictness ranking is total and ordered`() {
+        assertTrue(ParseProfilePolicy.rank(L) < ParseProfilePolicy.rank(S))
+        assertTrue(ParseProfilePolicy.rank(S) < ParseProfilePolicy.rank(X))
     }
 }

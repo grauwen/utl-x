@@ -261,6 +261,38 @@ only meaningful **paired with the profile that produced it**. So:
   `--parse-profile lenient` can never weaken a guard. The flag serves the **mapper/UTLXe** use (pick
   leniency per job); the guard/UTLXS build pins it.
 
+### 9.1 Where it lives in a bundle — and the resolution order
+
+A deployed unit is a **bundle** (`.utlxp`): transformations (`<name>.utlx` + `transform.yaml` + test
+fixtures), shared schemas, and a **bundle-level engine config** (`BundleInfo.hasEngineConfig`). The parse
+profile belongs in that **bundle-level engine config** — *not* in a per-transformation `transform.yaml`
+and *not* in `%utlx`:
+
+- **It's the §5 engine/deployment config, packaged.** The profile is a deployment posture, not a mapping
+  property; the bundle's engine config is exactly the `parse.profile` slot §9 describes.
+- **It makes "tests aligned with what's running" true.** The bundle's `test-input-*` fixtures then run
+  under the *same* profile as runtime, so a "this malformed input is rejected" test means the same thing
+  in the harness and in production (reproducibility, §8). Placing the profile outside the bundle would let
+  test and runtime strictness drift.
+- **Bundle-level, not per-transformation.** One policy per deployment (§5). A per-transformation profile
+  would let one bundle mix a `strict` guard-transform with a `lenient` one — a hole. (A rare
+  per-transformation *override* may exist for mappers, but never below the deployment floor.)
+
+**Resolution order (monotonic, fail-safe) — "strictest wins":**
+
+```
+effective = strictest of ( guard/deployment LOCK , bundle engine-config , standard default )
+```
+
+- A bundle (or CLI flag) may **raise** strictness — safe, cannot open a hole.
+- It may **never weaken** below a lock. On a locked guard (pinned `strict`), a bundle requesting `lenient`
+  is a **policy violation → reject the bundle**, not honour-and-weaken.
+- Same rule one layer up from the §9 flag precedence: **guard-lock → bundle engine-config → CLI flag →
+  standard default**, resolved to the strictest. The engine and daemon both consult this one resolver.
+
+This generalises to the whole §5.2 axis family: the bundle engine-config is where a deployment *declares*
+its intended posture (parse / types / validate / serialize); the guard lock enforces the floor.
+
 ## 10. Fit with the 1.1 plan & test-corpora
 
 This is the operational expression of **Phase 0c hardening** and the **`expectations/profiles/`**

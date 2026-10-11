@@ -244,8 +244,9 @@ class TransformationService {
     /**
      * Public entry point for parsing input data to UDM. Used by engine strategies.
      */
-    fun parseInputPublic(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
-        return parseInput(data, format, options)
+    fun parseInputPublic(data: String, format: String, options: Map<String, Any> = emptyMap(),
+                         parseProfile: ParseProfile = ParseProfile.STANDARD): UDM {
+        return parseInput(data, format, options, ParseOptions.of(parseProfile))
     }
 
     /**

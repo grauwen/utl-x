@@ -1,10 +1,12 @@
 # F23: Parser strictness profiles — per-reader policy enforcement + operator selection (`ParseProfile`)
 
-> **Status:** **IN PROGRESS** (Phase 1 complete; Phase 2 next). The policy model is designed and stable;
-> the plumbing landed reader-by-reader. **JSON, XML, YAML, CSV are all threaded** (Phase 1 ✅); the
-> CLI/engine *selection* (Phase 2) remains. Patch-releasable in increments (no behaviour change until a profile is
-> actually *selected* — the engine applies the `standard` default throughout, so every increment is
-> regression-free: **conformance 522/522**, harness **standard 24/24** at each step).
+> **Status:** **IN PROGRESS** — Phase 1 ✅ (all readers threaded) and Phase 2 ✅ for **CLI + engine
+> (utlxe)**; only the **daemon (utlxd)** selection remains, **deferred to the IDE work**. The policy model
+> is designed and stable. A deployment can now select the profile via `--parse-profile` (CLI) or
+> `engine.parse.profile` (+ `locked`) in `engine.yaml`, resolved by `ParseProfilePolicy` ("strictest wins,
+> never weaken a lock"). Patch-releasable in increments: no behaviour change until a profile is actually
+> *selected* (everything defaults to `standard`), so every increment stayed regression-free —
+> **conformance 522/522**, harness **standard 24/24**, engine **434** + daemon **191** tests green.
 >
 > **This doc is a delivery tracker.** The **normative design** — the model, the dimension × profile
 > matrix, the depth rule (§4.1), the parse/serialize-independence decision (§6.1), fail-closed semantics,
@@ -85,13 +87,18 @@ tightens them uniformly. **Protobuf is the one exception** — see the deferred 
 > wire message, so the risk is low and it is largely outside F23's untrusted-input scope. Tracked as
 > open question 4 below.
 
-**Phase 2 — operator selection** (next)
-- **CLI:** `--parse-profile strict|standard|lenient` → `ParseOptions.of(profile)` threaded into
+**Phase 2 — operator selection**
+- **CLI:** ✅ `--parse-profile strict|standard|lenient` → `ParseOptions.of(profile)` threaded into
   `TransformationService.parseInput / parseInputBytes`. Named to reserve a future `--serialize-profile`
-  (§6.1). Default `standard`.
-- **Engine / daemon:** deployment-config key (e.g. `engine.yaml: parse.profile`, optionally per-format)
-  → `ParseProfile`. **Guard = `strict`, locked**; a config-lock **wins over any flag/request** and the
-  flag is **ignored** on a guard (fail-safe) — a stray `--parse-profile lenient` can never weaken it (§5/§9).
+  (§6.1). Default `standard`. Validated end-to-end (strict rejects deep/dup-key; lenient last-wins;
+  invalid value errors) + conformance 522/522.
+- **Engine (utlxe):** ✅ `EngineConfig.engine.parse { profile, locked }` → `UtlxEngine.createStrategy`
+  resolves once via `ParseProfilePolicy.resolve(lock, requested)` (the §9.1 resolver; an invalid profile
+  string **fails the engine** — no silent weakening) → each strategy carries the `ParseProfile` →
+  `parseInputPublic` (now profile-aware) + `transform` apply it. **Guard = `strict`, locked**: a
+  config-lock is a floor nothing downstream can weaken. Default `standard`, so unchanged until configured.
+- **Daemon (utlxd):** ⬜ **deferred to the IDE work** (open question 5) — dev/admin daemon, not the guard
+  runtime; safe at `standard` today.
 - **Engine/UTLXE API:** embedders (e.g. Open-M) select a profile at embed time; a guard/UTLXS build pins it.
 
 ## Scope / non-goals
@@ -126,6 +133,14 @@ Tracked in the architecture doc §12 (toggle granularity, per-format defaults, r
    text grammar). Give it its own depth guard + profile wiring, or leave it as-is? It's author-supplied,
    design-time, not untrusted wire input → low priority. (The other Tier-2 wrappers — xsd/jsch/tsch/avro —
    were threaded alongside osch; this item is now protobuf-only.)
+5. **Daemon (utlxd) profile-threading — DEFERRED to the IDE work.** utlxd is the dev/admin/LSP/REST
+   daemon that backs the IDE, **not** the guard runtime (that is utlxe, now wired). Deferred by decision;
+   safe to defer — every daemon path defaults to `standard` (unchanged, not a regression). Scope when
+   picked up: the two `TransformOptions` sites (`RestApiServer.kt:408/:524`) + the daemon's own
+   `parseInput` (`:931`, builds readers directly). **Chosen approach (A):** the daemon reads its profile
+   from the bundle's `engine.yaml` via the `bundleStore` it already holds (light-parse the `parse` block;
+   no `:modules:engine` dependency), consistent with §9.1. `core`'s `ParseProfile`/`ParseProfilePolicy`
+   are already on the daemon classpath.
 
 ## Sources / related
 

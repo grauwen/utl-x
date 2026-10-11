@@ -12,6 +12,52 @@ package com.glomidco.utlx.core.format
 enum class ParseProfile { LENIENT, STANDARD, STRICT }
 
 /**
+ * Governance resolver for the parse profile (F23 Phase 2; see parser-strictness-profiles.md §9.1).
+ *
+ * The effective profile is resolved from the layered sources — a guard/deployment **lock**, a bundle- or
+ * CLI-**requested** profile, and the standard default — by the rule **"strictest wins, never weaken a
+ * lock"**:
+ *
+ *   effective = strictest of ( lock , requested , STANDARD )
+ *
+ * A lock is a hard **floor**: a request *at or above* it is honoured (raising strictness is always safe);
+ * a request *below* it is either clamped up to the lock (fail-safe — for a transient CLI flag) or
+ * refused outright (loud — for a deployed bundle that *declares* a weaker profile). Either way a lock can
+ * never be weakened by anything downstream of it, so a guard pinned to STRICT stays STRICT.
+ */
+object ParseProfilePolicy {
+    /** Strictness order: LENIENT (0) < STANDARD (1) < STRICT (2). */
+    fun rank(p: ParseProfile): Int = when (p) {
+        ParseProfile.LENIENT -> 0
+        ParseProfile.STANDARD -> 1
+        ParseProfile.STRICT -> 2
+    }
+
+    /** Raised when a requested profile would weaken a locked floor and [resolve] is told to refuse (fail-closed). */
+    class PolicyViolation(message: String) : RuntimeException(message)
+
+    /**
+     * Resolve the effective profile.
+     *
+     * @param lock     the guard/deployment floor, or null for an unlocked deployment.
+     * @param requested the bundle- or CLI-requested profile, or null → the STANDARD default.
+     * @param rejectBelowLock  when a request is weaker than [lock]: true → throw [PolicyViolation]
+     *   (a deployed bundle that declares weaker-than-locked is a misconfiguration — surface it);
+     *   false → clamp up to the lock (fail-safe; the right behaviour for an ignorable transient flag).
+     */
+    fun resolve(lock: ParseProfile?, requested: ParseProfile?, rejectBelowLock: Boolean = false): ParseProfile {
+        val req = requested ?: ParseProfile.STANDARD
+        if (lock == null) return req
+        if (rank(req) < rank(lock)) {
+            if (rejectBelowLock) throw PolicyViolation(
+                "Requested parse profile '$req' is weaker than the locked '$lock' — refused (fail-closed).")
+            return lock   // fail-safe: never weaken below the lock
+        }
+        return req        // req >= lock → honour it (raising strictness is safe)
+    }
+}
+
+/**
  * Resolved, per-reader parse options for a [ParseProfile]. Readers adopt fields incrementally; a field
  * a given reader doesn't consume yet is simply inert. Values mirror `test-corpora/expectations/bounds.yaml`
  * and the §4 toggle matrix of the strictness-profiles doc.
