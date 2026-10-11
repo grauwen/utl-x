@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.odata
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.json.JSONParser
+import com.glomidco.utlx.core.format.ParseOptions
 
 /**
  * OData JSON Parser - Converts OData JSON payloads to UDM
@@ -21,15 +22,19 @@ import com.glomidco.utlx.formats.json.JSONParser
  */
 class ODataJSONParser(
     private val content: String,
-    private val options: Map<String, Any> = emptyMap()
+    private val options: Map<String, Any> = emptyMap(),
+    // F23: OData-JSON is parsed by the hardened JSON reader, so it must carry the parse *profile*
+    // through to it (depth / duplicate-key policy) — otherwise OData would be pinned to `standard`
+    // and a strict guard couldn't tighten it. `options` above is the OData metadata-level map (distinct).
+    private val parseOptions: ParseOptions = ParseOptions.standard()
 ) {
     /** B20: Construct from raw bytes. OData is JSON-based (always UTF-8). */
-    constructor(bytes: ByteArray, options: Map<String, Any> = emptyMap()) :
-        this(String(bytes, Charsets.UTF_8), options)
+    constructor(bytes: ByteArray, options: Map<String, Any> = emptyMap(), parseOptions: ParseOptions = ParseOptions.standard()) :
+        this(String(bytes, Charsets.UTF_8), options, parseOptions)
 
     fun parse(): UDM {
-        // Step 1: Parse as standard JSON
-        val udm = JSONParser(content).parse()
+        // Step 1: Parse as standard JSON — under the selected parse profile (F23)
+        val udm = JSONParser(content, parseOptions).parse()
 
         // Step 2: Post-process UDM tree for OData annotations
         return processNode(udm)
