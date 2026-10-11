@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.tsch
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.json.JSONParser
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Reader
 import java.io.StringReader
 
@@ -39,15 +40,18 @@ import java.io.StringReader
  *   metadata = mapOf("__schemaType" to "tsch-schema")
  * )
  */
-class TableSchemaParser(private val source: Reader) {
-    constructor(tableSchema: String) : this(StringReader(tableSchema))
+class TableSchemaParser(
+    private val source: Reader,
+    private val parseOptions: ParseOptions = ParseOptions.standard()   // F23: forwarded to the inner JSONParser (Tier-2 wrapper; already bounded at standard)
+) {
+    constructor(tableSchema: String, parseOptions: ParseOptions = ParseOptions.standard()) : this(StringReader(tableSchema), parseOptions)
 
     /**
      * Parse Table Schema to UDM
      */
     fun parse(): UDM {
         // Step 1: Parse as JSON
-        val jsonParser = JSONParser(source)
+        val jsonParser = JSONParser(source, parseOptions)
         val jsonUDM = jsonParser.parse()
 
         // Step 2: Enhance with Table Schema-specific metadata

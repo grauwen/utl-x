@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.jsch
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.json.JSONParser
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Reader
 import java.io.StringReader
 
@@ -49,15 +50,18 @@ import java.io.StringReader
  *   )
  * )
  */
-class JSONSchemaParser(private val source: Reader) {
-    constructor(jsonSchema: String) : this(StringReader(jsonSchema))
+class JSONSchemaParser(
+    private val source: Reader,
+    private val parseOptions: ParseOptions = ParseOptions.standard()   // F23: forwarded to the inner JSONParser (Tier-2 wrapper; already bounded at standard)
+) {
+    constructor(jsonSchema: String, parseOptions: ParseOptions = ParseOptions.standard()) : this(StringReader(jsonSchema), parseOptions)
 
     /**
      * Parse JSON Schema to UDM
      */
     fun parse(): UDM {
         // Step 1: Parse as JSON
-        val jsonParser = JSONParser(source)
+        val jsonParser = JSONParser(source, parseOptions)
         val jsonUDM = jsonParser.parse()
 
         // Step 2: Enhance with JSON Schema-specific metadata

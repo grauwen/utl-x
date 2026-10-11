@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.osch
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.xml.XMLParser
+import com.glomidco.utlx.core.format.ParseOptions
 
 /**
  * EDMX Parser - Converts OData EDMX/CSDL metadata documents to UDM with USDL directives
@@ -22,14 +23,17 @@ import com.glomidco.utlx.formats.xml.XMLParser
  */
 class EDMXParser(
     private val content: String,
-    private val options: Map<String, Any> = emptyMap()
+    private val options: Map<String, Any> = emptyMap(),
+    // F23: EDMX is parsed by the hardened XML reader — carry the parse profile through so a strict
+    // deployment can tighten metadata parsing too (Tier-2; `options` is the EDMX option map, distinct).
+    private val parseOptions: ParseOptions = ParseOptions.standard()
 ) {
     /**
      * Parse EDMX/CSDL XML to UDM with USDL directives
      */
     fun parse(): UDM {
-        // Step 1: Parse as XML using the XML parser (raw EDMX structure)
-        val xmlUDM = XMLParser(content).parse()
+        // Step 1: Parse as XML using the XML parser (raw EDMX structure) under the selected profile (F23)
+        val xmlUDM = XMLParser(content, options = parseOptions).parse()
 
         // Step 2: Extract EDMX document model and convert to USDL
         return try {

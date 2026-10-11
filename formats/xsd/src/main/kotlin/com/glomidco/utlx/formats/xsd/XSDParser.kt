@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.xsd
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.xml.XMLParser
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Reader
 import java.io.StringReader
 
@@ -50,16 +51,17 @@ import java.io.StringReader
  */
 class XSDParser(
     private val source: Reader,
-    private val arrayHints: Set<String> = emptySet()
+    private val arrayHints: Set<String> = emptySet(),
+    private val parseOptions: ParseOptions = ParseOptions.standard()   // F23: forwarded to the inner XMLParser (Tier-2 wrapper; already bounded at standard)
 ) {
-    constructor(xsd: String, arrayHints: Set<String> = emptySet()) : this(StringReader(xsd), arrayHints)
+    constructor(xsd: String, arrayHints: Set<String> = emptySet(), parseOptions: ParseOptions = ParseOptions.standard()) : this(StringReader(xsd), arrayHints, parseOptions)
 
     /**
      * Parse XSD to UDM
      */
     fun parse(): UDM {
         // Step 1: Parse as XML with array hints
-        val xmlParser = XMLParser(source, arrayHints)
+        val xmlParser = XMLParser(source, arrayHints, options = parseOptions)
         val xmlUDM = xmlParser.parse()
         if (xmlUDM is UDM.Object) {
         }

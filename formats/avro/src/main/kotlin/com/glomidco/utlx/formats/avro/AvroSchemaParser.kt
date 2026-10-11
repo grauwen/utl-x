@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.avro
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.formats.json.JSONParser
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.InputStream
 
 /**
@@ -26,8 +27,8 @@ class AvroSchemaParser {
     /**
      * Parse Avro schema from JSON string
      */
-    fun parse(schemaJson: String): UDM {
-        val jsonParser = JSONParser(schemaJson)
+    fun parse(schemaJson: String, parseOptions: ParseOptions = ParseOptions.standard()): UDM {
+        val jsonParser = JSONParser(schemaJson, parseOptions)   // F23: Avro schema is JSON — forward the profile
         val udm = jsonParser.parse()
         val raw = parseSchema(udm)
         return enrichWithUSDL(raw)
@@ -36,8 +37,8 @@ class AvroSchemaParser {
     /**
      * Parse Avro schema from InputStream
      */
-    fun parse(inputStream: InputStream): UDM {
-        val jsonParser = JSONParser(inputStream.reader())
+    fun parse(inputStream: InputStream, parseOptions: ParseOptions = ParseOptions.standard()): UDM {
+        val jsonParser = JSONParser(inputStream.reader(), parseOptions)   // F23: Avro schema is JSON — forward the profile
         val udm = jsonParser.parse()
         val raw = parseSchema(udm)
         return enrichWithUSDL(raw)
