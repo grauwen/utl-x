@@ -62,6 +62,29 @@ behaviour change until a profile is selected (Phase 2).
 | **YAML** | → SnakeYAML `nestingDepthLimit` (raises default 50) | via `fromProfile` (SnakeYAML `isAllowDuplicateKeys` + check) | n/a | ✅ threaded + tested |
 | **CSV** | n/a — flat records (§4.1) | n/a | n/a | ✅ inert `options` param (uniform dispatch; grammar = dialect, limits = bounds) |
 
+**Delegating readers** (parse by wrapping a core reader, then post-process) — these must *forward* the
+profile to the inner reader, else they'd be pinned to `standard` and a strict guard couldn't tighten them:
+
+| reader | module | wraps | status |
+|---|---|---|---|
+| **OData-JSON** (`ODataJSONParser`, Tier-1 data) | odata | JSON | ✅ forwards → `JSONParser` |
+| **EDMX / CSDL** (`EDMXParser`, Tier-2 metadata) | osch | XML | ✅ forwards → `XMLParser` |
+| **XSD** (`XSDParser`, Tier-2 schema) | xsd | XML | ✅ forwards → `XMLParser` |
+| **JSON Schema** (`JSONSchemaParser`, Tier-2 schema) | jsch | JSON | ✅ forwards → `JSONParser` |
+| **Table Schema** (`TableSchemaParser`, Tier-2 schema) | tsch | JSON | ✅ forwards → `JSONParser` |
+| **Avro Schema** (`AvroSchemaParser`, Tier-2 schema) | avro | JSON | ✅ forwards → `JSONParser` (both `parse` overloads) |
+
+All six delegating readers now forward the profile to their hardened inner reader, so a strict deployment
+tightens them uniformly. **Protobuf is the one exception** — see the deferred note:
+
+> **Deferred — `ProtobufSchemaParser` (protobuf).** Unlike the others it does **not** wrap a core reader;
+> it hand-parses `.proto` **text** with its own line-based grammar (`parseProtoText` / `parseMessage` /
+> `parseEnum` / …), so it inherits nothing from the hardened JSON/XML readers and the profile-forward
+> doesn't apply. It would need its **own** depth guard (nested messages recurse) if hardening ever
+> mattered — but a `.proto` schema is an **author-supplied, design-time** artifact, not an untrusted
+> wire message, so the risk is low and it is largely outside F23's untrusted-input scope. Tracked as
+> open question 4 below.
+
 **Phase 2 — operator selection** (next)
 - **CLI:** `--parse-profile strict|standard|lenient` → `ParseOptions.of(profile)` threaded into
   `TransformationService.parseInput / parseInputBytes`. Named to reserve a future `--serialize-profile`
@@ -99,6 +122,10 @@ Tracked in the architecture doc §12 (toggle granularity, per-format defaults, r
    purely bounds + dialect? (Leaning: dialect + bounds; no leniency dial.)
 2. **Config shape** — one `parse.profile` key vs per-format map; precedence when both are set.
 3. **`SerializeProfile`** — when a concrete need appears, spin a separate `F##` (not a phase here).
+4. **Protobuf schema** (`ProtobufSchemaParser`) — the only reader not fed by a core reader (own `.proto`
+   text grammar). Give it its own depth guard + profile wiring, or leave it as-is? It's author-supplied,
+   design-time, not untrusted wire input → low priority. (The other Tier-2 wrappers — xsd/jsch/tsch/avro —
+   were threaded alongside osch; this item is now protobuf-only.)
 
 ## Sources / related
 
