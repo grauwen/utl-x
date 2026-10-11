@@ -11,6 +11,8 @@ import com.glomidco.utlx.core.types.StandardLibrary
 import com.glomidco.utlx.core.types.TypeCheckResult
 import com.glomidco.utlx.core.types.TypeChecker
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.formats.avro.AvroSchemaParser
 import com.glomidco.utlx.formats.avro.AvroSchemaSerializer
 import com.glomidco.utlx.formats.csv.CSVDialect
@@ -108,7 +110,10 @@ class TransformationService {
         val verbose: Boolean = false,
         val pretty: Boolean = true,
         val strictTypes: Boolean = false,
-        val overrideOutputFormat: String? = null
+        val overrideOutputFormat: String? = null,
+        // F23 Phase 2: the parse strictness profile applied to ALL input readers. Default STANDARD
+        // (= prior behaviour). On a guard this is pinned to STRICT by deployment config, not here.
+        val parseProfile: ParseProfile = ParseProfile.STANDARD
     )
 
     /**
@@ -125,6 +130,8 @@ class TransformationService {
         val program = compileScript(utlxSource, options)
 
         // Step 2: Parse inputs using format from header if not specified
+        // F23 Phase 2: resolve the parse profile once; every reader receives it (uniform policy).
+        val parseOpts = ParseOptions.of(options.parseProfile)
         val inputUDMs = inputs.mapValues { (name, inputData) ->
             // Priority: explicit format > header format > auto-detect
             val format = inputData.format
@@ -141,9 +148,9 @@ class TransformationService {
 
             // B20: prefer raw bytes (non-UTF-8 safe) over pre-decoded String
             if (inputData.bytes != null) {
-                parseInputBytes(inputData.bytes, format, inputData.charset, formatOptions)
+                parseInputBytes(inputData.bytes, format, inputData.charset, formatOptions, parseOpts)
             } else {
-                parseInput(inputData.content, format, formatOptions)
+                parseInput(inputData.content, format, formatOptions, parseOpts)
             }
         }
 
@@ -256,7 +263,8 @@ class TransformationService {
     /**
      * Parse input - extracted from CLI's parseInput (EXACT copy to maintain 100% compatibility)
      */
-    private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap()): UDM {
+    private fun parseInput(data: String, format: String, options: Map<String, Any> = emptyMap(),
+                           parseOpts: ParseOptions = ParseOptions.standard()): UDM {
         return try {
             when (format.lowercase()) {
                 "auto" -> {
@@ -279,52 +287,52 @@ class TransformationService {
                         }
                         else -> "json" // Default to JSON
                     }
-                    parseInput(data, detectedFormat, options)
+                    parseInput(data, detectedFormat, options, parseOpts)
                 }
                 "xml" -> {
                     val arrayHints = (options["arrays"] as? List<*>)
                         ?.mapNotNull { it as? String }
                         ?.toSet()
                         ?: emptySet()
-                    XMLParser(data, arrayHints).parse()
+                    XMLParser(data, arrayHints, options = parseOpts).parse()
                 }
                 "json" -> {
-                    JSONParser(data).parse()
+                    JSONParser(data, parseOpts).parse()
                 }
                 "odata" -> {
-                    ODataJSONParser(data, options).parse()
+                    ODataJSONParser(data, options, parseOpts).parse()
                 }
                 "osch" -> {
-                    EDMXParser(data, options).parse()
+                    EDMXParser(data, options, parseOpts).parse()
                 }
                 "csv" -> {
                     val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
                     val headers = (options["headers"] as? Boolean) ?: true
 
                     val dialect = CSVDialect(delimiter = delimiter)
-                    CSVParser(data, dialect).parse(hasHeaders = headers)
+                    CSVParser(data, dialect, parseOpts).parse(hasHeaders = headers)
                 }
                 "yaml", "yml" -> {
-                    YAMLParser().parse(data)
+                    YAMLParser().parse(data, YAMLParser.ParseOptions.fromProfile(parseOpts))
                 }
                 "xsd" -> {
                     val arrayHints = (options["arrays"] as? List<*>)
                         ?.mapNotNull { it as? String }
                         ?.toSet()
                         ?: emptySet()
-                    XSDParser(data, arrayHints).parse()
+                    XSDParser(data, arrayHints, parseOpts).parse()
                 }
                 "jsch" -> {
-                    JSONSchemaParser(data).parse()
+                    JSONSchemaParser(data, parseOpts).parse()
                 }
                 "tsch" -> {
-                    TableSchemaParser(data).parse()
+                    TableSchemaParser(data, parseOpts).parse()
                 }
                 "avro" -> {
-                    AvroSchemaParser().parse(data)
+                    AvroSchemaParser().parse(data, parseOpts)
                 }
                 "proto" -> {
-                    ProtobufSchemaParser().parse(data)
+                    ProtobufSchemaParser().parse(data)   // F23: own .proto grammar — no profile forward (open-q 4)
                 }
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
@@ -338,25 +346,26 @@ class TransformationService {
      * B20: Parse input from raw bytes. Uses format-specific encoding detection.
      * Falls back to String-based parsing if ByteArray constructor is not available for the format.
      */
-    private fun parseInputBytes(bytes: ByteArray, format: String, charset: java.nio.charset.Charset? = null, options: Map<String, Any> = emptyMap()): UDM {
+    private fun parseInputBytes(bytes: ByteArray, format: String, charset: java.nio.charset.Charset? = null, options: Map<String, Any> = emptyMap(),
+                                parseOpts: ParseOptions = ParseOptions.standard()): UDM {
         return when (format.lowercase()) {
             "xml" -> {
                 val arrayHints = (options["arrays"] as? List<*>)?.mapNotNull { it as? String }?.toSet() ?: emptySet()
-                XMLParser(bytes, arrayHints).parse()
+                XMLParser(bytes, arrayHints, options = parseOpts).parse()
             }
-            "json" -> JSONParser(bytes).parse()
+            "json" -> JSONParser(bytes, parseOpts).parse()
             "csv" -> {
                 val delimiter = (options["delimiter"] as? String)?.firstOrNull() ?: ','
                 val headers = (options["headers"] as? Boolean) ?: true
                 val dialect = CSVDialect(delimiter = delimiter)
-                CSVParser(bytes, charset, dialect).parse(hasHeaders = headers)
+                CSVParser(bytes, charset, dialect, parseOpts).parse(hasHeaders = headers)
             }
-            "yaml", "yml" -> YAMLParser().parse(bytes, charset)
-            "odata" -> ODataJSONParser(bytes, options).parse()
+            "yaml", "yml" -> YAMLParser().parse(bytes, charset, YAMLParser.ParseOptions.fromProfile(parseOpts))
+            "odata" -> ODataJSONParser(bytes, options, parseOpts).parse()
             else -> {
                 // Formats without ByteArray constructors — decode and use String path
                 val text = String(bytes, charset ?: Charsets.UTF_8)
-                parseInput(text, format, options)
+                parseInput(text, format, options, parseOpts)
             }
         }
     }

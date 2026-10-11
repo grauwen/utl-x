@@ -5,6 +5,7 @@ import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.cli.capture.TestCaptureService
 import com.glomidco.utlx.cli.CommandResult
 import com.glomidco.utlx.core.debug.DebugConfig
+import com.glomidco.utlx.core.format.ParseProfile
 import java.io.File
 
 /**
@@ -37,7 +38,8 @@ object TransformCommand {
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
         val strictTypes: Boolean = false,  // Enforce type checking (fail on type errors)
         val identityMode: Boolean = false,  // true = no script, passthrough with smart format flip
-        val charset: String? = null  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
+        val charset: String? = null,  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
+        val parseProfile: String? = null  // F23: parser strictness profile (strict|standard|lenient); null = standard
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -333,11 +335,24 @@ ${"$"}input"""
             }
 
             // Step 3: Call TransformationService
+            // F23: resolve the parse profile (operator-selected; default standard). A guard pins this
+            // via deployment config, not here — the CLI flag is for the mapper/dev.
+            val resolvedProfile = when (options.parseProfile?.lowercase()) {
+                null, "standard" -> ParseProfile.STANDARD
+                "strict" -> ParseProfile.STRICT
+                "lenient" -> ParseProfile.LENIENT
+                else -> throw IllegalArgumentException(
+                    "Invalid --parse-profile '${options.parseProfile}' (expected: strict | standard | lenient)")
+            }
+            if (options.verbose && options.parseProfile != null) {
+                println("Parse profile: ${resolvedProfile.name.lowercase()} (from CLI option)")
+            }
             val serviceOptions = TransformationService.TransformOptions(
                 verbose = options.verbose,
                 pretty = options.pretty,
                 strictTypes = options.strictTypes,
-                overrideOutputFormat = effectiveOutputFormat
+                overrideOutputFormat = effectiveOutputFormat,
+                parseProfile = resolvedProfile
             )
 
             val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
@@ -500,6 +515,7 @@ ${"$"}input"""
         val debugComponents = mutableSetOf<DebugConfig.Component>()
         var strictTypes = false
         var charset: String? = null
+        var parseProfile: String? = null
 
         var i = 0
         while (i < args.size) {
@@ -544,6 +560,9 @@ ${"$"}input"""
                 }
                 "--charset" -> {
                     charset = args[++i]
+                }
+                "--parse-profile" -> {
+                    parseProfile = args[++i]
                 }
                 "--strict-types" -> {
                     strictTypes = true
@@ -621,7 +640,8 @@ ${"$"}input"""
                 debugLevel = debugLevel,
                 debugComponents = debugComponents,
                 strictTypes = strictTypes,
-                charset = charset
+                charset = charset,
+                parseProfile = parseProfile
             )
         }
 
@@ -642,7 +662,8 @@ ${"$"}input"""
                     debugComponents = debugComponents,
                     strictTypes = strictTypes,
                     charset = charset,
-                    identityMode = true
+                    identityMode = true,
+                    parseProfile = parseProfile
                 )
             }
             // B26: single output channel — printUsage() for context, Main.kt prints the error once.
@@ -676,7 +697,8 @@ ${"$"}input"""
             debugLevel = debugLevel,
             debugComponents = debugComponents,
             strictTypes = strictTypes,
-            charset = charset
+            charset = charset,
+            parseProfile = parseProfile
         )
     }
     
@@ -713,6 +735,7 @@ ${"$"}input"""
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)
+            |  --parse-profile PROFILE     Parser strictness: strict | standard | lenient (default standard)
             |  --capture                   Force enable test capture (overrides config)
             |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message
