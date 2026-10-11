@@ -150,8 +150,18 @@ def main():
             continue
         actual[rel] = probe(cli, ip, fmt, args.timeout)
 
+    def _repo_rel(tok):
+        """Render CLI tokens repo-relative so the report never carries an absolute (machine-specific) path."""
+        p = Path(tok)
+        if p.is_absolute():
+            try:
+                return str(p.relative_to(REPO_ROOT))
+            except ValueError:
+                return p.name
+        return tok
+
     report = {"note": "current un-profiled parser vs each profile's spec; mismatches = Phase-0c backlog",
-              "cli": " ".join(cli), "profiles": {}}
+              "cli": " ".join(_repo_rel(t) for t in cli), "profiles": {}}
     for name, cases in profiles.items():
         rows, match, mismatch, errors = [], 0, 0, 0
         for rel, exp in cases.items():

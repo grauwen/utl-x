@@ -1,5 +1,9 @@
 # UTL-X .gitignore
 
+# Generated test-corpora reports (regenerable via scripts/harness.py — not source).
+# The reproducible apparatus is the inputs + oracles + harness, NOT the report.
+test-corpora/baseline.json
+
 # Compiled files
 *.class
 *.jar

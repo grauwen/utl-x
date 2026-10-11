@@ -29,7 +29,7 @@ pip3 install pyyaml                  # once
 
 python3 test-corpora/scripts/harness.py                 # all profiles, summary
 python3 test-corpora/scripts/harness.py --profile strict -v
-python3 test-corpora/scripts/harness.py --json test-corpora/baseline.json
+python3 test-corpora/scripts/harness.py --json test-corpora/baseline.json   # generated report — gitignored, not source
 # custom CLI (e.g. the engine jar, or a native build):
 python3 test-corpora/scripts/harness.py --cli "java -jar modules/cli/build/libs/cli-1.3.0.jar"
 ```

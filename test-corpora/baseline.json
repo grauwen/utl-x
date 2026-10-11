@@ -4,8 +4,8 @@
   "profiles": {
     "lenient": {
       "total": 22,
-      "match": 14,
-      "mismatch": 8,
+      "match": 15,
+      "mismatch": 7,
       "errors": 1,
       "cases": [
         {
@@ -131,10 +131,10 @@
         {
           "input": "corpora/malformed/csv/unclosed_quote.csv",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "unclosed-quote",
-          "detail": ""
+          "detail": "Error parsing input: CSV parse error at 3:1 - Unterminated quoted field\nError: CSV parse error at 3:1 - Unterminated quoted field\n"
         },
         {
           "input": "corpora/malformed/yaml/tab_indent.yaml",
@@ -188,8 +188,8 @@
     },
     "standard": {
       "total": 22,
-      "match": 16,
-      "mismatch": 6,
+      "match": 17,
+      "mismatch": 5,
       "errors": 1,
       "cases": [
         {
@@ -315,10 +315,10 @@
         {
           "input": "corpora/malformed/csv/unclosed_quote.csv",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "unclosed-quote",
-          "detail": ""
+          "detail": "Error parsing input: CSV parse error at 3:1 - Unterminated quoted field\nError: CSV parse error at 3:1 - Unterminated quoted field\n"
         },
         {
           "input": "corpora/malformed/yaml/tab_indent.yaml",
@@ -372,8 +372,8 @@
     },
     "strict": {
       "total": 22,
-      "match": 12,
-      "mismatch": 10,
+      "match": 13,
+      "mismatch": 9,
       "errors": 1,
       "cases": [
         {
@@ -499,10 +499,10 @@
         {
           "input": "corpora/malformed/csv/unclosed_quote.csv",
           "expected": "reject",
-          "actual": "accept",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "unclosed-quote",
-          "detail": ""
+          "detail": "Error parsing input: CSV parse error at 3:1 - Unterminated quoted field\nError: CSV parse error at 3:1 - Unterminated quoted field\n"
         },
         {
           "input": "corpora/malformed/yaml/tab_indent.yaml",
