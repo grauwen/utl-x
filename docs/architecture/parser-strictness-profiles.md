@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Document | parser-strictness-profiles |
-| Status | Proposal — draft (design); sibling to `%utlx 1.1`, feeds Phase 0 hardening |
+| Status | Proposal — draft (design); sibling to `%utlx 1.1`, feeds Phase 0 hardening. **Delivery tracked in `docs/features/F23-parser-strictness-profiles.md`** (this doc = normative design; F23 = scope/phases/status). |
 | Scope | A **named strictness profile** (`lenient \| standard \| strict`) that governs how tolerant each **parser** is of imperfect input, and how canonical each **serializer** is on output. Profile is a **deployment policy**, not language syntax or data; for a content guard it is pinned to `strict` and **locked**. |
 | Related | `utlx-1_1-build-plan.md` (Phase 0b baseline, 0c hardening-to-a-bar); `utlx-test-corpora.md` (§5.7 malformed/leniency; `expectations/profiles/{strict,lenient}`); `utlx-language-versioning-validation.md` §3 (parse-time hardening vs semantic validation); `utlx-1_1-semantic-validation.md` (`validate.*`); `civilian-guard.md` (fail-closed, rebuild-clean / no pass-through) |
 
@@ -171,6 +171,34 @@ This is exactly what the guard's **rebuild-clean / no-pass-through** doctrine al
 message is rebuilt and written **canonically**, never echoed. So "strict serializer" ≡ "canonical
 writer," and the guard is already pointed there.
 
+### 6.1 Parse and serialize are **independent** axes
+
+Parse-strictness and serialize-strictness are **separately selectable** — one profile per axis, not a
+single dial governing both. They are asymmetric operations with knob-sets that do not transfer:
+
+| | **Parse** | **Serialize** |
+|---|---|---|
+| operates on | untrusted **input** (bytes off the wire) | a **UDM** already well-formed by construction |
+| "strict" means | *reject* malformed/malicious input — the LANGSEC attack surface | *canonical / minimal* output (§6) |
+| knobs | `allowDuplicateKeys`, `allowTrailingCommas`, `allowComments`, `allowDoctype`, `allowUndefinedEntities`, `maxDepth` | key order, escaping, quote style, compact/pretty, charset/BOM, number format |
+
+The knobs **don't carry over**: a `UDM.Object` cannot hold duplicate keys, the writer never emits a
+DOCTYPE or an undefined entity, and output depth is already bounded by the parse. So serialize
+strictness is its **own** construct — a future **`SerializeProfile`**, **not** `ParseProfile` reused on
+the output path. Only `ParseProfile` (the security-critical half) is implemented today; the serialize
+axis is reserved, not yet built.
+
+**Why independence earns its keep — the normalisation gateway.** The valuable asymmetric combination is
+**`parse = lenient` + `serialize = strict/canonical`**: accept messy real-world input (BOM, trailing
+commas, duplicate-keys → last-wins) and emit one clean canonical form. That is a legitimate, common
+pipeline shape (cf. DataWeave/XSLT cleanup stages); a single shared profile cannot express it. The
+reverse (strict-in, lenient-out) is rarely useful.
+
+**The guard** wants `strict` on **both** ends — but for different reasons: input = *reject attacks*;
+output = hand the downstream consumer a minimal canonical message with no tolerated slack. They coincide
+at `strict` there, so one guard-lock (§5) still pins both. Independence matters for the **mapper
+(UTLXe)**, not the guard.
+
 ## 7. Fail-closed semantics at `strict`
 
 At `strict` the contract on any deviation is **reject + a reason code, never repair, never
@@ -196,6 +224,14 @@ only meaningful **paired with the profile that produced it**. So:
   (§5).
 - **Build/profile alignment:** `standard` is the UTLXe default; `strict`-locked is part of the
   **UTLXS / guard** profile. (See `utlx-language-versioning-validation.md` for UTLXe vs UTLXS.)
+- **Operator selection (CLI/engine), never data:** the parse profile may be chosen by the **operator**
+  via an engine-config key *or* a CLI flag — an operator argument, **not** reachable from the message or
+  the mapping (§5). The flag is **`--parse-profile strict|standard|lenient`**, named deliberately to
+  reserve a future **`--serialize-profile`** (§6.1); a convenience `--profile X` may later set both axes,
+  with the per-axis flags overriding it. **Precedence:** a deployment-config lock **wins over the flag** —
+  on a guard (profile pinned to `strict`, locked) the flag is **ignored** (fail-safe), so a stray
+  `--parse-profile lenient` can never weaken a guard. The flag serves the **mapper/UTLXe** use (pick
+  leniency per job); the guard/UTLXS build pins it.
 
 ## 10. Fit with the 1.1 plan & test-corpora
 
