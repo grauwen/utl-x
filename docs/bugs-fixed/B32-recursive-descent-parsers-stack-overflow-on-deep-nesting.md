@@ -7,6 +7,17 @@
 crash-depth probe flips JSON/XML from **crash → clean reject** (≈1000); the harness shows **0
 robustness-errors** (all profiles) with `deep_nesting_50000` now rejecting; **conformance 522/522**.
 Moderate nesting (100) still parses, so no legitimate-data regression — safe for a minor patch release.
+**Update (Phase-1 plumbing):** the **JSON** reader now takes its depth bound from `core/format/ParseOptions`
+(`maxDepth`, per-profile: strict 64 / standard 128 / lenient 256) instead of the hardcoded 1000 cap —
+the *proper* per-profile fix (unit-tested). The **XML** reader still uses the 1000 stop-gap until it is
+threaded onto `ParseOptions` (next increment).
+**Permanent fix:** **F22** (iterative / indexed parsing) removes the *stack-bound* depth class entirely —
+depth becomes heap-bounded, so `max_depth` can be raised safely (match/exceed DataWeave's 4096) and
+StackOverflow is structurally impossible. The per-profile `ParseOptions.maxDepth` here is the bridge to it.
+**Native-verified:** the GraalVM native binary compiles cleanly with `ParseOptions` and rejects a
+50000-deep input with a clean `Maximum nesting depth (256) exceeded` — **no native stack overflow**. The
+app-level counter is architecture-independent, so the bound protects the native image (incl. the guard's
+native build), not just the JVM.
 **Still OPEN (follow-up):** per-profile `max_depth` enforcement (strict 64 / standard 128 / lenient 256)
 needs the parser **profile plumbing** — until then the strict 64 bound isn't applied (e.g.
 `deep_nesting_100` is still accepted under the 1000 cap). Found 2026-10-10 by the `test-corpora`

@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.json
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.interpreter.RuntimeValue
+import com.glomidco.utlx.core.format.ParseOptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
@@ -24,7 +25,25 @@ class JSONParserTest {
     @Test
     fun `B32 regression - moderately nested JSON still parses`() {
         val d = 100
-        JSONParser("[".repeat(d) + "1" + "]".repeat(d)).parse()  // must not throw
+        JSONParser("[".repeat(d) + "1" + "]".repeat(d)).parse()  // 100 < standard 256 — must not throw
+    }
+
+    @Test
+    fun `B31 duplicate keys rejected under standard (default)`() {
+        assertThrows<JSONParseException> { JSONParser("""{"a":1,"a":2}""").parse() }
+    }
+
+    @Test
+    fun `B31 duplicate keys are last-wins under lenient`() {
+        val r = JSONParser("""{"a":1,"a":2}""", ParseOptions.lenient()).parse() as UDM.Object
+        assertEquals(2.0, r.get("a")?.asScalar()?.asNumber())
+    }
+
+    @Test
+    fun `per-profile depth - strict rejects what lenient accepts`() {
+        val json = "[".repeat(100) + "1" + "]".repeat(100)
+        assertThrows<JSONParseException> { JSONParser(json, ParseOptions.strict()).parse() }  // 100 > strict 64
+        JSONParser(json, ParseOptions.lenient()).parse()                                      // 100 < lenient 256
     }
 
     @Test

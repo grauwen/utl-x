@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.json
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.interpreter.RuntimeValue
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Writer
 import java.io.StringWriter
 
@@ -343,7 +344,7 @@ object JSON {
     /**
      * Parse JSON string to UDM
      */
-    fun parse(json: String): UDM {
-        return JSONParser(json).parse()
+    fun parse(json: String, options: ParseOptions = ParseOptions.standard()): UDM {
+        return JSONParser(json, options).parse()
     }
 }

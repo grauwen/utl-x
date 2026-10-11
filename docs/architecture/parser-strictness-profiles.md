@@ -79,6 +79,33 @@ off** — that's a hard security floor, not a strictness dial.
 > expected verdict per profile**. Change a cell here ⇒ change its expected corpus verdicts there; a
 > corpus case that no cell covers ⇒ an unspecified policy decision to add here.
 
+### 4.1 The depth bound: one policy, per-format enforcement (+ safety ceiling)
+
+`max_depth` is a **single profile policy** (one `ParseOptions.maxDepth` per profile) — **not** a
+per-format constant (that would fragment the deployment/guard policy). But each reader **enforces** that
+one value in its own way, and MAY clamp it to a per-format **safety ceiling**, because formats differ in
+nesting model, parser engine, and crash point. This is a **requirement** for threading `ParseOptions`
+into each reader:
+
+| format | how `maxDepth` is applied |
+|---|---|
+| **CSV** | **ignored** — CSV is flat (no nesting) |
+| **JSON** | app-level depth counter |
+| **XML** | app-level depth counter — crashes *earlier* than JSON (~3778 vs ~5032 @ 2 MB), so its safety ceiling is lower |
+| **YAML** | mapped to SnakeYAML `LoaderOptions.nestingDepthLimit` |
+| **avro / protobuf** | mapped to the library's recursion limit (protobuf's default is ~100) |
+| **jsch / xsd / osch / tsch** | **inherit** the underlying JSON/XML reader's depth (no separate value) |
+
+**Safety ceiling (clamp).** While the recursive readers remain stack-bound (pre-**F22**), a reader must
+**clamp** a configured `maxDepth` to what *its own* parser can survive — XML's ceiling is lower than
+JSON's. At the default 64/256 this never fires; it is a guard-rail against a *high* configured value
+(e.g. a 2000 `lenient` would be only ~1.9× below XML's ~3778 crash). Once **F22** (iterative) lands,
+depth is heap-bounded and the ceiling can rise uniformly.
+
+> **Rule:** one policy value → per-format **enforcement** → per-format **safety ceiling**. Never a
+> per-format *policy*. (A field a reader can't use — `maxDepth` for CSV — is simply inert, like
+> `allowDoctype` for JSON.)
+
 ## 5. Policy model — the security-critical part
 
 > Strictness is a **policy set by the deployment/operator**. On a guard it is **locked to `strict`**

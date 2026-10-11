@@ -1,6 +1,7 @@
 package com.glomidco.utlx.formats.json
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ParseOptions
 import java.io.Reader
 import java.io.StringReader
 
@@ -15,26 +16,25 @@ import java.io.StringReader
  * - array → UDM.Array
  * - object → UDM.Object
  */
-// B32: hard safety cap on nesting depth — prevents StackOverflowError (DoS) on deeply-nested input.
-// Profile-independent stop-gap; the per-profile `max_depth` (test-corpora/expectations/bounds.yaml)
-// supersedes it once parser profiles land. 1000 matches Jackson's default and is safe at the default
-// 2 MB JVM stack (measured crash ~5032 JSON / ~3778 XML, B32); lower it for a smaller -Xss.
-private const val MAX_NESTING_DEPTH = 1000
-
-class JSONParser(private val source: Reader) {
+class JSONParser(
+    private val source: Reader,
+    // Parse profile: per-profile depth bound (B32) + duplicate-key policy (B31). Deployment policy,
+    // not data/header-driven; default STANDARD. See core/format/ParseOptions + parser-strictness-profiles.md.
+    private val options: ParseOptions = ParseOptions.standard()
+) {
     private var current = 0
     private var line = 1
     private var column = 1
     private val text = source.readText()
     private var depth = 0
 
-    constructor(json: String) : this(StringReader(json))
+    constructor(json: String, options: ParseOptions = ParseOptions.standard()) : this(StringReader(json), options)
 
     /**
      * B20: Construct from raw bytes. JSON MUST be UTF-8 per RFC 8259.
      * Strips UTF-8 BOM (EF BB BF) if present.
      */
-    constructor(bytes: ByteArray) : this(StringReader(decodeJsonBytes(bytes)))
+    constructor(bytes: ByteArray, options: ParseOptions = ParseOptions.standard()) : this(StringReader(decodeJsonBytes(bytes)), options)
     
     /**
      * Parse JSON to UDM
@@ -59,8 +59,8 @@ class JSONParser(private val source: Reader) {
     
     private fun parseValue(): UDM {
         // B32: bound recursion depth before descending (check-then-increment; decrement in finally).
-        if (depth >= MAX_NESTING_DEPTH) {
-            throw JSONParseException("Maximum nesting depth ($MAX_NESTING_DEPTH) exceeded", line, column)
+        if (depth >= options.maxDepth) {
+            throw JSONParseException("Maximum nesting depth (${options.maxDepth}) exceeded", line, column)
         }
         depth++
         try {
@@ -102,6 +102,10 @@ class JSONParser(private val source: Reader) {
                 
                 // Parse value
                 val value = parseValue()
+                // B31: duplicate-key policy — reject under standard/strict, last-wins under lenient.
+                if (!options.allowDuplicateKeys && properties.containsKey(key)) {
+                    throw JSONParseException("Duplicate object key: '$key'", line, column)
+                }
                 properties[key] = value
                 
                 skipWhitespace()

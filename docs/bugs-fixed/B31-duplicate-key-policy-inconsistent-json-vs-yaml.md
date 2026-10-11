@@ -1,6 +1,12 @@
 # B31: duplicate-key policy is inconsistent across readers — JSON silently last-wins; YAML rejects
 
-**Status:** **OPEN** — found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
+**Status:** **PARTIALLY ADDRESSED** — JSON's duplicate-key handling is now **profile-driven** via the
+new `core/format/ParseOptions` (`allowDuplicateKeys`): it **rejects under standard/strict** and is
+**last-wins under lenient** (unit-tested in `json_tests.kt`; conformance 522/522 holds). This removes the
+JSON-vs-YAML *default* inconsistency (both now reject by default). **Still open:** thread YAML onto the
+same `ParseOptions` (today it uses SnakeYAML's own `allowDuplicateKeys`), and wire the engine/daemon's
+deployment-config → `ParseProfile` **selection** so a deployment can actually choose lenient/strict
+(the engine currently applies the STANDARD default uniformly). Found 2026-10-10 (Phase 0b).
 **Priority:** Medium (correctness + cross-reader consistency + strict/standard policy).
 **Created:** October 2026
 **Component:**
