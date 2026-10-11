@@ -4,9 +4,9 @@
   "profiles": {
     "lenient": {
       "total": 22,
-      "match": 15,
-      "mismatch": 7,
-      "errors": 1,
+      "match": 16,
+      "mismatch": 6,
+      "errors": 0,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -171,10 +171,10 @@
         {
           "input": "corpora/security/json/deep_nesting_50000.json",
           "expected": "reject",
-          "actual": "error",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "dos-depth",
-          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
@@ -188,9 +188,9 @@
     },
     "standard": {
       "total": 22,
-      "match": 17,
-      "mismatch": 5,
-      "errors": 1,
+      "match": 18,
+      "mismatch": 4,
+      "errors": 0,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -355,10 +355,10 @@
         {
           "input": "corpora/security/json/deep_nesting_50000.json",
           "expected": "reject",
-          "actual": "error",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "dos-depth",
-          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
@@ -372,9 +372,9 @@
     },
     "strict": {
       "total": 22,
-      "match": 13,
-      "mismatch": 9,
-      "errors": 1,
+      "match": 14,
+      "mismatch": 8,
+      "errors": 0,
       "cases": [
         {
           "input": "corpora/conformance/json/valid_object.json",
@@ -539,10 +539,10 @@
         {
           "input": "corpora/security/json/deep_nesting_50000.json",
           "expected": "reject",
-          "actual": "error",
-          "match": false,
+          "actual": "reject",
+          "match": true,
           "reason": "max-depth",
-          "detail": "crash: Exception in thread \"main\" java.lang.StackOverflowError"
+          "detail": "Error parsing input: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\nError: JSON parse error at 1:1001 - Maximum nesting depth (1000) exceeded\n"
         },
         {
           "input": "corpora/security/xml/billion_laughs.xml",
