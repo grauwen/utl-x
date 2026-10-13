@@ -76,11 +76,23 @@ Minor: an exclusive/half-open flag on `inRange`.
 
 ## 5. Verdict
 
-- **Expressively: yes — conditional on the expression sublanguage.** `assert` backstops everything, so
-  the real risk is not `validate.*` the namespace but whether UTL-X's **expression/stdlib** has
-  **quantifiers** (`all`/`any` over collections), **aggregation** (`sum`/`count`), **`DateTime`
-  comparison**, and **dynamic lookup**. **Action: audit the expression sublanguage for these first** —
-  that is where any hard hole would actually be.
+> **Gate result — expression-sublanguage audit RUN 2026-10-13: all four capabilities PRESENT.** The
+> conditional below is satisfied. The `:stdlib` registry already provides:
+> **quantifiers** `every`/`some`/`all`/`any`/`none` (+ `map`/`filter`/`reduce`/`find`);
+> **aggregation** `count`/`size`/`length`/`sum`/`min`/`max`/`avg`;
+> **date comparison** `toDate`/`parseDate`/`now`/`isBefore`/`isAfter`;
+> **membership/lookup** `contains`/`containsKey`/`includes`/`indexOf`/`get`/`keys`/`values`/`lookupBy`.
+> So `assert` can already express `every`/`count`/temporal-ordering/referential rules today — there is
+> **no hard expressive hole**. The §3 named idioms (quantification, cardinality, referential,
+> composite-unique, temporal-order) are therefore **optional *sugar* over existing functions** (sugar for
+> faithful/analyzable translation), not expressiveness blockers — add them if/when a translator or
+> analyzability need arises; otherwise defer. *(Caveat: confirm the exact `every`/`some` semantics —
+> `(array, predicate) → bool` — when wiring `assert`.)*
+
+- **Expressively: yes — conditional on the expression sublanguage** *(now confirmed, see gate result above)*.
+  `assert` backstops everything, so the real risk is not `validate.*` the namespace but whether UTL-X's
+  **expression/stdlib** has **quantifiers** (`all`/`any` over collections), **aggregation**
+  (`sum`/`count`), **`DateTime` comparison**, and **dynamic lookup** — **all present**.
 - **Declaratively: ~5 named idioms short** (quantification, cardinality, referential, composite-unique,
   temporal-order). Closing them makes Schematron/FEEL tests translate to *analyzable* rules, protecting
   the "readable, auditable, IDE-reasoned" value.

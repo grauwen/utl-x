@@ -74,28 +74,31 @@ does not break any 1.0 guarantee — it only adds. A minor version is correct.
 
 ---
 
-## 3. Version bump rationale — a gated vocabulary (the `since` rule) + its engine semantics
+## 3. Version bump rationale — a gated **namespace** + its engine semantics
 
-> **Revision 2026-10-12 (supersedes two earlier framings).** *Not* "a new UDM node type"
-> (`ValidationResult` is a plain `Object` now), and *not* "callable in 1.0 with only the semantics gated"
-> (that muddied what "1.0" means). Settled rule: **`validate.*` is a 1.1 feature, gated by its `since`
-> metadata** — callable only under `%utlx 1.1`, where it also gains the engine semantics. **Availability
-> and semantics arrive together.**
+> **Revision 2026-10-13 (supersedes earlier framings).** *Not* "a new UDM node type" (`ValidationResult`
+> is a plain `Object` now); *not* "callable in 1.0 with only the semantics gated"; and *not* "gate on
+> `@UTLXFunction(since)`". The last was wrong in practice: **`since` is an informational "added-in
+> release" tag, already set ABOVE 1.0 on functions that are valid under `%utlx 1.0`** (e.g. crypto /
+> JSON-Patch are `since = "1.2"` yet usable in 1.0 scripts). Gating on `since` would retroactively reject
+> those. **Settled rule: gate on the NAMESPACE.** `validate.*` is a `%utlx 1.1` language namespace;
+> `since` stays purely informational.
 
-New core stdlib functions (e.g. `string.pad`) ship in engine patch/minor releases without a header bump —
-a 1.0 script gains them just by running on a newer engine. **`validate.*` is deliberately different:** it
-is tagged `@UTLXFunction(since = "1.1")`, and the engine **enforces `since` at name resolution** — a
-function whose `since` exceeds the script's declared `%utlx` version is **rejected at parse**:
+New core stdlib functions (e.g. `string.pad`, and even `since = "1.2"` crypto) ship in engine releases
+and are callable from a `%utlx 1.0` script — a newer engine just has more functions. **`validate.*` is
+deliberately different: it is a language *namespace* introduced at `%utlx 1.1`.** The engine holds a
+**namespace → minimum-language-version** table (`{ "validate": "1.1" }`; a future `ai` → `"2.0"`), and at
+stdlib name resolution **rejects a namespaced call whose namespace needs a newer `%utlx` than the script
+declares**:
 
 ```
-validate.required requires %utlx 1.1 (declared: %utlx 1.0)
+validate.required requires %utlx 1.1 (script declares %utlx 1.0); the validate.* namespace is a 1.1 language feature.
 ```
 
-This is a **general rule**, not a validate-special-case: it gates every version-introduced function (a
-future `2.0` / `ai.*` the same way). Functions with `since` blank or `"1.0"` are always available, so
-every existing 1.0 script is unaffected. Keeping `validate.*` out of 1.0 makes **"1.0" a fixed, portable
-contract** — a 1.0 script means the same thing on every engine and can never silently depend on whether
-an engine happens to carry 1.1 functions.
+This gates by namespace, **not** by `since` — so every existing function (including `since = "1.2"`
+crypto) stays callable under 1.0; only the `validate.*` namespace is version-restricted. The check runs
+at resolution, which fires only when the base is genuinely a namespace (a local variable resolves first),
+so it never false-positives. Keeping `validate.*` out of 1.0 makes **"1.0" a fixed, portable contract**.
 
 Because you must declare `%utlx 1.1` to call `validate.*` at all, you automatically get the **1.1 engine
 semantics** around the result — two behaviors a 1.0 engine does not perform:
@@ -105,7 +108,7 @@ semantics** around the result — two behaviors a 1.0 engine does not perform:
 2. **Engine-enforced fail-closed routing** — forward on `valid`; **dead-letter + audit on invalid**
    (§8, build-plan Phase 4).
 
-So the bump is justified twice over — a **gated vocabulary** (the `since` rule) *and* genuine
+So the bump is justified twice over — a **gated namespace** *and* genuine
 **evaluation/runtime-semantics** — exactly what a language version is for. A 1.0-only engine meeting a
 `%utlx 1.1` script rejects it (it can neither resolve the gated functions nor perform the semantics):
 
@@ -570,13 +573,15 @@ A UTL-X 1.1-capable engine MUST:
 2. **Run all `%utlx 1.0` scripts unchanged** — including any 1.0 script, which by definition calls no
    `validate.*` (those are gated to 1.1, item 3).
 
-3. **Gate `validate.*` on `since` at name resolution.** `validate.*` is tagged
-   `@UTLXFunction(since = "1.1")`; the engine **rejects, at parse**, any call to a function whose `since`
-   exceeds the script's declared `%utlx` version — e.g. `validate.required` in a `%utlx 1.0` script →
-   *"requires %utlx 1.1 (declared: 1.0)."* This is a **general** rule for all version-introduced functions
-   (`since` blank/`"1.0"` ⇒ always available ⇒ existing scripts unaffected). *(Settled 2026-10-12 — this
-   supersedes both the earlier "new node type" framing and the brief "callable in 1.0" wording: `validate.*`
-   is a 1.1 feature; availability and the 1.1 semantics arrive together.)*
+3. **Gate the `validate.*` namespace by minimum language version at name resolution.** The engine holds a
+   `namespace → minVersion` table (`{ "validate": "1.1" }`) and **rejects** a namespaced call whose
+   namespace needs a newer `%utlx` than the script declares — e.g. `validate.required` under `%utlx 1.0` →
+   *"validate.required requires %utlx 1.1 … the validate.* namespace is a 1.1 language feature."* Gate on
+   the **namespace**, **not** `@UTLXFunction(since)` — `since` is an informational "added-in release" tag
+   already set >1.0 on 1.0-valid functions (crypto is `since = "1.2"`), so gating on it would wrongly
+   reject existing 1.0 scripts. *(Settled 2026-10-13; supersedes the earlier "new node type", "callable in
+   1.0", and "gate on `since`" framings. `validate.*` is a 1.1 feature — availability and 1.1 semantics
+   arrive together.)*
 
 4. **Produce `ValidationResult` as a plain UDM `Object`** with the structure defined in section 6 (not a
    new node type — spike 2026-10-12), and apply **implicit `payload` passthrough** in field-access

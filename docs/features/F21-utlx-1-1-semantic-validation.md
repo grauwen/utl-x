@@ -95,14 +95,15 @@ deployment locks. It is why the *same* `.utlx` is a harmless mapping on UTLXe an
 on UTLXs with no code change — and why the fail-closed routing is **not** part of the `validate.*`
 functions themselves.
 
-**How the version gates it — the `since` rule (settled 2026-10-12).** `validate.*` is tagged
-`@UTLXFunction(since = "1.1")`, and the engine **enforces `since` at name resolution**: a call to a
-function whose `since` exceeds the script's declared `%utlx` version is **rejected at parse**. So
-`validate.*` is callable **only under `%utlx 1.1`** — and because you must be in 1.1 to call it, you
-automatically get the 1.1 engine semantics (passthrough + enforced routing). **Availability and semantics
-arrive together** (this supersedes the brief "callable in 1.0" idea). It's a *general* rule — `since`
-blank/`"1.0"` ⇒ always available, so existing 1.0 scripts are unaffected; a future `2.0`/`ai.*` gates the
-same way. This keeps "1.0" a fixed, portable contract. (Spec §3 / §8 item 3.)
+**How the version gates it — by NAMESPACE (settled 2026-10-13).** The engine holds a
+`namespace → minimum-%utlx-version` table (`{ "validate": "1.1" }`; a future `ai` → `"2.0"`) and, at
+stdlib name resolution, **rejects** a namespaced call whose namespace needs a newer `%utlx` than the
+script declares. So `validate.*` is callable **only under `%utlx 1.1`** — and because you must be in 1.1
+to call it, you automatically get the 1.1 engine semantics (passthrough + enforced routing); **availability
+and semantics arrive together**. Gate on the **namespace**, **not** `@UTLXFunction(since)` — `since` is an
+informational "added-in release" tag already set >1.0 on 1.0-valid functions (crypto is `since="1.2"`), so
+gating on it would wrongly reject existing 1.0 scripts. This keeps "1.0" a fixed, portable contract.
+(Spec §3 / §8 item 3.)
 
 ## Implementation status
 

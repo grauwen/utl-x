@@ -56,6 +56,7 @@ include("formats:tsch")
 // Standard library
 include("stdlib")
 // stdlib-security merged into stdlib/crypto/ (F11 — May 2026)
+// F21 validate.* lives in the stdlib/validate/ package (not a separate module) — see F21 §Packaging.
 
 // Schema utilities (USDL implementation)
 include("schema")

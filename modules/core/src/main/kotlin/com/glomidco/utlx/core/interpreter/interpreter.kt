@@ -163,6 +163,35 @@ class Interpreter {
         }
     }
 
+    // ── F21 language-version gate (by NAMESPACE, not `since`) ──
+    // A `validate.*` call is a `%utlx 1.1` LANGUAGE feature; a script declaring an older version may not
+    // use it. The gate keys on the NAMESPACE — NOT on `@UTLXFunction(since)`, which is an informational
+    // "added-in release" tag already set >1.0 on functions that are valid under 1.0 (e.g. crypto@1.2).
+    // Enforced at stdlib resolution, so it fires only when the base really is a namespace (the variable
+    // path resolves first), never for a local variable that happens to be named like a namespace.
+    private var declaredLanguageVersion: String = "1.0"
+    private val namespaceMinVersion: Map<String, String> = mapOf("validate" to "1.1")
+
+    private fun enforceLanguageVersion(name: String, location: Location) {
+        val ns = name.substringBefore('.', missingDelimiterValue = "")
+        val required = namespaceMinVersion[ns] ?: return
+        if (compareLanguageVersions(declaredLanguageVersion, required) < 0) {
+            throw RuntimeError(
+                "$name requires %utlx $required (script declares %utlx $declaredLanguageVersion); " +
+                "the $ns.* namespace is a $required language feature.", location)
+        }
+    }
+
+    private fun compareLanguageVersions(a: String, b: String): Int {
+        fun parts(v: String) = v.trim().removePrefix("%utlx").trim().split('.').map { it.toIntOrNull() ?: 0 }
+        val pa = parts(a); val pb = parts(b)
+        for (i in 0 until maxOf(pa.size, pb.size)) {
+            val d = pa.getOrElse(i) { 0 }.compareTo(pb.getOrElse(i) { 0 })
+            if (d != 0) return d
+        }
+        return 0
+    }
+
     /**
      * Try to find and register a stdlib function from the lookup map (no reflection).
      * Called lazily on first use of each function — O(1) HashMap lookup.
@@ -199,6 +228,9 @@ class Interpreter {
      */
     fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
         logger.debug { "Starting execution with ${namedInputs.size} input(s): ${namedInputs.keys.joinToString()}" }
+
+        // F21: capture the declared %utlx version for the namespace language-version gate.
+        declaredLanguageVersion = program.header.version
 
         // Extract metadata from all inputs for smart error enhancement
         val inputFormats = program.header.inputs.associate { (name, spec) ->
@@ -1024,8 +1056,22 @@ class Interpreter {
     }
     
     private fun evaluateFunctionCall(expr: Expression.FunctionCall, env: Environment): RuntimeValue {
-        // First try to resolve the function from the environment
-        val functionName = (expr.function as? Expression.Identifier)?.name
+        // Resolve the call's function name for the stdlib fallback below.
+        //  - a bare Identifier `fn(...)`            → "fn"
+        //  - a MemberAccess on an Identifier base   → "ns.fn"  (NAMESPACED stdlib call, e.g.
+        //    `validate.required(...)` → "validate.required"). F21: `validate.*` resolution.
+        // This name is only *consumed* in the "Undefined variable" fallback (catch below). A real
+        // member access on a *defined* variable evaluates successfully first, so this never hijacks it —
+        // the namespace path only triggers when the base identifier is undefined (a genuine namespace).
+        // Attribute/metadata accesses (@attr / ^meta) are excluded — those are never function namespaces.
+        val functionName = when (val fn = expr.function) {
+            is Expression.Identifier -> fn.name
+            is Expression.MemberAccess ->
+                (fn.target as? Expression.Identifier)
+                    ?.takeIf { !fn.isAttribute && !fn.isMetadata }
+                    ?.let { "${it.name}.${fn.property}" }
+            else -> null
+        }
         
         try {
             val function = evaluate(expr.function, env)
@@ -1067,6 +1113,9 @@ class Interpreter {
      * Dynamic function loader - attempts to load stdlib functions on demand
      */
     private fun tryLoadStdlibFunction(functionName: String, arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
+        // F21: language-version gate — reject a namespaced call whose namespace needs a newer %utlx than
+        // the script declares (e.g. validate.* under %utlx 1.0). Fires before resolution.
+        enforceLanguageVersion(functionName, location)
         // B19: Try lazy lookup registration first (no reflection, GraalVM safe)
         if (tryRegisterFromLookup(functionName)) {
             // Function now registered — re-evaluate the call

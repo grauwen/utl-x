@@ -66,16 +66,17 @@ confirmed).
 - `validate/` **package inside `:stdlib`** (registered via `@UTLXFunction` + the existing loader /
   registry); the `:core ↛ validation` dependency-direction test wired into CI. *(2026-10-12: a stdlib
   package, not a separate module — see the Decisions revision above.)*
-- **Version-header handling + the `since` gate** *(settled 2026-10-12)*: the engine reads the `%utlx`
-  version; a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution
-  enforces `@UTLXFunction(since)`** — a call to a function whose `since` exceeds the script's version is
-  rejected at parse (e.g. `validate.required` under `%utlx 1.0` → *"requires %utlx 1.1"*). `validate.*` is
-  tagged `since = "1.1"`; this is a **general** rule (blank/`"1.0"` ⇒ always available ⇒ 1.0 scripts
-  unaffected; a future `2.0` gates likewise). So `validate.*` is callable **only under 1.1** — availability
-  and the 1.1 semantics (passthrough + routing) arrive together.
+- **Version-header handling + the namespace gate** *(settled 2026-10-13)*: the engine reads the `%utlx`
+  version; a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution gates
+  namespaces by minimum language version** — a `namespace → minVersion` table (`{ "validate": "1.1" }`)
+  rejects a namespaced call whose namespace needs a newer `%utlx` than declared (e.g. `validate.required`
+  under `%utlx 1.0` → *"requires %utlx 1.1"*). Gate on the **namespace**, **not** `@UTLXFunction(since)` —
+  `since` is an informational "added-in release" tag already set >1.0 on 1.0-valid functions (crypto is
+  `since="1.2"`), so gating on it would wrongly break existing 1.0 scripts. So `validate.*` is callable
+  **only under 1.1**; availability and the 1.1 semantics (passthrough + routing) arrive together.
   *(One language parser, not two — the header reads a version value, `validate.*` is function calls (no
-  new body syntax); the 1.0/1.1 difference is decided at semantic analysis via the version + `since` gate.
-  The front-end stays in `:core`, version-aware but not `validate`-aware. See
+  new body syntax); the 1.0/1.1 difference is decided at semantic analysis via the version + namespace
+  gate. The front-end stays in `:core`, version-aware but not `validate`-aware. See
   `utlx-language-versioning-validation.md` "Two kinds of parser".)*
 - `ValidationResult` data model (per Phase 0).
 - **One engine + a mode switch (not two artifacts) + CI** *(decision 2026-10-12, see versioning doc)*:
@@ -106,6 +107,12 @@ single-rule sugar; implicit `|>`-merge rejected), all rules evaluated (no short-
 `unique`, temporal ordering) or defer each with a reason — and **confirm the UTL-X expression
 sublanguage has quantifiers / aggregation / `DateTime` comparison / dynamic lookup** (that is where any
 hard expressive hole would be, not in `validate.*` itself).
+
+> **Expression-sublanguage check — DONE 2026-10-13: all four present** (`every`/`some`/`all`/`any`/`none`;
+> `count`/`sum`/`min`/`max`/`avg`/`size`; `toDate`/`isBefore`/`isAfter`/`now`; `contains`/`lookupBy`/`get`
+> /`keys`/`values`). No hard hole → `assert` is expressively complete vs Schematron/FEEL; the §3 named
+> idioms are optional sugar (expressible today), deferred unless a translator/analyzability need appears.
+> See `utlx-validate-vocabulary-coverage.md` §5 gate result.
 
 **Exit:** every function matches the spec; `assert([...])` produces one `ValidationResult` (Model A §5.10); the
 vocabulary-coverage gate is signed off (added or explicitly deferred).

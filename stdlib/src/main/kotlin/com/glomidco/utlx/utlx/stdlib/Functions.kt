@@ -4,6 +4,7 @@ package com.glomidco.utlx.stdlib
 import com.glomidco.utlx.core.udm.UDM
 import kotlin.reflect.full.*
 import com.glomidco.utlx.stdlib.array.*
+import com.glomidco.utlx.stdlib.validate.ValidateFunctions
 import com.glomidco.utlx.stdlib.string.*
 import com.glomidco.utlx.stdlib.math.*
 import com.glomidco.utlx.stdlib.date.*
@@ -194,6 +195,21 @@ object StandardLibrary {
        // F11: XMLDSig verification (Peppol/WS-Security)
        registerXMLDSigFunctions()
 
+       // F21: semantic validation (validate.* — %utlx 1.1, since-gated)
+       registerValidateFunctions()
+
+    }
+
+    private fun registerValidateFunctions() {
+        register("validate.assert", ValidateFunctions::assert)
+        register("validate.required", ValidateFunctions::required)
+        register("validate.inRange", ValidateFunctions::inRange)
+        register("validate.oneOf", ValidateFunctions::oneOf)
+        register("validate.matches", ValidateFunctions::matches)
+        register("validate.isoDate", ValidateFunctions::isoDate)
+        register("validate.unique", ValidateFunctions::unique)
+        register("validate.mutuallyExclusive", ValidateFunctions::mutuallyExclusive)
+        register("validate.atLeastOne", ValidateFunctions::atLeastOne)
     }
 
     private fun registerAdvancedRegexFunctions() {
@@ -1317,6 +1333,7 @@ object StandardLibrary {
         val functionClasses = listOf(
             // Core functions
             com.glomidco.utlx.stdlib.core.CoreFunctions::class,
+            com.glomidco.utlx.stdlib.validate.ValidateFunctions::class,
             com.glomidco.utlx.stdlib.core.DebugFunctions::class,
             com.glomidco.utlx.stdlib.core.RuntimeFunctions::class,
 
