@@ -148,23 +148,45 @@ flag (Gradle property / GraalVM feature):
 | Profile / artifact | Language | Contains | Deployed in Open-M |
 |---|---|---|---|
 | **UTLXe** (mapping) | `%utlx 1.0` | parsers, UDM, core stdlib, serializers | **per mapping — N instances** |
-| **UTLXS** (semantic) | `+ %utlx 1.1` | `validate.*` + routing / dead-letter | **once — the semantic-test component** |
+| **UTLXs** (semantic) | `+ %utlx 1.1` | `validate.*` + routing / dead-letter | **once — the semantic-test component** |
 | **UTLXe-infer** | `+ %utlx 2.0` | separate repo (`utl-x-infer`) — heavy `ai.*` deps | per inference need |
 
 **Deployment multiplicity is the decisive reason to split.** In Open-M you run **UTLXe for every
-mapping** (N instances) but **UTLXS only once** (a single semantic-validation component). Bundling
+mapping** (N instances) but **UTLXs only once** (a single semantic-validation component). Bundling
 `validate.*` into UTLXe would pay the validation footprint **N times and use it once**.
 Size-per-binary is a weak argument; **size × N (mappers) vs × 1 (validator)** is a decisive one.
 Secondary reasons reinforce it: **cadence** (the mature 1.0 mapping line vs the still-stabilising
 `validate.*` ship on different clocks), **assurance** (validation code *not present* in a mapper beats
 present-but-unused in its TCB), and **edge footprint**.
 
-This maps **exactly onto the version gate**: UTLXe *is* "a 1.0 engine" — it legitimately rejects
-`%utlx 1.1` scripts because it genuinely lacks `validate.*`, as §2 requires; UTLXS *is* "a 1.1 engine."
-The build flag is simply *how you produce* the "1.0 engine" and "1.1 engine" the gate already posits.
-(*Exception:* a mapping that validates **inline** — `%utlx 1.1`, validate-then-map in one script —
-needs the UTLXS profile for that arrow; the topology above centralises validation into the single
-UTLXS component so the mapping arrows stay on lean UTLXe.)
+> **Revision 2026-10-12 — reconcile with "validate.* in stdlib" + "1.1 gates semantics."** Two arguments
+> above now need re-weighing:
+> - **`validate.*` lives in `:stdlib`**, not a separate module — so it is **physically present in UTLXe
+>   too**. The *multiplicity* ("pay N times") and *assurance* ("not present in a mapper's TCB") arguments
+>   for a **separate artifact** are therefore **weakened** (the spike found the native-size delta small).
+>   What still stands: **cadence** and a clean **version gate**.
+> - **The gate is on *semantics*, not vocabulary.** UTLXe can *call* `validate.*` as pure functions under
+>   `%utlx 1.0`; what it cannot do is the `%utlx 1.1` **implicit passthrough + enforced routing**. So the
+>   UTLXe/UTLXs distinction may be better expressed as a **deployment capability** ("does this deployment
+>   enable 1.1 semantics / accept `%utlx 1.1`?") than as two separate binaries.
+> - **Decision (2026-10-12): one engine + a deployment switch**, not two co-equal build artifacts.
+>   `UTLXe` / `UTLXs` are **modes** of a single multi-version engine — selected by a config flag ("accept
+>   `%utlx 1.1` / enforce validation semantics?"), guard-lockable, composing with the parse profile
+>   (§5.2 of `parser-strictness-profiles.md`). Rationale: multiplicity is moot (validate.* in stdlib
+>   either way); **one native image / one reflect-config** (the same GraalVM logic that put validate.* in
+>   stdlib); cadence is defanged by the always-green 1.0 conformance suite; and far less build/release
+>   overhead. A **stripped build** that physically omits the 1.1-semantics code is held **in reserve**,
+>   produced only where an assurance requirement mandates provable *absence* (not the default — the
+>   version gate already makes a 1.0-mode engine behaviorally incapable).
+
+This maps **onto the version gate**: UTLXe *is* "a 1.0 engine" — it legitimately rejects `%utlx 1.1`
+scripts because it implements **1.0 semantics only** (the `validate.*` functions are in stdlib and
+callable, but the 1.1 passthrough + enforced routing are absent), as §2 requires; UTLXs *is* "a 1.1 engine."
+A **deployment-config switch** (not a separate binary) selects which mode a given instance runs — the
+"1.0 engine" and "1.1 engine" the gate posits are *one* engine in two configurations (see the 2026-10-12
+decision above). (*Exception:* a mapping that validates **inline** — `%utlx 1.1`, validate-then-map in one
+script — needs the instance in 1.1 mode for that arrow; the topology above centralises validation into a
+single 1.1-mode component so the mapping arrows stay on lean 1.0-mode instances.)
 
 **Keeping core frozen — the invariant that answers the "core gets bigger" worry.** Structure the code
 as modules with a strictly **one-way** dependency — **`:core` never depends on `:validate`** (validate →
@@ -199,7 +221,7 @@ The repo/codebase split stays reserved for `ai.*`/2.0 (heavy deps → `utl-x-inf
 
 1. Freeze 1.0 as a **tag / maintenance branch** (`v1.0.x` / `release/1.0`, the book's citable
    baseline); develop 1.1 on `main`. Git gives a pristine 1.0 *and* a home for 1.1 — no repo split.
-2. `main` builds **both artifacts** (UTLXe and UTLXS); 1.0-only patches, if ever needed, ship from the
+2. `main` builds **both artifacts** (UTLXe and UTLXs); 1.0-only patches, if ever needed, ship from the
    maintenance line. "Download both" is satisfied by two artifacts from one codebase.
 3. **CI runs the full 1.0 conformance suite on every build** (plus a 1.1 suite) against *both
    profiles*. This conformance wall is the real guarantee that the 1.1 work never disturbs 1.0.
@@ -210,7 +232,7 @@ boundary for *cadence and assurance* (above), but it is small — so if you are 
 it is not the lever. The levers that move megabytes are **optional format modules** (a JSON-only mapper
 should not compile in the EDIFACT/BINF readers) and **excluding `ai.*`** (already achieved by the repo
 split). The MIL content guard is the tell: it **needs `validate.*`** (its rule engine) yet wants a
-minimal image — so it is a UTLXS profile *minus* unused format readers and anything probabilistic.
+minimal image — so it is a UTLXs profile *minus* unused format readers and anything probabilistic.
 Compose the feature set — **formats × {validate} × {ai}** — at build time.
 
 **Commercial / policy variants ride on the same flag.** Validation sold as a closed add-on, or a

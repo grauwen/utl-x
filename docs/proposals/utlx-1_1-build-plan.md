@@ -4,17 +4,26 @@
 |---|---|
 | Document | utlx-1_1-build-plan |
 | Status | Plan — **foundation-first** (measure the parsers, then build); see Phase 0 |
-| Scope | Implement `%utlx 1.1`: the `validate.*` core (Tier 1) + `ValidationResult`, as a separate `:validate` module, delivered as the **UTLXS** profile alongside **UTLXe** |
+| Scope | Implement `%utlx 1.1`: the `validate.*` core (Tier 1) + `ValidationResult`, as a separate `:validate` module, delivered as the **UTLXs** profile alongside **UTLXe** |
 | Spec | `utlx-1_1-semantic-validation.md` (the what); this doc is the how/when |
 | Related | `utlx-language-versioning-validation.md` §2.1/§3 (packaging, version gate); `utlx-validate-naming-and-guard-profile.md` (names, two tiers); `parser-strictness-profiles.md` (the `lenient\|standard\|strict` parse/serialize posture — Phase 0b measures baseline *per profile*, 0c hardens to `strict`); `validate-module-spike.md`; `utlx-test-corpora.md` (§5.5, §5.7) |
 
 ## Decisions this plan rests on (already made — not reopened)
 
-- `validate.*` is a **stdlib namespace in its own module** `:validate`; **`:core` never depends on
-  `:validate`** (architecture-tested). → UTLXe is byte-invariant to 1.1.
-- Two build profiles from one codebase/repo: **UTLXe** (`%utlx 1.0`, mapping, N instances) and **UTLXS**
-  (`+1.1`, the single semantic component). The build flag *is* the version gate.
-- `ValidationResult` lives in `:validate`, modelled as a UDM **`Object`** (pending spike confirmation).
+> **Revision 2026-10-12 — packaging reversed.** `validate.*` now ships **inside `:stdlib`** (a
+> `validate/` package), **not** a separate `:validate` module. Reason: a separate function module
+> reintroduces the cross-module **GraalVM** native-image reflection-reachability failures that forced the
+> `stdlib-security` → `stdlib/crypto/` merge (F11) and the B25 lookup bugs. The UTLXe/UTLXs split is
+> enforced by the **`:core` version gate**, not by module exclusion — so separation only bought the
+> low-value "byte-invariant UTLXe" (spike: native-size delta is small). In-stdlib also gets
+> `@UTLXFunction` discoverability on the one proven reflect-config for free. See F21 §Packaging.
+
+- `validate.*` is a **stdlib namespace in a `validate/` package of `:stdlib`** (reflection-safe, one
+  native config). `:core` depends on **neither** stdlib-validation; the one-way rule `:core ↛ validation`
+  holds as before (`:stdlib` already depends on `:core`, never the reverse).
+- Two build profiles from one codebase/repo: **UTLXe** (`%utlx 1.0`, mapping, N instances) and **UTLXs**
+  (`+1.1`, the single semantic component). The **`:core` version gate** *is* the split (not a module boundary).
+- `ValidationResult` modelled as a UDM **`Object`** (keeps `:core` frozen; spike-confirmed clean).
 - **No per-format parser/serializer change** for `validate.*` (UDM-layer). Hold this as an invariant.
 - Naming: descriptive camelCase. **Tier 1 (core)** here; **Tier 2 (guard profile)** is a *later, separate*
   workstream in the security library.
@@ -54,18 +63,29 @@ confirmed).
 
 ## Phase 1 — Foundation: module, version gate, profiles · ~1 week
 
-- `:validate` module (depends on `:core`); the dependency-direction test wired into CI.
-- **Version-header handling:** engine parses `%utlx 1.1`; UTLXe (core profile) **rejects** it with a clear
-  "engine too old / validation not in this build" error; UTLXS **accepts** it (spec §2 gate).
+- `validate/` **package inside `:stdlib`** (registered via `@UTLXFunction` + the existing loader /
+  registry); the `:core ↛ validation` dependency-direction test wired into CI. *(2026-10-12: a stdlib
+  package, not a separate module — see the Decisions revision above.)*
+- **Version-header handling + the `since` gate** *(settled 2026-10-12)*: the engine reads the `%utlx`
+  version; a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution
+  enforces `@UTLXFunction(since)`** — a call to a function whose `since` exceeds the script's version is
+  rejected at parse (e.g. `validate.required` under `%utlx 1.0` → *"requires %utlx 1.1"*). `validate.*` is
+  tagged `since = "1.1"`; this is a **general** rule (blank/`"1.0"` ⇒ always available ⇒ 1.0 scripts
+  unaffected; a future `2.0` gates likewise). So `validate.*` is callable **only under 1.1** — availability
+  and the 1.1 semantics (passthrough + routing) arrive together.
   *(One language parser, not two — the header reads a version value, `validate.*` is function calls (no
-  new body syntax), and the 1.0/1.1 difference is decided at semantic analysis: version gate + name
-  resolution. The language front-end stays in `:core`, version-aware but not `validate`-aware. See
+  new body syntax); the 1.0/1.1 difference is decided at semantic analysis via the version + `since` gate.
+  The front-end stays in `:core`, version-aware but not `validate`-aware. See
   `utlx-language-versioning-validation.md` "Two kinds of parser".)*
 - `ValidationResult` data model (per Phase 0).
-- **Two build targets + CI**: `main` emits **UTLXe** and **UTLXS** from one codebase; both publish.
-- A no-op `%utlx 1.1` script runs on UTLXS, is rejected on UTLXe.
+- **One engine + a mode switch (not two artifacts) + CI** *(decision 2026-10-12, see versioning doc)*:
+  `main` emits **one** multi-version engine; a **deployment config flag** selects **1.0-only mode**
+  (reject `%utlx 1.1`) vs **1.1 mode** (enable passthrough + enforced routing). `UTLXe`/`UTLXs` are those
+  *modes*. CI tests the one binary in **both** modes. *(A stripped build omitting the 1.1-semantics code
+  is reserved for mandated-absence assurance only — not produced by default.)*
+- A no-op `%utlx 1.1` script runs in **1.1 mode**, is rejected in **1.0 mode**.
 
-**Exit:** both artifacts build in CI; the gate behaves correctly both ways.
+**Exit:** the one engine builds in CI; the gate behaves correctly in both modes.
 
 ## Phase 2 — Tier-1 `validate.*` functions · ~2 weeks
 
@@ -74,8 +94,10 @@ Implement, per spec §5, all nine — each **pure / stateless / deterministic**:
 `assert` · `required` · `inRange` · `oneOf` · `matches` · `isoDate` · `unique` ·
 `mutuallyExclusive` · `atLeastOne`
 
-Plus the result semantics: **chaining via `|>`** (all rules evaluated, no short-circuit), aggregation
-(`valid` / `passed` / `failed` / `warnings` / `errors[]` with `field`/`fields` + `severity`), and
+Plus the result semantics: **`assert([rules])` canonical** (Model A, spec §5.10 — shortcuts are
+single-rule sugar; implicit `|>`-merge rejected), all rules evaluated (no short-circuit), aggregation
+(`valid` / `passed` / `failed` / `warnings` / `notices` / `issues[]` with `field`/`fields` + three-level
+`severity` `error`/`warning`/`notice`), and
 **implicit payload passthrough**.
 
 **Design gate — vocabulary completeness.** Before finalising the function list, run
@@ -85,32 +107,32 @@ Plus the result semantics: **chaining via `|>`** (all rules evaluated, no short-
 sublanguage has quantifiers / aggregation / `DateTime` comparison / dynamic lookup** (that is where any
 hard expressive hole would be, not in `validate.*` itself).
 
-**Exit:** every function matches the spec; chaining produces one merged `ValidationResult`; the
+**Exit:** every function matches the spec; `assert([...])` produces one `ValidationResult` (Model A §5.10); the
 vocabulary-coverage gate is signed off (added or explicitly deferred).
 
 ## Phase 3 — The conformance wall (runs from here on, every build) · ~1 week to stand up
 
-- **New 1.1 conformance suite** (spec §10): per-function accept/reject + boundary; chaining; result
-  shape; severity (`error` vs `warning`); payload passthrough; purity/determinism (same input → same
+- **New 1.1 conformance suite** (spec §10): per-function accept/reject + boundary; `assert` aggregation (Model A §5.10); result
+  shape; three-level severity (`error`/`warning`/`notice`) + the warning-budget routing policy; payload passthrough; purity/determinism (same input → same
   result, no I/O).
 - **Full 1.0 suite (the 465 tests) runs against BOTH profiles** — the real guarantee that 1.1 never
   disturbs 1.0. CI gates on both.
 - Hook into the `test-corpora/` conformance tier; add the `:core ↛ :validate` test and a
   parser/serializer-untouched check (diff-stat guard on `:core` readers/writers).
 
-**Exit:** 1.1 suite green; 1.0 suite green on UTLXe *and* UTLXS; CI red if either breaks or if `:core`
+**Exit:** 1.1 suite green; 1.0 suite green in **both modes** (1.0-only and 1.1); CI red if either breaks or if `:core`
 grows a `:validate` dependency.
 
-## Phase 4 — Output & routing (the UTLXS component) · ~1.5 weeks
+## Phase 4 — Output & routing (the UTLXs component) · ~1.5 weeks
 
 - **Serialization:** confirm happy-path payload serialization is unchanged across formats; serialize the
   `ValidationResult` wrapper (as `Object`) where a verdict report is emitted — verify, don't rewrite,
   each writer.
 - **Routing on validity:** `valid` → payload/next; invalid → **dead-letter + errors** (fail-closed),
-  with an audit record. Wire UTLXS as an **Open-M `mode: component`** semantic node; FEEL routing
+  with an audit record. Wire UTLXs as an **Open-M `mode: component`** semantic node; FEEL routing
   integration per spec.
 
-**Exit:** UTLXS runs end-to-end as an Open-M semantic component; valid passes, invalid dead-letters with
+**Exit:** UTLXs runs end-to-end as an Open-M semantic component; valid passes, invalid dead-letters with
 structured errors.
 
 ## Phase 5 — Tooling & docs · ~1 week
@@ -138,7 +160,7 @@ harness (0a)** — it is a shared prerequisite (it *is* the Phase-3 wall), and i
 the rest of the order is set by data, not guesswork. Building 1.1 on an unverified parse is validation
 theater; but `0c` is **bar-limited**, not open-ended. Because `validate.*` needs no parser change,
 hardening is never wasted and never blocks 1.1 — every parser fix strengthens both UTLXe (shipping now)
-and the future UTLXS.
+and the future UTLXs.
 
 ```
 P0 foundation: test-infra(0a) → measure(0b) → harden-to-bar(0c)   [spike 0d ∥]
@@ -154,11 +176,15 @@ guard is the first consumer), then the base-1.1 build **~6–7 weeks** on top.
 
 ## Invariants that must hold throughout (CI-enforced)
 
-1. `:core` has **no** dependency on `:validate` (architecture test).
+1. `:core` has **no** dependency on validation code (`validate.*` lives in `:stdlib`; `:core ↛ :stdlib`
+   already holds — architecture test). *(Was: "no dependency on `:validate`" — same one-way rule, now
+   that validate is a stdlib package rather than a separate module.)*
 2. The full **1.0 conformance suite passes on both profiles**, every build.
 3. **No `:core` parser/serializer edits** attributable to `validate.*` (diff-stat guard). If one is
    needed, stop — it falsifies the UDM-layer claim and the §5.5 proof.
-4. Every `validate.*` function is **pure / stateless / deterministic** (property tests).
+4. Every `validate.*` function is **pure / stateless / deterministic** (property tests). "Prevent output"
+   is NOT a function capability — it is engine/component fail-closed routing on the `ValidationResult`
+   (Phase 4), locked by a guard; the functions only *decide* (see F21 "Execution model").
 
 ## Risks & mitigations
 
@@ -174,7 +200,8 @@ guard is the first consumer), then the base-1.1 build **~6–7 weeks** on top.
 
 ## Definition of done (base 1.1)
 
-UTLXS runs all nine Tier-1 `validate.*` with correct `ValidationResult` semantics and fail-closed
-routing; UTLXe and UTLXS both ship from `main`; the 1.0 suite is green on both; the four invariants are
+in **1.1 mode** the engine runs all nine Tier-1 `validate.*` with correct `ValidationResult` semantics
+and fail-closed routing; the **one engine ships from `main`** and is exercised in **both modes**
+(1.0-only and 1.1); the 1.0 suite is green in both; the four invariants are
 CI-enforced; IDE + docs support 1.1; engine released as `v1.4.x` with a published support matrix and a
 1.0 maintenance tag/branch.

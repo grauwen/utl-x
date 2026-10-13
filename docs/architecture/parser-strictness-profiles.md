@@ -117,7 +117,7 @@ the fail-closed posture collapses. Therefore:
 - **Where it's set:** engine/deployment configuration (e.g. `engine.yaml: parse.profile`), optionally
   **per input format** (e.g. JSON `standard`, XML `strict`). **Not** the `%utlx` header, **not** a
   runtime argument reachable from data.
-- **Guard = locked:** the guard/UTLXS profile pins `strict` and forbids override. A mapping that
+- **Guard = locked:** the guard/UTLXs profile pins `strict` and forbids override. A mapping that
   *requests* a weaker profile on a guard is itself a policy violation (reject).
 - **General mapping (UTLXe):** operator picks the deployment default (`standard` recommended),
   overridable per deployment — never per message.
@@ -163,7 +163,7 @@ so they stay guard-relevant regardless.)
 The parse profile is **not** the only strictness dial. There is a *family* of independent axes, each
 operating at a different **phase** and on a different **subject**. They are orthogonal — a mapper can mix
 them freely — but a **guard pins every one to its maximum and locks it** (same governance as §5: a
-deployment policy, never author- or data-reachable). Treat the guard/UTLXS profile as that bundle, not as
+deployment policy, never author- or data-reachable). Treat the guard/UTLXs profile as that bundle, not as
 a single dial.
 
 | Axis | Subject | Phase | Mapper default | Guard (locked) | Where |
@@ -251,7 +251,7 @@ only meaningful **paired with the profile that produced it**. So:
   Keeping it out of the language header is deliberate — it must not be author- or data-reachable
   (§5).
 - **Build/profile alignment:** `standard` is the UTLXe default; `strict`-locked is part of the
-  **UTLXS / guard** profile. (See `utlx-language-versioning-validation.md` for UTLXe vs UTLXS.)
+  **UTLXs / guard** profile. (See `utlx-language-versioning-validation.md` for UTLXe vs UTLXs.)
 - **Operator selection (CLI/engine), never data:** the parse profile may be chosen by the **operator**
   via an engine-config key *or* a CLI flag — an operator argument, **not** reachable from the message or
   the mapping (§5). The flag is **`--parse-profile strict|standard|lenient`**, named deliberately to
@@ -259,7 +259,7 @@ only meaningful **paired with the profile that produced it**. So:
   with the per-axis flags overriding it. **Precedence:** a deployment-config lock **wins over the flag** —
   on a guard (profile pinned to `strict`, locked) the flag is **ignored** (fail-safe), so a stray
   `--parse-profile lenient` can never weaken a guard. The flag serves the **mapper/UTLXe** use (pick
-  leniency per job); the guard/UTLXS build pins it.
+  leniency per job); the guard/UTLXs build pins it.
 
 ### 9.1 Where it lives in a bundle — and the resolution order
 

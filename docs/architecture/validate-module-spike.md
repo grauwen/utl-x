@@ -18,7 +18,7 @@
 
 1. **Does `validate.*` require any change to the per-format parsers/serializers?** (Claim: no — it is
    UDM-layer. Confirm empirically.)
-2. **How big is it?** jar KB and GraalVM native-image delta of UTLXe vs UTLXS. (Decides whether a
+2. **How big is it?** jar KB and GraalVM native-image delta of UTLXe vs UTLXs. (Decides whether a
    "minimal UTLXe" is worth *marketing* on size grounds, and whether Tier 1 / Tier 2 need separate
    modules or one.)
 3. **`ValidationResult` as a UDM `Object` vs a new node type** — which is clean in practice? (Favoured:
@@ -33,7 +33,7 @@
 - **`ValidationResult` modelled as a conventional UDM `Object`** (fields: `valid`, `passed`, `failed`,
   `errors[]`, `payload`) — produced by the functions, serialized by the *existing* Object serializer.
 - **One routing example:** a `%utlx 1.1` script that does `required |> inRange |> oneOf` then branches on
-  `valid` (pass → payload, fail → the errors) — the UTLXS shape.
+  `valid` (pass → payload, fail → the errors) — the UTLXs shape.
 - **Two build targets from the one codebase:**
   - `utlxe` = `:core` (+ JSON/XML readers only) — must **reject** the `%utlx 1.1` script (version gate).
   - `utlxs` = `:core` + `:validate` — runs it.
@@ -65,7 +65,7 @@ claim #1 and is the most important finding).
 
 - **Any `:core` reader/writer edit needed** → claim #1 is wrong; escalate (the format-independence thesis
   and the §5.5 proof depend on it).
-- **Native-image delta small** (expected, pure Kotlin) → keep **one** `:validate` module; the UTLXe/UTLXS
+- **Native-image delta small** (expected, pure Kotlin) → keep **one** `:validate` module; the UTLXe/UTLXs
   split stays justified by *multiplicity/cadence/assurance*, not size — don't market it as a size win.
 - **Native-image delta surprisingly large** → investigate why (likely an accidental heavy dependency);
   consider splitting Tier 1 / Tier 2, and it *does* become a size argument too.
@@ -78,3 +78,27 @@ A one-page result appended here (or linked), feeding the final numbers back into
 `utlx-language-versioning-validation.md` §2.1/§3. The architecture does not change on the result; only
 the *granularity* (one validate module vs Tier-1/Tier-2 split) and the *marketing* ("minimal build" on
 size grounds, yes/no) are settled by it.
+
+### Outcome — run 2026-10-12
+
+Built as a throwaway `:modules:validate` (3 functions `required`/`inRange`/`oneOf` + `ValidationResult`
+as an `Object` + the `:core ↛ validate` arch test + 9 unit tests, all green).
+
+- **Q1 — parser/serializer edits: ZERO.** `git status` showed only the new module + `settings.gradle.kts`;
+  no `:core` or `:formats` file touched. Format-independence thesis **confirmed**.
+- **Q3 — `ValidationResult` as `Object`: clean.** Built with `UDM.Object.of(...)`, serialized by the
+  existing Object writer; no new node type, `:core` frozen. **Adopt `Object`.** *(The spec §3/§6 still
+  calls it a "new UDM node type" and bases the version bump on that — update that wording: the bump is
+  justified by the gated `validate.*` namespace + the fail-closed output contract, not a new node type.)*
+- **Q2 — size/native delta:** not yet measured (needs the two build targets); but see the packaging
+  reversal below, which makes it moot for the module-vs-not decision.
+
+**Packaging decision — reversed to stdlib-inclusion (this *did* change the architecture).** This spike
+said "the module boundary is already decided." It isn't any more. Surfacing the **GraalVM** angle changed
+the call: a *separate* function module reintroduces the cross-module reflection-reachability failures that
+forced the `stdlib-security` → `stdlib/crypto/` merge (F11) and the B25 lookup bugs. Since the UTLXe/UTLXs
+split is enforced by the **`:core` version gate** (not module exclusion), the separate module only bought
+"byte-invariant UTLXe" — low value at a small native-size delta. **Decision: `validate.*` ships as a
+`validate/` package inside `:stdlib`**, using `@UTLXFunction` + the existing loader (discoverability on
+the one proven reflect-config, for free). The throwaway `:modules:validate` is therefore discarded; the
+`:core ↛ validation` invariant holds via `:stdlib` as before. See F21 §Packaging + build-plan Decisions (rev 2026-10-12).

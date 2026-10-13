@@ -99,7 +99,7 @@ tightens them uniformly. **Protobuf is the one exception** — see the deferred 
   config-lock is a floor nothing downstream can weaken. Default `standard`, so unchanged until configured.
 - **Daemon (utlxd):** ⬜ **deferred to the IDE work** (open question 5) — dev/admin daemon, not the guard
   runtime; safe at `standard` today.
-- **Engine/UTLXE API:** embedders (e.g. Open-M) select a profile at embed time; a guard/UTLXS build pins it.
+- **Engine/UTLXE API:** embedders (e.g. Open-M) select a profile at embed time; a guard/UTLXs build pins it.
 
 ## Scope / non-goals
 

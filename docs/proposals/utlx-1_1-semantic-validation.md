@@ -74,31 +74,49 @@ does not break any 1.0 guarantee — it only adds. A minor version is correct.
 
 ---
 
-## 3. Version bump rationale — why 1.1 and not a 1.0 stdlib addition
+## 3. Version bump rationale — a gated vocabulary (the `since` rule) + its engine semantics
 
-New core stdlib functions (e.g. `string.pad`, `date.truncate`) ship in engine
-patch and minor releases without a header version bump. A 1.0 script gains
-access to new functions simply by running on a newer engine — no script change
-required.
+> **Revision 2026-10-12 (supersedes two earlier framings).** *Not* "a new UDM node type"
+> (`ValidationResult` is a plain `Object` now), and *not* "callable in 1.0 with only the semantics gated"
+> (that muddied what "1.0" means). Settled rule: **`validate.*` is a 1.1 feature, gated by its `since`
+> metadata** — callable only under `%utlx 1.1`, where it also gains the engine semantics. **Availability
+> and semantics arrive together.**
 
-`validate.*` requires a header version bump to `%utlx 1.1` for one reason:
-it introduces a new UDM output node type — `ValidationResult` — that does not
-exist in UDM 1.0. A 1.0 engine encountering `validate.assert()` would not know
-what to do with the result. Rather than silently produce wrong output, it must
-reject the script before execution begins. The version declaration in the
-header is the mechanism for this rejection.
+New core stdlib functions (e.g. `string.pad`) ship in engine patch/minor releases without a header bump —
+a 1.0 script gains them just by running on a newer engine. **`validate.*` is deliberately different:** it
+is tagged `@UTLXFunction(since = "1.1")`, and the engine **enforces `since` at name resolution** — a
+function whose `since` exceeds the script's declared `%utlx` version is **rejected at parse**:
 
-A 1.0 engine encountering a `%utlx 1.1` script emits:
+```
+validate.required requires %utlx 1.1 (declared: %utlx 1.0)
+```
+
+This is a **general rule**, not a validate-special-case: it gates every version-introduced function (a
+future `2.0` / `ai.*` the same way). Functions with `since` blank or `"1.0"` are always available, so
+every existing 1.0 script is unaffected. Keeping `validate.*` out of 1.0 makes **"1.0" a fixed, portable
+contract** — a 1.0 script means the same thing on every engine and can never silently depend on whether
+an engine happens to carry 1.1 functions.
+
+Because you must declare `%utlx 1.1` to call `validate.*` at all, you automatically get the **1.1 engine
+semantics** around the result — two behaviors a 1.0 engine does not perform:
+
+1. **Implicit payload passthrough** — a `ValidationResult` resolves as its `payload` in downstream field
+   access (`$input.orderId` → `$input.payload.orderId`), so existing mappings need no rewrite.
+2. **Engine-enforced fail-closed routing** — forward on `valid`; **dead-letter + audit on invalid**
+   (§8, build-plan Phase 4).
+
+So the bump is justified twice over — a **gated vocabulary** (the `since` rule) *and* genuine
+**evaluation/runtime-semantics** — exactly what a language version is for. A 1.0-only engine meeting a
+`%utlx 1.1` script rejects it (it can neither resolve the gated functions nor perform the semantics):
 
 ```
 UTL-X engine v1.3.0 cannot execute %utlx 1.1 scripts.
-The validate.* namespace requires UTL-X engine v1.x.0 or later.
+%utlx 1.1 adds the validate.* namespace + validation passthrough/routing; this engine implements 1.0 only.
 Upgrade: https://github.com/grauwen/utl-x/releases
 ```
 
-All `%utlx 1.0` scripts run unchanged on a `%utlx 1.1`-capable engine. The
-header version is a **minimum language version** declaration — not an engine
-release pin.
+All `%utlx 1.0` scripts run unchanged on a 1.1-capable engine. The header version is a **minimum language
+version** declaration, not an engine release pin.
 
 ---
 
@@ -146,10 +164,10 @@ validate.assert(rules: Rule[]) → ValidationResult
 | `rule` | string | ✓ | Stable rule identifier. Used in error reports and routing. Should be kebab-case. |
 | `check` | boolean expression | ✓ | The assertion. Evaluated against `$` (current input context). Must return boolean. |
 | `when` | boolean expression | — | Guard condition. Rule is only evaluated when `when` is true. Skipped rules count as passed. |
-| `message` | string | ✓ | Human-readable failure message. Included in the `ValidationResult.errors` array. |
+| `message` | string | ✓ | Human-readable failure message. Included in the `ValidationResult.issues` array. |
 | `field` | string | — | The field path that failed. Single field. Used by IDE and ops dashboard to highlight the offending field. |
 | `fields` | string[] | — | Multiple field paths involved in the failure. Use for cross-field rules. Mutually exclusive with `field`. |
-| `severity` | string | — | `"error"` (default) or `"warning"`. Warnings do not set `valid: false`. |
+| `severity` | string | — | `"error"` (default), `"warning"`, or `"notice"`. Only `error` sets `valid: false`; `warning` is counted and may trip a routing **warning budget** (§8); `notice` is informational only — never affects `valid` or routing (audit/observability). |
 
 **Example:**
 
@@ -185,15 +203,27 @@ $current |> validate.assert([
     message: "orderDate cannot be in the future",
     field:   "orderDate" },
 
-  // Codelist check — warning only, does not fail validation
+  // Codelist check — WARNING: tolerated, does not fail validation (counts to the warning budget, §8)
   { rule:     "preferred-incoterm",
     check:    ["EXW","FCA","CPT","CIP","DAP","DPU","DDP"] |> contains($.incoterm),
     message:  "incoterm is not a standard ICC 2020 Incoterm",
     field:    "incoterm",
-    severity: "warning" }
+    severity: "warning" },
+
+  // Advisory — NOTICE: audit/observability only, never affects valid or routing
+  { rule:     "legacy-scheme",
+    check:    $.schemeVersion = "2024",
+    message:  "an older scheme version is in use",
+    field:    "schemeVersion",
+    severity: "notice" }
 
 ])
 ```
+
+Severity is declared **per rule** (the default is `"error"` — a bare rule is a hard, `valid`-failing
+check; opt *down* to `"warning"`/`"notice"`). One `assert` therefore mixes blocking errors, tolerated
+warnings, and audit notices; the `ValidationResult` aggregates them into `failed`/`warnings`/`notices`
+counts + the tagged `issues[]`, and `valid` is false iff any `error`-severity rule failed (§6).
 
 ### 5.2 `validate.required`
 
@@ -295,32 +325,51 @@ validate.atLeastOne(fields: string[]) → ValidationResult
 $current |> validate.atLeastOne(["email", "phone", "fax"])
 ```
 
-### 5.10 Chaining validate.* functions
+### 5.10 Composition model — how multiple validations combine
 
-Multiple `validate.*` calls can be chained via the pipe operator. Results are
-merged into a single `ValidationResult`:
+> **Decision 2026-10-12 — `assert([...])` is canonical (Model A); implicit pipe-merge (Model B) is
+> rejected.** This supersedes the earlier "chain `validate.*` calls via `|>`, results merged" text.
+
+**Canonical form: a single `validate.assert([rules])`.** Put every constraint in one rule list; `assert`
+evaluates **all** of them (no short-circuit) and returns **one** `ValidationResult` aggregating
+`passed`/`failed`/`warnings`/`notices`/`issues[]`. Cross-field rules — the point of semantic validation —
+live naturally in a rule's `check` (`$.lineTotal == $.unitPrice * $.quantity`).
 
 ```
 %utlx 1.1
 input: current json
 output json
 ---
-$current
-  |> validate.required(["orderId", "currency", "lineItems"])
-  |> validate.inRange("unitPrice", 0.01, 999999.99)
-  |> validate.oneOf("currency", ["EUR", "USD", "GBP"])
-  |> validate.assert([
-       { rule: "vatrate-eur",
-         when: $.currency = "EUR",
-         check: [0, 7, 19] |> contains($.vatRate),
-         message: "Invalid VAT rate for EUR" }
-     ])
+$current |> validate.assert([
+  { rule: "fields-present", check: $.orderId != null and $.currency != null, message: "orderId & currency required", fields: ["orderId","currency"] },
+  { rule: "price-range",    check: $.unitPrice >= 0.01 and $.unitPrice <= 999999.99, message: "unitPrice out of range", field: "unitPrice" },
+  { rule: "currency-list",  check: ["EUR","USD","GBP"] |> contains($.currency), message: "unsupported currency", field: "currency" },
+  { rule: "vatrate-eur",    when: $.currency = "EUR", check: [0,7,19] |> contains($.vatRate), message: "invalid VAT rate for EUR", field: "vatRate" },
+])
 ```
 
-When chained, all rules from all calls are evaluated. The final
-`ValidationResult` aggregates `passed`, `failed`, `warnings`, and `errors`
-from every step in the chain. Chaining is short-circuit-free — all rules are
-always evaluated regardless of earlier failures.
+The **shortcuts** (§5.2–5.9) are **single-rule sugar** — each returns a standalone `ValidationResult` for
+one common check (`$current |> validate.required([...])`). They are **not** chained; when you have more
+than one constraint, list them as rules in a single `assert`. To combine *already-computed* results (e.g.
+across multiple inputs), use the explicit **`validate.all([resultA, resultB, …])`** combinator
+(guard-profile, §5.11) — one well-specified merge — rather than piping results through functions.
+
+**Why `assert`-canonical (Model A), and not implicit `|>`-merge (Model B):**
+
+| | **Model A — chosen** | Model B — rejected |
+|---|---|---|
+| how checks combine | one rule list in `assert` (a loop) | each `validate.*` merges a piped-in prior result |
+| function purity | pure: `(payload, …) → result` | every function must be **merge-aware** (detect result-vs-payload, extract `.payload`, merge) |
+| merge semantics | one place, trivially defined | subtle + must be specified (field collisions, count aggregation, payload threading) |
+| validation **as data** | ✓ the rule list is inspectable / auditable / generatable (Schematron · JSON-Schema · FEEL precedent) | ✗ checks are *code* (pipe stages) |
+| cross-field checks | first-class in `check` | still need `assert` for them → you carry *both* idioms |
+| content-guard fit | **strong** — a guard policy *is* a set of constraints, reviewable as data | weaker — author-convenience pipeline |
+
+Model B reads nicely as a pipeline, but it forces merge-awareness into every function, makes the payload a
+fragile threaded invariant, still needs `assert` for cross-field rules, and — decisively for a **content
+guard** — turns the validation policy into *code* rather than an inspectable *rule list*. Model A keeps
+functions pure, the merge single and well-defined, and the policy auditable. All rules are evaluated
+regardless of earlier failures (no short-circuit) in both models; A localises that to one `assert`.
 
 ### 5.11 Naming convention and the guard profile
 
@@ -338,27 +387,34 @@ two-tier vocabulary and the rename that aligned this spec to the convention are 
 
 ---
 
-## 6. ValidationResult — new UDM node type
+## 6. ValidationResult
 
-`validate.*` functions return a `ValidationResult` — a new UDM node type
-introduced in UDM 1.1. It does not exist in UDM 1.0.
+`validate.*` functions return a `ValidationResult`.
+
+> **Revision 2026-10-12 (spike outcome):** `ValidationResult` is modelled as a **plain UDM `Object`**
+> with the fields below — **not** a new UDM node type. This keeps `:core`/UDM **frozen** (no core change
+> for 1.1) and lets the *existing* Object serializer emit it unchanged; the spike confirmed it is clean.
+> The `%utlx 1.1` version bump is therefore justified by the **gated `validate.*` namespace + the
+> fail-closed output contract**, not by a new node type. (Earlier text called it a "new UDM node type";
+> that framing is superseded.)
 
 ### Structure
 
 ```
 ValidationResult {
-  valid:    boolean      // true if no "error" severity rules failed
+  valid:    boolean      // true iff no "error" severity issues occurred (warnings/notices never flip it)
   passed:   integer      // count of passed rules (including skipped guards)
-  failed:   integer      // count of failed "error" severity rules
-  warnings: integer      // count of failed "warning" severity rules
-  errors: [
+  failed:   integer      // count of "error" severity issues   (these set valid:false)
+  warnings: integer      // count of "warning" severity issues  (tolerable; may trip a routing budget — §8)
+  notices:  integer      // count of "notice"  severity issues  (informational; never affect valid or routing)
+  issues: [              // ALL issues, every severity, each tagged (renamed from "errors[]" 2026-10-12)
     {
       rule:     string   // rule identifier
-      message:  string   // human-readable failure description
+      message:  string   // human-readable description
       field:    string?  // single field path, if declared
       fields:   string[] // multiple field paths, if declared
-      actual:   any?     // the actual value that failed, if scalar
-      severity: string   // "error" | "warning"
+      actual:   any?     // the actual value, if scalar
+      severity: string   // "error" | "warning" | "notice"
     }
   ]
   payload:  UDM Node     // the original input — passed through unchanged
@@ -371,12 +427,13 @@ ValidationResult {
 // In a downstream expression or routing condition
 result.valid                  // true / false
 result.passed                 // integer
-result.failed                 // integer
+result.failed                 // integer (error-severity)
 result.warnings               // integer
-result.errors[0].rule         // "vatrate-eur"
-result.errors[0].message      // "Invalid VAT rate for EUR invoices"
-result.errors[0].field        // "vatRate"
-result.errors[0].actual       // 21
+result.notices                // integer
+result.issues[0].rule         // "vatrate-eur"
+result.issues[0].message      // "Invalid VAT rate for EUR invoices"
+result.issues[0].field        // "vatRate"
+result.issues[0].severity     // "error" | "warning" | "notice"
 result.payload.orderId        // original field — passthrough via .payload
 ```
 
@@ -397,39 +454,44 @@ Explicit `._` access is required only when inspecting validation metadata:
 // Explicit — routing or error reporting, validation-aware
 { valid: $input.valid,
   errorCount: $input.failed,
-  firstError: $input.errors[0].message }
+  firstError: $input.issues[0].message }
 ```
 
 ---
 
 ## 7. Complete script examples
 
-### Example 1 — Simple field validation before mapping
+### Example 1 — Field validation before mapping (canonical: one `assert`)
+
+All constraints go in a single `validate.assert([...])` — including presence checks (§5.10, Model A).
+No chaining.
 
 ```
 %utlx 1.1
 input: current json
 output json
 ---
-$current
-  |> validate.required(["orderId", "currency", "lineItems"])
-  |> validate.assert([
-       { rule:    "price-positive",
-         check:   $.unitPrice > 0,
-         message: "unitPrice must be positive",
-         field:   "unitPrice" },
-       { rule:    "vatrate-eur",
-         when:    $.currency = "EUR",
-         check:   [0, 7, 19] |> contains($.vatRate),
-         message: "vatRate must be 0, 7, or 19 for EUR invoices",
-         field:   "vatRate" }
-     ])
+$current |> validate.assert([
+  { rule:    "fields-present",
+    check:   $.orderId != null and $.currency != null and $.lineItems != null,
+    message: "orderId, currency and lineItems are required",
+    fields:  ["orderId", "currency", "lineItems"] },
+  { rule:    "price-positive",
+    check:   $.unitPrice > 0,
+    message: "unitPrice must be positive",
+    field:   "unitPrice" },
+  { rule:    "vatrate-eur",
+    when:    $.currency = "EUR",
+    check:   [0, 7, 19] |> contains($.vatRate),
+    message: "vatRate must be 0, 7, or 19 for EUR invoices",
+    field:   "vatRate" },
+])
 ```
 
-Produces a `ValidationResult`. If `valid = true`, the `payload` field
-contains the original input ready for downstream mapping. If `valid = false`,
-the `errors` array contains structured failure records for routing to an
-error handler.
+Produces one `ValidationResult`. If `valid = true`, `.payload` holds the original input ready for
+downstream mapping; if `valid = false`, `.issues` holds the structured failure records for routing to an
+error handler. *(A single presence check could instead use the `validate.required([...])` shortcut
+standalone — but with several constraints, list them as rules in one `assert`, per §5.10.)*
 
 ### Example 2 — Validation then mapping in one script
 
@@ -456,7 +518,7 @@ in if validated.valid
    else {
      orderId:   validated.payload.orderId,
      status:    "REJECTED",
-     errors:    validated.errors |> map(e => e.message)
+     errors:    validated.issues |> map(e => e.message)
    }
 ```
 
@@ -487,8 +549,8 @@ let linesResult = $orderLines |> validate.assert([
 
 in {
   valid:        headerResult.valid and linesResult.valid,
-  headerErrors: headerResult.errors,
-  lineErrors:   linesResult.errors,
+  headerErrors: headerResult.issues,
+  lineErrors:   linesResult.issues,
   payload: {
     orderId:  $orderHeader.orderId,
     currency: $orderHeader.currency,
@@ -505,17 +567,20 @@ A UTL-X 1.1-capable engine MUST:
 
 1. **Accept `%utlx 1.1` in the script header** and apply the 1.1 contract.
 
-2. **Run all `%utlx 1.0` scripts unchanged** under the strict 1.0 contract.
-   A 1.0 script must not gain access to `validate.*` simply by running on a
-   1.1 engine — the header version gates availability.
+2. **Run all `%utlx 1.0` scripts unchanged** — including any 1.0 script, which by definition calls no
+   `validate.*` (those are gated to 1.1, item 3).
 
-3. **Reject `validate.*` calls in `%utlx 1.0` scripts at parse time.**
-   Not at runtime. Parse-time rejection produces an informative error before
-   any evaluation begins.
+3. **Gate `validate.*` on `since` at name resolution.** `validate.*` is tagged
+   `@UTLXFunction(since = "1.1")`; the engine **rejects, at parse**, any call to a function whose `since`
+   exceeds the script's declared `%utlx` version — e.g. `validate.required` in a `%utlx 1.0` script →
+   *"requires %utlx 1.1 (declared: 1.0)."* This is a **general** rule for all version-introduced functions
+   (`since` blank/`"1.0"` ⇒ always available ⇒ existing scripts unaffected). *(Settled 2026-10-12 — this
+   supersedes both the earlier "new node type" framing and the brief "callable in 1.0" wording: `validate.*`
+   is a 1.1 feature; availability and the 1.1 semantics arrive together.)*
 
-4. **Implement `ValidationResult` as a first-class UDM node type** with the
-   structure defined in section 6. The node must support implicit `payload`
-   passthrough in field access expressions.
+4. **Produce `ValidationResult` as a plain UDM `Object`** with the structure defined in section 6 (not a
+   new node type — spike 2026-10-12), and apply **implicit `payload` passthrough** in field-access
+   expressions. (`validate.*` only runs under `%utlx 1.1` per item 3, so this is always the 1.1 path.)
 
 5. **Evaluate all rules regardless of earlier failures** — validation is not
    short-circuit. Every rule in a `validate.assert` call is evaluated even if
@@ -535,6 +600,37 @@ A UTL-X 1.1-capable engine MUST:
 9. **Pass the UTL-X 1.1 conformance suite additions** — new tests covering
    every `validate.*` function and the `ValidationResult` UDM node.
 
+> **`validate.*` decides; it does not prevent output (decide / enforce / lock).** The functions are
+> **pure** — they return a `ValidationResult` and never halt evaluation or suppress output. A script
+> always produces a value; the author branches on `.valid` (§7 Example 2). "Prevent output" is an
+> **engine / component** behavior one layer up: a UTLXs validation component routes `valid` → forward the
+> payload, `invalid` → **dead-letter + audit, not forwarded** (fail-closed; build-plan Phase 4), and a
+> **guard locks** that so it is not author-reachable. This mirrors the parse-profile decide/enforce/lock
+> split (`../architecture/parser-strictness-profiles.md` §5.2) and is **not** part of the `validate.*`
+> functions — keeping the language pure (every 1.0 guarantee intact).
+
+> **Routing policy — per-severity budgets ("block after N errors / M warnings").** The pure functions
+> report **counts** (`failed` = errors, `warnings`, `notices`) and never apply a threshold; `valid` is
+> purely `failed == 0`. The forward/reject decision is an **engine/component policy** over those counts,
+> **deployment-configured and guard-lockable** (the same place as the parse profile, §5.2):
+>
+> ```
+> forward  iff  failed <= maxErrors  AND  warnings <= maxWarnings
+>            (notices never gate)
+> ```
+>
+> - **`maxErrors`** — error budget. **Default 0** (any error → reject, fail-closed). `maxErrors = 1` means
+>   "block at the 2nd error"; a **guard locks it to 0** (tolerating errors is a best-effort/lenient posture,
+>   never a guard one).
+> - **`maxWarnings`** — warning budget. `maxWarnings = 2` means "block at the 3rd warning". Default 0
+>   (`strict`); looser profiles set N or ∞. Over budget → reject (or "accept-with-flag", a deployment choice).
+> - **notices** — never gate; audit/observability only.
+>
+> Both budgets are policies in the §5.2 axis family, set in deployment config, guard-lockable. They stay
+> **out of the pure functions** (which only produce the counts), so determinism holds. An author may also
+> threshold **in-script** on the same count fields (`if v.failed >= 2 or v.warnings >= 3 …`) for non-guard
+> use — but a guard's budget is enforced by the engine and **not** author-reachable.
+
 ---
 
 ## 9. LSP daemon — changes for 1.1
@@ -549,7 +645,7 @@ support `%utlx 1.1` scripts:
 - **Hover documentation** for all `validate.*` functions
 - **Diagnostic** when `validate.*` is used in a `%utlx 1.0` script — error
   with a link to the upgrade guide
-- **`ValidationResult` field completion** — `result.valid`, `result.errors`,
+- **`ValidationResult` field completion** — `result.valid`, `result.issues`,
   `result.payload.*` completions when the cursor is on a `ValidationResult`
   node
 
@@ -577,9 +673,10 @@ All existing 1.0 tests remain and must continue to pass.
 | `validate.unique` | No duplicates, one duplicate, all duplicate | 4 |
 | `validate.mutuallyExclusive` | Zero set, one set, two set | 3 |
 | `validate.atLeastOne` | None set, one set, all set | 3 |
-| Chaining | Two functions chained, three chained, errors merged | 4 |
+| `validate.assert` aggregation | Multi-rule list: all evaluated (no short-circuit); `issues[]`/counts aggregate; mixed severities | 4 |
+| `validate.all` combinator | Merge 2 and 3 `ValidationResult`s into one (guard-profile) | 2 |
 | ValidationResult — implicit passthrough | Field access on result resolves via payload | 3 |
-| ValidationResult — explicit access | `.valid`, `.errors`, `.failed`, `.warnings` | 4 |
+| ValidationResult — explicit access | `.valid`, `.issues`, `.failed`, `.warnings`, `.notices` | 5 |
 | let...in with ValidationResult | Conditional mapping on valid flag | 3 |
 | Multi-input validation | Two named inputs, separate results | 3 |
 | Header version gate | `validate.*` in `%utlx 1.0` → parse error | 2 |
