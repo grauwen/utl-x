@@ -149,6 +149,12 @@ output json
 
 ## 5. The `validate.*` namespace
 
+> **Check expressions reference the *named input* (revision 2026-10-14).** UTL-X has **no bare `$`** —
+> the lexer requires `$` be followed by a name. A rule's `check`/`when` therefore uses the input name:
+> `$input.unitPrice > 0` (default input), `$current.…`, `$orderHeader.…`, etc. (Earlier drafts wrote
+> `$.field`; that does not parse. A bare-`$` "current context" token is a possible future ergonomics
+> feature, tracked separately — not part of base 1.1.) Verified end-to-end: `$input |> validate.assert([…])`.
+
 ### 5.1 `validate.assert`
 
 The primary function. Evaluates a list of named rules against the input and
@@ -165,7 +171,7 @@ validate.assert(rules: Rule[]) → ValidationResult
 | Field | Type | Required | Description |
 |---|---|---|---|
 | `rule` | string | ✓ | Stable rule identifier. Used in error reports and routing. Should be kebab-case. |
-| `check` | boolean expression | ✓ | The assertion. Evaluated against `$` (current input context). Must return boolean. |
+| `check` | boolean expression | ✓ | The assertion. References the **named input** being validated (e.g. `$input`, or `$current`/`$orderHeader` per the header's input name) — UTL-X has no bare `$`; use the input name. Must return boolean. |
 | `when` | boolean expression | — | Guard condition. Rule is only evaluated when `when` is true. Skipped rules count as passed. |
 | `message` | string | ✓ | Human-readable failure message. Included in the `ValidationResult.issues` array. |
 | `field` | string | — | The field path that failed. Single field. Used by IDE and ops dashboard to highlight the offending field. |
@@ -183,39 +189,39 @@ $current |> validate.assert([
 
   // Simple field check — unitPrice must be positive
   { rule:    "price-positive",
-    check:   $.unitPrice > 0,
+    check:   $current.unitPrice > 0,
     message: "unitPrice must be a positive number",
     field:   "unitPrice" },
 
   // Conditional cross-field check — VAT rate valid for EUR invoices
   { rule:    "vatrate-eur",
-    when:    $.currency = "EUR",
-    check:   [0, 7, 19] |> contains($.vatRate),
+    when:    $current.currency = "EUR",
+    check:   [0, 7, 19] |> contains($current.vatRate),
     message: "vatRate must be 0, 7, or 19 for EUR invoices",
     field:   "vatRate" },
 
   // Computed consistency check — line total must match unit price × quantity
   { rule:    "line-total-consistent",
-    check:   $.lineTotal = $.unitPrice * $.quantity,
+    check:   $current.lineTotal = $current.unitPrice * $current.quantity,
     message: "lineTotal does not equal unitPrice × quantity",
     fields:  ["lineTotal", "unitPrice", "quantity"] },
 
   // Date validity — order date must not be in the future
   { rule:    "date-not-future",
-    check:   $.orderDate |> toDate("yyyyMMdd") <= today(),
+    check:   $current.orderDate |> toDate("yyyyMMdd") <= today(),
     message: "orderDate cannot be in the future",
     field:   "orderDate" },
 
   // Codelist check — WARNING: tolerated, does not fail validation (counts to the warning budget, §8)
   { rule:     "preferred-incoterm",
-    check:    ["EXW","FCA","CPT","CIP","DAP","DPU","DDP"] |> contains($.incoterm),
+    check:    ["EXW","FCA","CPT","CIP","DAP","DPU","DDP"] |> contains($current.incoterm),
     message:  "incoterm is not a standard ICC 2020 Incoterm",
     field:    "incoterm",
     severity: "warning" },
 
   // Advisory — NOTICE: audit/observability only, never affects valid or routing
   { rule:     "legacy-scheme",
-    check:    $.schemeVersion = "2024",
+    check:    $current.schemeVersion = "2024",
     message:  "an older scheme version is in use",
     field:    "schemeVersion",
     severity: "notice" }
@@ -336,7 +342,7 @@ $current |> validate.atLeastOne(["email", "phone", "fax"])
 **Canonical form: a single `validate.assert([rules])`.** Put every constraint in one rule list; `assert`
 evaluates **all** of them (no short-circuit) and returns **one** `ValidationResult` aggregating
 `passed`/`failed`/`warnings`/`notices`/`issues[]`. Cross-field rules — the point of semantic validation —
-live naturally in a rule's `check` (`$.lineTotal == $.unitPrice * $.quantity`).
+live naturally in a rule's `check` (`$current.lineTotal == $current.unitPrice * $current.quantity`).
 
 ```
 %utlx 1.1
@@ -344,10 +350,10 @@ input: current json
 output json
 ---
 $current |> validate.assert([
-  { rule: "fields-present", check: $.orderId != null and $.currency != null, message: "orderId & currency required", fields: ["orderId","currency"] },
-  { rule: "price-range",    check: $.unitPrice >= 0.01 and $.unitPrice <= 999999.99, message: "unitPrice out of range", field: "unitPrice" },
-  { rule: "currency-list",  check: ["EUR","USD","GBP"] |> contains($.currency), message: "unsupported currency", field: "currency" },
-  { rule: "vatrate-eur",    when: $.currency = "EUR", check: [0,7,19] |> contains($.vatRate), message: "invalid VAT rate for EUR", field: "vatRate" },
+  { rule: "fields-present", check: $current.orderId != null and $current.currency != null, message: "orderId & currency required", fields: ["orderId","currency"] },
+  { rule: "price-range",    check: $current.unitPrice >= 0.01 and $current.unitPrice <= 999999.99, message: "unitPrice out of range", field: "unitPrice" },
+  { rule: "currency-list",  check: ["EUR","USD","GBP"] |> contains($current.currency), message: "unsupported currency", field: "currency" },
+  { rule: "vatrate-eur",    when: $current.currency = "EUR", check: [0,7,19] |> contains($current.vatRate), message: "invalid VAT rate for EUR", field: "vatRate" },
 ])
 ```
 
@@ -476,16 +482,16 @@ output json
 ---
 $current |> validate.assert([
   { rule:    "fields-present",
-    check:   $.orderId != null and $.currency != null and $.lineItems != null,
+    check:   $current.orderId != null and $current.currency != null and $current.lineItems != null,
     message: "orderId, currency and lineItems are required",
     fields:  ["orderId", "currency", "lineItems"] },
   { rule:    "price-positive",
-    check:   $.unitPrice > 0,
+    check:   $current.unitPrice > 0,
     message: "unitPrice must be positive",
     field:   "unitPrice" },
   { rule:    "vatrate-eur",
-    when:    $.currency = "EUR",
-    check:   [0, 7, 19] |> contains($.vatRate),
+    when:    $current.currency = "EUR",
+    check:   [0, 7, 19] |> contains($current.vatRate),
     message: "vatRate must be 0, 7, or 19 for EUR invoices",
     field:   "vatRate" },
 ])
@@ -504,10 +510,10 @@ input: current json
 output json
 ---
 let validated = $current |> validate.assert([
-  { rule: "price-positive", check: $.unitPrice > 0,
+  { rule: "price-positive", check: $current.unitPrice > 0,
     message: "unitPrice must be positive", field: "unitPrice" },
   { rule: "date-not-future",
-    check: $.orderDate |> toDate("yyyyMMdd") <= today(),
+    check: $current.orderDate |> toDate("yyyyMMdd") <= today(),
     message: "orderDate cannot be in the future", field: "orderDate" }
 ])
 
@@ -537,7 +543,7 @@ output json
 ---
 let headerResult = $orderHeader |> validate.assert([
   { rule: "header-currency",
-    check: ["EUR","USD","GBP"] |> contains($.currency),
+    check: ["EUR","USD","GBP"] |> contains($orderHeader.currency),
     message: "Unsupported currency", field: "currency" }
 ])
 
@@ -561,6 +567,28 @@ in {
   }
 }
 ```
+
+**Multi-input is first-class — two patterns.** Validation is **not restricted to one input**; every named
+input is in scope in a `check`:
+
+1. **Per-input, then combine** (above): validate each input, merge with `headerResult.valid and
+   linesResult.valid` (or `validate.all([headerResult, linesResult])`).
+2. **Cross-input in a single `assert`**: a rule's `check` can reference several inputs directly — the
+   natural form for cross-document consistency (EN 16931 "header total = Σ line amounts"):
+
+```
+%utlx 1.1
+input: header json, lines json
+output json
+---
+$header |> validate.assert([
+  { rule: "currency-match", check: $header.currency == $lines.currency,  message: "header/line currency mismatch", field: "currency" },
+  { rule: "total-matches",  check: $header.total == ($lines.items |> sum(i => i.amount)), message: "header total ≠ Σ line amounts", fields: ["total"] },
+])
+```
+
+The `check` sees `$header` **and** `$lines`. (`ValidationResult.payload` is the single piped value —
+`$header` here; for a combined payload, shape it explicitly as in pattern 1.)
 
 ---
 

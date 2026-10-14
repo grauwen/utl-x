@@ -1326,13 +1326,15 @@ object StandardLibrary {
      * Scans all @UTLXFunction annotations across stdlib and builds a comprehensive registry
      * with metadata for documentation, autocomplete, and function discovery.
      */
-    fun exportRegistry(): FunctionRegistry {
+    fun exportRegistry(languageVersion: String = "1.0"): FunctionRegistry {
         val allFunctions = mutableListOf<FunctionInfo>()
 
         // List of all function object classes to scan
         val functionClasses = listOf(
             // Core functions
             com.glomidco.utlx.stdlib.core.CoreFunctions::class,
+            // validate.* is scanned here but FILTERED OUT by version unless languageVersion ≥ 1.1 (its
+            // namespace min-version). So the default/base (1.0) IDE list excludes it; a 1.1 context includes it.
             com.glomidco.utlx.stdlib.validate.ValidateFunctions::class,
             com.glomidco.utlx.stdlib.core.DebugFunctions::class,
             com.glomidco.utlx.stdlib.core.RuntimeFunctions::class,
@@ -1491,16 +1493,25 @@ object StandardLibrary {
             }
         }
 
+        // F21: filter by language version. validate.* (category "Validation") is the %utlx 1.1 namespace —
+        // hidden unless languageVersion ≥ 1.1. (FunctionInfo.name here is the bare method name — e.g.
+        // "assert", not "validate.assert" — so we key on category; the version threshold comes from the
+        // shared LanguageNamespaces policy.) Default "1.0" ⇒ the base list (backward compatible: no
+        // validate.*). Every other (ungated) function always shows.
+        val validateMin = com.glomidco.utlx.core.semantic.LanguageNamespaces.NAMESPACE_MIN_VERSION["validate"] ?: "1.1"
+        val validateHidden = com.glomidco.utlx.core.semantic.LanguageNamespaces.compareVersions(languageVersion, validateMin) < 0
+        val visible = allFunctions.filter { !(validateHidden && it.category == "Validation") }
+
         // Group by category
-        val categories = allFunctions
+        val categories = visible
             .groupBy { it.category }
             .mapValues { it.value.sortedBy { func -> func.name } }
 
         return FunctionRegistry(
             version = "1.0.0",
             generatedAt = java.time.Instant.now().toString(),
-            totalFunctions = allFunctions.size,
-            functions = allFunctions.sortedBy { it.name },
+            totalFunctions = visible.size,
+            functions = visible.sortedBy { it.name },
             categories = categories
         )
     }

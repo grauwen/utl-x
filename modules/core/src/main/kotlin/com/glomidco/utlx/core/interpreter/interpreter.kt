@@ -165,31 +165,19 @@ class Interpreter {
 
     // ── F21 language-version gate (by NAMESPACE, not `since`) ──
     // A `validate.*` call is a `%utlx 1.1` LANGUAGE feature; a script declaring an older version may not
-    // use it. The gate keys on the NAMESPACE — NOT on `@UTLXFunction(since)`, which is an informational
-    // "added-in release" tag already set >1.0 on functions that are valid under 1.0 (e.g. crypto@1.2).
-    // Enforced at stdlib resolution, so it fires only when the base really is a namespace (the variable
-    // path resolves first), never for a local variable that happens to be named like a namespace.
+    // use it. Keys on the NAMESPACE via the shared `LanguageNamespaces` policy (NOT `@UTLXFunction(since)`,
+    // which is an informational "added-in release" tag already set >1.0 on 1.0-valid functions like
+    // crypto@1.2). Enforced at stdlib resolution, so it fires only when the base really is a namespace
+    // (the variable path resolves first), never for a local variable named like a namespace.
     private var declaredLanguageVersion: String = "1.0"
-    private val namespaceMinVersion: Map<String, String> = mapOf("validate" to "1.1")
 
     private fun enforceLanguageVersion(name: String, location: Location) {
-        val ns = name.substringBefore('.', missingDelimiterValue = "")
-        val required = namespaceMinVersion[ns] ?: return
-        if (compareLanguageVersions(declaredLanguageVersion, required) < 0) {
-            throw RuntimeError(
-                "$name requires %utlx $required (script declares %utlx $declaredLanguageVersion); " +
-                "the $ns.* namespace is a $required language feature.", location)
-        }
-    }
-
-    private fun compareLanguageVersions(a: String, b: String): Int {
-        fun parts(v: String) = v.trim().removePrefix("%utlx").trim().split('.').map { it.toIntOrNull() ?: 0 }
-        val pa = parts(a); val pb = parts(b)
-        for (i in 0 until maxOf(pa.size, pb.size)) {
-            val d = pa.getOrElse(i) { 0 }.compareTo(pb.getOrElse(i) { 0 })
-            if (d != 0) return d
-        }
-        return 0
+        if (com.glomidco.utlx.core.semantic.LanguageNamespaces.isAvailableAt(name, declaredLanguageVersion)) return
+        val required = com.glomidco.utlx.core.semantic.LanguageNamespaces.minVersionFor(name)
+        val ns = com.glomidco.utlx.core.semantic.LanguageNamespaces.namespaceOf(name)
+        throw RuntimeError(
+            "$name requires %utlx $required (script declares %utlx $declaredLanguageVersion); " +
+            "the $ns.* namespace is a $required language feature.", location)
     }
 
     /**
