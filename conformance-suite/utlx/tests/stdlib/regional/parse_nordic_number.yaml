@@ -1,0 +1,43 @@
+name: "parse_nordic_number"
+category: "stdlib/regional"
+description: "Test parseNordicNumber - Nordic/SI format (space thousands, comma decimal)"
+tags: ["stdlib", "regional", "numbers", "parsing", "nordic", "scandinavian", "si"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: parseNordicNumber("1 234,56"),
+    no_thousands: parseNordicNumber("1234,56"),
+    large: parseNordicNumber("1 234 567,89"),
+    integer: parseNordicNumber("1 234"),
+    decimal_only: parseNordicNumber("0,99")
+  }
+
+expected:
+  format: json
+  data:
+    basic: 1234.56
+    no_thousands: 1234.56
+    large: 1234567.89
+    integer: 1234
+    decimal_only: 0.99
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "B33-nordic-regular-space-variant-2026-10-16"
+  complexity: "basic"
+  notes:
+    - "Nordic/SI format: space thousands, comma decimal"
+    - "parseNordicNumber is tolerant of regular (U+0020), no-break (U+00A0) and narrow-no-break (U+202F) spaces"

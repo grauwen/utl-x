@@ -8,7 +8,8 @@ import kotlin.test.assertTrue
 
 /**
  * F19: Complete test coverage for RegionalNumberFunctions.
- * 8 functions × (happy path + edge cases + arg variants + errors) = comprehensive.
+ * 10 functions × (happy path + edge cases + arg variants + errors) = comprehensive.
+ * Includes B33 regression guards: French render MUST emit U+202F, Nordic render MUST emit a plain U+0020.
  */
 class RegionalNumberFunctionsTest {
 
@@ -149,6 +150,42 @@ class RegionalNumberFunctionsTest {
     }
 
     // =========================================================================
+    // parseNordicNumber(string) — 1 arg  (space thousands, comma decimal)
+    // =========================================================================
+
+    @Test fun `parseNordicNumber - standard format with regular space`() {
+        assertEquals(1234.56, result("parseNordicNumber", "1 234,56"))
+    }
+
+    @Test fun `parseNordicNumber - non-breaking space`() {
+        assertEquals(1234.56, result("parseNordicNumber", "1\u00A0234,56"))
+    }
+
+    @Test fun `parseNordicNumber - narrow no-break space`() {
+        assertEquals(1234.56, result("parseNordicNumber", "1\u202F234,56"))
+    }
+
+    @Test fun `parseNordicNumber - no thousands`() {
+        assertEquals(1234.56, result("parseNordicNumber", "1234,56"))
+    }
+
+    @Test fun `parseNordicNumber - zero`() {
+        assertEquals(0.0, result("parseNordicNumber", "0"))
+    }
+
+    @Test fun `parseNordicNumber - negative`() {
+        assertEquals(-1234.56, result("parseNordicNumber", "-1 234,56"))
+    }
+
+    @Test fun `parseNordicNumber - large number`() {
+        assertEquals(1234567.89, result("parseNordicNumber", "1 234 567,89"))
+    }
+
+    @Test fun `parseNordicNumber - invalid throws`() {
+        assertThrows<Exception> { RegionalNumberFunctions.parseNordicNumber(listOf(UDM.Scalar("abc"))) }
+    }
+
+    // =========================================================================
     // renderUSNumber(value, decimals?, thousands?) — 1-3 args
     // =========================================================================
 
@@ -266,6 +303,56 @@ class RegionalNumberFunctionsTest {
         assertTrue(result.endsWith(",56"), "Should have comma decimal: $result")
     }
 
+    // B33 regression: French MUST emit the narrow no-break space U+202F (not a plain
+    // space), exactly reproducing the old Locale.FRANCE output on both JVM and native.
+    @Test fun `renderFrenchNumber - thousands separator is U+202F exactly (B33)`() {
+        assertEquals("1\u202F234,56", render("renderFrenchNumber", 1234.56))
+    }
+
+    @Test fun `renderFrenchNumber - large uses U+202F grouping exactly (B33)`() {
+        assertEquals("1\u202F234\u202F567,89", render("renderFrenchNumber", 1234567.89))
+    }
+
+    // =========================================================================
+    // renderNordicNumber(value, decimals?, thousands?) — 1-3 args
+    // (Nordic / SI international: regular ASCII space U+0020 thousands, comma decimal)
+    // =========================================================================
+
+    @Test fun `renderNordicNumber - 1 arg default`() {
+        assertEquals("1 234,56", render("renderNordicNumber", 1234.56))
+    }
+
+    @Test fun `renderNordicNumber - 2 args custom decimals`() {
+        assertEquals("1 234,6", render("renderNordicNumber", 1234.56, 1))
+    }
+
+    @Test fun `renderNordicNumber - 3 args no thousands`() {
+        assertEquals("1234,56", render("renderNordicNumber", 1234.56, 2, false))
+    }
+
+    @Test fun `renderNordicNumber - zero`() {
+        assertEquals("0,00", render("renderNordicNumber", 0.0))
+    }
+
+    @Test fun `renderNordicNumber - negative`() {
+        assertEquals("-1 234,56", render("renderNordicNumber", -1234.56))
+    }
+
+    @Test fun `renderNordicNumber - no decimals`() {
+        assertEquals("1 235", render("renderNordicNumber", 1234.56, 0))
+    }
+
+    @Test fun `renderNordicNumber - large number`() {
+        assertEquals("1 234 567,89", render("renderNordicNumber", 1234567.89))
+    }
+
+    // Nordic MUST use a plain ASCII space (U+0020), distinct from French's U+202F.
+    @Test fun `renderNordicNumber - thousands separator is regular space U+0020 exactly`() {
+        assertEquals("1 234,56", render("renderNordicNumber", 1234.56))
+        assertTrue(!render("renderNordicNumber", 1234.56).contains('\u202F'),
+            "Nordic must not use the narrow no-break space U+202F")
+    }
+
     // =========================================================================
     // Round-trip tests: parse → render → parse
     // =========================================================================
@@ -298,6 +385,13 @@ class RegionalNumberFunctionsTest {
         assertEquals(original, parsed)
     }
 
+    @Test fun `roundtrip Nordic`() {
+        val original = 1234567.89
+        val rendered = render("renderNordicNumber", original)  // regular-space thousands; parseNordic strips it
+        val parsed = result("parseNordicNumber", rendered)
+        assertEquals(original, parsed)
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
@@ -308,6 +402,7 @@ class RegionalNumberFunctionsTest {
             "parseEUNumber" -> RegionalNumberFunctions.parseEUNumber(listOf(UDM.Scalar(input)))
             "parseFrenchNumber" -> RegionalNumberFunctions.parseFrenchNumber(listOf(UDM.Scalar(input)))
             "parseSwissNumber" -> RegionalNumberFunctions.parseSwissNumber(listOf(UDM.Scalar(input)))
+            "parseNordicNumber" -> RegionalNumberFunctions.parseNordicNumber(listOf(UDM.Scalar(input)))
             else -> throw IllegalArgumentException("Unknown function: $fn")
         }
         return (r as UDM.Scalar).value as Double
@@ -323,6 +418,7 @@ class RegionalNumberFunctionsTest {
             "renderEUNumber" -> RegionalNumberFunctions.renderEUNumber(args)
             "renderSwissNumber" -> RegionalNumberFunctions.renderSwissNumber(args)
             "renderFrenchNumber" -> RegionalNumberFunctions.renderFrenchNumber(args)
+            "renderNordicNumber" -> RegionalNumberFunctions.renderNordicNumber(args)
             else -> throw IllegalArgumentException("Unknown function: $fn")
         }
         return (r as UDM.Scalar).value as String

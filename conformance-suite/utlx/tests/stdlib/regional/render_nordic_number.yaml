@@ -1,0 +1,52 @@
+name: "render_nordic_number"
+category: "stdlib/regional"
+description: "Test renderNordicNumber - Nordic/SI format (regular-space thousands, comma decimal)"
+tags: ["stdlib", "regional", "numbers", "formatting", "nordic", "scandinavian", "si"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    basic: renderNordicNumber(1234.56),
+    no_decimals: renderNordicNumber(1234.56, 0),
+    three_decimals: renderNordicNumber(1234.567, 3),
+    no_thousands: renderNordicNumber(1234.56, 2, false),
+    negative: renderNordicNumber(-1234.56),
+    zero: renderNordicNumber(0),
+    large: renderNordicNumber(1234567.89),
+    small: renderNordicNumber(0.99, 2),
+    integer: renderNordicNumber(1234, 2)
+  }
+
+expected:
+  format: json
+  data:
+    basic: "1 234,56"
+    no_decimals: "1 235"
+    three_decimals: "1 234,567"
+    no_thousands: "1234,56"
+    negative: "-1 234,56"
+    zero: "0,00"
+    large: "1 234 567,89"
+    small: "0,99"
+    integer: "1 234,00"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "B33-nordic-regular-space-variant-2026-10-16"
+  complexity: "basic"
+  notes:
+    - "Nordic/SI format: regular ASCII space (U+0020) thousands, comma decimal"
+    - "Distinct from renderFrenchNumber, which uses the narrow no-break space (U+202F)"
+    - "Used by Sweden, Norway, Finland and the SI/ISO international style"

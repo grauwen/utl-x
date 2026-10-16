@@ -280,12 +280,14 @@ object StandardLibrary {
         register("parseEUNumber", RegionalNumberFunctions::parseEUNumber)
         register("parseFrenchNumber", RegionalNumberFunctions::parseFrenchNumber)
         register("parseSwissNumber", RegionalNumberFunctions::parseSwissNumber)
+        register("parseNordicNumber", RegionalNumberFunctions::parseNordicNumber)
 
         // Regional number rendering/formatting functions
         register("renderUSNumber", RegionalNumberFunctions::renderUSNumber)
         register("renderEUNumber", RegionalNumberFunctions::renderEUNumber)
         register("renderFrenchNumber", RegionalNumberFunctions::renderFrenchNumber)
         register("renderSwissNumber", RegionalNumberFunctions::renderSwissNumber)
+        register("renderNordicNumber", RegionalNumberFunctions::renderNordicNumber)
     }
 
     private fun registerCoreFunctions() {

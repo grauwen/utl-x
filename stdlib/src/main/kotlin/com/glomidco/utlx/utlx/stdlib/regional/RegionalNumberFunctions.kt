@@ -323,6 +323,86 @@ object RegionalNumberFunctions {
         return UDM.Scalar(formatted)
     }
 
+    @UTLXFunction(
+        description = "Parse number in Nordic/SI format (space thousands, comma decimal). Tolerant of regular (U+0020), no-break (U+00A0) and narrow-no-break (U+202F) spaces. Example: '1 234,56' → 1234.56",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Regional",
+        returns = "Number - The parsed numeric value with standard decimal representation",
+        example = "parseNordicNumber(\"1 234,56\") => 1234.56",
+        tags = ["regional", "numbers", "parsing", "nordic", "scandinavian", "si"],
+        since = "1.0"
+    )
+    fun parseNordicNumber(args: List<UDM>): UDM {
+        requireArgs(args, 1, "parseNordicNumber")
+        val value = args[0].asString()
+
+        try {
+            // Nordic/SI format: space as thousands separator, comma as decimal.
+            // Accept every space variant seen in the wild (regular/NBSP/narrow-NBSP).
+            val cleaned = value.trim()
+                .replace(" ", "")       // Remove regular space (U+0020)
+                .replace("\u00A0", "")  // Remove non-breaking space (U+00A0)
+                .replace("\u202F", "")  // Remove narrow no-break space (U+202F)
+                .replace(",", ".")      // Convert comma decimal to period decimal
+
+            val number = if (cleaned.contains(".")) {
+                cleaned.toDouble()
+            } else {
+                cleaned.toLongOrNull()?.toDouble() ?: cleaned.toDouble()
+            }
+            return UDM.Scalar(number)
+        } catch (e: NumberFormatException) {
+            throw FunctionArgumentException(
+                "parseNordicNumber: Cannot parse '$value' as Nordic format number. Expected format: '1 234,56' (space thousands, comma decimal). Hint: Make sure the input uses space as thousands separator and comma as decimal separator"
+            )
+        }
+    }
+
+    @UTLXFunction(
+        description = "Format number in Nordic/SI style (regular-space thousands, comma decimal). Example: 1234.56 → \"1 234,56\". Used by Sweden, Norway, Finland and the SI/ISO international style.",
+        minArgs = 1,
+        maxArgs = 3,
+        category = "Regional",
+        returns = "String - The formatted number string in Nordic (regular-space) format",
+        example = "renderNordicNumber(1234.56, 2, true) => \"1 234,56\"",
+        tags = ["regional", "numbers", "formatting", "output", "nordic", "scandinavian", "si"],
+        since = "1.0"
+    )
+    fun renderNordicNumber(args: List<UDM>): UDM {
+        if (args.isEmpty() || args.size > 3) {
+            throw FunctionArgumentException(
+                "renderNordicNumber expects 1-3 arguments (value, decimals?, thousands?), got ${args.size}. Hint: Check the function call syntax"
+            )
+        }
+
+        val value = when (val udm = args[0]) {
+            is UDM.Scalar -> when (val v = udm.value) {
+                is Number -> v.toDouble()
+                is String -> v.toDoubleOrNull() ?: throw FunctionArgumentException(
+                    "renderNordicNumber: Cannot convert '$v' to number"
+                )
+                else -> throw FunctionArgumentException("renderNordicNumber: First argument must be a number")
+            }
+            else -> throw FunctionArgumentException("renderNordicNumber: First argument must be a number")
+        }
+
+        val decimals = if (args.size >= 2) {
+            args[1].asNumber().toInt()
+        } else {
+            2
+        }
+
+        val useThousands = if (args.size >= 3) {
+            args[2].asBoolean()
+        } else {
+            true
+        }
+
+        val formatted = formatNordicNumber(value, decimals, useThousands)
+        return UDM.Scalar(formatted)
+    }
+
     /**
      * Format number in USA/UK/Asia style: comma thousands, period decimal
      * Example: 1234.56 -> "1,234.56"
@@ -361,10 +441,15 @@ object RegionalNumberFunctions {
             "#$decimalFormat"
         }
 
-        // Use German locale which has period as thousands separator and comma as decimal
-        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.GERMANY)
-        val formatter = java.text.DecimalFormat(pattern, symbols)
-        return formatter.format(value)
+        // Locale-independent (like formatSwissNumber): format with the always-available
+        // US locale, then swap separators -> period thousands, comma decimal.
+        // Avoids depending on Locale.GERMANY, which is absent in the GraalVM native image
+        // (DecimalFormatSymbols.getInstance would silently fall back to US there).
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value) // e.g. "1,234.56"
+        return buildString(usFormatted.length) {
+            for (c in usFormatted) append(when (c) { ',' -> '.'; '.' -> ','; else -> c })
+        }
     }
 
     /**
@@ -407,10 +492,45 @@ object RegionalNumberFunctions {
             "#$decimalFormat"
         }
 
-        // Use French locale which has space as thousands separator and comma as decimal
-        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.FRANCE)
-        val formatter = java.text.DecimalFormat(pattern, symbols)
-        return formatter.format(value)
+        // Locale-independent (like formatSwissNumber): format with the always-available
+        // US locale, then swap separators -> narrow-no-break-space thousands, comma decimal.
+        // Avoids depending on Locale.FRANCE, which is absent in the GraalVM native image.
+        // The thousands separator is U+202F (NARROW NO-BREAK SPACE) to exactly reproduce
+        // what DecimalFormatSymbols.getInstance(Locale.FRANCE) emitted on the JVM (modern
+        // CLDR French data), which is what the conformance fixtures encode.
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value) // e.g. "1,234.56"
+        return buildString(usFormatted.length) {
+            for (c in usFormatted) append(when (c) { ',' -> '\u202F'; '.' -> ','; else -> c })
+        }
+    }
+
+    /**
+     * Format number in Nordic/SI style: regular-space thousands, comma decimal
+     * Example: 1234.56 -> "1 234,56"
+     */
+    private fun formatNordicNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
+        }
+
+        val pattern = if (useThousands) {
+            "#,##$decimalFormat"
+        } else {
+            "#$decimalFormat"
+        }
+
+        // Locale-independent (like formatSwissNumber): format with the always-available
+        // US locale, then swap separators -> regular ASCII space (U+0020) thousands, comma decimal.
+        // Unlike formatFrenchNumber (which uses U+202F to match CLDR French), this emits a plain
+        // space for the Nordic / SI international style (Sweden, Norway, Finland).
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value) // e.g. "1,234.56"
+        return buildString(usFormatted.length) {
+            for (c in usFormatted) append(when (c) { ',' -> ' '; '.' -> ','; else -> c })
+        }
     }
 
     /**
