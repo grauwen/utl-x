@@ -1,10 +1,11 @@
 # B33: native image missing locale — EU / French / Nordic number rendering
 
-> **⤴ Backport candidate for `main` / 1.3.2.** The defect is in released stdlib code
-> (`RegionalNumberFunctions.kt`) and affects every **native binary** build. The fix is **standalone** and
-> has **no** dependency on the `%utlx 1.1` / `validate.*` feature it was discovered alongside. It touches
-> `RegionalNumberFunctions.kt` (the `formatEUNumber`/`formatFrenchNumber` fix + the Nordic additions), two
-> additive `register(...)` lines in `Functions.kt`, and two new fixtures under `tests/stdlib/regional/`.
+> **⤴ Backport candidate for `main` / 1.3.2.** The defect is in released code (stdlib
+> `RegionalNumberFunctions.kt` **and** the `formats/csv` serializer) and affects every **native binary**
+> build. The fix is **standalone** and has **no** dependency on the `%utlx 1.1` / `validate.*` feature it
+> was discovered alongside. It touches: `RegionalNumberFunctions.kt` (the `formatEUNumber`/`formatFrenchNumber`
+> fix + the Nordic & India additions), `csv_serializer.kt` (the same EU/French fix in its `regionalFormat`
+> option), additive `register(...)` lines in `Functions.kt`, and new fixtures under `tests/stdlib/regional/`.
 > `main` is on the same `com.glomidco` namespace, so the paths apply; expect a clean cherry-pick.
 
 > **⟲ Reopened 2026-10-16** to close an adjacent coverage gap found while mapping the renderers onto
@@ -119,8 +120,12 @@ depend on which locale data is present). The manual approach keeps the image lea
   binary → expected **526/526** (the 520 that passed + the 4 `validate.*` tests + these 6 regional
   tests). *(Native rebuild is the maintainer's step.)*
 - Nordic additions (below): 9/9 `renderNordicNumber` values reproduced byte-exact with a regular space
-  `U+0020` (`1 234,56` → `31 20 32 33 34 2c 35 36`); `parseNordicNumber` round-trips. Two new fixtures
-  (`render_nordic_number`, `parse_nordic_number`) added — the native-suite total rises to **528**.
+  `U+0020` (`1 234,56` → `31 20 32 33 34 2c 35 36`); `parseNordicNumber` round-trips.
+- India additions (below): 10/10 `renderIndianNumber` values correct incl. lakh (`1,23,456.78`), crore
+  (`1,23,45,678.90`) and exact lakh/crore boundaries; `parseIndianNumber` round-trips.
+- `:stdlib:test` `RegionalNumberFunctionsTest` is green (12 functions, incl. the B33 regression guards).
+- Four new fixtures (`render_nordic_number`, `parse_nordic_number`, `render_indian_number`,
+  `parse_indian_number`) — the native-suite total rises to **530**.
 
 ## Reopened: Nordic / regular-space variant (Western-coverage gap closure)
 
@@ -133,6 +138,7 @@ The four shipped styles map onto Western locales by their `(thousands, decimal)`
 | `renderFrenchNumber` | `U+202F` / `,` | France, Belgium (FR), Luxembourg, Quebec |
 | `renderSwissNumber` | `'` / `.` | Switzerland, Liechtenstein |
 | **`renderNordicNumber`** *(new)* | **`U+0020`** / `,` | **Sweden, Norway, Finland; the SI/ISO international style** |
+| **`renderIndianNumber`** *(new)* | **`,` (2-2-3)** / `.` | **India — lakh/crore grouping** |
 
 The gap: space-as-thousands is **not one convention**. French CLDR emits the narrow no-break space
 `U+202F` (`renderFrenchNumber`), but the Nordics and the SI/ISO international style use a **plain ASCII
@@ -150,13 +156,45 @@ renderer.
 //   … append(when (c) { ',' -> ' '; '.' -> ','; else -> c })   // plain space, cf. French's ' '
 ```
 
-Still **not** covered (out of scope, recorded): India's lakh/crore grouping (`12,34,567.89`, 2-2-3) —
-all styles use fixed 3-digit grouping; and accounting-style negatives `(1 234,56)`.
+### Also added: India (lakh/crore grouping)
+
+Indian English formatting is a genuinely distinct, high-volume style: **2-2-3 grouping** (rightmost group
+of 3, then groups of 2) → `12,34,567.89`, comma thousands, period decimal, Latin `0-9` digits.
+
+`java.text.DecimalFormat` only honours a single (rightmost) grouping size, so the Indian grouping **cannot
+be expressed as a pattern** (`#,##,##0` still yields `1,234,567`). It is therefore applied **manually**
+(`formatIndianNumber` / `groupIndian`) on top of an ungrouped `Locale.US` format — so it stays
+locale-data-free and native-image-safe, exactly like the rest.
+
+- `renderIndianNumber(value, decimals?, thousands?)` → `12,34,567.89`.
+- `parseIndianNumber(value)` → inverse (strips commas regardless of grouping position).
+
+Still **not** covered (out of scope, recorded): accounting-style negatives `(1 234,56)`.
+
+## Second instance found & fixed: the CSV serializer
+
+Running the **full suite against the freshly-compiled native binary** (not just the JVM) surfaced a
+**second copy** of this exact bug: the CSV output format's `regionalFormat: "european"|"french"` option
+has its own number formatter in `formats/csv/.../csv_serializer.kt` that was a verbatim copy of the
+*pre-B33* stdlib code — `DecimalFormatSymbols.getInstance(Locale.GERMANY|FRANCE)`. On native it fell back
+to US, so `csv_output_regionalformat_european` / `csv_output_regionalformat_french` (JVM-green) **failed
+on native** (`1,234.56` instead of `1.234,56` / `1 234,56`). Fixed identically: US base + manual swap
+(EU `.`↔`,`; French → `U+202F`). This is why native verification matters — the JVM suite could never have
+caught it. Both tests now pass on native.
 
 ## Related / follow-up (not fixed here)
 
-The locale-aware **date** functions (`DateFunctions.kt`, `JvmCldrProvider.kt`) resolve arbitrary BCP-47
-tags via `Locale.forLanguageTag(...)` / `Locale.getAvailableLocales()`, so they are almost certainly
-subject to the same native-image locale-data gap for non-default locales. No conformance test currently
-exercises a non-US date locale on the native binary, so it did not surface. Worth a dedicated audit (the
-CLDR provider should source its own bundled data rather than lean on JVM locales under native).
+- **`stdlib/finance/FinancialFunctions.kt` — `formatCurrency` / `parseCurrency` (candidate B34).** These
+  use `NumberFormat.getCurrencyInstance(Locale.forLanguageTag(...))` for exact output (e.g.
+  `formatCurrency(1234.56, "EUR", "de_DE")` → `"1.234,56 €"`), so they are subject to the same native
+  locale-data gap. **Not** fixed here because (a) no conformance test exercises them on native, so nothing
+  is currently wrong in the suite, and (b) unlike separators, currency formatting (symbol, symbol
+  placement, per-currency decimals like JPY=0) is genuinely locale/currency *data* — making it native-safe
+  needs a small **shipped currency/locale table**, a real feature, not a one-line swap. `parseCurrency` is
+  lower risk: it has a symbol-stripping last-resort fallback, so it degrades to a number rather than
+  erroring. Audit before relying on currency output on the native binary.
+- The locale-aware **date** functions (`DateFunctions.kt`, `JvmCldrProvider.kt`) resolve arbitrary BCP-47
+  tags via `Locale.forLanguageTag(...)` / `Locale.getAvailableLocales()`, so they are almost certainly
+  subject to the same native-image locale-data gap for non-default locales. No conformance test currently
+  exercises a non-US date locale on the native binary, so it did not surface. Worth a dedicated audit (the
+  CLDR provider should source its own bundled data rather than lean on JVM locales under native).

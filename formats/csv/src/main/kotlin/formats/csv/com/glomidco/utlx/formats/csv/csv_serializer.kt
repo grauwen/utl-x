@@ -381,10 +381,14 @@ class CSVSerializer(
             "#$decimalFormat"
         }
 
-        // Use German locale which has period as thousands separator and comma as decimal
-        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.GERMANY)
-        val formatter = java.text.DecimalFormat(pattern, symbols)
-        return formatter.format(value)
+        // Locale-independent (like formatSwissNumber): format with the always-available US locale,
+        // then swap separators -> period thousands, comma decimal. Avoids depending on Locale.GERMANY,
+        // which is absent in the GraalVM native image (would silently fall back to US). See B33.
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value) // e.g. "1,234.56"
+        return buildString(usFormatted.length) {
+            for (c in usFormatted) append(when (c) { ',' -> '.'; '.' -> ','; else -> c })
+        }
     }
 
     /**
@@ -429,10 +433,15 @@ class CSVSerializer(
             "#$decimalFormat"
         }
 
-        // Use French locale which has space as thousands separator and comma as decimal
-        val symbols = java.text.DecimalFormatSymbols.getInstance(java.util.Locale.FRANCE)
-        val formatter = java.text.DecimalFormat(pattern, symbols)
-        return formatter.format(value)
+        // Locale-independent (like formatSwissNumber): format with the always-available US locale,
+        // then swap separators -> U+202F narrow-no-break-space thousands, comma decimal. Avoids
+        // depending on Locale.FRANCE (absent in the native image). U+202F exactly reproduces the old
+        // Locale.FRANCE output on both JVM and native, matching the conformance fixtures. See B33.
+        val formatter = java.text.DecimalFormat(pattern, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US))
+        val usFormatted = formatter.format(value) // e.g. "1,234.56"
+        return buildString(usFormatted.length) {
+            for (c in usFormatted) append(when (c) { ',' -> '\u202F'; '.' -> ','; else -> c })
+        }
     }
 
     private fun extractRuntimeValue(value: RuntimeValue?): String {

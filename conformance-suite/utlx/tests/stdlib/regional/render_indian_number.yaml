@@ -1,0 +1,54 @@
+name: "render_indian_number"
+category: "stdlib/regional"
+description: "Test renderIndianNumber - Indian lakh/crore format (2-2-3 comma grouping, period decimal)"
+tags: ["stdlib", "regional", "numbers", "formatting", "indian", "lakh", "crore"]
+
+input:
+  format: json
+  data: |
+    {}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    small: renderIndianNumber(1234.56),
+    lakh: renderIndianNumber(123456.78),
+    ten_lakh: renderIndianNumber(1234567.89),
+    crore: renderIndianNumber(12345678.90),
+    one_lakh: renderIndianNumber(100000),
+    one_crore: renderIndianNumber(10000000),
+    no_thousands: renderIndianNumber(1234567.89, 2, false),
+    no_decimals: renderIndianNumber(1234567.89, 0),
+    negative: renderIndianNumber(-1234567.89),
+    zero: renderIndianNumber(0)
+  }
+
+expected:
+  format: json
+  data:
+    small: "1,234.56"
+    lakh: "1,23,456.78"
+    ten_lakh: "12,34,567.89"
+    crore: "1,23,45,678.90"
+    one_lakh: "1,00,000.00"
+    one_crore: "1,00,00,000.00"
+    no_thousands: "1234567.89"
+    no_decimals: "12,34,568"
+    negative: "-12,34,567.89"
+    zero: "0.00"
+
+performance_limits:
+  max_duration_ms: 300
+  max_memory_mb: 15
+
+metadata:
+  author: "UTL-X Conformance"
+  source: "B33-indian-lakh-crore-variant-2026-10-16"
+  complexity: "basic"
+  notes:
+    - "Indian format: lakh/crore 2-2-3 grouping (rightmost group of 3, then groups of 2)"
+    - "Comma thousands, period decimal, Latin 0-9 digits"
+    - "Grouping applied manually (java DecimalFormat cannot express Indian grouping) - locale-data-free"

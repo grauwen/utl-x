@@ -403,6 +403,81 @@ object RegionalNumberFunctions {
         return UDM.Scalar(formatted)
     }
 
+    @UTLXFunction(
+        description = "Parse number in Indian format (lakh/crore grouping, comma thousands, period decimal). Example: '12,34,567.89' → 1234567.89",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Regional",
+        returns = "Number - The parsed numeric value with standard decimal representation",
+        example = "parseIndianNumber(\"12,34,567.89\") => 1234567.89",
+        tags = ["regional", "numbers", "parsing", "indian", "lakh", "crore"],
+        since = "1.0"
+    )
+    fun parseIndianNumber(args: List<UDM>): UDM {
+        requireArgs(args, 1, "parseIndianNumber")
+        val value = args[0].asString()
+
+        try {
+            // Indian format: comma as (irregular lakh/crore) thousands separator, period as decimal.
+            // Grouping position is irrelevant to parsing — just strip the commas.
+            val cleaned = value.trim().replace(",", "")
+            val number = if (cleaned.contains(".")) {
+                cleaned.toDouble()
+            } else {
+                cleaned.toLongOrNull()?.toDouble() ?: cleaned.toDouble()
+            }
+            return UDM.Scalar(number)
+        } catch (e: NumberFormatException) {
+            throw FunctionArgumentException(
+                "parseIndianNumber: Cannot parse '$value' as Indian format number. Expected format: '12,34,567.89' (lakh/crore comma grouping, period decimal). Hint: Make sure the input uses comma as thousands separator and period as decimal separator"
+            )
+        }
+    }
+
+    @UTLXFunction(
+        description = "Format number in Indian style (lakh/crore 2-2-3 grouping, comma thousands, period decimal). Example: 1234567.89 → \"12,34,567.89\"",
+        minArgs = 1,
+        maxArgs = 3,
+        category = "Regional",
+        returns = "String - The formatted number string in Indian (lakh/crore) format",
+        example = "renderIndianNumber(1234567.89, 2, true) => \"12,34,567.89\"",
+        tags = ["regional", "numbers", "formatting", "output", "indian", "lakh", "crore"],
+        since = "1.0"
+    )
+    fun renderIndianNumber(args: List<UDM>): UDM {
+        if (args.isEmpty() || args.size > 3) {
+            throw FunctionArgumentException(
+                "renderIndianNumber expects 1-3 arguments (value, decimals?, thousands?), got ${args.size}. Hint: Check the function call syntax"
+            )
+        }
+
+        val value = when (val udm = args[0]) {
+            is UDM.Scalar -> when (val v = udm.value) {
+                is Number -> v.toDouble()
+                is String -> v.toDoubleOrNull() ?: throw FunctionArgumentException(
+                    "renderIndianNumber: Cannot convert '$v' to number"
+                )
+                else -> throw FunctionArgumentException("renderIndianNumber: First argument must be a number")
+            }
+            else -> throw FunctionArgumentException("renderIndianNumber: First argument must be a number")
+        }
+
+        val decimals = if (args.size >= 2) {
+            args[1].asNumber().toInt()
+        } else {
+            2
+        }
+
+        val useThousands = if (args.size >= 3) {
+            args[2].asBoolean()
+        } else {
+            true
+        }
+
+        val formatted = formatIndianNumber(value, decimals, useThousands)
+        return UDM.Scalar(formatted)
+    }
+
     /**
      * Format number in USA/UK/Asia style: comma thousands, period decimal
      * Example: 1234.56 -> "1,234.56"
@@ -531,6 +606,53 @@ object RegionalNumberFunctions {
         return buildString(usFormatted.length) {
             for (c in usFormatted) append(when (c) { ',' -> ' '; '.' -> ','; else -> c })
         }
+    }
+
+    /**
+     * Format number in Indian style: lakh/crore grouping (rightmost group of 3, then groups of 2),
+     * comma thousands, period decimal. Example: 1234567.89 -> "12,34,567.89"
+     *
+     * java.text.DecimalFormat only supports a single (rightmost) grouping size, so the Indian
+     * 2-2-3 grouping cannot be expressed as a pattern — it is applied manually here. This keeps the
+     * function locale-data-free (US symbols only) and therefore native-image-safe (see B33).
+     */
+    private fun formatIndianNumber(value: Double, decimals: Int, useThousands: Boolean): String {
+        val decimalFormat = if (decimals > 0) {
+            "0.${"0".repeat(decimals)}"
+        } else {
+            "0"
+        }
+
+        // Format WITHOUT grouping first (US symbols -> period decimal, 0-9 digits).
+        val plain = java.text.DecimalFormat(decimalFormat, java.text.DecimalFormatSymbols.getInstance(java.util.Locale.US)).format(value)
+        if (!useThousands) return plain
+
+        val negative = plain.startsWith("-")
+        val unsigned = if (negative) plain.substring(1) else plain
+        val dotIndex = unsigned.indexOf('.')
+        val intPart = if (dotIndex >= 0) unsigned.substring(0, dotIndex) else unsigned
+        val fracPart = if (dotIndex >= 0) unsigned.substring(dotIndex) else "" // includes the '.'
+
+        return (if (negative) "-" else "") + groupIndian(intPart) + fracPart
+    }
+
+    /**
+     * Apply Indian digit grouping to a plain (ungrouped) integer string: the rightmost 3 digits
+     * form the first group, then every 2 digits. "1234567" -> "12,34,567".
+     */
+    private fun groupIndian(intPart: String): String {
+        if (intPart.length <= 3) return intPart
+        val last3 = intPart.substring(intPart.length - 3)
+        val rest = intPart.substring(0, intPart.length - 3)
+        val sb = StringBuilder()
+        var i = rest.length
+        while (i > 0) {
+            val start = maxOf(0, i - 2)
+            if (sb.isNotEmpty()) sb.insert(0, ",")
+            sb.insert(0, rest.substring(start, i))
+            i = start
+        }
+        return "$sb,$last3"
     }
 
     /**

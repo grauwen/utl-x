@@ -8,8 +8,9 @@ import kotlin.test.assertTrue
 
 /**
  * F19: Complete test coverage for RegionalNumberFunctions.
- * 10 functions × (happy path + edge cases + arg variants + errors) = comprehensive.
- * Includes B33 regression guards: French render MUST emit U+202F, Nordic render MUST emit a plain U+0020.
+ * 12 functions × (happy path + edge cases + arg variants + errors) = comprehensive.
+ * Includes B33 regression guards: French render MUST emit U+202F, Nordic render MUST emit a plain U+0020,
+ * and renderIndianNumber MUST apply lakh/crore 2-2-3 grouping.
  */
 class RegionalNumberFunctionsTest {
 
@@ -186,6 +187,38 @@ class RegionalNumberFunctionsTest {
     }
 
     // =========================================================================
+    // parseIndianNumber(string) — 1 arg  (lakh/crore comma grouping, period decimal)
+    // =========================================================================
+
+    @Test fun `parseIndianNumber - standard lakh grouping`() {
+        assertEquals(1234567.89, result("parseIndianNumber", "12,34,567.89"))
+    }
+
+    @Test fun `parseIndianNumber - crore grouping`() {
+        assertEquals(12345678.9, result("parseIndianNumber", "1,23,45,678.90"))
+    }
+
+    @Test fun `parseIndianNumber - one lakh`() {
+        assertEquals(100000.0, result("parseIndianNumber", "1,00,000"))
+    }
+
+    @Test fun `parseIndianNumber - no thousands`() {
+        assertEquals(1234.56, result("parseIndianNumber", "1234.56"))
+    }
+
+    @Test fun `parseIndianNumber - zero`() {
+        assertEquals(0.0, result("parseIndianNumber", "0"))
+    }
+
+    @Test fun `parseIndianNumber - negative`() {
+        assertEquals(-1234567.89, result("parseIndianNumber", "-12,34,567.89"))
+    }
+
+    @Test fun `parseIndianNumber - invalid throws`() {
+        assertThrows<Exception> { RegionalNumberFunctions.parseIndianNumber(listOf(UDM.Scalar("abc"))) }
+    }
+
+    // =========================================================================
     // renderUSNumber(value, decimals?, thousands?) — 1-3 args
     // =========================================================================
 
@@ -354,6 +387,51 @@ class RegionalNumberFunctionsTest {
     }
 
     // =========================================================================
+    // renderIndianNumber(value, decimals?, thousands?) — 1-3 args
+    // (lakh/crore 2-2-3 grouping, comma thousands, period decimal)
+    // =========================================================================
+
+    @Test fun `renderIndianNumber - small number (below a lakh)`() {
+        assertEquals("1,234.56", render("renderIndianNumber", 1234.56))
+    }
+
+    @Test fun `renderIndianNumber - lakh grouping`() {
+        assertEquals("1,23,456.78", render("renderIndianNumber", 123456.78))
+    }
+
+    @Test fun `renderIndianNumber - ten lakh (2-2-3 grouping)`() {
+        assertEquals("12,34,567.89", render("renderIndianNumber", 1234567.89))
+    }
+
+    @Test fun `renderIndianNumber - crore grouping`() {
+        assertEquals("1,23,45,678.90", render("renderIndianNumber", 12345678.90))
+    }
+
+    @Test fun `renderIndianNumber - exactly one lakh`() {
+        assertEquals("1,00,000.00", render("renderIndianNumber", 100000.0))
+    }
+
+    @Test fun `renderIndianNumber - exactly one crore`() {
+        assertEquals("1,00,00,000.00", render("renderIndianNumber", 10000000.0))
+    }
+
+    @Test fun `renderIndianNumber - 3 args no thousands`() {
+        assertEquals("1234567.89", render("renderIndianNumber", 1234567.89, 2, false))
+    }
+
+    @Test fun `renderIndianNumber - no decimals`() {
+        assertEquals("12,34,568", render("renderIndianNumber", 1234567.89, 0))
+    }
+
+    @Test fun `renderIndianNumber - zero`() {
+        assertEquals("0.00", render("renderIndianNumber", 0.0))
+    }
+
+    @Test fun `renderIndianNumber - negative`() {
+        assertEquals("-12,34,567.89", render("renderIndianNumber", -1234567.89))
+    }
+
+    // =========================================================================
     // Round-trip tests: parse → render → parse
     // =========================================================================
 
@@ -392,6 +470,13 @@ class RegionalNumberFunctionsTest {
         assertEquals(original, parsed)
     }
 
+    @Test fun `roundtrip Indian`() {
+        val original = 12345678.90
+        val rendered = render("renderIndianNumber", original)  // "1,23,45,678.90"
+        val parsed = result("parseIndianNumber", rendered)
+        assertEquals(original, parsed)
+    }
+
     // =========================================================================
     // Helpers
     // =========================================================================
@@ -403,6 +488,7 @@ class RegionalNumberFunctionsTest {
             "parseFrenchNumber" -> RegionalNumberFunctions.parseFrenchNumber(listOf(UDM.Scalar(input)))
             "parseSwissNumber" -> RegionalNumberFunctions.parseSwissNumber(listOf(UDM.Scalar(input)))
             "parseNordicNumber" -> RegionalNumberFunctions.parseNordicNumber(listOf(UDM.Scalar(input)))
+            "parseIndianNumber" -> RegionalNumberFunctions.parseIndianNumber(listOf(UDM.Scalar(input)))
             else -> throw IllegalArgumentException("Unknown function: $fn")
         }
         return (r as UDM.Scalar).value as Double
@@ -419,6 +505,7 @@ class RegionalNumberFunctionsTest {
             "renderSwissNumber" -> RegionalNumberFunctions.renderSwissNumber(args)
             "renderFrenchNumber" -> RegionalNumberFunctions.renderFrenchNumber(args)
             "renderNordicNumber" -> RegionalNumberFunctions.renderNordicNumber(args)
+            "renderIndianNumber" -> RegionalNumberFunctions.renderIndianNumber(args)
             else -> throw IllegalArgumentException("Unknown function: $fn")
         }
         return (r as UDM.Scalar).value as String

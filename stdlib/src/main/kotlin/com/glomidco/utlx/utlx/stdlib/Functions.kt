@@ -281,6 +281,7 @@ object StandardLibrary {
         register("parseFrenchNumber", RegionalNumberFunctions::parseFrenchNumber)
         register("parseSwissNumber", RegionalNumberFunctions::parseSwissNumber)
         register("parseNordicNumber", RegionalNumberFunctions::parseNordicNumber)
+        register("parseIndianNumber", RegionalNumberFunctions::parseIndianNumber)
 
         // Regional number rendering/formatting functions
         register("renderUSNumber", RegionalNumberFunctions::renderUSNumber)
@@ -288,6 +289,7 @@ object StandardLibrary {
         register("renderFrenchNumber", RegionalNumberFunctions::renderFrenchNumber)
         register("renderSwissNumber", RegionalNumberFunctions::renderSwissNumber)
         register("renderNordicNumber", RegionalNumberFunctions::renderNordicNumber)
+        register("renderIndianNumber", RegionalNumberFunctions::renderIndianNumber)
     }
 
     private fun registerCoreFunctions() {
