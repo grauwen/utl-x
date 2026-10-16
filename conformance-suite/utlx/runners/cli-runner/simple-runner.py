@@ -1043,8 +1043,47 @@ def find_test_files(test_dir: Path, category: str = None, test_name: str = None)
         # Find all test files in directory
         for pattern in ['*.yaml', '*.yml']:
             test_files.extend(search_dir.rglob(pattern))
-    
+
     return sorted(test_files)
+
+
+def _parse_version(v) -> Tuple[int, ...]:
+    """Parse a dotted version like '1.1' into a comparable tuple (1, 1)."""
+    parts = []
+    for p in str(v).strip().split('.'):
+        try:
+            parts.append(int(p))
+        except ValueError:
+            break
+    return tuple(parts) if parts else (1, 0)
+
+
+def declared_language_version(test_case: Dict[str, Any]) -> str:
+    """The %utlx language version a test's script(s) declare — the source of truth for
+    which language level the test belongs to. A test is treated as requiring the HIGHEST
+    version across its main transformation and any variant transformations. Tests with no
+    %utlx header default to '1.0' (the baseline), so a 1.0-conformance run includes them."""
+    texts: List[str] = []
+    t = test_case.get('transformation')
+    if isinstance(t, str):
+        texts.append(t)
+    for key in ('variants', 'transformation_variants'):
+        vs = test_case.get(key)
+        if isinstance(vs, list):
+            for item in vs:
+                if isinstance(item, dict) and isinstance(item.get('transformation'), str):
+                    texts.append(item['transformation'])
+    highest = (1, 0)
+    found = False
+    for text in texts:
+        m = re.search(r'%utlx\s+([0-9]+(?:\.[0-9]+)*)', text)
+        if m:
+            found = True
+            ver = _parse_version(m.group(1))
+            if ver > highest:
+                highest = ver
+    return '.'.join(str(x) for x in highest) if found else '1.0'
+
 
 def main():
     parser = argparse.ArgumentParser(description='UTL-X Conformance Test Runner')
@@ -1056,6 +1095,10 @@ def main():
                         help='Show failures from last test run (or run tests if no results exist)')
     parser.add_argument('--save-results', action='store_true',
                         help='Save test results to file for later viewing')
+    parser.add_argument('--max-language-version', default=None, metavar='X.Y',
+                        help="Only run tests whose declared %%utlx version is <= X.Y "
+                             "(e.g. --max-language-version 1.0 for a 1.0-conformance run that excludes "
+                             "1.1 tests like validate.*). Default: run all (= the highest/1.1 conformance set).")
 
     args = parser.parse_args()
 
@@ -1204,8 +1247,12 @@ def main():
         print("No test files found matching criteria")
         sys.exit(0)
     
+    max_ver = _parse_version(args.max_language_version) if args.max_language_version else None
+
     print(f"UTL-X Conformance Suite - Simple Runner")
     print(f"UTL-X CLI: {utlx_cli}")
+    if max_ver is not None:
+        print(f"Language-version filter: running only tests with declared %utlx <= {args.max_language_version}")
     print(f"Running {len(test_files)} test files...")
     print()
 
@@ -1214,6 +1261,7 @@ def main():
 
     total_tests = 0
     passed_tests = 0
+    skipped_version = 0
     failures_list = []
     exit_code = 0
 
@@ -1225,6 +1273,11 @@ def main():
                 continue
 
             test_name = test_case.get('name', test_file.stem)
+
+            # Language-version filter: skip tests that require a higher %utlx than requested.
+            if max_ver is not None and _parse_version(declared_language_version(test_case)) > max_ver:
+                skipped_version += 1
+                continue
 
             # Run main test
             success, reason = run_single_test(test_case, utlx_cli, test_name)
@@ -1250,6 +1303,8 @@ def main():
         print(f"Results: {passed_tests}/{total_tests} tests passed")
         success_rate = (passed_tests / total_tests * 100) if total_tests > 0 else 0
         print(f"Success rate: {success_rate:.1f}%")
+        if skipped_version:
+            print(f"(skipped {skipped_version} test(s) requiring %utlx > {args.max_language_version})")
 
         if passed_tests == total_tests:
             print("✓ All tests passed!")

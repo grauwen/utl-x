@@ -162,6 +162,32 @@ Success rate: 100.0%
 ✅ All tests passed!
 ```
 
+### Language versioning (`%utlx 1.0` vs `1.1`)
+
+The runtime suite is a **single corpus**, not one tree per language version. Each test declares its
+language level in its own transformation header (`%utlx 1.0` / `%utlx 1.1`) — that header is the **source
+of truth** for which level the test belongs to. Rationale: UTL-X ships *one* engine (a 1.1 engine is a
+superset that also runs 1.0), so the full corpus *is* the 1.1-conformance definition, and forking a
+second suite would duplicate infrastructure and drift.
+
+Language version is instead a **filterable dimension**:
+
+```bash
+# 1.1 conformance (default): run everything
+python3 runners/cli-runner/simple-runner.py --utlx-cli <cli>
+
+# 1.0 conformance: run only tests whose declared %utlx <= 1.0
+python3 runners/cli-runner/simple-runner.py --utlx-cli <cli> --max-language-version 1.0
+```
+
+- The `--max-language-version X.Y` filter skips (and reports) any test whose declared `%utlx` exceeds
+  `X.Y`. A test with no header defaults to `1.0`.
+- **1.0-conformance = 527 tests; full/1.1 = 530.** The 3 skipped tests are the `validate.*` feature tests
+  under `tests/language/validate/` (`%utlx 1.1`).
+- Note the one subtlety: `validate_version_gate` is itself a **`%utlx 1.0`** script asserting that a 1.0
+  program *rejects* `validate.*` — so it correctly **runs in the 1.0 set** (it is a 1.0 guarantee about a
+  1.1 feature). This cross-version test is exactly why the suites are not physically split.
+
 ---
 
 ## 2. Validation Conformance Suite

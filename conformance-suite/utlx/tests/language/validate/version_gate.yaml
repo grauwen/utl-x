@@ -1,0 +1,22 @@
+name: "validate_version_gate"
+category: "language/validate"
+description: "The validate.* namespace is gated to %utlx 1.1 — calling it under %utlx 1.0 is rejected"
+tags: ["validate", "1.1", "version-gate", "semantic-validation"]
+
+input:
+  format: json
+  data: {"orderId": 42}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  $input |> validate.required(["orderId"])
+
+error_expected:
+  type: "version_gate"
+  reason: "validate.* requires %utlx 1.1; a %utlx 1.0 script must be rejected at the namespace gate"
+
+metadata:
+  author: "UTL-X Team"

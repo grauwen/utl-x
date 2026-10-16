@@ -1,0 +1,32 @@
+name: "validate_oneOf_fail"
+category: "language/validate"
+description: "validate.oneOf flags a value outside the controlled list"
+tags: ["validate", "1.1", "oneOf", "semantic-validation"]
+
+input:
+  format: json
+  data: {"currency": "GBP"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.oneOf("currency", ["EUR", "USD"])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": "currency", "message": "Field 'currency' value 'GBP' is not one of [EUR, USD]", "severity": "error"}
+    ],
+    "payload": {"currency": "GBP"}
+  }
+
+metadata:
+  author: "UTL-X Team"

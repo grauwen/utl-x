@@ -1,0 +1,32 @@
+name: "validate_required_fail"
+category: "language/validate"
+description: "validate.required flags a missing field as an error-severity issue (ValidationResult)"
+tags: ["validate", "1.1", "required", "semantic-validation"]
+
+input:
+  format: json
+  data: {"orderId": 42, "currency": "EUR"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.required(["orderId", "currency", "lineItems"])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 2,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": "lineItems", "message": "Required field 'lineItems' is missing", "severity": "error"}
+    ],
+    "payload": {"orderId": 42, "currency": "EUR"}
+  }
+
+metadata:
+  author: "UTL-X Team"

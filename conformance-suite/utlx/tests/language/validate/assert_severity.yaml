@@ -1,0 +1,36 @@
+name: "validate_assert_severity"
+category: "language/validate"
+description: "validate.assert aggregates rules; error flips valid, warning is counted but does not"
+tags: ["validate", "1.1", "assert", "severity", "semantic-validation"]
+
+input:
+  format: json
+  data: {"price": -1, "qty": -1}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "price-positive", check: $input.price > 0, message: "price must be positive", field: "price" },
+    { rule: "qty-positive",   check: $input.qty > 0,   message: "qty should be positive", field: "qty", severity: "warning" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 1,
+    "notices": 0,
+    "issues": [
+      {"rule": "price-positive", "field": "price", "message": "price must be positive", "severity": "error"},
+      {"rule": "qty-positive", "field": "qty", "message": "qty should be positive", "severity": "warning"}
+    ],
+    "payload": {"price": -1, "qty": -1}
+  }
+
+metadata:
+  author: "UTL-X Team"
