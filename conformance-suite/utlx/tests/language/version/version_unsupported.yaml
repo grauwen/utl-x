@@ -1,0 +1,22 @@
+name: "version_unsupported"
+category: "language/version"
+description: "A script declaring a %utlx version the engine does not understand is rejected up front"
+tags: ["language", "version", "header", "semantic-validation"]
+
+input:
+  format: json
+  data: {"x": 1}
+
+transformation: |
+  %utlx 2.0
+  input json
+  output json
+  ---
+  $input
+
+error_expected:
+  type: "runtime_error"
+  reason: "%utlx 2.0 is not a version this engine understands (supports 1.0, 1.1); must be rejected, not run as if 1.0"
+
+metadata:
+  author: "UTL-X Team"

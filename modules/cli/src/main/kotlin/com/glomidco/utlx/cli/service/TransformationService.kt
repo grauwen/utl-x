@@ -113,7 +113,10 @@ class TransformationService {
         val overrideOutputFormat: String? = null,
         // F23 Phase 2: the parse strictness profile applied to ALL input readers. Default STANDARD
         // (= prior behaviour). On a guard this is pinned to STRICT by deployment config, not here.
-        val parseProfile: ParseProfile = ParseProfile.STANDARD
+        val parseProfile: ParseProfile = ParseProfile.STANDARD,
+        // F21: the engine language mode — the highest %utlx version this run will accept. Default is the
+        // latest the build understands (1.1); a 1.0-only ("UTLXe") deployment sets this to "1.0".
+        val maxLanguageVersion: String = com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
     )
 
     /**
@@ -155,7 +158,8 @@ class TransformationService {
         }
 
         // Step 3: Execute transformation
-        val interpreter = Interpreter()
+        // F21: the engine runs in the configured language mode; a 1.0-only mode rejects a %utlx 1.1 header.
+        val interpreter = Interpreter(maxLanguageVersion = options.maxLanguageVersion)
 
         // B19 fix: Make stdlib functions available without reflection.
         // Build lookup map once (lazy — no startup cost), register on first use.

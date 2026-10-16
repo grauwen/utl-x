@@ -131,7 +131,14 @@ class RuntimeError(message: String, val location: Location? = null) : Exception(
 /**
  * Interpreter - executes UTL-X AST
  */
-class Interpreter {
+class Interpreter(
+    /**
+     * The highest `%utlx` language version this engine instance will accept (the deployment "mode").
+     * Defaults to the latest the build understands (accept 1.0 and 1.1). Construct with a lower value
+     * (e.g. "1.0") for a 1.0-only ("UTLXe") deployment that rejects `%utlx 1.1`. See [LanguageVersions].
+     */
+    private val maxLanguageVersion: String = com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
+) {
     private val globalEnv = Environment()
     private val stdlib = StandardLibraryImpl()
     
@@ -180,6 +187,26 @@ class Interpreter {
             "the $ns.* namespace is a $required language feature.", location)
     }
 
+    // ── F21 version-header handling (the engine "mode") ──
+    // Reject a header the engine can't honour, BEFORE running the body: (1) a version this build doesn't
+    // understand at all (typo / future version), and (2) a version above this engine's configured mode
+    // (e.g. `%utlx 1.1` on a 1.0-only / UTLXe deployment). A blank version is treated as the baseline.
+    private fun enforceSupportedVersion(version: String, location: Location) {
+        val v = com.glomidco.utlx.core.semantic.LanguageVersions.normalize(version)
+        if (v.isEmpty()) return  // no/blank header → treated as baseline 1.0 (back-compat)
+
+        if (!com.glomidco.utlx.core.semantic.LanguageVersions.isSupported(v)) {
+            throw RuntimeError(
+                "unsupported %utlx version '$v'; this engine understands " +
+                com.glomidco.utlx.core.semantic.LanguageVersions.SUPPORTED.joinToString(", "), location)
+        }
+        if (com.glomidco.utlx.core.semantic.LanguageNamespaces.compareVersions(v, maxLanguageVersion) > 0) {
+            throw RuntimeError(
+                "%utlx $v is not enabled in this engine (configured for %utlx $maxLanguageVersion, " +
+                "1.0-only mode); run a 1.1-mode engine to execute this script.", location)
+        }
+    }
+
     /**
      * Try to find and register a stdlib function from the lookup map (no reflection).
      * Called lazily on first use of each function — O(1) HashMap lookup.
@@ -217,8 +244,10 @@ class Interpreter {
     fun execute(program: Program, namedInputs: Map<String, UDM>): RuntimeValue {
         logger.debug { "Starting execution with ${namedInputs.size} input(s): ${namedInputs.keys.joinToString()}" }
 
-        // F21: capture the declared %utlx version for the namespace language-version gate.
+        // F21: capture the declared %utlx version for the namespace language-version gate,
+        // then enforce the engine mode (reject unsupported / above-mode versions up front).
         declaredLanguageVersion = program.header.version
+        enforceSupportedVersion(program.header.version, program.header.location)
 
         // Extract metadata from all inputs for smart error enhancement
         val inputFormats = program.header.inputs.associate { (name, spec) ->

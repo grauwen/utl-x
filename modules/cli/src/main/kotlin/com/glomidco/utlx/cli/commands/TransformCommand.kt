@@ -39,7 +39,8 @@ object TransformCommand {
         val strictTypes: Boolean = false,  // Enforce type checking (fail on type errors)
         val identityMode: Boolean = false,  // true = no script, passthrough with smart format flip
         val charset: String? = null,  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
-        val parseProfile: String? = null  // F23: parser strictness profile (strict|standard|lenient); null = standard
+        val parseProfile: String? = null,  // F23: parser strictness profile (strict|standard|lenient); null = standard
+        val languageMode: String? = null  // F21: engine language mode (1.0|1.1|utlxe|utlxs); null = latest (1.1)
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -347,12 +348,25 @@ ${"$"}input"""
             if (options.verbose && options.parseProfile != null) {
                 println("Parse profile: ${resolvedProfile.name.lowercase()} (from CLI option)")
             }
+            // F21: resolve the engine language mode (default = latest). "utlxe"/"utlxs" are the deployment
+            // vocabulary for the 1.0-only / 1.1 modes; "1.0"/"1.1" are accepted directly.
+            val resolvedLanguageMode = when (options.languageMode?.lowercase()) {
+                null -> com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
+                "1.0", "utlxe" -> "1.0"
+                "1.1", "utlxs" -> "1.1"
+                else -> throw IllegalArgumentException(
+                    "Invalid --language-mode '${options.languageMode}' (expected: 1.0 | 1.1 | utlxe | utlxs)")
+            }
+            if (options.verbose && options.languageMode != null) {
+                println("Language mode: %utlx $resolvedLanguageMode (from CLI option)")
+            }
             val serviceOptions = TransformationService.TransformOptions(
                 verbose = options.verbose,
                 pretty = options.pretty,
                 strictTypes = options.strictTypes,
                 overrideOutputFormat = effectiveOutputFormat,
-                parseProfile = resolvedProfile
+                parseProfile = resolvedProfile,
+                maxLanguageVersion = resolvedLanguageMode
             )
 
             val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
@@ -516,6 +530,7 @@ ${"$"}input"""
         var strictTypes = false
         var charset: String? = null
         var parseProfile: String? = null
+        var languageMode: String? = null
 
         var i = 0
         while (i < args.size) {
@@ -563,6 +578,9 @@ ${"$"}input"""
                 }
                 "--parse-profile" -> {
                     parseProfile = args[++i]
+                }
+                "--language-mode" -> {
+                    languageMode = args[++i]
                 }
                 "--strict-types" -> {
                     strictTypes = true
@@ -641,7 +659,8 @@ ${"$"}input"""
                 debugComponents = debugComponents,
                 strictTypes = strictTypes,
                 charset = charset,
-                parseProfile = parseProfile
+                parseProfile = parseProfile,
+                languageMode = languageMode
             )
         }
 
@@ -663,7 +682,8 @@ ${"$"}input"""
                     strictTypes = strictTypes,
                     charset = charset,
                     identityMode = true,
-                    parseProfile = parseProfile
+                    parseProfile = parseProfile,
+                    languageMode = languageMode
                 )
             }
             // B26: single output channel — printUsage() for context, Main.kt prints the error once.
@@ -698,10 +718,11 @@ ${"$"}input"""
             debugComponents = debugComponents,
             strictTypes = strictTypes,
             charset = charset,
-            parseProfile = parseProfile
+            parseProfile = parseProfile,
+            languageMode = languageMode
         )
     }
-    
+
     private fun printUsage() {
         println("""
             |Transform data using UTL-X scripts
@@ -736,6 +757,8 @@ ${"$"}input"""
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)
             |  --parse-profile PROFILE     Parser strictness: strict | standard | lenient (default standard)
+            |  --language-mode MODE        Engine language mode: 1.0 | 1.1 | utlxe | utlxs (default latest/1.1).
+            |                              1.0 (utlxe) rejects %utlx 1.1 scripts (e.g. validate.*)
             |  --capture                   Force enable test capture (overrides config)
             |  --no-capture                Force disable test capture (overrides config)
             |  -h, --help                  Show this help message

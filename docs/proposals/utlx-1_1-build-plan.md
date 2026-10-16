@@ -66,8 +66,17 @@ confirmed).
 - `validate/` **package inside `:stdlib`** (registered via `@UTLXFunction` + the existing loader /
   registry); the `:core ↛ validation` dependency-direction test wired into CI. *(2026-10-12: a stdlib
   package, not a separate module — see the Decisions revision above.)*
-- **Version-header handling + the namespace gate** *(settled 2026-10-13)*: the engine reads the `%utlx`
-  version; a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution gates
+- **Version-header handling + the namespace gate** *(settled 2026-10-13; version-header enforcement
+  **IMPLEMENTED 2026-10-16**)*: the engine reads the `%utlx` version and, before running the body, rejects
+  (a) a version it doesn't understand (`LanguageVersions.SUPPORTED = {1.0, 1.1}`; e.g. `%utlx 2.0` →
+  *"unsupported %utlx version"*) and (b) a version above its configured mode — `Interpreter(maxLanguageVersion)`
+  defaults to the latest, and a **1.0-only engine rejects `%utlx 1.1`** (*"not enabled … 1.0-only mode"*).
+  Covered by `LanguageVersionModeTest` + conformance `language/version/version_unsupported`. The **CLI mode
+  flag is wired (2026-10-16)**: `utlx transform --language-mode 1.0|1.1|utlxe|utlxs` (default latest/1.1)
+  flows through `TransformationService` into `Interpreter(maxLanguageVersion=…)`, so a `--language-mode 1.0`
+  (`utlxe`) run rejects a `%utlx 1.1` script while still running 1.0 — verified end-to-end on the built CLI.
+  **Still to wire:** the same mode selection in the **daemon** (mirror: config/request → `Interpreter(maxLanguageVersion)`).
+  a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution gates
   namespaces by minimum language version** — a `namespace → minVersion` table (`{ "validate": "1.1" }`)
   rejects a namespaced call whose namespace needs a newer `%utlx` than declared (e.g. `validate.required`
   under `%utlx 1.0` → *"requires %utlx 1.1"*). Gate on the **namespace**, **not** `@UTLXFunction(since)` —
