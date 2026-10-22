@@ -1,0 +1,40 @@
+name: "validate_assert_lambda_no_short_circuit"
+category: "language/validate"
+description: "VB01: every validate.assert rule is evaluated even when an earlier check throws (no short-circuit); a non-evaluable check escalates to error (fail-closed)"
+tags: ["validate", "1.1", "assert", "lambda", "VB01", "no-short-circuit"]
+
+input:
+  format: json
+  data: {"name": "ok"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "price-positive", check: (p) => p.price > 0, message: "price must be positive", field: "price" },
+    { rule: "qty-positive",   check: (p) => p.qty > 0,   message: "qty should be positive", field: "qty", severity: "warning" },
+    { rule: "name-present",   check: (p) => p.name != null, message: "name required", field: "name" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 1,
+    "failed": 2,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "price-positive", "field": "price", "message": "check 'price-positive' could not be evaluated: Cannot compare these types", "severity": "error"},
+      {"rule": "qty-positive", "field": "qty", "message": "check 'qty-positive' could not be evaluated: Cannot compare these types", "severity": "error"}
+    ],
+    "payload": {"name": "ok"}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "name-present passes; price/qty checks throw on the missing fields and become error issues"
+    - "qty-positive was declared severity:warning, but a non-evaluable check escalates to error (fail-closed)"

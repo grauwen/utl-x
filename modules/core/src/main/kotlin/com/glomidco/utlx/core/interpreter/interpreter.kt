@@ -1127,12 +1127,74 @@ class Interpreter(
     }
     
     /**
+     * VB01: evaluate `validate.assert(payload, rules)` with LAZY per-rule lambda checks.
+     *
+     * Each rule is `{ rule?, check: (p) => <boolean expr>, message?, field?/fields?, severity?, when? }`.
+     * The `check` lambda is invoked with the payload, each under its own try/catch:
+     *   - returns true  → the rule passes
+     *   - returns false → the rule fails (message/field/severity as given)
+     *   - THROWS        → the check could not be evaluated (e.g. missing/mistyped field) → a reported
+     *                     error-severity issue, NOT a process-aborting crash (the VB01 fix)
+     * After resolving every `check` to a boolean, the (now UDM-safe) rules are handed to the UNCHANGED
+     * stdlib `validate.assert`, which owns the ValidationResult aggregation. All rules are always
+     * evaluated (no short-circuit). A legacy non-lambda `check` is passed through untouched.
+     */
+    private fun evaluateValidateAssert(arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
+        if (arguments.size < 2) {
+            throw RuntimeError("validate.assert expects (payload, rules), got ${arguments.size} argument(s)", location)
+        }
+        val payload = evaluate(arguments[0], env)
+        val rulesValue = evaluate(arguments[1], env)
+        val rules = (rulesValue as? RuntimeValue.ArrayValue)?.elements
+            ?: throw RuntimeError("validate.assert: the rules argument must be an array", location)
+
+        val resolvedRules = rules.map { rule ->
+            if (rule !is RuntimeValue.ObjectValue) return@map rule  // defer to stdlib for odd shapes
+            val checkVal = rule.properties["check"]
+            if (checkVal !is RuntimeValue.FunctionValue) return@map rule  // legacy boolean / absent — leave as-is
+
+            val props = rule.properties.toMutableMap()
+            try {
+                val childEnv = checkVal.closure.createChild()
+                if (checkVal.parameters.isNotEmpty()) childEnv.define(checkVal.parameters[0], payload)
+                val result = evaluate(checkVal.body, childEnv)
+                props["check"] = RuntimeValue.BooleanValue(result is RuntimeValue.BooleanValue && result.value)
+            } catch (e: Exception) {
+                // Non-evaluable check → reported error issue (fail-closed), never an aborting throw.
+                val ruleName = (props["rule"] as? RuntimeValue.StringValue)?.value
+                props["check"] = RuntimeValue.BooleanValue(false)
+                props["severity"] = RuntimeValue.StringValue("error")
+                props["message"] = RuntimeValue.StringValue(
+                    "check ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated: ${e.message ?: e.javaClass.simpleName}"
+                )
+            }
+            RuntimeValue.ObjectValue(props)
+        }
+
+        // Dispatch to the unchanged stdlib validate.assert (now sees only boolean checks → UDM-safe).
+        tryRegisterFromLookup("validate.assert")
+        val nativeImpl = StandardLibraryImpl.nativeFunctions["validate.assert"]
+            ?: throw RuntimeError("validate.assert is not available (stdlib not loaded)", location)
+        return nativeImpl(listOf(payload, RuntimeValue.ArrayValue(resolvedRules)))
+    }
+
+    /**
      * Dynamic function loader - attempts to load stdlib functions on demand
      */
     private fun tryLoadStdlibFunction(functionName: String, arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
         // F21: language-version gate — reject a namespaced call whose namespace needs a newer %utlx than
         // the script declares (e.g. validate.* under %utlx 1.0). Fires before resolution.
         enforceLanguageVersion(functionName, location)
+
+        // VB01: `validate.assert` is higher-order — each rule's `check` is a LAMBDA evaluated lazily here
+        // (not a pre-evaluated boolean in the UDM-level stdlib). Deferring the check into the interpreter
+        // lets us invoke it per-rule under try/catch, so a check that cannot evaluate (missing/mistyped
+        // field) becomes a reported error issue instead of aborting the whole validation. Handled in :core
+        // (not :stdlib) because a lambda is a RuntimeValue.FunctionValue that cannot be converted to UDM;
+        // once each check is resolved to a boolean, dispatch flows to the UNCHANGED stdlib validate.assert.
+        if (functionName == "validate.assert") {
+            return evaluateValidateAssert(arguments, env, location)
+        }
         // B19: Try lazy lookup registration first (no reflection, GraalVM safe)
         if (tryRegisterFromLookup(functionName)) {
             // Function now registered — re-evaluate the call

@@ -13,8 +13,8 @@ transformation: |
   output json
   ---
   $input |> validate.assert([
-    { rule: "price-positive", check: $input.price > 0, message: "price must be positive", field: "price" },
-    { rule: "qty-positive",   check: $input.qty > 0,   message: "qty should be positive", field: "qty", severity: "warning" }
+    { rule: "price-positive", check: (p) => p.price > 0, message: "price must be positive", field: "price" },
+    { rule: "qty-positive",   check: (p) => p.qty > 0,   message: "qty should be positive", field: "qty", severity: "warning" }
   ])
 
 expected:

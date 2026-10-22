@@ -1,0 +1,34 @@
+name: "validate_assert_lambda_missing_field"
+category: "language/validate"
+description: "VB01: a validate.assert lambda check on a MISSING field is reported as a clean error issue, not a crash"
+tags: ["validate", "1.1", "assert", "lambda", "VB01", "robustness"]
+
+input:
+  format: json
+  data: {"currency": "EUR"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "price-positive", check: (p) => p.price > 0, message: "price must be positive", field: "price" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "price-positive", "field": "price", "message": "check 'price-positive' could not be evaluated: Cannot compare these types", "severity": "error"}
+    ],
+    "payload": {"currency": "EUR"}
+  }
+
+metadata:
+  author: "UTL-X Team"

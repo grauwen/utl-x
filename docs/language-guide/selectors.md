@@ -216,6 +216,19 @@ input..id
 
 ## Predicates
 
+> ⚠️ **NOT IMPLEMENTED (verified 2026-10-22).** The `array[condition]` predicate syntax in this section is
+> **aspirational** — it is not implemented in the current engine (no `parsePredicate` in the parser, no
+> conformance coverage) and **errors at runtime** (`Undefined variable: <field>`). Until it lands, express
+> the same filtering with a lambda, which is the only supported form:
+>
+> ```utlx
+> // documented-but-unimplemented:   input.items[price > 100]
+> // use instead (works today):
+> filter(input.items, x => x.price > 100)
+> ```
+>
+> The remainder of this section describes the intended future syntax, not current behaviour.
+
 ### Filter by Condition
 
 ```utlx

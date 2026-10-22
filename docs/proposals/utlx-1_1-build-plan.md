@@ -75,7 +75,10 @@ confirmed).
   flag is wired (2026-10-16)**: `utlx transform --language-mode 1.0|1.1|utlxe|utlxs` (default latest/1.1)
   flows through `TransformationService` into `Interpreter(maxLanguageVersion=…)`, so a `--language-mode 1.0`
   (`utlxe`) run rejects a `%utlx 1.1` script while still running 1.0 — verified end-to-end on the built CLI.
-  **Still to wire:** the same mode selection in the **daemon** (mirror: config/request → `Interpreter(maxLanguageVersion)`).
+  The mode's real consumers are the **UTLXe / UTLXs engine deployments** (the CLI/engine), which this covers.
+  **Not a daemon concern:** `utlxd` is IDE infrastructure — it should run the latest language (so authors can
+  write `validate.*`), *not* a 1.0-only mode. Surfacing `validate.*` in the IDE is a separate workstream
+  (completion/diagnostics version-awareness via `exportRegistry(version)` + how 1.1 is presented to authors).
   a 1.0-mode engine **rejects** `%utlx 1.1`. Within an accepted version, **name resolution gates
   namespaces by minimum language version** — a `namespace → minVersion` table (`{ "validate": "1.1" }`)
   rejects a namespaced call whose namespace needs a newer `%utlx` than declared (e.g. `validate.required`
