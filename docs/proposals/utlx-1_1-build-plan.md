@@ -144,15 +144,26 @@ grows a `:validate` dependency.
 
 ## Phase 4 — Output & routing (the UTLXs component) · ~1.5 weeks
 
-- **Serialization:** confirm happy-path payload serialization is unchanged across formats; serialize the
-  `ValidationResult` wrapper (as `Object`) where a verdict report is emitted — verify, don't rewrite,
-  each writer.
-- **Routing on validity:** `valid` → payload/next; invalid → **dead-letter + errors** (fail-closed),
-  with an audit record. Wire UTLXs as an **Open-M `mode: component`** semantic node; FEEL routing
-  integration per spec.
+- **Serialization — DONE (2026-10-22, verify-not-rewrite):** a `ValidationResult` is a plain UDM `Object`,
+  so every writer already serializes it. Verified to **JSON** and **XML** (incl. nested `issues[]` and the
+  `payload` wrapper); happy-path payload serialization unchanged. Conformance:
+  `validate/result_serializes_xml`.
+- **Routing policy (the "enforce") — DONE (2026-10-22):** the pure, transport-agnostic fail-closed
+  decision landed as `engine/routing/ValidationRoutingPolicy` — `forward iff failed <= maxErrors AND
+  warnings <= maxWarnings` (notices never gate); default `maxErrors=0, maxWarnings=0` (`FAIL_CLOSED`,
+  guard-lockable); non-`ValidationResult` outputs (plain mappings) always forward. 11 unit tests
+  (`ValidationRoutingPolicyTest`). This is the decide/**enforce**/lock "enforce" over the counts.
+- **In-script routing (the "decide") — DONE:** an author can branch on the result today
+  (`if (v.valid) …payload else …dead-letter`), verified (`validate/routing_in_script`). The pure
+  functions decide; they never prevent output (spec §8).
+- **Still to wire (infra-dependent, NOT built):** the dead-letter **transport** + **audit record** sink
+  (needs the messaging/Dapr endpoints — EF-series), and wiring UTLXs as an **Open-M `mode: component`**
+  node with **FEEL routing**. `ValidationRoutingPolicy` is the decision these plug into; routing a rejected
+  payload to an actual dead-letter channel is deployment plumbing layered on top. Gated on Open-M/messaging
+  infra availability.
 
-**Exit:** UTLXs runs end-to-end as an Open-M semantic component; valid passes, invalid dead-letters with
-structured errors.
+**Exit (partial):** the routing *decision* (fail-closed policy) + serialization + in-script routing are
+done and tested; the Open-M component + dead-letter *transport* wiring remains, pending that infra.
 
 ## Phase 5 — Tooling & docs · ~1 week
 

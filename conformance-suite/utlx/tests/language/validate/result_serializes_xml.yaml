@@ -1,0 +1,39 @@
+name: "validate_result_serializes_xml"
+category: "language/validate"
+description: "Phase 4: a ValidationResult serializes to XML unchanged (verify, don't rewrite the writer) — it is a plain UDM Object"
+tags: ["validate", "1.1", "serialization", "xml", "phase4"]
+
+input:
+  format: json
+  data: {"orderId": 42}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output xml
+  ---
+  $input |> validate.required(["orderId", "lineItems"])
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <root>
+      <valid>false</valid>
+      <passed>1</passed>
+      <failed>1</failed>
+      <warnings>0</warnings>
+      <notices>0</notices>
+      <issues>
+        <rule/>
+        <field>lineItems</field>
+        <message>Required field &apos;lineItems&apos; is missing</message>
+        <severity>error</severity>
+      </issues>
+      <payload>
+        <orderId>42</orderId>
+      </payload>
+    </root>
+
+metadata:
+  author: "UTL-X Team"

@@ -1,0 +1,32 @@
+name: "validate_routing_in_script"
+category: "language/validate"
+description: "Phase 4: an author can route in-script by branching on the ValidationResult (valid -> forward payload, invalid -> dead-letter)"
+tags: ["validate", "1.1", "routing", "phase4"]
+
+input:
+  format: json
+  data: {"orderId": 42}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  let v = $input |> validate.required(["orderId", "lineItems"])
+  in if (v.valid) { status: "forward", payload: v.payload }
+     else { status: "dead-letter", failed: v.failed, issues: v.issues }
+
+expected:
+  format: json
+  data: {
+    "status": "dead-letter",
+    "failed": 1,
+    "issues": [
+      {"rule": null, "field": "lineItems", "message": "Required field 'lineItems' is missing", "severity": "error"}
+    ]
+  }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "The decide layer is language-expressible; the engine fail-closed policy (ValidationRoutingPolicy) is the enforce layer one level up"
