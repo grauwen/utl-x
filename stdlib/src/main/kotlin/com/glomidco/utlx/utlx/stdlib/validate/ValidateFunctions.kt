@@ -30,14 +30,16 @@ object ValidateFunctions {
 
     @UTLXFunction(
         description = "The canonical form: evaluate a list of rules against the payload, returning one " +
-            "aggregated ValidationResult. All rules are evaluated (no short-circuit).",
+            "aggregated ValidationResult. Each rule's `check` is a LAMBDA `(p) => <boolean>` invoked " +
+            "with the payload; a check that cannot be evaluated (missing/mistyped field) becomes a " +
+            "reported error issue rather than aborting. All rules are evaluated (no short-circuit).",
         minArgs = 2, maxArgs = 2, category = "Validation",
         parameters = [
             "payload (piped in)",
-            "rules: array of { rule, check, when?, message, field?/fields?, severity? }",
+            "rules: array of { rule, check: (p) => boolean, when?: (p) => boolean, message, field?/fields?, severity? }",
         ],
         returns = "ValidationResult",
-        example = "\$current |> validate.assert([{ rule: \"price\", check: \$.unitPrice > 0, message: \"must be positive\", field: \"unitPrice\" }])",
+        example = "\$current |> validate.assert([{ rule: \"price\", check: (p) => p.unitPrice > 0, message: \"must be positive\", field: \"unitPrice\" }])",
         since = "1.1",
     )
     fun assert(args: List<UDM>): UDM {

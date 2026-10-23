@@ -77,7 +77,7 @@ $input |> validate.assert([
 | `message` | no | Issue text (defaults to `"rule failed"`) |
 | `field` / `fields` | no | Field name, or an array joined comma-separated |
 | `severity` | no | `error` (default), `warning`, or `notice` |
-| `when` | — | **Not supported — see Known limitations.** Do not use. |
+| `when` | no | Applicability guard, lambda `(p) => <boolean>` — see [Conditional rules](#conditional-rules-when) |
 
 ### The lambda contract
 
@@ -120,6 +120,61 @@ It is also what makes the rule robust. Because the condition is deferred, `asser
 per rule under its own error boundary. An eagerly evaluated condition is computed while the rule
 list is being built — *upstream* of `assert` — so a comparison against missing or mistyped data
 throws there and then, and `assert` never runs to isolate anything.
+
+### Conditional rules (`when`)
+
+A rule can carry an applicability guard. It is a lambda with the same contract as `check`, and it
+is resolved **first**:
+
+| The `when` lambda | Outcome |
+|---|---|
+| returns `true` | the rule applies; `check` is then evaluated |
+| returns `false` | the rule is **skipped** and counts as passed; `check` is **never** evaluated |
+| **throws**, or returns a non-boolean | its own **error** issue, `"guard '<rule>' could not be evaluated: …"` |
+
+```utlx
+$input |> validate.assert([
+  { rule: "wholesale-min-qty", check: (p) => p.qty >= 100, message: "wholesale needs qty >= 100",
+    field: "qty", when: (p) => p.type == "WHOLESALE" },
+  { rule: "retail-max-qty",    check: (p) => p.qty <= 10,  message: "retail needs qty <= 10",
+    field: "qty", when: (p) => p.type == "RETAIL" }
+])
+```
+
+On a `{"type": "RETAIL", "qty": 50}` payload the wholesale rule is skipped and counts as passed;
+the retail rule applies and fails.
+
+A guard that **cannot** be evaluated fails its rule rather than skipping it — the same fail-closed
+reasoning as `check`, and for the same reason: malformed data must never be able to silence the rule
+meant to catch it. As with `check`, that escalates over a declared `severity: warning`.
+
+> Lambda `when` was silently ignored before
+> [VB02](../bugs-fixed/VB02-validate-assert-lambda-when-guard-silently-ignored.md) — a rule you
+> believed was scoped ran against every record. If you are reading older scripts, check their
+> guards actually took effect.
+
+### Writing a defensive check
+
+`&&` and `||` short-circuit, so a guard protects the comparison behind it — all of these report
+cleanly on `{}` (no `qty`) rather than escalating to "could not be evaluated":
+
+| Check on `{}` (no `qty`) | Result |
+|---|---|
+| `(p) => p.qty != null && p.qty > 0` | ✓ `false` — fails the rule with your own `message` |
+| `(p) => p.qty == null \|\| p.qty > 0` | ✓ `true` — treats absent as not-applicable |
+| `(p) => if (p.qty == null) true else p.qty > 0` | ✓ `true` — equivalent, more explicit |
+
+Note that `and` / `or` are **not** keywords in UTL-X — `check: (p) => a or b` is a parse error.
+Use `&&` / `||`.
+
+Pick the guard that says what you mean: `&&` to **fail** the rule on absent data, `||` to treat
+absent as **not applicable**. Leaving the check unguarded is also valid — it then reports
+"could not be evaluated" at `error` severity, which is the right outcome when absent data should
+itself be a finding. Prefer a Tier-1 named validator over any of them where one fits.
+
+> Short-circuiting was fixed in
+> [B34](../bugs-fixed/B34-logical-operators-do-not-short-circuit.md); before that fix, only the
+> `if`/`else` form guarded correctly.
 
 ### Deprecated: the eager `check:` form
 
@@ -193,50 +248,6 @@ goes is deployment plumbing on top of this decision.
 
 ## Known limitations
 
-### `when:` — conditional rules are not yet supported
-
-The `when` guard was **not** migrated to the lambda form, and neither spelling is safe:
-
-| Form | Behaviour |
-|------|-----------|
-| `when: $input.qty > 0` (eager) | **Aborts** with `Error: Cannot compare these types` when `qty` is missing or mistyped |
-| `when: (p) => p.qty > 0` (lambda) | **Silently ignored** — the guard never applies and the rule is always evaluated |
-| `when: false` (literal) | Honoured: the rule is skipped and counts as passed |
-
-The lambda form is the dangerous one: a rule you believe is scoped to a subset of records runs
-against all of them, with no diagnostic. Until `when` is migrated, express conditionality
-**inside** the check:
-
-```utlx
-{ rule: "qty-positive", check: (p) => p.qty == null || p.qty > 0,
-  message: "...", field: "qty" }
-```
-
-### Writing a defensive check
-
-`&&` and `||` short-circuit, so a guard protects the comparison behind it — all of these report
-cleanly on `{}` (no `qty`) rather than escalating to "could not be evaluated":
-
-| Check on `{}` (no `qty`) | Result |
-|---|---|
-| `(p) => p.qty != null && p.qty > 0` | ✓ `false` — fails the rule with your own `message` |
-| `(p) => p.qty == null \|\| p.qty > 0` | ✓ `true` — treats absent as not-applicable |
-| `(p) => if (p.qty == null) true else p.qty > 0` | ✓ `true` — equivalent, more explicit |
-
-Note that `and` / `or` are **not** keywords in UTL-X — `check: (p) => a or b` is a parse error.
-Use `&&` / `||`.
-
-Pick the guard that says what you mean: `&&` to **fail** the rule on absent data, `||` to treat
-absent as **not applicable**. Leaving the check unguarded is also valid — it then reports
-"could not be evaluated" at `error` severity, which is the right outcome when absent data should
-itself be a finding. Prefer a Tier-1 named validator over any of them where one fits.
-
-> Short-circuiting was fixed in
-> [B34](../bugs-fixed/B34-logical-operators-do-not-short-circuit.md); before that fix, only the
-> `if`/`else` form guarded correctly.
-
-### Other open items
-
 - `oneOf` numeric membership (see Tier 1 above).
 - The `[condition]` predicate selector documented in [Selectors](selectors.md) is **not
   implemented** — use `filter(…, x => …)`.
@@ -253,7 +264,9 @@ $input |> validate.inRange("price", 0, 100)
 $input |> validate.oneOf("ccy", ["EUR"])       // strings only for now
 
 $input |> validate.assert([                    // escape hatch: lambda checks
-  { rule: "r", check: (p) => p.x > 0, message: "m", field: "x", severity: "warning" }
+  { rule: "r", check: (p) => p.x > 0, message: "m", field: "x", severity: "warning" },
+  { rule: "c", check: (p) => p.x <= 10, message: "m",           // conditional rule:
+    when: (p) => p.type == "RETAIL" }                           // false => skipped, counts passed
 ])
 
 v.valid        // failed == 0
@@ -268,6 +281,7 @@ v.payload      // the record, for routing
 | Named validator first | Type-safe by construction; `assert` only degrades gracefully |
 | `check` is always `(p) => …` | The language's only working deferred-condition form |
 | Guard with `&&` / `\|\|` | They short-circuit (B34); `&&` fails on absent, `\|\|` skips it |
+| A broken `when` fails its rule | It never skips it — malformed data must not silence a rule |
 | Never rely on `when` | Eager form crashes, lambda form is silently ignored |
 | Never read `valid` as "within budget" | `valid` is `failed == 0`; budgets live in the engine policy |
 

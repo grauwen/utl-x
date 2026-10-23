@@ -177,7 +177,11 @@ the branch-only compiled path in agreement with it.
   `x != null && x > 0` on missing `x` → `false`); result type unchanged (`1 || 2` → `true`,
   `"" || "x"` → `true`, `0 && 5` → `false`); full truth table, `&&`-over-`||` precedence and `??`
   all intact.
-- `:modules:core:test` and `:modules:engine:test` green.
+- `:modules:core:test` (208 tests) and `:modules:engine:test` (451 tests) green.
+
+  Note for anyone re-running these: run them with no other gradle invocation in flight. Overlapping
+  builds produced spurious `NoClassDefFoundError` (Avro, protobuf) and socket-timeout failures in
+  `:modules:engine:test` that vanish on an isolated `--rerun`.
 - **`B34LogicalShortCircuitTest`** (`:core`, 16 tests) — the Kotlin regression guard. Rather than
   asserting only "no throw" (which cannot distinguish *skipped* from *ran and happened not to
   fail*), it registers a synthetic stdlib function `record(n)` that appends to a list: an empty

@@ -1,0 +1,39 @@
+name: "validate_assert_when_guard_non_evaluable"
+category: "language/validate"
+description: "VB02: a `when` guard that cannot be evaluated is a reported error issue — a broken guard must not silently suppress its rule (fail-closed)"
+tags: ["validate", "1.1", "assert", "lambda", "when", "VB02", "fail-closed"]
+
+input:
+  format: json
+  data: {"name": "ok"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "conditional-rule", check: (p) => true, message: "never reached", field: "qty", when: (p) => p.missingThing > 0 }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "conditional-rule", "field": "qty", "message": "guard 'conditional-rule' could not be evaluated: Cannot compare these types", "severity": "error"}
+    ],
+    "payload": {"name": "ok"}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB02-validate-assert-lambda-when-guard-silently-ignored.md"]
+  notes:
+    - "The guard compares a missing field and throws; the rule fails with a guard-specific message"
+    - "`when` is forced true on failure so the rule cannot be skipped by its own broken guard"
+    - "The rule's own `message` is replaced — the guard, not the check, is what went wrong"

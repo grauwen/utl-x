@@ -1137,17 +1137,40 @@ class Interpreter(
     }
     
     /**
-     * VB01: evaluate `validate.assert(payload, rules)` with LAZY per-rule lambda checks.
+     * Invoke a rule predicate lambda (`check` / `when`) with the payload. Returns the boolean it
+     * produced, or null if it produced something that is not a boolean. Throws whatever the body
+     * throws — callers isolate that per rule (VB01/VB02).
+     */
+    private fun invokeRulePredicate(fn: RuntimeValue.FunctionValue, payload: RuntimeValue): Boolean? {
+        val childEnv = fn.closure.createChild()
+        if (fn.parameters.isNotEmpty()) childEnv.define(fn.parameters[0], payload)
+        val result = evaluate(fn.body, childEnv)
+        return (result as? RuntimeValue.BooleanValue)?.value
+    }
+
+    /**
+     * VB01/VB02: evaluate `validate.assert(payload, rules)` with LAZY per-rule lambda checks.
      *
-     * Each rule is `{ rule?, check: (p) => <boolean expr>, message?, field?/fields?, severity?, when? }`.
-     * The `check` lambda is invoked with the payload, each under its own try/catch:
+     * Each rule is
+     * `{ rule?, check: (p) => <bool>, when?: (p) => <bool>, message?, field?/fields?, severity? }`.
+     *
+     * **VB01 — `check`.** Invoked with the payload under its own try/catch:
      *   - returns true  → the rule passes
      *   - returns false → the rule fails (message/field/severity as given)
      *   - THROWS        → the check could not be evaluated (e.g. missing/mistyped field) → a reported
-     *                     error-severity issue, NOT a process-aborting crash (the VB01 fix)
-     * After resolving every `check` to a boolean, the (now UDM-safe) rules are handed to the UNCHANGED
-     * stdlib `validate.assert`, which owns the ValidationResult aggregation. All rules are always
-     * evaluated (no short-circuit). A legacy non-lambda `check` is passed through untouched.
+     *                     error-severity issue, NOT a process-aborting crash
+     *
+     * **VB02 — `when`.** The applicability guard, same lambda contract, resolved FIRST:
+     *   - returns true  → the rule applies; `check` is then evaluated
+     *   - returns false → the rule is skipped and counts as passed; `check` is NEVER evaluated
+     *   - THROWS, or does not return a boolean → the guard could not be evaluated → its own
+     *     error-severity issue. `when` is forced true so the rule FAILS: a broken guard must never
+     *     silently suppress a rule (fail-closed).
+     *
+     * After resolving `when`/`check` to booleans, the (now UDM-safe) rules are handed to the
+     * UNCHANGED stdlib `validate.assert`, which owns the ValidationResult aggregation and already
+     * skips a rule whose `when` is false. All rules are always evaluated (no short-circuit). A rule
+     * with neither a lambda `check` nor a lambda `when` is passed through untouched (legacy form).
      */
     private fun evaluateValidateAssert(arguments: List<Expression>, env: Environment, location: Location): RuntimeValue {
         if (arguments.size < 2) {
@@ -1161,22 +1184,50 @@ class Interpreter(
         val resolvedRules = rules.map { rule ->
             if (rule !is RuntimeValue.ObjectValue) return@map rule  // defer to stdlib for odd shapes
             val checkVal = rule.properties["check"]
-            if (checkVal !is RuntimeValue.FunctionValue) return@map rule  // legacy boolean / absent — leave as-is
+            val whenVal = rule.properties["when"]
+            // Legacy form — nothing deferred to resolve. Leave as-is.
+            if (checkVal !is RuntimeValue.FunctionValue && whenVal !is RuntimeValue.FunctionValue) return@map rule
 
             val props = rule.properties.toMutableMap()
-            try {
-                val childEnv = checkVal.closure.createChild()
-                if (checkVal.parameters.isNotEmpty()) childEnv.define(checkVal.parameters[0], payload)
-                val result = evaluate(checkVal.body, childEnv)
-                props["check"] = RuntimeValue.BooleanValue(result is RuntimeValue.BooleanValue && result.value)
-            } catch (e: Exception) {
-                // Non-evaluable check → reported error issue (fail-closed), never an aborting throw.
-                val ruleName = (props["rule"] as? RuntimeValue.StringValue)?.value
-                props["check"] = RuntimeValue.BooleanValue(false)
-                props["severity"] = RuntimeValue.StringValue("error")
-                props["message"] = RuntimeValue.StringValue(
-                    "check ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated: ${e.message ?: e.javaClass.simpleName}"
-                )
+            val ruleName = (props["rule"] as? RuntimeValue.StringValue)?.value
+
+            // ── VB02: resolve the `when` guard first; a false guard skips the rule entirely ──
+            if (whenVal is RuntimeValue.FunctionValue) {
+                try {
+                    val applies = invokeRulePredicate(whenVal, payload)
+                        ?: throw RuntimeError("guard did not return a boolean", location)
+                    props["when"] = RuntimeValue.BooleanValue(applies)
+                    if (!applies) {
+                        // Not applicable: the stdlib skips the rule and counts it as passed without
+                        // ever reading `check`, so resolve `check` to a placeholder for UDM-safety.
+                        props["check"] = RuntimeValue.BooleanValue(true)
+                        return@map RuntimeValue.ObjectValue(props)
+                    }
+                } catch (e: Exception) {
+                    // Non-evaluable guard → its own error issue. `when` is forced TRUE so the rule
+                    // fails: a broken guard must never silently suppress a rule (fail-closed).
+                    props["when"] = RuntimeValue.BooleanValue(true)
+                    props["check"] = RuntimeValue.BooleanValue(false)
+                    props["severity"] = RuntimeValue.StringValue("error")
+                    props["message"] = RuntimeValue.StringValue(
+                        "guard ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated: ${e.message ?: e.javaClass.simpleName}"
+                    )
+                    return@map RuntimeValue.ObjectValue(props)
+                }
+            }
+
+            // ── VB01: resolve the `check` ──
+            if (checkVal is RuntimeValue.FunctionValue) {
+                try {
+                    props["check"] = RuntimeValue.BooleanValue(invokeRulePredicate(checkVal, payload) == true)
+                } catch (e: Exception) {
+                    // Non-evaluable check → reported error issue (fail-closed), never an aborting throw.
+                    props["check"] = RuntimeValue.BooleanValue(false)
+                    props["severity"] = RuntimeValue.StringValue("error")
+                    props["message"] = RuntimeValue.StringValue(
+                        "check ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated: ${e.message ?: e.javaClass.simpleName}"
+                    )
+                }
             }
             RuntimeValue.ObjectValue(props)
         }

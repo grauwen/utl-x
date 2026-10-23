@@ -1,0 +1,40 @@
+name: "validate_assert_when_lambda"
+category: "language/validate"
+description: "VB02: a lambda `when` guard gates the rule — false skips it (counts as passed), true applies it"
+tags: ["validate", "1.1", "assert", "lambda", "when", "VB02"]
+
+input:
+  format: json
+  data: {"type": "RETAIL", "qty": 50}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "wholesale-min-qty", check: (p) => p.qty >= 100, message: "wholesale orders need qty >= 100", field: "qty", when: (p) => p.type == "WHOLESALE" },
+    { rule: "retail-max-qty",    check: (p) => p.qty <= 10,  message: "retail orders need qty <= 10",    field: "qty", when: (p) => p.type == "RETAIL" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 1,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "retail-max-qty", "field": "qty", "message": "retail orders need qty <= 10", "severity": "error"}
+    ],
+    "payload": {"type": "RETAIL", "qty": 50}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB02-validate-assert-lambda-when-guard-silently-ignored.md"]
+  notes:
+    - "wholesale-min-qty is skipped (guard false on a RETAIL record) and counts as passed"
+    - "retail-max-qty applies and fails — proving a true guard does NOT suppress the check"
+    - "Before VB02, a lambda `when` was silently ignored and BOTH rules were evaluated"
