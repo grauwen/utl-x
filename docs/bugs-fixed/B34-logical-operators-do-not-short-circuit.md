@@ -169,13 +169,32 @@ the branch-only compiled path in agreement with it.
   right operand when the left is falsy; includes the real-world `x != null && x > 0` guard. ✅
 - `conformance .../core/operators/logical_or_short_circuit.yaml` — `||` must not evaluate the right
   operand when the left is truthy. ✅
-- Full conformance **537/537** (JVM). Both fixtures failed with `Error: Division by zero` before
-  the fix and pass after it.
+- Full conformance **537/537** on **both** JVM and the rebuilt GraalVM native binary
+  (`language/validate` 8/8, `core/operators` 4/4 natively). Both fixtures failed with
+  `Error: Division by zero` before the fix and pass after it.
 - Verified by probe: short-circuit (`false && (1 / 0)` → `false`, `true || (1 / 0)` → `true`,
   `x != null && x > 0` on missing `x` → `false`); result type unchanged (`1 || 2` → `true`,
   `"" || "x"` → `true`, `0 && 5` → `false`); full truth table, `&&`-over-`||` precedence and `??`
   all intact.
 - `:modules:core:test` and `:modules:engine:test` green.
+- **`B34LogicalShortCircuitTest`** (`:core`, 16 tests) — the Kotlin regression guard. Rather than
+  asserting only "no throw" (which cannot distinguish *skipped* from *ran and happened not to
+  fail*), it registers a synthetic stdlib function `record(n)` that appends to a list: an empty
+  list proves the operand was never evaluated. Covers both skip directions, the evaluate
+  directions, a chained `&&`, the two division-by-zero symptoms, the null-guard cases, both truth
+  tables, boolean coercion, `&&`-over-`||` precedence, and `??` (whose block neighbours the fix).
+  Verified to be a true regression guard: with the fix temporarily reverted, **7 of the 16 fail**
+  and the 9 that pass are exactly the ones B34 never broke.
+
+  Two test-isolation notes worth keeping in mind for any similar test:
+  `Interpreter.tryRegisterFromLookup` registers into `StandardLibraryImpl.nativeFunctions`, a
+  **global** map, and the stored wrapper closes over the lambda it was first given. With
+  per-instance recorder state, JUnit's fresh-instance-per-method means the first method to call
+  `record` pins the closure to its own now-dead list and every later method sees an empty one —
+  so the `isEmpty()` assertions would pass **vacuously**. The recorder is therefore companion
+  state reset in `@BeforeEach`, and a first test asserts the recorder itself works, so the
+  emptiness assertions can never silently become vacuous again. (This was a real failure during
+  development, not a hypothetical.)
 
 Both fixtures are deliberately **neutral on the result-type decision** — every asserted expression
 yields the same value under boolean and value-returning semantics — so they pin evaluation order
