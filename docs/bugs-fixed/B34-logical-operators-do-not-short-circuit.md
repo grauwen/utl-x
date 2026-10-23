@@ -116,8 +116,9 @@ So `main` is uniformly wrong (one evaluator, nothing to diverge), while the bran
 depending on whether `ASTCompiler` managed to compile it — `CompiledStrategy` falls back to the
 interpreter for unsupported AST nodes. The divergence becomes live on merge.
 
-*(The COMPILED column is read from the bytecode emitter, not executed — the emitted jumps are
-unambiguous, but no test drives that path for operators yet. See §Tests.)*
+*(When first reported, the COMPILED column was read from the bytecode emitter rather than executed.
+It is now confirmed by execution: `B34CompiledShortCircuitTest` drives `ASTCompiler` directly and
+reproduces the `1 || 2` → `1.0` divergence when the fix is removed. See §Tests.)*
 
 ## Fix
 
@@ -200,9 +201,17 @@ Both fixtures are deliberately **neutral on the result-type decision** — every
 yields the same value under boolean and value-returning semantics — so they pin evaluation order
 only and stay valid if that decision is ever revisited.
 
-Still to add:
+- **`B34CompiledShortCircuitTest`** (`:engine`, 5 tests) — the cross-strategy guard, closing the
+  gap left by the first report. It drives `ASTCompiler` **directly** rather than through
+  `CompiledStrategy`, because that strategy silently falls back to the interpreter when
+  `compile()` returns null: routed through it, a test could pass while measuring the interpreter
+  and prove nothing about the compiled path. Every case asserts `compile(...) != null` first, so a
+  future `isCompilable` change that stops compiling logical operators surfaces as a failure rather
+  than quietly voiding the test. Covers compiled short-circuit (both operators), the compiled null
+  guard, boolean coercion, and a 17-expression table asserting **interpreter and COMPILED return
+  identical values**.
 
-- An operator case in `ValidateAcrossStrategiesTest` (or an equivalent `:engine` test) asserting
-  interpreter and COMPILED agree. The `toBoolean` coercion is currently verified by reading the
-  emitted call, not by executing the compiled path — that test is the real guard, and the one that
-  would have caught the original divergence.
+  Verified to be a true regression guard: with the `toBoolean` emission temporarily removed, 2 of
+  the 5 fail with `expected: <true> but was: <1.0>` and
+  `strategy divergence on \`1 || 2\``. The `toBoolean` coercion is therefore now verified by
+  **execution**, not by reading the emitted call.
