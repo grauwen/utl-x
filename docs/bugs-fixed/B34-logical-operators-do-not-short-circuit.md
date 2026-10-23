@@ -3,9 +3,11 @@
 > **B = core bug** (`:core` interpreter / parser), the family that also holds B01–B33 — distinct from
 > engine (`EB`), IDE (`IB`) and validation (`VB`) bugs. This is **B34**.
 
-**Status:** **OPEN** (found 2026-10-23 while documenting the `%utlx 1.1` validation WoW — the
-"defensive check" guidance in [VB01](VB01-validate-assert-raw-check-crashes-on-missing-or-mistyped-data.md)
-turned out to be unimplementable).
+**Status:** **FIXED (2026-10-23, pending commit)** — short-circuit added to the `:core` interpreter,
+boolean coercion added to the `:engine` compiled path so the two agree. Found 2026-10-23 while
+documenting the `%utlx 1.1` validation WoW — the "defensive check" guidance in
+[VB01](VB01-validate-assert-raw-check-crashes-on-missing-or-mistyped-data.md) turned out to be
+unimplementable. See §Implementation.
 **Priority:** **High** — a dead operand is still evaluated, so logically unreachable code throws.
 Every author-level guard idiom (`x != null && x > 0`) is broken, and the defect is **on `main`**,
 affecting every script in every build, not just `%utlx 1.1`.
@@ -75,10 +77,10 @@ default-value operator on this path.
 - **Any null/type guard is broken.** `x != null && x > 0` throws on absent or mistyped `x` —
   exactly the data a guard exists for.
 - **`validate.assert` lambda checks always take the interpreter path** (`evaluateValidateAssert`
-  calls `evaluate(checkVal.body, …)` directly), so no `&&` guard inside a `check` can ever protect
-  its right operand, on any strategy. This is why `if (p.x == null) true else p.x > 0` is currently
-  the only working defensive form — see
-  [Validation Rules](../language-guide/validation-rules.md#-and--do-not-short-circuit).
+  calls `evaluate(checkVal.body, …)` directly), so before the fix no `&&` guard inside a `check`
+  could protect its right operand on any strategy, leaving `if (p.x == null) true else p.x > 0` as
+  the only working defensive form. Post-fix guidance is in
+  [Validation Rules](../language-guide/validation-rules.md#writing-a-defensive-check).
 - **VB01's rejected Option C is unimplementable as written** — it recommends
   `isNumber($input.price) and $input.price > 0`. Besides `and` not being a keyword, the conjunction
   would not guard the comparison even spelled `&&`.
@@ -135,34 +137,53 @@ if (expr.operator == BinaryOperator.AND || expr.operator == BinaryOperator.OR) {
 branch off it), *not* gated behind `%utlx 1.1`. Landing it before or with the 1.1 merge is what
 keeps the two evaluation paths consistent.
 
-### Open decision — boolean-coercing or value-returning?
+### Resolved decision — boolean-coercing
 
-The two paths currently disagree on more than evaluation order, so one answer has to be chosen:
+The two paths disagreed on more than evaluation order, so the result type had to be settled:
 
-- **Boolean (recommended, and what the sketch above does).** Keeps current CLI behaviour, matches
+- **Boolean — chosen.** Keeps existing CLI behaviour byte-for-byte (`1 || 2` stays `true`), matches
   `OperatorRegistry.kt:235` ("Returns true if both operands are true"), and leaves the
-  default-value job to `??`, which already works correctly. Requires `ASTCompiler` to coerce at the
-  end of `compileShortCircuit`.
-- **Value-returning (JS/DataWeave-like).** Matches the new codegen and enables `x || default`, but
-  changes results for any existing script relying on a boolean.
+  default-value job to `??`, which already short-circuits correctly. No script changes meaning.
+- **Value-returning (JS/DataWeave-like)** — rejected. It matched the new codegen and would enable
+  `x || default`, but `??` already owns that idiom, and it would silently change results for any
+  script relying on a boolean.
 
-Either way **both strategies must agree**, and the cross-strategy test is the place to assert it.
+## Implementation (2026-10-23)
+
+- **`:core` `interpreter.kt`** — `evaluateBinaryOp` gains an early return for `AND`/`OR` ahead of
+  the eager operand pair, mirroring the `NULLISH_COALESCE` block above it: evaluate the left, and
+  return immediately when it decides the result (`AND` + falsy → `false`, `OR` + truthy → `true`);
+  otherwise evaluate the right and coerce. The now-unreachable `when` branches throw
+  `"Logical <op> should have been handled earlier"`, the same guard `NULLISH_COALESCE` uses.
+- **`:engine` `RuntimeOps.kt`** — new `@JvmStatic fun toBoolean(value: UDM)` beside `not`.
+- **`:engine` `ASTCompiler.kt`** — `compileShortCircuit` emits `INVOKESTATIC RuntimeOps.toBoolean`
+  after `endLabel`, so the compiled path returns a boolean instead of the deciding operand. The
+  jump structure (which was already correct) is untouched.
+
+Scope note: the interpreter half is the `main` defect; the two `:engine` changes exist only to keep
+the branch-only compiled path in agreement with it.
 
 ## Tests
 
-Added with this report (they **fail until the fix lands** — the suite goes to 535/537):
-
 - `conformance .../core/operators/logical_and_short_circuit.yaml` — `&&` must not evaluate the
-  right operand when the left is falsy; includes the real-world `x != null && x > 0` guard.
+  right operand when the left is falsy; includes the real-world `x != null && x > 0` guard. ✅
 - `conformance .../core/operators/logical_or_short_circuit.yaml` — `||` must not evaluate the right
-  operand when the left is truthy.
+  operand when the left is truthy. ✅
+- Full conformance **537/537** (JVM). Both fixtures failed with `Error: Division by zero` before
+  the fix and pass after it.
+- Verified by probe: short-circuit (`false && (1 / 0)` → `false`, `true || (1 / 0)` → `true`,
+  `x != null && x > 0` on missing `x` → `false`); result type unchanged (`1 || 2` → `true`,
+  `"" || "x"` → `true`, `0 && 5` → `false`); full truth table, `&&`-over-`||` precedence and `??`
+  all intact.
+- `:modules:core:test` and `:modules:engine:test` green.
 
-Both are deliberately **neutral on the open decision above**: every asserted expression returns the
-same result under boolean and value-returning semantics, so they pin evaluation order only and will
-not need rewriting whichever way the decision goes.
+Both fixtures are deliberately **neutral on the result-type decision** — every asserted expression
+yields the same value under boolean and value-returning semantics — so they pin evaluation order
+only and stay valid if that decision is ever revisited.
 
-Still to add once the fix lands:
+Still to add:
 
 - An operator case in `ValidateAcrossStrategiesTest` (or an equivalent `:engine` test) asserting
-  interpreter and COMPILED agree — the guard that would have caught the divergence.
-- A fixture for the result-type decision, once made.
+  interpreter and COMPILED agree. The `toBoolean` coercion is currently verified by reading the
+  emitted call, not by executing the compiled path — that test is the real guard, and the one that
+  would have caught the original divergence.

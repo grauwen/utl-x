@@ -1,0 +1,37 @@
+name: "logical_and_short_circuit"
+category: "core/operators"
+description: "B34: && must not evaluate its right operand when the left operand is falsy"
+tags: ["core", "operators", "logical", "short-circuit", "B34"]
+
+input:
+  format: json
+  data: {"price": 5}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    deadArithmetic: false && (1 / 0),
+    nullGuard: $input.qty != null && $input.qty > 0,
+    bothTrue: $input.price != null && $input.price > 0,
+    bothFalse: $input.price == 99 && $input.price > 0
+  }
+
+expected:
+  format: json
+  data: {
+    "deadArithmetic": false,
+    "nullGuard": false,
+    "bothTrue": true,
+    "bothFalse": false
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B34-logical-operators-do-not-short-circuit.md"]
+  notes:
+    - "deadArithmetic: a falsy left operand makes (1 / 0) unreachable; evaluating it raises Division by zero"
+    - "nullGuard: the author-facing case — a null guard must protect the comparison behind it"
+    - "Neutral on the boolean-vs-value-returning decision: every value here is identical under both"

@@ -1,0 +1,37 @@
+name: "logical_or_short_circuit"
+category: "core/operators"
+description: "B34: || must not evaluate its right operand when the left operand is truthy"
+tags: ["core", "operators", "logical", "short-circuit", "B34"]
+
+input:
+  format: json
+  data: {"price": 5}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    deadArithmetic: true || (1 / 0),
+    presentShortCircuit: $input.price == 5 || $input.qty > 0,
+    bothFalse: $input.price == 99 || $input.price == 100,
+    rightDecides: $input.price == 99 || $input.price == 5
+  }
+
+expected:
+  format: json
+  data: {
+    "deadArithmetic": true,
+    "presentShortCircuit": true,
+    "bothFalse": false,
+    "rightDecides": true
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B34-logical-operators-do-not-short-circuit.md"]
+  notes:
+    - "deadArithmetic: a truthy left operand makes (1 / 0) unreachable; evaluating it raises Division by zero"
+    - "presentShortCircuit: the right operand compares a missing field and must never be reached"
+    - "Neutral on the boolean-vs-value-returning decision: every value here is identical under both"

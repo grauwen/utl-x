@@ -101,6 +101,14 @@ object RuntimeOps {
     @JvmStatic
     fun not(value: UDM): UDM = UDM.Scalar(!isTruthy(value))
 
+    /**
+     * B34: coerce a short-circuit result to a boolean, so `&&` / `||` return the same type here as
+     * in the `:core` interpreter (`??` owns the default-value idiom; the logical operators do not
+     * return their operand).
+     */
+    @JvmStatic
+    fun toBoolean(value: UDM): UDM = UDM.Scalar(isTruthy(value))
+
     @JvmStatic
     fun negate(value: UDM): UDM = UDM.Scalar(-(toNumber(value) ?: 0.0))
 

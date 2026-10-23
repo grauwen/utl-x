@@ -205,38 +205,38 @@ The `when` guard was **not** migrated to the lambda form, and neither spelling i
 
 The lambda form is the dangerous one: a rule you believe is scoped to a subset of records runs
 against all of them, with no diagnostic. Until `when` is migrated, express conditionality
-**inside** the check with `if` — see the next section for why `&&` will not do.
+**inside** the check:
 
 ```utlx
-{ rule: "qty-positive", check: (p) => if (p.qty == null) true else p.qty > 0,
+{ rule: "qty-positive", check: (p) => p.qty == null || p.qty > 0,
   message: "...", field: "qty" }
 ```
 
-### `&&` and `||` do not short-circuit
+### Writing a defensive check
 
-Both operands of a logical operator are **always** evaluated, so the usual defensive guard does
-not protect the comparison behind it:
+`&&` and `||` short-circuit, so a guard protects the comparison behind it — all of these report
+cleanly on `{}` (no `qty`) rather than escalating to "could not be evaluated":
 
 | Check on `{}` (no `qty`) | Result |
 |---|---|
-| `(p) => p.qty != null && p.qty > 0` | ✗ escalated error — `p.qty > 0` still evaluated, throws |
-| `(p) => isNumber(p.qty) && p.qty > 0` | ✗ escalated error — same |
-| `(p) => p.qty == null \|\| p.qty > 0` | ✗ escalated error — same |
-| `(p) => if (p.qty == null) true else p.qty > 0` | ✓ passes — `if` *does* guard |
+| `(p) => p.qty != null && p.qty > 0` | ✓ `false` — fails the rule with your own `message` |
+| `(p) => p.qty == null \|\| p.qty > 0` | ✓ `true` — treats absent as not-applicable |
+| `(p) => if (p.qty == null) true else p.qty > 0` | ✓ `true` — equivalent, more explicit |
 
-Note also that `and` / `or` are **not** keywords in UTL-X — `check: (p) => a or b` is a parse
-error. Use `&&` / `||`, or `if`/`else` when the right-hand side must not be evaluated.
+Note that `and` / `or` are **not** keywords in UTL-X — `check: (p) => a or b` is a parse error.
+Use `&&` / `||`.
 
-The practical consequence for rule authors: **`if`/`else` is the only working defensive form in
-a lambda check.** A guarded boolean conjunction gives you a correctly *reported* issue rather
-than a crash — the fail-closed behaviour still holds — but it reports "could not be evaluated"
-where you intended "not applicable". Prefer a Tier-1 named validator over either.
+Pick the guard that says what you mean: `&&` to **fail** the rule on absent data, `||` to treat
+absent as **not applicable**. Leaving the check unguarded is also valid — it then reports
+"could not be evaluated" at `error` severity, which is the right outcome when absent data should
+itself be a finding. Prefer a Tier-1 named validator over any of them where one fits.
+
+> Short-circuiting was fixed in
+> [B34](../bugs-fixed/B34-logical-operators-do-not-short-circuit.md); before that fix, only the
+> `if`/`else` form guarded correctly.
 
 ### Other open items
 
-- `&&` / `||` not short-circuiting is tracked as
-  [B34](../bugs-fixed/B34-logical-operators-do-not-short-circuit.md) — a `main` core defect, not a
-  `%utlx 1.1` one.
 - `oneOf` numeric membership (see Tier 1 above).
 - The `[condition]` predicate selector documented in [Selectors](selectors.md) is **not
   implemented** — use `filter(…, x => …)`.
@@ -267,7 +267,7 @@ v.payload      // the record, for routing
 |------|-----|
 | Named validator first | Type-safe by construction; `assert` only degrades gracefully |
 | `check` is always `(p) => …` | The language's only working deferred-condition form |
-| Guard with `if`, never `&&` | `&&` / `\|\|` do not short-circuit; both operands always evaluate |
+| Guard with `&&` / `\|\|` | They short-circuit (B34); `&&` fails on absent, `\|\|` skips it |
 | Never rely on `when` | Eager form crashes, lambda form is silently ignored |
 | Never read `valid` as "within budget" | `valid` is `failed == 0`; budgets live in the engine policy |
 

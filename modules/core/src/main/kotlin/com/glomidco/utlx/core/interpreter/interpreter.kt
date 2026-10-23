@@ -797,6 +797,19 @@ class Interpreter(
             }
         }
 
+        // B34: logical AND/OR must SHORT-CIRCUIT — the right operand is evaluated only when the
+        // left does not already decide the result. Previously both operands were forced by the
+        // eager pair below, so a logically dead operand still ran (`false && (1 / 0)` raised
+        // Division by zero) and no guard (`x != null && x > 0`) could protect the comparison
+        // behind it. Same shape as the NULLISH_COALESCE early return above. The result stays
+        // boolean-coerced (`??` owns the default-value idiom); ASTCompiler coerces to match.
+        if (expr.operator == BinaryOperator.AND || expr.operator == BinaryOperator.OR) {
+            val leftTruthy = evaluate(expr.left, env).isTruthy()
+            if (expr.operator == BinaryOperator.AND && !leftTruthy) return RuntimeValue.BooleanValue(false)
+            if (expr.operator == BinaryOperator.OR && leftTruthy) return RuntimeValue.BooleanValue(true)
+            return RuntimeValue.BooleanValue(evaluate(expr.right, env).isTruthy())
+        }
+
         // For all other operators, evaluate both sides
         val left = evaluate(expr.left, env)
         val right = evaluate(expr.right, env)
@@ -878,12 +891,9 @@ class Interpreter(
                 RuntimeValue.BooleanValue(cmp >= 0)
             }
             
-            BinaryOperator.AND -> {
-                RuntimeValue.BooleanValue(left.isTruthy() && right.isTruthy())
-            }
-
-            BinaryOperator.OR -> {
-                RuntimeValue.BooleanValue(left.isTruthy() || right.isTruthy())
+            BinaryOperator.AND, BinaryOperator.OR -> {
+                // Unreachable: short-circuited in the early return above (B34).
+                throw RuntimeError("Logical ${expr.operator} should have been handled earlier", expr.location)
             }
 
             BinaryOperator.NULLISH_COALESCE -> {

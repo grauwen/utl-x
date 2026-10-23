@@ -426,6 +426,11 @@ class ASTCompiler {
         }
 
         ctx.mv.visitLabel(endLabel)
+
+        // B34: the value on the stack is whichever operand decided the result. Coerce it to a
+        // boolean so the compiled path matches the interpreter rather than returning the operand.
+        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "toBoolean",
+            "($UDM_DESC)$UDM_DESC", false)
     }
 
     // ── Unary operators ──
