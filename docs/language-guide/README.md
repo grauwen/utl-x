@@ -21,6 +21,7 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 
 - ⭐ [Multiple Inputs and Outputs](multiple-inputs-outputs.md) - **NEW: Combine data from multiple sources**
 - [Templates](templates.md) - Declarative transformation templates
+- ⭐ [Validation Rules](validation-rules.md) - **NEW (`%utlx 1.1`): semantic validation with `validate.*` and routing on the verdict**
 
 ## Format Support
 
@@ -42,6 +43,7 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 - **Let Bindings** - Variable declarations
 - **Conditional Expressions** - if/else
 - **Lambda Functions** - Anonymous functions
+- **Semantic Validation (`validate.*`)** - ✅ **NEW (`%utlx 1.1`, 2026-10-23)** - [Documentation](validation-rules.md)
 - **XML, JSON, CSV, YAML** - All formats supported
 
 ### 📋 Planned Features
@@ -169,6 +171,7 @@ docs/
 │   ├── control-flow.md
 │   ├── selectors.md
 │   ├── templates.md
+│   ├── validation-rules.md ⭐ NEW
 │   ├── multiple-inputs-outputs.md ⭐ NEW
 │   └── quick-reference-multi-$input.md ⭐ NEW
 ├── formats/

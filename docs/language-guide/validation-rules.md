@@ -1,0 +1,290 @@
+# Validation Rules
+
+Author semantic validation rules with `validate.*` and route on the verdict.
+
+**Requires `%utlx 1.1`.** The `validate.*` namespace is gated: calling it from a script that
+declares `%utlx 1.0` is rejected before resolution.
+
+---
+
+## Overview
+
+UTL-X separates *deciding* whether a record is acceptable from *enforcing* what happens to it.
+A `validate.*` call is **pure**: it reports counts and issues, and never applies a threshold or
+routes anything. The forward/reject decision is a policy layered on top.
+
+The vocabulary has two tiers, and the order matters:
+
+| Tier | What | When to reach for it |
+|------|------|----------------------|
+| **1 — named validators** | `required`, `inRange`, `oneOf`, `matches`, `isoDate`, `unique`, `mutuallyExclusive`, `atLeastOne` | **Default.** Declarative, null/type-aware, robust on missing and mistyped data. |
+| **2 — `validate.assert`** | A list of rules whose conditions are **lambdas** | Only when no named validator expresses the constraint. |
+
+Tier 1 is type-safe by construction. Tier 2 is raw interpreter arithmetic that *degrades
+gracefully* — a weaker guarantee. Prefer Tier 1; grow it rather than reaching past it.
+
+---
+
+## Tier 1 — Named validators
+
+Each validator takes the payload by pipe and returns a `ValidationResult`.
+
+| Validator | Signature | Example |
+|-----------|-----------|---------|
+| `required` | `(fields: string[])` | `$input \|> validate.required(["orderId", "currency"])` |
+| `inRange` | `(field, min, max)` — inclusive | `$input \|> validate.inRange("unitPrice", 0.01, 999999.99)` |
+| `oneOf` | `(field, values[])` | `$input \|> validate.oneOf("currency", ["EUR", "USD", "GBP"])` |
+| `matches` | `(field, pattern)` — regex | `$input \|> validate.matches("iban", "^[A-Z]{2}[0-9]{2}.*")` |
+| `isoDate` | `(field, format)` | `$input \|> validate.isoDate("orderDate", "yyyyMMdd")` |
+| `unique` | `(arrayField, keyField)` | `$input \|> validate.unique("orderLines", "lineId")` |
+| `mutuallyExclusive` | `(fields: string[])` — at most one set | `$input \|> validate.mutuallyExclusive(["shipToId", "shipToAddress"])` |
+| `atLeastOne` | `(fields: string[])` — at least one set | `$input \|> validate.atLeastOne(["email", "phone", "fax"])` |
+
+**Robustness.** These degrade gracefully instead of throwing:
+
+| Input | `required(["price"])` | `inRange("price",0,100)` | `oneOf("price",[50,60])` |
+|---|---|---|---|
+| `{}` — missing | `valid:false` | `valid:false` | `valid:false` |
+| `{"price":"abc"}` — mistyped | `valid:true` (present) | `valid:false` | `valid:false` |
+
+> **Known defect:** `oneOf` currently fails **numeric** membership — `price: 50` against
+> `[50, 60]` reports `valid:false`. String membership is correct. Use `inRange` or a Tier-2
+> lambda for numeric enumerations until this is fixed.
+
+---
+
+## Tier 2 — `validate.assert` with lambda rules
+
+A rule's condition is a **function**, not a value:
+
+```utlx
+%utlx 1.1
+input json
+output json
+---
+$input |> validate.assert([
+  { rule: "price-positive", check: (p) => p.price > 0, message: "price must be positive", field: "price" },
+  { rule: "qty-positive",   check: (p) => p.qty > 0,   message: "qty should be positive", field: "qty", severity: "warning" }
+])
+```
+
+### Rule record
+
+| Key | Required | Meaning |
+|-----|----------|---------|
+| `check` | **yes** | Lambda `(p) => <boolean expr>`, called with the payload |
+| `rule` | no | Rule id, echoed into the issue |
+| `message` | no | Issue text (defaults to `"rule failed"`) |
+| `field` / `fields` | no | Field name, or an array joined comma-separated |
+| `severity` | no | `error` (default), `warning`, or `notice` |
+| `when` | — | **Not supported — see Known limitations.** Do not use. |
+
+### The lambda contract
+
+| The `check` lambda | Outcome | Severity |
+|---|---|---|
+| returns `true` | passes | — |
+| returns `false` | fails | as declared (`error` by default) |
+| **throws** | fails | **forced to `error`** — any declared `severity` is overridden |
+
+Two guarantees follow:
+
+- **No short-circuit.** Every rule is evaluated. One throwing check does not stop the rest.
+- **Fail-closed.** A check that *cannot be evaluated* — missing field, wrong type — becomes a
+  reported `error` issue (`"check 'price-positive' could not be evaluated: …"`), never a
+  process-aborting throw, and never a mere warning. Malformed data cannot slip through because
+  the rule that would have caught it was declared `severity: warning`.
+
+Worked example — payload `{"name": "ok"}` against the three rules `price-positive` (error),
+`qty-positive` (declared `warning`), `name-present` (error):
+
+```json
+{ "valid": false, "passed": 1, "failed": 2, "warnings": 0, "notices": 0,
+  "issues": [
+    {"rule": "price-positive", "field": "price", "message": "check 'price-positive' could not be evaluated: Cannot compare these types", "severity": "error"},
+    {"rule": "qty-positive",   "field": "qty",   "message": "check 'qty-positive' could not be evaluated: Cannot compare these types",   "severity": "error"}
+  ] }
+```
+
+`name-present` passes; the other two checks cannot evaluate against the absent fields, so both
+land as errors — including the one declared `warning`.
+
+### Why a lambda
+
+A deferred condition over a value has exactly **one** working form in UTL-X — a lambda.
+`filter($input.items, x => x.price > 100)` works; a bare condition as an argument does not, and
+neither does the `items[price > 100]` predicate form. So a lambda `check` is not a special case
+for validation; it is the language's own condition idiom.
+
+It is also what makes the rule robust. Because the condition is deferred, `assert` can invoke it
+per rule under its own error boundary. An eagerly evaluated condition is computed while the rule
+list is being built — *upstream* of `assert` — so a comparison against missing or mistyped data
+throws there and then, and `assert` never runs to isolate anything.
+
+### Deprecated: the eager `check:` form
+
+```utlx
+{ rule: "legacy", check: $input.price > 0, message: "..." }    // ✗ do not write this
+```
+
+This is still accepted for backward compatibility and works on well-formed data, but it is the
+anti-pattern the lambda form replaced: on `{}` or `{"price":"abc"}` it aborts the whole
+transformation with `Error: Cannot compare these types` instead of reporting an issue. Migrate
+any remaining occurrences to `check: (p) => …`.
+
+---
+
+## The ValidationResult
+
+Every `validate.*` call returns the same shape:
+
+```json
+{ "valid": false, "passed": 0, "failed": 1, "warnings": 1, "notices": 0,
+  "issues": [ {"rule": "...", "field": "...", "message": "...", "severity": "error"} ],
+  "payload": { "...": "the record, unchanged" } }
+```
+
+| Field | Semantics |
+|-------|-----------|
+| `valid` | **Exactly** `failed == 0`. No threshold is applied here. |
+| `failed` | Count of `error`-severity issues only |
+| `warnings` / `notices` | Counted separately; neither affects `valid` |
+| `passed` | `totalChecks - issues.size` — a warning-issuing rule is neither passed nor failed |
+| `issues` | One entry per non-passing rule |
+| `payload` | The input record, carried through for downstream routing |
+
+The result serializes cleanly to both JSON and XML (verified, including on the GraalVM native
+binary).
+
+---
+
+## Routing on the verdict
+
+Three layers, deliberately separate:
+
+| Layer | Owner | Responsibility |
+|-------|-------|----------------|
+| **decide** | the script | `validate.*` produces the result; `valid = (failed == 0)` |
+| **enforce** | the engine | `forward iff failed <= maxErrors AND warnings <= maxWarnings` |
+| **lock** | deployment guard | pins the budgets (default `0 / 0`) |
+
+Thresholds are kept out of the pure functions so their determinism holds — the same design axis
+as the parse profile.
+
+**Decide, in-script.** Branching on the result is ordinary language:
+
+```utlx
+%utlx 1.1
+input json
+output json
+---
+let v = $input |> validate.required(["orderId", "lineItems"])
+in if (v.valid) { status: "forward", payload: v.payload }
+   else { status: "dead-letter", failed: v.failed, issues: v.issues }
+```
+
+**Enforce, in the engine.** `ValidationRoutingPolicy` applies the per-severity budgets. It
+defaults to the strictest posture (`maxErrors = 0`, `maxWarnings = 0`) — any error or warning
+rejects. `notices` never gate. Output that is not a `ValidationResult` forwards untouched, so
+the policy never governs a plain mapping. It is transport-agnostic: *where* a rejected payload
+goes is deployment plumbing on top of this decision.
+
+---
+
+## Known limitations
+
+### `when:` — conditional rules are not yet supported
+
+The `when` guard was **not** migrated to the lambda form, and neither spelling is safe:
+
+| Form | Behaviour |
+|------|-----------|
+| `when: $input.qty > 0` (eager) | **Aborts** with `Error: Cannot compare these types` when `qty` is missing or mistyped |
+| `when: (p) => p.qty > 0` (lambda) | **Silently ignored** — the guard never applies and the rule is always evaluated |
+| `when: false` (literal) | Honoured: the rule is skipped and counts as passed |
+
+The lambda form is the dangerous one: a rule you believe is scoped to a subset of records runs
+against all of them, with no diagnostic. Until `when` is migrated, express conditionality
+**inside** the check with `if` — see the next section for why `&&` will not do.
+
+```utlx
+{ rule: "qty-positive", check: (p) => if (p.qty == null) true else p.qty > 0,
+  message: "...", field: "qty" }
+```
+
+### `&&` and `||` do not short-circuit
+
+Both operands of a logical operator are **always** evaluated, so the usual defensive guard does
+not protect the comparison behind it:
+
+| Check on `{}` (no `qty`) | Result |
+|---|---|
+| `(p) => p.qty != null && p.qty > 0` | ✗ escalated error — `p.qty > 0` still evaluated, throws |
+| `(p) => isNumber(p.qty) && p.qty > 0` | ✗ escalated error — same |
+| `(p) => p.qty == null \|\| p.qty > 0` | ✗ escalated error — same |
+| `(p) => if (p.qty == null) true else p.qty > 0` | ✓ passes — `if` *does* guard |
+
+Note also that `and` / `or` are **not** keywords in UTL-X — `check: (p) => a or b` is a parse
+error. Use `&&` / `||`, or `if`/`else` when the right-hand side must not be evaluated.
+
+The practical consequence for rule authors: **`if`/`else` is the only working defensive form in
+a lambda check.** A guarded boolean conjunction gives you a correctly *reported* issue rather
+than a crash — the fail-closed behaviour still holds — but it reports "could not be evaluated"
+where you intended "not applicable". Prefer a Tier-1 named validator over either.
+
+### Other open items
+
+- `&&` / `||` not short-circuiting is tracked as
+  [B34](../bugs-fixed/B34-logical-operators-do-not-short-circuit.md) — a `main` core defect, not a
+  `%utlx 1.1` one.
+- `oneOf` numeric membership (see Tier 1 above).
+- The `[condition]` predicate selector documented in [Selectors](selectors.md) is **not
+  implemented** — use `filter(…, x => …)`.
+
+---
+
+## Cheat sheet
+
+```utlx
+%utlx 1.1                                      // required for validate.*
+
+$input |> validate.required(["a", "b"])        // prefer named validators
+$input |> validate.inRange("price", 0, 100)
+$input |> validate.oneOf("ccy", ["EUR"])       // strings only for now
+
+$input |> validate.assert([                    // escape hatch: lambda checks
+  { rule: "r", check: (p) => p.x > 0, message: "m", field: "x", severity: "warning" }
+])
+
+v.valid        // failed == 0
+v.failed       // errors only
+v.warnings     // never affects valid
+v.issues       // [{rule, field, message, severity}]
+v.payload      // the record, for routing
+```
+
+| Rule | Why |
+|------|-----|
+| Named validator first | Type-safe by construction; `assert` only degrades gracefully |
+| `check` is always `(p) => …` | The language's only working deferred-condition form |
+| Guard with `if`, never `&&` | `&&` / `\|\|` do not short-circuit; both operands always evaluate |
+| Never rely on `when` | Eager form crashes, lambda form is silently ignored |
+| Never read `valid` as "within budget" | `valid` is `failed == 0`; budgets live in the engine policy |
+
+---
+
+## Next Steps
+
+- **Operators and comparison semantics:** [Operators Guide](operators.md)
+- **Lambdas and higher-order functions:** [Functions Guide](functions.md)
+- **Conditionals and `let`:** [Control Flow](control-flow.md)
+
+---
+
+**Questions?** Ask in [Discussions](https://github.com/grauwen/utl-x/discussions)
+
+---
+
+**Last Updated:** 2026-10-23
+**Language Version:** `%utlx 1.1`
+**License:** AGPL-3.0 / Commercial Dual-License
