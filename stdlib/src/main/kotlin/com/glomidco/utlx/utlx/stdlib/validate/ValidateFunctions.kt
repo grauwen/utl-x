@@ -89,6 +89,30 @@ object ValidateFunctions {
         else -> value
     }
 
+    /**
+     * VB06: does this UDM look like a `ValidationResult`?
+     *
+     * Same shape test the engine's `ValidationRoutingPolicy.isValidationResult` uses: the verdict
+     * fields. A validator receiving one as its *payload* means the author chained validators —
+     * `$input |> validate.required([...]) |> validate.inRange(...)` — so the second call inspected
+     * the FIRST call's result instead of the message. That silently discarded the first verdict and
+     * nested it under `payload`, where a top-level `valid: true` could then hide a real failure and
+     * the engine would forward the payload. Fail-open, from the most natural-looking composition.
+     *
+     * Validators do not compose by piping. Each takes the message; results are combined by hand
+     * (counts with `+`, issues with `flatten([...])`) until a `validate.all(results)` combinator
+     * lands. See `examples/utlx/advanced/validation-guard-named-validators.utlx`.
+     */
+    private fun looksLikeValidationResult(udm: UDM): Boolean {
+        val props = (udm as? UDM.Object)?.properties ?: return false
+        return props.containsKey("valid") && props.containsKey("failed") && props.containsKey("issues")
+    }
+
+    /** VB06: the chaining diagnosis, shared by every validator. */
+    private fun chainedPayloadReason(): String =
+        "payload is a ValidationResult; validators must not be chained with |> — each takes the " +
+            "message, not the previous result"
+
     /** Render a scalar for an issue message — `50.0` reads as `50`, so the text matches the script. */
     private fun displayScalar(value: Any?): String =
         when (val c = canonicalScalar(value)) {
@@ -112,6 +136,8 @@ object ValidateFunctions {
     )
     fun assert(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "assert", chainedPayloadReason())
         val rules = (args.getOrNull(1) as? UDM.Array)?.elements?.filterIsInstance<UDM.Object>() ?: emptyList()
         val issues = mutableListOf<ValidationIssue>()
         var totalChecks = 0
@@ -146,6 +172,8 @@ object ValidateFunctions {
     )
     fun required(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "required", chainedPayloadReason())
         arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "required", it) }
         val elements = arrayArg(args, 1)
             ?: return malformedRule(payload, "required", "fields must be an array of field names")
@@ -169,6 +197,8 @@ object ValidateFunctions {
     )
     fun inRange(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "inRange", chainedPayloadReason())
         arityReason(args, 4, "payload, field, min, max")?.let { return malformedRule(payload, "inRange", it) }
         val field = fieldArg(args, 1)
             ?: return malformedRule(payload, "inRange", "field must be a non-empty string")
@@ -197,6 +227,8 @@ object ValidateFunctions {
     )
     fun oneOf(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "oneOf", chainedPayloadReason())
         arityReason(args, 3, "payload, field, values[]")?.let { return malformedRule(payload, "oneOf", it) }
         val field = fieldArg(args, 1)
             ?: return malformedRule(payload, "oneOf", "field must be a non-empty string")
@@ -224,6 +256,8 @@ object ValidateFunctions {
     )
     fun matches(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "matches", chainedPayloadReason())
         arityReason(args, 3, "payload, field, pattern")?.let { return malformedRule(payload, "matches", it) }
         val field = fieldArg(args, 1)
             ?: return malformedRule(payload, "matches", "field must be a non-empty string")
@@ -250,6 +284,8 @@ object ValidateFunctions {
     )
     fun isoDate(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "isoDate", chainedPayloadReason())
         arityReason(args, 3, "payload, field, format")?.let { return malformedRule(payload, "isoDate", it) }
         val field = fieldArg(args, 1)
             ?: return malformedRule(payload, "isoDate", "field must be a non-empty string")
@@ -277,6 +313,8 @@ object ValidateFunctions {
     )
     fun unique(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "unique", chainedPayloadReason())
         arityReason(args, 3, "payload, arrayField, keyField")?.let { return malformedRule(payload, "unique", it) }
         val arrayField = fieldArg(args, 1)
             ?: return malformedRule(payload, "unique", "arrayField must be a non-empty string")
@@ -308,6 +346,8 @@ object ValidateFunctions {
     )
     fun mutuallyExclusive(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "mutuallyExclusive", chainedPayloadReason())
         arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "mutuallyExclusive", it) }
         val fields = arrayArg(args, 1)?.let { fieldNames(it) }
             ?: return malformedRule(payload, "mutuallyExclusive", "fields must be an array of field-name strings")
@@ -327,6 +367,8 @@ object ValidateFunctions {
     )
     fun atLeastOne(args: List<UDM>): UDM {
         val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "atLeastOne", chainedPayloadReason())
         arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "atLeastOne", it) }
         val fields = arrayArg(args, 1)?.let { fieldNames(it) }
             ?: return malformedRule(payload, "atLeastOne", "fields must be an array of field-name strings")

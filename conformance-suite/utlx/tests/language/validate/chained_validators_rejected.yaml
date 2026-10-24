@@ -1,0 +1,47 @@
+name: "validate_chained_validators_rejected"
+category: "language/validate"
+description: "VB06: piping one validator into another is rejected as a malformed rule — the second would inspect the first's ValidationResult instead of the message, which could report valid:true while hiding a real failure"
+tags: ["validate", "1.1", "chaining", "fail-closed", "VB06"]
+
+input:
+  format: json
+  data: {"qty": 500}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.required(["orderId"]) |> validate.required(["valid", "issues"])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": null, "message": "validate.required: malformed rule — payload is a ValidationResult; validators must not be chained with |> — each takes the message, not the previous result", "severity": "error"}
+    ],
+    "payload": {
+      "valid": false,
+      "passed": 0,
+      "failed": 1,
+      "warnings": 0,
+      "notices": 0,
+      "issues": [
+        {"rule": null, "field": "orderId", "message": "Required field 'orderId' is missing", "severity": "error"}
+      ],
+      "payload": {"qty": 500}
+    }
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB06-chained-validators-fail-open.md"]
+  notes:
+    - "This exact script used to return valid:true, passed:2, failed:0 — because `valid` and `issues` ARE present on a ValidationResult, so the second rule 'passed'. The real failure sat nested under payload, and the engine's routing policy reads TOP-LEVEL failed, so the message would have been forwarded."
+    - "The nested result is still visible under `payload` — the outer verdict simply no longer claims success on it."
+    - "Correct composition: one validate.assert with all rules, or one `let` per validator each taking $input, merged with + and flatten([...]). See examples/utlx/advanced/validation-guard-named-validators.utlx"

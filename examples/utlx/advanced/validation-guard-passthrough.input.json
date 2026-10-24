@@ -1,0 +1,11 @@
+{
+  "orderId": "ORD-10045",
+  "channel": "RETAIL",
+  "currency": "EUR",
+  "qty": 12,
+  "customer": { "id": "C-991", "name": "Acme BV" },
+  "lines": [
+    { "sku": "W-1", "qty": 10 },
+    { "sku": "W-2", "qty": 2 }
+  ]
+}

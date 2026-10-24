@@ -1,0 +1,67 @@
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Validation guard — one-to-one pass-through with business rules.
+//
+// A message that satisfies every rule is passed through unchanged. A message that fails is
+// wrapped in a dead-letter envelope carrying the reasons, so the rejection is diagnosable
+// without the original payload.
+//
+// Run:
+//   utlx transform validation-guard-passthrough.utlx --input validation-guard-passthrough.input.json
+//   utlx transform validation-guard-passthrough.utlx --input validation-guard-passthrough.reject.json
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+%utlx 1.1
+input json
+output json
+---
+// All rules live in ONE validate.assert call so they aggregate into a single verdict.
+//
+// Validators do NOT chain with |> — each takes the message, never the previous result. A chained
+// call is rejected as a malformed rule (VB06); before that fix it inspected the first call's
+// ValidationResult and could report `valid: true` over a real, nested failure.
+let v = $input |> validate.assert([
+
+  { rule: "order-id-present",
+    check: (p) => p.orderId != null,
+    message: "orderId is required",
+    field: "orderId" },
+
+  // `&&` short-circuits, so the null guard protects the comparisons behind it.
+  { rule: "qty-in-range",
+    check: (p) => p.qty != null && p.qty >= 1 && p.qty <= 100,
+    message: "qty must be between 1 and 100",
+    field: "qty" },
+
+  { rule: "currency-allowed",
+    check: (p) => p.currency == "EUR" || p.currency == "USD",
+    message: "currency must be EUR or USD",
+    field: "currency" },
+
+  // Conditional rule: `when` is an applicability guard. False -> the rule is skipped and counts
+  // as passed; the check is never evaluated. A guard that cannot be evaluated fails the rule
+  // rather than skipping it, so malformed data can never silence a rule.
+  { rule: "wholesale-min-qty",
+    check: (p) => p.qty >= 50,
+    message: "wholesale orders need qty >= 50",
+    field: "qty",
+    when: (p) => p.channel == "WHOLESALE" },
+
+  // A warning is counted separately and does NOT make the message invalid.
+  { rule: "legacy-field-deprecated",
+    check: (p) => p.legacyRef == null,
+    message: "legacyRef is deprecated and will be removed",
+    field: "legacyRef",
+    severity: "warning" }
+])
+
+in if (v.valid)
+     // Valid -> one-to-one pass-through. Content is unchanged (it is re-serialised from the
+     // UDM, so formatting such as key order or whitespace is normalised, not preserved).
+     $input
+   else
+     // Invalid -> a dead-letter envelope. `issues[].rule` identifies each failure, which keeps
+     // the rejection diagnosable where the payload itself may not be logged.
+     { status: "dead-letter",
+       failed: v.failed,
+       warnings: v.warnings,
+       issues: v.issues,
+       payload: v.payload }

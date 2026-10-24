@@ -269,4 +269,67 @@ class ValidateFunctionsTest {
         assertTrue(valid(ValidateFunctions.atLeastOne(listOf(order, arr(str("orderId"))))))
         assertTrue(valid(ValidateFunctions.mutuallyExclusive(listOf(order, arr(str("orderId"))))))
     }
+
+    // ── VB06: a validator must refuse a ValidationResult as its payload (chaining) ──
+
+    /** A ValidationResult, as produced by a first validator in a chain. */
+    private fun aResult() = ValidateFunctions.required(listOf(order, arr(str("missingField"))))
+
+    @Test fun `VB06 the fixture result really is a failing ValidationResult`() {
+        // Guards the tests below from passing vacuously on a malformed fixture.
+        val r = aResult()
+        assertFalse(valid(r))
+        assertEquals(1, count(r, "failed"))
+    }
+
+    @Test fun `VB06 chaining into required is rejected instead of inspecting the result`() {
+        // The fail-open shape: `valid` and `issues` ARE present on a ValidationResult, so this
+        // chain used to report valid:true, burying the real failure under `payload`.
+        val r = ValidateFunctions.required(listOf(aResult(), arr(str("valid"), str("issues"))))
+        assertMalformed(r, "must not be chained")
+    }
+
+    @Test fun `VB06 chaining into inRange is rejected`() {
+        assertMalformed(
+            ValidateFunctions.inRange(listOf(aResult(), str("failed"), num(0), num(99))),
+            "must not be chained",
+        )
+    }
+
+    @Test fun `VB06 chaining into oneOf is rejected`() {
+        assertMalformed(
+            ValidateFunctions.oneOf(listOf(aResult(), str("valid"), arr(UDM.Scalar.boolean(false)))),
+            "must not be chained",
+        )
+    }
+
+    @Test fun `VB06 chaining into assert is rejected`() {
+        val rules = arr(UDM.Object.of("rule" to str("r"), "check" to UDM.Scalar.boolean(true), "message" to str("m")))
+        assertMalformed(ValidateFunctions.assert(listOf(aResult(), rules)), "must not be chained")
+    }
+
+    @Test fun `VB06 chaining into unique, matches, isoDate, mutuallyExclusive and atLeastOne is rejected`() {
+        val res = aResult()
+        assertMalformed(ValidateFunctions.unique(listOf(res, str("issues"), str("field"))), "must not be chained")
+        assertMalformed(ValidateFunctions.matches(listOf(res, str("valid"), str(".*"))), "must not be chained")
+        assertMalformed(ValidateFunctions.isoDate(listOf(res, str("valid"), str("yyyy"))), "must not be chained")
+        assertMalformed(ValidateFunctions.mutuallyExclusive(listOf(res, arr(str("valid")))), "must not be chained")
+        assertMalformed(ValidateFunctions.atLeastOne(listOf(res, arr(str("valid")))), "must not be chained")
+    }
+
+    @Test fun `VB06 an ordinary payload that merely has a valid field is NOT mistaken for a result`() {
+        // Over-reach guard: the shape test needs all three verdict fields. A business message with
+        // its own `valid` flag must still validate normally.
+        val msg = obj("valid" to UDM.Scalar.boolean(true), "orderId" to num(42))
+        val r = ValidateFunctions.required(listOf(msg, arr(str("orderId"))))
+        assertTrue(valid(r), "a message with a `valid` field must not be treated as a ValidationResult")
+    }
+
+    @Test fun `VB06 the correct composition is unaffected`() {
+        // Each validator takes the MESSAGE; results are merged by the caller.
+        val a = ValidateFunctions.required(listOf(order, arr(str("orderId"))))
+        val b = ValidateFunctions.inRange(listOf(order, str("unitPrice"), num(0), num(100)))
+        assertTrue(valid(a) && valid(b))
+        assertEquals(0, count(a, "failed") + count(b, "failed"))
+    }
 }

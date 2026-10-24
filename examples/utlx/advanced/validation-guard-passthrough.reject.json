@@ -1,0 +1,7 @@
+{
+  "channel": "WHOLESALE",
+  "currency": "GBP",
+  "qty": 5,
+  "legacyRef": "OLD-7",
+  "customer": { "id": "C-992", "name": "Globex NV" }
+}

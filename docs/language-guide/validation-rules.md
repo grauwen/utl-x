@@ -56,6 +56,33 @@ literal `[50, 60]` ([VB03](../bugs-fixed/VB03-validate-oneOf-numeric-membership-
 that fix it did not). It does **not** coerce across kinds: the string `"50"` is not the number `50`,
 which is what makes it useful as a type check as well as a value check.
 
+### Validators do not chain
+
+Each validator takes **the message**. Piping one into another is rejected:
+
+```utlx
+$input |> validate.required(["orderId"]) |> validate.inRange("qty", 1, 100)
+  → valid:false — "validate.inRange: malformed rule — payload is a ValidationResult;
+                   validators must not be chained with |>"
+```
+
+The second call would otherwise inspect the *first call's result* instead of your message, and
+because a `ValidationResult` has its own `valid` and `issues` fields it could report **`valid:true`
+over a real failure** ([VB06](../bugs-fixed/VB06-chained-validators-fail-open.md)).
+
+To apply several rules, either put them all in one `validate.assert` (below), or bind one result per
+validator — each taking `$input` — and merge:
+
+```utlx
+let a = $input |> validate.required(["orderId"])
+let b = $input |> validate.inRange("qty", 1, 100)
+in if (a.failed + b.failed == 0) $input
+   else { status: "dead-letter", issues: flatten([a.issues, b.issues]) }
+```
+
+`+` sums the counts; `flatten([…])` concatenates the issue arrays (`+` does not work on arrays).
+A single `validate.all(results)` combinator is planned but not yet available.
+
 ### When a rule itself is wrong
 
 A validator whose **arguments** are malformed reports an `error` issue rather than passing:

@@ -1,0 +1,44 @@
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Validation guard — the same shape built from the NAMED validators (the robust Tier-1
+// vocabulary) instead of lambda checks.
+//
+// The named validators are null/type-aware, so they degrade gracefully on missing or mistyped
+// data rather than merely avoiding a crash. Prefer them wherever one expresses your constraint.
+//
+// The catch: there is no Tier-1 combinator yet (`validate.all(results)` is a planned guard-profile
+// addition), and validators must NOT be chained with |> — each call takes the MESSAGE, never the
+// previous result. So a multi-rule guard binds one result per rule and merges them by hand:
+//   - counts  with +
+//   - issues  with flatten([...])   (+ does not concatenate arrays)
+//
+// Run:
+//   utlx transform validation-guard-named-validators.utlx --input validation-guard-passthrough.input.json
+//   utlx transform validation-guard-named-validators.utlx --input validation-guard-passthrough.reject.json
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+%utlx 1.1
+input json
+output json
+---
+
+// Each validator receives $input — NOT the previous result.
+let rIds  = $input |> validate.required(["orderId", "currency", "qty"])
+let rQty  = $input |> validate.inRange("qty", 1, 100)
+let rCcy  = $input |> validate.oneOf("currency", ["EUR", "USD"])
+// Note: since VB04, `unique` reports a malformed rule when `lines` is absent or is not an
+// array — fail-closed, because uniqueness was asked for and nothing could be checked. If the
+// array is genuinely OPTIONAL, list it in `required` (as here) so the real cause is reported,
+// or guard the call with a conditional.
+let rLine = $input |> validate.unique("lines", "sku")
+
+let failed   = rIds.failed + rQty.failed + rCcy.failed + rLine.failed
+let warnings = rIds.warnings + rQty.warnings + rCcy.warnings + rLine.warnings
+let issues   = flatten([rIds.issues, rQty.issues, rCcy.issues, rLine.issues])
+
+in if (failed == 0)
+     $input                                   // valid -> one-to-one pass-through
+   else
+     { status: "dead-letter",
+       failed: failed,
+       warnings: warnings,
+       issues: issues,
+       payload: $input }
