@@ -2,6 +2,7 @@ package com.glomidco.utlx.stdlib.validate
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.annotations.UTLXFunction
+import java.math.BigDecimal
 
 /**
  * `validate.*` — semantic validation (F21, `%utlx 1.1`). Tier-1 shortcuts.
@@ -27,6 +28,38 @@ object ValidateFunctions {
     private fun asNumber(udm: UDM?): Double? = ((udm as? UDM.Scalar)?.value as? Number)?.toDouble()
     private fun scalarValue(udm: UDM?): Any? = (udm as? UDM.Scalar)?.value
     private fun isSet(udm: UDM?): Boolean = udm != null && !(udm is UDM.Scalar && udm.value == null)
+
+    /**
+     * VB03: the canonical form of a scalar for VALUE comparison.
+     *
+     * `scalarValue` hands back the raw boxed value, and the same number reaches us in different
+     * boxes depending on where it came from: JSON `50` parses to an Int/Long, while the script
+     * literal `50` in `validate.oneOf("price", [50, 60])` is evaluated by the interpreter as a
+     * Double. `Any?.equals` is type-sensitive, so `50 != 50.0` and membership silently failed.
+     *
+     * Numbers are therefore canonicalised to a scale-insensitive BigDecimal (via `toString`, so no
+     * binary-float noise is introduced, then `stripTrailingZeros`, so 50, 50.0 and 5E1 are one
+     * value). Non-finite doubles keep their boxed form — BigDecimal cannot represent them.
+     *
+     * Non-numbers are returned unchanged, deliberately: the string `"50"` is NOT the number 50,
+     * and `oneOf` is a controlled-value check, not a coercion.
+     */
+    private fun canonicalScalar(value: Any?): Any? = when (value) {
+        null -> null
+        is Boolean -> value          // Boolean is not a Number; keep it out of the numeric path
+        is BigDecimal -> value.stripTrailingZeros()
+        is Double -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
+        is Float -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
+        is Number -> BigDecimal(value.toString()).stripTrailingZeros()
+        else -> value
+    }
+
+    /** Render a scalar for an issue message — `50.0` reads as `50`, so the text matches the script. */
+    private fun displayScalar(value: Any?): String =
+        when (val c = canonicalScalar(value)) {
+            is BigDecimal -> c.toPlainString()
+            else -> c.toString()
+        }
 
     @UTLXFunction(
         description = "The canonical form: evaluate a list of rules against the payload, returning one " +
@@ -122,10 +155,16 @@ object ValidateFunctions {
     fun oneOf(args: List<UDM>): UDM {
         val payload = payloadOf(args)
         val field = asString(args.getOrNull(1)) ?: ""
-        val allowed = (args.getOrNull(2) as? UDM.Array)?.elements?.map { scalarValue(it) } ?: emptyList()
+        val allowedValues = (args.getOrNull(2) as? UDM.Array)?.elements?.map { scalarValue(it) } ?: emptyList()
         val actual = scalarValue(props(payload)[field])
-        val issues = if (actual in allowed) emptyList()
-            else listOf(ValidationIssue(field, "Field '$field' value '$actual' is not one of $allowed"))
+        // VB03: compare canonical forms — a JSON Int and a script Double of the same number match.
+        val allowed = allowedValues.map { canonicalScalar(it) }
+        val issues = if (canonicalScalar(actual) in allowed) emptyList()
+            else listOf(ValidationIssue(
+                field,
+                "Field '$field' value '${displayScalar(actual)}' is not one of " +
+                    allowedValues.joinToString(", ", "[", "]") { displayScalar(it) }
+            ))
         return validationResult(payload, issues, totalChecks = 1)
     }
 
@@ -183,9 +222,14 @@ object ValidateFunctions {
         val keyField = asString(args.getOrNull(2)) ?: ""
         val array = (props(payload)[arrayField] as? UDM.Array)?.elements ?: emptyList()
         val keys = array.mapNotNull { scalarValue((it as? UDM.Object)?.properties?.get(keyField)) }
-        val dupes = keys.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+        // VB03: group on the canonical form, so an Int 7 and a Double 7.0 count as the same key.
+        val dupes = keys.groupingBy { canonicalScalar(it) }.eachCount().filterValues { it > 1 }.keys
         val issues = if (dupes.isEmpty()) emptyList()
-            else listOf(ValidationIssue(arrayField, "Duplicate '$keyField' values in '$arrayField': $dupes"))
+            else listOf(ValidationIssue(
+                arrayField,
+                "Duplicate '$keyField' values in '$arrayField': " +
+                    dupes.joinToString(", ", "[", "]") { displayScalar(it) }
+            ))
         return validationResult(payload, issues, totalChecks = 1)
     }
 

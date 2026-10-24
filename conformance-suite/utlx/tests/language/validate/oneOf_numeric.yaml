@@ -1,0 +1,36 @@
+name: "validate_oneOf_numeric"
+category: "language/validate"
+description: "VB03: numeric membership in validate.oneOf matches regardless of how the number was boxed (JSON int vs script literal), while a string is still not a number"
+tags: ["validate", "1.1", "oneOf", "numeric", "VB03"]
+
+input:
+  format: json
+  data: {"qty": 50, "price": 50.5, "ccy": "50"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  {
+    intMatchesLiteral:   ($input |> validate.oneOf("qty", [50, 60])).valid,
+    decimalMatches:      ($input |> validate.oneOf("price", [50.5, 60])).valid,
+    intOutsideList:      ($input |> validate.oneOf("qty", [10, 20])).valid,
+    stringIsNotANumber:  ($input |> validate.oneOf("ccy", [50, 60])).valid
+  }
+
+expected:
+  format: json
+  data: {
+    "intMatchesLiteral": true,
+    "decimalMatches": true,
+    "intOutsideList": false,
+    "stringIsNotANumber": false
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB03-validate-oneOf-numeric-membership-fails.md"]
+  notes:
+    - "intMatchesLiteral is the bug: JSON 50 parses to an Int, the script literal 50 is a Double, and Any?.equals reported them unequal"
+    - "stringIsNotANumber is deliberate — oneOf is a controlled-value check, not a coercion"

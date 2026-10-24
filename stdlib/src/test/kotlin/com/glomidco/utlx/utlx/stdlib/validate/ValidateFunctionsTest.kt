@@ -114,4 +114,65 @@ class ValidateFunctionsTest {
         assertEquals(1, count(r, "warnings")) // c
         assertEquals(2, count(r, "passed"))   // a + d(skipped)
     }
+
+    // ── VB03: numeric membership / key identity must not depend on the numeric box ──
+
+    @Test fun `VB03 oneOf matches an Int payload against Double list entries`() {
+        // JSON `50` parses to an Int; the script literal `[50, 60]` is evaluated as Doubles.
+        // `Any?.equals` is type-sensitive, so this reported invalid before VB03.
+        val p = obj("price" to UDM.Scalar(50))
+        assertTrue(valid(ValidateFunctions.oneOf(listOf(p, str("price"), arr(num(50.0), num(60.0))))))
+    }
+
+    @Test fun `VB03 oneOf matches a Double payload against Int list entries`() {
+        val p = obj("price" to UDM.Scalar(50.0))
+        assertTrue(valid(ValidateFunctions.oneOf(listOf(p, str("price"), arr(UDM.Scalar(50), UDM.Scalar(60))))))
+    }
+
+    @Test fun `VB03 oneOf is insensitive to trailing-zero scale`() {
+        val p = obj("price" to UDM.Scalar(java.math.BigDecimal("50.00")))
+        assertTrue(valid(ValidateFunctions.oneOf(listOf(p, str("price"), arr(num(50))))))
+    }
+
+    @Test fun `VB03 oneOf still rejects a value outside the list`() {
+        val p = obj("price" to UDM.Scalar(55))
+        assertFalse(valid(ValidateFunctions.oneOf(listOf(p, str("price"), arr(num(50.0), num(60.0))))))
+    }
+
+    @Test fun `VB03 oneOf does not coerce a string into a number`() {
+        // Deliberate: oneOf is a controlled-value check, not a coercion. "50" is not 50.
+        val p = obj("price" to str("50"))
+        assertFalse(valid(ValidateFunctions.oneOf(listOf(p, str("price"), arr(num(50.0), num(60.0))))))
+    }
+
+    @Test fun `VB03 oneOf keeps booleans out of the numeric path`() {
+        val p = obj("flag" to UDM.Scalar.boolean(true))
+        assertTrue(valid(ValidateFunctions.oneOf(listOf(p, str("flag"), arr(UDM.Scalar.boolean(true))))))
+        assertFalse(valid(ValidateFunctions.oneOf(listOf(p, str("flag"), arr(num(1))))))
+    }
+
+    @Test fun `VB03 oneOf message renders numbers without a trailing point-zero`() {
+        val p = obj("price" to UDM.Scalar(55))
+        val r = ValidateFunctions.oneOf(listOf(p, str("price"), arr(num(50.0), num(60.0))))
+        val msg = ((((r as UDM.Object).properties["issues"] as UDM.Array).elements[0] as UDM.Object)
+            .properties["message"] as UDM.Scalar).value as String
+        assertEquals("Field 'price' value '55' is not one of [50, 60]", msg)
+    }
+
+    @Test fun `VB03 unique treats the same number in different boxes as one key`() {
+        val rows = arr(
+            obj("lineId" to UDM.Scalar(7)),
+            obj("lineId" to UDM.Scalar(7.0)),
+        )
+        val p = obj("orderLines" to rows)
+        assertFalse(
+            valid(ValidateFunctions.unique(listOf(p, str("orderLines"), str("lineId")))),
+            "Int 7 and Double 7.0 are the same key — this must be reported as a duplicate",
+        )
+    }
+
+    @Test fun `VB03 unique still passes on genuinely distinct keys`() {
+        val rows = arr(obj("lineId" to UDM.Scalar(7)), obj("lineId" to UDM.Scalar(8.0)))
+        assertTrue(valid(ValidateFunctions.unique(listOf(obj("orderLines" to rows), str("orderLines"), str("lineId")))))
+    }
 }

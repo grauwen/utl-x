@@ -47,9 +47,10 @@ Each validator takes the payload by pipe and returns a `ValidationResult`.
 | `{}` — missing | `valid:false` | `valid:false` | `valid:false` |
 | `{"price":"abc"}` — mistyped | `valid:true` (present) | `valid:false` | `valid:false` |
 
-> **Known defect:** `oneOf` currently fails **numeric** membership — `price: 50` against
-> `[50, 60]` reports `valid:false`. String membership is correct. Use `inRange` or a Tier-2
-> lambda for numeric enumerations until this is fixed.
+`oneOf` compares numbers by value, not by how they were boxed, so a JSON `50` matches a script
+literal `[50, 60]` ([VB03](../bugs-fixed/VB03-validate-oneOf-numeric-membership-fails.md) — before
+that fix it did not). It does **not** coerce across kinds: the string `"50"` is not the number `50`,
+which is what makes it useful as a type check as well as a value check.
 
 ---
 
@@ -248,7 +249,6 @@ goes is deployment plumbing on top of this decision.
 
 ## Known limitations
 
-- `oneOf` numeric membership (see Tier 1 above).
 - The `[condition]` predicate selector documented in [Selectors](selectors.md) is **not
   implemented** — use `filter(…, x => …)`.
 
@@ -261,7 +261,7 @@ goes is deployment plumbing on top of this decision.
 
 $input |> validate.required(["a", "b"])        // prefer named validators
 $input |> validate.inRange("price", 0, 100)
-$input |> validate.oneOf("ccy", ["EUR"])       // strings only for now
+$input |> validate.oneOf("ccy", ["EUR"])       // numbers compare by value too
 
 $input |> validate.assert([                    // escape hatch: lambda checks
   { rule: "r", check: (p) => p.x > 0, message: "m", field: "x", severity: "warning" },
