@@ -74,13 +74,40 @@ which collapsed any number of bad elements into **one** issue with `field: "line
 | quantifier with a non-lambda `check` | malformed rule | see the fail-open note below |
 | `when` guard false | rule skipped; **no expansion** | the guard decides applicability before the quantifier runs |
 
-### A fail-open hole found during implementation
+### A fail-open hole found during implementation — and the shortcut that caused it
 
-The resolver's legacy-form early return — *"neither `check` nor `when` is a lambda, so there is
-nothing to defer"* — sent `{ every: "lines", check: true }` straight to the stdlib as an ordinary
-passing rule. A malformed quantifier therefore failed **open**. The bail now also tests for the
-presence of `every`/`some`, so a quantified rule always routes through the branch that can reject it.
-There is a regression test for exactly this.
+`{ every: "lines", check: true }` — a quantifier with a non-lambda check — reached the stdlib as an
+ordinary **passing** rule. The quantifier was never looked at, nothing was checked, and the verdict
+said `valid: true`. Fail-open, in new code, in the same class as VB04 and VB06.
+
+The cause was a shortcut at the head of the resolver:
+
+```kotlin
+// Legacy form — nothing deferred to resolve. Leave as-is.
+if (checkVal !is RuntimeValue.FunctionValue && whenVal !is RuntimeValue.FunctionValue) {
+    return@flatMap listOf(rule)
+}
+```
+
+Its condition was an **enumeration of the things the resolver handles**, so every new rule key had to
+remember to extend it — and forgetting produced a silent pass rather than an error. It had already
+done this once:
+
+| | What the enumeration missed |
+|---|---|
+| **VB02** | keyed only on `check`, so a lambda `when` beside a boolean `check` was never resolved — a rule scoped to a subset of records silently ran against all of them |
+| **F24** | did not know about `every`/`some`, so a malformed quantifier passed |
+
+Extending the condition a third time would have fixed this instance and left the trap. **The
+shortcut was removed instead.** It was only an optimisation: with it gone a plain rule falls through,
+every block skips itself when its key is absent, and the rule is rebuilt unchanged at the cost of one
+map copy. Verified behaviour-preserving against the legacy eager-`check` (true and false), literal
+`when: true`/`when: false`, `fields[]`, `severity` and no-rule-id shapes, plus 546/546 conformance.
+The code now carries a note saying not to reintroduce it.
+
+How it was found: a batch of nine edge-case probes against the built CLI. Eight matched expectation;
+this one printed `valid: true`. No test would have caught it, because I had not thought to write one
+— which is the argument for probing new behaviour rather than only testing what you designed.
 
 ## Location — deliberately absent
 

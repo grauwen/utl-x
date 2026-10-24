@@ -1313,20 +1313,21 @@ class Interpreter(
             if (rule !is RuntimeValue.ObjectValue) return@flatMap listOf(rule)  // odd shapes → stdlib
             val checkVal = rule.properties["check"]
             val whenVal = rule.properties["when"]
-            // Legacy form — nothing deferred to resolve. Leave as-is.
+            // NOTE: there is deliberately NO "nothing to resolve, pass the rule straight through"
+            // shortcut here. One used to exist, keyed on "neither `check` nor `when` is a lambda",
+            // and it produced two FAIL-OPEN bugs — because its condition was an enumeration of the
+            // things this resolver handles, and every new rule key had to remember to extend it:
             //
-            // A quantified rule must NOT take this path even when neither predicate is a lambda:
-            // `{ every: "lines", check: true }` would otherwise be handed to the stdlib as a plain
-            // passing rule, so a malformed quantifier would fail OPEN. Presence of `every`/`some`
-            // always routes through the quantifier branch, which rejects it properly.
-            val quantified = rule.properties.containsKey("every") || rule.properties.containsKey("some")
-            if (!quantified &&
-                checkVal !is RuntimeValue.FunctionValue &&
-                whenVal !is RuntimeValue.FunctionValue
-            ) {
-                return@flatMap listOf(rule)
-            }
-
+            //   VB02  a lambda `when` beside a boolean `check` → the guard was never resolved,
+            //         so a rule scoped to a subset of records silently ran against all of them.
+            //   F24   `{ every: "lines", check: true }` → the quantifier was never seen, so the
+            //         rule reached the stdlib as an ordinary PASSING rule and nothing was checked.
+            //
+            // Forgetting to extend the list produced a silent pass, not an error: the default
+            // consequence of an oversight was unsafe. Falling through costs one map copy — every
+            // block below skips itself when its key is absent, and the rule is rebuilt unchanged
+            // (verified against the legacy eager-`check`, literal-`when`, `fields[]`, `severity`
+            // and no-rule-id shapes). Do not reintroduce the shortcut.
             val props = rule.properties.toMutableMap()
             val ruleName = (props["rule"] as? RuntimeValue.StringValue)?.value
 
