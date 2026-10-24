@@ -178,6 +178,9 @@ class Interpreter(
     // (the variable path resolves first), never for a local variable named like a namespace.
     private var declaredLanguageVersion: String = "1.0"
 
+    /** VB05: the program most recently cleared by the static namespace gate (identity compare). */
+    private var gatedProgram: com.glomidco.utlx.core.ast.Program? = null
+
     private fun enforceLanguageVersion(name: String, location: Location) {
         if (com.glomidco.utlx.core.semantic.LanguageNamespaces.isAvailableAt(name, declaredLanguageVersion)) return
         val required = com.glomidco.utlx.core.semantic.LanguageNamespaces.minVersionFor(name)
@@ -248,6 +251,18 @@ class Interpreter(
         // then enforce the engine mode (reject unsupported / above-mode versions up front).
         declaredLanguageVersion = program.header.version
         enforceSupportedVersion(program.header.version, program.header.location)
+
+        // VB05: enforce the namespace gate STATICALLY, before any data is touched. The runtime gate
+        // in tryLoadStdlibFunction only fires when a namespaced call is actually reached, so a
+        // %utlx 1.0 script could carry validate.* calls on an untaken branch and run fine — passing
+        // tests and failing in production on the first payload to reach them. A version gate is a
+        // claim about the PROGRAM, so it is decided once here; the runtime gate stays as a backstop.
+        // Memoised by program identity: execute() runs per payload, and the gate is a property of
+        // the program, not of the data — so a batch of N records must not pay for N walks.
+        if (gatedProgram !== program) {
+            com.glomidco.utlx.core.semantic.LanguageVersionStaticGate.check(program, declaredLanguageVersion)
+            gatedProgram = program
+        }
 
         // Extract metadata from all inputs for smart error enhancement
         val inputFormats = program.header.inputs.associate { (name, spec) ->

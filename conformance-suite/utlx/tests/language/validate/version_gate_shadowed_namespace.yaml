@@ -1,0 +1,26 @@
+name: "validate_version_gate_shadowed_namespace"
+category: "language/validate"
+description: "VB05 guard against over-reach: a let-bound variable named `validate` is an ordinary member access, not the 1.1 namespace, so a %utlx 1.0 script using it stays legal"
+tags: ["validate", "1.1", "version-gate", "static", "shadowing", "VB05"]
+
+input:
+  format: json
+  data: {"orderId": 42}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let validate = { required: "just an object" }
+  in { echo: validate.required }
+
+expected:
+  format: json
+  data: { "echo": "just an object" }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB05-version-gate-is-evaluation-time-not-static.md"]
+  notes:
+    - "The static walk tracks names bound by let, lambda parameters, catch variables and match variables, and skips a call whose base identifier is shadowed — matching the runtime rule that a namespace is only a namespace when its base is undefined."

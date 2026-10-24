@@ -2,8 +2,12 @@
 
 Author semantic validation rules with `validate.*` and route on the verdict.
 
-**Requires `%utlx 1.1`.** The `validate.*` namespace is gated: calling it from a script that
-declares `%utlx 1.0` is rejected before resolution.
+**Requires `%utlx 1.1`.** The `validate.*` namespace is gated, and the gate is **static**: a script
+declaring `%utlx 1.0` is rejected for *containing* a `validate.*` call, before any data is processed —
+even if the call sits on a branch that would never be taken
+([VB05](../bugs-fixed/VB05-version-gate-is-evaluation-time-not-static.md)). The error names the call
+and exits non-zero. A variable that happens to be named `validate` is unaffected: a namespace is only
+a namespace when the name is not bound.
 
 ---
 

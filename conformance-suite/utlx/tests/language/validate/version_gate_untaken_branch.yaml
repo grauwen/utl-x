@@ -1,0 +1,27 @@
+name: "validate_version_gate_untaken_branch"
+category: "language/validate"
+description: "VB05: the %utlx namespace gate is static — a 1.0 script carrying a validate.* call is rejected even when the branch holding it is never taken"
+tags: ["validate", "1.1", "version-gate", "static", "VB05"]
+
+input:
+  format: json
+  data: {"orderId": 42}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  if ($input.orderId > 1000) ($input |> validate.required(["orderId"]))
+  else { status: "no validation needed" }
+
+error_expected:
+  type: "version_gate"
+  reason: "validate.* requires %utlx 1.1; a 1.0 script must be rejected for CONTAINING the call, not only for reaching it"
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB05-version-gate-is-evaluation-time-not-static.md"]
+  notes:
+    - "orderId is 42, so the validate branch is not taken. Before VB05 this returned {\"status\":\"no validation needed\"} with exit 0."
+    - "The same script with orderId 5000 failed — so whether a 1.0 script was legal depended on the payload."
