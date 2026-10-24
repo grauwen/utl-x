@@ -1152,6 +1152,119 @@ class Interpreter(
     }
     
     /**
+     * F24: the elements of `payload[field]`, or null when that is absent or not an array.
+     * Fail-closed, like `validate.unique`: a quantifier over a non-array checked nothing.
+     */
+    private fun elementsOf(payload: RuntimeValue, field: String): List<RuntimeValue>? {
+        val props = when (payload) {
+            is RuntimeValue.ObjectValue -> payload.properties
+            is RuntimeValue.UDMValue -> (payload.udm as? UDM.Object)?.properties
+                ?.mapValues { (_, v) -> udmToRuntimeValue(v) }
+            else -> null
+        } ?: return null
+        return when (val arr = props[field]) {
+            is RuntimeValue.ArrayValue -> arr.elements
+            is RuntimeValue.UDMValue -> (arr.udm as? UDM.Array)?.elements?.map { udmToRuntimeValue(it) }
+            else -> null
+        }
+    }
+
+    /** F24: a quantified rule that cannot be run at all — fail-closed, as an error issue. */
+    private fun malformedQuantifiedRule(
+        props: MutableMap<String, RuntimeValue>,
+        reason: String,
+    ): RuntimeValue {
+        val name = (props["rule"] as? RuntimeValue.StringValue)?.value
+        val out = props.toMutableMap()
+        out.remove("every"); out.remove("some")
+        out["check"] = RuntimeValue.BooleanValue(false)
+        out["when"] = RuntimeValue.BooleanValue(true)
+        out["severity"] = RuntimeValue.StringValue("error")
+        out["message"] = RuntimeValue.StringValue(
+            "quantified rule ${name?.let { "'$it' " } ?: ""}is malformed — $reason")
+        return RuntimeValue.ObjectValue(out)
+    }
+
+    /**
+     * F24 `every`: expand into one boolean rule per element, so each failing element is its own
+     * issue with a `path`. Every element is evaluated (no short-circuit) — the same rule the
+     * multi-rule case follows, so one bad element never hides another. An element whose check
+     * throws becomes an error issue for that element, not an aborted validation (VB01).
+     *
+     * An EMPTY array yields a single passing rule: `every` over nothing is vacuously true, and
+     * keeping one check makes the rule visible in `passed` rather than silently absent.
+     */
+    private fun expandEvery(
+        props: MutableMap<String, RuntimeValue>,
+        check: RuntimeValue.FunctionValue,
+        payload: RuntimeValue,
+        field: String,
+        elements: List<RuntimeValue>,
+        ruleName: String?,
+    ): List<RuntimeValue> {
+        if (elements.isEmpty()) {
+            val out = props.toMutableMap()
+            out.remove("every")
+            out["check"] = RuntimeValue.BooleanValue(true)
+            return listOf(RuntimeValue.ObjectValue(out))
+        }
+        return elements.mapIndexed { i, element ->
+            val out = props.toMutableMap()
+            out.remove("every")
+            out["field"] = props["field"] ?: RuntimeValue.StringValue(field)
+            try {
+                out["check"] = RuntimeValue.BooleanValue(invokeRulePredicate(check, element) == true)
+            } catch (e: Exception) {
+                out["check"] = RuntimeValue.BooleanValue(false)
+                out["severity"] = RuntimeValue.StringValue("error")
+                // Prose, not a path expression: a location SYNTAX belongs to a serialization
+                // (JSON Pointer is JSON's), and this report is format-neutral.
+                out["message"] = RuntimeValue.StringValue(
+                    "check ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated for element $i " +
+                        "of '$field': " + (e.message ?: e.javaClass.simpleName))
+            }
+            RuntimeValue.ObjectValue(out)
+        }
+    }
+
+    /**
+     * F24 `some`: one rule for the whole array — it passes if ANY element satisfies the check.
+     * All elements are evaluated (no short-circuit), so a throwing element cannot mask a later
+     * passing one. If nothing passed and everything threw, the message says so rather than
+     * reporting a plain rule failure. An EMPTY array fails: `some` over nothing is false.
+     */
+    private fun collapseSome(
+        props: MutableMap<String, RuntimeValue>,
+        check: RuntimeValue.FunctionValue,
+        field: String,
+        elements: List<RuntimeValue>,
+        ruleName: String?,
+    ): RuntimeValue {
+        val out = props.toMutableMap()
+        out.remove("some")
+        out["field"] = props["field"] ?: RuntimeValue.StringValue(field)
+        var anyPassed = false
+        var evaluated = 0
+        var lastError: String? = null
+        for (element in elements) {
+            try {
+                if (invokeRulePredicate(check, element) == true) anyPassed = true
+                evaluated++
+            } catch (e: Exception) {
+                lastError = e.message ?: e.javaClass.simpleName
+            }
+        }
+        out["check"] = RuntimeValue.BooleanValue(anyPassed)
+        if (!anyPassed && evaluated == 0 && lastError != null) {
+            out["severity"] = RuntimeValue.StringValue("error")
+            out["message"] = RuntimeValue.StringValue(
+                "check ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated for any element " +
+                    "of '$field': $lastError")
+        }
+        return RuntimeValue.ObjectValue(out)
+    }
+
+    /**
      * Invoke a rule predicate lambda (`check` / `when`) with the payload. Returns the boolean it
      * produced, or null if it produced something that is not a boolean. Throws whatever the body
      * throws — callers isolate that per rule (VB01/VB02).
@@ -1196,12 +1309,23 @@ class Interpreter(
         val rules = (rulesValue as? RuntimeValue.ArrayValue)?.elements
             ?: throw RuntimeError("validate.assert: the rules argument must be an array", location)
 
-        val resolvedRules = rules.map { rule ->
-            if (rule !is RuntimeValue.ObjectValue) return@map rule  // defer to stdlib for odd shapes
+        val resolvedRules = rules.flatMap { rule ->
+            if (rule !is RuntimeValue.ObjectValue) return@flatMap listOf(rule)  // odd shapes → stdlib
             val checkVal = rule.properties["check"]
             val whenVal = rule.properties["when"]
             // Legacy form — nothing deferred to resolve. Leave as-is.
-            if (checkVal !is RuntimeValue.FunctionValue && whenVal !is RuntimeValue.FunctionValue) return@map rule
+            //
+            // A quantified rule must NOT take this path even when neither predicate is a lambda:
+            // `{ every: "lines", check: true }` would otherwise be handed to the stdlib as a plain
+            // passing rule, so a malformed quantifier would fail OPEN. Presence of `every`/`some`
+            // always routes through the quantifier branch, which rejects it properly.
+            val quantified = rule.properties.containsKey("every") || rule.properties.containsKey("some")
+            if (!quantified &&
+                checkVal !is RuntimeValue.FunctionValue &&
+                whenVal !is RuntimeValue.FunctionValue
+            ) {
+                return@flatMap listOf(rule)
+            }
 
             val props = rule.properties.toMutableMap()
             val ruleName = (props["rule"] as? RuntimeValue.StringValue)?.value
@@ -1216,7 +1340,7 @@ class Interpreter(
                         // Not applicable: the stdlib skips the rule and counts it as passed without
                         // ever reading `check`, so resolve `check` to a placeholder for UDM-safety.
                         props["check"] = RuntimeValue.BooleanValue(true)
-                        return@map RuntimeValue.ObjectValue(props)
+                        return@flatMap listOf(RuntimeValue.ObjectValue(props))
                     }
                 } catch (e: Exception) {
                     // Non-evaluable guard → its own error issue. `when` is forced TRUE so the rule
@@ -1227,7 +1351,35 @@ class Interpreter(
                     props["message"] = RuntimeValue.StringValue(
                         "guard ${ruleName?.let { "'$it' " } ?: ""}could not be evaluated: ${e.message ?: e.javaClass.simpleName}"
                     )
-                    return@map RuntimeValue.ObjectValue(props)
+                    return@flatMap listOf(RuntimeValue.ObjectValue(props))
+                }
+            }
+
+            // ── F24: quantified rules — `every` / `some` over a named array ──
+            // The structural analogue of a Schematron context-rule: `every: "lines"` + a `check`
+            // is `<rule context="lines/*"><assert test="…">`. The check receives each ELEMENT, not
+            // the payload, and `every` expands into one boolean rule PER element so each failing
+            // element becomes its own issue carrying a `path` (`/lines/1`).
+            val everyField = (rule.properties["every"] as? RuntimeValue.StringValue)?.value
+            val someField = (rule.properties["some"] as? RuntimeValue.StringValue)?.value
+            if (everyField != null || someField != null) {
+                if (checkVal !is RuntimeValue.FunctionValue) {
+                    return@flatMap listOf(malformedQuantifiedRule(
+                        props, "a quantified rule needs `check` as a lambda `(element) => boolean`"))
+                }
+                if (everyField != null && someField != null) {
+                    return@flatMap listOf(malformedQuantifiedRule(
+                        props, "a rule may use `every` or `some`, not both"))
+                }
+                val field = everyField ?: someField!!
+                val elements = elementsOf(payload, field)
+                    ?: return@flatMap listOf(malformedQuantifiedRule(
+                        props, "'$field' is not an array on this payload"))
+
+                return@flatMap if (everyField != null) {
+                    expandEvery(props, checkVal, payload, field, elements, ruleName)
+                } else {
+                    listOf(collapseSome(props, checkVal, field, elements, ruleName))
                 }
             }
 
@@ -1244,7 +1396,7 @@ class Interpreter(
                     )
                 }
             }
-            RuntimeValue.ObjectValue(props)
+            listOf(RuntimeValue.ObjectValue(props))
         }
 
         // Dispatch to the unchanged stdlib validate.assert (now sees only boolean checks → UDM-safe).

@@ -1,0 +1,42 @@
+name: "validate_assert_every_per_element_path"
+category: "language/validate"
+description: "F24: `every` applies the check to each element of a named array and reports ONE issue per failing element, counted individually"
+tags: ["validate", "1.1", "assert", "quantifier", "every", "F24"]
+
+input:
+  format: json
+  data: { "lines": [ {"sku": "A", "qty": 5}, {"sku": "B", "qty": -2}, {"sku": "C", "qty": -9} ] }
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "line-qty-positive", every: "lines", check: (l) => l.qty > 0,
+      message: "line qty must be positive", field: "qty" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 1,
+    "failed": 2,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "line-qty-positive", "field": "qty", "message": "line qty must be positive", "severity": "error"},
+      {"rule": "line-qty-positive", "field": "qty", "message": "line qty must be positive", "severity": "error"}
+    ],
+    "payload": { "lines": [ {"sku": "A", "qty": 5}, {"sku": "B", "qty": -2}, {"sku": "C", "qty": -9} ] }
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F24-quantified-validation-rules.md"]
+  notes:
+    - "The check receives each ELEMENT, not the payload — the structural analogue of a Schematron context-rule."
+    - "passed:1 and failed:2 — every element is a check, so counts are per element, and the first (valid) line is reported as passed."
+    - "Two issues rather than one: without the quantifier the same constraint collapsed to a SINGLE issue with field 'lines', so the count of failures was lost."
+    - "There is deliberately no location field. A location syntax belongs to a serialization (JSON Pointer is JSON's, XPath is XML's) and this report is format-neutral; expressing 'which element' neutrally is deferred to the SVRL-projection decision."

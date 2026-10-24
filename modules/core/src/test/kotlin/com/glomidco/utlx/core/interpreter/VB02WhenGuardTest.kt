@@ -41,9 +41,6 @@ class VB02WhenGuardTest {
      * leave every later method observing nothing. See B34LogicalShortCircuitTest for the same trap.
      */
     companion object {
-        /** Rules as `validate.assert` received them — resolved to booleans by the interpreter. */
-        val received = mutableListOf<Map<String, UDM>>()
-
         /**
          * Payloads seen by `vb02Record()` inside a check lambda — empty means the check never ran.
          *
@@ -55,24 +52,21 @@ class VB02WhenGuardTest {
          */
         val checkRuns = mutableListOf<Double>()
 
-        val lookup: Map<String, (List<UDM>) -> UDM> = mapOf(
-            "validate.assert" to { args ->
-                received.clear()
-                (args.getOrNull(1) as? UDM.Array)?.elements
-                    ?.filterIsInstance<UDM.Object>()
-                    ?.forEach { received.add(it.properties) }
-                UDM.Object.of("valid" to UDM.Scalar.boolean(true))
-            },
-            "vb02Record" to { args ->
-                checkRuns.add(((args[0] as UDM.Scalar).value as Number).toDouble())
-                UDM.Scalar.boolean(true)
-            },
+        // `validate.assert` comes from the SHARED capture — two classes registering their own
+        // would silently share whichever ran first (see ValidateAssertCapture).
+        val lookup: Map<String, (List<UDM>) -> UDM> = ValidateAssertCapture.lookup(
+            mapOf(
+                "vb02Record" to { args ->
+                    checkRuns.add(((args[0] as UDM.Scalar).value as Number).toDouble())
+                    UDM.Scalar.boolean(true)
+                },
+            )
         )
     }
 
     @BeforeEach
     fun reset() {
-        received.clear()
+        ValidateAssertCapture.reset()
         checkRuns.clear()
     }
 
@@ -89,10 +83,7 @@ class VB02WhenGuardTest {
         interpreter.execute(program, UDM.Object.of("type" to UDM.Scalar("RETAIL")))
     }
 
-    private fun only(): Map<String, UDM> {
-        assertEquals(1, received.size, "expected exactly one rule, got ${received.size}")
-        return received[0]
-    }
+    private fun only(): Map<String, UDM> = ValidateAssertCapture.single()
 
     private fun flag(props: Map<String, UDM>, key: String): Any? = (props[key] as? UDM.Scalar)?.value
     private fun text(props: Map<String, UDM>, key: String): String? = (props[key] as? UDM.Scalar)?.value as? String

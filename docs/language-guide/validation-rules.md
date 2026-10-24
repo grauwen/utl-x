@@ -133,6 +133,7 @@ $input |> validate.assert([
 | `field` / `fields` | no | Field name, or an array joined comma-separated |
 | `severity` | no | `error` (default), `warning`, or `notice` |
 | `when` | no | Applicability guard, lambda `(p) => <boolean>` — see [Conditional rules](#conditional-rules-when) |
+| `every` / `some` | no | Quantify over a named array; `check` then takes each **element** — see [Quantified rules](#quantified-rules-every--some) |
 
 ### The lambda contract
 
@@ -175,6 +176,45 @@ It is also what makes the rule robust. Because the condition is deferred, `asser
 per rule under its own error boundary. An eagerly evaluated condition is computed while the rule
 list is being built — *upstream* of `assert` — so a comparison against missing or mistyped data
 throws there and then, and `assert` never runs to isolate anything.
+
+### Quantified rules (`every` / `some`)
+
+A rule can quantify over a named array. The `check` then receives **each element**, not the payload:
+
+```utlx
+$input |> validate.assert([
+  { rule: "line-qty-positive", every: "lines", check: (l) => l.qty > 0,
+    message: "line qty must be positive", field: "qty" }
+])
+```
+
+| Form | Passes when | Issues reported |
+|---|---|---|
+| `every: "<field>"` | every element satisfies the check | **one per failing element** |
+| `some: "<field>"` | at least one element does | one, for the whole array |
+
+On `lines: [{qty:5}, {qty:-2}, {qty:-9}]` the `every` rule above gives `passed:1, failed:2` and two
+issues. Write the same constraint as a whole-payload lambda
+(`check: (p) => count(filter(p.lines, l => l.qty <= 0)) == 0`) and you get **one** issue with
+`field: "lines"` — the number of failures is lost. That is the reason to prefer `every` for anything
+per-element.
+
+An issue does **not** carry an element locator. A location syntax belongs to a serialization — JSON
+Pointer is JSON's, XPath is XML's — and this report is format-neutral, so the counts tell you how
+many elements failed and `payload` carries the record for inspection. Expressing *which* element
+neutrally is an open decision ([F24 §Location](../features/F24-quantified-validation-rules.md)).
+
+Edge semantics worth knowing:
+
+- `every` over an empty array **passes** (vacuously true); `some` over an empty array **fails**.
+- Every element is evaluated — no short-circuit — so one bad element never hides another.
+- An element whose check cannot be evaluated becomes an error issue **for that element**, naming it
+  in the message (*"could not be evaluated for element 1 of 'lines'"*).
+- A quantifier over a missing field or a non-array is a **malformed rule** (fail-closed), like
+  `validate.unique`.
+- A `when` guard is resolved first: a false guard skips the rule without quantifying at all.
+
+See [F24](../features/F24-quantified-validation-rules.md) for the full design.
 
 ### Conditional rules (`when`)
 
@@ -260,7 +300,7 @@ Every `validate.*` call returns the same shape:
 | `failed` | Count of `error`-severity issues only |
 | `warnings` / `notices` | Counted separately; neither affects `valid` |
 | `passed` | `totalChecks - issues.size` — a warning-issuing rule is neither passed nor failed |
-| `issues` | One entry per non-passing rule |
+| `issues` | One entry per non-passing rule — and one **per failing element** for a quantified rule |
 | `payload` | The input record, carried through for downstream routing |
 
 The result serializes cleanly to both JSON and XML (verified, including on the GraalVM native

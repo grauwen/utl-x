@@ -1,0 +1,40 @@
+name: "validate_assert_some_quantifier"
+category: "language/validate"
+description: "F24: `some` passes when at least one element of a named array satisfies the check, and reports a single issue when none does"
+tags: ["validate", "1.1", "assert", "quantifier", "some", "F24"]
+
+input:
+  format: json
+  data: { "lines": [ {"region": "DE"}, {"region": "FR"} ] }
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "has-a-domestic-line", some: "lines", check: (l) => l.region == "NL",
+      message: "at least one line must be domestic", field: "region" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "has-a-domestic-line", "field": "region", "message": "at least one line must be domestic", "severity": "error"}
+    ],
+    "payload": { "lines": [ {"region": "DE"}, {"region": "FR"} ] }
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F24-quantified-validation-rules.md"]
+  notes:
+    - "`some` is a whole-array question, so it yields ONE issue and no path — there is no single element to point at."
+    - "All elements are evaluated (no short-circuit), so a throwing element cannot mask a later passing one."
+    - "`some` over an empty array is false; `every` over an empty array is vacuously true."
