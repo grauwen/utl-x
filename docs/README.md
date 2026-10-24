@@ -71,6 +71,7 @@ Understanding UTL-X internals:
 - **[Universal Data Model](architecture/universal-data-model.md)** - UDM explained
 - **[Runtime](architecture/runtime.md)** - Runtime architecture
 - **[Performance](architecture/performance.md)** - Optimization techniques
+- **[Validation Enforcement & Observability](architecture/utlxe-validation-enforcement-and-observability.md)** - What the engine does with a validation verdict: enforcement, logging, counters, dead-letter
 
 ### 🔄 Comparisons
 

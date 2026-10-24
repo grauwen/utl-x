@@ -1,6 +1,6 @@
 # F21: `%utlx 1.1` — Semantic Validation (`validate.*`)
 
-**Status:** Design complete — implementation planned (see build plan)
+**Status:** Design complete — language side **implemented** (543/543 conformance; see the VB01–VB05 fix reports). The **engine** half — enforcement, counters, logging, dead-letter — is [EF23](EF23-engine-validation-enforcement-and-observability.md), not yet implemented.
 **Priority:** High (next minor of the pure language line; prerequisite for the content guard and Open-M semantic components)
 **Created:** October 2026
 **Updated:** October 2026
