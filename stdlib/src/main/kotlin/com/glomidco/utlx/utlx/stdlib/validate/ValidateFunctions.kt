@@ -30,6 +30,41 @@ object ValidateFunctions {
     private fun isSet(udm: UDM?): Boolean = udm != null && !(udm is UDM.Scalar && udm.value == null)
 
     /**
+     * VB04: a rule that cannot be **constructed** is an error, exactly like a rule that cannot be
+     * **evaluated** (VB01's `check`, VB02's `when`).
+     *
+     * Malformed arguments used to produce a silent PASS: `validate.required("price")` — the array
+     * brackets forgotten — ran zero checks and returned `valid:true`, and `unique` pointed at a
+     * non-array counted a check as passed. On a fail-closed guard (`maxErrors = 0`) `valid:true`
+     * forwards the payload, so a typo in a rule silently disabled that rule and waved the data
+     * through. Reporting an error issue instead keeps a broken rule fail-closed.
+     */
+    private fun malformedRule(payload: UDM, fn: String, reason: String, field: String? = null): UDM =
+        validationResult(
+            payload,
+            listOf(ValidationIssue(field = field, message = "validate.$fn: malformed rule — $reason")),
+            totalChecks = 1,
+        )
+
+    /** The exact-arity guard the `@UTLXFunction` minArgs/maxArgs declare but nothing enforces here. */
+    private fun arityReason(args: List<UDM>, expected: Int, shape: String): String? =
+        if (args.size == expected) null
+        else "expected $expected arguments ($shape), got ${args.size}"
+
+    /** A field-name argument: must be a non-blank string. */
+    private fun fieldArg(args: List<UDM>, i: Int): String? =
+        ((args.getOrNull(i) as? UDM.Scalar)?.value as? String)?.takeIf { it.isNotBlank() }
+
+    /** An array argument's elements, or null when the argument is not an array at all. */
+    private fun arrayArg(args: List<UDM>, i: Int): List<UDM>? = (args.getOrNull(i) as? UDM.Array)?.elements
+
+    /** Field names from an array argument — null if any element is not a string (silently dropped before). */
+    private fun fieldNames(elements: List<UDM>): List<String>? {
+        val names = elements.map { (it as? UDM.Scalar)?.value as? String }
+        return if (names.any { it == null }) null else names.filterNotNull()
+    }
+
+    /**
      * VB03: the canonical form of a scalar for VALUE comparison.
      *
      * `scalarValue` hands back the raw boxed value, and the same number reaches us in different
@@ -111,7 +146,11 @@ object ValidateFunctions {
     )
     fun required(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val fields = (args.getOrNull(1) as? UDM.Array)?.elements?.mapNotNull { asString(it) } ?: emptyList()
+        arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "required", it) }
+        val elements = arrayArg(args, 1)
+            ?: return malformedRule(payload, "required", "fields must be an array of field names")
+        val fields = fieldNames(elements)
+            ?: return malformedRule(payload, "required", "every entry in fields must be a string")
         val p = props(payload)
         val issues = fields
             .filter { f -> val v = p[f]; v == null || (v is UDM.Scalar && v.value == null) }
@@ -130,9 +169,13 @@ object ValidateFunctions {
     )
     fun inRange(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val field = asString(args.getOrNull(1)) ?: ""
+        arityReason(args, 4, "payload, field, min, max")?.let { return malformedRule(payload, "inRange", it) }
+        val field = fieldArg(args, 1)
+            ?: return malformedRule(payload, "inRange", "field must be a non-empty string")
         val min = asNumber(args.getOrNull(2))
+            ?: return malformedRule(payload, "inRange", "min must be a number", field)
         val max = asNumber(args.getOrNull(3))
+            ?: return malformedRule(payload, "inRange", "max must be a number", field)
         val v = asNumber(props(payload)[field])
         val issues = when {
             v == null -> listOf(ValidationIssue(field, "Field '$field' is not a number (inRange)"))
@@ -154,8 +197,11 @@ object ValidateFunctions {
     )
     fun oneOf(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val field = asString(args.getOrNull(1)) ?: ""
-        val allowedValues = (args.getOrNull(2) as? UDM.Array)?.elements?.map { scalarValue(it) } ?: emptyList()
+        arityReason(args, 3, "payload, field, values[]")?.let { return malformedRule(payload, "oneOf", it) }
+        val field = fieldArg(args, 1)
+            ?: return malformedRule(payload, "oneOf", "field must be a non-empty string")
+        val allowedValues = (arrayArg(args, 2)
+            ?: return malformedRule(payload, "oneOf", "values must be an array", field)).map { scalarValue(it) }
         val actual = scalarValue(props(payload)[field])
         // VB03: compare canonical forms — a JSON Int and a script Double of the same number match.
         val allowed = allowedValues.map { canonicalScalar(it) }
@@ -178,10 +224,17 @@ object ValidateFunctions {
     )
     fun matches(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val field = asString(args.getOrNull(1)) ?: ""
-        val pattern = asString(args.getOrNull(2)) ?: ""
+        arityReason(args, 3, "payload, field, pattern")?.let { return malformedRule(payload, "matches", it) }
+        val field = fieldArg(args, 1)
+            ?: return malformedRule(payload, "matches", "field must be a non-empty string")
+        val pattern = asString(args.getOrNull(2))
+            ?: return malformedRule(payload, "matches", "pattern must be a string", field)
+        // VB04: an unparseable regex is a broken RULE, not failing data — report it as such instead
+        // of silently reporting "does not match" and blaming the payload.
+        val regex = runCatching { Regex(pattern) }.getOrNull()
+            ?: return malformedRule(payload, "matches", "pattern is not a valid regular expression: /$pattern/", field)
         val value = asString(props(payload)[field])
-        val ok = value != null && runCatching { Regex(pattern).matches(value) }.getOrDefault(false)
+        val ok = value != null && regex.matches(value)
         val issues = if (ok) emptyList()
             else listOf(ValidationIssue(field, "Field '$field' value '${value ?: ""}' does not match /$pattern/"))
         return validationResult(payload, issues, totalChecks = 1)
@@ -197,11 +250,17 @@ object ValidateFunctions {
     )
     fun isoDate(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val field = asString(args.getOrNull(1)) ?: ""
-        val format = asString(args.getOrNull(2)) ?: ""
+        arityReason(args, 3, "payload, field, format")?.let { return malformedRule(payload, "isoDate", it) }
+        val field = fieldArg(args, 1)
+            ?: return malformedRule(payload, "isoDate", "field must be a non-empty string")
+        val format = asString(args.getOrNull(2))
+            ?: return malformedRule(payload, "isoDate", "format must be a string", field)
+        // VB04: as with `matches`, an unusable format is a broken rule, not failing data.
+        val formatter = runCatching { java.time.format.DateTimeFormatter.ofPattern(format) }.getOrNull()
+            ?: return malformedRule(payload, "isoDate", "format is not a valid date pattern: '$format'", field)
         val value = asString(props(payload)[field])
         val ok = value != null && runCatching {
-            java.time.LocalDate.parse(value, java.time.format.DateTimeFormatter.ofPattern(format)); true
+            java.time.LocalDate.parse(value, formatter); true
         }.getOrDefault(false)
         val issues = if (ok) emptyList()
             else listOf(ValidationIssue(field, "Field '$field' value '${value ?: ""}' is not a valid date in format '$format'"))
@@ -218,9 +277,15 @@ object ValidateFunctions {
     )
     fun unique(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val arrayField = asString(args.getOrNull(1)) ?: ""
-        val keyField = asString(args.getOrNull(2)) ?: ""
-        val array = (props(payload)[arrayField] as? UDM.Array)?.elements ?: emptyList()
+        arityReason(args, 3, "payload, arrayField, keyField")?.let { return malformedRule(payload, "unique", it) }
+        val arrayField = fieldArg(args, 1)
+            ?: return malformedRule(payload, "unique", "arrayField must be a non-empty string")
+        val keyField = fieldArg(args, 2)
+            ?: return malformedRule(payload, "unique", "keyField must be a non-empty string", arrayField)
+        // VB04: previously a non-array (or absent) field meant zero keys, no duplicates, and a
+        // silent PASS — the worst direction for a guard. Nothing was checked, so it is an error.
+        val array = (props(payload)[arrayField] as? UDM.Array)?.elements
+            ?: return malformedRule(payload, "unique", "'$arrayField' is not an array on this payload", arrayField)
         val keys = array.mapNotNull { scalarValue((it as? UDM.Object)?.properties?.get(keyField)) }
         // VB03: group on the canonical form, so an Int 7 and a Double 7.0 count as the same key.
         val dupes = keys.groupingBy { canonicalScalar(it) }.eachCount().filterValues { it > 1 }.keys
@@ -243,7 +308,9 @@ object ValidateFunctions {
     )
     fun mutuallyExclusive(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val fields = (args.getOrNull(1) as? UDM.Array)?.elements?.mapNotNull { asString(it) } ?: emptyList()
+        arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "mutuallyExclusive", it) }
+        val fields = arrayArg(args, 1)?.let { fieldNames(it) }
+            ?: return malformedRule(payload, "mutuallyExclusive", "fields must be an array of field-name strings")
         val set = fields.filter { isSet(props(payload)[it]) }
         val issues = if (set.size <= 1) emptyList()
             else listOf(ValidationIssue(null, "At most one of $fields may be set; found $set"))
@@ -260,7 +327,9 @@ object ValidateFunctions {
     )
     fun atLeastOne(args: List<UDM>): UDM {
         val payload = payloadOf(args)
-        val fields = (args.getOrNull(1) as? UDM.Array)?.elements?.mapNotNull { asString(it) } ?: emptyList()
+        arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "atLeastOne", it) }
+        val fields = arrayArg(args, 1)?.let { fieldNames(it) }
+            ?: return malformedRule(payload, "atLeastOne", "fields must be an array of field-name strings")
         val issues = if (fields.any { isSet(props(payload)[it]) }) emptyList()
             else listOf(ValidationIssue(null, "At least one of $fields must be set"))
         return validationResult(payload, issues, totalChecks = 1)

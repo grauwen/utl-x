@@ -52,6 +52,29 @@ literal `[50, 60]` ([VB03](../bugs-fixed/VB03-validate-oneOf-numeric-membership-
 that fix it did not). It does **not** coerce across kinds: the string `"50"` is not the number `50`,
 which is what makes it useful as a type check as well as a value check.
 
+### When a rule itself is wrong
+
+A validator whose **arguments** are malformed reports an `error` issue rather than passing:
+
+```utlx
+$input |> validate.required("orderId")        // brackets forgotten
+  → valid:false, failed:1
+    "validate.required: malformed rule — fields must be an array of field names"
+```
+
+This covers wrong arity, a non-array where a list is expected, a non-numeric bound in `inRange`, an
+unparseable regex in `matches`, an unusable format in `isoDate`, and a `unique` target that is not an
+array. The message names the function and the reason, so it points at your script rather than at the
+payload.
+
+It follows the same rule as the two `assert` cases: **a rule that cannot be constructed is an error,
+exactly like one that cannot be evaluated.** Before
+[VB04](../bugs-fixed/VB04-named-validators-fail-open-on-malformed-arguments.md) these cases passed
+silently — a typo disabled the rule and forwarded the data.
+
+An empty list is still legal and still passes: `validate.required([])` checks nothing by design,
+since a computed field list may legitimately be empty.
+
 ---
 
 ## Tier 2 — `validate.assert` with lambda rules
@@ -282,6 +305,7 @@ v.payload      // the record, for routing
 | `check` is always `(p) => …` | The language's only working deferred-condition form |
 | Guard with `&&` / `\|\|` | They short-circuit (B34); `&&` fails on absent, `\|\|` skips it |
 | A broken `when` fails its rule | It never skips it — malformed data must not silence a rule |
+| A malformed rule is an error | Wrong arity or argument type reports, never passes (VB04) |
 | Never rely on `when` | Eager form crashes, lambda form is silently ignored |
 | Never read `valid` as "within budget" | `valid` is `failed == 0`; budgets live in the engine policy |
 

@@ -175,4 +175,98 @@ class ValidateFunctionsTest {
         val rows = arr(obj("lineId" to UDM.Scalar(7)), obj("lineId" to UDM.Scalar(8.0)))
         assertTrue(valid(ValidateFunctions.unique(listOf(obj("orderLines" to rows), str("orderLines"), str("lineId")))))
     }
+
+    // ── VB04: a rule that cannot be CONSTRUCTED is an error, never a silent pass ──
+
+    private fun messages(r: UDM) = ((r as UDM.Object).properties["issues"] as UDM.Array).elements
+        .map { ((it as UDM.Object).properties["message"] as UDM.Scalar).value as String }
+
+    /** Every malformed rule must be invalid, at error severity, counted as failed. */
+    private fun assertMalformed(r: UDM, expectedFragment: String) {
+        assertFalse(valid(r), "a malformed rule must not report valid: ${messages(r)}")
+        assertEquals(1, count(r, "failed"), "a malformed rule must count as failed: ${messages(r)}")
+        assertEquals(0, count(r, "passed"), "a malformed rule must not count a passed check")
+        assertEquals(listOf<Any?>("error"), severities(r))
+        val msg = messages(r).single()
+        assertTrue(msg.contains("malformed rule"), "message should name the rule as malformed: $msg")
+        assertTrue(msg.contains(expectedFragment), "expected '$expectedFragment' in: $msg")
+    }
+
+    // The four that used to report valid:true — the fail-open paths.
+
+    @Test fun `VB04 required with a non-array fields argument is an error, not a silent pass`() {
+        // `validate.required("price")` — brackets forgotten. Used to run 0 checks and pass.
+        assertMalformed(ValidateFunctions.required(listOf(order, str("price"))), "fields must be an array")
+    }
+
+    @Test fun `VB04 inRange with too few arguments is an error, not a silent pass`() {
+        // max omitted. Used to skip the max comparison and count a passed check.
+        assertMalformed(ValidateFunctions.inRange(listOf(order, str("unitPrice"), num(0))), "expected 4 arguments")
+    }
+
+    @Test fun `VB04 inRange with a non-numeric bound is an error, not a silent pass`() {
+        assertMalformed(
+            ValidateFunctions.inRange(listOf(order, str("unitPrice"), str("abc"), num(100))),
+            "min must be a number",
+        )
+    }
+
+    @Test fun `VB04 unique on a field that is not an array is an error, not a silent pass`() {
+        // Used to find zero keys, hence no duplicates, hence valid:true — nothing was checked.
+        val p = obj("orderLines" to num(7))
+        assertMalformed(
+            ValidateFunctions.unique(listOf(p, str("orderLines"), str("lineId"))),
+            "is not an array",
+        )
+    }
+
+    @Test fun `VB04 mutuallyExclusive with a non-array fields argument is an error`() {
+        assertMalformed(ValidateFunctions.mutuallyExclusive(listOf(order, str("a"))), "fields must be an array")
+    }
+
+    // These were already fail-closed, but blamed the payload for a broken rule.
+
+    @Test fun `VB04 matches with an unparseable regex blames the rule, not the data`() {
+        val r = ValidateFunctions.matches(listOf(order, str("currency"), str("[")))
+        assertMalformed(r, "not a valid regular expression")
+    }
+
+    @Test fun `VB04 isoDate with an unusable format blames the rule, not the data`() {
+        val p = obj("d" to str("2024-01-15"))
+        assertMalformed(ValidateFunctions.isoDate(listOf(p, str("d"), str("'"))), "not a valid date pattern")
+    }
+
+    @Test fun `VB04 oneOf with a non-array values argument is an error`() {
+        assertMalformed(ValidateFunctions.oneOf(listOf(order, str("currency"), str("EUR"))), "values must be an array")
+    }
+
+    @Test fun `VB04 atLeastOne with a non-array fields argument is an error`() {
+        assertMalformed(ValidateFunctions.atLeastOne(listOf(order, str("email"))), "fields must be an array")
+    }
+
+    @Test fun `VB04 required rejects a non-string entry in the fields array`() {
+        // Previously mapNotNull dropped it silently, so the rule checked fewer fields than written.
+        assertMalformed(
+            ValidateFunctions.required(listOf(order, arr(str("orderId"), obj("nested" to num(1))))),
+            "must be a string",
+        )
+    }
+
+    @Test fun `VB04 a valid date pattern still blames the data when the value does not match`() {
+        // Guard against over-reach: "QQQQ" IS a legal DateTimeFormatter pattern (quarter-of-year),
+        // so a value that fails to parse against it is a DATA problem, not a malformed rule.
+        val p = obj("d" to str("2024-01-15"))
+        val r = ValidateFunctions.isoDate(listOf(p, str("d"), str("QQQQ")))
+        assertFalse(valid(r))
+        assertFalse(messages(r).single().contains("malformed"), "should blame the data: ${messages(r)}")
+    }
+
+    @Test fun `VB04 well-formed rules are completely unaffected`() {
+        assertTrue(valid(ValidateFunctions.required(listOf(order, arr(str("orderId"), str("currency"))))))
+        assertTrue(valid(ValidateFunctions.inRange(listOf(order, str("unitPrice"), num(0), num(100)))))
+        assertTrue(valid(ValidateFunctions.oneOf(listOf(order, str("currency"), arr(str("EUR"), str("USD"))))))
+        assertTrue(valid(ValidateFunctions.matches(listOf(order, str("currency"), str("^[A-Z]{3}$")))))
+        assertTrue(valid(ValidateFunctions.atLeastOne(listOf(order, arr(str("orderId"))))))
+        assertTrue(valid(ValidateFunctions.mutuallyExclusive(listOf(order, arr(str("orderId"))))))
+    }
 }

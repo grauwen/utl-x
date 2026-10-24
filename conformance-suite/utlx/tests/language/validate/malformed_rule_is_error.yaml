@@ -1,0 +1,36 @@
+name: "validate_malformed_rule_is_error"
+category: "language/validate"
+description: "VB04: a named validator given malformed arguments reports an error issue instead of silently passing — a rule that cannot be constructed is fail-closed, like one that cannot be evaluated"
+tags: ["validate", "1.1", "malformed", "fail-closed", "VB04"]
+
+input:
+  format: json
+  data: {"orderId": 42, "orderLines": 7}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.required("orderId")
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": null, "message": "validate.required: malformed rule — fields must be an array of field names", "severity": "error"}
+    ],
+    "payload": {"orderId": 42, "orderLines": 7}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB04-named-validators-fail-open-on-malformed-arguments.md"]
+  notes:
+    - "The array brackets are missing — the commonest typo in a rule. This used to run ZERO checks and return valid:true, which on a fail-closed guard (maxErrors=0) forwarded the payload."
+    - "Breadth across all eight validators (arity, non-array arguments, non-numeric bounds, invalid regex, invalid date pattern, non-array target) is covered by ValidateFunctionsTest in :stdlib."
