@@ -7,7 +7,7 @@
 | Document | interlink-protocol-v1 |
 | Status | Draft ICD — for review by both owners of a split guard |
 | Scope | The protocol on the dedicated link between half A and half B of a UTL-X split guard (deployment shape D) |
-| Related | `UDM-content-guard.md` §3b (split guard), `hardware-acceleration.md` §4a (transform → verify) and §9.8, `ZCU106-dual-10GbE-guard-prototype-abstract.md`, `BINF-bit-level-binary-format.md`, `guard-parser-profile.md` |
+| Related | `UDM-content-guard.md` §3b (split guard), `hardware-acceleration.md` §4a (transform → verify) and §9.8, `utlx-guard/docs/guard/ZCU106-dual-10GbE-guard-prototype-abstract.md`, `BINF-bit-level-binary-format.md`, `guard-parser-profile.md` |
 | Owners | Owner A (sending half) and Owner B (receiving half) — **both must sign** this ICD and every change to it |
 
 > **Design rule in one line:** the interlink protocol is the most security-critical interface

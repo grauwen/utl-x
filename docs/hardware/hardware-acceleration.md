@@ -159,7 +159,7 @@ accredited partner own the verifier (deployment shape C in `UDM-content-guard.md
 
 ## 4b. Why the network terminates in the FPGA — taking the OS off the boundary
 
-*Figure: `utlx-fpga-vs-os-boundary.svg` / `.png`. Full explanation: `fpga-programming-primer.md` §1a.*
+*Figure: `utlx-fpga-vs-os-boundary.svg` / `.png`. Full explanation: `utlx-guard/docs/guard/fpga-programming-primer.md` §1a.*
 
 | | A — network through the processor | B — network through the FPGA (UTL-X Guard) |
 |---|---|---|

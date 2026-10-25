@@ -114,8 +114,8 @@ or rule keys was incomplete and the default consequence of the omission was "let
 
 ### The guard case breaks "infer the verdict from the output" — added 2026-10-25
 
-Reading the guard design (`../guard/utlx-guard-validate-subset-and-compiler.md`, imported 2026-10-25)
-shows that every option above shares a hidden assumption: that the transformation's **output is the
+Reading the guard design (`utlx-guard/docs/guard/utlx-guard-validate-subset-and-compiler.md`, in the
+separately-governed private `utlx-guard` repo) shows that every option above shares a hidden assumption: that the transformation's **output is the
 verdict**. For the guard it is not.
 
 The A-side pipeline is:
