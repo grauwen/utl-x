@@ -112,6 +112,53 @@ or rule keys was incomplete and the default consequence of the omission was "let
 - **(d) Re-parse the serialized output** in `TransportHandlers` — uniform and structurally free, but
   it pays a parse per payload to recover information that was just thrown away. Not recommended.
 
+### The guard case breaks "infer the verdict from the output" — added 2026-10-25
+
+Reading the guard design (`../guard/utlx-guard-validate-subset-and-compiler.md`, imported 2026-10-25)
+shows that every option above shares a hidden assumption: that the transformation's **output is the
+verdict**. For the guard it is not.
+
+The A-side pipeline is:
+
+```
+parse source → UDM → validate.* (A) → strip → serialise simple form
+```
+
+The output is the **stripped simple form** — the thing to emit, BINF-framed, for the FPGA's `out_r`
+port. The verdict travels on a *separate* port (`verdict`: a pass bit, an ICD reason code, and a
+failed-rule bitmask). So:
+
+- `VerdictCheck.of(outputUDM)` would inspect the stripped payload, find no `ValidationResult` shape,
+  and return **`NoVerdict`** — a *wrong* answer, not merely an absent one. The verdict would be lost
+  while the engine reported "nothing to gate".
+- Only `NotInspected` being the **default** keeps this from being another silent fail-open: a
+  strategy that never looks is recorded as unknown. But a strategy that looks at the wrong thing
+  still produces a confident `NoVerdict`.
+
+So inferring the verdict from the output works for the in-script envelope pattern
+(`routing_in_script.yaml`, where the script returns `{status, payload, issues}`) and **not** for a
+validate-then-strip-then-emit guard, which is the shape the product actually needs.
+
+### Option (e): capture the verdict where validation ran
+
+The verdict has to be taken from `validate.*` itself — a side channel out of the interpreter — rather
+than recovered from whatever the script happened to return. Implications:
+
+- `:core` records the `ValidationResult`(s) produced during one execution; the engine reads them from
+  the execution context instead of from the output.
+- It composes with the guard pipeline: the output stays a pure payload (as `out_r` wants), and the
+  verdict is out-of-band (as `verdict` wants).
+- It answers "which rules failed" directly from `issues[].rule`, which the guard needs anyway to
+  compare against the hardware bitmask — their proof strategy is *"compare `valid` **and** the set of
+  failing rule IDs with the hardware bitmask"*.
+- Cost: it is more invasive than (a)–(d), touches `:core`, and raises a question none of the others
+  do — what if a script calls `validate.*` more than once? (Several results; the guard's A-side
+  policy is one `assert` call, but nothing enforces that.)
+
+**This is now the recommended direction**, superseding (a). Options (a)–(d) remain valid for the
+UTLXe/envelope case, but a design that only works when the output *is* the verdict cannot serve the
+guard, and the guard is why `validate.*` exists.
+
 ### Non-negotiable, whichever option wins
 
 **"I could not obtain the output UDM" must not mean "forward".** The policy already distinguishes
