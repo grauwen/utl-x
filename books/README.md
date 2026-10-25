@@ -5,13 +5,15 @@ Source for the UTL-X book series. **One directory per book**; sources are [Typst
 | Directory | Book | Status |
 |-----------|------|--------|
 | `language/`       | *UTL-X — One Language, All Formats* | active |
-| `guard/`           | *UTL-X Guard* (open-standards content guard) | active |
 | `mapper/`          | *UTL-X — The Mapper* (message-mapping component; short on-ramp) | active |
 | `engine-azure/`   | *UTLXe on Azure*                    | active |
 | `engine-gcp/`   | *UTLXe on GCP* (future)             | planned |
 | `engine-aws/`   | *UTLXe on AWS* (future)             | planned |
 | `cookbook/`     | *UTL-X Cookbook* (future)           | planned |
 | `_shared/`      | shared Typst templates / styles / diagrams | scaffold |
+
+> *UTL-X Guard* (the open-standards content guard book) moved to the separately-governed private
+> `utlx-guard` repository, at `books/guard/`, together with the guard design and hardware notes.
 
 ## Building
 Each book has its own `build.sh` (run it from inside the book's directory, e.g.

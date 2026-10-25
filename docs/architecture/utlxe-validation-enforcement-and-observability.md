@@ -9,7 +9,7 @@
 | Scope | What the engine does with a **validation verdict** at runtime: enforcement (forward vs reject), logging, metrics, dead-letter. Covers both validation systems and how they relate. |
 | Out of scope | *Script* validation (parsing/semantic checks on `.utlx` source) — see `VALIDATION_GAPS.md`, `VALIDATION_ENHANCEMENT_PLAN.md`. The `validate.*` language surface — see `../language-guide/validation-rules.md`. |
 | Feature doc | [`EF23`](../features/EF23-engine-validation-enforcement-and-observability.md) — this document is its design rationale; EF23 carries the scope, acceptance criteria and the decisions required |
-| Related | `EF02-engine-schema-validation.md`, `EF12-runtime-logging-and-diagnostics.md`, `EF14-opentelemetry-tracing.md`, `EF19-health-response-enrichment.md`, `utlx-guard/docs/guard/civilian-guard.md`, `../proposals/utlx-validate-naming-and-guard-profile.md`, `../bugs-fixed/VB04-…`, `../bugs-fixed/VB05-…` |
+| Related | `EF02-engine-schema-validation.md`, `EF12-runtime-logging-and-diagnostics.md`, `EF14-opentelemetry-tracing.md`, `EF19-health-response-enrichment.md`, `utlx-guard/docs/architecture/civilian-guard.md`, `../proposals/utlx-validate-naming-and-guard-profile.md`, `../bugs-fixed/VB04-…`, `../bugs-fixed/VB05-…` |
 
 > **One line:** a `validate.*` verdict is currently just *output* — nothing enforces it, nothing logs it, and the existing counters classify a rejection as a **successful execution**, so a guard rejecting every payload reports itself healthy.
 

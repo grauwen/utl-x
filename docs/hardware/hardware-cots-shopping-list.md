@@ -75,7 +75,7 @@ shipboard / minimal-SWaP product, see §9 (Kria SOM or VNX+).
 - **Not included:** SFP+ optics or DAC cables — see §1c for the test set.
 - **Split guard:** two ZCU106 back to back = one 10G port per network, one 10G fiber
   interlink, one private management port per owner (see `UDM-content-guard.md` §3b and
-  `utlx-guard/docs/guard/ZCU106-dual-10GbE-guard-prototype-abstract.md`).
+  `utlx-guard/docs/hardware/ZCU106-dual-10GbE-guard-prototype-abstract.md`).
 
 **Alternative silicon (optional):** **Microchip PolarFire SoC Icicle Kit** (RISC-V + FPGA)
 — a few hundred dollars (*verify*), for comparing a non-AMD supply chain and its
