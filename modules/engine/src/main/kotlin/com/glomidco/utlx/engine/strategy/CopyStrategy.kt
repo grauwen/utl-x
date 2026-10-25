@@ -11,6 +11,7 @@ import com.glomidco.utlx.core.types.StandardLibrary
 import com.glomidco.utlx.core.types.TypeCheckResult
 import com.glomidco.utlx.core.types.TypeChecker
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.engine.routing.VerdictCheck
 import com.glomidco.utlx.engine.config.TransformConfig
 import com.glomidco.utlx.engine.strategy.compiled.ASTCompiler
 import com.glomidco.utlx.engine.strategy.compiled.TransformFunction
@@ -220,7 +221,11 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
                 outputUDM, outputFormat, compiledProgram.header.outputFormat, true
             )
 
-            return ExecutionResult(output = outputData)
+            return ExecutionResult(
+                output = outputData,
+                // EF23: decide here — this is where the output still exists as a UDM.
+                verdict = VerdictCheck.of(outputUDM),
+            )
         } finally {
             returnSkeleton(skeleton)
         }
@@ -268,7 +273,11 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             outputUDM, outputFormat, compiledProgram.header.outputFormat, true
         )
 
-        return ExecutionResult(output = outputData)
+        return ExecutionResult(
+            output = outputData,
+            // EF23: decide here — this is where the output still exists as a UDM.
+            verdict = VerdictCheck.of(outputUDM),
+        )
     }
 
     override fun shutdown() {

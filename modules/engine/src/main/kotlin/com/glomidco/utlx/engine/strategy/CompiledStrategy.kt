@@ -14,6 +14,7 @@ import com.glomidco.utlx.engine.config.TransformConfig
 import com.glomidco.utlx.engine.strategy.compiled.ASTCompiler
 import com.glomidco.utlx.engine.strategy.compiled.TransformFunction
 import org.slf4j.LoggerFactory
+import com.glomidco.utlx.engine.routing.VerdictCheck
 
 /**
  * COMPILED Strategy — compiles .utlx expressions to JVM bytecode for direct execution.
@@ -113,7 +114,11 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             val outputData = transformationService.serializeOutputPublic(
                 outputUDM, outputFormat, compiledProgram.header.outputFormat, true
             )
-            return ExecutionResult(output = outputData)
+            return ExecutionResult(
+                output = outputData,
+                // EF23: decide here — this is where the output still exists as a UDM.
+                verdict = VerdictCheck.of(outputUDM),
+            )
         } else {
             // ── Fallback: interpreter (same as TEMPLATE) ──
             val inputs = mapOf(
@@ -158,7 +163,11 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             val outputData = transformationService.serializeOutputPublic(
                 outputUDM, outputFormat, compiledProgram.header.outputFormat, true
             )
-            return ExecutionResult(output = outputData)
+            return ExecutionResult(
+                output = outputData,
+                // EF23: decide here — this is where the output still exists as a UDM.
+                verdict = VerdictCheck.of(outputUDM),
+            )
         } else {
             // ── Fallback: interpreter via TransformationService.transform() ──
             val inputs = declaredInputs.associate { (name, formatSpec) ->

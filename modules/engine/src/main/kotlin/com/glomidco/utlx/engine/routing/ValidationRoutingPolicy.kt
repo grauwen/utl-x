@@ -1,6 +1,7 @@
 package com.glomidco.utlx.engine.routing
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.validate.ValidateFunctions
 
 /**
  * F21 / Phase 4 — **fail-closed routing policy** over a `validate.*` `ValidationResult`.
@@ -73,11 +74,18 @@ class ValidationRoutingPolicy(
         }
     }
 
-    /** A UDM Object is a ValidationResult if it carries the verdict shape (`valid` + the count fields). */
-    fun isValidationResult(udm: UDM): Boolean {
-        if (udm !is UDM.Object) return false
-        return udm.get("valid") != null && udm.get("failed") != null && udm.get("issues") != null
-    }
+    /**
+     * A UDM Object is a ValidationResult if it carries the verdict shape (`valid` + the count
+     * fields).
+     *
+     * Delegates to `:stdlib`, which owns the definition because it also *produces* the shape
+     * (`validationResult`). This class used to carry its own copy of the three-field test in a
+     * different spelling, so a change to the ValidationResult shape would have had to be found in
+     * two modules. `:engine` already declares `implementation(project(":stdlib"))`, so this is a
+     * plain compile-time call — no reflection, and nothing for GraalVM to configure (contrast
+     * B19/B25, where an undeclarable boundary was bridged reflectively and broke the native image).
+     */
+    fun isValidationResult(udm: UDM): Boolean = ValidateFunctions.looksLikeValidationResult(udm)
 
     private fun intOf(obj: UDM.Object, key: String): Int {
         val v = (obj.get(key) as? UDM.Scalar)?.value ?: return 0

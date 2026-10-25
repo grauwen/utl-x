@@ -44,7 +44,14 @@ data class InputSchemaRef(
 data class ExecutionResult(
     val output: String,
     val validationErrors: List<ValidationError> = emptyList(),
-    val metadata: Map<String, Any> = emptyMap()
+    val metadata: Map<String, Any> = emptyMap(),
+    /**
+     * EF23: what looking at the output for a `validate.*` verdict found. Defaults to
+     * [com.glomidco.utlx.engine.routing.VerdictCheck.NotInspected] on purpose — a strategy that
+     * does not set it is recorded as *unknown*, never as *nothing to gate*.
+     */
+    val verdict: com.glomidco.utlx.engine.routing.VerdictCheck =
+        com.glomidco.utlx.engine.routing.VerdictCheck.NotInspected,
 )
 
 data class ValidationError(

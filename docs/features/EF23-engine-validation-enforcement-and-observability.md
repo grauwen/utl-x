@@ -72,12 +72,63 @@ strategy tests. Item 5 is the infra-dependent one and is deliberately last — d
 7. Cross-strategy: the decision is identical on COPY, TEMPLATE and COMPILED — extend
    `ValidateAcrossStrategiesTest`.
 
+## Blocker found 2026-10-24: there is no single point that holds the output UDM
+
+`ValidationRoutingPolicy.decide` takes a `UDM`. By the time `TransportHandlers` has an
+`ExecutionResult`, `output` is **already a serialized String**. So item 1 cannot simply be "add a
+call after execution" — the verdict has to be read where the output is still a UDM, and the
+strategies do not agree on where that is:
+
+| Strategy | Holds the output UDM? | How it serializes |
+|---|---|---|
+| `CompiledStrategy` | yes, 2 sites | explicit `transformationService.serializeOutputPublic(outputUDM, …)` |
+| `CopyStrategy` | yes, 2 sites | same |
+| `TemplateStrategy` | **no** | `transformationService.transform(...)` returns output **already serialized** |
+
+So there is no choke point. `serializeOutputPublic` is the closest thing — four of the six sites go
+through it — but `TemplateStrategy` bypasses it entirely, and a serializer is the wrong home for a
+routing policy anyway. (Worth noting in passing: `serializeOutputPublic` lives in
+`modules/cli/.../TransformationService.kt`, so the engine reaches into the CLI module for it.)
+
+**Why this matters more than it looks.** Wiring the policy only at the sites that happen to hold a
+UDM means `TemplateStrategy` silently does not enforce — fail-open **by omission**. That is the exact
+failure shape that has now occurred three times in this feature area
+([VB04](../bugs-fixed/VB04-named-validators-fail-open-on-malformed-arguments.md) malformed arguments,
+[VB06](../bugs-fixed/VB06-chained-validators-fail-open.md) chained validators,
+[F24](F24-quantified-validation-rules.md) §fail-open), each time because an enumeration of call sites
+or rule keys was incomplete and the default consequence of the omission was "let it through".
+
+### Options
+
+- **(a) Widen `ExecutionResult`** to carry the output UDM (or a `Decision` computed by one shared
+  helper the strategies call), and decide **once** in `ValidationOrchestrator`. N small strategy
+  changes, but only one place *decides*, so an omission shows up as a missing verdict rather than as
+  silent forwarding. **Recommended.**
+- **(b) Expose the UDM from `TransformationService.transform`** so `TemplateStrategy` can hold it
+  too, then decide at a single post-execution point. Cleanest conceptually; touches the
+  CLI-module service the engine depends on.
+- **(c) Decide inside `serializeOutputPublic`** — the nearest existing funnel, but it misses
+  `TemplateStrategy` and puts policy in a serializer. Not recommended.
+- **(d) Re-parse the serialized output** in `TransportHandlers` — uniform and structurally free, but
+  it pays a parse per payload to recover information that was just thrown away. Not recommended.
+
+### Non-negotiable, whichever option wins
+
+**"I could not obtain the output UDM" must not mean "forward".** The policy already distinguishes
+*not a ValidationResult* (→ forward, correct for a plain mapping) from *a failing verdict* (→
+reject). A third state — *could not tell* — must be explicit and fail-closed for a validation
+component, or the wiring reintroduces the bug class it exists to prevent.
+
+This becomes **decision 0**: it gates item 1, and items 2 and 3 depend on having a `Decision` to
+count and log.
+
 ## Decisions required before implementation
 
 These are open in the design rationale (§9 there) and block parts of the scope:
 
 | # | Question | Blocks |
 |---|---|---|
+| 0 | Where does the verdict get read, given no strategy-independent point holds the output UDM? (§Blocker) | items 1, 2, 3 |
 | 1 | Do the two policy vocabularies converge — `FAIL`/`WARN`/`OFF`/`SKIP` vs `maxErrors`/`maxWarnings` budgets? | item 4 |
 | 2 | `pipeline=` (EF02 §4 design) or `transformation=` (shipped `MetricsCollector`) as the metric label? | item 2 |
 | 3 | Does a rejection report `success=false`, or `success=true` with a verdict field? | items 1, 3 |

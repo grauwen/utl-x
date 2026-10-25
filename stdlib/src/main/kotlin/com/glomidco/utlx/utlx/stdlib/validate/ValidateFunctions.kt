@@ -102,8 +102,15 @@ object ValidateFunctions {
      * Validators do not compose by piping. Each takes the message; results are combined by hand
      * (counts with `+`, issues with `flatten([...])`) until a `validate.all(results)` combinator
      * lands. See `examples/utlx/advanced/validation-guard-named-validators.utlx`.
+     *
+     * **Public on purpose: this is the single definition of the verdict shape.** It sits beside
+     * [validationResult], the function that produces that shape, so the producer and every
+     * recogniser cannot drift. The engine's `ValidationRoutingPolicy.isValidationResult` delegates
+     * here rather than keeping its own copy — it used to have one, in a different spelling
+     * (`get("valid") != null` vs `containsKey`), which meant adding a field to a ValidationResult
+     * would have required finding two places in two modules.
      */
-    private fun looksLikeValidationResult(udm: UDM): Boolean {
+    fun looksLikeValidationResult(udm: UDM): Boolean {
         val props = (udm as? UDM.Object)?.properties ?: return false
         return props.containsKey("valid") && props.containsKey("failed") && props.containsKey("issues")
     }
