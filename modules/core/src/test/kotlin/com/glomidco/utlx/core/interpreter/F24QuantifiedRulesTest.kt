@@ -133,6 +133,28 @@ class F24QuantifiedRulesTest {
             """$positiveQty, every: "lines", some: "lines" }""", "three", "not both")
     }
 
+    // ── rule-id uniqueness: checked here BECAUSE expansion shares one id ──
+
+    @Test fun `duplicate author ids are rejected before expansion`() {
+        run("""{ rule: "dup", check: (p) => true, message: "a" },
+               { rule: "dup", check: (p) => true, message: "b" }""")
+        val props = ValidateAssertCapture.single()
+        assertEquals(false, ValidateAssertCapture.flag(props, "check"))
+        val msg = assertNotNull(ValidateAssertCapture.text(props, "message"))
+        assertTrue(msg.contains("duplicate rule id(s) 'dup'"), "unexpected message: $msg")
+    }
+
+    @Test fun `every sharing one id across its elements is NOT a duplicate`() {
+        // This is why uniqueness is checked on the author's pre-expansion list and not in `:stdlib`:
+        // expansion deliberately emits one rule per element, all carrying the author's single id.
+        run("""$positiveQty, every: "lines" }""")
+        assertEquals(3, ValidateAssertCapture.received.size, "expansion must survive the id check")
+        assertTrue(
+            ValidateAssertCapture.received.all { ValidateAssertCapture.text(it, "rule") == "qty-positive" },
+            "every expanded rule keeps the author's id",
+        )
+    }
+
     // ── interaction with the `when` guard ──
 
     @Test fun `a false when guard skips the rule without quantifying`() {

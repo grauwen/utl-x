@@ -1309,6 +1309,32 @@ class Interpreter(
         val rules = (rulesValue as? RuntimeValue.ArrayValue)?.elements
             ?: throw RuntimeError("validate.assert: the rules argument must be an array", location)
 
+        // Rule ids must be unique across the AUTHOR'S list: a failure has to be attributable to one
+        // rule, and a consumer indexing on `issues[].rule` (a guard maps each id to one bit of a
+        // bounded table) cannot resolve a collision. Checked here, before `every`/`some` expansion,
+        // because expansion deliberately produces many rules sharing one id — one per element.
+        run {
+            val authorIds = rules.mapNotNull {
+                ((it as? RuntimeValue.ObjectValue)?.properties?.get("rule") as? RuntimeValue.StringValue)?.value
+            }
+            val dupes = authorIds.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+            if (dupes.isNotEmpty()) {
+                val reason = "validate.assert: malformed rule — duplicate rule id(s) " +
+                    dupes.joinToString(", ") { "'$it'" } +
+                    " — ids must be unique within a rule list, or a failure cannot be attributed to one rule"
+                val synthetic = RuntimeValue.ObjectValue(mapOf(
+                    "rule" to RuntimeValue.StringValue(dupes.first()),
+                    "check" to RuntimeValue.BooleanValue(false),
+                    "severity" to RuntimeValue.StringValue("error"),
+                    "message" to RuntimeValue.StringValue(reason),
+                ))
+                tryRegisterFromLookup("validate.assert")
+                val impl = StandardLibraryImpl.nativeFunctions["validate.assert"]
+                    ?: throw RuntimeError("validate.assert is not available (stdlib not loaded)", location)
+                return impl(listOf(payload, RuntimeValue.ArrayValue(listOf(synthetic))))
+            }
+        }
+
         val resolvedRules = rules.flatMap { rule ->
             if (rule !is RuntimeValue.ObjectValue) return@flatMap listOf(rule)  // odd shapes → stdlib
             val checkVal = rule.properties["check"]

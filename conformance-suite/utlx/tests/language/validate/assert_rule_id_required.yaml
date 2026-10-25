@@ -1,0 +1,39 @@
+name: "validate_assert_rule_id_required"
+category: "language/validate"
+description: "Rule-ID discipline: every validate.assert rule needs a non-empty `rule` id — it is what a failure is attributed to in issues[].rule, and what downstream consumers index on"
+tags: ["validate", "1.1", "assert", "rule-id", "fail-closed", "VB07"]
+
+input:
+  format: json
+  data: {"qty": -5}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "qty-positive", check: (p) => p.qty > 0, message: "qty must be positive" },
+    { check: (p) => p.qty < 100, message: "no id on this rule" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": null, "message": "validate.assert: malformed rule — every rule needs a non-empty `rule` id (1 of 2 missing one); the id names the failure in `issues[].rule` and is what consumers index on", "severity": "error"}
+    ],
+    "payload": {"qty": -5}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB07-unknown-severity-leaves-a-failing-rule-uncounted.md"]
+  notes:
+    - "A missing id is a malformed POLICY, not a per-rule failure: the whole list is rejected, because a report that cannot attribute a failure is not usable as an audit record."
+    - "Uniqueness is checked separately, in the interpreter, on the author's pre-expansion list — a quantified `every` rule legitimately expands to many rules sharing one id."

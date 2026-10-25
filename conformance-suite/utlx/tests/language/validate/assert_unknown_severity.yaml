@@ -1,0 +1,43 @@
+name: "validate_assert_unknown_severity"
+category: "language/validate"
+description: "VB07: an unrecognised severity is reported as an error issue instead of leaving the failing rule uncounted — a typo must not silently disable a rule"
+tags: ["validate", "1.1", "assert", "severity", "fail-closed", "VB07"]
+
+input:
+  format: json
+  data: {"qty": -5}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "qty-positive", check: (p) => p.qty > 0, message: "qty must be positive",
+      field: "qty", severity: "Warning" },
+    { rule: "qty-sane", check: (p) => p.qty > -100, message: "qty out of range",
+      field: "qty", severity: "banana" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 1,
+    "notices": 0,
+    "issues": [
+      {"rule": "qty-positive", "field": "qty", "message": "qty must be positive", "severity": "warning"},
+      {"rule": "qty-sane", "field": "qty", "message": "rule 'qty-sane' has an unknown severity 'banana' — expected one of error, notice, warning", "severity": "error"}
+    ],
+    "payload": {"qty": -5}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB07-unknown-severity-leaves-a-failing-rule-uncounted.md"]
+  notes:
+    - "`Warning` is accepted case-insensitively and normalised to `warning` — the engine's own ValidationError uses uppercase, so that spelling gets copied."
+    - "`banana` is not a severity: the rule would otherwise be counted in NO bucket, leaving failed:0 and valid:true even though the rule failed and its issue was in issues[]."
+    - "qty-sane's own check would have PASSED (-5 > -100); the error is about the rule being malformed, which is why it is reported regardless."

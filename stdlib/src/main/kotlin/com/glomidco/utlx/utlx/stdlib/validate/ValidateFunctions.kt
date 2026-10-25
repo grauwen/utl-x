@@ -120,6 +120,29 @@ object ValidateFunctions {
         "payload is a ValidationResult; validators must not be chained with |> — each takes the " +
             "message, not the previous result"
 
+    /** The only severities a `ValidationResult` counts. Anything else is a malformed rule (VB07). */
+    private val SEVERITIES = setOf("error", "warning", "notice")
+
+    /**
+     * VB07: recognise a severity, case-insensitively, and return it in canonical lowercase —
+     * or null if it is not one of [SEVERITIES].
+     *
+     * Why this has to be checked rather than passed through: `validationResult` counts issues by
+     * **exact** severity match, so an unrecognised value landed in no bucket at all. The rule
+     * failed, its issue appeared in `issues[]`, and yet `failed` stayed 0 — so `valid` stayed true
+     * and a fail-closed routing policy FORWARDED the payload. A typo silently disabled the rule.
+     *
+     * `"ERROR"` was the nastiest case: the engine's own `ValidationError` uses uppercase, so anyone
+     * following that convention got a silently dead rule. Uppercase is now accepted and normalised
+     * rather than rejected, since the two spellings mean the same thing; genuinely unknown values
+     * are reported.
+     */
+    private fun canonicalSeverity(raw: String?): String? {
+        if (raw == null) return "error"                 // absent → the documented default
+        val lower = raw.trim().lowercase()
+        return if (lower in SEVERITIES) lower else null
+    }
+
     /** Render a scalar for an issue message — `50.0` reads as `50`, so the text matches the script. */
     private fun displayScalar(value: Any?): String =
         when (val c = canonicalScalar(value)) {
@@ -146,13 +169,44 @@ object ValidateFunctions {
         // VB06: a chained validator would inspect the previous result, not the message.
         if (looksLikeValidationResult(payload)) return malformedRule(payload, "assert", chainedPayloadReason())
         val rules = (args.getOrNull(1) as? UDM.Array)?.elements?.filterIsInstance<UDM.Object>() ?: emptyList()
+
+        // ── Rule-ID discipline: `rule` identifies a failure in the report, and downstream consumers
+        // index on it (a guard maps each ID to one bit of a bounded failed-rule table and uses the
+        // set of failing IDs as its audit record). A missing or duplicated ID makes the report
+        // unusable for that, so it is a malformed POLICY — a list-level fault, not a per-rule one.
+        val ids = rules.map { asString(it.properties["rule"])?.takeIf { s -> s.isNotBlank() } }
+        if (ids.any { it == null }) {
+            return malformedRule(payload, "assert",
+                "every rule needs a non-empty `rule` id (${ids.count { it == null }} of ${ids.size} " +
+                    "missing one); the id names the failure in `issues[].rule` and is what consumers index on")
+        }
+        // Uniqueness is NOT checked here: a quantified rule (`every`) expands to one rule per
+        // element, all legitimately carrying the author's single id. The author's pre-expansion
+        // list is the thing that must have unique ids, and only the interpreter sees it — so that
+        // check lives in `Interpreter.evaluateValidateAssert`.
+
         val issues = mutableListOf<ValidationIssue>()
         var totalChecks = 0
         for (rule in rules) {
             val p = rule.properties
             totalChecks++
+            val ruleId = asString(p["rule"])
             // `when` guard: a rule whose `when` is explicitly false is skipped and counts as passed.
             if ((p["when"] as? UDM.Scalar)?.value == false) continue
+            // VB07: an unrecognised severity would land the issue in no count bucket at all, leaving
+            // `failed` at 0 and the verdict valid. Report it on THIS rule (per-rule isolation, as
+            // VB01 does for a non-evaluable check) rather than discarding the whole batch.
+            val severity = canonicalSeverity(asString(p["severity"]))
+            if (severity == null) {
+                issues.add(ValidationIssue(
+                    field = asString(p["field"]),
+                    message = "rule '$ruleId' has an unknown severity " +
+                        "'${asString(p["severity"])}' — expected one of ${SEVERITIES.sorted().joinToString(", ")}",
+                    severity = "error",
+                    rule = ruleId,
+                ))
+                continue
+            }
             // `check` is pre-evaluated to a boolean (the rule list is built with `$` = payload via the
             // pipe). true → pass; anything else (false/null/non-bool) → fail (fail-closed on a bad check).
             if ((p["check"] as? UDM.Scalar)?.value == true) continue
@@ -161,10 +215,60 @@ object ValidateFunctions {
             issues.add(ValidationIssue(
                 field = field,
                 message = asString(p["message"]) ?: "rule failed",
-                severity = asString(p["severity"]) ?: "error",
-                rule = asString(p["rule"]),
+                severity = severity,
+                rule = ruleId,
             ))
         }
+        return validationResult(payload, issues, totalChecks)
+    }
+
+    @UTLXFunction(
+        description = "Merge several ValidationResults into one aggregated ValidationResult. The " +
+            "sanctioned way to apply several rules: each validator takes the MESSAGE, and their " +
+            "results are combined here. Counts are recomputed from the merged issues, so they can " +
+            "never disagree with them.",
+        minArgs = 2, maxArgs = 2, category = "Validation",
+        parameters = ["payload (piped in)", "results: array of ValidationResult"],
+        returns = "ValidationResult",
+        example = "\$current |> validate.all([\$current |> validate.required([\"orderId\"]), " +
+            "\$current |> validate.inRange(\"qty\", 1, 100)])",
+        since = "1.1",
+    )
+    fun all(args: List<UDM>): UDM {
+        val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "all", chainedPayloadReason())
+        arityReason(args, 2, "payload, results[]")?.let { return malformedRule(payload, "all", it) }
+        val elements = arrayArg(args, 1)
+            ?: return malformedRule(payload, "all", "results must be an array of ValidationResults")
+
+        val issues = mutableListOf<ValidationIssue>()
+        var totalChecks = 0
+        for ((i, element) in elements.withIndex()) {
+            if (!looksLikeValidationResult(element)) {
+                return malformedRule(payload, "all",
+                    "results[$i] is not a ValidationResult — pass the OUTPUT of a validate.* call, " +
+                        "not a payload or a rule list")
+            }
+            val props = (element as UDM.Object).properties
+            val elementIssues = (props["issues"] as? UDM.Array)?.elements?.filterIsInstance<UDM.Object>()
+                ?: emptyList()
+            // `passed` + |issues| reconstructs that result's totalChecks, so the merged `passed`
+            // is the sum of the parts rather than a recount against a different denominator.
+            totalChecks += ((props["passed"] as? UDM.Scalar)?.value as? Number)?.toInt() ?: 0
+            totalChecks += elementIssues.size
+            for (iss in elementIssues) {
+                issues.add(ValidationIssue(
+                    field = asString(iss.properties["field"]),
+                    message = asString(iss.properties["message"]) ?: "rule failed",
+                    // already canonical in a well-formed result; re-checked so a hand-built
+                    // result cannot smuggle an uncounted severity through the merge (VB07).
+                    severity = canonicalSeverity(asString(iss.properties["severity"])) ?: "error",
+                    rule = asString(iss.properties["rule"]),
+                ))
+            }
+        }
+        // Counts come from validationResult, recomputed over the merged issues.
         return validationResult(payload, issues, totalChecks)
     }
 

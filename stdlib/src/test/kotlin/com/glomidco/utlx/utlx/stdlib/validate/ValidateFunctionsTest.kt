@@ -332,4 +332,137 @@ class ValidateFunctionsTest {
         assertTrue(valid(a) && valid(b))
         assertEquals(0, count(a, "failed") + count(b, "failed"))
     }
+
+    // ── VB07: an unrecognised severity must not make a failing rule invisible ──
+
+    private fun messagesOf(r: UDM) = ((r as UDM.Object).properties["issues"] as UDM.Array).elements
+        .map { ((it as UDM.Object).properties["message"] as UDM.Scalar).value as String }
+
+    @Test fun `VB07 an unknown severity is reported, not silently uncounted`() {
+        // The bug: validationResult counts by EXACT severity match, so "banana" landed in no
+        // bucket — failed stayed 0, valid stayed true, and a fail-closed policy forwarded a
+        // payload whose rule had actually failed.
+        val r = ValidateFunctions.assert(listOf(order, arr(rule("r", check = false, sev = "banana"))))
+        assertFalse(valid(r), "an unknown severity must not leave the verdict valid")
+        assertEquals(1, count(r, "failed"))
+        assertEquals(listOf<Any?>("error"), severities(r))
+        assertTrue(messagesOf(r).single().contains("unknown severity 'banana'"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `VB07 uppercase ERROR is normalised rather than ignored`() {
+        // The engine's own ValidationError uses uppercase "ERROR", so this spelling is likely to be
+        // copied. It used to produce valid:true. Accepted and normalised, author message preserved.
+        val r = ValidateFunctions.assert(listOf(order, arr(rule("r", check = false, sev = "ERROR"))))
+        assertFalse(valid(r)); assertEquals(1, count(r, "failed"))
+        assertEquals(listOf<Any?>("error"), severities(r))
+        assertEquals("r failed", messagesOf(r).single(), "the author's message must survive")
+    }
+
+    @Test fun `VB07 mixed-case warning and notice normalise and keep their semantics`() {
+        val w = ValidateFunctions.assert(listOf(order, arr(rule("r", check = false, sev = "Warning"))))
+        assertTrue(valid(w), "a warning must not flip valid"); assertEquals(1, count(w, "warnings"))
+        assertEquals(listOf<Any?>("warning"), severities(w))
+
+        val n = ValidateFunctions.assert(listOf(order, arr(rule("r", check = false, sev = "NOTICE"))))
+        assertTrue(valid(n)); assertEquals(1, count(n, "notices"))
+        assertEquals(listOf<Any?>("notice"), severities(n))
+    }
+
+    @Test fun `VB07 an absent severity still defaults to error`() {
+        val bare = UDM.Object.of("rule" to str("r"), "check" to UDM.Scalar.boolean(false),
+            "message" to str("m"))
+        val r = ValidateFunctions.assert(listOf(order, arr(bare)))
+        assertFalse(valid(r)); assertEquals(listOf<Any?>("error"), severities(r))
+    }
+
+    // ── Rule-ID discipline: the id is what a failure is attributed to ──
+
+    @Test fun `a rule without an id is a malformed policy`() {
+        val noId = UDM.Object.of("check" to UDM.Scalar.boolean(false), "message" to str("m"))
+        assertMalformed(ValidateFunctions.assert(listOf(order, arr(noId))), "non-empty `rule` id")
+    }
+
+    @Test fun `a blank rule id is a malformed policy`() {
+        val blank = UDM.Object.of("rule" to str("   "), "check" to UDM.Scalar.boolean(false),
+            "message" to str("m"))
+        assertMalformed(ValidateFunctions.assert(listOf(order, arr(blank))), "non-empty `rule` id")
+    }
+
+    @Test fun `a missing id is reported even when other rules have one`() {
+        val noId = UDM.Object.of("check" to UDM.Scalar.boolean(true), "message" to str("m"))
+        assertMalformed(
+            ValidateFunctions.assert(listOf(order, arr(rule("ok", check = true), noId))),
+            "1 of 2",
+        )
+    }
+
+    @Test fun `duplicate ids are NOT rejected at the stdlib layer`() {
+        // Uniqueness is checked on the author's pre-expansion list, in the interpreter: a quantified
+        // rule (`every`) legitimately expands to many rules sharing one id. See F24QuantifiedRulesTest
+        // and VB07's report. Here two same-id rules aggregate normally.
+        val r = ValidateFunctions.assert(listOf(order, arr(rule("a", check = false), rule("a", check = false))))
+        assertEquals(2, count(r, "failed"))
+    }
+
+    // ── validate.all — the sanctioned combinator (VB06 closed off chaining) ──
+
+    @Test fun `all merges results and recomputes the counts from the merged issues`() {
+        val a = ValidateFunctions.required(listOf(order, arr(str("orderId"), str("customer")))) // 2 checks, 1 fails
+        val b = ValidateFunctions.inRange(listOf(order, str("unitPrice"), num(100), num(200)))  // 1 check, fails
+        val r = ValidateFunctions.all(listOf(order, arr(a, b)))
+        assertFalse(valid(r))
+        assertEquals(2, count(r, "failed"))
+        assertEquals(1, count(r, "passed"), "passed is the sum of the parts, not a recount")
+        assertEquals(listOf<Any?>("customer", "unitPrice"), issueFields(r))
+    }
+
+    @Test fun `all over passing results is valid`() {
+        val a = ValidateFunctions.required(listOf(order, arr(str("orderId"))))
+        val b = ValidateFunctions.oneOf(listOf(order, str("currency"), arr(str("EUR"), str("USD"))))
+        val r = ValidateFunctions.all(listOf(order, arr(a, b)))
+        assertTrue(valid(r)); assertEquals(2, count(r, "passed")); assertEquals(0, count(r, "failed"))
+    }
+
+    @Test fun `all preserves severities, so a warning still does not flip valid`() {
+        val warn = ValidateFunctions.assert(listOf(order, arr(rule("w", check = false, sev = "warning"))))
+        val ok = ValidateFunctions.required(listOf(order, arr(str("orderId"))))
+        val r = ValidateFunctions.all(listOf(order, arr(warn, ok)))
+        assertTrue(valid(r), "a merged warning must not flip valid")
+        assertEquals(1, count(r, "warnings")); assertEquals(0, count(r, "failed"))
+    }
+
+    @Test fun `all over an empty list checks nothing and is vacuously valid`() {
+        val r = ValidateFunctions.all(listOf(order, arr()))
+        assertTrue(valid(r)); assertEquals(0, count(r, "passed")); assertEquals(0, count(r, "failed"))
+    }
+
+    @Test fun `all rejects an element that is not a ValidationResult`() {
+        // The likely mistake: passing payloads or rule lists instead of validator OUTPUTS.
+        assertMalformed(ValidateFunctions.all(listOf(order, arr(order))), "results[0] is not a ValidationResult")
+    }
+
+    @Test fun `all rejects a non-array results argument`() {
+        assertMalformed(ValidateFunctions.all(listOf(order, str("nope"))), "results must be an array")
+    }
+
+    @Test fun `all refuses a ValidationResult as its own payload`() {
+        val a = ValidateFunctions.required(listOf(order, arr(str("orderId"))))
+        assertMalformed(ValidateFunctions.all(listOf(a, arr())), "must not be chained")
+    }
+
+    @Test fun `all re-canonicalises a severity so a hand-built result cannot smuggle one through`() {
+        // A result assembled by hand (not by validate.*) could carry an uncounted severity; the
+        // merge normalises it rather than propagating a VB07-style invisible failure.
+        val handBuilt = UDM.Object.of(
+            "valid" to UDM.Scalar.boolean(false), "passed" to num(0), "failed" to num(1),
+            "warnings" to num(0), "notices" to num(0),
+            "issues" to arr(UDM.Object.of(
+                "rule" to str("x"), "field" to str("f"), "message" to str("m"),
+                "severity" to str("ERROR"))),
+            "payload" to order,
+        )
+        val r = ValidateFunctions.all(listOf(order, arr(handBuilt)))
+        assertFalse(valid(r)); assertEquals(1, count(r, "failed"))
+        assertEquals(listOf<Any?>("error"), severities(r))
+    }
 }

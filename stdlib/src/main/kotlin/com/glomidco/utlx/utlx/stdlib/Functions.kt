@@ -202,6 +202,7 @@ object StandardLibrary {
 
     private fun registerValidateFunctions() {
         register("validate.assert", ValidateFunctions::assert)
+        register("validate.all", ValidateFunctions::all)
         register("validate.required", ValidateFunctions::required)
         register("validate.inRange", ValidateFunctions::inRange)
         register("validate.oneOf", ValidateFunctions::oneOf)

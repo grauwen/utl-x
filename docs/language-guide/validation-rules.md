@@ -43,6 +43,7 @@ Each validator takes the payload by pipe and returns a `ValidationResult`.
 | `unique` | `(arrayField, keyField)` | `$input \|> validate.unique("orderLines", "lineId")` |
 | `mutuallyExclusive` | `(fields: string[])` — at most one set | `$input \|> validate.mutuallyExclusive(["shipToId", "shipToAddress"])` |
 | `atLeastOne` | `(fields: string[])` — at least one set | `$input \|> validate.atLeastOne(["email", "phone", "fax"])` |
+| `all` | `(results: ValidationResult[])` — merge several verdicts | see [Applying several rules](#applying-several-rules) |
 
 **Robustness.** These degrade gracefully instead of throwing:
 
@@ -70,18 +71,47 @@ The second call would otherwise inspect the *first call's result* instead of you
 because a `ValidationResult` has its own `valid` and `issues` fields it could report **`valid:true`
 over a real failure** ([VB06](../bugs-fixed/VB06-chained-validators-fail-open.md)).
 
-To apply several rules, either put them all in one `validate.assert` (below), or bind one result per
-validator — each taking `$input` — and merge:
+<h4 id="applying-several-rules">Applying several rules</h4>
+
+Use **`validate.all`**, which merges several results into one verdict:
 
 ```utlx
-let a = $input |> validate.required(["orderId"])
-let b = $input |> validate.inRange("qty", 1, 100)
-in if (a.failed + b.failed == 0) $input
-   else { status: "dead-letter", issues: flatten([a.issues, b.issues]) }
+$input |> validate.all([
+  $input |> validate.required(["orderId", "customer"]),
+  $input |> validate.inRange("qty", 1, 100),
+  $input |> validate.oneOf("ccy", ["EUR", "USD"])
+])
 ```
 
-`+` sums the counts; `flatten([…])` concatenates the issue arrays (`+` does not work on arrays).
-A single `validate.all(results)` combinator is planned but not yet available.
+Every validator takes `$input` — never the previous result. The merged `passed` is the sum of the
+parts, and the counts are **recomputed from the merged issues**, so they can never disagree with
+them. An empty list checks nothing and is vacuously valid; an element that is not a
+`ValidationResult` is a malformed rule, which catches the likely mistake of passing payloads or rule
+lists instead of validator outputs.
+
+The alternative is one `validate.assert` carrying all the rules (below) — preferable when the rules
+need ids, severities or `when` guards, since those are rule-record features.
+
+### Rule ids and severities are checked
+
+Two parts of a rule are validated before anything runs, because a report that gets them wrong is
+not usable:
+
+```utlx
+{ check: (p) => p.qty > 0, message: "m" }                     // ✗ no `rule` id
+{ rule: "a", … }, { rule: "a", … }                            // ✗ duplicate ids
+{ rule: "r", …, severity: "banana" }                          // ✗ not a severity
+{ rule: "r", …, severity: "ERROR" }                           // ✓ normalised to `error`
+```
+
+- **`rule` is required and must be unique.** It is what `issues[].rule` attributes a failure to, and
+  what a downstream consumer indexes on. A missing or duplicated id rejects the whole rule list as a
+  malformed policy. (A quantified `every` rule expands to one issue per element, all sharing the
+  author's single id — that is not a duplicate.)
+- **`severity` is a closed set** — `error`, `warning`, `notice` — matched case-insensitively and
+  reported in lowercase. An unrecognised value becomes an `error` issue naming the rule. Before
+  [VB07](../bugs-fixed/VB07-unknown-severity-leaves-a-failing-rule-uncounted.md) it was counted in
+  *no* bucket, so a typo left `failed:0` and `valid:true` on a rule that had failed.
 
 ### When a rule itself is wrong
 
@@ -128,10 +158,10 @@ $input |> validate.assert([
 | Key | Required | Meaning |
 |-----|----------|---------|
 | `check` | **yes** | Lambda `(p) => <boolean expr>`, called with the payload |
-| `rule` | no | Rule id, echoed into the issue |
+| `rule` | **yes** | Rule id — echoed into `issues[].rule`, and what a failure is attributed to. Must be non-blank and unique within the list |
 | `message` | no | Issue text (defaults to `"rule failed"`) |
 | `field` / `fields` | no | Field name, or an array joined comma-separated |
-| `severity` | no | `error` (default), `warning`, or `notice` |
+| `severity` | no | `error` (default), `warning` or `notice` — a **closed set**, matched case-insensitively. Anything else is an error issue naming the rule ([VB07](../bugs-fixed/VB07-unknown-severity-leaves-a-failing-rule-uncounted.md)) |
 | `when` | no | Applicability guard, lambda `(p) => <boolean>` — see [Conditional rules](#conditional-rules-when) |
 | `every` / `some` | no | Quantify over a named array; `check` then takes each **element** — see [Quantified rules](#quantified-rules-every--some) |
 

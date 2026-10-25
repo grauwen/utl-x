@@ -1,0 +1,43 @@
+name: "validate_all_combinator"
+category: "language/validate"
+description: "validate.all merges several ValidationResults into one verdict — the sanctioned way to apply several named validators, since piping one into another is rejected (VB06)"
+tags: ["validate", "1.1", "all", "combinator", "VB06"]
+
+input:
+  format: json
+  data: {"orderId": "A1", "qty": 500, "ccy": "XXX"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.all([
+    $input |> validate.required(["orderId", "customer"]),
+    $input |> validate.inRange("qty", 1, 100),
+    $input |> validate.oneOf("ccy", ["EUR", "USD"])
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 1,
+    "failed": 3,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": "customer", "message": "Required field 'customer' is missing", "severity": "error"},
+      {"rule": null, "field": "qty", "message": "Field 'qty' (500.0) is above maximum 100.0", "severity": "error"},
+      {"rule": null, "field": "ccy", "message": "Field 'ccy' value 'XXX' is not one of [EUR, USD]", "severity": "error"}
+    ],
+    "payload": {"orderId": "A1", "qty": 500, "ccy": "XXX"}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "Each validator takes $input — never the previous result. validate.all merges their outputs."
+    - "passed:1 is the SUM of the parts: required ran 2 checks and passed 1; inRange and oneOf ran 1 each and passed 0. Counts are recomputed from the merged issues, so they can never disagree with them."
+    - "Contrast chained_validators_rejected.yaml, where piping one validator into another is a malformed rule."
+    - "inRange's message still renders raw doubles ('(500.0)'); VB03's displayScalar would fix that — tracked separately."
