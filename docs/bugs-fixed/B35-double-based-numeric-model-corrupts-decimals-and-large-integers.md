@@ -113,11 +113,164 @@ That makes it a **version-boundary fix**, not a patch. Two shapes fit:
   deployment asks for exact semantics and 1.0 scripts keep theirs. This is the less disruptive route
   and reuses machinery that already exists.
 
-Either way the fix spans the parser, the AST, every arithmetic operator, comparison, and the format
-serialisers — it is a numeric-model change, not a localised one. Note in particular that an
-**exact-comparison-only** fix would be worse than nothing: with literals still `Double`, an author
-writing `$input.id == 9007199254740993` would get a literal of `…992`, an exact comparison, and
-`false` — the right number typed, the wrong answer returned, failing in the opposite direction.
+Note in particular that an **exact-comparison-only** fix would be worse than nothing: with literals
+still `Double`, an author writing `$input.id == 9007199254740993` would get a literal of `…992`, an
+exact comparison, and `false` — the right number typed, the wrong answer returned, failing in the
+opposite direction. Literals and comparison have to be fixed *together*; see §Fix effort, which
+splits the work into a cheap correctness floor and the expensive remainder.
+
+> **Correction (2026-10-26).** An earlier revision of this report said the fix "spans the parser, the
+> AST, every arithmetic operator, comparison, and the format serialisers — a numeric-model change,
+> not a localised one." That is true of *full* exactness and misleading as a description of the
+> correctness floor, which is small. The measurements are in §Fix effort.
+
+## Fix effort
+
+Measured, not estimated:
+
+```
+Expression.NumberLiteral is CONSTRUCTED in exactly one place   parser_impl.kt:906
+RuntimeValue.NumberValue usages                                46, across 8 files
+extractNumber call sites                                       14
+toDouble() in :core                                            16   ← the problem
+toDouble() in :stdlib                                          155  ← mostly legitimate:
+                                                                    RegionalNumberFunctions,
+                                                                    StatisticalFunctions,
+                                                                    RichDateFunctions, BinaryFunctions
+```
+
+The defect concentrates in **16 calls in `interpreter.kt`** and one parser site. Most stdlib
+`toDouble()` calls are maths where `Double` is the right type (`sqrt`, statistics, date arithmetic)
+and are not in scope.
+
+### UDM is not the problem — the parsers are
+
+`UDM.Scalar` holds `Any?`, and its factory is `fun number(n: Number)`. It accepts **any** `Number`,
+`BigDecimal` included, so the model was designed for exact decimals. The JSON serialiser is already
+capable too:
+
+```kotlin
+// json_serializer.kt:78
+is Number -> {
+    if (value is Double && value % 1.0 == 0.0 && …) writer.write(value.toLong().toString())
+    else writer.write(value.toString())          // BigDecimal("100.10") → "100.10"
+}
+```
+
+A `BigDecimal` reaching the serialiser would emit `100.10`, trailing zero intact, **with no change at
+all**. The precision is discarded earlier, by each format parser choosing a numeric type.
+
+### Measured per format: exactness is format-DEPENDENT
+
+Identity transform (`$input`) of the same three values through each parser:
+
+| input value | JSON | YAML | CSV | XML |
+|---|---|---|---|---|
+| `100.10` | `100.1` ✗ | `100.1` ✗ | `100.1` ✗ | `100.1` ✗ |
+| `9007199254740993` (int64) | **`…993` ✅** | **`…993` ✅** | `…992` ✗ | `…992` ✗ |
+| `12345678901234567.89` | `…568` ✗ | `…568` ✗ | `…568` ✗ | `…568` ✗ |
+
+The middle row is the finding that matters most, and it is not about floating point at all: **the same
+integer survives a JSON or YAML round-trip and is corrupted by a CSV or XML one.** For a *universal*
+data model, a value changing according to which parser read it is precisely the failure UDM exists to
+prevent — a stronger objection than imprecision, because it breaks the project's central promise
+rather than a numeric nicety.
+
+The cause is a missing integer branch. JSON tries `Long` first:
+
+```kotlin
+// json_parser.kt:234
+numStr.toLongOrNull()?.let { return UDM.Scalar.number(it) }
+// json_parser.kt:237 — "Fall back to Double for decimals and scientific notation"
+val value = numStr.toDoubleOrNull() ?: throw …
+```
+
+CSV and XML have no such branch — every numeric value goes through `Double`:
+
+```kotlin
+// csv_parser.kt:211
+trimmed.toDoubleOrNull()?.let { return UDM.Scalar.number(it) }
+
+// xml_parser.kt:540
+private fun tryParseNumber(str: String): UDM.Scalar? =
+    str.toDoubleOrNull()?.let { UDM.Scalar.number(it) }
+```
+
+YAML is exact for integers because it delegates to SnakeYAML, which returns `Long`
+(`YAMLParser.kt:145`: `is Number -> UDM.Scalar.number(obj)`).
+
+### Stage 0 — pass-through exactness (one line per parser)
+
+Parse decimals as `BigDecimal` and integers as `Long`, in all four parsers:
+
+- `{"total": 100.10}` round-trips as `100.10`
+- `12345678901234567.89` round-trips intact — F10's corrupted example, fixed
+- CSV and XML stop corrupting int64, so the four formats agree
+
+Nothing downstream needs to change: the interpreter narrows to `Double` on use anyway, and
+`Number.toDouble()` works on `BigDecimal`. The serialiser is already correct.
+
+This makes UTL-X **preserve what it is given** — the property F10 is about, and the one a guard needs
+for a verify-not-rewrite pass-through, where the output frame should be the input's bytes and not a
+re-rendered approximation.
+
+Risks to check: `valuesEqual` on `BigDecimal` vs `Double` is scale-sensitive (VB03's
+`canonicalScalar` already solves exactly this and would be shared); and the three parsers each need
+the same treatment, or the inconsistency simply moves.
+
+Still a behaviour change — decimal output goes from `100.1` to `100.10` — so still a version
+boundary. But it is a one-line change per parser rather than a numeric-model project, and it is the
+highest value-per-risk item in this report.
+
+### Stage 1 — the correctness floor (roughly a day)
+
+Exact literals **and** exact comparison, landed together:
+
+- `Expression.NumberLiteral` gains an exact field (a `BigDecimal` built from the lexeme). **Additive**
+  — one constructor site, so every existing reader of `.value` keeps compiling. Three other files
+  reference the type but only to *read* it (the AST visualiser and `ASTCompiler`).
+- `valuesEqual` and `compareValues` canonicalise before comparing. **The implementation already
+  exists**: VB03's `canonicalScalar` in `:stdlib` does exactly this — `BigDecimal(toString())` plus
+  `stripTrailingZeros`, with non-finite doubles kept as-is. It would move to `:core` and be shared,
+  the same way `ValidationRuleKinds` was for F25 (`:stdlib → :core` being the legal direction).
+
+Fixes: integer comparison above 2⁵³, the `9007199254740993` and `100.10` literals, and the
+`oneOf`-vs-`check` asymmetry below — declarative kinds and lambdas would agree again.
+
+Does **not** fix arithmetic: `19.99 * 100 == 1999` stays false.
+
+Still needs a version boundary, because it changes released comparison results.
+
+### Stage 2 — the actual project
+
+Only the first item is code:
+
+1. **Division semantics.** `BigDecimal` division requires an explicit scale and `RoundingMode`:
+   `1/3` has no exact representation. That is a *language* decision, not an implementation detail.
+   XPath's `xs:decimal` rules are the precedent to copy, but they have to be chosen and specified.
+2. **Serialiser output changes.** Exact numbers mean `100.10` serialises as `100.10`, preserving the
+   trailing zero F10 calls meaningful — so existing output bytes change. This is the compatibility
+   break, and it is in the serialisers rather than the interpreter.
+3. **Performance.** `BigDecimal` arithmetic is roughly an order of magnitude slower than `double`.
+   On a mapping hot path that is material, and it is the strongest argument for an **opt-in compute
+   profile** over a flat switch.
+
+### Recommendation
+
+Do **Stage 0 first.** It is one line per parser, it fixes the cross-format inconsistency (which is a
+broken promise rather than a rounding complaint), and it gives pass-through exactness — which is what
+F10 and a verify-not-rewrite guard actually need. It does not depend on any of the Stage 1/2 design
+questions.
+
+Then **Stage 1** at the same version boundary: small, reuses working code, and removes the
+self-contradiction whereby UTL-X preserves an int64 through the data path and then reports two
+different ones as equal.
+
+Treat **Stage 2** as a design item gated on the division decision, delivered through the profile
+mechanism.
+
+Note the three stages are independently valuable and in increasing order of cost and risk: Stage 0
+preserves data, Stage 1 makes judgements correct, Stage 2 makes computation correct.
 
 ## The one part that *is* a 1.1 issue
 
