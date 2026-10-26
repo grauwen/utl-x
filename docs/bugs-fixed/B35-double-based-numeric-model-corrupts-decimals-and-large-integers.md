@@ -199,9 +199,40 @@ private fun tryParseNumber(str: String): UDM.Scalar? =
 YAML is exact for integers because it delegates to SnakeYAML, which returns `Long`
 (`YAMLParser.kt:145`: `is Number -> UDM.Scalar.number(obj)`).
 
-### Stage 0 — pass-through exactness (one line per parser)
+### Scope across all eleven format modules
 
-Parse decimals as `BigDecimal` and integers as `Long`, in all four parsers:
+Scanned, so the fix is not over-estimated. **Three parser lines change; the serialisers mostly only
+need verifying.**
+
+| Module | Parse-side numeric handling | Needs the fix? |
+|---|---|---|
+| **json** | `toLongOrNull()` then `toDoubleOrNull()` (`json_parser.kt:234/238`) | ✗ decimals |
+| **csv** | `toDoubleOrNull()` only (`csv_parser.kt:211`) | ✗ decimals **and** int64 |
+| **xml** | `toDoubleOrNull()` only (`xml_parser.kt:540`) | ✗ decimals **and** int64 |
+| **yaml** | delegates to SnakeYAML — `Long` for integers | partly exact; decimals only |
+| **odata** | **delegates** — `ODataJSONParser.kt:37` calls `JSONParser(content, parseOptions).parse()` | inherits JSON; no separate fix |
+| avro, protobuf, osch | `toIntOrNull` on **schema** fields (`maxLength` and the like) | not payload data |
+| jsch, tsch, xsd | no numeric handling at all | — |
+
+The schema formats describe types rather than carrying values, so their integer parsing is out of
+scope. OData reshapes a JSON envelope and inherits whatever `JSONParser` produced — one less thing to
+change, and one less place for the formats to disagree.
+
+**Serialisers are already capable**, because they dispatch on `is Number` and call `toString()`:
+
+| Module | Serialiser numeric path | Action |
+|---|---|---|
+| json | `is Double` fast path for integral values; a `BigDecimal` skips it and falls to `value.toString()` | correct as-is |
+| csv, xml, osch | `is Number` → `toString()` | correct as-is |
+| yaml | `is Double -> {…}` (line 130) with `else -> value` (146), so a `BigDecimal` reaches SnakeYAML directly | **verify**, may need no change |
+
+So the earlier phrasing "all four parsers" undercounted the data formats (five, with OData) while
+over-counting the work (three lines), and implied serialiser changes that are not required.
+
+### Stage 0 — pass-through exactness (three parser lines)
+
+Parse decimals as `BigDecimal` and integers as `Long` in `json`, `csv` and `xml`; confirm YAML's
+SnakeYAML path and the YAML serialiser. OData inherits the JSON fix:
 
 - `{"total": 100.10}` round-trips as `100.10`
 - `12345678901234567.89` round-trips intact — F10's corrupted example, fixed
@@ -215,8 +246,9 @@ for a verify-not-rewrite pass-through, where the output frame should be the inpu
 re-rendered approximation.
 
 Risks to check: `valuesEqual` on `BigDecimal` vs `Double` is scale-sensitive (VB03's
-`canonicalScalar` already solves exactly this and would be shared); and the three parsers each need
-the same treatment, or the inconsistency simply moves.
+`canonicalScalar` already solves exactly this and would be shared); all three parsers need the same
+treatment, or the inconsistency simply moves; and the YAML serialiser's `else -> value` branch should
+be confirmed to render a `BigDecimal` as written.
 
 Still a behaviour change — decimal output goes from `100.1` to `100.10` — so still a version
 boundary. But it is a one-line change per parser rather than a numeric-model project, and it is the
