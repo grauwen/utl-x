@@ -465,4 +465,114 @@ class ValidateFunctionsTest {
         assertFalse(valid(r)); assertEquals(1, count(r, "failed"))
         assertEquals(listOf<Any?>("error"), severities(r))
     }
+
+    // ── F25: declarative rule kinds — the policy stays data, and failures carry the rule id ──
+
+    private fun kindRule(id: String, kind: String, spec: UDM, sev: String? = null, msg: String? = null): UDM {
+        val pairs = mutableListOf("rule" to str(id), kind to spec)
+        if (sev != null) pairs.add("severity" to str(sev))
+        if (msg != null) pairs.add("message" to str(msg))
+        return UDM.Object.of(*pairs.toTypedArray())
+    }
+
+    private fun issueRules(r: UDM) = ((r as UDM.Object).properties["issues"] as UDM.Array).elements
+        .map { ((it as UDM.Object).properties["rule"] as UDM.Scalar).value }
+
+    @Test fun `F25 a declarative rule carries the author's rule id into the issue`() {
+        // This is the whole point: composing named validators with validate.all gave rule:null,
+        // because a named validator has no id to report.
+        val r = ValidateFunctions.assert(listOf(order, arr(
+            kindRule("order-fields-present", "required", arr(str("orderId"), str("lineItems"))))))
+        assertFalse(valid(r))
+        assertEquals(listOf<Any?>("order-fields-present"), issueRules(r))
+        assertEquals(listOf<Any?>("lineItems"), issueFields(r))
+    }
+
+    @Test fun `F25 a declarative kind contributes the validator's own check count`() {
+        // `required` over two fields is two checks, exactly as the standalone call reports.
+        val r = ValidateFunctions.assert(listOf(order, arr(
+            kindRule("fields", "required", arr(str("orderId"), str("lineItems"))))))
+        assertEquals(1, count(r, "passed")); assertEquals(1, count(r, "failed"))
+    }
+
+    @Test fun `F25 every declarative kind delegates to its named validator`() {
+        val rules = arr(
+            kindRule("a", "required", arr(str("orderId"))),
+            kindRule("b", "inRange", obj("field" to str("unitPrice"), "min" to num(0), "max" to num(100))),
+            kindRule("c", "oneOf", obj("field" to str("currency"), "values" to arr(str("EUR")))),
+            kindRule("d", "matches", obj("field" to str("currency"), "pattern" to str("^[A-Z]{3}$"))),
+            kindRule("e", "mutuallyExclusive", arr(str("orderId"))),
+            kindRule("f", "atLeastOne", arr(str("orderId"))),
+        )
+        val r = ValidateFunctions.assert(listOf(order, rules))
+        assertTrue(valid(r), "all six should pass on this payload: ${issueRules(r)}")
+    }
+
+    @Test fun `F25 the rule's own severity applies to the kind's issues`() {
+        val r = ValidateFunctions.assert(listOf(order, arr(
+            kindRule("w", "required", arr(str("lineItems")), sev = "warning"))))
+        assertTrue(valid(r), "a warning must not flip valid")
+        assertEquals(1, count(r, "warnings")); assertEquals(listOf<Any?>("warning"), severities(r))
+    }
+
+    @Test fun `F25 the rule's own message overrides the validator's wording`() {
+        val r = ValidateFunctions.assert(listOf(order, arr(
+            kindRule("m", "required", arr(str("lineItems")), msg = "an order needs line items"))))
+        assertEquals("an order needs line items", messagesOf(r).single())
+    }
+
+    @Test fun `F25 a rule with no kind is reported`() {
+        val bare = UDM.Object.of("rule" to str("r"), "message" to str("m"))
+        val r = ValidateFunctions.assert(listOf(order, arr(bare)))
+        assertFalse(valid(r))
+        assertTrue(messagesOf(r).single().contains("no rule kind"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `F25 a rule with two kinds is reported`() {
+        val two = UDM.Object.of("rule" to str("r"),
+            "required" to arr(str("orderId")),
+            "inRange" to obj("field" to str("unitPrice"), "min" to num(0), "max" to num(1)))
+        val r = ValidateFunctions.assert(listOf(order, arr(two)))
+        assertFalse(valid(r))
+        assertTrue(messagesOf(r).single().contains("2 rule kinds"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `F25 a malformed kind spec names the shape it expected`() {
+        val bad = UDM.Object.of("rule" to str("r"),
+            "inRange" to obj("field" to str("unitPrice"), "min" to num(0)))   // no max
+        val r = ValidateFunctions.assert(listOf(order, arr(bad)))
+        assertFalse(valid(r))
+        assertTrue(messagesOf(r).single().contains("{ field, min, max }"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `F25 a non-array spec for a list-shaped kind is reported`() {
+        val bad = UDM.Object.of("rule" to str("r"), "required" to str("orderId"))
+        val r = ValidateFunctions.assert(listOf(order, arr(bad)))
+        assertTrue(messagesOf(r).single().contains("an array of field names"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `F25 a false when guard skips a declarative rule and counts it as passed`() {
+        val skipped = UDM.Object.of("rule" to str("r"),
+            "required" to arr(str("lineItems")), "when" to UDM.Scalar.boolean(false))
+        val r = ValidateFunctions.assert(listOf(order, arr(skipped)))
+        assertTrue(valid(r)); assertEquals(1, count(r, "passed"))
+    }
+
+    @Test fun `F25 a declarative kind inherits the validator's own hardening`() {
+        // `unique` over a field that is not an array is a malformed rule (VB04); the declarative
+        // form must report that rather than passing, and must attribute it to this rule id.
+        val r = ValidateFunctions.assert(listOf(obj("lines" to num(7)), arr(
+            kindRule("lines-unique", "unique", obj("arrayField" to str("lines"), "keyField" to str("sku"))))))
+        assertFalse(valid(r))
+        assertEquals(listOf<Any?>("lines-unique"), issueRules(r))
+        assertTrue(messagesOf(r).single().contains("is not an array"), "got: ${messagesOf(r)}")
+    }
+
+    @Test fun `F25 lambda and declarative rules mix in one policy`() {
+        val r = ValidateFunctions.assert(listOf(order, arr(
+            kindRule("declared", "required", arr(str("orderId"))),
+            rule("lambda", check = true),
+        )))
+        assertTrue(valid(r)); assertEquals(2, count(r, "passed"))
+    }
 }

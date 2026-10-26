@@ -2,6 +2,7 @@ package com.glomidco.utlx.stdlib.validate
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.annotations.UTLXFunction
+import com.glomidco.utlx.core.semantic.ValidationRuleKinds
 import java.math.BigDecimal
 
 /**
@@ -120,6 +121,69 @@ object ValidateFunctions {
         "payload is a ValidationResult; validators must not be chained with |> — each takes the " +
             "message, not the previous result"
 
+    /**
+     * F25: the rule kinds a `validate.assert` rule may carry. **Exactly one per rule.**
+     *
+     * `check` is the lambda escape hatch (VB01); the rest are the named validators used
+     * *declaratively*, so a policy stays **data**: an inspectable, hashable, generatable rule list
+     * in which every entry has an id, a severity and an optional `when` guard. That is what lets a
+     * downstream consumer index on `issues[].rule` — a guard maps each id to one bit of a bounded
+     * failed-rule table and uses the set of failing ids as its audit record.
+     *
+     * One kind per rule because a rule is one unit of policy: one id, one severity, one bit. A rule
+     * carrying two kinds, or none, is a malformed policy.
+     */
+    private val RULE_KINDS = ValidationRuleKinds.ALL
+
+    /**
+     * F25: run a declarative rule kind by delegating to the matching named validator, so the
+     * declarative and standalone forms cannot drift — same null/type-aware implementation, same
+     * VB03/VB04 hardening. Returns the validator's own `ValidationResult`, or null if the rule's
+     * arguments are the wrong shape for that kind.
+     */
+    private fun runKind(kind: String, spec: UDM?, payload: UDM): UDM? {
+        fun obj(key: String): UDM? = (spec as? UDM.Object)?.properties?.get(key)
+        return when (kind) {
+            // list-shaped kinds: the spec IS the field list
+            "required" -> (spec as? UDM.Array)?.let { required(listOf(payload, it)) }
+            "mutuallyExclusive" -> (spec as? UDM.Array)?.let { mutuallyExclusive(listOf(payload, it)) }
+            "atLeastOne" -> (spec as? UDM.Array)?.let { atLeastOne(listOf(payload, it)) }
+            // object-shaped kinds: named arguments, so a rule reads as a sentence
+            "inRange" -> {
+                val f = obj("field"); val lo = obj("min"); val hi = obj("max")
+                if (f == null || lo == null || hi == null) null else inRange(listOf(payload, f, lo, hi))
+            }
+            "oneOf" -> {
+                val f = obj("field"); val v = obj("values")
+                if (f == null || v == null) null else oneOf(listOf(payload, f, v))
+            }
+            "matches" -> {
+                val f = obj("field"); val pat = obj("pattern")
+                if (f == null || pat == null) null else matches(listOf(payload, f, pat))
+            }
+            "isoDate" -> {
+                val f = obj("field"); val fmt = obj("format")
+                if (f == null || fmt == null) null else isoDate(listOf(payload, f, fmt))
+            }
+            "unique" -> {
+                val a = obj("arrayField"); val k = obj("keyField")
+                if (a == null || k == null) null else unique(listOf(payload, a, k))
+            }
+            else -> null
+        }
+    }
+
+    /** The argument shape each object-shaped kind expects, for the malformed-rule message. */
+    private fun kindShape(kind: String): String = when (kind) {
+        "required", "mutuallyExclusive", "atLeastOne" -> "an array of field names"
+        "inRange" -> "{ field, min, max }"
+        "oneOf" -> "{ field, values }"
+        "matches" -> "{ field, pattern }"
+        "isoDate" -> "{ field, format }"
+        "unique" -> "{ arrayField, keyField }"
+        else -> "a lambda (p) => boolean"
+    }
+
     /** The only severities a `ValidationResult` counts. Anything else is a malformed rule (VB07). */
     private val SEVERITIES = setOf("error", "warning", "notice")
 
@@ -207,8 +271,58 @@ object ValidateFunctions {
                 ))
                 continue
             }
-            // `check` is pre-evaluated to a boolean (the rule list is built with `$` = payload via the
-            // pipe). true → pass; anything else (false/null/non-bool) → fail (fail-closed on a bad check).
+            // ── F25: exactly one rule kind per rule ──
+            val kinds = RULE_KINDS.filter { p.containsKey(it) }
+            if (kinds.size != 1) {
+                val detail = if (kinds.isEmpty()) {
+                    "no rule kind — expected one of ${RULE_KINDS.joinToString(", ")}"
+                } else {
+                    "${kinds.size} rule kinds (${kinds.joinToString(", ")}) — a rule carries exactly one"
+                }
+                issues.add(ValidationIssue(
+                    field = asString(p["field"]),
+                    message = "rule '$ruleId' has $detail",
+                    severity = "error", rule = ruleId,
+                ))
+                continue
+            }
+            val kind = kinds.single()
+
+            if (kind != "check") {
+                // Declarative kind: delegate to the named validator, then stamp this rule's id and
+                // severity onto whatever it reported. Delegating means the declarative and
+                // standalone forms share one implementation and cannot drift.
+                val inner = runKind(kind, p[kind], payload)
+                if (inner == null) {
+                    issues.add(ValidationIssue(
+                        field = asString(p["field"]),
+                        message = "rule '$ruleId' has a malformed `$kind` — expected ${kindShape(kind)}",
+                        severity = "error", rule = ruleId,
+                    ))
+                    continue
+                }
+                val innerProps = (inner as UDM.Object).properties
+                val innerIssues = (innerProps["issues"] as? UDM.Array)?.elements
+                    ?.filterIsInstance<UDM.Object>() ?: emptyList()
+                // This rule contributes the kind's own check count, not one — `required` over three
+                // fields is three checks, exactly as the standalone call would report.
+                totalChecks += (((innerProps["passed"] as? UDM.Scalar)?.value as? Number)?.toInt() ?: 0) +
+                    innerIssues.size - 1   // −1: the loop already counted this rule once
+                for (iss in innerIssues) {
+                    issues.add(ValidationIssue(
+                        field = asString(iss.properties["field"]) ?: asString(p["field"]),
+                        // the rule's own `message` wins when given, so an author can phrase the
+                        // business reason instead of the validator's generic wording
+                        message = asString(p["message"]) ?: asString(iss.properties["message"]) ?: "rule failed",
+                        severity = severity,
+                        rule = ruleId,
+                    ))
+                }
+                continue
+            }
+
+            // `check` is pre-evaluated to a boolean (the lambda is resolved by the interpreter).
+            // true → pass; anything else (false/null/non-bool) → fail (fail-closed on a bad check).
             if ((p["check"] as? UDM.Scalar)?.value == true) continue
             val field = asString(p["field"])
                 ?: (p["fields"] as? UDM.Array)?.elements?.mapNotNull { asString(it) }?.joinToString(",")

@@ -1,0 +1,49 @@
+name: "validate_assert_declarative_rule_kinds"
+category: "language/validate"
+description: "F25: a validate.assert rule may declare its check as a named kind (required, inRange, oneOf, …) instead of a lambda — so the policy stays data and every failure carries the author's rule id"
+tags: ["validate", "1.1", "assert", "rule-kinds", "F25"]
+
+input:
+  format: json
+  data: {"orderId": "A1", "qty": 500, "ccy": "XXX", "channel": "WHOLESALE"}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "order-fields-present", required: ["orderId", "customer"] },
+    { rule: "qty-in-range",         inRange: { field: "qty", min: 1, max: 100 } },
+    { rule: "ccy-allowed",          oneOf: { field: "ccy", values: ["EUR", "USD"] },
+                                    severity: "warning" },
+    { rule: "wholesale-min",        inRange: { field: "qty", min: 50, max: 10000 },
+                                    when: (p) => p.channel == "WHOLESALE" },
+    { rule: "lambda-still-works",   check: (p) => p.orderId != null, message: "orderId required" }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 3,
+    "failed": 2,
+    "warnings": 1,
+    "notices": 0,
+    "issues": [
+      {"rule": "order-fields-present", "field": "customer", "message": "Required field 'customer' is missing", "severity": "error"},
+      {"rule": "qty-in-range", "field": "qty", "message": "Field 'qty' (500.0) is above maximum 100.0", "severity": "error"},
+      {"rule": "ccy-allowed", "field": "ccy", "message": "Field 'ccy' value 'XXX' is not one of [EUR, USD]", "severity": "warning"}
+    ],
+    "payload": {"orderId": "A1", "qty": 500, "ccy": "XXX", "channel": "WHOLESALE"}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F25-declarative-validation-rule-kinds.md"]
+  notes:
+    - "Every issue carries the author's rule id. Composing the same checks with validate.all over bare named validators gives rule:null, because a named validator has no id to report — see all_combinator.yaml."
+    - "One `$input`, written once. The repeated-$input form also allowed a sub-object to be validated and merged as if it were the whole message."
+    - "passed:3 from 6 checks and 3 issues — a declarative kind contributes the validator's own check count (`required` over two fields is two checks), not one."
+    - "wholesale-min passes: its `when` guard matches (WHOLESALE) and 500 is within 50..10000. lambda-still-works shows the `check` lambda is unaffected."
+    - "Kinds DELEGATE to the named validators, so the declarative and standalone forms share one implementation and inherit the same VB03/VB04 hardening."

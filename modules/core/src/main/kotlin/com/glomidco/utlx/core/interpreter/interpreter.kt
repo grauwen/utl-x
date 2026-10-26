@@ -1177,6 +1177,9 @@ class Interpreter(
         val name = (props["rule"] as? RuntimeValue.StringValue)?.value
         val out = props.toMutableMap()
         out.remove("every"); out.remove("some")
+        // strip any declarative kind too: the rule is already being reported as malformed, and
+        // leaving one would make `:stdlib` count `check` + that kind as "two rule kinds" (F25)
+        com.glomidco.utlx.core.semantic.ValidationRuleKinds.DECLARATIVE.forEach { out.remove(it) }
         out["check"] = RuntimeValue.BooleanValue(false)
         out["when"] = RuntimeValue.BooleanValue(true)
         out["severity"] = RuntimeValue.StringValue("error")
@@ -1390,6 +1393,17 @@ class Interpreter(
             val everyField = (rule.properties["every"] as? RuntimeValue.StringValue)?.value
             val someField = (rule.properties["some"] as? RuntimeValue.StringValue)?.value
             if (everyField != null || someField != null) {
+                // F25: a declarative kind operates on the payload, while a quantifier applies a
+                // LAMBDA to each element — they cannot be combined. Diagnosed here so the author is
+                // not told about a `check` they never wrote (the fallback below injects one).
+                val declarative = com.glomidco.utlx.core.semantic.ValidationRuleKinds.DECLARATIVE
+                    .filter { rule.properties.containsKey(it) }
+                if (declarative.isNotEmpty()) {
+                    return@flatMap listOf(malformedQuantifiedRule(props,
+                        "`${everyField?.let { "every" } ?: "some"}` cannot be combined with the " +
+                            "declarative kind `${declarative.first()}` — quantify a `check` lambda, " +
+                            "or drop the quantifier"))
+                }
                 if (checkVal !is RuntimeValue.FunctionValue) {
                     return@flatMap listOf(malformedQuantifiedRule(
                         props, "a quantified rule needs `check` as a lambda `(element) => boolean`"))

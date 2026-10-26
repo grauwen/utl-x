@@ -73,24 +73,37 @@ over a real failure** ([VB06](../bugs-fixed/VB06-chained-validators-fail-open.md
 
 <h4 id="applying-several-rules">Applying several rules</h4>
 
-Use **`validate.all`**, which merges several results into one verdict:
+Put them in **one `validate.assert`**, as declarative rules — see
+[Rule kinds](#rule-kinds-declarative-rules):
 
 ```utlx
-$input |> validate.all([
-  $input |> validate.required(["orderId", "customer"]),
-  $input |> validate.inRange("qty", 1, 100),
-  $input |> validate.oneOf("ccy", ["EUR", "USD"])
+$input |> validate.assert([
+  { rule: "order-fields-present", required: ["orderId", "customer"] },
+  { rule: "qty-in-range",         inRange: { field: "qty", min: 1, max: 100 } },
+  { rule: "ccy-allowed",          oneOf: { field: "ccy", values: ["EUR", "USD"] } }
 ])
 ```
 
-Every validator takes `$input` — never the previous result. The merged `passed` is the sum of the
-parts, and the counts are **recomputed from the merged issues**, so they can never disagree with
-them. An empty list checks nothing and is vacuously valid; an element that is not a
-`ValidationResult` is a malformed rule, which catches the likely mistake of passing payloads or rule
-lists instead of validator outputs.
+One `$input`, and every failure carries your rule id.
 
-The alternative is one `validate.assert` carrying all the rules (below) — preferable when the rules
-need ids, severities or `when` guards, since those are rule-record features.
+**`validate.all` is for merging policies, not for composing validators.** It takes several
+`ValidationResult`s and returns one — useful when a shared base policy is combined with a
+channel-specific one:
+
+```utlx
+$input |> validate.all([
+  $input |> validate.assert([ … shared base policy … ]),
+  $input |> validate.assert([ … channel-specific policy … ])
+])
+```
+
+The merged `passed` is the sum of the parts, and counts are **recomputed from the merged issues** so
+they can never disagree with them. An empty list is vacuously valid; an element that is not a
+`ValidationResult` is a malformed rule.
+
+> Avoid `validate.all([$input |> validate.required([…]), …])` — composing bare named validators that
+> way produces issues with `rule: null`, because a named validator has no id to report. Use
+> declarative rules inside `assert` instead.
 
 ### Rule ids and severities are checked
 
@@ -153,11 +166,74 @@ $input |> validate.assert([
 ])
 ```
 
+<h3 id="rule-kinds-declarative-rules">Rule kinds (declarative rules)</h3>
+
+A rule declares its check either as a **named kind** or as a `check` lambda. Exactly one per rule:
+
+```utlx
+$input |> validate.assert([
+  { rule: "order-fields-present", required: ["orderId", "customer"] },
+  { rule: "qty-in-range",         inRange: { field: "qty", min: 1, max: 100 } },
+  { rule: "ccy-allowed",          oneOf: { field: "ccy", values: ["EUR", "USD"] },
+                                  severity: "warning" },
+  { rule: "wholesale-min",        inRange: { field: "qty", min: 50, max: 10000 },
+                                  when: (p) => p.channel == "WHOLESALE" },
+  { rule: "price-positive",       check: (p) => p.price > 0, message: "price must be positive" }
+])
+```
+
+| Kind | Shape |
+|---|---|
+| `required` | `["a", "b"]` — array of field names |
+| `mutuallyExclusive` | `["a", "b"]` |
+| `atLeastOne` | `["a", "b"]` |
+| `inRange` | `{ field, min, max }` |
+| `oneOf` | `{ field, values }` |
+| `matches` | `{ field, pattern }` |
+| `isoDate` | `{ field, format }` |
+| `unique` | `{ arrayField, keyField }` |
+| `check` | `(p) => <boolean>` — the lambda escape hatch |
+
+**Prefer a declarative kind over a lambda** where one fits. It is the same implementation as the
+standalone validator — kinds delegate, so the two forms cannot drift and the declarative form
+inherits the same null/type-aware robustness — and unlike a standalone call it carries your rule id,
+severity and `when` guard.
+
+**Why this and not several standalone calls.** A rule list is **data**: inspectable, hashable for a
+rule-set version, generatable, and mappable to whatever a downstream consumer needs (a guard maps
+each rule id to one bit of a failed-rule table and uses the set of failing ids as its audit record).
+Several chained or combined standalone calls are *code* — and their issues report `rule: null`,
+because a named validator has no id to report.
+
+Details:
+
+- **The rule's `message` overrides** the validator's generic wording, so you can phrase the business
+  reason: `{ rule: "lines-needed", required: ["lineItems"], message: "an order needs line items" }`.
+- **The rule's `severity` applies to every issue** the kind produces.
+- **A kind contributes the validator's own check count** — `required` over two fields is two checks,
+  exactly as the standalone call reports — so `passed` means the same thing in both forms.
+- **A kind inherits the validator's hardening.** `unique` pointed at a non-array is a malformed rule
+  ([VB04](../bugs-fixed/VB04-named-validators-fail-open-on-malformed-arguments.md)) in the
+  declarative form too, attributed to your rule id.
+- **Zero kinds, two kinds, or a malformed kind spec** are each reported as an error issue naming the
+  rule and the shape expected.
+- **A quantifier cannot be combined with a declarative kind** — `every`/`some` apply a *lambda* to
+  each element, while a kind operates on the payload.
+
+> **Numbers compare differently in the two forms.** A declarative kind compares **exactly**
+> (`oneOf`/`unique` canonicalise, so `9007199254740993` and `9007199254740992` are distinct); a
+> `check` lambda compares as IEEE-754 doubles, where the same two integers are equal and
+> `19.99 * 100 == 1999` is false. The asymmetry is deliberate — kinds are policy, lambdas are
+> arithmetic — and it is a reason to prefer a kind for any numeric constraint. The underlying
+> numeric model is [B35](../bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md),
+> which cannot change within 1.1.
+
 ### Rule record
 
 | Key | Required | Meaning |
 |-----|----------|---------|
-| `check` | **yes** | Lambda `(p) => <boolean expr>`, called with the payload |
+| a **rule kind** | **yes** | Exactly one of `check`, `required`, `inRange`, `oneOf`, `matches`, `isoDate`, `unique`, `mutuallyExclusive`, `atLeastOne` — see [Rule kinds](#rule-kinds-declarative-rules) |
+| `check` | — | The lambda form of the above: `(p) => <boolean expr>`, called with the payload |
 | `rule` | **yes** | Rule id — echoed into `issues[].rule`, and what a failure is attributed to. Must be non-blank and unique within the list |
 | `message` | no | Issue text (defaults to `"rule failed"`) |
 | `field` / `fields` | no | Field name, or an array joined comma-separated |
