@@ -260,6 +260,23 @@ report was that confirmation. What changes now:
   JSON comparison parses both sides to a float, where `100.10` and `100.1` are indistinguishable, so
   a JSON fixture could not have detected the defect it is there to prevent.
 
+- `ScalarCanonicalTest` — the canonicalisation contract directly: representation must not matter
+  (scale, integral-vs-decimal, exponent-vs-plain, signed zero), type must still matter (a numeric
+  string is not a number, a boolean is not 1), and non-finite doubles keep their existing semantics
+  rather than being redefined.
+- `B35CompiledExactNumericTest` (`:engine`) — the cross-strategy invariant: literals and comparison
+  must give the same answer compiled as interpreted. Drives `ASTCompiler` directly and asserts
+  `compile(...) != null` first, because `CompiledStrategy` silently falls back to the interpreter —
+  a test routed through it could pass while measuring the wrong path.
+- `B35CsvExactNumberTest`, `B35XmlExactNumberTest` — parser-level exactness for the two formats that
+  had no integer branch at all, each also asserting that **acceptance is unchanged**: text that was
+  a string stays a string.
+- `B35YamlExactScalarTest` — YAML is the one format whose scalars a third-party library constructs,
+  so its fix is a subclass rather than a call. The tests that matter most there are the *delegation*
+  ones: `.inf`, `-.inf`, `.nan`, underscore grouping and YAML 1.1 sexagesimals must still go to
+  SnakeYAML's own construct. An edit that replaced the float construct outright instead of
+  delegating would otherwise break those silently.
+
 Verified by reverting each half independently and confirming three disjoint failure sets: removing
 exact literals fails the literal and ordering tests; restoring `Double` narrowing fails the
 above-2⁵³ tests; using raw boxed equality fails the scale and representation tests — which is
@@ -287,9 +304,51 @@ to any line carrying the same components:
 Schema-describing formats (avro, protobuf, osch, jsch, tsch, xsd) are **out of scope**: their
 numeric parsing is on schema fields such as `maxLength`, not on payload data.
 
-Two follow-ups are deliberately not included: exact arithmetic, above, and the pattern-match literal,
-which still holds a `Double`. The latter affects `match` against a literal above 2⁵³ and is the one
-remaining place a literal is read without its exact form.
+One follow-up is deliberately not included: **exact arithmetic**, above.
+
+Everything else found while auditing coverage is in. A first pass had missed three places where a
+number was still narrowed, none of which the original tests would have caught:
+
+- **Emitting a literal.** `RuntimeValue.toUDM()` used the `Double` field, so comparison was exact
+  while *constructing* a value was not — `{ id: 9007199254740993 }` still serialised as `…992` and
+  `{ total: 100.10 }` as `100.1`. Preserving an incoming number but corrupting one the mapping writes
+  is arguably the worse half for a guard, which constructs its output frame.
+- **The COMPILED strategy's literals.** `ASTCompiler` emitted `Double.valueOf` for every numeric
+  literal. COMPILED is the engine's **default**, so after the interpreter was fixed the default path
+  was still lossy and the two strategies disagreed on the value of the same script. Exact types are
+  now reconstructed from their string form in bytecode, which is also the only way to place a
+  `BigDecimal` constant.
+- **The COMPILED strategy's comparison.** `RuntimeOps.compareValues` narrowed to `Double`, so
+  equality above 2⁵³ was strategy-dependent. It now shares `ScalarCanonical`.
+- **Pattern literals.** `match` compared the `Double` reading of each arm, so an arm written
+  `9007199254740993` never matched that value — and before the comparison fix it matched the
+  *neighbouring* arm instead. Pattern literals now carry the exact form too.
+
+A strategy-dependent number is worse than a uniformly lossy one, so the compiled path is covered by
+its own parity tests rather than by inference from the interpreter's.
+
+## Adjacent issues found while auditing, deliberately not changed
+
+Recorded so they are not rediscovered as regressions of this fix.
+
+- **The compiled path coerces strings and booleans in comparison; the interpreter does not.**
+  `RuntimeOps.toNumber` converts a numeric string and a boolean, so `"5" == 5` is **true** compiled
+  and **false** interpreted. This predates B35 and is a type-confusion difference rather than a
+  numeric one, so widening or narrowing it as a side effect of a numeric fix would have been wrong.
+  It deserves its own report — for a guard it matters more than the precision did.
+- **JSON and CSV saturate a large `Double` on output.** Both test integrality with `value % 1.0 == 0.0`
+  and then call `toLong()`, so `1e30` serialises as `9223372036854775807`. XML's predicate
+  (`d == d.toLong().toDouble()`) rejects it correctly and prints `1.0E30`. Unifying the three would
+  be an improvement; each has fixtures behind it, so it is a separate change.
+- **`.inf` and `.nan` serialise to invalid JSON.** A YAML input carrying `.inf` emits the bare token
+  `Infinity`. Pre-existing and independent of this fix.
+- **YAML yields `Integer` for a small integer where JSON yields `Long`.** The formats differ in
+  *type* while agreeing in *value*. Harmless now that comparison canonicalises, and pinned by a test
+  so it stays a known difference rather than a surprise.
+- **Three fixtures named `csv_regional_*_output` set no regional format**, only a delimiter, so they
+  never exercised the regional path, and the europe and swiss expectations are byte-identical. The
+  regional path itself is covered by the five `csv_output_regionalformat_*` fixtures and
+  `csv_render_consistency`.
 
 ## Related
 
