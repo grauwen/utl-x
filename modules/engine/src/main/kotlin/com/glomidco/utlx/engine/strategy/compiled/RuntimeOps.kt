@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy.compiled
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.udm.ScalarCanonical
+import com.glomidco.utlx.core.interpreter.RuntimeError
 
 /**
  * Runtime operations called by compiled bytecode.
@@ -48,34 +49,44 @@ object RuntimeOps {
 
     // ── Comparison ──
 
+    /**
+     * B36: equality **without coercion**, matching the interpreter.
+     *
+     * Equality used to be `compareValues(...) == 0`, and `compareValues` coerced through
+     * `toNumber`, which also converts a numeric string and a boolean. So `"5" == 5` and `true == 1`
+     * were **true** on the compiled path and **false** in the interpreter — the same transformation
+     * giving different answers depending on which executable ran it, against the stated contract
+     * that "a transformation that works in one executable works identically in all three". The
+     * conformance suite never caught it because it drives the CLI, which interprets.
+     *
+     * The interpreter's semantics win: stricter, fail-closed, and already what the validation
+     * functions assume — the string `"50"` is not the number 50. Numbers compare canonically, so
+     * representation still does not matter; anything else compares without conversion.
+     */
     @JvmStatic
-    fun equal(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) == 0)
-    }
+    fun equal(left: UDM, right: UDM): UDM = UDM.Scalar(valuesEqual(left, right))
 
     @JvmStatic
-    fun notEqual(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) != 0)
-    }
+    fun notEqual(left: UDM, right: UDM): UDM = UDM.Scalar(!valuesEqual(left, right))
 
     @JvmStatic
     fun greaterThan(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) > 0)
+        return UDM.Scalar(orderOf(left, right) > 0)
     }
 
     @JvmStatic
     fun greaterEqual(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) >= 0)
+        return UDM.Scalar(orderOf(left, right) >= 0)
     }
 
     @JvmStatic
     fun lessThan(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) < 0)
+        return UDM.Scalar(orderOf(left, right) < 0)
     }
 
     @JvmStatic
     fun lessEqual(left: UDM, right: UDM): UDM {
-        return UDM.Scalar(compareValues(left, right) <= 0)
+        return UDM.Scalar(orderOf(left, right) <= 0)
     }
 
     // ── Logical ──
@@ -250,25 +261,40 @@ object RuntimeOps {
     /** The raw numeric value behind a scalar, with no coercion and no narrowing. */
     private fun rawNumber(udm: UDM): Number? = (udm as? UDM.Scalar)?.value as? Number
 
-    private fun compareValues(left: UDM, right: UDM): Int {
-        // B35: when BOTH sides are numbers, order them exactly, using the same definition the
-        // interpreter uses. Narrowing to Double here made two different integers above 2^53 compare
-        // equal on the compiled path after the interpreter had been fixed, so the answer depended on
-        // which strategy ran.
-        val lx = rawNumber(left)
-        val rx = rawNumber(right)
-        if (lx != null && rx != null) return ScalarCanonical.compareNumbers(lx, rx)
+    /**
+     * B36 — equality, mirroring the interpreter's `valuesEqual`.
+     *
+     * B35: two numbers compare canonically, so a Long, a BigDecimal with trailing zeros and a
+     * Double of the same quantity are one value, and two different integers above 2^53 are not.
+     * Everything else compares by raw value with no conversion, and a non-scalar is never equal to
+     * anything — both as the interpreter does it.
+     */
+    private fun valuesEqual(left: UDM, right: UDM): Boolean {
+        if (left !is UDM.Scalar || right !is UDM.Scalar) return false
+        val l = left.value
+        val r = right.value
+        if (l is Number && r is Number) return ScalarCanonical.numbersEqual(l, r)
+        return l == r
+    }
 
-        // Mixed kinds keep the existing coercion: `toNumber` also converts a numeric STRING and a
-        // BOOLEAN, which the interpreter does not, so `"5" == 5` is true here and false there. That
-        // divergence predates B35 and is deliberately left alone rather than widened or narrowed as
-        // a side effect of a numeric fix.
-        val ln = toNumber(left)
-        val rn = toNumber(right)
-        if (ln != null && rn != null) return ln.compareTo(rn)
+    /**
+     * B36 — ordering, mirroring the interpreter's `compareValues`.
+     *
+     * Numbers order exactly and strings order lexicographically. Anything else is an **error**
+     * rather than a silent answer: the interpreter raises "Cannot compare these types", and the
+     * compiled path used to coerce instead and return a verdict — so `"5" < 6` was `true` here and
+     * a runtime error there. Returning a confident wrong answer is the worse of the two, especially
+     * where the verdict gates whether a message is forwarded.
+     */
+    private fun orderOf(left: UDM, right: UDM): Int {
+        val ln = rawNumber(left)
+        val rn = rawNumber(right)
+        if (ln != null && rn != null) return ScalarCanonical.compareNumbers(ln, rn)
 
-        val ls = toStringValue(left)
-        val rs = toStringValue(right)
-        return ls.compareTo(rs)
+        val ls = (left as? UDM.Scalar)?.value as? String
+        val rs = (right as? UDM.Scalar)?.value as? String
+        if (ls != null && rs != null) return ls.compareTo(rs)
+
+        throw RuntimeError("Cannot compare these types")
     }
 }
