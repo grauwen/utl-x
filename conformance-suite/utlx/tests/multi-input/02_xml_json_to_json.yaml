@@ -79,7 +79,7 @@ expected:
             "InStock": true,
             "Price": 29.99,
             "Currency": "EUR",
-            "DiscountPercent": 10,
+            "DiscountPercent": 10.00,
             "FinalPrice": 26.991
           },
           {
@@ -89,7 +89,7 @@ expected:
             "InStock": true,
             "Price": 149.99,
             "Currency": "EUR",
-            "DiscountPercent": 5,
+            "DiscountPercent": 5.00,
             "FinalPrice": 142.4905
           }
         ]

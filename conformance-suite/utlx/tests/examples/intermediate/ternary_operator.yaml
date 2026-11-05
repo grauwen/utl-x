@@ -70,7 +70,7 @@ expected:
       "comparison": "adult",
       "comparisonFalse": "not senior",
       "numeric": 85,
-      "numericCalc": 93.50000000000001,
+      "numericCalc": 93.5,
       "nested": "B",
       "inputBased": "on",
       "withNull": "not found",

@@ -112,6 +112,34 @@ class B35CompiledExactNumericTest {
         assertBoth("{ v: 5 == 5.0 }", "v", true)
     }
 
+    // ── Stage 2 arithmetic parity: both strategies must compute the same number ──
+
+    @Test
+    fun `exact multiplication agrees across strategies`() {
+        assertBoth("{ v: 19.99 * 100 }", "v", BigDecimal("1999.00"))
+        assertBoth("{ v: \$input.dec * 2 }", "v", BigDecimal("200.20"))
+        assertBoth("{ v: 19.99 * 100 == 1999 }", "v", true)
+    }
+
+    @Test
+    fun `exact addition and subtraction agree across strategies`() {
+        assertBoth("{ v: 0.1 + 0.2 }", "v", BigDecimal("0.3"))
+        assertBoth("{ v: 0.1 + 0.2 > 0.3 }", "v", false)
+        assertBoth("{ v: 10.00 - 9.99 }", "v", BigDecimal("0.01"))
+        assertBoth("{ v: \$input.big - 9007199254740992 }", "v", BigDecimal("1"))
+    }
+
+    @Test
+    fun `division stays approximate on both strategies`() {
+        assertBoth("{ v: 10 / 3 }", "v", 3.3333333333333335)
+        assertBoth("{ v: (10 / 3) * 3 }", "v", 10.0)
+    }
+
+    @Test
+    fun `a Double operand keeps both strategies on the approximate path`() {
+        assertBoth("{ v: 1e2 * 1.5 }", "v", 150.0)
+    }
+
     @Test
     fun `a payload value passes through identically on both strategies`() {
         assertBoth("{ v: \$input.big }", "v", 9007199254740993L)

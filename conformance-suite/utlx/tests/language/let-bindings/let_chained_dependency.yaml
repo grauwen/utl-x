@@ -25,4 +25,4 @@ transformation: |
 expected:
   format: json
   data: |
-    {"subtotal": 100, "tax": 21, "total": 121}
+    {"subtotal": 100, "tax": 21.00, "total": 121.00}

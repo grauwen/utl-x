@@ -163,13 +163,54 @@ class B35ExactNumericModelTest {
     // ── Known remaining limitation: arithmetic is still Double ──
 
     @Test
-    fun `arithmetic is still inexact — update these when exact computation lands`() {
-        // Money: the headline example. Exact arithmetic would make this true.
-        assertEquals(false, value(run("19.99 * 100 == 1999")))
-        // Classic binary-float artefact. Exact arithmetic would make this false.
-        assertEquals(true, value(run("0.1 + 0.2 > 0.3")))
-        // Subtraction above 2^53 collapses, even though the operands now compare correctly.
-        assertEquals(0.0, value(run("9007199254740993 - 9007199254740992")))
+    fun `multiplication is exact — the headline case`() {
+        assertEquals(true, value(run("19.99 * 100 == 1999")))
+        assertEquals(true, value(run("\$input.money * 100 == 1999")))
+    }
+
+    @Test
+    fun `addition is exact, so the classic float artefact is gone`() {
+        assertEquals(false, value(run("0.1 + 0.2 > 0.3")))
+        assertEquals(true, value(run("0.1 + 0.2 == 0.3")))
+    }
+
+    @Test
+    fun `subtraction above 2^53 no longer collapses`() {
+        // Was 0.0: both operands became the same Double before being subtracted.
+        // The result is a BigDecimal rather than a Long — exact arithmetic works in one numeric
+        // type. The VALUE is what matters and it is exact; it serialises as `1`, and comparison
+        // canonicalises, so the difference in box is not observable to an author.
+        assertEquals(BigDecimal("1"), value(run("9007199254740993 - 9007199254740992")))
+        assertEquals(true, value(run("9007199254740993 - 9007199254740992 == 1")))
+    }
+
+    @Test
+    fun `division stays approximate, deliberately`() {
+        // Exact division needs a digit count and a rounding mode, which are prescribed by law in
+        // some tax regimes and so are a business decision rather than an engineering one. If this
+        // ever changes it must be a deliberate act, not a side effect — hence the assertion.
+        assertEquals(3.3333333333333335, value(run("10 / 3")))
+        assertEquals(1.0, value(run("10 % 3")))
+    }
+
+    @Test
+    fun `a Double operand keeps the whole operation approximate`() {
+        // An exponent-form literal carries no exact value, so there is nothing to preserve and the
+        // cheap path is used — which is what keeps float-style scripts at float speed.
+        assertEquals(150.0, value(run("1e2 * 1.5")))
+        // Division yields a Double, so arithmetic after it is approximate again. This is the
+        // author-facing rule: division returns you to approximate arithmetic.
+        assertEquals(10.0, value(run("(10 / 3) * 3")))
+    }
+
+    @Test
+    fun `scale follows the inputs`() {
+        // Adding keeps the larger scale; multiplying adds them. That is the arithmetically exact
+        // answer, and it is why a computed money total now carries its inputs' cents instead of
+        // being rounded to look tidy.
+        assertEquals(BigDecimal("4.00"), value(run("1.50 + 2.50")))
+        assertEquals(BigDecimal("29.985"), value(run("19.99 * 1.5")))
+        assertEquals(BigDecimal("8.00"), value(run("100 * 0.08")))
     }
 
     // ── Pattern literals: `match` must select the arm the author wrote ──
@@ -240,9 +281,10 @@ class B35ExactNumericModelTest {
     }
 
     @Test
-    fun `comparing a payload value against an arithmetic result goes through Double`() {
-        // Documents the boundary: the LITERAL is exact, the PRODUCT is not, so this is the one
-        // place a reader might expect exactness and not get it.
-        assertTrue(value(run("\$input.money * 100 == 1999")) == false)
+    fun `string concatenation renders a number as written`() {
+        // `"x" + 1` used to produce "x1.0", because the only value available was the Double.
+        assertEquals("x1", value(run("\"x\" + 1")))
+        assertEquals("x1.5", value(run("\"x\" + 1.5")))
+        assertEquals("x100.10", value(run("\"x\" + \$input.dec")))
     }
 }

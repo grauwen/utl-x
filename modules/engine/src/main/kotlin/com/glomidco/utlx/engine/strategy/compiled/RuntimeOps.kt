@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy.compiled
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.udm.ScalarCanonical
+import com.glomidco.utlx.core.udm.ExactArithmetic
 import com.glomidco.utlx.core.interpreter.RuntimeError
 
 /**
@@ -14,25 +15,42 @@ object RuntimeOps {
 
     // ── Arithmetic ──
 
+    /**
+     * B35 Stage 2: `+`, `-` and `*` are exact when both operands carry an exact value.
+     *
+     * Delegates to the shared `ExactArithmetic` in `:core` rather than reimplementing the rule. The
+     * interpreter calls the same function with the same fallback, which is the point: B36 was what
+     * happened when the two strategies each kept their own copy of a comparison rule and drifted
+     * apart unnoticed, because the conformance suite exercises only the interpreted path.
+     *
+     * The Double value is still computed first and passed as the fallback, so operand coercion and
+     * the string-concatenation branch behave exactly as before.
+     */
     @JvmStatic
     fun add(left: UDM, right: UDM): UDM {
         val l = toNumber(left)
         val r = toNumber(right)
-        if (l != null && r != null) return UDM.Scalar(l + r)
+        if (l != null && r != null) {
+            return UDM.Scalar(ExactArithmetic.add(rawNumber(left), rawNumber(right), l + r))
+        }
         // String concatenation fallback
         return UDM.Scalar(toStringValue(left) + toStringValue(right))
     }
 
     @JvmStatic
     fun subtract(left: UDM, right: UDM): UDM {
-        return UDM.Scalar((toNumber(left) ?: 0.0) - (toNumber(right) ?: 0.0))
+        val fallback = (toNumber(left) ?: 0.0) - (toNumber(right) ?: 0.0)
+        return UDM.Scalar(ExactArithmetic.subtract(rawNumber(left), rawNumber(right), fallback))
     }
 
     @JvmStatic
     fun multiply(left: UDM, right: UDM): UDM {
-        return UDM.Scalar((toNumber(left) ?: 0.0) * (toNumber(right) ?: 0.0))
+        val fallback = (toNumber(left) ?: 0.0) * (toNumber(right) ?: 0.0)
+        return UDM.Scalar(ExactArithmetic.multiply(rawNumber(left), rawNumber(right), fallback))
     }
 
+    // B35 Stage 2 stops here: divide and modulo stay on the Double path, because exact division
+    // needs a digit count and a rounding mode that are a business decision. See ExactArithmetic.
     @JvmStatic
     fun divide(left: UDM, right: UDM): UDM {
         val r = toNumber(right) ?: 0.0

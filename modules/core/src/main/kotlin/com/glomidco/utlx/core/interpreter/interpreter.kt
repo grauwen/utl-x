@@ -4,6 +4,8 @@ import mu.KotlinLogging
 import com.glomidco.utlx.core.ast.*
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.udm.ScalarCanonical
+import com.glomidco.utlx.core.udm.ExactArithmetic
+import com.glomidco.utlx.core.format.ExactNumber
 import kotlin.math.*
 
 private val logger = KotlinLogging.logger {}
@@ -865,9 +867,13 @@ class Interpreter(
                     }
                     else -> {
                         try {
+                            // B35 Stage 2: exact when both operands carry an exact value. The
+                            // Double operands are still extracted first, so operand validation,
+                            // error messages and numeric-string coercion are all unchanged — the
+                            // Double result simply becomes the fallback.
                             val l = extractNumber(left, "Left operand must be number for arithmetic", expr.location)
                             val r = extractNumber(right, "Right operand must be number for arithmetic", expr.location)
-                            RuntimeValue.NumberValue(l + r)
+                            numberResult(ExactArithmetic.add(numberOf(left), numberOf(right), l + r))
                         } catch (e: RuntimeError) {
                             throw RuntimeError("Invalid operands for +", expr.location)
                         }
@@ -878,15 +884,19 @@ class Interpreter(
             BinaryOperator.MINUS -> {
                 val l = extractNumber(left, "Left operand must be number", expr.location)
                 val r = extractNumber(right, "Right operand must be number", expr.location)
-                RuntimeValue.NumberValue(l - r)
+                numberResult(ExactArithmetic.subtract(numberOf(left), numberOf(right), l - r))
             }
             
             BinaryOperator.MULTIPLY -> {
                 val l = extractNumber(left, "Left operand must be number", expr.location)
                 val r = extractNumber(right, "Right operand must be number", expr.location)
-                RuntimeValue.NumberValue(l * r)
+                numberResult(ExactArithmetic.multiply(numberOf(left), numberOf(right), l * r))
             }
             
+            // B35 Stage 2 deliberately stops here. DIVIDE and MODULO stay on the Double path:
+            // exact division needs a digit count and a rounding mode, which are prescribed by law in
+            // some invoicing and tax regimes and so are a business decision, not an implementation
+            // one. The author-facing rule is "division returns you to approximate arithmetic".
             BinaryOperator.DIVIDE -> {
                 val l = extractNumber(left, "Left operand must be number", expr.location)
                 val r = extractNumber(right, "Right operand must be number", expr.location)
@@ -1043,6 +1053,15 @@ class Interpreter(
         is Byte -> -n.toLong()
         else -> null
     }
+
+    /**
+     * B35 Stage 2: wrap an arithmetic result, carrying its exact form when there is one.
+     *
+     * `ExactArithmetic` hands back a `BigDecimal` when both operands were exact and the `Double`
+     * fallback otherwise, so this is the one place that distinction turns back into a RuntimeValue.
+     */
+    private fun numberResult(n: Number): RuntimeValue.NumberValue =
+        RuntimeValue.NumberValue.exactly(n.toDouble(), n.takeUnless { it is Double || it is Float })
 
     private fun valuesEqual(left: RuntimeValue, right: RuntimeValue): Boolean {
         // B35: if both sides are numbers, compare them canonically — one path, whatever the
@@ -1759,12 +1778,18 @@ class Interpreter(
     private fun extractStringValue(value: RuntimeValue): String {
         return when (value) {
             is RuntimeValue.StringValue -> value.value
-            is RuntimeValue.NumberValue -> value.value.toString()
+            // B35: render the number as written. `"total: " + 1` produced "total: 1.0", because the
+            // only value available was the Double; the literal's exact form says the author wrote 1.
+            // Matches UDM.Scalar.asString(), so concatenating a payload number and concatenating a
+            // literal agree.
+            is RuntimeValue.NumberValue ->
+                value.exact?.let { ExactNumber.renderExactOrNull(it) } ?: value.value.toString()
             is RuntimeValue.BooleanValue -> value.value.toString()
             is RuntimeValue.NullValue -> "null"
             is RuntimeValue.UDMValue -> {
                 when (val udm = value.udm) {
-                    is UDM.Scalar -> udm.value.toString()
+                    is UDM.Scalar -> (udm.value as? Number)
+                        ?.let { ExactNumber.renderExactOrNull(it) } ?: udm.value.toString()
                     else -> value.toString()
                 }
             }

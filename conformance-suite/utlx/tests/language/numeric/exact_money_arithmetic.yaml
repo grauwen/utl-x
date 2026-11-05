@@ -1,0 +1,54 @@
+name: "exact_money_arithmetic"
+category: "language/numeric"
+description: "B35 Stage 2: + - * are exact, so money arithmetic is correct; / stays approximate"
+tags: ["numeric", "exact", "arithmetic", "money", "B35", "1.0"]
+
+input:
+  format: json
+  data: |
+    {"price": 19.99, "qty": 3, "rate": 0.08, "big": 9007199254740993}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    r: {
+      lineTotal:   $input.price * $input.qty,
+      tax:         $input.price * $input.rate,
+      headline:    19.99 * 100,
+      floatSum:    0.1 + 0.2,
+      difference:  10.00 - 9.99,
+      bigDiff:     $input.big - 9007199254740992,
+      division:    10 / 3,
+      afterDiv:    (10 / 3) * 3,
+      expOperand:  1e2 * 1.5
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <r>
+      <lineTotal>59.97</lineTotal>
+      <tax>1.5992</tax>
+      <headline>1999.00</headline>
+      <floatSum>0.3</floatSum>
+      <difference>0.01</difference>
+      <bigDiff>1</bigDiff>
+      <division>3.3333333333333335</division>
+      <afterDiv>10</afterDiv>
+      <expOperand>150</expOperand>
+    </r>
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"]
+  notes:
+    - "Output is XML on purpose: the JSON comparison parses both sides to a float, so scale (1999.00 vs 1999) would be invisible"
+    - "Before: lineTotal 59.97000000000001, headline 1999.0000000000002, floatSum 0.30000000000000004, bigDiff 0"
+    - "division and afterDiv pin that / is still approximate — exact division needs a rounding mode, which is a business decision"
+    - "expOperand pins the fallback: an exponent-form literal carries no exact value, so the operation stays on the Double path (and an integral Double prints without its .0)"
+    - "Scale is derived from the inputs: price(2) * qty(0) = 2; price(2) * rate(2) = 4"

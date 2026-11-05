@@ -2,10 +2,11 @@
 
 > **B = core bug** (`:core` interpreter / parser / AST), the family of B01–B34. This is **B35**.
 
-**Status:** **FIXED — data preservation and comparison.** Numbers are now preserved as written by
-every data-format parser and serialiser, and comparison is exact. **Arithmetic is still
-double-based** and is tracked below as the one remaining stage, because exact computation needs a
-division scale and rounding mode chosen at the language level.
+**Status:** **FIXED.** Numbers are preserved as written by every data-format parser and serialiser,
+comparison is exact, and `+`, `-` and `*` are exact. **`/` and `%` remain approximate by decision,
+not by omission** — exact division requires a digit count and a rounding mode that are prescribed by
+law in some invoicing regimes, which makes them a business decision; see §Why division is
+deliberately excluded.
 **Priority:** High for the domain. UTL-X transforms invoices, orders and prices.
 **Component:** `:core` (parser, AST, interpreter comparison), the five data-format modules, and the
 UDM scalar accessors.
@@ -25,8 +26,11 @@ UDM scalar accessors.
 | `$input.id == 9007199254740993` (id = …993) | `false` | **`true`** |
 | `$input.id > 9007199254740992` | `false` | **`true`** |
 | `100.10 == 100.1`, `5 == 5.0` | `true` | `true` (preserved) |
-| `19.99 * 100 == 1999` | `false` | `false` — **still open** |
-| `0.1 + 0.2 > 0.3` | `true` | `true` — **still open** |
+| `19.99 * 100 == 1999` | `false` | **`true`** |
+| `0.1 + 0.2 > 0.3` | `true` | **`false`** |
+| `9007199254740993 - 9007199254740992` | `0` | **`1`** |
+| `"total: " + 1` | `"total: 1.0"` | **`"total: 1"`** |
+| `10 / 3` | `3.3333333333333335` | unchanged — **approximate by decision** |
 
 ## The project's own position
 
@@ -206,29 +210,147 @@ The validation functions and the operators now share one canonicalisation, so bo
 This matters beyond tidiness: where a validation result is consumed as an oracle for downstream
 enforcement, an oracle holding two notions of numeric equality is not usable.
 
-## Still open: exact arithmetic
+## Exact arithmetic — `+`, `-`, `*`
 
-`19.99 * 100 == 1999` is still false and `0.1 + 0.2 > 0.3` is still true. Operands are narrowed to
-`Double` for `+ - * / %`, and the regression tests pin that so landing it later is a deliberate act
-rather than a surprise.
+Addition, subtraction and multiplication are now exact. This is the half of B35 that a customer
+notices, and it is why the report was filed.
 
-Three things gate it, only the first of which is code:
+| | before | after |
+|---|---|---|
+| `19.99 * 100 == 1999` | `false` | **`true`** |
+| `0.1 + 0.2 > 0.3` | `true` | **`false`** |
+| `19.99 * 3` | `59.97000000000001` | **`59.97`** |
+| `10.00 - 9.99` | `0.009999999999999787` | **`0.01`** |
+| `9007199254740993 - 9007199254740992` | `0` | **`1`** |
+| `10 / 3` | `3.3333333333333335` | unchanged — **still approximate** |
 
-1. **Division semantics.** `BigDecimal` division requires an explicit scale and `RoundingMode`:
-   `1/3` has no exact representation. That is a *language* decision, not an implementation detail.
-   XPath's `xs:decimal` rules are the precedent to copy — at least 18 digits of precision,
-   implementation-defined beyond — but they have to be chosen and written down.
-2. **Performance.** `BigDecimal` arithmetic is roughly an order of magnitude slower than `double`.
-   On a mapping hot path that is material, and it is the strongest argument for making exact
-   computation an **opt-in compute profile** rather than a flat switch. The profile mechanism
-   already exists for parser strictness ([F23](../features/F23-parser-strictness-profiles.md)).
-   Note that exactness could be made to cost nothing when it is not needed: falling back to `Double`
-   whenever either operand is already a `Double` keeps float-style scripts on the fast path.
-3. **Scope of the result change.** Every computed money total would gain the scale of its inputs
-   (`2500` becoming `2500.00`), so this changes more output than the preservation work did.
+### Why division is deliberately excluded
 
-The three stages were independently valuable and in increasing order of cost and risk:
-**preserve the data, judge it correctly, compute it correctly.** The first two are done.
+Addition, subtraction and multiplication of two decimals **always have an exact decimal answer**.
+Nothing is chosen, nothing is rounded, no information is discarded. `BigDecimal` computes them
+directly and the result is simply correct.
+
+Division is the one operator with no such guarantee. `10 / 3` is 3.3333… with no terminating decimal
+form, so an exact division cannot proceed until it is told **how many digits to keep** and **which
+way to round the last one**. `BigDecimal` refuses to guess and throws rather than inventing an
+answer.
+
+Those two settings are not an implementation detail. In invoicing and tax the rounding rule is
+sometimes **prescribed by law** and varies by jurisdiction, which makes it a business decision rather
+than an engineering one. Picking a default quietly inside a bug fix would have buried a commercial
+decision in a commit.
+
+So `/` and `%` keep the behaviour they have always had, and the author-facing rule is one sentence:
+
+> **Division returns you to approximate arithmetic.**
+
+An exact total that is then divided yields an ordinary double — the same answer as before this
+change, so nothing regresses; it simply stops being exact from that point on. When the rounding
+question is answered, the change is small and isolated: one operator, in one shared object. The
+recommendation to whoever owns it would be XPath's `xs:decimal` precedent — `DECIMAL128` (34
+significant digits) with `HALF_EVEN` — because it is a written-down standard rather than an invented
+rule, and because `HALF_EVEN` does not drift upward across a long column of figures the way
+school-style "round .5 up" does.
+
+### When exactness applies, and why that makes it free
+
+Only when **both** operands already carry an exact value — a number that came out of a payload or
+was written as a literal. If either side is a `Double` (an exponent-form literal, or the result of an
+earlier division) there is nothing exact to preserve and the operation stays on the `Double` path.
+Promoting a `Double` to `BigDecimal` would be worse than useless: it would manufacture the 55-digit
+value a double actually holds and present it as though the author had written it.
+
+That rule was expected to be the mitigation for `BigDecimal`'s cost, which is roughly an order of
+magnitude per operation. **Measured, the cost does not appear at all.** Summing 200,000
+price×quantity pairs:
+
+```
+exact path (both operands exact)     0.49s, 0.63s      total 11994000.00
+double path (one operand a Double)   0.52s, 0.52s      total 1.199400000002839E7
+```
+
+Parsing and serialising dominate so completely that the arithmetic is not measurable, which removes
+the main argument for making exactness an opt-in compute profile. The second row is also worth
+reading as a result in its own right: summing 200,000 money values as doubles drifts by 2.8e-6 and
+renders in exponent notation.
+
+### Scale, and the one thing to know about it
+
+Exactness means the result's scale **follows from the inputs** rather than being chosen:
+
+```
+1.50 + 2.50   =  4.00      adding keeps the larger scale
+19.99 * 1.5   =  29.985    multiplying ADDS the scales
+100 * 0.08    =  8.00
+```
+
+This is the arithmetically correct answer, and it is why a computed money total now carries its
+inputs' cents instead of being rounded to look tidy.
+
+The consequence to be aware of: **a computed value that used to serialise as a JSON integer may now
+serialise as a JSON decimal.** `100 * 0.08` was `8` and is now `8.00`. A consumer validating that
+field against `"type": "integer"` will need updating. This is the single most likely source of
+friction from this change.
+
+It also means repeated multiplication grows the number of decimal places linearly — 200 chained
+multiplications of a scale-2 value produce a 400-digit number. Measured cost stays modest (20,000
+chained multiplications take 1.9s), and output size grows linearly with input size rather than
+explosively, so there is **no cap**: capping would require either a rounding decision, which this
+work deliberately avoids, or a silent behaviour cliff. Where a presentation value is wanted, round
+explicitly — `round(x, 2)` and `roundToCents(x)` both exist and both work on exact values.
+
+### Why `stripTrailingZeros` was considered and rejected
+
+Stripping trailing zeros from arithmetic results would have turned `8.00` back into `8` and reduced
+fixture churn from six files to one. It was rejected on consistency grounds: Stage 0 deliberately
+preserves a *parsed* `8.00`, so stripping a *computed* `8.00` would leave the language with two
+contradictory rules for the same value depending on where it came from. One rule — report what you
+computed — is worth more than the saved churn. It is also what DataWeave and XPath `xs:decimal`
+arithmetic do, so the behaviour will not surprise anyone arriving from either.
+
+### Both strategies, one definition
+
+`ExactArithmetic` lives in `:core` and the interpreter and the compiled path both call it, with the
+`Double` result passed in as the fallback. That shape matters: the operand coercion, the error
+messages and the string-concatenation branch of `+` are all untouched, so the only thing that
+changed is which of two already-computed answers is returned.
+
+Keeping it in one place is the direct lesson of
+[B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md) — two strategies each holding
+their own copy of a semantic rule drift apart, and the drift is invisible because the conformance
+suite exercises only the interpreted path.
+
+### Related fix: numbers inside strings
+
+`"total: " + 1` produced `"total: 1.0"`, because the only value available at concatenation was the
+`Double`. The literal's exact form says the author wrote `1`, so it now renders as `"total: 1"`.
+This also corrected a fixture that expected a currency string of `"$108.0"` — one decimal place on a
+money value.
+
+### Fixtures updated
+
+Six, all the same cause: a computed decimal now carries scale, so a JSON integer became a JSON
+decimal. Two of the six were **recording the defect** rather than asserting intent:
+
+- `ternary_operator` expected `93.50000000000001` for `85 * 1.1` — a pure floating-point artefact.
+- `function_definition_basic` expected `"$108.0"` from a function named `FormatCurrency`.
+
+The other four (`let_chained_dependency`, `f01_schema_with_policy`, `valid_pascalcase_function`,
+`02_xml_json_to_json`) changed from `8`/`121`/`10` to `8.00`/`121.00`/`10.00`.
+
+Worth recording why those four passed before: the old double arithmetic was correct **only when the
+rounding error happened to vanish**.
+
+```
+100 * 0.08   double 8.0                 printed 8      exact 8.00
+100 * 1.21   double 121.0               printed 121    exact 121.00
+100 * 0.21   double 21.0                printed 21     exact 21.00
+ 85 * 1.1    double 93.50000000000001   printed as-is  exact 93.5
+```
+
+Four instances of the same expression form; three landed exactly on the integer by luck and one did
+not. That is the clearest available argument that the old behaviour was an accident rather than a
+design: it worked whenever the error cancelled and produced visible garbage when it did not.
 
 ## Guard implications
 
@@ -260,6 +382,10 @@ report was that confirmation. What changes now:
   JSON comparison parses both sides to a float, where `100.10` and `100.1` are indistinguishable, so
   a JSON fixture could not have detected the defect it is there to prevent.
 
+- `ExactArithmeticTest` — the arithmetic contract: exact when both operands are exact, **fall back
+  rather than fabricate** when either is a `Double`, and scale derived rather than chosen. One test
+  asserts by reflection that **no divide method exists**, so adding exact division cannot happen
+  without someone first recording the rounding decision.
 - `ScalarCanonicalTest` — the canonicalisation contract directly: representation must not matter
   (scale, integral-vs-decimal, exponent-vs-plain, signed zero), type must still matter (a numeric
   string is not a number, a boolean is not 1), and non-finite doubles keep their existing semantics
@@ -282,7 +408,10 @@ exact literals fails the literal and ordering tests; restoring `Double` narrowin
 above-2⁵³ tests; using raw boxed equality fails the scale and representation tests — which is
 precisely the regression that preserving precision alone would have caused.
 
-Full JVM test suite green; conformance **554/554 on both JVM and GraalVM native**. The native run
+Full JVM test suite green; conformance **556/556** through the Python runner against both the JVM
+jar and the GraalVM native binary. Note that figure describes the **interpreted** path: the
+conformance runner drives the CLI, which interprets, so the compiled strategy's coverage is the
+`:engine` suite and the parity tests named above — the gap B36 documents. The native run
 matters here because the fix touches every serialiser and introduces a subclass of the YAML
 library's constructor, and an undeclarable reflective boundary has broken this project's native
 image before (B19/B25).
@@ -298,13 +427,15 @@ to any line carrying the same components:
 | new, `:core` | `ExactNumber`, `ScalarCanonical` and their tests |
 | format parsers | one call each in JSON, CSV, XML; a constructor subclass in YAML. OData inherits the JSON fix — it delegates to the JSON parser |
 | format serialisers | one branch each in JSON, CSV, XML. YAML needed none |
-| `:core` | exact field on the number literal node and on the runtime number value; the parser passing the lexeme's exact value; canonical `valuesEqual` / `compareValues`; exact unary minus; plain rendering in the scalar `asString()` |
+| `:core` | exact field on the number literal node and on the runtime number value; the parser passing the lexeme's exact value; canonical `valuesEqual` / `compareValues`; exact unary minus; plain rendering in the scalar `asString()` and in string concatenation |
+| `:core`, `:engine` | `ExactArithmetic` plus one call per operator in the interpreter and in `RuntimeOps`; exact literal emission in `ASTCompiler` (a `BigDecimal` constant has to be rebuilt from its string form in bytecode) |
 | elsewhere | numeric classification in the type checker; the validation canonicaliser delegating to the shared one |
 
 Schema-describing formats (avro, protobuf, osch, jsch, tsch, xsd) are **out of scope**: their
 numeric parsing is on schema fields such as `maxLength`, not on payload data.
 
-One follow-up is deliberately not included: **exact arithmetic**, above.
+One thing is deliberately not included: **exact division**, and the reason is a decision rather
+than an omission — see §Why division is deliberately excluded.
 
 Everything else found while auditing coverage is in. A first pass had missed three places where a
 number was still narrowed, none of which the original tests would have caught:
@@ -331,17 +462,16 @@ its own parity tests rather than by inference from the interpreter's.
 
 Recorded so they are not rediscovered as regressions of this fix.
 
-- **The compiled path coerces strings and booleans in comparison; the interpreter does not.**
-  `RuntimeOps.toNumber` converts a numeric string and a boolean, so `"5" == 5` is **true** compiled
-  and **false** interpreted. This predates B35 and is a type-confusion difference rather than a
-  numeric one, so widening or narrowing it as a side effect of a numeric fix would have been wrong.
-  It deserves its own report — for a guard it matters more than the precision did.
-- **JSON and CSV saturate a large `Double` on output.** Both test integrality with `value % 1.0 == 0.0`
-  and then call `toLong()`, so `1e30` serialises as `9223372036854775807`. XML's predicate
-  (`d == d.toLong().toDouble()`) rejects it correctly and prints `1.0E30`. Unifying the three would
-  be an improvement; each has fixtures behind it, so it is a separate change.
-- **`.inf` and `.nan` serialise to invalid JSON.** A YAML input carrying `.inf` emits the bare token
-  `Infinity`. Pre-existing and independent of this fix.
+- **The compiled path coerced strings and booleans in comparison; the interpreter did not** —
+  `"5" == 5` was true compiled and false interpreted. Type confusion rather than imprecision, so it
+  was deliberately not folded into a numeric fix. → **[B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md), fixed.**
+  Measurement found seven diverging comparisons, not the one noted here.
+- **Three serialisers saturated a large `Double` on output** — `1e30` and `1e300` both printed as
+  `9223372036854775807`. YAML was affected too, which this note originally missed; XML was already
+  correct. → **[B37](B37-serializers-saturate-large-doubles-to-long-max.md), fixed.**
+- **Non-finite numbers serialise as invalid JSON** — `.inf` emits the bare token `Infinity`. No
+  single correct answer, and the fix wants a serialisation profile that does not exist yet.
+  → **[B38](B38-non-finite-numbers-serialise-as-invalid-json.md), open.**
 - **YAML yields `Integer` for a small integer where JSON yields `Long`.** The formats differ in
   *type* while agreeing in *value*. Harmless now that comparison canonicalises, and pinned by a test
   so it stays a known difference rather than a surprise.

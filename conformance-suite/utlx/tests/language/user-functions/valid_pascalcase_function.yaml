@@ -33,8 +33,8 @@ expected:
     {
       "amount": 100,
       "taxRate": 0.08,
-      "taxAmount": 8,
-      "total": 108
+      "taxAmount": 8.00,
+      "total": 108.00
     }
 
 performance_limits:

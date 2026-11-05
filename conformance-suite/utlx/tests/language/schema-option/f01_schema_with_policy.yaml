@@ -20,4 +20,4 @@ transformation: |
 expected:
   format: json
   data: |
-    {"total": 121}
+    {"total": 121.00}

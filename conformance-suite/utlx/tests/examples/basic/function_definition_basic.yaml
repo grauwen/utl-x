@@ -36,9 +36,9 @@ expected:
   data: |
     {
       "subtotal": 100,
-      "tax": 8,
-      "total": 108,
-      "formatted": "$108.0"
+      "tax": 8.00,
+      "total": 108.00,
+      "formatted": "$108.00"
     }
 
 performance_limits:
