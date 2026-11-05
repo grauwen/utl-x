@@ -1,0 +1,36 @@
+name: "large_double_not_saturated"
+category: "language/numeric"
+description: "B37: a double too large for Long must not be printed as a saturated integer"
+tags: ["numeric", "serializer", "double", "B37", "1.0"]
+
+input:
+  format: json
+  data: |
+    {"a": 1e30, "b": 1e300, "c": 1.5, "d": 1}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  { root: $input }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <root>
+      <a>1.0E30</a>
+      <b>1.0E300</b>
+      <c>1.5</c>
+      <d>1</d>
+    </root>
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B37-serializers-saturate-large-doubles-to-long-max.md"]
+  notes:
+    - "Output is XML on purpose: the JSON comparison parses both sides to a float, so 1e30 and a saturated 9223372036854775807 would NOT both be detectable as text"
+    - "Before the fix JSON, CSV and YAML all printed 9223372036854775807 for BOTH a and b"
+    - "XML was already correct, because its integrality test was a Long round-trip rather than `% 1.0 == 0.0`"
+    - "c and d guard the normal cases: a decimal keeps its point, a small integer loses its .0"

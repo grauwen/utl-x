@@ -384,14 +384,10 @@ class XMLSerializer(
                 // B35: exact types render as written. Narrowing every Number through toDouble()
                 // just to test for integrality corrupted Long and BigDecimal on the way out.
                 ExactNumber.renderExactOrNull(value) ?: run {
+                    // B37: this predicate was already the correct one — a Long round-trip — and is
+                    // now shared, so the other serialisers cannot drift away from it again.
                     val d = value.toDouble()
-                    if (d == d.toLong().toDouble()) {
-                        // It's an integer, format without decimal point
-                        d.toLong().toString()
-                    } else {
-                        // It's a decimal, keep as is
-                        d.toString()
-                    }
+                    ExactNumber.integralLongOrNull(d)?.toString() ?: d.toString()
                 }
             }
             else -> value.toString()

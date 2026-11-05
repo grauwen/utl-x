@@ -81,8 +81,10 @@ class JSONSerializer(
                 val exact = ExactNumber.renderExactOrNull(value)
                 if (exact != null) {
                     writer.write(exact)
-                } else if (value is Double && value % 1.0 == 0.0 && !value.isInfinite() && !value.isNaN()) {
-                    writer.write(value.toLong().toString())
+                } else if (value is Double && ExactNumber.integralLongOrNull(value) != null) {
+                    // B37: round-trip through Long rather than `% 1.0 == 0.0`, which was true for
+                    // every large double and let toLong() saturate 1e30 to 9223372036854775807.
+                    writer.write(ExactNumber.integralLongOrNull(value).toString())
                 } else {
                     writer.write(value.toString())
                 }

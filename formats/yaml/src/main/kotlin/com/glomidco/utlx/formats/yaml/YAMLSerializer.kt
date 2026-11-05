@@ -1,6 +1,7 @@
 // formats/yaml/src/main/kotlin/com/glomidco/utlx/formats/yaml/YAMLSerializer.kt
 package com.glomidco.utlx.formats.yaml
 
+import com.glomidco.utlx.core.format.ExactNumber
 import com.glomidco.utlx.core.udm.*
 import org.yaml.snakeyaml.DumperOptions
 import org.yaml.snakeyaml.Yaml
@@ -128,12 +129,11 @@ class YAMLSerializer {
                 // Handle numbers specially to preserve integer vs float distinction
                 when (val value = udm.value) {
                     is Double -> {
-                        // Convert whole numbers to Long for proper YAML serialization
-                        if (value.isFinite() && value % 1.0 == 0.0) {
-                            value.toLong()
-                        } else {
-                            value
-                        }
+                        // Convert whole numbers to Long for proper YAML serialization.
+                        // B37: integrality is a Long round-trip, not `% 1.0 == 0.0` — the latter was
+                        // true for every large double, so toLong() saturated 1e30 and 1e300 to the
+                        // same value, 9223372036854775807.
+                        ExactNumber.integralLongOrNull(value) ?: value
                     }
                     is Float -> {
                         // Convert whole numbers to Int for proper YAML serialization

@@ -143,6 +143,41 @@ class ExactNumberTest {
         }
     }
 
+    // ── B37: integrality is a Long round-trip, not a modulo test ──
+
+    @Test
+    fun `an integral double within Long range round-trips`() {
+        assertEquals(1L, ExactNumber.integralLongOrNull(1.0))
+        assertEquals(-7L, ExactNumber.integralLongOrNull(-7.0))
+        assertEquals(0L, ExactNumber.integralLongOrNull(0.0))
+        assertEquals(9007199254740992L, ExactNumber.integralLongOrNull(9007199254740992.0))
+    }
+
+    @Test
+    fun `a double too large for Long is refused rather than saturated`() {
+        // `d % 1.0 == 0.0` is true for both of these, and Double.toLong() SATURATES, so the old
+        // predicate printed 9223372036854775807 for each — the same wrong number for two values
+        // thirty orders of magnitude apart.
+        assertNull(ExactNumber.integralLongOrNull(1e30))
+        assertNull(ExactNumber.integralLongOrNull(1e300))
+        assertNull(ExactNumber.integralLongOrNull(-1e30))
+        assertTrue(1e30 % 1.0 == 0.0, "the old predicate really did accept 1e30")
+        assertEquals(Long.MAX_VALUE, 1e30.toLong(), "toLong() really does saturate")
+    }
+
+    @Test
+    fun `a non-integral double is refused`() {
+        assertNull(ExactNumber.integralLongOrNull(1.5))
+        assertNull(ExactNumber.integralLongOrNull(-0.25))
+    }
+
+    @Test
+    fun `a non-finite double is refused`() {
+        assertNull(ExactNumber.integralLongOrNull(Double.NaN))
+        assertNull(ExactNumber.integralLongOrNull(Double.POSITIVE_INFINITY))
+        assertNull(ExactNumber.integralLongOrNull(Double.NEGATIVE_INFINITY))
+    }
+
     // ── The narrow variant used by parsers that delegate scalar construction ──
 
     @Test

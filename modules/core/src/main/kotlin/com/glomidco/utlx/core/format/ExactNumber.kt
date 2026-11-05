@@ -82,6 +82,25 @@ object ExactNumber {
     }
 
     /**
+     * B37 — the [Long] exactly equal to [d], or `null` if there is none.
+     *
+     * Serialisers print an integral double without its `.0` ("print `1`, not `1.0`"), and three of
+     * them tested integrality with `d % 1.0 == 0.0` before calling `toLong()`. That predicate is
+     * true for *every* large double, and `Double.toLong()` **saturates** rather than overflowing, so
+     * `1e30` and `1e300` both serialised as `9223372036854775807` — a wrong number, and the same
+     * wrong number for two values thirty orders of magnitude apart.
+     *
+     * Round-tripping through `Long` instead is the test that actually holds: a value is safe to
+     * print as an integer only if converting it back gives the value you started with. XML already
+     * did it this way, which is why XML alone printed `1.0E30` correctly.
+     */
+    fun integralLongOrNull(d: Double): Long? {
+        if (!d.isFinite()) return null
+        val asLong = d.toLong()
+        return if (asLong.toDouble() == d) asLong else null
+    }
+
+    /**
      * Render [n] as written when it is one of the exact types, or `null` when it is a `Double` or
      * `Float` and the caller's own floating-point formatting should apply.
      *

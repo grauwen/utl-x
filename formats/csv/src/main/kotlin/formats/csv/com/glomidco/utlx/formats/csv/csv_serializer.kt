@@ -326,13 +326,10 @@ class CSVSerializer(
         if (regionalFormat == RegionalFormat.NONE) {
             // B35: exact types render as written; the Double path below is unchanged.
             ExactNumber.renderExactOrNull(value)?.let { return it }
-            // No regional formatting - standard output
+            // No regional formatting - standard output.
+            // B37: integrality is a Long round-trip, not `% 1.0 == 0.0` — see ExactNumber.
             val d = value.toDouble()
-            return if (d % 1.0 == 0.0) {
-                d.toLong().toString()
-            } else {
-                d.toString()
-            }
+            return ExactNumber.integralLongOrNull(d)?.toString() ?: d.toString()
         }
 
         // Regional formatting is DecimalFormat-based and so inherently Double-based: it rounds to a
