@@ -154,7 +154,7 @@ expected:
             {
               "id": "TXN-002",
               "date": "2024-01-03",
-              "amount": 2500,
+              "amount": 2500.00,
               "source": "ACME Corp",
               "category": "salary"
             }

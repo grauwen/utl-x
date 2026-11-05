@@ -217,8 +217,11 @@ object TypeChecker {
     private fun getScalarKind(value: Any): ScalarKind {
         return when (value) {
             is String -> ScalarKind.STRING
-            is Int, is Long, is Short, is Byte -> ScalarKind.INTEGER
-            is Double, is Float -> ScalarKind.NUMBER
+            is Int, is Long, is Short, is Byte, is java.math.BigInteger -> ScalarKind.INTEGER
+            is Double, is Float, is java.math.BigDecimal -> ScalarKind.NUMBER
+            // B35: parsers now hand over exact types, so classify by Number rather than by the
+            // handful of boxed primitives. Without this a BigDecimal fell through to STRING.
+            is Number -> ScalarKind.NUMBER
             is Boolean -> ScalarKind.BOOLEAN
             else -> ScalarKind.STRING // Default fallback
         }

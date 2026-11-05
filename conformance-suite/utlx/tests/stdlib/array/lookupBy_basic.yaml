@@ -38,7 +38,7 @@ expected:
   data: |
     [
       {"orderId": "ORD-001", "total": 299.99, "customerName": "Acme Corp", "country": "NL"},
-      {"orderId": "ORD-002", "total": 150, "customerName": "Globex Inc", "country": "US"},
+      {"orderId": "ORD-002", "total": 150.00, "customerName": "Globex Inc", "country": "US"},
       {"orderId": "ORD-003", "total": 89.50, "customerName": "Acme Corp", "country": "NL"}
     ]
 

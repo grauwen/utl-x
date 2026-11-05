@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.json
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.Reader
 import java.io.StringReader
 
@@ -229,13 +230,11 @@ class JSONParser(
         
         val numStr = text.substring(start, current)
 
-        // Try integer first (preserves Int64 precision)
-        if (!numStr.contains('.') && !numStr.contains('e') && !numStr.contains('E')) {
-            numStr.toLongOrNull()?.let { return UDM.Scalar.number(it) }
-        }
-
-        // Fall back to Double for decimals and scientific notation
-        val value = numStr.toDoubleOrNull()
+        // B35: represent the number as exactly as its written form allows — Long/BigInteger for
+        // integers (as before, now unbounded), BigDecimal for plain decimals so `100.10` keeps its
+        // scale, Double only for exponent and special forms. Acceptance is unchanged, so the error
+        // below still fires for exactly the lexemes it did before.
+        val value = ExactNumber.ofOrNull(numStr)
             ?: throw JSONParseException("Invalid number: $numStr", line, column)
 
         return UDM.Scalar.number(value)

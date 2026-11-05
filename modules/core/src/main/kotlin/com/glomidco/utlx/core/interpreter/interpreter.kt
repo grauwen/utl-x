@@ -3,6 +3,7 @@ package com.glomidco.utlx.core.interpreter
 import mu.KotlinLogging
 import com.glomidco.utlx.core.ast.*
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.ScalarCanonical
 import kotlin.math.*
 
 private val logger = KotlinLogging.logger {}
@@ -12,7 +13,26 @@ private val logger = KotlinLogging.logger {}
  */
 sealed class RuntimeValue {
     data class StringValue(val value: String) : RuntimeValue()
-    data class NumberValue(val value: Double) : RuntimeValue()
+    data class NumberValue(val value: Double) : RuntimeValue() {
+        /**
+         * B35: the exact value, when this number came from a written form that `Double` cannot
+         * hold exactly — an int64 above 2^53, or a decimal such as `100.10`. Null when [value] is
+         * already all there is (arithmetic results, exponent-form literals).
+         *
+         * Deliberately NOT a constructor property. `NumberValue` is a data class constructed in
+         * dozens of places, and keeping `exact` out of the generated equals/hashCode/copy/toString
+         * means adding it changes nothing for code that already exists. Comparison reads it
+         * through `numberOf`, the single consumer.
+         */
+        var exact: Number? = null
+            internal set
+
+        companion object {
+            /** A number together with the exact value of the form it was written in. */
+            fun exactly(value: Double, exact: Number?): NumberValue =
+                NumberValue(value).also { it.exact = exact }
+        }
+    }
     data class BooleanValue(val value: Boolean) : RuntimeValue()
     object NullValue : RuntimeValue()
     data class ArrayValue(val elements: List<RuntimeValue>) : RuntimeValue()
@@ -26,7 +46,11 @@ sealed class RuntimeValue {
     
     fun toUDM(): UDM = when (this) {
         is StringValue -> UDM.Scalar.string(value)
-        is NumberValue -> UDM.Scalar.number(value)
+        // B35: emit the exact form when there is one. Without this a literal written straight to
+        // the output was still narrowed — `{ id: 9007199254740993 }` serialised as ...992 and
+        // `{ total: 100.10 }` as 100.1 — so comparison was exact while CONSTRUCTING a value was
+        // not. Arithmetic results carry no exact form and are unaffected.
+        is NumberValue -> UDM.Scalar.number(exact ?: value)
         is BooleanValue -> UDM.Scalar.boolean(value)
         is NullValue -> UDM.Scalar.nullValue()
         is ArrayValue -> UDM.Array(elements.map { it.toUDM() })
@@ -304,7 +328,7 @@ class Interpreter(
     fun evaluate(expr: Expression, env: Environment): RuntimeValue {
         return when (expr) {
             is Expression.StringLiteral -> RuntimeValue.StringValue(expr.value)
-            is Expression.NumberLiteral -> RuntimeValue.NumberValue(expr.value)
+            is Expression.NumberLiteral -> RuntimeValue.NumberValue.exactly(expr.value, expr.exact)
             is Expression.BooleanLiteral -> RuntimeValue.BooleanValue(expr.value)
             is Expression.NullLiteral -> RuntimeValue.NullValue
             
@@ -924,7 +948,10 @@ class Interpreter(
         return when (expr.operator) {
             UnaryOperator.MINUS -> {
                 val value = extractNumber(operand, "Unary minus requires number", expr.location)
-                RuntimeValue.NumberValue(-value)
+                // B35: negation is exact, so carry the exact form through it. `-9007199254740993`
+                // is lexed as a positive literal under a unary minus, so without this every
+                // negative literal would drop back to Double and compare against the wrong number.
+                RuntimeValue.NumberValue.exactly(-value, negateExact(operand))
             }
 
             UnaryOperator.NOT -> {
@@ -988,11 +1015,49 @@ class Interpreter(
         }
     }
 
+    /**
+     * B35: the numeric value behind a RuntimeValue, or null if it is not a number.
+     *
+     * One accessor for both operands of a comparison, so a number compares the same whether it
+     * arrived as a literal or out of the payload. Booleans are excluded — `UDM.Scalar` can hold one
+     * and `Boolean` is not a `Number`, which is what keeps `true == 1` false.
+     */
+    private fun numberOf(value: RuntimeValue): Number? = when (value) {
+        is RuntimeValue.NumberValue -> value.exact ?: value.value
+        is RuntimeValue.UDMValue -> (value.udm as? UDM.Scalar)?.value as? Number
+        else -> null
+    }
+
+    /**
+     * B35: the exact negation of [value], or null when there is no exact form to negate.
+     *
+     * Covers both a negated literal and a negated payload number, since `UDM.Scalar` now holds
+     * exact types too.
+     */
+    private fun negateExact(value: RuntimeValue): Number? = when (val n = numberOf(value)) {
+        is java.math.BigDecimal -> n.negate()
+        is java.math.BigInteger -> n.negate()
+        is Long -> if (n != Long.MIN_VALUE) -n else java.math.BigInteger.valueOf(n).negate()
+        is Int -> -n.toLong()
+        is Short -> -n.toLong()
+        is Byte -> -n.toLong()
+        else -> null
+    }
+
     private fun valuesEqual(left: RuntimeValue, right: RuntimeValue): Boolean {
+        // B35: if both sides are numbers, compare them canonically — one path, whatever the
+        // representations. The parsers preserve what they were given, so the same quantity can
+        // arrive as a Long, a BigDecimal with trailing zeros, or a Double; raw boxed equality would
+        // then report `100.10 == 100.1` and `5 == 5.0` as false. Canonicalising also makes
+        // comparison above 2^53 correct, which narrowing to Double did not.
+        val leftNumber = numberOf(left)
+        val rightNumber = numberOf(right)
+        if (leftNumber != null && rightNumber != null) {
+            return ScalarCanonical.numbersEqual(leftNumber, rightNumber)
+        }
+
         return when {
             left is RuntimeValue.StringValue && right is RuntimeValue.StringValue -> 
-                left.value == right.value
-            left is RuntimeValue.NumberValue && right is RuntimeValue.NumberValue -> 
                 left.value == right.value
             left is RuntimeValue.BooleanValue && right is RuntimeValue.BooleanValue -> 
                 left.value == right.value
@@ -1009,18 +1074,6 @@ class Interpreter(
                 val udm = right.udm
                 if (udm is UDM.Scalar && udm.value is String) {
                     left.value == udm.value
-                } else false
-            }
-            left is RuntimeValue.UDMValue && right is RuntimeValue.NumberValue -> {
-                val udm = left.udm
-                if (udm is UDM.Scalar && udm.value is Number) {
-                    udm.value.toDouble() == right.value
-                } else false
-            }
-            left is RuntimeValue.NumberValue && right is RuntimeValue.UDMValue -> {
-                val udm = right.udm
-                if (udm is UDM.Scalar && udm.value is Number) {
-                    left.value == udm.value.toDouble()
                 } else false
             }
             left is RuntimeValue.UDMValue && right is RuntimeValue.BooleanValue -> {
@@ -1048,42 +1101,16 @@ class Interpreter(
     }
     
     private fun compareValues(left: RuntimeValue, right: RuntimeValue, location: Location): Int {
-        // Try to extract numbers for comparison
+        // Try to extract numbers for comparison.
+        // B35: order exactly rather than narrowing both sides to Double first, which made two
+        // different integers above 2^53 compare as equal. Shares `numberOf` with valuesEqual so
+        // `<`, `>` and `==` agree on what counts as a number and on what it is worth.
         try {
-            val leftNum = when (left) {
-                is RuntimeValue.NumberValue -> left.value
-                is RuntimeValue.UDMValue -> {
-                    when (val udm = left.udm) {
-                        is UDM.Scalar -> {
-                            when (val value = udm.value) {
-                                is Number -> value.toDouble()
-                                else -> null
-                            }
-                        }
-                        else -> null
-                    }
-                }
-                else -> null
-            }
-            
-            val rightNum = when (right) {
-                is RuntimeValue.NumberValue -> right.value
-                is RuntimeValue.UDMValue -> {
-                    when (val udm = right.udm) {
-                        is UDM.Scalar -> {
-                            when (val value = udm.value) {
-                                is Number -> value.toDouble()
-                                else -> null
-                            }
-                        }
-                        else -> null
-                    }
-                }
-                else -> null
-            }
-            
+            val leftNum = numberOf(left)
+            val rightNum = numberOf(right)
+
             if (leftNum != null && rightNum != null) {
-                return leftNum.compareTo(rightNum)
+                return ScalarCanonical.compareNumbers(leftNum, rightNum)
             }
         } catch (e: Exception) {
             // Fall through to string comparison
@@ -1748,7 +1775,12 @@ class Interpreter(
     private fun literalToRuntimeValue(value: Any?): RuntimeValue {
         return when (value) {
             is String -> RuntimeValue.StringValue(value)
-            is Number -> RuntimeValue.NumberValue(value.toDouble())
+            // B35: carry an exact pattern literal through, so match compares as written. A Double
+            // or Float pattern has nothing more exact than itself and keeps the previous path.
+            is Number -> RuntimeValue.NumberValue.exactly(
+                value.toDouble(),
+                value.takeUnless { it is Double || it is Float }
+            )
             is Boolean -> RuntimeValue.BooleanValue(value)
             null -> RuntimeValue.NullValue
             else -> RuntimeValue.NullValue

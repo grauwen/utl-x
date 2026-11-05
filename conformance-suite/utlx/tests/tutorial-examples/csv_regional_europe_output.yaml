@@ -33,8 +33,8 @@ expected:
   format: csv
   data: |
     product;quantity;unit_price;total
-    Widget A;100;1234.56;123456
-    Gadget B;50;2500;125000
+    Widget A;100;1234.56;123456.00
+    Gadget B;50;2500.00;125000.00
     Tool C;25;999.99;24999.75
 
 performance_limits:

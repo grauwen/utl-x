@@ -1,0 +1,42 @@
+name: "exact_comparison_above_2_53"
+category: "language/numeric"
+description: "B35: comparison is exact — two different integers above 2^53 are not equal, and representation does not change equality"
+tags: ["numeric", "exact", "comparison", "equality", "B35", "1.0"]
+
+input:
+  format: json
+  data: |
+    {"id": 9007199254740993, "a": 100.10, "b": 100.1, "c": 5, "d": 5.0}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    same: $input.id == 9007199254740993,
+    different: $input.id == 9007199254740992,
+    greater: $input.id > 9007199254740992,
+    scale: $input.a == $input.b,
+    intDec: $input.c == $input.d
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "same": true,
+      "different": false,
+      "greater": true,
+      "scale": true,
+      "intDec": true
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"]
+  notes:
+    - "Before the fix: `same` was true only by accident, `different` was ALSO true, and `greater` was false"
+    - "`same` requires exact LITERALS; without them the literal is ...992 and the answer is false"
+    - "`scale` and `intDec` require canonical comparison; with raw equality on preserved types they would be false"
+    - "Both halves are needed — exact literals with lossy comparison, or the reverse, each fails a line here"

@@ -9,6 +9,7 @@ import io.kotest.matchers.types.shouldBeInstanceOf
 import com.glomidco.utlx.core.udm.*
 import org.yaml.snakeyaml.DumperOptions
 import java.time.Instant
+import java.math.BigDecimal
 
 class YAMLParserTest : DescribeSpec({
 
@@ -74,7 +75,8 @@ class YAMLParserTest : DescribeSpec({
             result.shouldBeInstanceOf<UDM.Object>()
             val obj = result as UDM.Object
             obj.properties["price"].shouldBeInstanceOf<UDM.Scalar>()
-            (obj.properties["price"] as UDM.Scalar).value.shouldBe(19.99)
+            // B35: a plain decimal is preserved exactly, so `19.99` is no longer a Double.
+            (obj.properties["price"] as UDM.Scalar).value.shouldBe(BigDecimal("19.99"))
         }
         
         it("should parse boolean values") {

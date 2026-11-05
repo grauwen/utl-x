@@ -122,10 +122,20 @@ sealed class Expression : Node() {
     
     /**
      * Number literal: 42, 3.14
+     *
+     * @param value the IEEE-754 reading of the literal, which every existing consumer uses.
+     * @param exact B35 — the exact value when the written form is exactly representable (a plain
+     *   integer or decimal), else null. Carried alongside [value] rather than replacing it so the
+     *   change is additive: the literal `9007199254740993` is a `Double` of …992, and comparing
+     *   against that reported two different integers as equal. The exact form lets comparison
+     *   answer with the number the author actually typed. Arithmetic still uses [value]; making
+     *   computation exact is a separate decision, because `BigDecimal` division needs a scale and
+     *   rounding mode chosen at the language level.
      */
     data class NumberLiteral(
         val value: Double,
-        override val location: Location
+        override val location: Location,
+        val exact: Number? = null
     ) : Expression()
     
     /**

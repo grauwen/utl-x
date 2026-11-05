@@ -1,0 +1,31 @@
+name: "exact_int64_xml"
+category: "language/numeric"
+description: "B35: XML preserves an integer above 2^53 instead of routing it through Double"
+tags: ["numeric", "exact", "xml", "int64", "B35", "1.0"]
+
+input:
+  format: xml
+  data: |
+    <r><id>9007199254740993</id><qty>9007199254740992</qty></r>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  $input.r
+
+expected:
+  format: json
+  data: |
+    {
+      "id": 9007199254740993,
+      "qty": 9007199254740992
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"]
+  notes:
+    - "XML inferred numbers through toDoubleOrNull only, so it corrupted int64 exactly as CSV did"
+    - "Pairs with exact_int64_csv: both must now agree with JSON and YAML"

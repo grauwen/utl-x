@@ -168,7 +168,8 @@ class SerializationFunctionsTest {
         assertTrue(person.properties["age"] is UDM.Scalar, "age should be a Scalar")
 
         assertEquals("John", (person.properties["name"] as UDM.Scalar).value)
-        assertEquals(30.0, (person.properties["age"] as UDM.Scalar).value)
+        // B35: XML now preserves an integer as an integer, as JSON always did. Was 30.0.
+        assertEquals(30L, (person.properties["age"] as UDM.Scalar).value)
     }
     
     @Test
@@ -354,7 +355,8 @@ class SerializationFunctionsTest {
         
         val firstRow = array.elements[0] as UDM.Object
         assertEquals("John", (firstRow.properties["name"] as UDM.Scalar).value)
-        assertEquals(30.0, (firstRow.properties["age"] as UDM.Scalar).value)
+        // B35: CSV now preserves an integer as an integer, as JSON always did. Was 30.0.
+        assertEquals(30L, (firstRow.properties["age"] as UDM.Scalar).value)
     }
     
     @Test

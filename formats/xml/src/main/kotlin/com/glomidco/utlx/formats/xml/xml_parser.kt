@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.xml
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.ByteArrayInputStream
 import java.io.InputStreamReader
 import java.io.Reader
@@ -534,10 +535,14 @@ class XMLParser(
     private fun isAtEnd(): Boolean = current >= text.length
     
     /**
-     * Try to parse string as number, return null if not a number
+     * Try to parse string as number, return null if not a number.
+     *
+     * B35: exact representation. XML previously routed every numeric value through Double, so it
+     * corrupted int64 that JSON preserved — the same value differed by which parser read it.
+     * Whether text counts as numeric is decided exactly as before.
      */
     private fun tryParseNumber(str: String): UDM.Scalar? {
-        return str.toDoubleOrNull()?.let { UDM.Scalar.number(it) }
+        return ExactNumber.ofOrNull(str)?.let { UDM.Scalar.number(it) }
     }
 
     /**

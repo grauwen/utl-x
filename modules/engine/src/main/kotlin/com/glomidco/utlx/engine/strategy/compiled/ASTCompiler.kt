@@ -206,10 +206,46 @@ class ASTCompiler {
             "(Ljava/lang/Object;)V", false)
     }
 
+    /**
+     * B35: emit the literal's **exact** written form, matching the interpreter.
+     *
+     * This path used to emit `Double.valueOf` unconditionally. Since COMPILED is the engine's
+     * default strategy, that meant the default path still serialised `9007199254740993` as `…992`
+     * and `100.10` as `100.1` after the interpreter had been fixed — so the same script produced
+     * different numbers depending on which strategy ran. A strategy-dependent value is worse than a
+     * uniformly lossy one, particularly where a result is consumed as an oracle.
+     *
+     * Exact types are reconstructed from their string form, which is the only way to put a
+     * `BigDecimal` constant into bytecode and also preserves scale. Exponent-form literals carry no
+     * exact value and keep the `Double` path, as in the interpreter.
+     */
     private fun compileNumberLiteral(ctx: CompileContext, expr: Expression.NumberLiteral) {
-        ctx.mv.visitLdcInsn(expr.value)
-        ctx.mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf",
-            "(D)Ljava/lang/Double;", false)
+        when (val exact = expr.exact) {
+            is Long -> {
+                ctx.mv.visitLdcInsn(exact)
+                ctx.mv.visitMethodInsn(INVOKESTATIC, "java/lang/Long", "valueOf",
+                    "(J)Ljava/lang/Long;", false)
+            }
+            is java.math.BigDecimal -> {
+                ctx.mv.visitTypeInsn(NEW, "java/math/BigDecimal")
+                ctx.mv.visitInsn(DUP)
+                ctx.mv.visitLdcInsn(exact.toString())
+                ctx.mv.visitMethodInsn(INVOKESPECIAL, "java/math/BigDecimal", "<init>",
+                    "(Ljava/lang/String;)V", false)
+            }
+            is java.math.BigInteger -> {
+                ctx.mv.visitTypeInsn(NEW, "java/math/BigInteger")
+                ctx.mv.visitInsn(DUP)
+                ctx.mv.visitLdcInsn(exact.toString())
+                ctx.mv.visitMethodInsn(INVOKESPECIAL, "java/math/BigInteger", "<init>",
+                    "(Ljava/lang/String;)V", false)
+            }
+            else -> {
+                ctx.mv.visitLdcInsn(expr.value)
+                ctx.mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf",
+                    "(D)Ljava/lang/Double;", false)
+            }
+        }
         // UDM.Scalar(value)
         ctx.mv.visitTypeInsn(NEW, UDM_SCALAR)
         ctx.mv.visitInsn(DUP_X1)

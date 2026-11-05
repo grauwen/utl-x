@@ -3,6 +3,7 @@ package com.glomidco.utlx.formats.json
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.interpreter.RuntimeValue
 import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.Writer
 import java.io.StringWriter
 
@@ -76,8 +77,11 @@ class JSONSerializer(
             null -> writer.write("null")
             is Boolean -> writer.write(value.toString())
             is Number -> {
-                // Format numbers nicely
-                if (value is Double && value % 1.0 == 0.0 && !value.isInfinite() && !value.isNaN()) {
+                // B35: exact types render as written; the Double path below is unchanged.
+                val exact = ExactNumber.renderExactOrNull(value)
+                if (exact != null) {
+                    writer.write(exact)
+                } else if (value is Double && value % 1.0 == 0.0 && !value.isInfinite() && !value.isNaN()) {
                     writer.write(value.toLong().toString())
                 } else {
                     writer.write(value.toString())

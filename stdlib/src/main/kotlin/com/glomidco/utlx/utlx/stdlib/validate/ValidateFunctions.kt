@@ -1,6 +1,7 @@
 package com.glomidco.utlx.stdlib.validate
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.ScalarCanonical
 import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 import com.glomidco.utlx.core.semantic.ValidationRuleKinds
 import java.math.BigDecimal
@@ -73,22 +74,19 @@ object ValidateFunctions {
      * literal `50` in `validate.oneOf("price", [50, 60])` is evaluated by the interpreter as a
      * Double. `Any?.equals` is type-sensitive, so `50 != 50.0` and membership silently failed.
      *
-     * Numbers are therefore canonicalised to a scale-insensitive BigDecimal (via `toString`, so no
-     * binary-float noise is introduced, then `stripTrailingZeros`, so 50, 50.0 and 5E1 are one
-     * value). Non-finite doubles keep their boxed form — BigDecimal cannot represent them.
+     * Numbers are therefore canonicalised to a scale-insensitive BigDecimal.
+     *
+     * **B35 moved the implementation to `:core`** (`ScalarCanonical`) so the comparison operators
+     * share it. Until then, this canonicalisation applied only to the declarative rule kinds while
+     * `==` inside a `check` lambda still narrowed to Double, so the same logical check could give
+     * opposite verdicts depending on how it was written. A component whose result is consumed as an
+     * oracle cannot hold two notions of numeric equality; `:stdlib → :core` is the legal direction,
+     * so the definition belongs there and is referenced from here.
      *
      * Non-numbers are returned unchanged, deliberately: the string `"50"` is NOT the number 50,
      * and `oneOf` is a controlled-value check, not a coercion.
      */
-    private fun canonicalScalar(value: Any?): Any? = when (value) {
-        null -> null
-        is Boolean -> value          // Boolean is not a Number; keep it out of the numeric path
-        is BigDecimal -> value.stripTrailingZeros()
-        is Double -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
-        is Float -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
-        is Number -> BigDecimal(value.toString()).stripTrailingZeros()
-        else -> value
-    }
+    private fun canonicalScalar(value: Any?): Any? = ScalarCanonical.canonical(value)
 
     /**
      * VB06: does this UDM look like a `ValidationResult`?

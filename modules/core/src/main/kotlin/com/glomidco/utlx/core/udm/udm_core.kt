@@ -284,7 +284,10 @@ sealed class UDM {
         return when (unwrapped) {
             is Scalar -> when (unwrapped.value) {
                 is String -> unwrapped.value
-                is Number -> unwrapped.value.toString()
+                // B35: render the exact types as written, so a preserved `0.0000001` does not
+                // stringify as `1E-7`. Double/Float keep their own toString().
+                is Number -> com.glomidco.utlx.core.format.ExactNumber.renderExactOrNull(unwrapped.value)
+                    ?: unwrapped.value.toString()
                 is Boolean -> unwrapped.value.toString()
                 null -> ""
                 else -> unwrapped.value.toString()

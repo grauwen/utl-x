@@ -1,0 +1,35 @@
+name: "exact_int64_csv"
+category: "language/numeric"
+description: "B35: CSV preserves an integer above 2^53 instead of routing it through Double"
+tags: ["numeric", "exact", "csv", "int64", "B35", "1.0"]
+
+input:
+  format: csv
+  data: |
+    id,qty
+    9007199254740993,9007199254740992
+
+transformation: |
+  %utlx 1.0
+  input csv
+  output json
+  ---
+  $input
+
+expected:
+  format: json
+  data: |
+    [
+      {
+        "id": 9007199254740993,
+        "qty": 9007199254740992
+      }
+    ]
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"]
+  notes:
+    - "CSV had no integer branch, so every numeric value became a Double and both ids collapsed to ...992"
+    - "The same value already survived a JSON round-trip, so a UNIVERSAL data model disagreed with itself by format"
+    - "This fixture is the cross-format agreement check: see exact_int64_xml for the other half"

@@ -119,7 +119,7 @@ expected:
             "ProductID": "PROD003",
             "Name": "Deluxe Tool",
             "Category": "Hardware",
-            "CostPrice": 22,
+            "CostPrice": 22.00,
             "Sales": [
               {
                 "Region": "South",

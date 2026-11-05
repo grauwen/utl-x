@@ -54,7 +54,7 @@ expected:
         </Item>
         <Item product="Mouse">
           <Quantity>2</Quantity>
-          <Price>25.5</Price>
+          <Price>25.50</Price>
         </Item>
       </Items>
       <Total>1050.99</Total>

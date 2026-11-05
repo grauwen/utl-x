@@ -1,6 +1,7 @@
 package com.glomidco.utlx.formats.csv
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.format.ExactNumber
 import com.glomidco.utlx.core.interpreter.RuntimeValue
 import java.io.Writer
 import java.io.StringWriter
@@ -308,7 +309,7 @@ class CSVSerializer(
                 when (val v = udm.value) {
                     null -> ""
                     is Boolean -> v.toString()
-                    is Number -> formatNumber(v.toDouble())
+                    is Number -> formatNumber(v)
                     else -> v.toString()
                 }
             }
@@ -321,23 +322,31 @@ class CSVSerializer(
      * Format a number according to the configured regional format
      * Uses Java's DecimalFormat with locale-specific symbols (same approach as stdlib)
      */
-    private fun formatNumber(value: Double): String {
+    private fun formatNumber(value: Number): String {
         if (regionalFormat == RegionalFormat.NONE) {
+            // B35: exact types render as written; the Double path below is unchanged.
+            ExactNumber.renderExactOrNull(value)?.let { return it }
             // No regional formatting - standard output
-            return if (value % 1.0 == 0.0) {
-                value.toLong().toString()
+            val d = value.toDouble()
+            return if (d % 1.0 == 0.0) {
+                d.toLong().toString()
             } else {
-                value.toString()
+                d.toString()
             }
         }
 
+        // Regional formatting is DecimalFormat-based and so inherently Double-based: it rounds to a
+        // fixed number of decimals by design, which is a presentation choice rather than a loss of
+        // the parsed value.
+        val d = value.toDouble()
+
         // Apply regional formatting using Java's DecimalFormat (same as stdlib)
         return when (regionalFormat) {
-            RegionalFormat.USA -> formatUSNumber(value, decimals, useThousands)
-            RegionalFormat.EUROPEAN -> formatEUNumber(value, decimals, useThousands)
-            RegionalFormat.FRENCH -> formatFrenchNumber(value, decimals, useThousands)
-            RegionalFormat.SWISS -> formatSwissNumber(value, decimals, useThousands)
-            RegionalFormat.NONE -> value.toString()
+            RegionalFormat.USA -> formatUSNumber(d, decimals, useThousands)
+            RegionalFormat.EUROPEAN -> formatEUNumber(d, decimals, useThousands)
+            RegionalFormat.FRENCH -> formatFrenchNumber(d, decimals, useThousands)
+            RegionalFormat.SWISS -> formatSwissNumber(d, decimals, useThousands)
+            RegionalFormat.NONE -> d.toString()
         }
     }
 

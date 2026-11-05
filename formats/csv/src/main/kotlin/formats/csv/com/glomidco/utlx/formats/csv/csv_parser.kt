@@ -2,6 +2,7 @@ package com.glomidco.utlx.formats.csv
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.InputStreamReader
 import java.io.Reader
 import java.io.StringReader
@@ -207,8 +208,9 @@ class CSVParser(
             return UDM.Scalar.nullValue()
         }
         
-        // Try number
-        trimmed.toDoubleOrNull()?.let {
+        // Try number — B35: exact representation (CSV previously routed every numeric value
+        // through Double, so it corrupted int64 that JSON preserved). Same accept/reject as before.
+        ExactNumber.ofOrNull(trimmed)?.let {
             return UDM.Scalar.number(it)
         }
         

@@ -5,6 +5,12 @@ import com.glomidco.utlx.core.udm.*
 import com.glomidco.utlx.core.format.ParseOptions as CoreParseOptions
 import org.yaml.snakeyaml.Yaml
 import org.yaml.snakeyaml.LoaderOptions
+import org.yaml.snakeyaml.constructor.AbstractConstruct
+import org.yaml.snakeyaml.constructor.Constructor
+import org.yaml.snakeyaml.nodes.Node
+import org.yaml.snakeyaml.nodes.ScalarNode
+import org.yaml.snakeyaml.nodes.Tag
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.InputStream
 import java.io.Reader
 import java.io.StringReader
@@ -39,7 +45,34 @@ class YAMLParser {
             isAllowDuplicateKeys = options.allowDuplicateKeys
             nestingDepthLimit = options.maxDepth   // §4.1: raise SnakeYAML's default (50) to the profile depth
         }
-        return Yaml(loaderOptions)
+        return Yaml(ExactFloatConstructor(loaderOptions))
+    }
+
+    /**
+     * B35: construct plain decimal scalars as `BigDecimal`.
+     *
+     * SnakeYAML already returns `Long`/`BigInteger` for integers, which is why YAML preserved int64
+     * when CSV and XML did not. Its float construct returns `Double`, so `100.10` arrived as
+     * `100.1` and YAML was left the one data format still losing decimals.
+     *
+     * Only the plain decimal form is taken over. Everything else SnakeYAML calls a float —
+     * exponent notation, `.inf`, `-.inf`, `.nan`, underscore grouping, YAML 1.1 sexagesimals —
+     * falls through to its own construct, which is well tested and which this fix has no reason to
+     * reimplement.
+     */
+    private class ExactFloatConstructor(loaderOptions: LoaderOptions) : Constructor(loaderOptions) {
+        init {
+            val delegate = yamlConstructors[Tag.FLOAT]!!
+            yamlConstructors[Tag.FLOAT] = object : AbstractConstruct() {
+                override fun construct(node: Node): Any? {
+                    val raw = (node as? ScalarNode)?.value
+                    if (raw != null) {
+                        ExactNumber.plainDecimalOrNull(raw)?.let { return it }
+                    }
+                    return delegate.construct(node)
+                }
+            }
+        }
     }
     
     /**

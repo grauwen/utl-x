@@ -3,6 +3,7 @@ package com.glomidco.utlx.formats.xml
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.core.interpreter.RuntimeValue
 import com.glomidco.utlx.core.format.ParseOptions
+import com.glomidco.utlx.core.format.ExactNumber
 import java.io.Writer
 import java.io.StringWriter
 
@@ -380,13 +381,17 @@ class XMLSerializer(
         return when (value) {
             null -> ""
             is Number -> {
-                val d = value.toDouble()
-                if (d == d.toLong().toDouble()) {
-                    // It's an integer, format without decimal point
-                    d.toLong().toString()
-                } else {
-                    // It's a decimal, keep as is
-                    d.toString()
+                // B35: exact types render as written. Narrowing every Number through toDouble()
+                // just to test for integrality corrupted Long and BigDecimal on the way out.
+                ExactNumber.renderExactOrNull(value) ?: run {
+                    val d = value.toDouble()
+                    if (d == d.toLong().toDouble()) {
+                        // It's an integer, format without decimal point
+                        d.toLong().toString()
+                    } else {
+                        // It's a decimal, keep as is
+                        d.toString()
+                    }
                 }
             }
             else -> value.toString()

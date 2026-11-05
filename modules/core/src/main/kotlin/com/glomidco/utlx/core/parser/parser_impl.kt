@@ -4,6 +4,7 @@ import mu.KotlinLogging
 import com.glomidco.utlx.core.ast.*
 import com.glomidco.utlx.core.lexer.Token
 import com.glomidco.utlx.core.lexer.TokenType
+import com.glomidco.utlx.core.format.ExactNumber
 
 private val logger = KotlinLogging.logger {}
 
@@ -903,7 +904,16 @@ class Parser(
         
         return when {
             match(TokenType.NUMBER) -> {
-                Expression.NumberLiteral(previous().literal as Double, Location.from(previous()))
+                // B35: keep the exact value of the written form alongside the Double reading, so a
+                // literal that Double cannot hold (an int64 above 2^53, a decimal such as 100.10)
+                // can still be compared as written. ofOrNull returns null for exponent forms,
+                // which stay on the Double path.
+                val token = previous()
+                Expression.NumberLiteral(
+                    token.literal as Double,
+                    Location.from(token),
+                    ExactNumber.ofOrNull(token.lexeme)
+                )
             }
             match(TokenType.STRING) -> {
                 Expression.StringLiteral(previous().literal as String, Location.from(previous()))
@@ -1385,8 +1395,12 @@ class Parser(
 
         return when {
             match(TokenType.NUMBER) -> {
-                val value = previous().literal as Double
-                Pattern.Literal(value, Location.from(previous()))
+                val token = previous()
+                // B35: same treatment as an expression literal. Without it, `match` against an
+                // int64 above 2^53 compared the Double reading of the arm, so the arm the author
+                // wrote never matched and a neighbouring arm could match instead.
+                val value: Any = ExactNumber.ofOrNull(token.lexeme) ?: (token.literal as Double)
+                Pattern.Literal(value, Location.from(token))
             }
             match(TokenType.STRING) -> {
                 val value = previous().literal as String

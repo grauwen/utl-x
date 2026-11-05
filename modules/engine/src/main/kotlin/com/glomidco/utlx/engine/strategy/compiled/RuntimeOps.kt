@@ -1,6 +1,7 @@
 package com.glomidco.utlx.engine.strategy.compiled
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.udm.ScalarCanonical
 
 /**
  * Runtime operations called by compiled bytecode.
@@ -246,7 +247,22 @@ object RuntimeOps {
         }
     }
 
+    /** The raw numeric value behind a scalar, with no coercion and no narrowing. */
+    private fun rawNumber(udm: UDM): Number? = (udm as? UDM.Scalar)?.value as? Number
+
     private fun compareValues(left: UDM, right: UDM): Int {
+        // B35: when BOTH sides are numbers, order them exactly, using the same definition the
+        // interpreter uses. Narrowing to Double here made two different integers above 2^53 compare
+        // equal on the compiled path after the interpreter had been fixed, so the answer depended on
+        // which strategy ran.
+        val lx = rawNumber(left)
+        val rx = rawNumber(right)
+        if (lx != null && rx != null) return ScalarCanonical.compareNumbers(lx, rx)
+
+        // Mixed kinds keep the existing coercion: `toNumber` also converts a numeric STRING and a
+        // BOOLEAN, which the interpreter does not, so `"5" == 5` is true here and false there. That
+        // divergence predates B35 and is deliberately left alone rather than widened or narrowed as
+        // a side effect of a numeric fix.
         val ln = toNumber(left)
         val rn = toNumber(right)
         if (ln != null && rn != null) return ln.compareTo(rn)

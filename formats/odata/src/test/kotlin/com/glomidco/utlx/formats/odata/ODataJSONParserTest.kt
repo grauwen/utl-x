@@ -7,6 +7,7 @@ import com.glomidco.utlx.core.udm.UDM
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import java.math.BigDecimal
 
 class ODataJSONParserTest {
 
@@ -89,7 +90,10 @@ class ODataJSONParserTest {
             result.properties.size shouldBe 3
             (result.properties["ID"] as UDM.Scalar).value shouldBe 1L
             (result.properties["Name"] as UDM.Scalar).value shouldBe "Widget"
-            (result.properties["Price"] as UDM.Scalar).value shouldBe 29.99
+            // B35: a plain decimal is now preserved exactly, so the parsed value is a
+            // BigDecimal rather than a Double. `1L` above was already asserting the
+            // equivalent for integers.
+            (result.properties["Price"] as UDM.Scalar).value shouldBe BigDecimal("29.99")
         }
     }
 

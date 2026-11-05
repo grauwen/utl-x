@@ -1,0 +1,37 @@
+name: "exact_decimal_trailing_zeros"
+category: "language/numeric"
+description: "B35: a decimal is preserved as written — trailing zeros survive and precision beyond Double is not lost"
+tags: ["numeric", "exact", "decimal", "money", "csv", "B35", "1.0"]
+
+input:
+  format: json
+  data: |
+    {"lines": [
+      {"sku": "A", "price": 100.10, "total": 2500.00},
+      {"sku": "B", "price": 0.0000001, "total": 12345678901234567.89}
+    ]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output csv { headers: true }
+  ---
+  $input.lines
+
+expected:
+  format: csv
+  data: |
+    sku,price,total
+    A,100.10,2500.00
+    B,0.0000001,12345678901234567.89
+
+metadata:
+  author: "UTL-X Team"
+  references:
+    - "docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"
+    - "docs/features/F10-decimal-type-mapping.md"
+  notes:
+    - "Output is CSV on purpose: the JSON comparison parses both sides to a float, where 100.10 and 100.1 are indistinguishable"
+    - "F10 states that trailing zeros carry meaning in financial contexts — 100.10 is one hundred euros and ten cents"
+    - "Before the fix: 100.1, 2500, 1.0E-7 and 1.2345678901234568E16"
+    - "The old rule collapsed a decimal only when it happened to be integral, so 2500.00 lost its cents while 89.50 kept them"

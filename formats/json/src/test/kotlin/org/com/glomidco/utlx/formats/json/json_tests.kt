@@ -6,6 +6,8 @@ import com.glomidco.utlx.core.format.ParseOptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.assertThrows
+import java.math.BigDecimal
+import java.math.BigInteger
 
 class JSONParserTest {
     @Test
@@ -96,24 +98,28 @@ class JSONParserTest {
     }
 
     @Test
-    fun `parse beyond Long MAX_VALUE falls back to Double`() {
+    fun `parse beyond Long MAX_VALUE stays exact as BigInteger`() {
+        // B35: an integral lexeme too wide for Long is still integral, so it is kept exactly
+        // rather than approximated. Was asserted as Double.
         val result = JSONParser("9223372036854775808").parse()
         assertTrue(result is UDM.Scalar)
-        assertTrue((result as UDM.Scalar).value is Double)
+        assertTrue((result as UDM.Scalar).value is BigInteger)
+        assertEquals(BigInteger("9223372036854775808"), result.value)
     }
 
     @Test
     fun `parse decimal number`() {
         val result = JSONParser("3.14159").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(3.14159, (result as UDM.Scalar).value)
+        // B35: a plain decimal is preserved exactly. Was 3.14159 as a Double.
+        assertEquals(BigDecimal("3.14159"), (result as UDM.Scalar).value)
     }
 
     @Test
-    fun `parse negative decimal as Double`() {
+    fun `parse negative decimal exactly`() {
         val result = JSONParser("-3.14").parse()
         assertTrue(result is UDM.Scalar)
-        assertEquals(-3.14, (result as UDM.Scalar).value)
+        assertEquals(BigDecimal("-3.14"), (result as UDM.Scalar).value)
     }
 
     @Test
@@ -516,17 +522,17 @@ class JSONSerializerTest {
     }
 
     @Test
-    fun `round trip preserves decimal as Double`() {
+    fun `round trip preserves decimal exactly`() {
         val serialized = roundTrip("3.14")
         assertEquals("3.14", serialized)
-        assertEquals(3.14, JSONParser(serialized).parse().asScalar()?.value)
+        assertEquals(BigDecimal("3.14"), JSONParser(serialized).parse().asScalar()?.value)
     }
 
     @Test
-    fun `round trip preserves negative decimal as Double`() {
+    fun `round trip preserves negative decimal exactly`() {
         val serialized = roundTrip("-0.5")
         assertEquals("-0.5", serialized)
-        assertEquals(-0.5, JSONParser(serialized).parse().asScalar()?.value)
+        assertEquals(BigDecimal("-0.5"), JSONParser(serialized).parse().asScalar()?.value)
     }
 
     @Test
@@ -542,15 +548,17 @@ class JSONSerializerTest {
     }
 
     @Test
-    fun `round trip fractional scientific notation stays Double`() {
-        // 2.5E-1 = 0.25 (not a whole number) → stays Double
+    fun `round trip fractional scientific notation becomes exact on reparse`() {
+        // B35: exponent notation stays on the Double path, so the FIRST parse is a Double. The
+        // serialiser writes it in plain form ("0.25"), and a plain decimal is exact — so the
+        // reparse is a BigDecimal. The value is unchanged; only the type converges on exact.
         val parsed = JSONParser("2.5E-1").parse() as UDM.Scalar
         assertTrue(parsed.value is Double)
         val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
         assertEquals("0.25", serialized)
         val reparsed = JSONParser(serialized).parse() as UDM.Scalar
-        assertTrue(reparsed.value is Double)
-        assertEquals(0.25, reparsed.value)
+        assertTrue(reparsed.value is BigDecimal)
+        assertEquals(BigDecimal("0.25"), reparsed.value)
     }
 
     @Test
@@ -571,8 +579,9 @@ class JSONSerializerTest {
         val parsed = JSONParser("-1.5e-3").parse() as UDM.Scalar
         val serialized = JSONSerializer(prettyPrint = false).serialize(parsed)
         val reparsed = JSONParser(serialized).parse() as UDM.Scalar
-        assertTrue(reparsed.value is Double)
-        assertEquals(-0.0015, reparsed.value)
+        // B35: see the fractional case above — plain-form output reparses exactly.
+        assertTrue(reparsed.value is BigDecimal)
+        assertEquals(BigDecimal("-0.0015"), reparsed.value)
     }
 
     @Test
@@ -583,7 +592,8 @@ class JSONSerializerTest {
         val reparsed = JSONParser(serialized).parse() as UDM.Object
 
         assertEquals(42L, reparsed.get("count")?.asScalar()?.value)
-        assertEquals(9.99, reparsed.get("price")?.asScalar()?.value)
+        // B35: the decimal is exact now; the integers were already exact.
+        assertEquals(BigDecimal("9.99"), reparsed.get("price")?.asScalar()?.value)
         assertEquals(9007199254740993L, reparsed.get("big")?.asScalar()?.value)
         assertEquals(-7L, reparsed.get("neg")?.asScalar()?.value)
         assertEquals(0L, reparsed.get("zero")?.asScalar()?.value)
@@ -613,11 +623,13 @@ class JSONSerializerTest {
     }
 
     @Test
-    fun `UDM accessors work for Double-backed scalar`() {
+    fun `UDM accessors work for BigDecimal-backed scalar`() {
         val parsed = JSONParser("3.14").parse() as UDM.Scalar
 
-        assertEquals(3.14, parsed.value)
-        assertTrue(parsed.value is Double)
+        // B35: the accessors dispatch on `is Number`, so they keep working unchanged when the
+        // backing type becomes exact — asNumber() still narrows to Double for arithmetic.
+        assertEquals(BigDecimal("3.14"), parsed.value)
+        assertTrue(parsed.value is BigDecimal)
         assertEquals(3.14, parsed.asNumber())
         assertEquals("3.14", parsed.asString())
         assertTrue(parsed.isNumber())
