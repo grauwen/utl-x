@@ -346,12 +346,35 @@ object RuntimeOps {
         if (target !is UDM.Object || spread !is UDM.Object) return target
         val merged = LinkedHashMap(target.properties)
         merged.putAll(spread.properties)
-        return UDM.Object(merged, target.attributes + spread.attributes, target.name ?: spread.name)
+        return UDM.Object(
+            merged,
+            target.attributes + spread.attributes,
+            target.name ?: spread.name,
+            // EB09 family: metadata was being dropped here too, so a spread erased it.
+            target.metadata + spread.metadata
+        )
     }
 
     @JvmStatic
     fun buildArray(elements: Array<UDM>): UDM {
         return UDM.Array(elements.toList())
+    }
+
+    /**
+     * EB11: append [spread]'s elements to [target], flattening — `[...arr, x]`.
+     *
+     * `compileArrayLiteral` compiled a `SpreadElement` as an ordinary element, so `[...arr]` came
+     * out as `[[1, 2, 3]]` — a nested array instead of a flattened one.
+     *
+     * Spreading a non-array contributes **nothing**, which is what the interpreter does: it
+     * evaluates the expression and silently ignores anything that is not an array. Mirrored rather
+     * than improved, so the two strategies agree.
+     */
+    @JvmStatic
+    fun spreadIntoArray(target: UDM, spread: UDM): UDM {
+        val base = (target as? UDM.Array)?.elements ?: return target
+        val extra = (spread as? UDM.Array)?.elements ?: return target
+        return UDM.Array(base + extra)
     }
 
     // ── Lambda support ──

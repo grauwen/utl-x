@@ -102,9 +102,14 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             ?: declaredInputs.firstOrNull()?.first
             ?: "input"
         val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase()
+        // EB10: the declared format's OPTIONS have to travel with its type. `input csv {headers:
+        // true, delimiter: "|"}` parses as comma-separated with no header row without them, so
+        // every field lookup came back null and the divergence looked like a transformation bug.
+        val declaredOptions = declaredInputs.firstOrNull()?.second?.options ?: emptyMap()
 
         // Parse input to UDM
-        val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json", parseProfile = parseProfile)
+        val inputUDM = transformationService.parseInputPublic(
+            input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile)
 
         if (transformFunction != null && !usingFallback) {
             // ── Compiled path: direct method invocation ──
@@ -153,7 +158,9 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
                 } else {
                     mapper.writeValueAsString(node)
                 }
-                name to transformationService.parseInputPublic(content, declaredFormat, parseProfile = parseProfile)
+                // EB10: the per-slot options travel with the per-slot format.
+                name to transformationService.parseInputPublic(
+                    content, declaredFormat, formatSpec.options, parseProfile = parseProfile)
             }
 
             logger.debug("Envelope split into {} named inputs: {}", inputUDMs.size, inputUDMs.keys)

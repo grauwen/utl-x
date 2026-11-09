@@ -183,20 +183,10 @@ class ConformanceStrategyParityTest {
             "examples/basic/try_catch_basic.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "examples/intermediate/function_composition.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
             "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "examples/intermediate/spread_operator.yaml" to Divergence.BOTH_OUTPUT,
             "examples/intermediate/try_catch_with_error_variable.yaml" to Divergence.BOTH_OUTPUT,
-            "examples/xml-encoding/multi_input_default_encoding.yaml" to Divergence.BOTH_OUTPUT,
-            "examples/xml-encoding/multi_input_explicit_encoding.yaml" to Divergence.BOTH_OUTPUT,
-            "examples/xml-encoding/multi_input_no_encoding.yaml" to Divergence.BOTH_OUTPUT,
             "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "stdlib/array/nestBy_basic.yaml" to Divergence.BOTH_OUTPUT,
-            "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.BOTH_OUTPUT,
-            "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.BOTH_OUTPUT,
-            "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.BOTH_OUTPUT,
-            "tutorial-examples/csv_regional_europe_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "tutorial-examples/csv_regional_swiss_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
 
         )
 

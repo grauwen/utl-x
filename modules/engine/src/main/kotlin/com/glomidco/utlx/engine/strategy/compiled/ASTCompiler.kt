@@ -1,5 +1,6 @@
 package com.glomidco.utlx.engine.strategy.compiled
 
+import com.glomidco.utlx.core.ast.Property
 import com.glomidco.utlx.core.ast.*
 import com.glomidco.utlx.core.udm.UDM
 import org.objectweb.asm.*
@@ -383,6 +384,26 @@ class ASTCompiler {
 
     // ── Object/Array construction ──
 
+    /**
+     * EB11: build the object in **source order**, merging each spread where it is written.
+     *
+     * This used to build every keyed property first and then apply the spreads on top, which
+     * inverts the author's order in two visible ways:
+     *
+     * ```
+     * { ...$input, z: 9 }     interpreter  a, b, z        compiled  z, a, b     ← wrong ORDER
+     * { ...$input, a: 99 }    interpreter  a = 99         compiled  a = 1       ← wrong VALUE
+     * ```
+     *
+     * Order matters because XML output is element order, and the value matters because the
+     * interpreter is last-wins by position — the spread always won here regardless of where it
+     * appeared.
+     *
+     * Consecutive keyed properties are grouped into one run so a long literal is still one
+     * `buildObjectWithAttributes` call rather than one per key; the runs and the spreads are then
+     * folded left to right with `spreadIntoObject`, which keeps the accumulator's key order and
+     * lets the newer segment win. That is exactly the interpreter's rule.
+     */
     private fun compileObjectLiteral(ctx: CompileContext, expr: Expression.ObjectLiteral) {
         // Process let bindings first
         for (binding in expr.letBindings) {
@@ -391,79 +412,134 @@ class ASTCompiler {
             ctx.mv.visitVarInsn(ASTORE, slot)
         }
 
-        // Separate regular properties from spread properties.
-        // EB08: and separate XML attributes from child properties. `@key:` carries isAttribute on
-        // the AST node; ignoring it emitted the attribute as a child element.
-        val keyed = expr.properties.filter { it.key != null && !it.isSpread }
-        val regularProps = keyed.filter { !it.isAttribute }
-        val attributeProps = keyed.filter { it.isAttribute }
-        val hasSpread = expr.properties.any { it.isSpread }
+        // Split into segments that preserve source order: runs of keyed properties, and spreads.
+        val segments = mutableListOf<Any>()
+        var run = mutableListOf<Property>()
+        for (prop in expr.properties) {
+            if (prop.isSpread) {
+                if (run.isNotEmpty()) { segments.add(run.toList()); run = mutableListOf() }
+                segments.add(prop)
+            } else if (prop.key != null) {
+                run.add(prop)
+            }
+            // A computed key with no static key is not emitted here, as before.
+        }
+        if (run.isNotEmpty()) segments.add(run.toList())
 
-        // Build the base object from regular properties
-        val count = regularProps.size
-
-        // Create String[] for keys
-        ctx.mv.visitLdcInsn(count)
-        ctx.mv.visitTypeInsn(ANEWARRAY, "java/lang/String")
-        for (i in regularProps.indices) {
-            ctx.mv.visitInsn(DUP)
-            ctx.mv.visitLdcInsn(i)
-            ctx.mv.visitLdcInsn(regularProps[i].key)
-            ctx.mv.visitInsn(AASTORE)
+        if (segments.isEmpty()) {
+            emitObjectFromProperties(ctx, emptyList())
+            return
         }
 
-        // Create UDM[] for values
-        ctx.mv.visitLdcInsn(count)
-        ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
-        for (i in regularProps.indices) {
-            ctx.mv.visitInsn(DUP)
-            ctx.mv.visitLdcInsn(i)
-            compileExpression(ctx, regularProps[i].value)
-            ctx.mv.visitInsn(AASTORE)
-        }
-
-        // EB08: the attribute keys and their values, as two more arrays
-        ctx.mv.visitLdcInsn(attributeProps.size)
-        ctx.mv.visitTypeInsn(ANEWARRAY, "java/lang/String")
-        for (i in attributeProps.indices) {
-            ctx.mv.visitInsn(DUP)
-            ctx.mv.visitLdcInsn(i)
-            ctx.mv.visitLdcInsn(attributeProps[i].key)
-            ctx.mv.visitInsn(AASTORE)
-        }
-        ctx.mv.visitLdcInsn(attributeProps.size)
-        ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
-        for (i in attributeProps.indices) {
-            ctx.mv.visitInsn(DUP)
-            ctx.mv.visitLdcInsn(i)
-            compileExpression(ctx, attributeProps[i].value)
-            ctx.mv.visitInsn(AASTORE)
-        }
-
-        // RuntimeOps.buildObjectWithAttributes(keys, values, attrKeys, attrValues)
-        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildObjectWithAttributes",
-            "([Ljava/lang/String;[$UDM_DESC[Ljava/lang/String;[$UDM_DESC)$UDM_DESC", false)
-
-        // Merge spread properties into the object
-        if (hasSpread) {
-            for (prop in expr.properties) {
-                if (prop.isSpread) {
-                    compileExpression(ctx, prop.value)
+        var started = false
+        for (segment in segments) {
+            if (segment is Property) {           // a spread
+                if (!started) { emitObjectFromProperties(ctx, emptyList()); started = true }
+                compileExpression(ctx, segment.value)
+                ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "spreadIntoObject",
+                    "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                val props = segment as List<Property>
+                emitObjectFromProperties(ctx, props)
+                if (started) {
                     ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "spreadIntoObject",
                         "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
                 }
+                started = true
             }
         }
     }
 
+    /**
+     * Leave one `UDM.Object` on the stack holding [props].
+     *
+     * EB08: `@key:` carries `isAttribute` on the AST node and belongs in the attribute map, not the
+     * properties — ignoring it emitted the attribute as a child element.
+     */
+    private fun emitObjectFromProperties(ctx: CompileContext, props: List<Property>) {
+        val regularProps = props.filter { !it.isAttribute }
+        val attributeProps = props.filter { it.isAttribute }
+
+        fun keyArray(of: List<Property>) {
+            ctx.mv.visitLdcInsn(of.size)
+            ctx.mv.visitTypeInsn(ANEWARRAY, "java/lang/String")
+            for (i in of.indices) {
+                ctx.mv.visitInsn(DUP)
+                ctx.mv.visitLdcInsn(i)
+                ctx.mv.visitLdcInsn(of[i].key)
+                ctx.mv.visitInsn(AASTORE)
+            }
+        }
+        fun valueArray(of: List<Property>) {
+            ctx.mv.visitLdcInsn(of.size)
+            ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
+            for (i in of.indices) {
+                ctx.mv.visitInsn(DUP)
+                ctx.mv.visitLdcInsn(i)
+                compileExpression(ctx, of[i].value)
+                ctx.mv.visitInsn(AASTORE)
+            }
+        }
+
+        keyArray(regularProps)
+        valueArray(regularProps)
+        keyArray(attributeProps)
+        valueArray(attributeProps)
+        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildObjectWithAttributes",
+            "([Ljava/lang/String;[$UDM_DESC[Ljava/lang/String;[$UDM_DESC)$UDM_DESC", false)
+    }
+
+    /**
+     * EB11: an array literal is built in source order too, flattening each spread where it appears.
+     *
+     * A `SpreadElement` used to be compiled as an ordinary element, so `[...arr, x]` produced
+     * `[[1, 2, 3], x]` — the spread nested instead of flattened. Same grouping approach as the
+     * object literal: runs of plain elements become one `buildArray`, and spreads are folded in
+     * with `spreadIntoArray`.
+     */
     private fun compileArrayLiteral(ctx: CompileContext, expr: Expression.ArrayLiteral) {
-        val count = expr.elements.size
-        ctx.mv.visitLdcInsn(count)
+        val segments = mutableListOf<Any>()
+        var run = mutableListOf<Expression>()
+        for (element in expr.elements) {
+            if (element is Expression.SpreadElement) {
+                if (run.isNotEmpty()) { segments.add(run.toList()); run = mutableListOf() }
+                segments.add(element)
+            } else {
+                run.add(element)
+            }
+        }
+        if (run.isNotEmpty()) segments.add(run.toList())
+
+        if (segments.isEmpty()) { emitArrayFromElements(ctx, emptyList()); return }
+
+        var started = false
+        for (segment in segments) {
+            if (segment is Expression.SpreadElement) {
+                if (!started) { emitArrayFromElements(ctx, emptyList()); started = true }
+                compileExpression(ctx, segment.expression)
+                ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "spreadIntoArray",
+                    "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
+            } else {
+                @Suppress("UNCHECKED_CAST")
+                emitArrayFromElements(ctx, segment as List<Expression>)
+                if (started) {
+                    ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "spreadIntoArray",
+                        "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
+                }
+                started = true
+            }
+        }
+    }
+
+    /** Leave one `UDM.Array` holding [elements] on the stack. */
+    private fun emitArrayFromElements(ctx: CompileContext, elements: List<Expression>) {
+        ctx.mv.visitLdcInsn(elements.size)
         ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
-        for (i in expr.elements.indices) {
+        for (i in elements.indices) {
             ctx.mv.visitInsn(DUP)
             ctx.mv.visitLdcInsn(i)
-            compileExpression(ctx, expr.elements[i])
+            compileExpression(ctx, elements[i])
             ctx.mv.visitInsn(AASTORE)
         }
         ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildArray",

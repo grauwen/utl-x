@@ -136,10 +136,10 @@ fixtures driven       : 357
 skipped               :  43
     multi-input                     39
     non-deterministic                4
-known divergences     :  17
-    BOTH_OUTPUT                      9
-    RUNS_ONLY_ON_TEMPLATE            5
+known divergences     :   7
     COMPILED_UNDEFINED_FUNCTION      3
+    BOTH_OUTPUT                      2
+    RUNS_ONLY_ON_TEMPLATE            2
 genuinely COMPILED    : 325   (91% of those driven)
 fell back to interp.  :  32
 ```
@@ -209,11 +209,11 @@ loaded. Minor corpus hygiene, worth fixing at some point; keyed by path it does 
 
 | | first run | now |
 |---|---|---|
-| known divergences | 101 | **17** |
+| known divergences | 101 | **7** |
 | `COMPILED_OUTPUT` | 0 | **0** |
 | fixtures driven | 354 | **361** |
 
-Seven defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
+Nine defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
 [EB05](../bugs-fixed/EB05-lambda-bodies-cannot-reach-a-named-input.md),
 [CB01](../bugs-fixed/CB01-auto-capture-emits-unparseable-yaml.md) (with
 [CB02](../bugs-fixed/CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) and
@@ -221,8 +221,10 @@ Seven defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB
 [EB06](../bugs-fixed/EB06-compiled-lambdas-cannot-see-enclosing-bindings.md) and
 [EB07](../bugs-fixed/EB07-compiled-index-access-ignores-string-keys.md),
 [EB08](../bugs-fixed/EB08-compiled-object-literals-drop-xml-attributes.md) and
-[EB09](../bugs-fixed/EB09-metadata-access-lost-on-both-compiled-strategies.md) — plus two diagnoses
-corrected and one flaw found in the harness itself.
+[EB09](../bugs-fixed/EB09-metadata-access-lost-on-both-compiled-strategies.md) and
+[EB10](../bugs-fixed/EB10-format-options-dropped-on-the-compiled-strategies.md) and
+[EB11](../bugs-fixed/EB11-spread-does-not-take-effect-where-it-is-written.md) — plus three
+diagnoses corrected and **two** flaws found in the harness itself.
 Each fix tended to reveal what it had been masking, which is why the total moved in steps rather
 than smoothly.
 

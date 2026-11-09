@@ -196,13 +196,18 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             ?: compiledProgram.header.inputs.firstOrNull()?.first
             ?: "input"
         val declaredFormat = compiledProgram.header.inputs.firstOrNull()?.second?.type?.name?.lowercase()
+        // EB10: the declared format's OPTIONS have to travel with its type. `input csv {headers:
+        // true, delimiter: "|"}` parses as comma-separated with no header row without them, so
+        // every field lookup came back null and the divergence looked like a transformation bug.
+        val declaredOptions = compiledProgram.header.inputs.firstOrNull()?.second?.options ?: emptyMap()
 
         // Acquire pre-built skeleton from pool
         val skeleton = acquireSkeleton()
 
         try {
             // Parse input data
-            val inputUDM = transformationService.parseInputPublic(input, declaredFormat ?: "json", parseProfile = parseProfile)
+            val inputUDM = transformationService.parseInputPublic(
+                input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile)
 
             // Merge input data into the skeleton structure
             val filledUDM = mergeDataIntoSkeleton(skeleton, inputUDM)
@@ -250,7 +255,9 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             }
 
             // Parse and merge into skeleton
-            val parsed = transformationService.parseInputPublic(content, declaredFormat, parseProfile = parseProfile)
+            // EB10: the per-slot options travel with the per-slot format.
+            val parsed = transformationService.parseInputPublic(
+                content, declaredFormat, formatSpec.options, parseProfile = parseProfile)
             val skeleton = inputSkeletons[name]
             val filled = if (skeleton != null) {
                 mergeDataIntoSkeleton(deepClone(skeleton), parsed)
