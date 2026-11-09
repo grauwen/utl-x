@@ -8,7 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 /**
- * B41 / B42 — the capture writer's output must be **parseable** YAML that asserts the **right thing**.
+ * CB01 / CB02 — the capture writer's output must be **parseable** YAML that asserts the **right thing**.
  *
  * Two defects shipped here because nothing tested this writer, and both were invisible for the same
  * reason: the conformance runner swallows a fixture it cannot load (`Error loading …`, return
@@ -16,10 +16,10 @@ import kotlin.test.assertTrue
  * the total. Seven fixtures were in that state, in a corpus whose headline figure is a count of
  * assertions.
  *
- * - **B41** — quotes were escaped but backslashes were not, so a captured value carrying
+ * - **CB01** — quotes were escaped but backslashes were not, so a captured value carrying
  *   JSON-escaped content emitted `\\"`, which YAML reads as a backslash followed by the end of the
  *   scalar. Escaping order is the whole bug.
- * - **B42** — the expected field was written as the output **text**, but the runner compares a
+ * - **CB02** — the expected field was written as the output **text**, but the runner compares a
  *   string `expected.data` as the expected **value** (it only re-parses a multi-line `{`/`[`
  *   block). For a transformation whose output document is a JSON string the text is one escaping
  *   level deeper than the value, so the fixture failed as soon as it could be run.
@@ -55,7 +55,7 @@ class ConformanceGeneratorYamlTest {
     /** A JSON document that is a string: `"..."` with the inner quotes escaped. */
     private fun jsonStringDoc(content: String) = "\"" + content.replace("\"", "\\\"") + "\""
 
-    // ── B41: it has to parse at all ──
+    // ── CB01: it has to parse at all ──
 
     @Test
     fun `a value containing JSON-escaped content still parses`() {
@@ -85,7 +85,7 @@ class ConformanceGeneratorYamlTest {
         }
     }
 
-    // ── B42: the expected field must be the VALUE the runner compares ──
+    // ── CB02: the expected field must be the VALUE the runner compares ──
 
     @Test
     fun `a JSON string output is written as its decoded value`() {
@@ -130,13 +130,13 @@ class ConformanceGeneratorYamlTest {
         assertEquals(csv.trimEnd('\n'), (expected as String).trimEnd('\n'))
     }
 
-    // ── B43: the round-trip property, over values chosen to break each branch ──
+    // ── CB03: the round-trip property, over values chosen to break each branch ──
 
     /**
      * `input.data` must survive the YAML round trip **exactly**.
      *
      * This is the property that matters and the one that was missing: the three earlier defects
-     * (B41 escaping, B42 text-vs-value, B43 lossy encodings) were all discoverable from it, and
+     * (CB01 escaping, CB02 text-vs-value, CB03 lossy encodings) were all discoverable from it, and
      * none of them was discoverable from a test that only checked the emitted string.
      *
      * The values are chosen one per branch of the writer, including the ones that silently

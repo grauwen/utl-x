@@ -1,6 +1,7 @@
-# B41: auto-capture emits unparseable YAML, so seven fixtures never ran
+# CB01: auto-capture emits unparseable YAML, so seven fixtures never ran
 
-> **B = core bug** (tooling around the shared core), the family of B01–B40. This is **B41**.
+> **CB = CLI bug** (`modules/cli` — the `utlx` binary and the tooling shipped with it).
+> This is **CB01**, the first of a new series.
 
 **Status:** **FIXED** — generator and the seven affected fixtures.
 **Priority:** Medium. No wrong answers; seven conformance fixtures simply asserted nothing, in a
@@ -67,7 +68,7 @@ expected **value** — so it compares one escaping level too deep. Input is hand
 round: a string starting with `"` is passed as-is.
 
 The three affected fixtures now carry the parsed value, which is the form the runner compares. **The
-writer was fixed too — see [B42](B42-capture-writes-output-text-where-the-runner-compares-a-value.md).**
+writer was fixed too — see [CB02](CB02-capture-writes-output-text-where-the-runner-compares-a-value.md).**
 Fixing only the escaping would have moved this from "silently skipped" to "fails on the next
 capture", so it is tracked and fixed rather than noted. The runner's convention is left as it is;
 changing it would touch most of the corpus.
@@ -100,11 +101,11 @@ No new test class. The fix is a YAML writer whose output is validated by the cor
 files it produced are now parsed and executed by both runners on every run, which is a stronger and
 cheaper check than a unit test asserting a string shape. The floors are what prevent regression.
 
-Tests were added with [B42](B42-capture-writes-output-text-where-the-runner-compares-a-value.md),
+Tests were added with [CB02](CB02-capture-writes-output-text-where-the-runner-compares-a-value.md),
 which covers this escaping too — `ConformanceGeneratorYamlTest`. Revert-verified: restoring the
 escaping order fails 5 of its 8 cases.
 
-[B43](B43-capture-yaml-writer-loses-data-in-three-ways.md) then added the general round-trip
+[CB03](CB03-capture-yaml-writer-loses-data-in-three-ways.md) then added the general round-trip
 property and found three further lossy encodings — control characters, block-scalar chomping, and
 numeric forms YAML 1.1 mis-reads. All three were discoverable from that property, and none from a
 test asserting the emitted string, which is the lesson worth keeping.
@@ -113,6 +114,6 @@ test asserting the emitted string, which is the lesson worth keeping.
 
 - [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
   — the harness whose skip tally surfaced this; finding 5 in its inventory.
-- [B39](B39-nested-lambdas-emit-duplicate-method-names.md),
-  [B40](B40-lambda-bodies-cannot-reach-a-named-input.md) — the other two defects that harness found,
+- [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md),
+  [EB05](EB05-lambda-bodies-cannot-reach-a-named-input.md) — the other two defects that harness found,
   both also invisible because something swallowed the failure.

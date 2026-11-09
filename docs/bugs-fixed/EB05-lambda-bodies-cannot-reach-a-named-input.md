@@ -1,10 +1,10 @@
-# B40: a lambda body cannot reach a named input, so the compiled class dies at runtime
+# EB05: a lambda body cannot reach a named input, so the compiled class dies at runtime
 
-> **B = core bug** (shared core and the execution strategies built on it), the family of B01–B39.
-> This is **B40**.
+> **EB = engine bug** (`modules/engine` — the execution strategies and the runtime they
+> call), the family of EB01–EB04. This is **EB05**.
 
 **Status:** **FIXED.**
-**Priority:** Medium-high. Unlike [B39](B39-nested-lambdas-emit-duplicate-method-names.md) this one
+**Priority:** Medium-high. Unlike [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md) this one
 *throws* — the class loads, the method runs, and it fails part-way through. It is caught and the
 strategy falls back, so the transformation still returns the right answer, but the failure happens
 after work has started rather than at compile time.
@@ -75,7 +75,7 @@ exactly as long as the lambda value lives.
 
 ## What the fix exposed underneath
 
-As with B39, fixing the outer failure revealed what it was masking. Of the seven affected fixtures
+As with EB04, fixing the outer failure revealed what it was masking. Of the seven affected fixtures
 the `Map` crash is gone from all seven, but only **one** then agreed across strategies:
 
 | fixture | now |
@@ -111,7 +111,7 @@ count is now measured, so the cost would be visible rather than guessed at.
 
 ## Tests
 
-`B40LambdaInputAccessTest` (`:engine`) asserts `compile(...) != null` and then compares against the
+`EB05LambdaInputAccessTest` (`:engine`) asserts `compile(...) != null` and then compares against the
 interpreter — the symptom was a runtime failure on bytecode that compiled cleanly, so checking the
 output alone would be satisfied by the interpreter fallback and prove nothing. Cases: a lambda
 reading a scalar input, reading a collection input (the lookup-join idiom), a parameter and an input
@@ -125,7 +125,7 @@ Full suite after the ABI change: **4437 tests, 0 failed** (`:engine` 845).
 
 ## Related
 
-- [B39](B39-nested-lambdas-emit-duplicate-method-names.md) — the other `ASTCompiler` defect found by
+- [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md) — the other `ASTCompiler` defect found by
   the same harness, in the same `compileLambda`. Both were invisible because compilation failure
   falls back silently.
 - [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)

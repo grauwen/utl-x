@@ -13,7 +13,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 /**
- * B36 — **comparison must not depend on which executable ran.**
+ * EB03 — **comparison must not depend on which executable ran.**
  *
  * `utlx`, `utlxd` and `utlxe` share one core, and the guide states the contract plainly: *"A
  * transformation that works in one executable works identically in all three... the conformance
@@ -44,7 +44,7 @@ import kotlin.test.assertTrue
  *
  * Numeric exactness parity lives in [B35CompiledExactNumericTest]; this covers the type axis.
  */
-class B36ComparisonParityTest {
+class EB03ComparisonParityTest {
 
     private val input = UDM.Object.of(
         "s5" to UDM.Scalar("5"),

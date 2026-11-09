@@ -1,6 +1,7 @@
-# B43: the capture YAML writer loses data in three more ways
+# CB03: the capture YAML writer loses data in three more ways
 
-> **B = core bug** (tooling around the shared core), the family of B01–B42. This is **B43**.
+> **CB = CLI bug** (`modules/cli` — the `utlx` binary and the tooling shipped with it).
+> This is **CB03**.
 
 **Status:** **FIXED.**
 **Priority:** Medium. Each case silently changes a captured value, in a tool whose only job is to
@@ -13,8 +14,8 @@ record one faithfully.
 
 ## How these were found
 
-[B41](B41-auto-capture-emits-unparseable-yaml.md) and
-[B42](B42-capture-writes-output-text-where-the-runner-compares-a-value.md) were each found by
+[CB01](CB01-auto-capture-emits-unparseable-yaml.md) and
+[CB02](CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) were each found by
 following a symptom. These were found by asking the *general* question — **does a captured value
 survive the YAML round trip exactly?** — and feeding one adversarial value per branch of the writer.
 
@@ -36,7 +37,7 @@ A double-quoted YAML scalar does not keep a literal newline or carriage return �
 folded to a space and the carriage return is dropped. They have to be written as `\n` and `\r`
 escapes. `quoteYamlString` wrote the character raw.
 
-This also reached the expected field through B42's decode: a JSON document whose value contains a
+This also reached the expected field through CB02's decode: a JSON document whose value contains a
 newline (`"\n"`) decoded to that newline and then came back as a space.
 
 ### 2. A literal block scalar silently appends a newline
@@ -116,7 +117,7 @@ Stated so it is not mistaken for completeness:
 
 ## Related
 
-- [B41](B41-auto-capture-emits-unparseable-yaml.md) — escaping order; made the files parseable.
-- [B42](B42-capture-writes-output-text-where-the-runner-compares-a-value.md) — text versus value;
+- [CB01](CB01-auto-capture-emits-unparseable-yaml.md) — escaping order; made the files parseable.
+- [CB02](CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) — text versus value;
   made them correct.
-- B43 — makes them *faithful*. The three together are one defect class: a writer with no tests.
+- CB03 — makes them *faithful*. The three together are one defect class: a writer with no tests.

@@ -53,7 +53,7 @@ import java.math.BigInteger
  * ### Why this lives in `:core`
  *
  * Both execution strategies call it. The interpreter and the compiled path each used to carry their
- * own arithmetic, and B36 was precisely what happens when two strategies hold their own copy of a
+ * own arithmetic, and EB03 was precisely what happens when two strategies hold their own copy of a
  * semantic rule: they drift, and the divergence is invisible because the conformance suite exercises
  * only one of them. One definition here, called from both.
  */

@@ -19,7 +19,7 @@ object RuntimeOps {
      * B35 Stage 2: `+`, `-` and `*` are exact when both operands carry an exact value.
      *
      * Delegates to the shared `ExactArithmetic` in `:core` rather than reimplementing the rule. The
-     * interpreter calls the same function with the same fallback, which is the point: B36 was what
+     * interpreter calls the same function with the same fallback, which is the point: EB03 was what
      * happened when the two strategies each kept their own copy of a comparison rule and drifted
      * apart unnoticed, because the conformance suite exercises only the interpreted path.
      *
@@ -68,7 +68,7 @@ object RuntimeOps {
     // ── Comparison ──
 
     /**
-     * B36: equality **without coercion**, matching the interpreter.
+     * EB03: equality **without coercion**, matching the interpreter.
      *
      * Equality used to be `compareValues(...) == 0`, and `compareValues` coerced through
      * `toNumber`, which also converts a numeric string and a boolean. So `"5" == 5` and `true == 1`
@@ -179,11 +179,62 @@ object RuntimeOps {
     }
 
     @JvmStatic
-    fun getIndex(target: UDM, index: Int): UDM {
-        return when (target) {
-            is UDM.Array -> if (index in target.elements.indices) target.elements[index] else UDM.Scalar.nullValue()
-            else -> UDM.Scalar.nullValue()
+    fun getIndex(target: UDM, index: Int): UDM = indexWithNumber(target, index)
+
+    /**
+     * EB07: index access with a **UDM** key, mirroring the interpreter.
+     *
+     * The previous signature took an `Int`, and `compileIndexAccess` reached it by calling
+     * `asNumber()` on whatever the index expression produced — so a *string* key became `0.0`,
+     * `byOrder["A"]` read element 0 of an object, and the answer was a silent null. The
+     * group-then-look-up idiom was therefore wrong on the compiled path with no error at all:
+     *
+     * ```utlx
+     * let byOrder = groupBy($input.lines, (l) -> l.oid)
+     * map($input.orders, (o) -> byOrder[o.id] ?? [])      // always [] when compiled
+     * ```
+     *
+     * A number indexes an array and a string indexes an object, and **out of bounds raises** rather
+     * than yielding null, because that is what the interpreter does — returning null here made the
+     * two strategies disagree on an error case as well as on a value.
+     */
+    @JvmStatic
+    fun getIndexUdm(target: UDM, index: UDM): UDM {
+        val key = (index as? UDM.Scalar)?.value
+        return when (key) {
+            is Number -> indexWithNumber(target, key.toInt())
+            is String -> indexWithString(target, key)
+            is Boolean -> indexWithString(target, key.toString())
+            null -> throw RuntimeError("Index must be a number or string, got null")
+            else -> throw RuntimeError("Index must be a number or string, got ${key::class.simpleName}")
         }
+    }
+
+    private fun indexWithNumber(target: UDM, index: Int): UDM {
+        val elements = when (target) {
+            is UDM.Array -> target.elements
+            else -> throw RuntimeError("Cannot index non-array UDM type with number")
+        }
+        if (index < 0) throw RuntimeError("Array index out of bounds: negative index $index")
+        if (index >= elements.size) {
+            throw RuntimeError("Array index out of bounds: index $index, size ${elements.size}")
+        }
+        return elements[index]
+    }
+
+    private fun indexWithString(target: UDM, name: String): UDM {
+        val obj = target as? UDM.Object
+            ?: throw RuntimeError("Cannot index non-object UDM type with string")
+        // Metadata and attributes are addressable through the same syntax, as in the interpreter.
+        if (name.startsWith("^")) {
+            val v = obj.getMetadata(name.substring(1)) ?: obj.getMetadata(name)
+            return if (v != null) UDM.Scalar.string(v) else UDM.Scalar.nullValue()
+        }
+        if (name.startsWith("@")) {
+            val v = obj.getAttribute(name.substring(1)) ?: obj.getAttribute(name)
+            return if (v != null) UDM.Scalar.string(v) else UDM.Scalar.nullValue()
+        }
+        return obj.get(name) ?: UDM.Scalar.nullValue()
     }
 
     // ── Null coalescing ──
@@ -202,6 +253,68 @@ object RuntimeOps {
             props[keys[i]] = values[i]
         }
         return UDM.Object(props)
+    }
+
+    /**
+     * EB08: build an object that distinguishes **XML attributes** from child properties.
+     *
+     * `@key:` in an object literal is marked `isAttribute` on the AST node, and the interpreter puts
+     * those into `UDM.Object.attributes` while everything else becomes a property. The compiler
+     * ignored the flag and passed every key to [buildObject], so an attribute came out as a child
+     * element: `<Invoice number="…">` became `<Invoice><number>…</number>`.
+     *
+     * It is not only an XML concern, which is why it has to be the attribute map rather than a
+     * naming convention — each serialiser re-presents attributes its own way:
+     *
+     * ```
+     * xml    <Invoice number="INV-2025" count="42">
+     * json   { "@number": "INV-2025", "@count": "42" }
+     * yaml   '@number': INV-2025
+     * ```
+     *
+     * Attributes are **strings** by construction, so the value is stringified here with the same
+     * rules the interpreter uses — including that an integral number loses its decimal point, which
+     * is why `@count: 42` shows up as `"42"` and not `42` even in JSON output.
+     */
+    @JvmStatic
+    fun buildObjectWithAttributes(
+        keys: Array<String>,
+        values: Array<UDM>,
+        attrKeys: Array<String>,
+        attrValues: Array<UDM>
+    ): UDM {
+        val props = LinkedHashMap<String, UDM>(keys.size)
+        for (i in keys.indices) {
+            props[keys[i]] = values[i]
+        }
+        // No attributes means exactly the object buildObject would have made, so the common case
+        // is unchanged.
+        if (attrKeys.isEmpty()) return UDM.Object(props)
+        val attrs = LinkedHashMap<String, String>(attrKeys.size)
+        for (i in attrKeys.indices) {
+            attrs[attrKeys[i]] = attributeText(attrValues[i])
+        }
+        return UDM.Object(props, attrs)
+    }
+
+    /**
+     * An attribute's string form, mirroring the interpreter.
+     *
+     * Deliberately *not* routed through the exact-number rendering introduced for the numeric model:
+     * the interpreter narrows to `Double` here, so matching it is what keeps the strategies in step.
+     * That both of them stringify `100.10` as `100.1` is a separate gap, recorded in EB08.
+     */
+    private fun attributeText(v: UDM): String = when (v) {
+        is UDM.Scalar -> when (val s = v.value) {
+            null -> ""
+            is Boolean -> s.toString()
+            is Number -> {
+                val d = s.toDouble()
+                if (d == d.toLong().toDouble()) d.toLong().toString() else d.toString()
+            }
+            else -> s.toString()
+        }
+        else -> v.toString()
     }
 
     /**
@@ -240,7 +353,9 @@ object RuntimeOps {
      * The method must have signature: static UDM methodName(List<UDM>, Map<String, UDM>)
      * Called by compiled bytecode to construct lambda values at runtime.
      *
-     * B40: [inputs] is the transformation's named-input map, **captured per construction**.
+     * EB05: [inputs] is the transformation's named-input map, **captured per construction**.
+     * EB06: [captured] is the enclosing scope's bindings, snapshotted where the lambda value was
+     * created — a lambda is a static method and cannot reach the enclosing frame's local slots.
      * A lambda body may reference an input (`$input.customers` inside a `map(...)` callback), and
      * the generated lambda is a *static* method with no access to `execute`'s locals. Threading the
      * map through as a second parameter keeps it per-invocation; a static field on the generated
@@ -248,11 +363,16 @@ object RuntimeOps {
      * compiled transformation.
      */
     @JvmStatic
-    fun makeLambda(clazz: Class<*>, methodName: String, inputs: Map<String, UDM>): UDM {
-        val method = clazz.getMethod(methodName, List::class.java, Map::class.java)
+    fun makeLambda(
+        clazz: Class<*>,
+        methodName: String,
+        inputs: Map<String, UDM>,
+        captured: Map<String, UDM>
+    ): UDM {
+        val method = clazz.getMethod(methodName, List::class.java, Map::class.java, Map::class.java)
         return UDM.Lambda { args ->
             try {
-                method.invoke(null, args, inputs) as UDM
+                method.invoke(null, args, inputs, captured) as UDM
             } catch (e: java.lang.reflect.InvocationTargetException) {
                 // Unwrap the reflection wrapper to expose the real error
                 throw e.targetException
@@ -287,7 +407,7 @@ object RuntimeOps {
     private fun rawNumber(udm: UDM): Number? = (udm as? UDM.Scalar)?.value as? Number
 
     /**
-     * B36 — equality, mirroring the interpreter's `valuesEqual`.
+     * EB03 — equality, mirroring the interpreter's `valuesEqual`.
      *
      * B35: two numbers compare canonically, so a Long, a BigDecimal with trailing zeros and a
      * Double of the same quantity are one value, and two different integers above 2^53 are not.
@@ -303,7 +423,7 @@ object RuntimeOps {
     }
 
     /**
-     * B36 — ordering, mirroring the interpreter's `compareValues`.
+     * EB03 — ordering, mirroring the interpreter's `compareValues`.
      *
      * Numbers order exactly and strings order lexicographically. Anything else is an **error**
      * rather than a silent answer: the interpreter raises "Cannot compare these types", and the

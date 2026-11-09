@@ -1,6 +1,11 @@
 # B37: serialisers saturate a large double to Long.MAX_VALUE
 
-> **B = core bug** (shared core and the format serialisers built on it), the family of B01–B36.
+> **B = core bug** (shared core and the format serialisers built on it), the family of B01–B35.
+>
+> **B36 does not exist.** It was filed here briefly and reclassified as
+> [EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) once it was clear the
+> defect was in `modules/engine`, not the shared core. The number is left unused rather than
+> recycled.
 > This is **B37**.
 
 **Status:** **FIXED.**
@@ -95,5 +100,5 @@ exist yet. Guessing would have been worse than recording it.
 - [B35](B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md) — found while
   auditing B35's coverage; the exact-type rendering branch sits directly in front of this predicate
   in every serialiser touched here.
-- [B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md) — the other issue that
+- [EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) — the other issue that
   audit turned up.

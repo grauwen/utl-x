@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * B39 — **a lambda inside a lambda must not collide.**
+ * EB04 — **a lambda inside a lambda must not collide.**
  *
  * `ASTCompiler` names each lambda's generated static method `lambda_N` from a counter that lived on
  * `CompileContext`. `compileLambda` builds a *fresh* context for the lambda body, so the counter
@@ -29,7 +29,7 @@ import kotlin.test.assertNotNull
  * These tests therefore assert `compile(...) != null` — *that it compiled at all* is the property
  * under test, not merely that the output is right.
  */
-class B39NestedLambdaTest {
+class EB04NestedLambdaTest {
 
     private val input = UDM.Object.of(
         "groups" to UDM.Array(listOf(
@@ -49,7 +49,7 @@ class B39NestedLambdaTest {
     /** Compiles and runs, failing if compilation fell back instead of producing bytecode. */
     private fun compiled(body: String): UDM {
         val fn = ASTCompiler().compile(program(body))
-        assertNotNull(fn, "`$body` did not compile — this is the B39 symptom, not a pass")
+        assertNotNull(fn, "`$body` did not compile — this is the EB04 symptom, not a pass")
         return fn.execute(mapOf("input" to input))
     }
 
@@ -70,7 +70,7 @@ class B39NestedLambdaTest {
 
     @Test
     fun `sibling lambdas still get distinct names`() {
-        // The pre-B39 counter handled this case correctly; it is here so a fix that shares one
+        // The pre-EB04 counter handled this case correctly; it is here so a fix that shares one
         // counter too aggressively cannot break it.
         val body = "{ a: map(\$input.groups, (g) => count(g.tags)), " +
             "b: map(\$input.groups, (g) => count(g.tags)) }"

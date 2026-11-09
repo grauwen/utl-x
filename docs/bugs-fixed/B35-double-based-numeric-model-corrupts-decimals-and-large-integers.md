@@ -316,7 +316,7 @@ messages and the string-concatenation branch of `+` are all untouched, so the on
 changed is which of two already-computed answers is returned.
 
 Keeping it in one place is the direct lesson of
-[B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md) — two strategies each holding
+[EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) — two strategies each holding
 their own copy of a semantic rule drift apart, and the drift is invisible because the conformance
 suite exercises only the interpreted path.
 
@@ -411,7 +411,7 @@ precisely the regression that preserving precision alone would have caused.
 Full JVM test suite green; conformance **556/556** through the Python runner against both the JVM
 jar and the GraalVM native binary. Note that figure describes the **interpreted** path: the
 conformance runner drives the CLI, which interprets, so the compiled strategy's coverage is the
-`:engine` suite and the parity tests named above — the gap B36 documents. The native run
+`:engine` suite and the parity tests named above — the gap EB03 documents. The native run
 matters here because the fix touches every serialiser and introduces a subclass of the YAML
 library's constructor, and an undeclarable reflective boundary has broken this project's native
 image before (B19/B25).
@@ -464,7 +464,7 @@ Recorded so they are not rediscovered as regressions of this fix.
 
 - **The compiled path coerced strings and booleans in comparison; the interpreter did not** —
   `"5" == 5` was true compiled and false interpreted. Type confusion rather than imprecision, so it
-  was deliberately not folded into a numeric fix. → **[B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md), fixed.**
+  was deliberately not folded into a numeric fix. → **[EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md), fixed.**
   Measurement found seven diverging comparisons, not the one noted here.
 - **Three serialisers saturated a large `Double` on output** — `1e30` and `1e300` both printed as
   `9223372036854775807`. YAML was affected too, which this note originally missed; XML was already

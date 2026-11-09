@@ -1,7 +1,7 @@
-# B39: nested lambdas emit duplicate method names, so the class never loads
+# EB04: nested lambdas emit duplicate method names, so the class never loads
 
-> **B = core bug** (shared core and the execution strategies built on it), the family of B01–B38.
-> This is **B39**.
+> **EB = engine bug** (`modules/engine` — the execution strategies and the runtime they
+> call), the family of EB01–EB03. This is **EB04**.
 
 **Status:** **FIXED.**
 **Priority:** Medium. It never produced a wrong answer — it silently disabled compilation for the
@@ -85,7 +85,7 @@ not a regression, just two defects that had been masked by a third.
 
 ## Tests
 
-`B39NestedLambdaTest` (`:engine`) asserts `compile(...) != null` before comparing output, because
+`EB04NestedLambdaTest` (`:engine`) asserts `compile(...) != null` before comparing output, because
 *that it compiled* is the property under test — a test that only checked the result would pass on
 the fallback and prove nothing. Cases: a lambda in a lambda, three levels of nesting, sibling
 lambdas (which were always fine, so a fix that over-shares one counter cannot break them), and
@@ -101,7 +101,7 @@ silently regress.
 
 - [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
   — the harness that found it, and why its compiled count is the load-bearing part.
-- [B36](B36-compiled-comparison-coerces-types-so-strategies-disagree.md) — the gap that harness
+- [EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) — the gap that harness
   closed; this is the first defect it found on its own rather than being written to catch.
 - [B34](B34-logical-operators-do-not-short-circuit.md) — the other `ASTCompiler` defect, and the
   origin of the discipline of asserting that something genuinely compiled.

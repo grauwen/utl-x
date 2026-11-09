@@ -12,7 +12,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
 /**
- * B40 — **a lambda body must be able to reach a named input.**
+ * EB05 — **a lambda body must be able to reach a named input.**
  *
  * `compileIdentifier` resolves any name that is not a local by loading the named-input map from
  * **slot 1** and calling `Map.get`. Slot 1 is the inputs map in `execute(Map)` — slot 0 is `this` —
@@ -39,11 +39,11 @@ import kotlin.test.assertNotNull
  * field on the generated class, which would have raced between concurrent executions of the same
  * compiled transformation.
  *
- * As with B39, the tests assert `compile(...) != null` and then compare against the interpreter:
+ * As with EB04, the tests assert `compile(...) != null` and then compare against the interpreter:
  * the symptom was a runtime failure on correctly-compiled-looking bytecode, so checking the output
  * alone would be satisfied by the interpreter fallback and prove nothing.
  */
-class B40LambdaInputAccessTest {
+class EB05LambdaInputAccessTest {
 
     private val input = UDM.Object.of(
         "orders" to UDM.Array(listOf(
@@ -89,7 +89,7 @@ class B40LambdaInputAccessTest {
 
     @Test
     fun `a lambda parameter and an input are both reachable, and distinct`() {
-        // The pre-B40 bug was slot collision between the two, so this is the direct regression case.
+        // The pre-EB05 bug was slot collision between the two, so this is the direct regression case.
         assertAgree("map(\$input.orders, (o) -> { id: o.id, others: count(\$input.customers) })")
     }
 

@@ -1,23 +1,24 @@
-# B42: capture writes output text where the runner compares a value
+# CB02: capture writes output text where the runner compares a value
 
-> **B = core bug** (tooling around the shared core), the family of B01–B41. This is **B42**.
+> **CB = CLI bug** (`modules/cli` — the `utlx` binary and the tooling shipped with it).
+> This is **CB02**.
 
 **Status:** **FIXED.**
 **Priority:** Medium. Every future capture of a transformation whose JSON output is a *string*
 would have produced a fixture that parses and then fails.
 **Component:** `:cli` — `ConformanceGenerator`.
 
-> **One-line:** [B41](B41-auto-capture-emits-unparseable-yaml.md) made the captured fixtures
+> **One-line:** [CB01](CB01-auto-capture-emits-unparseable-yaml.md) made the captured fixtures
 > parseable; this makes them *correct*. The writer emitted the output **text**, but the runner
 > compares a string `expected.data` as the output **value**.
 
-## Why this is separate from B41
+## Why this is separate from CB01
 
-B41 was an escaping-order mistake that made seven files unparseable. Fixing it was necessary and not
+CB01 was an escaping-order mistake that made seven files unparseable. Fixing it was necessary and not
 sufficient: the files then loaded, and three of the seven **failed**. The failure was not stale
 expectations — it was a disagreement between the writer and the reader about what the field means.
 
-That distinction is the point. Fixing only B41 would have moved the problem from "silently skipped"
+That distinction is the point. Fixing only CB01 would have moved the problem from "silently skipped"
 to "fails on the next capture", which is better but still wrong.
 
 ## Root cause
@@ -60,7 +61,7 @@ leaving every other shape alone. Two details that are easy to get wrong:
 - **Only JSON-ish output formats.** CSV and XML expectations are compared as text, so decoding
   would corrupt them.
 
-The quoting itself is now one shared function, which is also where B41's escaping order lives, so
+The quoting itself is now one shared function, which is also where CB01's escaping order lives, so
 the two cannot drift apart.
 
 ## Tests
@@ -70,12 +71,12 @@ shipped. Every case parses the emitted YAML and compares the decoded value, beca
 emitted *string* would re-encode the bug rather than catch it.
 
 Covers: a value carrying JSON-escaped content, a bare backslash, a sweep asserting every emitted
-document parses at all (B41); a JSON string output written as its value, a JSON-*looking* decoded
+document parses at all (CB01); a JSON string output written as its value, a JSON-*looking* decoded
 string staying a string rather than becoming a mapping, an object output left unchanged, a
 non-JSON format left as text, and the input/expected asymmetry held in one test so it cannot be
-"tidied" away (B42).
+"tidied" away (CB02).
 
-Revert-verified separately: restoring the text-for-value behaviour fails 3 of 8; restoring B41's
+Revert-verified separately: restoring the text-for-value behaviour fails 3 of 8; restoring CB01's
 escaping order fails 5 of 8. Different sets, so each fix is independently load-bearing.
 
 One test-authoring note worth keeping, because it cost real time: Kotlin raw strings make quote
@@ -85,9 +86,9 @@ product bug. The tests build these documents from named one-character pieces ins
 
 ## Related
 
-- [B41](B41-auto-capture-emits-unparseable-yaml.md) — the escaping defect in the same writer; this
+- [CB01](CB01-auto-capture-emits-unparseable-yaml.md) — the escaping defect in the same writer; this
   is the half that fixing it revealed.
-- [B43](B43-capture-yaml-writer-loses-data-in-three-ways.md) — three further lossy encodings in the
+- [CB03](CB03-capture-yaml-writer-loses-data-in-three-ways.md) — three further lossy encodings in the
   same writer, found by asking whether these tests covered every case. They did not.
 - [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
   — the harness whose skip tally started this thread.

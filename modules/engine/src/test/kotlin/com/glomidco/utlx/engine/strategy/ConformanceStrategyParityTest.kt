@@ -32,7 +32,7 @@ import kotlin.test.assertTrue
  *
  *  - **B34** `&&`/`||` returned the deciding operand compiled, a coerced boolean interpreted.
  *  - **B35** literals and arithmetic were made exact in the interpreter; COMPILED stayed lossy.
- *  - **B36** `"5" == 5` was true compiled, false interpreted — seven comparisons disagreed.
+ *  - **EB03** `"5" == 5` was true compiled, false interpreted — seven comparisons disagreed.
  *
  * Each needed a hand-written parity test, and each was found by probing rather than by a suite.
  * This test replaces that discipline with coverage: every future core semantic change is checked
@@ -108,16 +108,24 @@ class ConformanceStrategyParityTest {
                 ", first error: ${failed.first().second.exceptionOrNull()?.message}"
         }
 
+        // Report BOTH strategies, not the first one that differs. Returning early here hid
+        // COMPILED divergences behind COPY's on any fixture where both were wrong — which is how
+        // "COMPILED never produced different output" came to look true when it was not.
         val t = template.getOrThrow()
-        if (copy.getOrThrow() != t) {
-            return "COPY output differs from TEMPLATE\n  TEMPLATE: ${t.take(300)}\n" +
-                "  COPY    : ${copy.getOrThrow().take(300)}"
+        val copyDiffers = copy.getOrThrow() != t
+        val compiledDiffers = compiled.getOrThrow() != t
+        if (!copyDiffers && !compiledDiffers) return null
+
+        val who = when {
+            copyDiffers && compiledDiffers -> "COPY and COMPILED"
+            copyDiffers -> "COPY"
+            else -> "COMPILED"
         }
-        if (compiled.getOrThrow() != t) {
-            return "COMPILED output differs from TEMPLATE\n  TEMPLATE: ${t.take(300)}\n" +
-                "  COMPILED: ${compiled.getOrThrow().take(300)}"
+        return buildString {
+            append("$who output differs from TEMPLATE\n  TEMPLATE: ${t.take(240)}")
+            if (copyDiffers) append("\n  COPY    : ${copy.getOrThrow().take(240)}")
+            if (compiledDiffers) append("\n  COMPILED: ${compiled.getOrThrow().take(240)}")
         }
-        return null
     }
 
     private fun runVia(name: String, fx: Fixture, make: () -> ExecutionStrategy): Result<String> {
@@ -143,34 +151,25 @@ class ConformanceStrategyParityTest {
             COPY_OUTPUT("COPY produces different output from TEMPLATE"),
 
             /**
-             * COPY and COMPILED cannot run it at all, because they parse input with
-             * `parseInputPublic`, which does not reproduce what the full `transform()` pipeline
-             * does. Concentrated in the schema-describing formats (xsd, protobuf, jsch, avro,
-             * osch), whose UDM carries synthetic `%types` / `%namespace` keys.
+             * A user-defined function (`function f(...) { ... }` / `let f = x => ...` used as a
+             * callee) is not visible to the compiled path: `compile()` compiles `program.body` and
+             * nothing else, so the call reports `Undefined function`. A missing capability, not a
+             * coding error.
              */
-            COMPILED_INPUT_SHAPE("COPY/COMPILED see a different input UDM and fail on null"),
-
-            /** `ASTCompiler` emits two methods called `lambda_0` — invalid bytecode. */
-            ASTCOMPILER_DUPLICATE_LAMBDA("ASTCompiler: duplicate lambda method name"),
-
-            /**
-             * The compiled path cannot resolve a name declared **outside** the expression it is
-             * compiling — a user-defined function, or a `let` bound in an enclosing scope.
-             * `compileIdentifier` treats any unbound name as a named input, so the lookup returns
-             * null and the generated code then dies in a non-null parameter check
-             * (`RuntimeOps.getIndex, parameter target`) or reports `Undefined function`.
-             *
-             * This is a missing capability rather than bad addressing (contrast B40), and the right
-             * first move is for `isCompilable` to **reject** it so the strategy falls back cleanly
-             * instead of emitting code that throws.
-             */
-            COMPILED_UNRESOLVED_NAME("COPY/COMPILED cannot resolve an out-of-scope name"),
+            COMPILED_UNDEFINED_FUNCTION("COPY/COMPILED cannot see a user-defined function"),
 
             /** Runs on TEMPLATE only, for a reason not yet classified. */
             RUNS_ONLY_ON_TEMPLATE("only TEMPLATE can run it"),
 
-            /** COMPILED produces different output. **Currently empty** — and worth keeping so. */
+            /** COMPILED produces different output while COPY agrees. */
             COMPILED_OUTPUT("COMPILED produces different output from TEMPLATE"),
+
+            /**
+             * **Both** compiled strategies produce different output. This is the shared
+             * `ASTCompiler` being wrong rather than one strategy's own machinery, so it is the most
+             * valuable class to look at: a single fix moves every entry.
+             */
+            BOTH_OUTPUT("COPY and COMPILED both differ from TEMPLATE"),
         }
 
         /**
@@ -181,106 +180,39 @@ class ConformanceStrategyParityTest {
          * shrinking. That second direction is what keeps the inventory honest.
          */
         private val KNOWN_DIVERGENCES: Map<String, Divergence> = mapOf(
-            // B40 reclassified these. The Map-interface crash is gone from all seven; one agreed
-            // outright (stdlib/array/lookupBy_basic, delisted) and the rest were masking two
-            // other problems.
-            "formats/jsch/transformation/generate_api_documentation.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/transformation/generate_validation_rules.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
-            "stdlib/array/groupBy_lookup_basic.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
-            "stdlib/array/groupBy_lookup_missing_key.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
-            "stdlib/array/groupBy_lookup_with_transform.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
-            // B39 reclassified these: the duplicate-lambda fix let them compile, and what was
-            // hiding behind that failure is now visible. Three others agreed outright and are gone.
-            "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.COPY_OUTPUT,
-            "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.COPY_OUTPUT,
-            "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.COPY_OUTPUT,
-            "auto-captured/json-to-xml/transform_auto_b900b260.yaml" to Divergence.COPY_OUTPUT,
-            "auto-captured/stdlib/array/map_auto_856bfe76.yaml" to Divergence.COPY_OUTPUT,
-            "auto-captured/stdlib/array/sum_auto_a4eced76.yaml" to Divergence.COPY_OUTPUT,
-            "edge-cases/array_index_bounds.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "examples/basic/json_to_xml_conversion.yaml" to Divergence.COPY_OUTPUT,
+            "auto-captured/stdlib/array/sum_auto_a4eced76.yaml" to Divergence.BOTH_OUTPUT,
             "examples/basic/try_catch_basic.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "examples/intermediate/function_composition.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "examples/intermediate/spread_operator.yaml" to Divergence.COPY_OUTPUT,
-            "examples/intermediate/try_catch_with_error_variable.yaml" to Divergence.COPY_OUTPUT,
-            "examples/real-world/sap_integration.yaml" to Divergence.COPY_OUTPUT,
+            "examples/intermediate/function_composition.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
+            "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
+            "examples/intermediate/spread_operator.yaml" to Divergence.BOTH_OUTPUT,
+            "examples/intermediate/try_catch_with_error_variable.yaml" to Divergence.BOTH_OUTPUT,
+            "examples/real-world/sap_integration.yaml" to Divergence.BOTH_OUTPUT,
             "examples/xml-encoding/encoding_precedence_rules.yaml" to Divergence.COPY_OUTPUT,
-            "examples/xml-encoding/multi_input_default_encoding.yaml" to Divergence.COPY_OUTPUT,
-            "examples/xml-encoding/multi_input_explicit_encoding.yaml" to Divergence.COPY_OUTPUT,
-            "examples/xml-encoding/multi_input_no_encoding.yaml" to Divergence.COPY_OUTPUT,
-            "formats/avro/basic/f08_avro_to_proto_passthrough.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/avro/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/avro/basic/round_trip_basic.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/avro/basic/round_trip_inverse.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/avro/real-world/api_schema.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/avro/real-world/order_system.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/jsch/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/jsch/basic/parse_2020_12.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/jsch/basic/parse_draft_07.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/basic/round_trip_basic.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/jsch/basic/round_trip_inverse.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/jsch/composition/ref_definitions.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/real-world/api_user_profile.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/real-world/customer_order.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/real-world/payment_transaction.yaml" to Divergence.COPY_OUTPUT,
-            "formats/osch/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/all_primitive_types.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/parse_basic_message.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/parse_enum.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/round_trip_basic.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/basic/round_trip_proto_to_usdl.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/complex-types/map_fields.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/complex-types/nested_messages.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/complex-types/oneof_fields.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/complex-types/repeated_fields.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/complex-types/reserved_fields.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/real-world/ecommerce_order.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/real-world/iot_telemetry.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/real-world/user_profile.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/validation/enum_first_value_zero.yaml" to Divergence.COPY_OUTPUT,
-            "formats/protobuf/validation/field_number_ranges.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/validation/multi_type_schema.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/protobuf/validation/package_namespace.yaml" to Divergence.COPY_OUTPUT,
-            "formats/tsch/basic/f08_usdl_dual_access.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/attribute_from_expression.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/attribute_special_chars.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/attribute_with_text.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/attributes_with_nested_elements.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/multiple_attributes.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/non_string_attribute_values.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/single_attribute_output.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/attributes/xml_to_xml_attribute_transformation.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xml/f09_hash_text_alias.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/basic/f08_roundtrip_xsd_jsch_xsd.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/basic/f08_usdl_dual_access.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/basic/f10_decimal_roundtrip.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/basic/parse_xsd_1_0.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/basic/parse_xsd_1_1.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/basic/round_trip_basic.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/features/annotations.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/patterns/detect_russian_doll.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/patterns/detect_salami_slice.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/patterns/detect_swiss_army_knife.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/patterns/detect_venetian_blind.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/patterns/pattern_preservation_russian_doll.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/patterns/russian_doll.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/patterns/russian_doll_convert.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/patterns/russian_doll_round_trip.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/patterns/venetian_blind.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/real-world/ecommerce_product_catalog.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/real-world/financial_invoice.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/real-world/hr_employee_schema.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/scope/global_elements.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/scope/global_types.yaml" to Divergence.COPY_OUTPUT,
-            "formats/xsd/transformation/extract_element_names.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/transformation/generate_field_documentation.yaml" to Divergence.COMPILED_INPUT_SHAPE,
-            "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.COMPILED_INPUT_SHAPE,
+            "examples/xml-encoding/multi_input_default_encoding.yaml" to Divergence.BOTH_OUTPUT,
+            "examples/xml-encoding/multi_input_explicit_encoding.yaml" to Divergence.BOTH_OUTPUT,
+            "examples/xml-encoding/multi_input_no_encoding.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/basic/parse_2020_12.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/basic/parse_draft_07.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/real-world/api_user_profile.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/real-world/customer_order.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/real-world/payment_transaction.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
+            "formats/xsd/basic/parse_xsd_1_0.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/basic/parse_xsd_1_1.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/patterns/russian_doll.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/patterns/venetian_blind.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/real-world/ecommerce_product_catalog.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/real-world/financial_invoice.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/real-world/hr_employee_schema.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/scope/global_elements.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/scope/global_types.yaml" to Divergence.BOTH_OUTPUT,
+            "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "stdlib/array/nestBy_basic.yaml" to Divergence.COPY_OUTPUT,
-            "stdlib/datetime/now_basic.yaml" to Divergence.COPY_OUTPUT,
+            "stdlib/array/nestBy_basic.yaml" to Divergence.BOTH_OUTPUT,
+            "stdlib/datetime/now_basic.yaml" to Divergence.BOTH_OUTPUT,
+            "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.BOTH_OUTPUT,
+            "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.BOTH_OUTPUT,
+            "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.BOTH_OUTPUT,
             "tutorial-examples/csv_regional_europe_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "tutorial-examples/csv_regional_swiss_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
 
@@ -385,7 +317,7 @@ class ConformanceStrategyParityTest {
          * Did this transformation reach bytecode, or fall back?
          *
          * Asked of `ASTCompiler` directly rather than inferred from logs, matching how the B35 and
-         * B36 parity tests establish the same fact.
+         * EB03 parity tests establish the same fact.
          */
         private fun recordCompilability(path: String, source: String) {
             val program = runCatching {

@@ -124,7 +124,7 @@ object ConformanceGenerator {
     /**
      * A YAML double-quoted scalar holding exactly [v].
      *
-     * B41: the backslash MUST be escaped before the quote. Escaping only the quote left the
+     * CB01: the backslash MUST be escaped before the quote. Escaping only the quote left the
      * backslashes in JSON-escaped content raw and emitted `\\"`, which YAML reads as a backslash
      * followed by the end of the scalar. Seven captured fixtures were unparseable as a result, and
      * the conformance runner skipped them silently: neither passes nor failures, asserting nothing.
@@ -135,7 +135,7 @@ object ConformanceGenerator {
             when {
                 c == '\\' -> sb.append("\\\\")
                 c == '"' -> sb.append("\\\"")
-                // B43: a literal control character inside a double-quoted YAML scalar is not
+                // CB03: a literal control character inside a double-quoted YAML scalar is not
                 // preserved — a newline is folded to a space and a carriage return is dropped, so
                 // `a\rb` came back as `a b`. They have to be written as escapes.
                 c == '\n' -> sb.append("\\n")
@@ -151,7 +151,7 @@ object ConformanceGenerator {
     /**
      * Is [v] safe to write as a literal block scalar (`|`)?
      *
-     * B43: a block scalar is the readable choice for multi-line content and the corpus uses it
+     * CB03: a block scalar is the readable choice for multi-line content and the corpus uses it
      * widely, but it cannot represent everything. `|` always ends the value with exactly one
      * newline, and trailing whitespace on a line is not reliably preserved. Where it cannot be
      * exact, [quoteYamlString] can, so this gates the choice rather than guessing.
@@ -169,7 +169,7 @@ object ConformanceGenerator {
 
 
     /**
-     * B42: format the **expected** value, which is not the same thing as formatting the output text.
+     * CB02: format the **expected** value, which is not the same thing as formatting the output text.
      *
      * The conformance runner treats a string `expected.data` as the expected **value**, and only
      * re-parses it as text when it is a multi-line block beginning with `{` or `[`:
@@ -183,7 +183,7 @@ object ConformanceGenerator {
      * multi-line object or array, or a bare number or boolean that YAML decodes to the same value.
      * For a transformation whose output document is a JSON **string** (`upper($input)`, `renderJson(...)`)
      * the text is one escaping level deeper than the value, and the fixture fails the moment it is
-     * run. Three captured fixtures did exactly that, and only after B41 made them parseable enough
+     * run. Three captured fixtures did exactly that, and only after CB01 made them parseable enough
      * to run at all.
      *
      * Note the asymmetry with `input.data`, which the runner uses as-is when it looks like JSON —
@@ -214,7 +214,7 @@ object ConformanceGenerator {
     private fun formatYamlValue(value: String): String {
         // Try to parse as JSON to determine if it needs quotes
         return when {
-            // Multi-line string. B43: `|` appends exactly one trailing newline, so a value that
+            // Multi-line string. CB03: `|` appends exactly one trailing newline, so a value that
             // does not end in one needs `|-` (strip) or it gains a character. Anything a block
             // scalar cannot hold exactly falls through to the quoted form, which always can.
             value.contains("\n") && isBlockSafe(value) -> {
@@ -225,7 +225,7 @@ object ConformanceGenerator {
             // JSON object or array — emitted raw, so YAML decodes it to the same structure the
             // runner compares. (The text changes; the value does not.)
             value.trim().startsWith("{") || value.trim().startsWith("[") -> value
-            // Number. B43: only forms YAML 1.1 reads back unchanged go out raw. `0123` is OCTAL
+            // Number. CB03: only forms YAML 1.1 reads back unchanged go out raw. `0123` is OCTAL
             // (83), `007` is 7, and `1e5` is read as a *string* — all silent corruption. Anything
             // else numeric is normalised to a form that round-trips to the same number.
             SAFE_NUMBER.matches(value) -> value
@@ -237,7 +237,7 @@ object ConformanceGenerator {
             // Boolean
             value == "true" || value == "false" -> value
             // String - needs quotes
-            // B41: the backslash MUST be escaped before the quote. This escaped only the quote,
+            // CB01: the backslash MUST be escaped before the quote. This escaped only the quote,
             // so a value carrying JSON-escaped content kept its raw backslashes and emitted
             // \\" — which YAML reads as a backslash followed by the end of the scalar. Seven
             // captured fixtures were unparseable as a result, and the conformance runner skipped

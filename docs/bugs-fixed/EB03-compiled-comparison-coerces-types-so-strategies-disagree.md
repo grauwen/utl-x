@@ -1,7 +1,7 @@
-# B36: the compiled path coerces types in comparison, so the strategies disagree
+# EB03: the compiled path coerces types in comparison, so the strategies disagree
 
-> **B = core bug** (`:core` interpreter / parser / AST and the execution strategies built on it),
-> the family of B01–B35. This is **B36**.
+> **EB = engine bug** (`modules/engine` — the execution strategies and the runtime they
+> call), the family of EB01–EB02. This is **EB03**.
 
 **Status:** **FIXED.** The compiled path now compares exactly as the interpreter does.
 **Priority:** High. The divergence is between the **production** execution path and the one every
@@ -125,7 +125,7 @@ which is itself evidence the coercion was accidental rather than relied upon —
 
 ## Tests
 
-`B36ComparisonParityTest` (`:engine`) asserts, for every case, that the two strategies **agree** and
+`EB03ComparisonParityTest` (`:engine`) asserts, for every case, that the two strategies **agree** and
 *what* they agree on — so a later alignment in the wrong direction fails too. It drives
 `ASTCompiler` directly and asserts `compile(...) != null` first, because `CompiledStrategy` falls
 back to the interpreter when compilation returns null: a test routed through the strategy could pass

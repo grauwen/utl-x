@@ -152,7 +152,7 @@ class ASTCompiler {
     // =========================================================================
 
     /**
-     * B39: lambda method names, counted **per generated class** rather than per context.
+     * EB04: lambda method names, counted **per generated class** rather than per context.
      *
      * `lambdaCounter` used to live on [CompileContext], and `compileLambda` builds a fresh context
      * for the lambda body. So the counter restarted at zero inside every lambda, and a lambda
@@ -172,7 +172,17 @@ class ASTCompiler {
         val classWriter: ClassWriter? = null,
         val className: String? = null,
         /** Shared with every nested context for the same class — see [LambdaNames]. */
-        val lambdaNames: LambdaNames = LambdaNames()
+        val lambdaNames: LambdaNames = LambdaNames(),
+        /**
+         * EB06: local slot holding the captured environment, or null when there is none.
+         *
+         * `execute` has none — its `let` bindings are real local slots. A lambda is a static method
+         * that cannot see those slots, so it receives them as a map instead; this is where that map
+         * lives, and [capturedNames] says what is in it.
+         */
+        val capturedSlot: Int? = null,
+        /** Names reachable through the captured environment, accumulated through nesting. */
+        val capturedNames: Set<String> = emptySet()
     ) {
         fun allocLocal(name: String): Int {
             val slot = localSlot++
@@ -296,6 +306,15 @@ class ASTCompiler {
         if (localSlot != null) {
             // Local variable (let binding)
             ctx.mv.visitVarInsn(ALOAD, localSlot)
+        } else if (ctx.capturedSlot != null && name in ctx.capturedNames) {
+            // EB06: a binding from an enclosing scope, reached through the captured environment.
+            // Without this a lambda referring to an enclosing `let` fell through to the input
+            // lookup below, got null, and the generated code died in a non-null parameter check.
+            ctx.mv.visitVarInsn(ALOAD, ctx.capturedSlot)
+            ctx.mv.visitLdcInsn(name)
+            ctx.mv.visitMethodInsn(INVOKEINTERFACE, MAP_TYPE, "get",
+                "(Ljava/lang/Object;)Ljava/lang/Object;", true)
+            ctx.mv.visitTypeInsn(CHECKCAST, UDM_TYPE)
         } else {
             // Input variable — look up in inputs map (arg 1)
             ctx.mv.visitVarInsn(ALOAD, 1) // inputs map
@@ -322,17 +341,19 @@ class ASTCompiler {
 
     private fun compileIndexAccess(ctx: CompileContext, expr: Expression.IndexAccess) {
         compileExpression(ctx, expr.target)
-        // For now, only support integer index literals
         if (expr.index is Expression.NumberLiteral) {
+            // An integer literal index can skip the boxing entirely.
             ctx.mv.visitLdcInsn((expr.index as Expression.NumberLiteral).value.toInt())
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getIndex",
+                "(${UDM_DESC}I)$UDM_DESC", false)
         } else {
+            // EB07: hand the key over as a UDM and let the runtime decide what it means. This used
+            // to call asNumber() on the index, so a STRING key silently became 0 — making
+            // `byOrder[o.id]` read element 0 of an object and return null, with no error.
             compileExpression(ctx, expr.index)
-            // Convert UDM number to int
-            ctx.mv.visitMethodInsn(INVOKEVIRTUAL, UDM_TYPE, "asNumber", "()D", false)
-            ctx.mv.visitInsn(D2I)
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getIndexUdm",
+                "(${UDM_DESC}${UDM_DESC})$UDM_DESC", false)
         }
-        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getIndex",
-            "(${UDM_DESC}I)$UDM_DESC", false)
     }
 
     private fun compileSafeNavigation(ctx: CompileContext, expr: Expression.SafeNavigation) {
@@ -365,8 +386,12 @@ class ASTCompiler {
             ctx.mv.visitVarInsn(ASTORE, slot)
         }
 
-        // Separate regular properties from spread properties
-        val regularProps = expr.properties.filter { it.key != null && !it.isSpread }
+        // Separate regular properties from spread properties.
+        // EB08: and separate XML attributes from child properties. `@key:` carries isAttribute on
+        // the AST node; ignoring it emitted the attribute as a child element.
+        val keyed = expr.properties.filter { it.key != null && !it.isSpread }
+        val regularProps = keyed.filter { !it.isAttribute }
+        val attributeProps = keyed.filter { it.isAttribute }
         val hasSpread = expr.properties.any { it.isSpread }
 
         // Build the base object from regular properties
@@ -392,9 +417,27 @@ class ASTCompiler {
             ctx.mv.visitInsn(AASTORE)
         }
 
-        // RuntimeOps.buildObject(keys, values)
-        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildObject",
-            "([Ljava/lang/String;[$UDM_DESC)$UDM_DESC", false)
+        // EB08: the attribute keys and their values, as two more arrays
+        ctx.mv.visitLdcInsn(attributeProps.size)
+        ctx.mv.visitTypeInsn(ANEWARRAY, "java/lang/String")
+        for (i in attributeProps.indices) {
+            ctx.mv.visitInsn(DUP)
+            ctx.mv.visitLdcInsn(i)
+            ctx.mv.visitLdcInsn(attributeProps[i].key)
+            ctx.mv.visitInsn(AASTORE)
+        }
+        ctx.mv.visitLdcInsn(attributeProps.size)
+        ctx.mv.visitTypeInsn(ANEWARRAY, UDM_TYPE)
+        for (i in attributeProps.indices) {
+            ctx.mv.visitInsn(DUP)
+            ctx.mv.visitLdcInsn(i)
+            compileExpression(ctx, attributeProps[i].value)
+            ctx.mv.visitInsn(AASTORE)
+        }
+
+        // RuntimeOps.buildObjectWithAttributes(keys, values, attrKeys, attrValues)
+        ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "buildObjectWithAttributes",
+            "([Ljava/lang/String;[$UDM_DESC[Ljava/lang/String;[$UDM_DESC)$UDM_DESC", false)
 
         // Merge spread properties into the object
         if (hasSpread) {
@@ -638,7 +681,7 @@ class ASTCompiler {
      *
      * Then at the call site, constructs a UDM.Lambda via RuntimeOps.makeLambda().
      *
-     * **B40 — why the method takes the inputs map.** `compileIdentifier` resolves a name that is
+     * **EB05 — why the method takes the inputs map.** `compileIdentifier` resolves a name that is
      * not a local by loading the named-input map from **slot 1** and calling `Map.get`. That slot
      * is correct in `execute(Map)` (0 = this, 1 = inputs), but a lambda is a *static* method where
      * slot 1 held the first lambda parameter — a `UDM`. So a lambda body referring to an input
@@ -661,19 +704,24 @@ class ASTCompiler {
         // Generate static method: static UDM lambda_N(List<UDM>, Map<String, UDM>)
         val lambdaMv = cw.visitMethod(
             ACC_PUBLIC or ACC_STATIC, lambdaName,
-            "(Ljava/util/List;L$MAP_TYPE;)$UDM_DESC", null, null)
+            "(Ljava/util/List;L$MAP_TYPE;L$MAP_TYPE;)$UDM_DESC", null, null)
         lambdaMv.visitCode()
 
         // Create a new context for the lambda body. Local variable slots:
         //   0 = args   (List<UDM>)
-        //   1 = inputs (Map<String, UDM>)  — B40: same slot as in execute(), so ALOAD 1 is
+        //   1 = inputs (Map<String, UDM>)  — EB05: same slot as in execute(), so ALOAD 1 is
         //       uniformly correct for an input reference wherever it is emitted
-        //   2+ = lambda parameters, then let bindings
-        // B39: carry the parent's name source, so nested lambdas keep counting up instead of
+        //   2 = captured (Map<String, UDM>) — EB06: the enclosing scope's bindings
+        //   3+ = lambda parameters, then let bindings
+        // EB04: carry the parent's name source, so nested lambdas keep counting up instead of
         // restarting at lambda_0 and colliding.
-        val lambdaCtx = CompileContext(lambdaMv, localSlot = 2,
+        // EB06: what the enclosing frame can see is what this lambda can capture — its own locals
+        // plus whatever it had captured itself, so the set accumulates through nesting.
+        val capturable = ctx.locals.keys + ctx.capturedNames
+        val lambdaCtx = CompileContext(lambdaMv, localSlot = 3,
             locals = mutableMapOf(), classWriter = cw, className = className,
-            lambdaNames = ctx.lambdaNames)
+            lambdaNames = ctx.lambdaNames,
+            capturedSlot = 2, capturedNames = capturable)
 
         // Bind parameters: extract from args list by index
         for (i in expr.parameters.indices) {
@@ -697,11 +745,46 @@ class ASTCompiler {
         // At the call site: RuntimeOps.makeLambda(ThisClass.class, "lambda_N", inputs)
         ctx.mv.visitLdcInsn(org.objectweb.asm.Type.getObjectType(className))
         ctx.mv.visitLdcInsn(lambdaName)
-        // B40: capture the inputs map so the lambda body can reach an input. Slot 1 holds it in
+        // EB05: capture the inputs map so the lambda body can reach an input. Slot 1 holds it in
         // execute() and — by the signature above — in an enclosing lambda method too.
         ctx.mv.visitVarInsn(ALOAD, 1)
+        // EB06: build the captured environment from the enclosing frame, at the point the lambda
+        // VALUE is created. Snapshotting here rather than sharing a mutable frame is what makes a
+        // lambda that outlives its enclosing expression still see the right bindings.
+        emitCapturedEnvironment(ctx, capturable)
         ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "makeLambda",
-            "(Ljava/lang/Class;Ljava/lang/String;L$MAP_TYPE;)$UDM_DESC", false)
+            "(Ljava/lang/Class;Ljava/lang/String;L$MAP_TYPE;L$MAP_TYPE;)$UDM_DESC", false)
+    }
+
+    /**
+     * EB06: leave a `Map<String, UDM>` of [names] on the stack, read from the enclosing frame.
+     *
+     * A name is either a real local slot of the enclosing method or, when that method is itself a
+     * lambda, an entry in *its* captured map — so this handles arbitrary nesting without the
+     * compiler tracking depth.
+     */
+    private fun emitCapturedEnvironment(ctx: CompileContext, names: Set<String>) {
+        ctx.mv.visitTypeInsn(NEW, "java/util/HashMap")
+        ctx.mv.visitInsn(DUP)
+        ctx.mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false)
+        for (name in names) {
+            val slot = ctx.locals[name]
+            ctx.mv.visitInsn(DUP)                    // the map, for put()
+            ctx.mv.visitLdcInsn(name)
+            if (slot != null) {
+                ctx.mv.visitVarInsn(ALOAD, slot)
+            } else {
+                // Inherited from the enclosing lambda's own captured environment.
+                val from = ctx.capturedSlot ?: continue
+                ctx.mv.visitVarInsn(ALOAD, from)
+                ctx.mv.visitLdcInsn(name)
+                ctx.mv.visitMethodInsn(INVOKEINTERFACE, MAP_TYPE, "get",
+                    "(Ljava/lang/Object;)Ljava/lang/Object;", true)
+            }
+            ctx.mv.visitMethodInsn(INVOKEINTERFACE, MAP_TYPE, "put",
+                "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true)
+            ctx.mv.visitInsn(POP)                    // discard put()'s previous value
+        }
     }
 
     // ── Try/Catch ──

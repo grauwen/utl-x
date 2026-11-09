@@ -1,7 +1,7 @@
 # Conformance across execution strategies
 
 **Status:** implemented — `ConformanceStrategyParityTest` in `:engine`.
-**Closes the gap recorded in** [B36](../bugs-fixed/B36-compiled-comparison-coerces-types-so-strategies-disagree.md)
+**Closes the gap recorded in** [EB03](../bugs-fixed/EB03-compiled-comparison-coerces-types-so-strategies-disagree.md)
 §"The structural gap this exposed".
 
 > **One-line:** the conformance corpus now runs on every execution strategy, not just the
@@ -29,7 +29,7 @@ diverged, and each found by probing rather than by a suite:
 
 - **B34** — `&&`/`||` returned the deciding operand compiled, a coerced boolean interpreted.
 - **B35** — literals and arithmetic made exact in the interpreter; COMPILED stayed lossy.
-- **B36** — `"5" == 5` true compiled, false interpreted; seven comparisons disagreed.
+- **EB03** — `"5" == 5` true compiled, false interpreted; seven comparisons disagreed.
 
 ## This is not the conformance suite
 
@@ -135,17 +135,17 @@ hides behind it.
 fixtures driven       : 361
 skipped               : 39
     multi-input                     39
-known divergences     :  97
-    COPY_OUTPUT                     49
-    COMPILED_INPUT_SHAPE            37
-    RUNS_ONLY_ON_TEMPLATE            7
-    COMPILED_UNRESOLVED_NAME         4
+known divergences     :  35
+    BOTH_OUTPUT                     26
+    RUNS_ONLY_ON_TEMPLATE            5
+    COMPILED_UNDEFINED_FUNCTION      3
+    COPY_OUTPUT                      1
 genuinely COMPILED    : 328   (91% of those driven)
 fell back to interp.  :  33
 ```
 
 The first measurement was 101 divergences and 313 compiled. The difference is
-[B39](../bugs-fixed/B39-nested-lambdas-emit-duplicate-method-names.md), the first defect this
+[EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md), the first defect this
 harness found on its own: a lambda nested in another lambda emitted a duplicate method name, the
 class was rejected, and the compiled strategy fell back to the interpreter — silently, with correct
 output. Eight fixtures were affected. Fixing it delisted three, and **exposed two further defects
@@ -175,20 +175,57 @@ Three fixtures share a `name:` with another file — `length_basic` (`stdlib/arr
 by name silently conflated them, which is how the first measurement reported 351 driven against 354
 loaded. Minor corpus hygiene, worth fixing at some point; keyed by path it does not matter.
 
-### The headline number: COMPILED never produced different output
+### Progress
 
-**`COMPILED_OUTPUT` is empty.** Where COMPILED runs, it agrees with TEMPLATE on every one of the 351
-fixtures. It either agrees or refuses to run. That is a meaningful result for `utlxe`, and
-consistent with B35 and B36 having just closed the two semantic divergences that did exist.
+| | first run | now |
+|---|---|---|
+| known divergences | 101 | **47** |
+| `COMPILED_OUTPUT` | 0 | **0** |
+| fixtures driven | 354 | **361** |
 
-**COPY is the strategy that produces different answers** — 44 of them.
+Five defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
+[EB05](../bugs-fixed/EB05-lambda-bodies-cannot-reach-a-named-input.md),
+[CB01](../bugs-fixed/CB01-auto-capture-emits-unparseable-yaml.md) (with
+[CB02](../bugs-fixed/CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) and
+[CB03](../bugs-fixed/CB03-capture-yaml-writer-loses-data-in-three-ways.md)),
+[EB06](../bugs-fixed/EB06-compiled-lambdas-cannot-see-enclosing-bindings.md) and
+[EB07](../bugs-fixed/EB07-compiled-index-access-ignores-string-keys.md) — plus one diagnosis corrected.
+Each fix tended to reveal what it had been masking, which is why the total moved in steps rather
+than smoothly.
+
+### Correction: the dominant class is the shared compiler, not COPY
+
+This section previously reported that **"COMPILED never produced different output"** and that COPY
+was the strategy producing different answers. **Both claims were artifacts of the harness**, not
+findings: `describeDivergence` compared COPY first and returned on the first difference, so on any
+fixture where both compiled strategies were wrong the COPY entry masked the COMPILED one.
+
+It now reports every axis and labels the shared case `BOTH_OUTPUT`:
+
+| | measured one axis | measuring both |
+|---|---|---|
+| `COPY_OUTPUT` | 39 | **1** |
+| `BOTH_OUTPUT` | — | **38** |
+| `COMPILED_OUTPUT` | 0 | 0 |
+
+That is better news than the original reading: the dominant class is the **shared `ASTCompiler`**,
+where one fix moves many fixtures — [EB08](../bugs-fixed/EB08-compiled-object-literals-drop-xml-attributes.md)
+took 12 of them immediately. `COMPILED_OUTPUT` being empty is still true and still meaningful, but
+it means "COMPILED alone", not "COMPILED is never wrong".
+
+The lesson is specific: a differential test must report every axis it compares, or it quietly
+becomes a single-axis test — and a plausible class name (`COPY_OUTPUT`) will carry the wrong
+diagnosis for as long as nobody checks it.
 
 ## The inventory this produced
 
 Each class below is a real defect or gap. None has a bug number yet; they are listed in the order I
 would assign them.
 
-**1. COPY emits XML attributes as child elements (47 fixtures, was 44 before B39).** The clearest case:
+**1. ~~COPY emits XML attributes as child elements.~~** **FIXED —
+[EB08](../bugs-fixed/EB08-compiled-object-literals-drop-xml-attributes.md)**, and it was never COPY's
+own defect: `ASTCompiler` ignored `Property.isAttribute`, so **both** compiled strategies emitted an
+attribute as a child element. 12 fixtures. The original note follows:
 
 ```
 TEMPLATE   <Order id="ORD-123"><Customer>John</Customer></Order>
@@ -199,32 +236,40 @@ The fixtures' own expectations use attributes, so TEMPLATE is right and COPY is 
 because `AUTO` selects COPY whenever a schema is present, so it is reachable without anyone asking
 for it.
 
-**2. COPY and COMPILED cannot run schema-format transformations (37 fixtures).** They parse input
-with `parseInputPublic`, which does not reproduce what the full `transform()` pipeline does.
-Concentrated in the schema-describing formats, whose UDM carries synthetic `%types` / `%namespace`
-keys — so accesses like `$input["%types"]` resolve to null and the transformation fails with
-"requires an object as first argument, but got null". By corpus area: xsd 24, protobuf 18, jsch 12,
-avro 6, osch 1.
+**2. ~~COPY and COMPILED cannot run schema-format transformations (37 fixtures).~~** **FIXED —
+[EB07](../bugs-fixed/EB07-compiled-index-access-ignores-string-keys.md), and the diagnosis above was
+wrong.** The input UDM was fine. Those transformations address it as `$input["%types"]` — a
+*string-keyed subscript* — and the compiled path called `asNumber()` on the key, so a string became
+`0`, the subscript returned null, and the failure surfaced one call later as "requires an object as
+first argument, but got null". The symptom pointed at parsing; the cause was the subscript. Fixing it
+moved **46 fixtures at once**, which no work on `parseInputPublic` would have done.
+
+A plausible explanation that fits the error text is not a diagnosis — which is the whole reason this
+harness reports a tally rather than a verdict.
 
 **3. ~~`ASTCompiler` emits duplicate lambda method names (8 fixtures).~~** **FIXED —
-[B39](../bugs-fixed/B39-nested-lambdas-emit-duplicate-method-names.md).** The lambda-name counter
+[EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md).** The lambda-name counter
 lived on `CompileContext`, and a fresh context is built for each lambda body, so nesting restarted
 it at zero. Was the cheapest of the five, as expected.
 
 **4. ~~`ASTCompiler` emits invokeinterface against a UDM concrete class.~~** **FIXED —
-[B40](../bugs-fixed/B40-lambda-bodies-cannot-reach-a-named-input.md).** `compileIdentifier` loaded
+[EB05](../bugs-fixed/EB05-lambda-bodies-cannot-reach-a-named-input.md).** `compileIdentifier` loaded
 the named-input map from local slot 1, which is the map in `execute` but the first *lambda
 parameter* in a lambda — so a lambda referencing an input called `Map.get` on a `UDM`. The lambda
 method now takes the map as a second parameter, putting the inputs at slot 1 in both shapes.
 
-**4b. COPY/COMPILED cannot resolve an out-of-scope name (4 fixtures).** Isolated by B40, which had
-been masking it. A user-defined function or a `let` from an enclosing scope resolves as a named
-input, yields null, and dies in a non-null check (`RuntimeOps.getIndex, parameter target`) or as
-`Undefined function`. A missing capability rather than a coding error; the right first move is for
-`isCompilable` to reject it so the fallback is clean.
+**4b. ~~COPY/COMPILED cannot resolve an out-of-scope name (4 fixtures).~~** Split in two once
+examined properly:
+
+- a `let` from an enclosing scope was a **closure-capture** defect that threw at runtime —
+  **FIXED, [EB06](../bugs-fixed/EB06-compiled-lambdas-cannot-see-enclosing-bindings.md)**. My earlier
+  recommendation to have `isCompilable` reject it would have thrown away a capability that took
+  about an hour to add.
+- a **user-defined function** genuinely is not visible to the compiled path, because `compile()`
+  compiles `program.body` and nothing else. 3 fixtures, now `COMPILED_UNDEFINED_FUNCTION`.
 
 **5. ~~Seven fixtures are malformed YAML and have never run — by either suite.~~** **FIXED —
-[B41](../bugs-fixed/B41-auto-capture-emits-unparseable-yaml.md).** The capture writer escaped quotes
+[CB01](../bugs-fixed/CB01-auto-capture-emits-unparseable-yaml.md).** The capture writer escaped quotes
 but not backslashes. Running them for the first time found three real problems, including a
 generator/runner disagreement about what `expected.data` means for JSON. Original note follows. All in
 `auto-captured/`, so auto-capture emitted invalid YAML. The Python runner's `load_test_case` catches
@@ -239,7 +284,7 @@ are the only fixtures in the corpus that assert nothing at all.
   payload; multi-input goes through an envelope-splitting path that has not been traced. They are
   named with a reason rather than quietly absent.
 - **Transport parity is still unaddressed.** `ch39` lists it alongside strategy parity (HTTP vs gRPC
-  vs stdio-proto), and no test class appears to cover it. Same bug class as B36: a divergence
+  vs stdio-proto), and no test class appears to cover it. Same bug class as EB03: a divergence
   between two paths that are claimed to be equivalent.
 - The 556 figure quoted for a release still describes the interpreted path. This test adds the
   strategy axis; it does not change what the Python suite measures.
