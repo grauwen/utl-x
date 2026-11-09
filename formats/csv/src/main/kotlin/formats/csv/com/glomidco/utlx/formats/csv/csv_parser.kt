@@ -210,7 +210,8 @@ class CSVParser(
         
         // Try number — B35: exact representation (CSV previously routed every numeric value
         // through Double, so it corrupted int64 that JSON preserved). Same accept/reject as before.
-        ExactNumber.ofOrNull(trimmed)?.let {
+        // B39: infer from free text, so a leading-zero identifier stays a string.
+        ExactNumber.inferredOrNull(trimmed)?.let {
             return UDM.Scalar.number(it)
         }
         

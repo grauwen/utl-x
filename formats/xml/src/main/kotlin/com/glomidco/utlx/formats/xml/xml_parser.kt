@@ -542,7 +542,8 @@ class XMLParser(
      * Whether text counts as numeric is decided exactly as before.
      */
     private fun tryParseNumber(str: String): UDM.Scalar? {
-        return ExactNumber.ofOrNull(str)?.let { UDM.Scalar.number(it) }
+        // B39: infer from free text, so a leading-zero identifier stays a string.
+        return ExactNumber.inferredOrNull(str)?.let { UDM.Scalar.number(it) }
     }
 
     /**

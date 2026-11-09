@@ -68,6 +68,62 @@ object ExactNumber {
     }
 
     /**
+     * Canonical JSON number form: no leading zero, optional fraction, optional exponent.
+     *
+     * This is the JSON grammar's own definition (`int frac? exp?` where `int` is `0` or
+     * `[1-9]\d*`), which is the point — a leading zero is *not* a number in JSON, and in practice
+     * it is the marker of an identifier.
+     */
+    private val CANONICAL_JSON_NUMBER =
+        Regex("-?(0|[1-9]\\d*)(\\.\\d+)?([eE][+-]?\\d+)?")
+
+    /** A decimal number written with a leading zero: `04.6166`, `0100031012`, `007`. */
+    private val ZERO_PADDED = Regex("-?0\\d+(\\.\\d+)?")
+
+    /**
+     * B40: is [text] a **zero-padded** decimal — a leading zero followed by another digit?
+     *
+     * That shape is an identifier in practice (a store code, an article number, a padded
+     * reference), and it is not a number in JSON's grammar. `0.5` and `0` are *not* padded and stay
+     * numbers; `04.6166`, `0100031012` and `007` are.
+     *
+     * Narrower than [inferredOrNull] on purpose, for parsers that delegate to a library with its
+     * own number syntax. YAML is the case: `0x1F`, `0o17`, `1_000` and `1:30` are deliberate YAML
+     * spellings and must keep working, so only the zero-padded form is taken back.
+     */
+    fun isZeroPadded(text: String): Boolean = ZERO_PADDED.matches(text.trim())
+
+    /**
+     * B39: should this free **text** be read as a number at all?
+     *
+     * Distinct from [ofOrNull] on purpose. `ofOrNull` parses a lexeme the grammar has *already*
+     * decided is numeric — JSON hands it one. This answers a different question, which CSV and XML
+     * have to ask of arbitrary text: *is this meant to be a number?*
+     *
+     * It says yes only for the canonical JSON number form, so an identifier keeps its leading
+     * zeros and stays a string:
+     *
+     * | text | before | now |
+     * |---|---|---|
+     * | `04.6166` (store id) | `4.6166` | `"04.6166"` |
+     * | `0100031012` (article no.) | `100031012` | `"0100031012"` |
+     * | `007` | `7` | `"007"` |
+     * | `12`, `1.50`, `0.5`, `-7`, `1e5` | number | number, unchanged |
+     *
+     * A leading zero was never recoverable afterwards — the digits are gone before the script runs,
+     * and `toString()` returns the normalised form — so this cannot be worked around in a
+     * transformation. That is what makes it a defect rather than a preference.
+     *
+     * Note the asymmetry is deliberate: `ofOrNull` must stay lenient because JSON's own lexer has
+     * already accepted the token, and refusing it there would turn a parse into an error.
+     */
+    fun inferredOrNull(text: String): Number? {
+        val s = text.trim()
+        if (!CANONICAL_JSON_NUMBER.matches(s)) return null
+        return ofOrNull(s)
+    }
+
+    /**
      * `BigDecimal` for a **plain decimal** lexeme (optional sign, digits, `.`, digits), `null` for
      * anything else — including integers, exponent forms, and YAML's `.inf` / `.nan` / `1_000.5`.
      *

@@ -62,14 +62,29 @@ class YAMLParser {
      */
     private class ExactFloatConstructor(loaderOptions: LoaderOptions) : Constructor(loaderOptions) {
         init {
-            val delegate = yamlConstructors[Tag.FLOAT]!!
+            val floatDelegate = yamlConstructors[Tag.FLOAT]!!
             yamlConstructors[Tag.FLOAT] = object : AbstractConstruct() {
                 override fun construct(node: Node): Any? {
                     val raw = (node as? ScalarNode)?.value
                     if (raw != null) {
+                        // B40: a zero-padded decimal is an identifier, not a number.
+                        if (ExactNumber.isZeroPadded(raw)) return raw
                         ExactNumber.plainDecimalOrNull(raw)?.let { return it }
                     }
-                    return delegate.construct(node)
+                    return floatDelegate.construct(node)
+                }
+            }
+
+            // B40: YAML 1.1 reads a bare leading-zero integer as **octal**, so `0100031012`
+            // became 16790026 — not a truncation but an unrelated number, and silently. Taking
+            // that one shape back is enough; `0x1F`, `0o17`, `1_000` and YAML 1.1 sexagesimals are
+            // deliberate spellings and keep going to SnakeYAML.
+            val intDelegate = yamlConstructors[Tag.INT]!!
+            yamlConstructors[Tag.INT] = object : AbstractConstruct() {
+                override fun construct(node: Node): Any? {
+                    val raw = (node as? ScalarNode)?.value
+                    if (raw != null && ExactNumber.isZeroPadded(raw)) return raw
+                    return intDelegate.construct(node)
                 }
             }
         }

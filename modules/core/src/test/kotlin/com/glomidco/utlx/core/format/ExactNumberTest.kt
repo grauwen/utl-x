@@ -178,6 +178,88 @@ class ExactNumberTest {
         assertNull(ExactNumber.integralLongOrNull(Double.NEGATIVE_INFINITY))
     }
 
+    // ── B39: inferring a number from free TEXT is stricter than parsing a known lexeme ──
+
+    /**
+     * Reported from the field: a Centric ORS POS XML feed where `RetailStoreID` is `04.6166` and
+     * article numbers look like `0100031012`. Every numeric-looking text node became a number, the
+     * leading zeros went with it, and nothing in a script could recover them — the digits are gone
+     * before the script runs, and `toString()` returns the normalised form.
+     *
+     * The rule is JSON's own number grammar: `0` or `[1-9]\d*`, so a leading zero is not a number.
+     */
+    @Test
+    fun `a leading zero means it is an identifier, not a number`() {
+        assertNull(ExactNumber.inferredOrNull("04.6166"), "a store id must stay text")
+        assertNull(ExactNumber.inferredOrNull("0100031012"), "an article number must stay text")
+        assertNull(ExactNumber.inferredOrNull("007"))
+        assertNull(ExactNumber.inferredOrNull("-007"))
+    }
+
+    @Test
+    fun `ordinary numbers are still inferred`() {
+        assertEquals(12L, ExactNumber.inferredOrNull("12"))
+        assertEquals(-7L, ExactNumber.inferredOrNull("-7"))
+        assertEquals(0L, ExactNumber.inferredOrNull("0"))
+        assertEquals(BigDecimal("1.50"), ExactNumber.inferredOrNull("1.50"))
+        assertEquals(BigDecimal("0.5"), ExactNumber.inferredOrNull("0.5"))
+        assertTrue(ExactNumber.inferredOrNull("1e5") is Double)
+    }
+
+    @Test
+    fun `a long identifier that is canonical stays an exact number`() {
+        // An 18-digit barcode with no leading zero is a canonical number, and it is now exact —
+        // the digit corruption that prompted the report is gone. Whether such a code *should* be
+        // typed as a number is a separate question from whether its digits survive.
+        assertEquals(123456789012345678L, ExactNumber.inferredOrNull("123456789012345678"))
+        assertEquals(BigInteger("2200000000000000000012"),
+            ExactNumber.inferredOrNull("2200000000000000000012"))
+    }
+
+    @Test
+    fun `text that is not a number at all stays text`() {
+        for (t in listOf("", "   ", "abc", "1,5", "1.2.3", "+5", "1_000", "0x1F", "NaN", "Infinity")) {
+            assertNull(ExactNumber.inferredOrNull(t), "'$t' should not be inferred as a number")
+        }
+    }
+
+    @Test
+    fun `inference is stricter than parsing a known lexeme`() {
+        // The two entry points answer different questions, and the asymmetry is deliberate: JSON's
+        // lexer has already accepted its token, so refusing it there would turn a parse into an
+        // error.
+        assertNull(ExactNumber.inferredOrNull("007"))
+        assertEquals(7L, ExactNumber.ofOrNull("007"))
+        assertNull(ExactNumber.inferredOrNull("NaN"))
+        assertTrue(ExactNumber.ofOrNull("NaN") is Double)
+    }
+
+    // ── B40: the narrower zero-padded test, for parsers with their own number syntax ──
+
+    @Test
+    fun `isZeroPadded recognises a padded decimal`() {
+        assertTrue(ExactNumber.isZeroPadded("04.6166"))
+        assertTrue(ExactNumber.isZeroPadded("0100031012"))
+        assertTrue(ExactNumber.isZeroPadded("007"))
+        assertTrue(ExactNumber.isZeroPadded("-007"))
+    }
+
+    @Test
+    fun `isZeroPadded does not fire on a canonical number`() {
+        // The zero in `0` and `0.5` is not padding.
+        for (t in listOf("0", "0.5", "0.50", "12", "-7", "1.50", "1e5")) {
+            assertTrue(!ExactNumber.isZeroPadded(t), "'$t' is not zero-padded")
+        }
+    }
+
+    @Test
+    fun `isZeroPadded leaves other number syntaxes alone`() {
+        // These are deliberate YAML spellings, not padded decimals, so YAML keeps resolving them.
+        for (t in listOf("0x1F", "0o17", "1_000", "1:30", "0b101", ".inf", "abc")) {
+            assertTrue(!ExactNumber.isZeroPadded(t), "'$t' should be left to the library")
+        }
+    }
+
     // ── The narrow variant used by parsers that delegate scalar construction ──
 
     @Test
