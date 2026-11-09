@@ -136,15 +136,22 @@ fixtures driven       : 354
 skipped               : 46
     multi-input                     39
     fixture YAML did not parse       7
-known divergences     : 101
-    COPY_OUTPUT                     44
+known divergences     :  98
+    COPY_OUTPUT                     47
     COMPILED_INPUT_SHAPE            37
-    ASTCOMPILER_DUPLICATE_LAMBDA     8
+    ASTCOMPILER_BAD_INVOKEINTERFACE  7
     RUNS_ONLY_ON_TEMPLATE            7
-    ASTCOMPILER_BAD_INVOKEINTERFACE  5
-genuinely COMPILED    : 313   (88% of those driven)
-fell back to interp.  :  41
+genuinely COMPILED    : 321   (91% of those driven)
+fell back to interp.  :  33
 ```
+
+The first measurement was 101 divergences and 313 compiled. The difference is
+[B39](../bugs-fixed/B39-nested-lambdas-emit-duplicate-method-names.md), the first defect this
+harness found on its own: a lambda nested in another lambda emitted a duplicate method name, the
+class was rejected, and the compiled strategy fell back to the interpreter — silently, with correct
+output. Eight fixtures were affected. Fixing it delisted three, and **exposed two further defects
+that had been masked** by the compilation failure, which is why `COPY_OUTPUT` and the invokeinterface
+count went up while the total went down.
 
 354 tests, **0.7 seconds** — the whole corpus on three strategies costs nothing, so there is no
 reason to exclude it from the normal loop.
@@ -157,7 +164,7 @@ compiled path is taken on trust:
 - the loader fails if fewer than 300 fixtures are found, rather than relying on JUnit's "no
   arguments" default — it locates the corpus by walking up from the working directory, so a moved or
   unchecked-out corpus has to be an error;
-- the compiled-coverage floor fails if fewer than 313 fixtures reach bytecode.
+- the compiled-coverage floor fails if fewer than 321 fixtures reach bytecode.
 
 Both were verified by breaking them deliberately.
 
@@ -182,7 +189,7 @@ consistent with B35 and B36 having just closed the two semantic divergences that
 Each class below is a real defect or gap. None has a bug number yet; they are listed in the order I
 would assign them.
 
-**1. COPY emits XML attributes as child elements (44 fixtures).** The clearest case:
+**1. COPY emits XML attributes as child elements (47 fixtures, was 44 before B39).** The clearest case:
 
 ```
 TEMPLATE   <Order id="ORD-123"><Customer>John</Customer></Order>
@@ -200,12 +207,12 @@ keys — so accesses like `$input["%types"]` resolve to null and the transformat
 "requires an object as first argument, but got null". By corpus area: xsd 24, protobuf 18, jsch 12,
 avro 6, osch 1.
 
-**3. `ASTCompiler` emits duplicate lambda method names (8 fixtures).** Two lambdas in one
-transformation are both named `lambda_0`, producing invalid bytecode:
-`Duplicate method name "lambda_0" with signature "(Ljava.util.List;)..."`. This is a straightforward
-naming bug and probably the cheapest of the five to fix.
+**3. ~~`ASTCompiler` emits duplicate lambda method names (8 fixtures).~~** **FIXED —
+[B39](../bugs-fixed/B39-nested-lambdas-emit-duplicate-method-names.md).** The lambda-name counter
+lived on `CompileContext`, and a fresh context is built for each lambda body, so nesting restarted
+it at zero. Was the cheapest of the five, as expected.
 
-**4. `ASTCompiler` emits invokeinterface against a UDM concrete class (5 fixtures).**
+**4. `ASTCompiler` emits invokeinterface against a UDM concrete class (7 fixtures, was 5 before B39).**
 `Class com.glomidco.utlx.core.udm.UDM$Scalar does not implement the requested interface`.
 
 **5. Seven fixtures are malformed YAML and have never run — by either suite.** All in

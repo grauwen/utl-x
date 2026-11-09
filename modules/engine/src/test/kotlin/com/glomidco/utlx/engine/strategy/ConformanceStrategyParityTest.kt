@@ -171,6 +171,13 @@ class ConformanceStrategyParityTest {
          * shrinking. That second direction is what keeps the inventory honest.
          */
         private val KNOWN_DIVERGENCES: Map<String, Divergence> = mapOf(
+            // B39 reclassified these: the duplicate-lambda fix let them compile, and what was
+            // hiding behind that failure is now visible. Three others agreed outright and are gone.
+            "formats/jsch/transformation/generate_validation_rules.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
+            "stdlib/array/lookupBy_basic.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
+            "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.COPY_OUTPUT,
+            "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.COPY_OUTPUT,
+            "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.COPY_OUTPUT,
             "auto-captured/json-to-xml/transform_auto_b900b260.yaml" to Divergence.COPY_OUTPUT,
             "auto-captured/stdlib/array/map_auto_856bfe76.yaml" to Divergence.COPY_OUTPUT,
             "auto-captured/stdlib/array/sum_auto_a4eced76.yaml" to Divergence.COPY_OUTPUT,
@@ -203,7 +210,6 @@ class ConformanceStrategyParityTest {
             "formats/jsch/real-world/payment_transaction.yaml" to Divergence.COPY_OUTPUT,
             "formats/jsch/transformation/generate_api_documentation.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "formats/jsch/transformation/generate_validation_rules.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
             "formats/osch/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/protobuf/basic/all_primitive_types.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/protobuf/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
@@ -258,18 +264,11 @@ class ConformanceStrategyParityTest {
             "formats/xsd/transformation/generate_field_documentation.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "stdlib/array/chunkBy_basic.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
             "stdlib/array/groupBy_lookup_basic.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "stdlib/array/groupBy_lookup_missing_key.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "stdlib/array/groupBy_lookup_with_transform.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "stdlib/array/lookupBy_basic.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
-            "stdlib/array/mapGroups_basic.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
             "stdlib/array/nestBy_basic.yaml" to Divergence.COPY_OUTPUT,
             "stdlib/datetime/now_basic.yaml" to Divergence.COPY_OUTPUT,
-            "tutorial-examples/csv_orders_grouping.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
-            "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
-            "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
-            "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.ASTCOMPILER_DUPLICATE_LAMBDA,
             "tutorial-examples/csv_regional_europe_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "tutorial-examples/csv_regional_swiss_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
 
@@ -282,7 +281,7 @@ class ConformanceStrategyParityTest {
          * `ASTCompiler.isCompilable`, the parity assertions above would all still pass — by
          * exercising the interpreter three times — and only this floor would notice.
          */
-        private const val MIN_COMPILED = 313
+        private const val MIN_COMPILED = 321
 
         /** Fixtures that cannot be driven through `ExecutionStrategy.execute(input: String)` yet. */
         private val SKIP_REASONS = ConcurrentHashMap<String, String>()

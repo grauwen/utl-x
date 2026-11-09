@@ -151,13 +151,28 @@ class ASTCompiler {
     // Expression compilation — each method leaves one UDM on the stack
     // =========================================================================
 
+    /**
+     * B39: lambda method names, counted **per generated class** rather than per context.
+     *
+     * `lambdaCounter` used to live on [CompileContext], and `compileLambda` builds a fresh context
+     * for the lambda body. So the counter restarted at zero inside every lambda, and a lambda
+     * nested in another lambda emitted a second method called `lambda_0` — rejected by the JVM as
+     * `Duplicate method name "lambda_0"`. One generated class is one namespace, so the counter
+     * belongs to the class, and every context compiling into it shares this instance.
+     */
+    private class LambdaNames {
+        private var next = 0
+        fun nextName(): String = "lambda_${next++}"
+    }
+
     private data class CompileContext(
         val mv: MethodVisitor,
         var localSlot: Int,
         val locals: MutableMap<String, Int> = mutableMapOf(),
         val classWriter: ClassWriter? = null,
         val className: String? = null,
-        var lambdaCounter: Int = 0
+        /** Shared with every nested context for the same class — see [LambdaNames]. */
+        val lambdaNames: LambdaNames = LambdaNames()
     ) {
         fun allocLocal(name: String): Int {
             val slot = localSlot++
@@ -165,7 +180,7 @@ class ASTCompiler {
             return slot
         }
 
-        fun nextLambdaName(): String = "lambda_${lambdaCounter++}"
+        fun nextLambdaName(): String = lambdaNames.nextName()
     }
 
     private fun compileExpression(ctx: CompileContext, expr: Expression) {
@@ -639,8 +654,11 @@ class ASTCompiler {
 
         // Create a new context for the lambda body
         // Local slot 0 = args (List<UDM>)
+        // B39: carry the parent's name source, so nested lambdas keep counting up instead of
+        // restarting at lambda_0 and colliding.
         val lambdaCtx = CompileContext(lambdaMv, localSlot = 1,
-            locals = mutableMapOf(), classWriter = cw, className = className)
+            locals = mutableMapOf(), classWriter = cw, className = className,
+            lambdaNames = ctx.lambdaNames)
 
         // Bind parameters: extract from args list by index
         for (i in expr.parameters.indices) {
