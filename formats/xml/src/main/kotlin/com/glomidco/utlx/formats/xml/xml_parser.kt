@@ -215,7 +215,7 @@ class XMLParser(
 
         // Parse content (text, child elements, or mixed)
         val children = mutableListOf<Pair<String, UDM>>()
-        val textContent = StringBuilder()
+        val textContent = TextBuffer()
 
         while (true) {
             skipWhitespace()
@@ -227,8 +227,8 @@ class XMLParser(
                 if (peek(4) == "<!--") {
                     skipComment()
                 } else if (peek(9) == "<![CDATA[") {
-                    val cdata = parseCDATA()
-                    textContent.append(cdata)
+                    // B41: everything inside CDATA is literal character data, trim must not reach it
+                    textContent.append(parseCDATA(), escaped = true)
                 } else {
                     // Child element - pass down namespace context
                     val child = parseElementChecked(namespaces)
@@ -237,7 +237,7 @@ class XMLParser(
                 }
             } else if (!isAtEnd() && peek() != '<') {
                 // Text content
-                textContent.append(parseText())
+                parseTextInto(textContent)
             } else {
                 break
             }
@@ -254,7 +254,7 @@ class XMLParser(
         consume('>', "Expected '>'")
 
         // Build UDM based on content
-        val content = textContent.toString().trim()
+        val content = textContent.trimmed()
 
         // Check if element has real attributes (not just inherited xmlns declarations)
         val hasRealAttributes = attributes.any { (key, _) ->
@@ -339,20 +339,70 @@ class XMLParser(
         return sb.toString()
     }
     
-    private fun parseText(): String {
-        val sb = StringBuilder()
-        
+    /**
+     * Read one run of character data into [buffer], recording for each character whether the sender
+     * **escaped** it (B41). An entity or character reference is data the author wrote deliberately;
+     * a literal space is usually the pretty-printer's.
+     */
+    private fun parseTextInto(buffer: TextBuffer) {
         while (!isAtEnd() && peek() != '<') {
             if (peek() == '&') {
-                sb.append(parseEntityReference())
+                buffer.append(parseEntityReference(), escaped = true)
             } else {
-                sb.append(advance())
+                buffer.append(advance(), escaped = false)
             }
         }
-        
-        return sb.toString()
     }
     
+    /**
+     * Character data plus, per character, whether the sender **escaped** it.
+     *
+     * B41: XML leaf text is trimmed, because indentation is nearly always the pretty-printer's and
+     * not the author's. But that reasoning only covers *literal* whitespace. A character reference
+     * (`&#32;`, `&#x20;`) and the contents of a CDATA section are data the author went out of their
+     * way to write — no formatter emits them, and there is no reading of XML in which they are
+     * layout. So the trim steps over them, and only literal whitespace is removed:
+     *
+     * ```
+     * <A>\n  x</A>              ->  "x"        literal indentation, dropped as before
+     * <A>&#32;&#32;x</A>        ->  "  x"      escaped, kept
+     * <A><![CDATA[  x]]></A>    ->  "  x"      literal character data, kept
+     * <A>&#32;</A>              ->  " "        a significant blank, no longer an empty element
+     * ```
+     *
+     * Attribute values are unaffected — they were never trimmed.
+     */
+    private class TextBuffer {
+        private val text = StringBuilder()
+        private val escaped = StringBuilder()
+
+        fun append(s: String, escaped: Boolean) {
+            text.append(s)
+            repeat(s.length) { this.escaped.append(if (escaped) ESCAPED else LITERAL) }
+        }
+
+        fun append(c: Char, escaped: Boolean) {
+            text.append(c)
+            this.escaped.append(if (escaped) ESCAPED else LITERAL)
+        }
+
+        /** `trim()`, except that an escaped character is never trimmed. */
+        fun trimmed(): String {
+            var start = 0
+            var end = text.length
+            while (start < end && text[start].isWhitespace() && escaped[start] == LITERAL) start++
+            while (end > start && text[end - 1].isWhitespace() && escaped[end - 1] == LITERAL) end--
+            return text.substring(start, end)
+        }
+
+        private companion object {
+            // A parallel mask rather than a sentinel character in the text: `&#0;` is a legal
+            // lexeme here and expands to NUL, so no character is safe to reserve.
+            const val LITERAL = '.'
+            const val ESCAPED = 'E'
+        }
+    }
+
     private fun parseEntityReference(): String {
         consume('&', "Expected '&'")
         val sb = StringBuilder()
