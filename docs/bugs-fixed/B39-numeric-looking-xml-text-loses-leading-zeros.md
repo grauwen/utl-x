@@ -91,7 +91,13 @@ zero they have a workaround and a defensible default:
    and read it from the `input xml { … }` options map, which already carries `arrays`. Worth taking
    largely as proposed. Note that an 18-digit barcode still arrives as a number today — exact, so
    nothing is lost, but typed as a number; this option is how you would ask for a string.
-2. **`trimText: false`** — keep leading and trailing whitespace. The report's case is POS block text
+2. ~~**`trimText: false`**~~ — **answered without the option**, see
+   [B41](B41-xml-trim-discards-escaped-whitespace.md): whitespace the sender *escapes* (`&#32;`) or
+   wraps in CDATA is no longer trimmed, which is per-element and sender-controlled where a
+   document-wide flag could not be. What follows is the original analysis, kept because the bare
+   `<A> </A>` case below is still open.
+
+   **`trimText: false`** — keep leading and trailing whitespace. The report's case is POS block text
    used to lay out a receipt, where indentation is content. The whitespace is gone before any
    numeric check, so this is independent of the above and needs its own option.
 
