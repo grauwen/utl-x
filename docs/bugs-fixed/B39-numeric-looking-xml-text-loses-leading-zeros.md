@@ -92,9 +92,16 @@ zero they have a workaround and a defensible default:
    largely as proposed. Note that an 18-digit barcode still arrives as a number today — exact, so
    nothing is lost, but typed as a number; this option is how you would ask for a string.
 2. **`trimText: false`** — keep leading and trailing whitespace. The report's case is POS block text
-   used to lay out a receipt, where indentation is content. XML leaf text is trimmed before any
-   numeric check (`xml_parser.kt`, `val content = textContent.toString().trim()`), so this is
-   independent of the above and needs its own option.
+   used to lay out a receipt, where indentation is content. The whitespace is gone before any
+   numeric check, so this is independent of the above and needs its own option.
+
+   **Two sites, not one** — worth knowing before estimating it. The `.trim()` in
+   `xml_parser.kt` (`val content = textContent.toString().trim()`) removes only the **trailing**
+   whitespace. The **leading** whitespace is eaten earlier, by the `skipWhitespace()` at the top of
+   the content loop — which is the same call that skips the indentation *between* child elements. So
+   switching it off naively gives every pretty-printed container an `_text` of `"\n  "`. The option
+   needs the rule "keep text verbatim in a leaf; ignore a whitespace-only run in an element that has
+   children".
 
    Re-measured on this branch, and there is a **sharper case than the report gave**: text that is
    *entirely* whitespace does not merely lose its indentation, it disappears, and the element
