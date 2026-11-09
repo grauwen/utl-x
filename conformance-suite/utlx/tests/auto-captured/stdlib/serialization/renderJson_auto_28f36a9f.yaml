@@ -19,7 +19,7 @@ transformation: |
 
 expected:
   format: json
-  data: "\"{\\"name\\":\\"John\\",\\"age\\":30}\""
+  data: "{\"name\":\"John\",\"age\":30}"
 
 performance_limits:
   max_duration_ms: 472
@@ -29,3 +29,6 @@ metadata:
   author: "UTL-X Auto-Capture"
   captured_date: "2025-10-19"
   references: ["Auto-generated test case"]
+  notes:
+    - "B41: this fixture was unparseable YAML from its capture until 2026-11, so it had never been executed by any runner"
+    - "expected was re-derived from verified engine behaviour and written as the PARSED value, which is what the runner compares for format: json"

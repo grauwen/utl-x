@@ -7,7 +7,7 @@ captured_at: "2025-10-19T13:48:18.891721Z"
 
 input:
   format: json
-  data: "\"{\\"test\\": \\"value\\"}\""
+  data: "\"{\\\"test\\\": \\\"value\\\"}\""
 
 transformation: |
   %utlx 1.0

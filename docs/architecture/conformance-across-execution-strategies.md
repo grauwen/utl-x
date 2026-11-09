@@ -132,16 +132,15 @@ hides behind it.
 ## Measured results
 
 ```
-fixtures driven       : 354
-skipped               : 46
+fixtures driven       : 361
+skipped               : 39
     multi-input                     39
-    fixture YAML did not parse       7
 known divergences     :  97
     COPY_OUTPUT                     49
     COMPILED_INPUT_SHAPE            37
     RUNS_ONLY_ON_TEMPLATE            7
     COMPILED_UNRESOLVED_NAME         4
-genuinely COMPILED    : 321   (91% of those driven)
+genuinely COMPILED    : 328   (91% of those driven)
 fell back to interp.  :  33
 ```
 
@@ -161,10 +160,10 @@ reason to exclude it from the normal loop.
 A differential test over zero fixtures passes while proving nothing, so neither the corpus nor the
 compiled path is taken on trust:
 
-- the loader fails if fewer than 300 fixtures are found, rather than relying on JUnit's "no
+- the loader fails if fewer than 355 fixtures are found, rather than relying on JUnit's "no
   arguments" default — it locates the corpus by walking up from the working directory, so a moved or
   unchecked-out corpus has to be an error;
-- the compiled-coverage floor fails if fewer than 321 fixtures reach bytecode.
+- the compiled-coverage floor fails if fewer than 328 fixtures reach bytecode.
 
 Both were verified by breaking them deliberately.
 
@@ -224,7 +223,10 @@ input, yields null, and dies in a non-null check (`RuntimeOps.getIndex, paramete
 `Undefined function`. A missing capability rather than a coding error; the right first move is for
 `isCompilable` to reject it so the fallback is clean.
 
-**5. Seven fixtures are malformed YAML and have never run — by either suite.** All in
+**5. ~~Seven fixtures are malformed YAML and have never run — by either suite.~~** **FIXED —
+[B41](../bugs-fixed/B41-auto-capture-emits-unparseable-yaml.md).** The capture writer escaped quotes
+but not backslashes. Running them for the first time found three real problems, including a
+generator/runner disagreement about what `expected.data` means for JSON. Original note follows. All in
 `auto-captured/`, so auto-capture emitted invalid YAML. The Python runner's `load_test_case` catches
 the parse error, prints `Error loading …` and returns `None`, so they are skipped: they are not in
 the 556 count and do not fail the run. The error lines scroll past in a 556-test run. Fixing the

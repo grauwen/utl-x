@@ -7,7 +7,7 @@ captured_at: "2025-10-19T13:15:14.984489Z"
 
 input:
   format: yaml
-  data: "\"{\\"employees\\": [{\\"name\\": \\"Alice\\"}]}\""
+  data: "\"{\\\"employees\\\": [{\\\"name\\\": \\\"Alice\\\"}]}\""
 
 transformation: |
   %utlx 1.0

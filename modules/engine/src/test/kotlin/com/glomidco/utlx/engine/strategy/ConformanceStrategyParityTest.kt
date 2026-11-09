@@ -293,7 +293,7 @@ class ConformanceStrategyParityTest {
          * `ASTCompiler.isCompilable`, the parity assertions above would all still pass — by
          * exercising the interpreter three times — and only this floor would notice.
          */
-        private const val MIN_COMPILED = 321
+        private const val MIN_COMPILED = 328
 
         /** Fixtures that cannot be driven through `ExecutionStrategy.execute(input: String)` yet. */
         private val SKIP_REASONS = ConcurrentHashMap<String, String>()
@@ -323,7 +323,7 @@ class ConformanceStrategyParityTest {
          * floor guards against, one level up, so it gets the same treatment: an explicit failure
          * rather than a reliance on JUnit's "no arguments" default.
          */
-        private const val MIN_FIXTURES = 300
+        private const val MIN_FIXTURES = 355
 
         @JvmStatic
         fun fixtures(): List<Fixture> {
