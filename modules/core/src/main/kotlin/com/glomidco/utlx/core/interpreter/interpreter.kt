@@ -1044,15 +1044,7 @@ class Interpreter(
      * Covers both a negated literal and a negated payload number, since `UDM.Scalar` now holds
      * exact types too.
      */
-    private fun negateExact(value: RuntimeValue): Number? = when (val n = numberOf(value)) {
-        is java.math.BigDecimal -> n.negate()
-        is java.math.BigInteger -> n.negate()
-        is Long -> if (n != Long.MIN_VALUE) -n else java.math.BigInteger.valueOf(n).negate()
-        is Int -> -n.toLong()
-        is Short -> -n.toLong()
-        is Byte -> -n.toLong()
-        else -> null
-    }
+    private fun negateExact(value: RuntimeValue): Number? = ExactArithmetic.negate(numberOf(value))
 
     /**
      * B35 Stage 2: wrap an arithmetic result, carrying its exact form when there is one.

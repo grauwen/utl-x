@@ -136,10 +136,10 @@ fixtures driven       : 357
 skipped               :  43
     multi-input                     39
     non-deterministic                4
-known divergences     :   7
+known divergences     :   5
     COMPILED_UNDEFINED_FUNCTION      3
-    BOTH_OUTPUT                      2
-    RUNS_ONLY_ON_TEMPLATE            2
+    BOTH_OUTPUT                      1
+    RUNS_ONLY_ON_TEMPLATE            1
 genuinely COMPILED    : 325   (91% of those driven)
 fell back to interp.  :  32
 ```
@@ -209,11 +209,11 @@ loaded. Minor corpus hygiene, worth fixing at some point; keyed by path it does 
 
 | | first run | now |
 |---|---|---|
-| known divergences | 101 | **7** |
+| known divergences | 101 | **5** |
 | `COMPILED_OUTPUT` | 0 | **0** |
 | fixtures driven | 354 | **361** |
 
-Nine defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
+Eleven defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
 [EB05](../bugs-fixed/EB05-lambda-bodies-cannot-reach-a-named-input.md),
 [CB01](../bugs-fixed/CB01-auto-capture-emits-unparseable-yaml.md) (with
 [CB02](../bugs-fixed/CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) and
@@ -223,7 +223,9 @@ Nine defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB0
 [EB08](../bugs-fixed/EB08-compiled-object-literals-drop-xml-attributes.md) and
 [EB09](../bugs-fixed/EB09-metadata-access-lost-on-both-compiled-strategies.md) and
 [EB10](../bugs-fixed/EB10-format-options-dropped-on-the-compiled-strategies.md) and
-[EB11](../bugs-fixed/EB11-spread-does-not-take-effect-where-it-is-written.md) — plus three
+[EB11](../bugs-fixed/EB11-spread-does-not-take-effect-where-it-is-written.md),
+[EB12](../bugs-fixed/EB12-compiled-try-catch-emits-unverifiable-bytecode.md) and
+[EB13](../bugs-fixed/EB13-compiled-arithmetic-turns-a-non-numeric-operand-into-zero.md) — plus three
 diagnoses corrected and **two** flaws found in the harness itself.
 Each fix tended to reveal what it had been masking, which is why the total moved in steps rather
 than smoothly.

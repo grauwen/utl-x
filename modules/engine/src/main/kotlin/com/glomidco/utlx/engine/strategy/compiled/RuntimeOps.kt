@@ -16,6 +16,27 @@ object RuntimeOps {
     // ── Arithmetic ──
 
     /**
+     * EB13: the numeric value of an arithmetic operand, **raising** when there is none.
+     *
+     * Every arithmetic op used `toNumber(x) ?: 0.0`, so a null or non-numeric operand silently
+     * became zero. The interpreter's `extractNumber` raises instead, which means the two paths
+     * disagreed on an *error* as well as on a value — and the value was wrong in the quieter,
+     * worse way:
+     *
+     * ```utlx
+     * try { { taxed: item.price * 1.08, status: "success" } } catch (e) { … }
+     * ```
+     *
+     * With `price: null` the interpreter raises and the catch fires. The compiled path returned
+     * `taxed: 0, status: "success"` — a plausible-looking record reporting success for a row that
+     * had no price. A missing field became a zero, which in a money mapping is the worst available
+     * answer.
+     */
+    private fun arithmeticOperand(value: UDM, side: String): Double =
+        toNumber(value) ?: throw RuntimeError("$side operand must be number")
+
+
+    /**
      * B35 Stage 2: `+`, `-` and `*` are exact when both operands carry an exact value.
      *
      * Delegates to the shared `ExactArithmetic` in `:core` rather than reimplementing the rule. The
@@ -28,24 +49,28 @@ object RuntimeOps {
      */
     @JvmStatic
     fun add(left: UDM, right: UDM): UDM {
-        val l = toNumber(left)
-        val r = toNumber(right)
-        if (l != null && r != null) {
-            return UDM.Scalar(ExactArithmetic.add(rawNumber(left), rawNumber(right), l + r))
+        // EB13: concatenate only when a side really is a STRING, which is the interpreter's rule.
+        // This used to concatenate whenever `toNumber` returned null, so `null + 2` produced the
+        // string "null2" where the interpreter raises.
+        val leftIsText = (left as? UDM.Scalar)?.value is String
+        val rightIsText = (right as? UDM.Scalar)?.value is String
+        if (leftIsText || rightIsText) {
+            return UDM.Scalar(toStringValue(left) + toStringValue(right))
         }
-        // String concatenation fallback
-        return UDM.Scalar(toStringValue(left) + toStringValue(right))
+        val l = arithmeticOperand(left, "Left")
+        val r = arithmeticOperand(right, "Right")
+        return UDM.Scalar(ExactArithmetic.add(rawNumber(left), rawNumber(right), l + r))
     }
 
     @JvmStatic
     fun subtract(left: UDM, right: UDM): UDM {
-        val fallback = (toNumber(left) ?: 0.0) - (toNumber(right) ?: 0.0)
+        val fallback = arithmeticOperand(left, "Left") - arithmeticOperand(right, "Right")
         return UDM.Scalar(ExactArithmetic.subtract(rawNumber(left), rawNumber(right), fallback))
     }
 
     @JvmStatic
     fun multiply(left: UDM, right: UDM): UDM {
-        val fallback = (toNumber(left) ?: 0.0) * (toNumber(right) ?: 0.0)
+        val fallback = arithmeticOperand(left, "Left") * arithmeticOperand(right, "Right")
         return UDM.Scalar(ExactArithmetic.multiply(rawNumber(left), rawNumber(right), fallback))
     }
 
@@ -53,16 +78,16 @@ object RuntimeOps {
     // needs a digit count and a rounding mode that are a business decision. See ExactArithmetic.
     @JvmStatic
     fun divide(left: UDM, right: UDM): UDM {
-        val r = toNumber(right) ?: 0.0
+        val r = arithmeticOperand(right, "Right")
         if (r == 0.0) throw ArithmeticException("Division by zero")
-        return UDM.Scalar((toNumber(left) ?: 0.0) / r)
+        return UDM.Scalar(arithmeticOperand(left, "Left") / r)
     }
 
     @JvmStatic
     fun modulo(left: UDM, right: UDM): UDM {
-        val r = toNumber(right) ?: 0.0
+        val r = arithmeticOperand(right, "Right")
         if (r == 0.0) throw ArithmeticException("Modulo by zero")
-        return UDM.Scalar((toNumber(left) ?: 0.0) % r)
+        return UDM.Scalar(arithmeticOperand(left, "Left") % r)
     }
 
     // ── Comparison ──
@@ -140,7 +165,14 @@ object RuntimeOps {
     fun toBoolean(value: UDM): UDM = UDM.Scalar(isTruthy(value))
 
     @JvmStatic
-    fun negate(value: UDM): UDM = UDM.Scalar(-(toNumber(value) ?: 0.0))
+    /**
+     * EB13: negation is exact, matching the interpreter — `-10` on an exact integer must not come
+     * back as `-10.0`. Shares `ExactArithmetic.negate` with the interpreter so the two cannot drift.
+     */
+    fun negate(value: UDM): UDM {
+        val d = arithmeticOperand(value, "Unary minus")
+        return UDM.Scalar(ExactArithmetic.negate(rawNumber(value)) ?: -d)
+    }
 
     // ── Property access ──
 

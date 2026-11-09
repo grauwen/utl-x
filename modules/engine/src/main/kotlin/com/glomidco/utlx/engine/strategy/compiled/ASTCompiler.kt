@@ -112,7 +112,27 @@ class ASTCompiler {
     // Compilability check — can we compile this expression?
     // =========================================================================
 
-    private fun isCompilable(expr: Expression): Boolean {
+    /**
+     * EB12: `atMethodRoot` says whether the operand stack is provably **empty** here.
+     *
+     * It is true at the root of a generated method body — `execute` and each `lambda_N` — and false
+     * once an enclosing expression has pushed anything, which is any container being built or any
+     * operator's operand.
+     *
+     * Only `try`/`catch` cares. At an exception handler the JVM discards the operand stack down to
+     * the exception, so a try region entered with a half-built array or object on the stack
+     * produces a class the verifier rejects outright:
+     *
+     * ```
+     * java.lang.VerifyError: Instruction type does not match stack map
+     *   Current Frame:  stack: { UDM$Scalar }
+     *   Stackmap Frame: stack: { Object, [UDM, [UDM, integer, UDM }
+     * ```
+     *
+     * A bare top-level `try { … } catch { … }` compiled and ran correctly, which is why this went
+     * unnoticed — it is only wrong in the position people actually use it, inside an object.
+     */
+    private fun isCompilable(expr: Expression, atMethodRoot: Boolean = true): Boolean {
         return when (expr) {
             is Expression.StringLiteral -> true
             is Expression.NumberLiteral -> true
@@ -120,31 +140,36 @@ class ASTCompiler {
             is Expression.NullLiteral -> true
             is Expression.Identifier -> true
             is Expression.ObjectLiteral -> {
-                expr.properties.all { (it.key != null || it.isSpread) && it.computedKey == null && isCompilable(it.value) } &&
-                    expr.letBindings.all { isCompilable(it.value) }
+                expr.properties.all { (it.key != null || it.isSpread) && it.computedKey == null && isCompilable(it.value, false) } &&
+                    expr.letBindings.all { isCompilable(it.value, false) }
             }
-            is Expression.ArrayLiteral -> expr.elements.all { isCompilable(it) }
-            is Expression.MemberAccess -> isCompilable(expr.target)
-            is Expression.IndexAccess -> isCompilable(expr.target) && isCompilable(expr.index)
-            is Expression.BinaryOp -> isCompilable(expr.left) && isCompilable(expr.right)
-            is Expression.UnaryOp -> isCompilable(expr.operand)
-            is Expression.Conditional -> isCompilable(expr.condition) &&
-                isCompilable(expr.thenBranch) && (expr.elseBranch?.let { isCompilable(it) } ?: true)
-            is Expression.Ternary -> isCompilable(expr.condition) &&
-                isCompilable(expr.thenExpr) && isCompilable(expr.elseExpr)
-            is Expression.LetBinding -> isCompilable(expr.value)
+            is Expression.ArrayLiteral -> expr.elements.all { isCompilable(it, false) }
+            is Expression.MemberAccess -> isCompilable(expr.target, false)
+            is Expression.IndexAccess -> isCompilable(expr.target, false) && isCompilable(expr.index, false)
+            is Expression.BinaryOp -> isCompilable(expr.left, false) && isCompilable(expr.right, false)
+            is Expression.UnaryOp -> isCompilable(expr.operand, false)
+            is Expression.Conditional -> isCompilable(expr.condition, false) &&
+                isCompilable(expr.thenBranch, false) && (expr.elseBranch?.let { isCompilable(it, false) } ?: true)
+            is Expression.Ternary -> isCompilable(expr.condition, false) &&
+                isCompilable(expr.thenExpr, false) && isCompilable(expr.elseExpr, false)
+            is Expression.LetBinding -> isCompilable(expr.value, false)
             is Expression.FunctionCall -> {
                 val fn = expr.function
-                fn is Expression.Identifier && expr.arguments.all { isCompilable(it) }
+                fn is Expression.Identifier && expr.arguments.all { isCompilable(it, false) }
             }
-            is Expression.Block -> expr.expressions.all { isCompilable(it) }
-            is Expression.Lambda -> isCompilable(expr.body)
-            is Expression.Pipe -> isCompilable(expr.source) && isCompilable(expr.target)
-            is Expression.SafeNavigation -> isCompilable(expr.target)
-            is Expression.Match -> expr.cases.all { isCompilable(it.expression) && (it.guard?.let { g -> isCompilable(g) } ?: true) }
-            is Expression.TryCatch -> isCompilable(expr.tryBlock) && isCompilable(expr.catchBlock)
-            is Expression.SpreadElement -> isCompilable(expr.expression)
-            is Expression.TemplateApplication -> isCompilable(expr.selector)
+            is Expression.Block -> expr.expressions.all { isCompilable(it, false) }
+            // A lambda body becomes its own static method, so the stack is empty at its root again.
+            is Expression.Lambda -> isCompilable(expr.body, true)
+            is Expression.Pipe -> isCompilable(expr.source, false) && isCompilable(expr.target, false)
+            is Expression.SafeNavigation -> isCompilable(expr.target, false)
+            is Expression.Match -> expr.cases.all { isCompilable(it.expression, false) && (it.guard?.let { g -> isCompilable(g, false) } ?: true) }
+            // EB12: only compilable where the operand stack is empty — see the doc on this function.
+            // Elsewhere the emitted class fails verification, so the whole transformation is handed
+            // to the interpreter instead, which is correct and merely slower.
+            is Expression.TryCatch ->
+                atMethodRoot && isCompilable(expr.tryBlock, false) && isCompilable(expr.catchBlock, false)
+            is Expression.SpreadElement -> isCompilable(expr.expression, false)
+            is Expression.TemplateApplication -> isCompilable(expr.selector, false)
         }
     }
 

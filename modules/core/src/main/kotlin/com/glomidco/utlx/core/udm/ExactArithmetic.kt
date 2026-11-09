@@ -86,6 +86,24 @@ object ExactArithmetic {
     fun multiply(left: Number?, right: Number?, fallback: Double): Number =
         apply(left, right, fallback) { a, b -> a.multiply(b) }
 
+    /**
+     * The exact negation of [n], or `null` when there is none.
+     *
+     * Shared so the interpreter and the compiled path cannot drift: the compiled `negate` used to
+     * go through `Double`, so `-10` on an exact integer came back as `-10.0`.
+     *
+     * `-Long.MIN_VALUE` has no `Long`, so it widens rather than wrapping to itself.
+     */
+    fun negate(n: Number?): Number? = when (n) {
+        is BigDecimal -> n.negate()
+        is BigInteger -> n.negate()
+        is Long -> if (n != Long.MIN_VALUE) -n else BigInteger.valueOf(n).negate()
+        is Int -> -n.toLong()
+        is Short -> -n.toLong()
+        is Byte -> -n.toLong()
+        else -> null
+    }
+
     private inline fun apply(
         left: Number?,
         right: Number?,
