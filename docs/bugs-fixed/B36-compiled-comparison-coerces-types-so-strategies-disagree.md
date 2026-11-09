@@ -138,7 +138,23 @@ working, including the B35 exactness properties so this fix cannot quietly undo 
 Revert-verified: restoring the coercing implementation fails 5 of the 9 tests; the file was then
 restored byte-identical.
 
-## The structural gap this exposed — not yet closed
+## The structural gap this exposed — now closed
+
+> **Update.** This section proposed two routes. The preferred one — a `--strategy` option on the
+> transform command — turned out to be the wrong call: `modules/cli` does not depend on
+> `modules:engine`, so it would mean bundling the engine into the open-source CLI, which is a
+> packaging decision rather than a test-coverage one. The alternative was taken instead, and the
+> corpus now runs on all three strategies from inside `:engine`:
+> [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md).
+>
+> It found **101 existing divergences** across 351 fixtures, now an asserted inventory. Notably
+> **COMPILED never produced different output** — it agrees or refuses to run — while **COPY differs
+> on 44 fixtures**, emitting XML attributes as child elements. It also found that 7 fixtures are
+> malformed YAML and have never been executed by either suite. The original text follows.
+>
+> ---
+
+## The structural gap this exposed — original assessment
 
 The defect existed because **no conformance fixture runs on the compiled strategy.** B34 had the
 same shape (its compiled half "was previously verified only by *reading* the emitted bytecode") and
