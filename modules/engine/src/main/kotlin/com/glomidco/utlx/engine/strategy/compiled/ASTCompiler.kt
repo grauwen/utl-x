@@ -630,13 +630,25 @@ class ASTCompiler {
      * Compile a lambda expression.
      *
      * Generates a static method in the same class:
-     *   static UDM lambda_N(List<UDM> args) {
+     *   static UDM lambda_N(List<UDM> args, Map<String, UDM> inputs) {
      *       UDM param1 = args.get(0);
      *       UDM param2 = args.get(1);  // etc.
      *       return <compiled body>;
      *   }
      *
      * Then at the call site, constructs a UDM.Lambda via RuntimeOps.makeLambda().
+     *
+     * **B40 — why the method takes the inputs map.** `compileIdentifier` resolves a name that is
+     * not a local by loading the named-input map from **slot 1** and calling `Map.get`. That slot
+     * is correct in `execute(Map)` (0 = this, 1 = inputs), but a lambda is a *static* method where
+     * slot 1 held the first lambda parameter — a `UDM`. So a lambda body referring to an input
+     * compiled happily and then died at runtime with
+     * `UDM$Object does not implement the requested interface java.util.Map`.
+     *
+     * Giving the lambda the map as its second parameter puts the inputs at slot 1 in **both**
+     * method shapes, so `ALOAD 1` is uniformly correct and `compileIdentifier` needs no knowledge
+     * of which kind of method it is emitting into. It also works for a lambda created *inside*
+     * another lambda, where the enclosing frame is itself a lambda method.
      */
     private fun compileLambda(ctx: CompileContext, expr: Expression.Lambda) {
         val cw = ctx.classWriter
@@ -646,17 +658,20 @@ class ASTCompiler {
 
         val lambdaName = ctx.nextLambdaName()
 
-        // Generate static method: static UDM lambda_N(List<UDM>)
+        // Generate static method: static UDM lambda_N(List<UDM>, Map<String, UDM>)
         val lambdaMv = cw.visitMethod(
             ACC_PUBLIC or ACC_STATIC, lambdaName,
-            "(Ljava/util/List;)$UDM_DESC", null, null)
+            "(Ljava/util/List;L$MAP_TYPE;)$UDM_DESC", null, null)
         lambdaMv.visitCode()
 
-        // Create a new context for the lambda body
-        // Local slot 0 = args (List<UDM>)
+        // Create a new context for the lambda body. Local variable slots:
+        //   0 = args   (List<UDM>)
+        //   1 = inputs (Map<String, UDM>)  — B40: same slot as in execute(), so ALOAD 1 is
+        //       uniformly correct for an input reference wherever it is emitted
+        //   2+ = lambda parameters, then let bindings
         // B39: carry the parent's name source, so nested lambdas keep counting up instead of
         // restarting at lambda_0 and colliding.
-        val lambdaCtx = CompileContext(lambdaMv, localSlot = 1,
+        val lambdaCtx = CompileContext(lambdaMv, localSlot = 2,
             locals = mutableMapOf(), classWriter = cw, className = className,
             lambdaNames = ctx.lambdaNames)
 
@@ -679,12 +694,14 @@ class ASTCompiler {
         lambdaMv.visitMaxs(0, 0)
         lambdaMv.visitEnd()
 
-        // At the call site: RuntimeOps.makeLambda(ThisClass.class, "lambda_N")
-        // Push the class reference
+        // At the call site: RuntimeOps.makeLambda(ThisClass.class, "lambda_N", inputs)
         ctx.mv.visitLdcInsn(org.objectweb.asm.Type.getObjectType(className))
         ctx.mv.visitLdcInsn(lambdaName)
+        // B40: capture the inputs map so the lambda body can reach an input. Slot 1 holds it in
+        // execute() and — by the signature above — in an enclosing lambda method too.
+        ctx.mv.visitVarInsn(ALOAD, 1)
         ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "makeLambda",
-            "(Ljava/lang/Class;Ljava/lang/String;)$UDM_DESC", false)
+            "(Ljava/lang/Class;Ljava/lang/String;L$MAP_TYPE;)$UDM_DESC", false)
     }
 
     // ── Try/Catch ──

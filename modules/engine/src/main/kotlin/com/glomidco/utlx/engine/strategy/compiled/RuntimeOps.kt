@@ -237,15 +237,22 @@ object RuntimeOps {
 
     /**
      * Create a UDM.Lambda wrapping a static method in the generated class.
-     * The method must have signature: static UDM methodName(List<UDM>)
+     * The method must have signature: static UDM methodName(List<UDM>, Map<String, UDM>)
      * Called by compiled bytecode to construct lambda values at runtime.
+     *
+     * B40: [inputs] is the transformation's named-input map, **captured per construction**.
+     * A lambda body may reference an input (`$input.customers` inside a `map(...)` callback), and
+     * the generated lambda is a *static* method with no access to `execute`'s locals. Threading the
+     * map through as a second parameter keeps it per-invocation; a static field on the generated
+     * class would have been simpler and would have raced between concurrent executions of the same
+     * compiled transformation.
      */
     @JvmStatic
-    fun makeLambda(clazz: Class<*>, methodName: String): UDM {
-        val method = clazz.getMethod(methodName, List::class.java)
+    fun makeLambda(clazz: Class<*>, methodName: String, inputs: Map<String, UDM>): UDM {
+        val method = clazz.getMethod(methodName, List::class.java, Map::class.java)
         return UDM.Lambda { args ->
             try {
-                method.invoke(null, args) as UDM
+                method.invoke(null, args, inputs) as UDM
             } catch (e: java.lang.reflect.InvocationTargetException) {
                 // Unwrap the reflection wrapper to expose the real error
                 throw e.targetException

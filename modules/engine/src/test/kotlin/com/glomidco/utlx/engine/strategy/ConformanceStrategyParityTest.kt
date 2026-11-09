@@ -153,8 +153,18 @@ class ConformanceStrategyParityTest {
             /** `ASTCompiler` emits two methods called `lambda_0` — invalid bytecode. */
             ASTCOMPILER_DUPLICATE_LAMBDA("ASTCompiler: duplicate lambda method name"),
 
-            /** `ASTCompiler` emits an invokeinterface against a UDM type that has no such interface. */
-            ASTCOMPILER_BAD_INVOKEINTERFACE("ASTCompiler: invokeinterface on a UDM concrete class"),
+            /**
+             * The compiled path cannot resolve a name declared **outside** the expression it is
+             * compiling — a user-defined function, or a `let` bound in an enclosing scope.
+             * `compileIdentifier` treats any unbound name as a named input, so the lookup returns
+             * null and the generated code then dies in a non-null parameter check
+             * (`RuntimeOps.getIndex, parameter target`) or reports `Undefined function`.
+             *
+             * This is a missing capability rather than bad addressing (contrast B40), and the right
+             * first move is for `isCompilable` to **reject** it so the strategy falls back cleanly
+             * instead of emitting code that throws.
+             */
+            COMPILED_UNRESOLVED_NAME("COPY/COMPILED cannot resolve an out-of-scope name"),
 
             /** Runs on TEMPLATE only, for a reason not yet classified. */
             RUNS_ONLY_ON_TEMPLATE("only TEMPLATE can run it"),
@@ -171,10 +181,17 @@ class ConformanceStrategyParityTest {
          * shrinking. That second direction is what keeps the inventory honest.
          */
         private val KNOWN_DIVERGENCES: Map<String, Divergence> = mapOf(
+            // B40 reclassified these. The Map-interface crash is gone from all seven; one agreed
+            // outright (stdlib/array/lookupBy_basic, delisted) and the rest were masking two
+            // other problems.
+            "formats/jsch/transformation/generate_api_documentation.yaml" to Divergence.COPY_OUTPUT,
+            "formats/jsch/transformation/generate_validation_rules.yaml" to Divergence.COPY_OUTPUT,
+            "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
+            "stdlib/array/groupBy_lookup_basic.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
+            "stdlib/array/groupBy_lookup_missing_key.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
+            "stdlib/array/groupBy_lookup_with_transform.yaml" to Divergence.COMPILED_UNRESOLVED_NAME,
             // B39 reclassified these: the duplicate-lambda fix let them compile, and what was
             // hiding behind that failure is now visible. Three others agreed outright and are gone.
-            "formats/jsch/transformation/generate_validation_rules.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "stdlib/array/lookupBy_basic.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.COPY_OUTPUT,
             "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.COPY_OUTPUT,
             "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.COPY_OUTPUT,
@@ -208,8 +225,6 @@ class ConformanceStrategyParityTest {
             "formats/jsch/real-world/api_user_profile.yaml" to Divergence.COPY_OUTPUT,
             "formats/jsch/real-world/customer_order.yaml" to Divergence.COPY_OUTPUT,
             "formats/jsch/real-world/payment_transaction.yaml" to Divergence.COPY_OUTPUT,
-            "formats/jsch/transformation/generate_api_documentation.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "formats/osch/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/protobuf/basic/all_primitive_types.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/protobuf/basic/f08_usdl_dual_access.yaml" to Divergence.COMPILED_INPUT_SHAPE,
@@ -264,9 +279,6 @@ class ConformanceStrategyParityTest {
             "formats/xsd/transformation/generate_field_documentation.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.COMPILED_INPUT_SHAPE,
             "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "stdlib/array/groupBy_lookup_basic.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "stdlib/array/groupBy_lookup_missing_key.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
-            "stdlib/array/groupBy_lookup_with_transform.yaml" to Divergence.ASTCOMPILER_BAD_INVOKEINTERFACE,
             "stdlib/array/nestBy_basic.yaml" to Divergence.COPY_OUTPUT,
             "stdlib/datetime/now_basic.yaml" to Divergence.COPY_OUTPUT,
             "tutorial-examples/csv_regional_europe_input.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,

@@ -136,11 +136,11 @@ fixtures driven       : 354
 skipped               : 46
     multi-input                     39
     fixture YAML did not parse       7
-known divergences     :  98
-    COPY_OUTPUT                     47
+known divergences     :  97
+    COPY_OUTPUT                     49
     COMPILED_INPUT_SHAPE            37
-    ASTCOMPILER_BAD_INVOKEINTERFACE  7
     RUNS_ONLY_ON_TEMPLATE            7
+    COMPILED_UNRESOLVED_NAME         4
 genuinely COMPILED    : 321   (91% of those driven)
 fell back to interp.  :  33
 ```
@@ -212,8 +212,17 @@ avro 6, osch 1.
 lived on `CompileContext`, and a fresh context is built for each lambda body, so nesting restarted
 it at zero. Was the cheapest of the five, as expected.
 
-**4. `ASTCompiler` emits invokeinterface against a UDM concrete class (7 fixtures, was 5 before B39).**
-`Class com.glomidco.utlx.core.udm.UDM$Scalar does not implement the requested interface`.
+**4. ~~`ASTCompiler` emits invokeinterface against a UDM concrete class.~~** **FIXED —
+[B40](../bugs-fixed/B40-lambda-bodies-cannot-reach-a-named-input.md).** `compileIdentifier` loaded
+the named-input map from local slot 1, which is the map in `execute` but the first *lambda
+parameter* in a lambda — so a lambda referencing an input called `Map.get` on a `UDM`. The lambda
+method now takes the map as a second parameter, putting the inputs at slot 1 in both shapes.
+
+**4b. COPY/COMPILED cannot resolve an out-of-scope name (4 fixtures).** Isolated by B40, which had
+been masking it. A user-defined function or a `let` from an enclosing scope resolves as a named
+input, yields null, and dies in a non-null check (`RuntimeOps.getIndex, parameter target`) or as
+`Undefined function`. A missing capability rather than a coding error; the right first move is for
+`isCompilable` to reject it so the fallback is clean.
 
 **5. Seven fixtures are malformed YAML and have never run — by either suite.** All in
 `auto-captured/`, so auto-capture emitted invalid YAML. The Python runner's `load_test_case` catches
