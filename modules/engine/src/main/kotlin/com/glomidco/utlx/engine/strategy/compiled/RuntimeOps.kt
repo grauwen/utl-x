@@ -178,6 +178,26 @@ object RuntimeOps {
         }
     }
 
+    /**
+     * EB09: `^metadata` access.
+     *
+     * `MemberAccess` carries an `isMetadata` flag for `^name`, and the interpreter reads it from
+     * `UDM.Object.metadata`. `compileMemberAccess` had a branch for `isAttribute` and none for this,
+     * so `$input.^schemaType` compiled as an ordinary property lookup and returned null — silently,
+     * which is why it surfaced as a value difference rather than an error.
+     *
+     * Metadata is a string like an attribute, and read-only: `Property` has no metadata flag, so
+     * there is no construction path to mirror.
+     */
+    @JvmStatic
+    fun getMetadata(target: UDM, name: String): UDM {
+        return when (target) {
+            is UDM.Object -> target.getMetadata(name)?.let { UDM.Scalar.string(it) }
+                ?: UDM.Scalar.nullValue()
+            else -> UDM.Scalar.nullValue()
+        }
+    }
+
     @JvmStatic
     fun getIndex(target: UDM, index: Int): UDM = indexWithNumber(target, index)
 

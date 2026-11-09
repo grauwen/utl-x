@@ -333,6 +333,11 @@ class ASTCompiler {
         if (expr.isAttribute) {
             ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getAttribute",
                 "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)
+        } else if (expr.isMetadata) {
+            // EB09: `^name` reads metadata, not a property. Without this branch it fell through to
+            // getProperty and returned null, so `$input.^schemaType` was silently empty.
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getMetadata",
+                "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)
         } else {
             ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "getProperty",
                 "(${UDM_DESC}Ljava/lang/String;)$UDM_DESC", false)

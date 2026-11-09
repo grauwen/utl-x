@@ -315,7 +315,10 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             is UDM.Object -> UDM.Object(
                 properties = udm.properties.mapValues { (_, v) -> buildEmptySkeleton(v) },
                 attributes = udm.attributes.mapValues { "" },
-                name = udm.name
+                name = udm.name,
+                // EB09: metadata describes the shape rather than holding a value, so unlike
+                // attributes it is carried into the skeleton rather than blanked.
+                metadata = udm.metadata
             )
             is UDM.Array -> {
                 val elementSkeleton = udm.elements.firstOrNull()?.let { buildEmptySkeleton(it) }
@@ -360,7 +363,10 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
                 UDM.Object(
                     properties = merged,
                     attributes = data.attributes.ifEmpty { skeleton.attributes },
-                    name = data.name ?: skeleton.name
+                    name = data.name ?: skeleton.name,
+                    // EB09: same precedence as attributes — the data's metadata wins, the
+                    // skeleton's is the fallback.
+                    metadata = data.metadata.ifEmpty { skeleton.metadata }
                 )
             }
             // Data wins for non-object types (skeleton was just a placeholder)
@@ -379,7 +385,11 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             is UDM.Object -> UDM.Object(
                 properties = value.properties.mapValues { (_, v) -> deepClone(v) },
                 attributes = value.attributes.toMap(),
-                name = value.name
+                name = value.name,
+                // EB09: metadata is part of the value and was being dropped here, so `^schemaType`
+                // and friends came back null on this strategy even after the compiled path could
+                // read them. Every UDM.Object rebuilt in this file has to carry it.
+                metadata = value.metadata.toMap()
             )
             is UDM.DateTime -> UDM.DateTime(value.instant)
             is UDM.Date -> UDM.Date(value.date)

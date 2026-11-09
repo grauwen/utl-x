@@ -180,36 +180,18 @@ class ConformanceStrategyParityTest {
          * shrinking. That second direction is what keeps the inventory honest.
          */
         private val KNOWN_DIVERGENCES: Map<String, Divergence> = mapOf(
-            "auto-captured/stdlib/array/sum_auto_a4eced76.yaml" to Divergence.BOTH_OUTPUT,
             "examples/basic/try_catch_basic.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "examples/intermediate/function_composition.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
             "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
             "examples/intermediate/spread_operator.yaml" to Divergence.BOTH_OUTPUT,
             "examples/intermediate/try_catch_with_error_variable.yaml" to Divergence.BOTH_OUTPUT,
-            "examples/real-world/sap_integration.yaml" to Divergence.BOTH_OUTPUT,
-            "examples/xml-encoding/encoding_precedence_rules.yaml" to Divergence.COPY_OUTPUT,
             "examples/xml-encoding/multi_input_default_encoding.yaml" to Divergence.BOTH_OUTPUT,
             "examples/xml-encoding/multi_input_explicit_encoding.yaml" to Divergence.BOTH_OUTPUT,
             "examples/xml-encoding/multi_input_no_encoding.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/jsch/basic/parse_2020_12.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/jsch/basic/parse_draft_07.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/jsch/real-world/api_user_profile.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/jsch/real-world/customer_order.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/jsch/real-world/payment_transaction.yaml" to Divergence.BOTH_OUTPUT,
             "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "formats/xsd/basic/parse_xsd_1_0.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/basic/parse_xsd_1_1.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/patterns/russian_doll.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/patterns/venetian_blind.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/real-world/ecommerce_product_catalog.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/real-world/financial_invoice.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/real-world/hr_employee_schema.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/scope/global_elements.yaml" to Divergence.BOTH_OUTPUT,
-            "formats/xsd/scope/global_types.yaml" to Divergence.BOTH_OUTPUT,
             "formats/xsd/transformation/map_to_database_schema.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
             "stdlib/array/nestBy_basic.yaml" to Divergence.BOTH_OUTPUT,
-            "stdlib/datetime/now_basic.yaml" to Divergence.BOTH_OUTPUT,
             "tutorial-examples/csv_orders_grouping_pipe.yaml" to Divergence.BOTH_OUTPUT,
             "tutorial-examples/csv_orders_grouping_semicolon.yaml" to Divergence.BOTH_OUTPUT,
             "tutorial-examples/csv_orders_grouping_tab.yaml" to Divergence.BOTH_OUTPUT,
@@ -225,7 +207,10 @@ class ConformanceStrategyParityTest {
          * `ASTCompiler.isCompilable`, the parity assertions above would all still pass — by
          * exercising the interpreter three times — and only this floor would notice.
          */
-        private const val MIN_COMPILED = 328
+        // Lowered from 328 when the four non-deterministic fixtures stopped being driven at
+        // all. That is a smaller denominator, not thinner coverage — the floor tracks how
+        // many of the DRIVEN fixtures reach bytecode.
+        private const val MIN_COMPILED = 325
 
         /** Fixtures that cannot be driven through `ExecutionStrategy.execute(input: String)` yet. */
         private val SKIP_REASONS = ConcurrentHashMap<String, String>()
@@ -303,6 +288,11 @@ class ConformanceStrategyParityTest {
                         ?: run { SKIP_REASONS[rel] = "input data not serialisable"; return@forEach }
                 }
 
+                if (isNondeterministic(source)) {
+                    SKIP_REASONS[rel] = "non-deterministic (reads the clock or a random source)"
+                    return@forEach
+                }
+
                 recordCompilability(rel, source)
                 out.add(Fixture(name, rel, source, payload))
             }
@@ -312,6 +302,28 @@ class ConformanceStrategyParityTest {
             }
             return out
         }
+
+        /**
+         * Functions whose result changes between calls, so the same fixture cannot be compared
+         * across three separate executions.
+         *
+         * Grounded in the stdlib registry rather than guessed: `register("now")`,
+         * `register("random")`, `register("currentDate")`, `register("currentTime")`.
+         */
+        private val NONDETERMINISTIC = Regex("""\b(now|random|currentDate|currentTime)\s*\(""")
+
+        /**
+         * A differential test runs each fixture once per strategy, so a transformation that reads
+         * the clock differs from itself and would be reported as a divergence that is not one.
+         *
+         * Three fixtures were in the baseline for exactly this reason, which also made the test
+         * **flaky in the other direction**: had two executions landed in the same millisecond the
+         * outputs would have matched, and the baseline check would then have failed with "now agree
+         * — delete the entry". The Python runner handles the same problem by validating that a
+         * timestamp is merely *in range*; a strategy comparison cannot do that, so these are
+         * skipped and named.
+         */
+        private fun isNondeterministic(source: String) = NONDETERMINISTIC.containsMatchIn(source)
 
         /**
          * Did this transformation reach bytecode, or fall back?

@@ -132,16 +132,16 @@ hides behind it.
 ## Measured results
 
 ```
-fixtures driven       : 361
-skipped               : 39
+fixtures driven       : 357
+skipped               :  43
     multi-input                     39
-known divergences     :  35
-    BOTH_OUTPUT                     26
+    non-deterministic                4
+known divergences     :  17
+    BOTH_OUTPUT                      9
     RUNS_ONLY_ON_TEMPLATE            5
     COMPILED_UNDEFINED_FUNCTION      3
-    COPY_OUTPUT                      1
-genuinely COMPILED    : 328   (91% of those driven)
-fell back to interp.  :  33
+genuinely COMPILED    : 325   (91% of those driven)
+fell back to interp.  :  32
 ```
 
 The first measurement was 101 divergences and 313 compiled. The difference is
@@ -155,15 +155,45 @@ count went up while the total went down.
 354 tests, **0.7 seconds** — the whole corpus on three strategies costs nothing, so there is no
 reason to exclude it from the normal loop.
 
+### A fixture that reads the clock cannot be compared this way
+
+Three entries in the baseline turned out not to be divergences at all. A differential test runs each
+fixture **once per strategy**, so a transformation calling `now()` differs from itself:
+
+```
+stdlib/datetime/now_basic            now()
+examples/real-world/sap_integration  now()
+auto-captured/.../sum_auto_a4eced76  now()
+```
+
+Worse, it made the test **flaky in the other direction**: had two executions landed in the same
+millisecond the outputs would have matched, and the baseline check would then have failed with
+"now agree — delete the entry".
+
+These are now skipped with a named reason, detected by what the transformation *calls* rather than
+by its name — `now`, `random`, `currentDate`, `currentTime`, taken from the stdlib registry. Name
+matching, which is what the Python runner uses (`validate_dynamic_output` looks for `now`,
+`parsedate`, `timestamp` in the test name), would have missed `sap_integration` entirely.
+
+The Python suite can do better than skipping, because it checks a timestamp is merely *in range*
+against a recorded expectation. A strategy comparison has no expectation to range-check against, so
+skipping is the honest option, and the count is reported rather than hidden.
+
+That is the second measurement flaw this harness has had — the first being the masking described
+above. Both produced *confident* numbers, which is the part worth remembering: a differential test
+can be wrong about what it is measuring while looking perfectly healthy.
+
 ### Two vacuity guards
 
 A differential test over zero fixtures passes while proving nothing, so neither the corpus nor the
 compiled path is taken on trust:
 
-- the loader fails if fewer than 355 fixtures are found, rather than relying on JUnit's "no
+- the loader fails if fewer than 355 fixtures are loaded, rather than relying on JUnit's "no
   arguments" default — it locates the corpus by walking up from the working directory, so a moved or
   unchecked-out corpus has to be an error;
-- the compiled-coverage floor fails if fewer than 328 fixtures reach bytecode.
+- the compiled-coverage floor fails if fewer than 325 of the driven fixtures reach bytecode
+  (it was 328 before the non-deterministic ones stopped being driven — a smaller
+  denominator, not thinner coverage).
 
 Both were verified by breaking them deliberately.
 
@@ -179,17 +209,20 @@ loaded. Minor corpus hygiene, worth fixing at some point; keyed by path it does 
 
 | | first run | now |
 |---|---|---|
-| known divergences | 101 | **47** |
+| known divergences | 101 | **17** |
 | `COMPILED_OUTPUT` | 0 | **0** |
 | fixtures driven | 354 | **361** |
 
-Five defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
+Seven defects found and fixed by this harness so far — [EB04](../bugs-fixed/EB04-nested-lambdas-emit-duplicate-method-names.md),
 [EB05](../bugs-fixed/EB05-lambda-bodies-cannot-reach-a-named-input.md),
 [CB01](../bugs-fixed/CB01-auto-capture-emits-unparseable-yaml.md) (with
 [CB02](../bugs-fixed/CB02-capture-writes-output-text-where-the-runner-compares-a-value.md) and
 [CB03](../bugs-fixed/CB03-capture-yaml-writer-loses-data-in-three-ways.md)),
 [EB06](../bugs-fixed/EB06-compiled-lambdas-cannot-see-enclosing-bindings.md) and
-[EB07](../bugs-fixed/EB07-compiled-index-access-ignores-string-keys.md) — plus one diagnosis corrected.
+[EB07](../bugs-fixed/EB07-compiled-index-access-ignores-string-keys.md),
+[EB08](../bugs-fixed/EB08-compiled-object-literals-drop-xml-attributes.md) and
+[EB09](../bugs-fixed/EB09-metadata-access-lost-on-both-compiled-strategies.md) — plus two diagnoses
+corrected and one flaw found in the harness itself.
 Each fix tended to reveal what it had been masking, which is why the total moved in steps rather
 than smoothly.
 
