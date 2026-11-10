@@ -510,7 +510,7 @@ class XMLParser(
      */
     private fun isXmlDeclaration(): Boolean {
         if (peek(5) != "<?xml") return false
-        val next = if (current + 5 < text.length) text[current + 5] else ' '
+        val next = if (current + 5 < text.length) text[current + 5] else '\u0000'
         return next == ' ' || next == '\t' || next == '\r' || next == '\n' || next == '?'
     }
 

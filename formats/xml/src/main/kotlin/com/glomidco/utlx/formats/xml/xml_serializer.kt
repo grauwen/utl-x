@@ -130,7 +130,7 @@ class XMLSerializer(
                     writer.write("<$elementName/>")
                 } else {
                     writer.write("<$elementName>")
-                    writeEscaped(writer, formatScalarValue(udm.value))
+                    writeEscapedText(writer, formatScalarValue(udm.value))
                     writer.write("</$elementName>")
                 }
                 if (prettyPrint) writer.write("\n")
@@ -205,7 +205,7 @@ class XMLSerializer(
                         writer.write(">")
                         val textValue = properties["_text"]!!
                         when (textValue) {
-                            is UDM.Scalar -> writeEscaped(writer, formatScalarValue(textValue.value))
+                            is UDM.Scalar -> writeEscapedText(writer, formatScalarValue(textValue.value))
                             else -> serializeUDM(textValue, writer, depth + 1, "value")
                         }
                         writer.write("</$name>")
@@ -222,7 +222,7 @@ class XMLSerializer(
                             val textValue = properties["_text"]!!
                             if (textValue is UDM.Scalar) {
                                 writeIndent(writer, depth + 1)
-                                writeEscaped(writer, formatScalarValue(textValue.value))
+                                writeEscapedText(writer, formatScalarValue(textValue.value))
                                 if (prettyPrint) writer.write("\n")
                             }
                         }
@@ -294,7 +294,7 @@ class XMLSerializer(
             is RuntimeValue.StringValue -> {
                 writeIndent(writer, depth)
                 writer.write("<$elementName>")
-                writeEscaped(writer, value.value)
+                writeEscapedText(writer, value.value)
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
@@ -359,16 +359,45 @@ class XMLSerializer(
         }
     }
     
+    /** Attribute values and anywhere the surrounding whitespace is not significant. */
     private fun writeEscaped(writer: Writer, text: String) {
-        for (c in text) {
-            when (c) {
-                '<' -> writer.write("&lt;")
-                '>' -> writer.write("&gt;")
-                '&' -> writer.write("&amp;")
-                '\'' -> writer.write("&apos;")
-                '"' -> writer.write("&quot;")
-                else -> writer.write(c.toString())
-            }
+        for (c in text) writeEscapedChar(writer, c)
+    }
+
+    private fun writeEscapedChar(writer: Writer, c: Char) {
+        when (c) {
+            '<' -> writer.write("&lt;")
+            '>' -> writer.write("&gt;")
+            '&' -> writer.write("&amp;")
+            '\'' -> writer.write("&apos;")
+            '"' -> writer.write("&quot;")
+            else -> writer.write(c.toString())
+        }
+    }
+
+    /**
+     * Element **text**, escaped so that re-reading the document gives the same value back.
+     *
+     * B43: as well as the markup characters, whitespace at the **start or end** of the run is
+     * written as a character reference. A parser trims literal whitespace there — this one included
+     * — so emitting it literally drops it silently on the next read: the value survives in memory
+     * but not through XML. [B41](../../../../../../../../docs/bugs-fixed) made the reading side keep
+     * escaped whitespace; this is the writing side of the same rule, and without both the round trip
+     * is lossy.
+     *
+     * Interior whitespace is left alone, because trimming only reaches the edges. Surrogate pairs
+     * are safe: a character reference is only ever emitted for whitespace, which is always BMP.
+     */
+    private fun writeEscapedText(writer: Writer, text: String) {
+        val lead = text.indexOfFirst { !it.isWhitespace() }
+        if (lead < 0) {
+            // All whitespace — every character is an edge, including the empty case (writes nothing).
+            for (c in text) writer.write("&#${c.code};")
+            return
+        }
+        val trail = text.indexOfLast { !it.isWhitespace() }
+        for ((i, c) in text.withIndex()) {
+            if (i < lead || i > trail) writer.write("&#${c.code};") else writeEscapedChar(writer, c)
         }
     }
 

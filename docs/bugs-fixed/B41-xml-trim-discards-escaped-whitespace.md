@@ -3,7 +3,9 @@
 > **B = core bug** (shared core and the format parsers built on it), the family of B01–B40.
 > This is **B41**.
 
-**Status:** **FIXED**
+**Status:** **FIXED** — reading side. The writing side is
+[B43](B43-xml-serialiser-writes-significant-whitespace-literally.md); a faithful round trip needs
+both.
 **Priority:** Medium. A silent loss of author-written data, with no workaround — but only in
 documents that escape whitespace, which is uncommon.
 **Component:** `formats/xml` — `xml_parser.kt`.
@@ -144,3 +146,6 @@ it shows the fix changed only what it claims to.
 - [B42](B42-xml-character-references-above-the-bmp-are-truncated.md) — found by reading the same
   function afterwards: the escaped characters this fix preserves were themselves being resolved
   wrongly above the BMP.
+- [B43](B43-xml-serialiser-writes-significant-whitespace-literally.md) — **the other half of this
+  fix.** Reading was faithful after B41, but writing still emitted significant whitespace literally,
+  so an XML→XML transformation lost it again. Neither side gives a faithful round trip alone.
