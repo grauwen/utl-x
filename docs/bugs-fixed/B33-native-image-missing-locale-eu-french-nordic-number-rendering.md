@@ -14,7 +14,7 @@
 > no-break space `U+202F`, while the **Nordics (SE/NO/FI) and the SI/ISO international style use a regular
 > space `U+0020`**. Added `renderNordicNumber` / `parseNordicNumber` for that style.
 
-**Status:** **FIXED (pending commit)** — `formatEUNumber` and `formatFrenchNumber` no longer depend on
+**Status:** **FIXED ** — `formatEUNumber` and `formatFrenchNumber` no longer depend on
 `Locale.GERMANY` / `Locale.FRANCE`. They now format with the always-present `Locale.US` and swap the
 separators by hand (the exact pattern `formatSwissNumber` has used since the B02-era fix). Output is now
 **identical on the JVM and the GraalVM native image**, and reproduces every `tests/stdlib/regional/*`
@@ -194,7 +194,7 @@ caught it. Both tests now pass on native.
   lower risk: it has a symbol-stripping last-resort fallback, so it degrades to a number rather than
   erroring. Audit before relying on currency output on the native binary.
 - The locale-aware **date** functions (`DateFunctions.kt`, `JvmCldrProvider.kt`) resolve arbitrary BCP-47
-  tags via `Locale.forLanguageTag(...)` / `Locale.getAvailableLocales()`, so they are almost certainly
+  tags via `Locale.forLanguageTag(...)` / `Locale.getAvailableLocales`, so they are almost certainly
   subject to the same native-image locale-data gap for non-default locales. No conformance test currently
   exercises a non-US date locale on the native binary, so it did not surface. Worth a dedicated audit (the
   CLDR provider should source its own bundled data rather than lean on JVM locales under native).

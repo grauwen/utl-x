@@ -4,7 +4,7 @@
 > from core (`B`), engine (`EB`) and IDE (`IB`) bugs. "Validation" names the feature; "UTLXs" is only the
 > deployment mode, so `VB` (not `SB`) is the clearer family. This is **VB01**.
 
-**Status:** **FIXED (2026-10-22, pending commit)** via Option A — `validate.assert` is now an
+**Status:** **FIXED (2026-10-22)** via Option A — `validate.assert` is now an
 interpreter-level higher-order builtin taking **lambda** checks `check: (p) => <expr>`, each invoked under
 try/catch so a non-evaluable check becomes a reported error issue. Found 2026-10-16 while adding the first
 *real* `validate.assert` tests (prior fixtures only used present, well-typed fields). See §Implementation.
@@ -67,13 +67,13 @@ non-evaluable check, evaluation must be **deferred into `assert`**.
 ## Options
 
 ### A. Lazy per-rule evaluation (lambda checks) — the "proper" robust fix
-`check: () => $input.price > 0` — a thunk `assert` invokes under `try/catch`: `true`→pass, `false`→fail,
+`check:  => $input.price > 0` — a thunk `assert` invokes under `try/catch`: `true`→pass, `false`→fail,
 **throws→a reported `error` issue** ("rule X could not be evaluated: …"). All rules still evaluated.
 - **Pros:** fully robust, per-rule isolation, general (any expression).
 - **Cons:** a lambda can't live inside a `UDM.Object`, so `assert` must become an **interpreter-handled
   higher-order builtin** (like `map`/`filter`/`reduce`, which take `RuntimeValue.FunctionValue` and invoke
   it via the owner interpreter). That crosses the `:core`/`:stdlib` boundary, must keep the namespace gate,
-  and **changes author syntax** (`check:` must be `() =>`), breaking existing fixtures/docs. Large,
+  and **changes author syntax** (`check:` must be ` =>`), breaking existing fixtures/docs. Large,
   architecturally sensitive.
 
 ### B. Null/type-tolerant comparison operators

@@ -3,7 +3,7 @@
 > **B = core bug** (`:core` interpreter / parser), the family that also holds B01–B33 — distinct from
 > engine (`EB`), IDE (`IB`) and validation (`VB`) bugs. This is **B34**.
 
-**Status:** **FIXED (2026-10-23, pending commit)** — short-circuit added to the `:core` interpreter,
+**Status:** **FIXED (2026-10-23)** — short-circuit added to the `:core` interpreter,
 boolean coercion added to the `:engine` compiled path so the two agree. Found 2026-10-23 while
 documenting the `%utlx 1.1` validation WoW — the "defensive check" guidance in
 [VB01](VB01-validate-assert-raw-check-crashes-on-missing-or-mistyped-data.md) turned out to be
@@ -52,8 +52,8 @@ private fun evaluateBinaryOp(expr: Expression.BinaryOp, env: Environment): Runti
 
     return when (expr.operator) {
         ...
-        BinaryOperator.AND -> RuntimeValue.BooleanValue(left.isTruthy() && right.isTruthy())
-        BinaryOperator.OR  -> RuntimeValue.BooleanValue(left.isTruthy() || right.isTruthy())
+        BinaryOperator.AND -> RuntimeValue.BooleanValue(left.isTruthy && right.isTruthy)
+        BinaryOperator.OR  -> RuntimeValue.BooleanValue(left.isTruthy || right.isTruthy)
     }
 }
 ```
@@ -127,10 +127,10 @@ Mirror the `??` shape, above the eager pair:
 ```kotlin
 if (expr.operator == BinaryOperator.AND || expr.operator == BinaryOperator.OR) {
     val left = evaluate(expr.left, env)
-    val leftTruthy = left.isTruthy()
+    val leftTruthy = left.isTruthy
     if (expr.operator == BinaryOperator.AND && !leftTruthy) return RuntimeValue.BooleanValue(false)
     if (expr.operator == BinaryOperator.OR  &&  leftTruthy) return RuntimeValue.BooleanValue(true)
-    return RuntimeValue.BooleanValue(evaluate(expr.right, env).isTruthy())
+    return RuntimeValue.BooleanValue(evaluate(expr.right, env).isTruthy)
 }
 ```
 
@@ -196,7 +196,7 @@ the branch-only compiled path in agreement with it.
   **global** map, and the stored wrapper closes over the lambda it was first given. With
   per-instance recorder state, JUnit's fresh-instance-per-method means the first method to call
   `record` pins the closure to its own now-dead list and every later method sees an empty one —
-  so the `isEmpty()` assertions would pass **vacuously**. The recorder is therefore companion
+  so the `isEmpty` assertions would pass **vacuously**. The recorder is therefore companion
   state reset in `@BeforeEach`, and a first test asserts the recorder itself works, so the
   emptiness assertions can never silently become vacuous again. (This was a real failure during
   development, not a hypothetical.)
@@ -208,7 +208,7 @@ only and stay valid if that decision is ever revisited.
 - **`B34CompiledShortCircuitTest`** (`:engine`, 5 tests) — the cross-strategy guard, closing the
   gap left by the first report. It drives `ASTCompiler` **directly** rather than through
   `CompiledStrategy`, because that strategy silently falls back to the interpreter when
-  `compile()` returns null: routed through it, a test could pass while measuring the interpreter
+  `compile` returns null: routed through it, a test could pass while measuring the interpreter
   and prove nothing about the compiled path. Every case asserts `compile(...) != null` first, so a
   future `isCompilable` change that stops compiling logical operators surfaces as a failure rather
   than quietly voiding the test. Covers compiled short-circuit (both operators), the compiled null

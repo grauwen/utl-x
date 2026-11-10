@@ -1,6 +1,6 @@
 # F24: Quantified Validation Rules (`every` / `some`)
 
-**Status:** **Implemented** (2026-10-24, pending commit)
+**Status:** **Implemented** (2026-10-24)
 **Priority:** High — the largest gap in the `validate.*` vocabulary against Schematron and FEEL, and the prerequisite for per-node reporting
 **Created:** October 2026
 **Depends on:** [F21](F21-utlx-1-1-semantic-validation.md) (`validate.*`), VB01/VB02 (lambda `check` and `when`)
@@ -118,7 +118,7 @@ An earlier draft of this feature added `path: String?` to `ValidationIssue`, set
    `ValidationIssue` is a `:stdlib` type over the UDM, which exists precisely so XML, JSON, CSV and
    YAML share one model. There is no JSON Pointer or XPath anywhere else in `:core` or `:stdlib` —
    verified — so the field would not have followed a precedent, it would have established one. This
-   is the same objection that correctly killed `.text()` (XML-specific) and the `[condition]`
+   is the same objection that correctly killed `.text` (XML-specific) and the `[condition]`
    predicate selector (XPath-shaped): a serialization's conventions do not belong in the universal
    layer. For a CSV payload the natural answer is not a pointer at all, it is *row 2*.
 2. **The mechanism was a smell.** `path` reached the issue by being stuffed into a copy of the

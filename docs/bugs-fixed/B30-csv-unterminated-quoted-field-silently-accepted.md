@@ -1,6 +1,6 @@
 # B30: CSV parser silently accepts an *unterminated* quoted field (reads to EOF instead of erroring)
 
-**Status:** **FIXED** (pending commit — user commits) — `parseQuotedField()` now tracks whether the
+**Status:** **FIXED** ( — user commits) — `parseQuotedField` now tracks whether the
 closing quote was seen and throws `CSVParseException("Unterminated quoted field", …)` on EOF-before-close.
 Verified end-to-end: the harness flips `corpora/malformed/csv/unclosed_quote.csv` from **accept → reject**
 in all three profiles with no regression (`valid_rows`/`ragged_rows` unchanged), and two unit tests pass
@@ -9,7 +9,7 @@ newline still parses). Found 2026-10-10 by the `test-corpora` per-profile baseli
 **Priority:** Medium (correctness; fails **all three** profiles — genuinely malformed, not benign).
 **Created:** October 2026
 **Component:** `formats/csv/src/main/kotlin/formats/csv/com/glomidco/utlx/formats/csv/csv_parser.kt`
-— `parseQuotedField()` (~L154–167).
+— `parseQuotedField` (~L154–167).
 
 > **One-line:** a quoted field with no closing quote (`1,"alice⏎`) is **accepted** — the parser reads
 > to end-of-input and returns the partial field, swallowing the newline and everything after it into
@@ -17,7 +17,7 @@ newline still parses). Found 2026-10-10 by the `test-corpora` per-profile baseli
 
 ## Problem
 
-`parseQuotedField()` consumes the opening quote, then loops `while (!isAtEnd())` appending characters;
+`parseQuotedField` consumes the opening quote, then loops `while (!isAtEnd)` appending characters;
 a closing quote ends the field (with quote-doubling handled). But if **EOF is reached before a closing
 quote**, the loop simply exits and the accumulated text is returned as the field — there is **no
 end-of-input check** for the still-open quote. So malformed CSV parses "successfully."
@@ -42,7 +42,7 @@ Baseline probe (identity transform) → **accepted** (exit 0). All three oracles
 
 ## Fix
 
-- On EOF inside `parseQuotedField()` with the quote still open → **throw a parse error** ("unterminated
+- On EOF inside `parseQuotedField` with the quote still open → **throw a parse error** ("unterminated
   quoted field at line/col"), matching the XML parser's `Unterminated DOCTYPE` style.
 - This is a **reject in every profile** (genuinely broken), not a leniency dial — so it is not
   profile-gated; fix it outright.

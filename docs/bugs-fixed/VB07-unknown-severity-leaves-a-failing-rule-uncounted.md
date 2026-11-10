@@ -2,7 +2,7 @@
 
 > **VB = Validation bug** (`%utlx 1.1` / `validate.*`), after VB01–VB06. This is **VB07**.
 
-**Status:** **FIXED (2026-10-25, pending commit)** — severity is now recognised case-insensitively and
+**Status:** **FIXED (2026-10-25)** — severity is now recognised case-insensitively and
 normalised, and an unknown value becomes an `error` issue on that rule. Rule-ID discipline added in
 the same pass. See §Implementation.
 **Priority:** **High** — fail-open. A typo in a severity silently disabled the rule, and the engine's
@@ -63,7 +63,7 @@ private val SEVERITIES = setOf("error", "warning", "notice")
 
 private fun canonicalSeverity(raw: String?): String? {
     if (raw == null) return "error"               // absent → the documented default
-    val lower = raw.trim().lowercase()
+    val lower = raw.trim.lowercase
     return if (lower in SEVERITIES) lower else null
 }
 ```

@@ -5,7 +5,7 @@
 > [VB02](VB02-validate-assert-lambda-when-guard-silently-ignored.md) and
 > [VB03](VB03-validate-oneOf-numeric-membership-fails.md). This is **VB04**.
 
-**Status:** **FIXED (2026-10-24, pending commit)** — a malformed rule now reports an `error`-severity
+**Status:** **FIXED (2026-10-24)** — a malformed rule now reports an `error`-severity
 issue instead of a silent pass, across all eight named validators, plus the exact-arity guard the
 `@UTLXFunction` annotations declare but nothing enforced. See §Implementation.
 **Priority:** **High** — this is the *dangerous* direction. An exception stops a pipeline loudly; a
@@ -47,12 +47,12 @@ Every validator reached its arguments through a tolerant accessor that substitut
 default when the argument is the wrong shape:
 
 ```kotlin
-val fields = (args.getOrNull(1) as? UDM.Array)?.elements?.mapNotNull { asString(it) } ?: emptyList()
+val fields = (args.getOrNull(1) as? UDM.Array)?.elements?.mapNotNull { asString(it) } ?: emptyList
 val min    = asNumber(args.getOrNull(2))           // null when absent OR non-numeric
-val array  = (props(payload)[arrayField] as? UDM.Array)?.elements ?: emptyList()
+val array  = (props(payload)[arrayField] as? UDM.Array)?.elements ?: emptyList
 ```
 
-Each `?: emptyList()` and each nullable bound turns "this rule is broken" into "this rule has nothing
+Each `?: emptyList` and each nullable bound turns "this rule is broken" into "this rule has nothing
 to check". And a rule with nothing to check **passes** — `validationResult` computes
 `valid = (failed == 0)`, so zero issues is zero failures:
 

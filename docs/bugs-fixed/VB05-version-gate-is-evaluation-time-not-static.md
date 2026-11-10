@@ -6,7 +6,7 @@
 > [VB03](VB03-validate-oneOf-numeric-membership-fails.md) and
 > [VB04](VB04-named-validators-fail-open-on-malformed-arguments.md). This is **VB05**.
 
-**Status:** **FIXED (2026-10-24, pending commit)** — the gate is now also enforced **statically**, once
+**Status:** **FIXED (2026-10-24)** — the gate is now also enforced **statically**, once
 per program in `Interpreter.execute`, before any data is touched. The runtime gate remains as a
 backstop. See §Implementation.
 **Priority:** **Medium-High** — not a wrong answer, a *late* one. A `%utlx 1.0` script using

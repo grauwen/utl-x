@@ -4,7 +4,7 @@
 > [VB01](VB01-validate-assert-raw-check-crashes-on-missing-or-mistyped-data.md) and
 > [VB02](VB02-validate-assert-lambda-when-guard-silently-ignored.md). This is **VB03**.
 
-**Status:** **FIXED (2026-10-23, pending commit)** — scalar comparison now canonicalises numbers
+**Status:** **FIXED (2026-10-23)** — scalar comparison now canonicalises numbers
 instead of relying on `Any?.equals`. First spotted 2026-10-22 as a side note in VB01 ("a possible
 `oneOf` numeric-equality quirk. Tracked separately"), carried as a documented caveat in the
 [Validation Rules](../language-guide/validation-rules.md) guide, fixed here. See §Implementation.
@@ -36,9 +36,9 @@ allowed list as `[50.0, 60.0]`, i.e. the two sides were never the same kind of n
 ## Root cause
 
 ```kotlin
-val allowed = (args.getOrNull(2) as? UDM.Array)?.elements?.map { scalarValue(it) } ?: emptyList()
+val allowed = (args.getOrNull(2) as? UDM.Array)?.elements?.map { scalarValue(it) } ?: emptyList
 val actual = scalarValue(props(payload)[field])
-val issues = if (actual in allowed) emptyList() else listOf(...)
+val issues = if (actual in allowed) emptyList else listOf(...)
 ```
 
 `scalarValue` returns the **raw boxed value** (`Any?`), and `in` is `Any?.equals`, which is
@@ -55,7 +55,7 @@ assumption that equal numbers arrive in equal boxes.
 **`unique` has the identical defect**, found while fixing this one:
 
 ```kotlin
-val dupes = keys.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
+val dupes = keys.groupingBy { it }.eachCount.filterValues { it > 1 }.keys
 ```
 
 `groupingBy` keys on `equals`/`hashCode`, so an `Int 7` and a `Double 7.0` land in different groups
@@ -71,10 +71,10 @@ A single canonicalisation helper, shared by both functions:
 private fun canonicalScalar(value: Any?): Any? = when (value) {
     null -> null
     is Boolean -> value          // Boolean is not a Number; keep it out of the numeric path
-    is BigDecimal -> value.stripTrailingZeros()
-    is Double -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
-    is Float -> if (value.isFinite()) BigDecimal(value.toString()).stripTrailingZeros() else value
-    is Number -> BigDecimal(value.toString()).stripTrailingZeros()
+    is BigDecimal -> value.stripTrailingZeros
+    is Double -> if (value.isFinite) BigDecimal(value.toString).stripTrailingZeros else value
+    is Float -> if (value.isFinite) BigDecimal(value.toString).stripTrailingZeros else value
+    is Number -> BigDecimal(value.toString).stripTrailingZeros
     else -> value
 }
 ```

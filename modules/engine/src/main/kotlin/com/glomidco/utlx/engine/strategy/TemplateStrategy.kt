@@ -10,6 +10,7 @@ import com.glomidco.utlx.core.parser.Parser
 import com.glomidco.utlx.core.types.StandardLibrary
 import com.glomidco.utlx.core.types.TypeCheckResult
 import com.glomidco.utlx.core.types.TypeChecker
+import com.glomidco.utlx.engine.routing.VerdictCheck
 import com.glomidco.utlx.engine.config.TransformConfig
 import org.slf4j.LoggerFactory
 
@@ -89,9 +90,15 @@ class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
         }
 
         // Let exceptions propagate — ValidationOrchestrator handles error classification
-        val (output, _) = transformationService.transform(utlxSource, inputs,
+        // EB14: inspect the output UDM for a verdict, as the compiled paths do. TEMPLATE produced
+        // none at all before, so a validation mapping run on the interpreter — which is what the
+        // CLI runs — had no verdict for a routing policy to act on.
+        val outcome = transformationService.transformWithUdm(utlxSource, inputs,
             TransformationService.TransformOptions(parseProfile = parseProfile))
-        return ExecutionResult(output = output)
+        return ExecutionResult(
+            output = outcome.output,
+            verdict = VerdictCheck.of(outcome.outputUDM),
+        )
     }
 
     override fun shutdown() {

@@ -3,7 +3,7 @@
 > **VB = Validation bug** (`%utlx 1.1` / `validate.*`), the family opened by
 > [VB01](VB01-validate-assert-raw-check-crashes-on-missing-or-mistyped-data.md). This is **VB02**.
 
-**Status:** **FIXED (2026-10-23, pending commit)** — `when` is now resolved in the interpreter
+**Status:** **FIXED (2026-10-23)** — `when` is now resolved in the interpreter
 alongside `check`, with the same lambda contract. Found 2026-10-23 while writing the
 [Validation Rules](../language-guide/validation-rules.md) guide: documenting `when` meant probing it,
 and none of its three spellings turned out to be safe. See §Implementation.
@@ -105,7 +105,7 @@ trusting `when: (p) => "yes"` is how VB02 happened in the first place.
   evaluated becomes an error issue; `when` cannot be used to skip the rule. ✅
 - `VB02WhenGuardTest` (`:core`, 9 tests) — asserts on what the interpreter *hands to*
   `validate.assert` via a synthetic `validate.assert` that captures the resolved rules, which is
-  where VB02 lived (the aggregation never changed). A `record()` call inside the `check` lambda
+  where VB02 lived (the aggregation never changed). A `record` call inside the `check` lambda
   proves **laziness**: a skipped rule must not evaluate its check. Covers both guard directions, a
   field-comparing guard, the throwing and non-boolean guards, severity escalation, the legacy
   literal passthrough, and the lambda-`when`-with-boolean-`check` case from root cause (2).

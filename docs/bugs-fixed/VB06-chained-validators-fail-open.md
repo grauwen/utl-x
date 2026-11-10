@@ -2,7 +2,7 @@
 
 > **VB = Validation bug** (`%utlx 1.1` / `validate.*`), after VB01–VB05. This is **VB06**.
 
-**Status:** **FIXED (2026-10-24, pending commit)** — every validator now refuses a `ValidationResult`
+**Status:** **FIXED (2026-10-24)** — every validator now refuses a `ValidationResult`
 as its payload and reports a malformed rule naming the mistake. See §Implementation.
 **Priority:** **High** — fail-open, reachable by writing the most natural-looking composition, and
 the resulting verdict is *confidently wrong* rather than obviously broken.
@@ -70,7 +70,7 @@ private fun looksLikeValidationResult(udm: UDM): Boolean {
 }
 
 // at the head of every validator, right after it takes its payload:
-if (looksLikeValidationResult(payload)) return malformedRule(payload, "<fn>", chainedPayloadReason())
+if (looksLikeValidationResult(payload)) return malformedRule(payload, "<fn>", chainedPayloadReason)
 ```
 
 The message states the diagnosis and the remedy:

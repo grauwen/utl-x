@@ -1,6 +1,6 @@
 # F25: Declarative Validation Rule Kinds
 
-**Status:** **Implemented** (2026-10-25, pending commit)
+**Status:** **Implemented** (2026-10-25)
 **Priority:** High — it is the policy form the guard needs, and it should land **before** any further validator vocabulary
 **Created:** October 2026
 **Depends on:** [F21](F21-utlx-1-1-semantic-validation.md) (`validate.*`), VB01 (lambda `check`), VB07 (rule-id discipline)

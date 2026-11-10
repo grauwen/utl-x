@@ -30,20 +30,29 @@ completeness question therefore splits in two:
 Almost every gap below is in layer 2 (and in the expression sublanguage), not a hard hole — because
 `assert` backstops layer 1.
 
+> **Accuracy note (2026-11-10).** The matrix below was written as a *design checklist*, and several
+> rows carried a ✓ against a function name that was being proposed in this very document rather than
+> one that existed. Each row has now been checked against the running build — `validate.noneMatch`,
+> `validate.absent`, `validate.impliesPresent` and the Tier-2 structural caps all return
+> `Undefined function`, and as `assert` rule kinds they are rejected with "has no rule kind". The
+> rows are corrected below. What *is* implemented: the ten registered functions (`assert`, `all`,
+> `required`, `inRange`, `oneOf`, `matches`, `isoDate`, `unique`, `mutuallyExclusive`, `atLeastOne`),
+> eight declarative rule kinds inside `assert`, and the `every` / `some` quantifiers.
+
 ## 2. Coverage matrix
 
 | Test category (Schematron / FEEL) | `validate.*` coverage |
 |---|---|
 | Value comparison (`< > = ≤ ≥ ≠`) | ✓ `inRange` / `assert` |
 | Enumeration / code list | ✓ `oneOf` |
-| Pattern / format (regex) | ✓ `matches`; negative → `noneMatch` |
-| Presence / absence | ✓ `required` / `absent` |
+| Pattern / format (regex) | ✓ `matches`. Negative form: **not implemented** — a `noneMatch` was proposed here, never built; use `assert` with a negated check |
+| Presence / absence | ✓ `required`. `absent` is **not implemented** — proposed here, never built |
 | Mutual exclusion / at-least-one | ✓ `mutuallyExclusive` / `atLeastOne` |
-| Conditional "if A then B" | ✓ `assert` `when` guard / `impliesPresent` |
+| Conditional "if A then B" | ✓ `assert` `when` guard. `impliesPresent` is **not implemented** — proposed here, never built |
 | Uniqueness (single key) | ✓ `unique` |
-| Structural caps (depth / size / fields) | ✓ Tier-2 |
+| Structural caps (depth / size / fields) | ✗ **not implemented** — "Tier-2" was a plan, not a shipped tier |
 | Cross-field arithmetic (`a*b=c`, `sum(lines)=total`) | ⚠ `assert` only — needs **aggregation** (`sum`) in the expr language |
-| **Quantify: *every / some* element satisfies P** | ✗ **no named fn** — `assert` + higher-order only |
+| **Quantify: *every / some* element satisfies P** | ✓ **implemented** as the `every` / `some` rule keys inside `validate.assert` ([F24](../features/F24-quantified-validation-rules.md)) — not as standalone functions |
 | **Cardinality: count min / max / exact (filtered)** | ✗ **no named fn** |
 | **Referential integrity / dynamic membership** | ✗ **no named fn** — `oneOf` is a *static* list |
 | **Composite-key uniqueness** | ⚠ `unique` takes one key |
@@ -52,9 +61,11 @@ Almost every gap below is in layer 2 (and in the expression sublanguage), not a 
 
 ## 3. Gap list — named functions worth adding (prioritised)
 
-1. **Quantification — `every(array, rule)` / `some(array, rule)`.** The biggest gap: Schematron's
-   per-context firing *is* universal quantification ("every line has a positive amount"); FEEL has
-   `every`/`some`. Today only raw `assert` + higher-order. **High priority.**
+1. ~~**Quantification — `every` / `some`.**~~ **DONE** — [F24](../features/F24-quantified-validation-rules.md)
+   shipped it as rule *keys* on an `assert` rule (`{ every: "lines", check: (l) => l.qty > 0 }`)
+   rather than as standalone functions. That is the better shape: a quantified rule stays one
+   inspectable rule-list entry, and the check receives each **element**, which is the structural
+   analogue of a Schematron context-rule. Reports one issue per failing element.
 2. **Cardinality — `count(field, min, max)`** on a possibly-filtered set ("1–5 line items").
 3. **Referential integrity / dynamic membership** — value in a set *derived from the document*
    (`oneOf` with a computed list, or a `references` / `memberOf` validator). Common in cross-record

@@ -1,6 +1,6 @@
 # F21: `%utlx 1.1` — Semantic Validation (`validate.*`)
 
-**Status:** Design complete — language side **implemented** (543/543 conformance; see the VB01–VB05 fix reports). The **engine** half — enforcement, counters, logging, dead-letter — is [EF23](EF23-engine-validation-enforcement-and-observability.md), not yet implemented.
+**Status:** Design complete — language side **implemented and verified** (563/563 conformance, of which 21 are `language/validate`; see the VB01–VB07 fix reports). Includes the quantifiers of [F24](F24-quantified-validation-rules.md) (`every` / `some`) and the declarative rule kinds of [F25](F25-declarative-validation-rule-kinds.md). The **engine** half — enforcement, counters, logging, dead-letter — is [EF23](EF23-engine-validation-enforcement-and-observability.md), not yet implemented; the verdict it needs is now produced on every strategy ([EB14](../bugs-fixed/EB14-validation-verdict-dropped-on-the-interpreter-paths.md)).
 **Priority:** High (next minor of the pure language line; prerequisite for the content guard and Open-M semantic components)
 **Created:** October 2026
 **Updated:** October 2026

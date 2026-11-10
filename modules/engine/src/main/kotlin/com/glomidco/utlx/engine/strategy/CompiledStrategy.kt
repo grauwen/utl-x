@@ -129,9 +129,16 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             val inputs = mapOf(
                 inputName to TransformationService.InputData(content = input, format = declaredFormat)
             )
-            val (output, _) = transformationService.transform(utlxSource, inputs,
+            // EB14: the fallback must decide too. The verdict was computed only on the compiled
+            // branch, so a validation mapping that failed to compile silently produced no verdict
+            // even though COMPILED was the requested strategy — the same silent-fallback divergence
+            // as EB03-EB13.
+            val outcome = transformationService.transformWithUdm(utlxSource, inputs,
                 TransformationService.TransformOptions(parseProfile = parseProfile))
-            return ExecutionResult(output = output)
+            return ExecutionResult(
+                output = outcome.output,
+                verdict = VerdictCheck.of(outcome.outputUDM),
+            )
         }
     }
 
@@ -193,9 +200,13 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             }
 
             logger.debug("Envelope split into {} named inputs (fallback): {}", inputs.size, inputs.keys)
-            val (output, _) = transformationService.transform(utlxSource, inputs,
+            // EB14: as the single-input fallback above — the multi-input fallback dropped it too.
+            val outcome = transformationService.transformWithUdm(utlxSource, inputs,
                 TransformationService.TransformOptions(parseProfile = parseProfile))
-            return ExecutionResult(output = output)
+            return ExecutionResult(
+                output = outcome.output,
+                verdict = VerdictCheck.of(outcome.outputUDM),
+            )
         }
     }
 

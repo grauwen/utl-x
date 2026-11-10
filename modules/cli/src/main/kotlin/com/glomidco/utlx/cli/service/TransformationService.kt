@@ -123,11 +123,30 @@ class TransformationService {
      * Transform UTLX script with inputs
      * This is the ONLY transformation method - all transformation logic lives here
      */
-    fun transform(
+    /**
+     * The result of a transformation, including the output **as a UDM**.
+     *
+     * EB14: [transform] returns only serialised text, so every caller that needed to *inspect* the
+     * output — the engine's verdict check, above all — had nothing left to inspect. Re-parsing the
+     * text is not a substitute: a round trip is not guaranteed faithful (see B38/B39/B43), and it
+     * would make the inspection depend on the output format.
+     */
+    data class TransformOutcome(
+        val output: String,
+        val outputFormat: String,
+        val outputUDM: UDM,
+    )
+
+    /**
+     * As [transform], but also hands back the output UDM.
+     *
+     * [transform] delegates here and drops the UDM, so the two can never diverge.
+     */
+    fun transformWithUdm(
         utlxSource: String,
         inputs: Map<String, InputData>,
         options: TransformOptions = TransformOptions()
-    ): Pair<String, String> {  // Returns (output, outputFormat)
+    ): TransformOutcome {
 
         // Step 1: Compile the UTLX script (using CLI's proven compileScript logic)
         val program = compileScript(utlxSource, options)
@@ -180,7 +199,16 @@ class TransformationService {
         // Step 5: Serialize output using format + format spec from header
         val outputData = serializeOutput(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
 
-        return Pair(outputData, outputFormat)
+        return TransformOutcome(outputData, outputFormat, outputUDM)
+    }
+
+    fun transform(
+        utlxSource: String,
+        inputs: Map<String, InputData>,
+        options: TransformOptions = TransformOptions()
+    ): Pair<String, String> {  // Returns (output, outputFormat)
+        val outcome = transformWithUdm(utlxSource, inputs, options)
+        return Pair(outcome.output, outcome.outputFormat)
     }
 
     /**

@@ -10,7 +10,7 @@
 > backport the stricter-by-default grammar changes (B29/B31) or the profile feature — those are a
 > minor-release concern, not patch-safe.
 
-**Status:** **MITIGATED** (safety cap landed; pending commit) — a profile-independent hard cap
+**Status:** **MITIGATED** (safety cap landed;) — a profile-independent hard cap
 `MAX_NESTING_DEPTH = 1000` now bounds recursion in the JSON (`parseValue`) and XML
 (`parseElementChecked`) readers: deeply-nested input throws a **clean** `JSONParseException`/
 `XMLParseException` instead of `StackOverflowError`. Verified: new module unit tests pass; the

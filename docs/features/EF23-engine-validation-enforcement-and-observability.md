@@ -1,6 +1,6 @@
 # EF23: Engine Validation Enforcement & Observability (UTLXe Adaptation for F21)
 
-**Status:** Design — **not implemented**. The decide layer (F21) is complete; the enforce component exists but has **zero call sites**.
+**Status:** Design — **not implemented**, but the precondition now holds. The decide layer (F21) is complete. The enforce component (`ValidationRoutingPolicy` → `VerdictCheck`) is now **called on every execution path**: each strategy computes `ExecutionResult.verdict`, so a verdict is always available and consistent ([EB14](../bugs-fixed/EB14-validation-verdict-dropped-on-the-interpreter-paths.md) fixed the three paths that dropped it). What is still missing is anything that **acts** on the verdict — dead-letter routing, counters, verdict-driven logging. The earlier wording here said the component had "zero call sites"; that was true when written and is no longer.
 **Priority:** High — a guard whose rejections are neither acted on nor counted is not a guard.
 **Created:** October 2026
 **Depends on:** [F21](F21-utlx-1-1-semantic-validation.md) (`validate.*` + the `%utlx` namespace gate)
