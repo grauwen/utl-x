@@ -141,3 +141,6 @@ it shows the fix changed only what it claims to.
   empty-element notes remain open.
 - [B40](B40-yaml-reads-zero-padded-identifiers-as-octal.md) — the other defect found by following
   that report outwards, in YAML.
+- [B42](B42-xml-character-references-above-the-bmp-are-truncated.md) — found by reading the same
+  function afterwards: the escaped characters this fix preserves were themselves being resolved
+  wrongly above the BMP.

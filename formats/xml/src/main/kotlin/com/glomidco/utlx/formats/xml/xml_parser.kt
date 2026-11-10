@@ -396,8 +396,9 @@ class XMLParser(
         }
 
         private companion object {
-            // A parallel mask rather than a sentinel character in the text: `&#0;` is a legal
-            // lexeme here and expands to NUL, so no character is safe to reserve.
+            // A parallel mask rather than a sentinel character in the text: reserving a character
+            // would need a proof that it can never appear in content, and character references can
+            // name very nearly anything. A mask needs no such argument.
             const val LITERAL = '.'
             const val ESCAPED = 'E'
         }
@@ -420,21 +421,13 @@ class XMLParser(
             "apos" -> "'"
             "quot" -> "\""
             else -> {
-                // Numeric character reference
+                // Numeric character reference. B42: resolve by CODE POINT, not by Char — see
+                // codePointText. An unresolvable one is a well-formedness error, handled on the
+                // same profile axis as the undefined entity below (B29).
                 if (entity.startsWith("#x")) {
-                    val hex = entity.substring(2)
-                    try {
-                        hex.toInt(16).toChar().toString()
-                    } catch (e: NumberFormatException) {
-                        "&$entity;"
-                    }
+                    codePointText(entity.substring(2).toIntOrNull(16), entity)
                 } else if (entity.startsWith("#")) {
-                    val decimal = entity.substring(1)
-                    try {
-                        decimal.toInt().toChar().toString()
-                    } catch (e: NumberFormatException) {
-                        "&$entity;"
-                    }
+                    codePointText(entity.substring(1).toIntOrNull(), entity)
                 } else if (options.allowUndefinedEntities) {
                     // lenient: keep the undefined entity as literal text
                     "&$entity;"
@@ -446,6 +439,37 @@ class XMLParser(
         }
     }
     
+    /**
+     * B42: the text of a numeric character reference, resolved by **code point**.
+     *
+     * `Int.toChar()` keeps only the low 16 bits, so every reference above the BMP was silently
+     * mangled into a different character:
+     *
+     * ```
+     * &#128512;  / &#x1F600;   (U+1F600 😀)  ->  U+F600, a private-use character
+     * ```
+     *
+     * Nothing reported it, because the result is a perfectly valid string — just not the one the
+     * document said. [Character.toChars] builds the surrogate pair the code point actually needs.
+     * The same truncation made a reference to an illegal character (NUL, a lone surrogate, anything
+     * past U+10FFFF) produce a corrupt result instead of an error, so those are now rejected on the
+     * profile axis the undefined-entity case already uses (B29): reject under standard/strict, keep
+     * the reference as literal text when [ParseOptions.allowUndefinedEntities] is set.
+     *
+     * A literal astral character in the document body was never affected — it arrives as a surrogate
+     * pair from the reader and is copied through unchanged.
+     */
+    private fun codePointText(cp: Int?, entity: String): String {
+        if (cp != null && isLegalXmlChar(cp)) return String(Character.toChars(cp))
+        if (options.allowUndefinedEntities) return "&$entity;"
+        throw XMLParseException("Invalid character reference: &$entity;", line, column)
+    }
+
+    /** XML 1.0 §2.2 `Char`: `#x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD] | [#x10000-#x10FFFF]`. */
+    private fun isLegalXmlChar(cp: Int): Boolean =
+        cp == 0x9 || cp == 0xA || cp == 0xD ||
+            cp in 0x20..0xD7FF || cp in 0xE000..0xFFFD || cp in 0x10000..0x10FFFF
+
     private fun parseCDATA(): String {
         // <![CDATA[...]]>
         repeat(9) { advance() } // Skip <![CDATA[
