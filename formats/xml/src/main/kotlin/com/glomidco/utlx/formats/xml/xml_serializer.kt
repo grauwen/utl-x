@@ -302,7 +302,12 @@ class XMLSerializer(
             is RuntimeValue.NumberValue -> {
                 writeIndent(writer, depth)
                 writer.write("<$elementName>")
-                writer.write(if (value.value % 1.0 == 0.0) value.value.toLong().toString() else value.value.toString())
+                // Was a second, divergent renderer carrying the `% 1.0 == 0.0` predicate B37
+                // replaced — so a large double saturated to Long.MAX_VALUE here while the UDM path
+                // rendered it correctly, and non-finite values skipped the XSD form above. B37's
+                // note said the predicate was "now shared"; these overloads were missed. One
+                // renderer, as CSV already does.
+                writer.write(formatScalarValue(value.value))
                 writer.write("</$elementName>")
                 if (prettyPrint) writer.write("\n")
             }
@@ -410,16 +415,39 @@ class XMLSerializer(
         return when (value) {
             null -> ""
             is Number -> {
-                // B35: exact types render as written. Narrowing every Number through toDouble()
-                // just to test for integrality corrupted Long and BigDecimal on the way out.
-                ExactNumber.renderExactOrNull(value) ?: run {
-                    // B37: this predicate was already the correct one — a Long round-trip — and is
-                    // now shared, so the other serialisers cannot drift away from it again.
-                    val d = value.toDouble()
-                    ExactNumber.integralLongOrNull(d)?.toString() ?: d.toString()
-                }
+                // B38 (XML half): XSD 1.0 §3.2.5 fixes the lexical space of `xs:double` — the
+                // special values are written INF, -INF and NaN (XSD 1.1 also allows +INF).
+                // `Infinity`, which is what Double.toString() produces, is NOT in that lexical
+                // space, so `<x>Infinity</x>` fails validation against an xs:double element. This
+                // half needs no policy decision, unlike the JSON half, which has no representation
+                // to be correct about and is still open.
+                xsdNonFiniteOrNull(value)
+                    // B35: exact types render as written. Narrowing every Number through toDouble()
+                    // just to test for integrality corrupted Long and BigDecimal on the way out.
+                    ?: ExactNumber.renderExactOrNull(value)
+                    ?: run {
+                        // B37: this predicate was already the correct one — a Long round-trip — and
+                        // is now shared, so the other serialisers cannot drift away from it again.
+                        val d = value.toDouble()
+                        ExactNumber.integralLongOrNull(d)?.toString() ?: d.toString()
+                    }
             }
             else -> value.toString()
+        }
+    }
+
+    /** `INF` / `-INF` / `NaN` per XSD, or null for every finite number and every exact type. */
+    private fun xsdNonFiniteOrNull(value: Number): String? {
+        val d = when (value) {
+            is Double -> value
+            is Float -> value.toDouble()
+            else -> return null   // Long, BigInteger and BigDecimal cannot be non-finite
+        }
+        return when {
+            d.isNaN() -> "NaN"
+            d == Double.POSITIVE_INFINITY -> "INF"
+            d == Double.NEGATIVE_INFINITY -> "-INF"
+            else -> null
         }
     }
 }

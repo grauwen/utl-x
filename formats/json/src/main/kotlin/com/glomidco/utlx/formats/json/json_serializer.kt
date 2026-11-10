@@ -206,11 +206,10 @@ class JSONSerializer(
         when (value) {
             is RuntimeValue.StringValue -> writer.write(escapeString(value.value))
             is RuntimeValue.NumberValue -> {
-                if (value.value % 1.0 == 0.0 && !value.value.isInfinite() && !value.value.isNaN()) {
-                    writer.write(value.value.toLong().toString())
-                } else {
-                    writer.write(value.value.toString())
-                }
+                // Was a second, divergent renderer: it guarded non-finite values but kept the
+                // `% 1.0 == 0.0` predicate B37 replaced, so a large double saturated to
+                // Long.MAX_VALUE here while the UDM path rendered it correctly. One renderer.
+                serializeScalar(UDM.Scalar(value.value), writer)
             }
             is RuntimeValue.BooleanValue -> writer.write(value.value.toString())
             is RuntimeValue.NullValue -> writer.write("null")
