@@ -1,6 +1,11 @@
 syntax = "proto3";
 package utlxe.v1;
 
+// WB02: declared here so the Go bindings can be regenerated with a plain
+//   protoc -I proto --go_out=<out> --go_opt=module=<module> proto/utlxe/v1/utlxe.proto
+// rather than a --go_opt=M... mapping nobody remembers. The JVM side generates at build
+// time via the Gradle protobuf plugin and ignores this option.
+option go_package = "github.com/grauwen/utl-x/wrappers/go/utlxclient/proto/utlxe/v1";
 option java_package = "com.glomidco.utlx.engine.proto";
 option java_multiple_files = true;
 option java_outer_classname = "UtlxeProto";

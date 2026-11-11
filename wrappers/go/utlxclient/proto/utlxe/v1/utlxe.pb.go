@@ -192,6 +192,7 @@ const (
 	ErrorCode_MAX_CONCURRENT_EXCEEDED     ErrorCode = 8  // maxConcurrent limit reached, request rejected
 	ErrorCode_MAX_INPUT_SIZE_EXCEEDED     ErrorCode = 9  // payload exceeds maxInputSize
 	ErrorCode_INTERNAL_ERROR              ErrorCode = 10 // engine-internal error (not payload-related)
+	ErrorCode_HEAP_PRESSURE               ErrorCode = 11 // EF15/EB02: heap backpressure active — retry after short delay
 )
 
 // Enum value maps for ErrorCode.
@@ -208,6 +209,7 @@ var (
 		8:  "MAX_CONCURRENT_EXCEEDED",
 		9:  "MAX_INPUT_SIZE_EXCEEDED",
 		10: "INTERNAL_ERROR",
+		11: "HEAP_PRESSURE",
 	}
 	ErrorCode_value = map[string]int32{
 		"ERROR_CODE_UNSPECIFIED":      0,
@@ -221,6 +223,7 @@ var (
 		"MAX_CONCURRENT_EXCEEDED":     8,
 		"MAX_INPUT_SIZE_EXCEEDED":     9,
 		"INTERNAL_ERROR":              10,
+		"HEAP_PRESSURE":               11,
 	}
 )
 
@@ -2410,7 +2413,7 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x0ePRE_VALIDATION\x10\x01\x12\x12\n" +
 	"\x0eTRANSFORMATION\x10\x02\x12\x13\n" +
 	"\x0fPOST_VALIDATION\x10\x03\x12\f\n" +
-	"\bINTERNAL\x10\x04*\xb9\x02\n" +
+	"\bINTERNAL\x10\x04*\xcc\x02\n" +
 	"\tErrorCode\x12\x1a\n" +
 	"\x16ERROR_CODE_UNSPECIFIED\x10\x00\x12\x1c\n" +
 	"\x18TRANSFORMATION_NOT_FOUND\x10\x01\x12\x15\n" +
@@ -2423,7 +2426,8 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\x17MAX_CONCURRENT_EXCEEDED\x10\b\x12\x1b\n" +
 	"\x17MAX_INPUT_SIZE_EXCEEDED\x10\t\x12\x12\n" +
 	"\x0eINTERNAL_ERROR\x10\n" +
-	"*\xe7\x03\n" +
+	"\x12\x11\n" +
+	"\rHEAP_PRESSURE\x10\v*\xe7\x03\n" +
 	"\vMessageType\x12\x1c\n" +
 	"\x18MESSAGE_TYPE_UNSPECIFIED\x10\x00\x12\x1f\n" +
 	"\x1bLOAD_TRANSFORMATION_REQUEST\x10\x01\x12\x13\n" +
@@ -2451,9 +2455,9 @@ const file_utlxe_v1_utlxe_proto_rawDesc = "" +
 	"\aExecute\x12\x18.utlxe.v1.ExecuteRequest\x1a\x19.utlxe.v1.ExecuteResponse\x12M\n" +
 	"\fExecuteBatch\x12\x1d.utlxe.v1.ExecuteBatchRequest\x1a\x1e.utlxe.v1.ExecuteBatchResponse\x12V\n" +
 	"\x0fExecutePipeline\x12 .utlxe.v1.ExecutePipelineRequest\x1a!.utlxe.v1.ExecutePipelineResponse\x12;\n" +
-	"\x06Health\x12\x17.utlxe.v1.HealthRequest\x1a\x18.utlxe.v1.HealthResponseB,\n" +
-	"\x1ccom.glomidco.utlx.engine.protoB\n" +
-	"UtlxeProtoP\x01b\x06proto3"
+	"\x06Health\x12\x17.utlxe.v1.HealthRequest\x1a\x18.utlxe.v1.HealthResponseBn\n" +
+	"\x1ecom.glomidco.utlx.engine.protoB\n" +
+	"UtlxeProtoP\x01Z>github.com/grauwen/utl-x/wrappers/go/utlxclient/proto/utlxe/v1b\x06proto3"
 
 var (
 	file_utlxe_v1_utlxe_proto_rawDescOnce sync.Once
