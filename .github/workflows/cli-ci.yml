@@ -279,7 +279,7 @@ jobs:
         ./gradlew :modules:cli:jacocoTestReport || true
     
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v5
       with:
         files: modules/cli/build/reports/jacoco/test/jacocoTestReport.xml
         flags: cli
