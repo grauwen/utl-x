@@ -13,6 +13,7 @@ were misfiled as `B` in one sitting before anyone noticed — so the rule is wri
 | **CB** | `modules/cli` — the `utlx` binary and the tooling shipped with it | [CB01](CB01-auto-capture-emits-unparseable-yaml.md) — the capture writer |
 | **IB** | the IDE and the `utlxd` daemon | [IB02](IB02-ide-execute-hardcoded-input-name.md) |
 | **VB** | `validate.*` semantic validation | [VB03](VB03-validate-oneOf-numeric-membership-fails.md) |
+| **WB** | `wrappers/*` — the client libraries that drive the engine (.NET, Go) | [WB01](WB01-dotnet-wrapper-writes-frame-bytes-out-of-order.md) — stdio frame ordering |
 
 Features use the parallel set in [`../features`](../features): **F** (language), **EF** (engine),
 **IF** (IDE).
@@ -21,6 +22,16 @@ Features use the parallel set in [`../features`](../features): **F** (language),
 `modules/engine`, the prefix is `EB` — even when the symptom first appeared somewhere else, and even
 when the fix turns out to be shared. A header that says "B = core bug" above a `Component:` of
 `:engine` is the mistake to watch for.
+
+### Why `WB` exists
+
+Added 2026-11-11, with [WB01](WB01-dotnet-wrapper-writes-frame-bytes-out-of-order.md). Every other
+prefix names a JVM module; the wrappers (`wrappers/dotnet`, `wrappers/go`) are first-party client
+libraries written in other languages, and a defect in one of them had no honest home. The temptation
+was to file WB01 as `EB`, because the symptom appeared while talking to the engine — but the engine
+behaved **correctly**, rejecting a malformed frame. Filing it as `EB` would have repeated the
+mistake this document was written to prevent: naming the component where a symptom surfaced rather
+than the one that is wrong.
 
 ## Choosing the next number
 
@@ -43,11 +54,11 @@ where you read it, which is worse than a gap.
 Prefixes and numbers were introduced over time, so a branch carries only what its history contains.
 Measured counts:
 
-| branch | B | EB | CB | IB | VB |
-|---|---|---|---|---|---|
-| `main` | 27 | 0 | 0 | 0 | 0 |
-| `development` | 26 | 2 | 0 | 7 | 0 |
-| this feature branch | 39 | 16 | 3 | 7 | 7 |
+| branch | B | EB | CB | IB | VB | WB |
+|---|---|---|---|---|---|---|
+| `main` | 27 | 0 | 0 | 0 | 0 | 0 |
+| `development` | 26 | 2 | 0 | 7 | 0 | 0 |
+| this feature branch | 39 | 16 | 3 | 7 | 7 | 2 |
 
 So **B02–B08 are missing from feature branches but present on `main`** — they were added there by
 `ca735747` ("major reshuffle of doc files"), which is not an ancestor of the feature line. Nothing

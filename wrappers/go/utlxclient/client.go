@@ -309,15 +309,20 @@ func (c *Client) sendAndReceive(msgType pb.MessageType, payload []byte) ([]byte,
 		return nil, fmt.Errorf("marshal envelope: %w", err)
 	}
 
-	// Write: varint length + envelope bytes
+	// Write one length-delimited frame, as a SINGLE write.
+	//
+	// WB01 (GitHub issue #6): the .NET client wrote the length prefix and the payload separately
+	// and, on Windows, they could reach the engine out of order. Go has no equivalent hazard — both
+	// of these were plain blocking writes — but two writes for one frame is the same unnecessary
+	// non-atomicity, and an io.Writer is free to be a short-writing or buffered thing where a
+	// partial frame matters. Composing the frame once keeps both clients to one convention:
+	// one frame, one write.
+	frame := appendFrame(nil, envData)
+
 	c.writeMu.Lock()
-	if err := writeVarint(c.stdin, len(envData)); err != nil {
+	if _, err := c.stdin.Write(frame); err != nil {
 		c.writeMu.Unlock()
-		return nil, fmt.Errorf("write varint: %w", err)
-	}
-	if _, err := c.stdin.Write(envData); err != nil {
-		c.writeMu.Unlock()
-		return nil, fmt.Errorf("write envelope: %w", err)
+		return nil, fmt.Errorf("write frame: %w", err)
 	}
 	c.writeMu.Unlock()
 
@@ -356,10 +361,22 @@ func (c *Client) waitReady(timeout time.Duration) error {
 	return fmt.Errorf("timeout after %v", timeout)
 }
 
+// appendFrame appends a length-delimited frame (varint length, then payload) to dst and returns
+// the extended slice. One allocation, and the caller issues one Write — see WB01.
+func appendFrame(dst, payload []byte) []byte {
+	var lenBuf [binary.MaxVarintLen32]byte
+	n := binary.PutUvarint(lenBuf[:], uint64(len(payload)))
+	dst = append(dst, lenBuf[:n]...)
+	return append(dst, payload...)
+}
+
 // writeVarint writes a base-128 varint to the writer.
+//
+// Retained for callers that genuinely have only a writer; the framing path above does not use it,
+// because a frame must not be split across two writes.
 func writeVarint(w io.Writer, value int) error {
-	buf := make([]byte, binary.MaxVarintLen32)
-	n := binary.PutUvarint(buf, uint64(value))
+	var buf [binary.MaxVarintLen32]byte
+	n := binary.PutUvarint(buf[:], uint64(value))
 	_, err := w.Write(buf[:n])
 	return err
 }

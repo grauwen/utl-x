@@ -277,12 +277,33 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
         }
     }
 
+    /// <summary>
+    /// Write one length-delimited frame.
+    ///
+    /// WB01 (GitHub issue #6): this used to write the varint length with a SYNCHRONOUS
+    /// <c>Stream.WriteByte</c> and the payload with an asynchronous <c>WriteAsync</c>. Mixing
+    /// synchronous and asynchronous I/O on one stream is unsafe, and on Windows it is actively
+    /// wrong: <c>Process.StandardInput.BaseStream</c> is an anonymous pipe whose handle is opened
+    /// for OVERLAPPED operation once async I/O is used, so the two writes are not ordered with
+    /// respect to each other. The payload could reach the engine first — the reporter captured
+    /// <c>08 05 02</c> where <c>02 08 05</c> was required, and UTLXe correctly answered
+    /// "Protocol message contained an invalid tag (zero)".
+    ///
+    /// The fix is not to order two writes but to have only one: length prefix and payload are
+    /// composed into a single buffer and written once, so the frame is atomic by construction and
+    /// no later refactor can reintroduce the interleaving. It is also one syscall instead of two on
+    /// a per-message path.
+    /// </summary>
     private async Task WriteEnvelopeAsync(StdioEnvelope envelope, CancellationToken ct)
     {
         var stream = _process!.InputStream;
         var bytes = envelope.ToByteArray();
-        VarintCodec.WriteVarint32(stream, bytes.Length);
-        await stream.WriteAsync(bytes, ct);
+
+        var frame = new byte[VarintCodec.Varint32Size(bytes.Length) + bytes.Length];
+        int offset = VarintCodec.WriteVarint32(frame, bytes.Length);
+        bytes.CopyTo(frame, offset);
+
+        await stream.WriteAsync(frame, ct);
         await stream.FlushAsync(ct);
     }
 
