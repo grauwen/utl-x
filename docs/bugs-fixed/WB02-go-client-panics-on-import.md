@@ -112,8 +112,17 @@ protoc -I proto \
   proto/utlxe/v1/utlxe.proto
 ```
 
-The `.proto` carries no `option go_package`, hence the `M` mapping; worth adding one so the command
-is reproducible without remembering the flag.
+The `.proto` carried no `option go_package`, hence the `M` mapping. **One has since been added**, so
+the command above no longer needs it:
+
+```
+protoc -I proto --go_out=<out> \
+  --go_opt=module=github.com/grauwen/utl-x/wrappers/go/utlxclient/proto \
+  proto/utlxe/v1/utlxe.proto
+```
+
+The JVM side generates at build time through the Gradle protobuf plugin and ignores the option; the
+engine build was re-run to confirm it.
 
 ### The regeneration also fixed a staleness nobody had noticed
 
@@ -152,8 +161,18 @@ func TestPackageImportsAndProtoInitialises(t *testing.T) {
 ```
 
 But the twelve integration tests are the greater loss, and the real fix is a CI job that runs
-`go test ./...` for the wrapper. A build-only check cannot catch this class of fault — as this bug
-demonstrates for two years of generated-code history.
+`go test ./...` for the wrapper. A build-only check cannot catch this class of fault.
+
+**Both have been added** (`.github/workflows/go-ci.yml`):
+
+1. `go build`, `go vet`, then **`go test -v ./...`** with the engine JAR built first, so the twelve
+   integration tests actually run.
+2. A **"generated bindings are up to date"** step that regenerates from the `.proto` and diffs
+   against the committed file, failing with a pointer to this report if they differ.
+
+Step 2 was checked against the corrupt file this report is about: a fresh generation differs from it
+by 14 lines, so **the guard would have failed the commit that introduced this bug**. Step 1 alone
+would also have caught it, one commit later.
 
 ## The lesson worth keeping
 

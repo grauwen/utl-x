@@ -1,0 +1,75 @@
+name: Go Wrapper CI
+
+# WB02: nothing ran the Go tests, so a corrupt generated descriptor sat in the tree
+# undetected. `go build` and `go vet` BOTH pass on it — the failure is at run time, in the
+# package's init() — so a build-only check cannot catch that class of fault. This workflow
+# exists to run the tests.
+
+on:
+  push:
+    paths:
+      - 'wrappers/go/**'
+      - 'proto/**'
+    branches: [development, main]
+  pull_request:
+    paths:
+      - 'wrappers/go/**'
+      - 'proto/**'
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: Build & Test (Go wrapper)
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Java 17 for building the UTLXe fat JAR the integration tests drive
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: gradle
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: wrappers/go/utlxclient/go.sum
+
+      # The integration tests spawn the real engine over stdio protobuf.
+      - name: Build UTLXe engine JAR
+        run: ./gradlew :modules:engine:jar
+
+      - name: Build
+        working-directory: wrappers/go/utlxclient
+        run: go build ./...
+
+      - name: Vet
+        working-directory: wrappers/go/utlxclient
+        run: go vet ./...
+
+      # The step that matters. `go build` passing proves nothing about a generated
+      # descriptor — WB02's panic was in init(), after a clean build and vet.
+      - name: Test
+        working-directory: wrappers/go/utlxclient
+        env:
+          UTLXE_JAR_PATH: ${{ github.workspace }}/modules/engine/build/libs/utlxe-1.3.0.jar
+        run: go test -v ./...
+
+      # Generated bindings must match the .proto they claim to come from. WB02 was caused by a
+      # repo-wide find-and-replace rewriting bytes INSIDE the embedded binary descriptor without
+      # fixing its length prefixes; regenerating and diffing is what catches that.
+      - name: Generated bindings are up to date
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@v1.36.6
+          sudo apt-get update && sudo apt-get install -y protobuf-compiler
+          mkdir -p /tmp/gen
+          protoc -I proto \
+            --go_out=/tmp/gen \
+            --go_opt=module=github.com/grauwen/utl-x/wrappers/go/utlxclient/proto \
+            proto/utlxe/v1/utlxe.proto
+          if ! diff -u wrappers/go/utlxclient/proto/utlxe/v1/utlxe.pb.go \
+                       /tmp/gen/utlxe/v1/utlxe.pb.go; then
+            echo "::error::Generated Go bindings differ from the .proto. Regenerate them — and never let a find-and-replace edit a .pb.go (see docs/bugs-fixed/WB02)."
+            exit 1
+          fi
