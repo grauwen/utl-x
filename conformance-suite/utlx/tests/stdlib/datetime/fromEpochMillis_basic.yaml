@@ -1,0 +1,45 @@
+name: "fromEpochMillis_basic"
+category: "stdlib/datetime"
+description: "F26: fromEpochMillis / fromEpochMicros produce the right instant, asserted absolutely rather than through a round trip"
+tags: ["datetime", "epoch", "timestamp", "F26"]
+
+input:
+  format: json
+  data: |
+    {"x": 1}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    epoch_itself: fromEpochMillis(0),
+    epoch_itself_micros: fromEpochMicros(0),
+    one_second: fromEpochMillis(1000),
+    reported_value: fromEpochMillis(1793799390438),
+    sub_milli: fromEpochMicros(1793799390438123),
+    before_epoch: fromEpochMillis(-1),
+    before_epoch_micros: fromEpochMicros(-1)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "epoch_itself": "1970-01-01T00:00:00Z",
+      "epoch_itself_micros": "1970-01-01T00:00:00Z",
+      "one_second": "1970-01-01T00:00:01Z",
+      "reported_value": "2026-11-04T13:36:30.438Z",
+      "sub_milli": "2026-11-04T13:36:30.438123Z",
+      "before_epoch": "1969-12-31T23:59:59.999Z",
+      "before_epoch_micros": "1969-12-31T23:59:59.999999Z"
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F26-epoch-timestamp-conversion.md", "GitHub issue #7"]
+  notes:
+    - "This fixture exists because the inverses were ONLY covered by `toEpochMillis(fromEpochMillis(n))`. A round trip proves the two functions are mutually inverse, NOT that either is right — two errors that cancel pass it. These assertions are absolute."
+    - "epoch_itself is the anchor: 0 must be 1970-01-01T00:00:00Z. No compensating pair of errors survives that."
+    - "The negative cases pin the floorDiv/floorMod handling in fromEpochMicros — a naive division truncates toward zero and lands one second out before 1970."

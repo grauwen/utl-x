@@ -1,0 +1,39 @@
+name: "toEpochMillis_basic"
+category: "stdlib/datetime"
+description: "F26: ISO-8601 with an offset converts to epoch milliseconds and microseconds as a plain integer"
+tags: ["datetime", "epoch", "timestamp", "F26"]
+
+input:
+  format: json
+  data: |
+    {"ts": "2026-11-04T14:36:30.438+01:00"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    millis: toEpochMillis($input.ts),
+    micros: toEpochMicros($input.ts),
+    from_literal: toEpochMillis("2026-11-04T14:36:30.438+01:00"),
+    utc_form_agrees: toEpochMillis("2026-11-04T13:36:30.438Z") == toEpochMillis($input.ts)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "millis": 1793799390438,
+      "micros": 1793799390438000,
+      "from_literal": 1793799390438,
+      "utc_form_agrees": true
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F26-epoch-timestamp-conversion.md", "GitHub issue #7"]
+  notes:
+    - "GitHub issue #7 asked for exactly these two functions and these values; the sink (Databricks Zerobus) needs a TIMESTAMP column as epoch micros."
+    - "The result is a Long, not a Double — the issue asks for 'a plain integer in JSON (not 1.79E15)', and a Double would also lose precision past 2^53."
+    - "utc_form_agrees pins that the offset is actually applied: +01:00 at 14:36 is the same instant as Z at 13:36."

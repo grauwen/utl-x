@@ -523,6 +523,11 @@ object StandardLibrary {
     private fun registerDateFunctions() {
         // Basic date functions
         register("now", DateFunctions::now)
+        // F26 (issue #7): epoch conversion, for sinks that want a numeric timestamp
+        register("toEpochMillis", DateFunctions::toEpochMillis)
+        register("toEpochMicros", DateFunctions::toEpochMicros)
+        register("fromEpochMillis", DateFunctions::fromEpochMillis)
+        register("fromEpochMicros", DateFunctions::fromEpochMicros)
         register("parseDate", DateFunctions::parseDate)
         register("toDate", DateFunctions::toDate)  // Conversion alias
         register("formatDate", DateFunctions::formatDate)

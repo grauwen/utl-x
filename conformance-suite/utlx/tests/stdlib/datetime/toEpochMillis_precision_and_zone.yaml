@@ -1,0 +1,43 @@
+name: "toEpochMillis_precision_and_zone"
+category: "stdlib/datetime"
+description: "F26: sub-millisecond digits survive toEpochMicros, and a value with no offset needs an explicit zone"
+tags: ["datetime", "epoch", "timestamp", "timezone", "F26"]
+
+input:
+  format: json
+  data: |
+    {"exact": "2026-11-04T13:36:30.438123Z", "wall": "2026-11-04T14:36:30", "day": "2026-11-04"}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    micros_keep_sub_milli: toEpochMicros($input.exact),
+    millis_truncate: toEpochMillis($input.exact),
+    wall_clock_with_zone: toEpochMillis($input.wall, "Europe/Amsterdam"),
+    date_with_zone: toEpochMillis($input.day, "Europe/Amsterdam"),
+    round_trip: toEpochMillis(fromEpochMillis(1793799390438)),
+    round_trip_micros: toEpochMicros(fromEpochMicros(1793799390438123))
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "micros_keep_sub_milli": 1793799390438123,
+      "millis_truncate": 1793799390438,
+      "wall_clock_with_zone": 1793799390000,
+      "date_with_zone": 1793746800000,
+      "round_trip": 1793799390438,
+      "round_trip_micros": 1793799390438123
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F26-epoch-timestamp-conversion.md", "GitHub issue #7"]
+  notes:
+    - "micros is NOT millis * 1000 — that would discard the .438123 the source carried. This fixture is what pins that."
+    - "A bare 2026-11-04T14:36:30 names a wall-clock reading, not an instant; it is accepted only WITH a zone. Without one the function raises and says what to pass, rather than silently assuming UTC."
+    - "date_with_zone is midnight Amsterdam (23:00Z the previous day), which is the case that would be a full day wrong under a silent UTC assumption."

@@ -19,6 +19,152 @@ object DateFunctions {
         return JavaInstant.ofEpochSecond(kotlinxInstant.epochSeconds, kotlinxInstant.nanosecondsOfSecond.toLong())
     }
 
+    // ── F26: epoch conversion (GitHub issue #7) ──────────────────────────────────────────────────
+
+    /**
+     * The instant [value] denotes, for the epoch functions below.
+     *
+     * Accepts what a mapping actually has to hand: an ISO-8601 string, or any of the UDM date
+     * types, so `toEpochMillis(now())` and `toEpochMillis($input.Timestamp)` both work rather than
+     * only the string form.
+     *
+     * A value with **no offset** (a bare `2026-11-04T14:36:30`, a date, a local date-time) is
+     * ambiguous — it names a wall-clock reading, not an instant — so it needs the optional zone
+     * argument. Assuming UTC silently would be wrong by up to a day at the worst possible moment,
+     * so it raises instead and says what to pass.
+     */
+    private fun instantOf(value: UDM, zoneId: String?, fn: String): JavaInstant {
+        fun zone(): java.time.ZoneId = try {
+            java.time.ZoneId.of(zoneId ?: throw FunctionArgumentException(
+                "$fn: '${value.asString()}' has no UTC offset, so it does not identify an instant. " +
+                "Pass a zone as the second argument, e.g. $fn(value, \"Europe/Amsterdam\"), " +
+                "or use a value that carries an offset (…+01:00 or …Z)."))
+        } catch (e: java.time.DateTimeException) {
+            throw FunctionArgumentException("$fn: unknown time zone '$zoneId'")
+        }
+
+        return when (value) {
+            is UDM.DateTime -> value.instant
+            is UDM.LocalDateTime -> value.dateTime.atZone(zone()).toInstant()
+            is UDM.Date -> value.date.atStartOfDay(zone()).toInstant()
+            is UDM.Scalar -> {
+                val text = value.value?.toString()?.trim()
+                    ?: throw FunctionArgumentException("$fn: value is null")
+
+                // An offset or a Z makes the text an instant outright.
+                val withOffset = runCatching { java.time.OffsetDateTime.parse(text).toInstant() }.getOrNull()
+                    ?: runCatching { JavaInstant.parse(text) }.getOrNull()
+                if (withOffset != null) return withOffset
+
+                // Otherwise it is a wall-clock reading. Resolve the SHAPE first and apply the zone
+                // after, so the "pass a zone" message survives — calling zone() inside a
+                // runCatching swallowed it and reported the generic parse failure instead.
+                val local: (java.time.ZoneId) -> JavaInstant =
+                    runCatching { java.time.LocalDateTime.parse(text) }.getOrNull()
+                        ?.let { ldt -> { z: java.time.ZoneId -> ldt.atZone(z).toInstant() } }
+                        ?: runCatching { java.time.LocalDate.parse(text) }.getOrNull()
+                            ?.let { d -> { z: java.time.ZoneId -> d.atStartOfDay(z).toInstant() } }
+                        ?: throw FunctionArgumentException(
+                            "$fn: cannot read '$text' as a date-time. Expected ISO-8601, for example " +
+                            "2026-11-04T14:36:30.438+01:00, 2026-11-04T13:36:30Z, or 2026-11-04T14:36:30 " +
+                            "together with a zone argument.")
+                local(zone())
+            }
+            else -> throw FunctionArgumentException(
+                "$fn: expected a date-time or an ISO-8601 string, got ${value::class.simpleName}")
+        }
+    }
+
+    @UTLXFunction(
+        description = "Epoch milliseconds for an ISO-8601 date-time (or any UTL-X date value).",
+        minArgs = 1,
+        maxArgs = 2,
+        category = "Date",
+        parameters = [
+            "value: ISO-8601 string with an offset (…+01:00 or …Z), or a date/date-time value",
+            "zone: optional IANA zone, required only when the value carries no offset"
+        ],
+        returns = "Number - whole milliseconds since 1970-01-01T00:00:00Z",
+        example = "toEpochMillis(\"2026-11-04T14:36:30.438+01:00\") => 1762263390438",
+        tags = ["date", "epoch", "timestamp"],
+        since = "1.0"
+    )
+    fun toEpochMillis(args: List<UDM>): UDM {
+        requireArgs(args, 1..2, "toEpochMillis")
+        val zone = if (args.size > 1) args[1].asString() else null
+        // A Long, deliberately: issue #7 asks for "a plain integer in JSON (not 1.79E15)", and a
+        // Double would both lose precision past 2^53 and serialise in exponent form.
+        return UDM.Scalar(instantOf(args[0], zone, "toEpochMillis").toEpochMilli())
+    }
+
+    @UTLXFunction(
+        description = "Epoch microseconds for an ISO-8601 date-time (or any UTL-X date value).",
+        minArgs = 1,
+        maxArgs = 2,
+        category = "Date",
+        parameters = [
+            "value: ISO-8601 string with an offset (…+01:00 or …Z), or a date/date-time value",
+            "zone: optional IANA zone, required only when the value carries no offset"
+        ],
+        returns = "Number - whole microseconds since 1970-01-01T00:00:00Z",
+        example = "toEpochMicros(\"2026-11-04T14:36:30.438+01:00\") => 1762263390438000",
+        tags = ["date", "epoch", "timestamp"],
+        since = "1.0"
+    )
+    fun toEpochMicros(args: List<UDM>): UDM {
+        requireArgs(args, 1..2, "toEpochMicros")
+        val zone = if (args.size > 1) args[1].asString() else null
+        val instant = instantOf(args[0], zone, "toEpochMicros")
+        // Not millis * 1000: that would throw away sub-millisecond digits the source may carry.
+        // Micros for year 1 .. 9999 fit a Long with room to spare (Long.MAX is ~year 294247).
+        return UDM.Scalar(
+            Math.addExact(
+                Math.multiplyExact(instant.epochSecond, 1_000_000L),
+                instant.nano / 1_000L
+            )
+        )
+    }
+
+    @UTLXFunction(
+        description = "The date-time at a given number of epoch milliseconds — the inverse of toEpochMillis.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = ["millis: milliseconds since 1970-01-01T00:00:00Z"],
+        returns = "DateTime",
+        example = "fromEpochMillis(1762263390438) => 2026-11-04T13:36:30.438Z",
+        tags = ["date", "epoch", "timestamp"],
+        since = "1.0"
+    )
+    fun fromEpochMillis(args: List<UDM>): UDM {
+        requireArgs(args, 1, "fromEpochMillis")
+        val n = (args[0] as? UDM.Scalar)?.value as? Number
+            ?: throw FunctionArgumentException("fromEpochMillis: expected a number of milliseconds")
+        return UDM.DateTime(JavaInstant.ofEpochMilli(n.toLong()))
+    }
+
+    @UTLXFunction(
+        description = "The date-time at a given number of epoch microseconds — the inverse of toEpochMicros.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Date",
+        parameters = ["micros: microseconds since 1970-01-01T00:00:00Z"],
+        returns = "DateTime",
+        example = "fromEpochMicros(1762263390438000) => 2026-11-04T13:36:30.438Z",
+        tags = ["date", "epoch", "timestamp"],
+        since = "1.0"
+    )
+    fun fromEpochMicros(args: List<UDM>): UDM {
+        requireArgs(args, 1, "fromEpochMicros")
+        val n = (args[0] as? UDM.Scalar)?.value as? Number
+            ?: throw FunctionArgumentException("fromEpochMicros: expected a number of microseconds")
+        val micros = n.toLong()
+        return UDM.DateTime(
+            JavaInstant.ofEpochSecond(Math.floorDiv(micros, 1_000_000L),
+                                      Math.floorMod(micros, 1_000_000L) * 1_000L)
+        )
+    }
+
     @UTLXFunction(
         description = "Performs now operation",
         minArgs = 1,
