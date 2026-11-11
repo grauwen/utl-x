@@ -13,8 +13,17 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ubuntu-latest
-    name: Build & Test (.NET wrapper)
+    # WB01 / issue #6: the frame-ordering bug was WINDOWS-ONLY. Process.StandardInput.BaseStream
+    # is an anonymous pipe whose handle is opened for OVERLAPPED I/O once async writes are used,
+    # so a synchronous write and an asynchronous one were not ordered against each other. On Linux
+    # both are plain blocking writes and the bug is invisible — which is exactly why this
+    # ubuntu-only workflow stayed green while the demo failed on a user's machine.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    name: Build & Test (.NET wrapper, ${{ matrix.os }})
 
     steps:
       - uses: actions/checkout@v4
@@ -59,7 +68,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: dotnet-test-results
+          name: dotnet-test-results-${{ matrix.os }}
           path: wrappers/dotnet/test-results/
 
       # Pack NuGet (verify packaging works)
