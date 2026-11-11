@@ -31,4 +31,30 @@ object LanguageVersions {
         val norm = normalize(version)
         return SUPPORTED.any { normalize(it) == norm }
     }
+
+    /**
+     * Why this engine cannot honour a `%utlx [declared]` header, or `null` if it can.
+     *
+     * EB15: this rule used to live only inside `Interpreter`, so it was enforced only on paths that
+     * reached the interpreter. A *compilable* script bypassed it entirely — `%utlx 2.0` ran as if it
+     * were 1.0 on the COPY and COMPILED strategies, which is fail-OPEN on a version gate. It is a
+     * static property of the header, so it belongs here, where every execution path can ask.
+     *
+     * Returns the message instead of throwing: `:core` should not dictate the exception type to the
+     * engine, and the interpreter wants a `RuntimeError` carrying a [Location] it already has.
+     */
+    fun unsupportedReason(declared: String, maxVersion: String = LATEST): String? {
+        val v = normalize(declared)
+        if (v.isEmpty()) return null  // no/blank header → treated as the baseline (back-compat)
+
+        if (!isSupported(v)) {
+            return "unsupported %utlx version '$v'; this engine understands " +
+                SUPPORTED.joinToString(", ")
+        }
+        if (LanguageNamespaces.compareVersions(v, maxVersion) > 0) {
+            return "%utlx $v is not enabled in this engine (configured for %utlx $maxVersion, " +
+                "1.0-only mode); run a 1.1-mode engine to execute this script."
+        }
+        return null
+    }
 }

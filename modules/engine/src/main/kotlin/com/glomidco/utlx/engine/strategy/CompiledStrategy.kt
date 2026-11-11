@@ -72,6 +72,8 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
 
         logger.info("Compiling transformation (COMPILED strategy)...")
         compiledProgram = compileSource(source)
+        // EB15: a header this engine cannot honour is rejected here, on every strategy.
+        requireSupportedLanguageVersion(compiledProgram)
 
         // Try to compile AST body to bytecode
         try {

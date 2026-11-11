@@ -144,7 +144,15 @@ class ASTCompiler {
                     expr.letBindings.all { isCompilable(it.value, false) }
             }
             is Expression.ArrayLiteral -> expr.elements.all { isCompilable(it, false) }
-            is Expression.MemberAccess -> isCompilable(expr.target, false)
+            // EB16: `.*` (and `.@*` / `.^*`) parses as a MemberAccess whose property is the literal
+            // "*", and the interpreter gives it real semantics — collect the child values, exclude
+            // `_text`, with a separate attribute variant. The compiler has none of that, so it
+            // emitted an ordinary property lookup for a key named "*", which no object has: the
+            // wildcard evaluated to **null** instead of an array, silently. Refuse it and let the
+            // transformation fall back to the interpreter, as EB12 does for try/catch. A wrong
+            // answer is worse than a slower one.
+            is Expression.MemberAccess ->
+                expr.property != "*" && isCompilable(expr.target, false)
             is Expression.IndexAccess -> isCompilable(expr.target, false) && isCompilable(expr.index, false)
             is Expression.BinaryOp -> isCompilable(expr.left, false) && isCompilable(expr.right, false)
             is Expression.UnaryOp -> isCompilable(expr.operand, false)

@@ -221,19 +221,11 @@ class Interpreter(
     // understand at all (typo / future version), and (2) a version above this engine's configured mode
     // (e.g. `%utlx 1.1` on a 1.0-only / UTLXe deployment). A blank version is treated as the baseline.
     private fun enforceSupportedVersion(version: String, location: Location) {
-        val v = com.glomidco.utlx.core.semantic.LanguageVersions.normalize(version)
-        if (v.isEmpty()) return  // no/blank header → treated as baseline 1.0 (back-compat)
-
-        if (!com.glomidco.utlx.core.semantic.LanguageVersions.isSupported(v)) {
-            throw RuntimeError(
-                "unsupported %utlx version '$v'; this engine understands " +
-                com.glomidco.utlx.core.semantic.LanguageVersions.SUPPORTED.joinToString(", "), location)
-        }
-        if (com.glomidco.utlx.core.semantic.LanguageNamespaces.compareVersions(v, maxLanguageVersion) > 0) {
-            throw RuntimeError(
-                "%utlx $v is not enabled in this engine (configured for %utlx $maxLanguageVersion, " +
-                "1.0-only mode); run a 1.1-mode engine to execute this script.", location)
-        }
+        // EB15: the rule itself lives in LanguageVersions so every execution path shares it. This
+        // used to be the only copy, which is why the compiled strategies never applied it.
+        com.glomidco.utlx.core.semantic.LanguageVersions
+            .unsupportedReason(version, maxLanguageVersion)
+            ?.let { throw RuntimeError(it, location) }
     }
 
     /**
@@ -1734,7 +1726,15 @@ class Interpreter(
             is com.glomidco.utlx.core.udm.UDM.Scalar -> {
                 when (val value = result.value) {
                     is String -> RuntimeValue.StringValue(value)
-                    is Number -> RuntimeValue.NumberValue(value.toDouble())
+                    // B44: the missing direction of B35. `toUDM()` emits the exact form, and
+                    // `literalToRuntimeValue` carries it in — but this path, which brings a stdlib
+                    // function's UDM result back into the interpreter, narrowed every Number through
+                    // toDouble() and dropped it. So `groupBy`/`nestBy` turned 15.500 into 15.5 while
+                    // the compiled strategies, which never make this round trip, kept it.
+                    is Number -> RuntimeValue.NumberValue.exactly(
+                        value.toDouble(),
+                        value.takeUnless { it is Double || it is Float }
+                    )
                     is Boolean -> RuntimeValue.BooleanValue(value)
                     null -> RuntimeValue.NullValue
                     else -> RuntimeValue.StringValue(value.toString())

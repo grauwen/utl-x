@@ -45,6 +45,8 @@ class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
 
         logger.info("Compiling transformation (TEMPLATE strategy)...")
         compiledProgram = compileSource(source)
+        // EB15: a header this engine cannot honour is rejected here, on every strategy.
+        requireSupportedLanguageVersion(compiledProgram)
         logger.info("Transformation compiled successfully")
     }
 

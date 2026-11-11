@@ -90,6 +90,8 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
 
         logger.info("Compiling transformation (COPY strategy)...")
         compiledProgram = compileSource(source)
+        // EB15: a header this engine cannot honour is rejected here, on every strategy.
+        requireSupportedLanguageVersion(compiledProgram)
 
         // Try to compile expression to bytecode (COPY + COMPILED combination)
         try {

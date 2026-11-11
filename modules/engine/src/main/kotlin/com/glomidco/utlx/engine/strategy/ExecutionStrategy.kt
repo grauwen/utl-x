@@ -59,3 +59,22 @@ data class ValidationError(
     val path: String? = null,
     val severity: String = "ERROR"
 )
+
+/**
+ * EB15: reject a `%utlx` header this engine cannot honour, before a strategy decides how to run it.
+ *
+ * The gate lived only in `Interpreter`, so it fired only where the interpreter ran. A *compilable*
+ * script never reached it: `%utlx 2.0` executed as if it were 1.0 on COPY and COMPILED — fail-OPEN
+ * on a version gate, and on the engine's default strategy. Every strategy now asks at
+ * `initialize`, which is the earliest point the header is known.
+ *
+ * Throws the same `RuntimeError` the interpreter throws, with the header's own location, so the
+ * three strategies report an unsupported version identically.
+ */
+internal fun requireSupportedLanguageVersion(program: com.glomidco.utlx.core.ast.Program) {
+    com.glomidco.utlx.core.semantic.LanguageVersions
+        .unsupportedReason(program.header.version)
+        ?.let {
+            throw com.glomidco.utlx.core.interpreter.RuntimeError(it, program.header.location)
+        }
+}

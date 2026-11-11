@@ -47,7 +47,7 @@ Measured counts:
 |---|---|---|---|---|---|
 | `main` | 27 | 0 | 0 | 0 | 0 |
 | `development` | 26 | 2 | 0 | 7 | 0 |
-| this feature branch | 35 | 14 | 3 | 7 | 7 |
+| this feature branch | 36 | 16 | 3 | 7 | 7 |
 
 So **B02–B08 are missing from feature branches but present on `main`** — they were added there by
 `ca735747` ("major reshuffle of doc files"), which is not an ancestor of the feature line. Nothing

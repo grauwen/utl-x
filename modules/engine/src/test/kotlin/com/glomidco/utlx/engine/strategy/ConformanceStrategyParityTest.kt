@@ -183,8 +183,46 @@ class ConformanceStrategyParityTest {
             "examples/intermediate/function_composition.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
             "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
             "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "language/version/version_unsupported.yaml" to Divergence.RUNS_ONLY_ON_TEMPLATE,
-            "stdlib/array/nestBy_basic.yaml" to Divergence.BOTH_OUTPUT,
+
+            // ── Found when this harness learned to drive the 39 named-input fixtures ──
+            // Diagnosed, not just catalogued. The RUNS_ONLY_ON_TEMPLATE entry sat unexamined for a
+            // long time because its label described a symptom and implied the wrong cause, so these
+            // two say what is actually wrong.
+            //
+            // COPY's output carries the Kotlin rendering of a runtime value into user data:
+            //   `server.host + ":" + toString(server.port)`
+            //     TEMPLATE/COMPILED -> "prod.db.example.com:5432"
+            //     COPY              -> "prod.db.example.com:UDMValue(udm=Scalar(value=5432))"
+            // Minimised to: a wildcard-produced child, inside a lambda, passed to toString(), on
+            // COPY only, for both JSON and YAML input. `Interpreter.runtimeValueToUDM` unwraps a
+            // UDMValue correctly (`is RuntimeValue.UDMValue -> value.udm`) and COMPILED agrees with
+            // TEMPLATE, so the defect is in COPY's own skeleton-merge marshalling, not the compiler
+            // and not the stdlib.
+            "datacontract/02_servers_wildcard.yaml" to Divergence.COPY_OUTPUT,
+
+            // Numeric exactness is not applied uniformly across the stdlib, so the strategies
+            // disagree on COMPUTED scale:
+            //   mapValues($d.prices, v => v * 2)   with prices {apple: 1.5, banana: 0.75}
+            //     TEMPLATE      -> 3,    1.5     (lambda parameter arrives WITHOUT an exact form)
+            //     COPY/COMPILED -> 3.0,  1.50    (exact BigDecimal arithmetic, scales multiplied)
+            // Measured on the interpreter, the seam is inside the stdlib rather than at one edge:
+            //   $d.prices.apple * 2            -> 3.0    exact
+            //   map([1.5, 0.75], v -> v * 2)   -> 3.0, 1.50   exact
+            //   mapValues(...,  v => v * 2)    -> 3,   1.5    NOT exact
+            //   sum([1.50, 1.50])              -> 3           NOT exact (3.00 would be exact)
+            // B44 fixed one such edge (`udmToRuntimeValue`); these are further ones. Left listed
+            // rather than patched because the right answer needs a DECISION first: should a
+            // *computed* result keep BigDecimal's scale (1.50 * 3 = 4.50, as today) or normalise
+            // (3.0 -> 3)? B35 preserves scale as WRITTEN; it never settled computed scale, and the
+            // fixtures were authored expecting normalisation.
+            "stdlib/object-lambda/mapValues_basic.yaml" to Divergence.BOTH_OUTPUT,
+            // version_unsupported left this list when EB15 moved the %utlx version gate out of the
+            // interpreter and into LanguageVersions, so every strategy applies it. It had been
+            // labelled "only TEMPLATE can run it", which read as a TEMPLATE limitation; the truth
+            // was the reverse — TEMPLATE was the only strategy enforcing the gate at all.
+            // nestBy_basic left this list when B44 fixed `udmToRuntimeValue`: the interpreter was
+            // narrowing a stdlib function's UDM result through toDouble(), so TEMPLATE produced
+            // 15.5 where the compiled strategies correctly kept 15.500. TEMPLATE was the wrong one.
 
         )
 
@@ -195,10 +233,12 @@ class ConformanceStrategyParityTest {
          * `ASTCompiler.isCompilable`, the parity assertions above would all still pass — by
          * exercising the interpreter three times — and only this floor would notice.
          */
-        // Lowered from 328 when the four non-deterministic fixtures stopped being driven at
-        // all. That is a smaller denominator, not thinner coverage — the floor tracks how
-        // many of the DRIVEN fixtures reach bytecode.
-        private const val MIN_COMPILED = 325
+        // 328 -> 325 when the four non-deterministic fixtures stopped being driven at all (a
+        // smaller denominator, not thinner coverage). 325 -> 362 when the loader learned to drive
+        // the 39 named-input fixtures: 396 driven instead of 357. The floor tracks how many of the
+        // DRIVEN fixtures reach bytecode, so it must be re-measured whenever the corpus the harness
+        // can drive changes. 362 and not 363 because EB16 now refuses to compile the `.*` wildcard.
+        private const val MIN_COMPILED = 362
 
         /** Fixtures that cannot be driven through `ExecutionStrategy.execute(input: String)` yet. */
         private val SKIP_REASONS = ConcurrentHashMap<String, String>()
@@ -228,7 +268,9 @@ class ConformanceStrategyParityTest {
          * floor guards against, one level up, so it gets the same treatment: an explicit failure
          * rather than a reliance on JUnit's "no arguments" default.
          */
-        private const val MIN_FIXTURES = 355
+        // 355 -> 390 once named-input fixtures became drivable (396 load today). The point is only
+        // to fail loudly if the corpus goes missing, so it sits a little below the real count.
+        private const val MIN_FIXTURES = 390
 
         @JvmStatic
         fun fixtures(): List<Fixture> {
@@ -256,24 +298,13 @@ class ConformanceStrategyParityTest {
                     SKIP_REASONS[rel] = "no transformation block"
                     return@forEach
                 }
-                if (doc.containsKey("inputs")) {
-                    // Multi-input needs the engine's named-slot path; execute() takes one payload.
-                    SKIP_REASONS[rel] = "multi-input"
-                    return@forEach
-                }
-
-                @Suppress("UNCHECKED_CAST")
-                val input = doc["input"] as? Map<String, Any?>
-                if (input == null) {
-                    SKIP_REASONS[rel] = "no input block"
-                    return@forEach
-                }
-                // `data` appears in the corpus both as a `|` string block and as inline YAML.
-                val payload = when (val d = input["data"]) {
-                    is String -> d
-                    null -> { SKIP_REASONS[rel] = "no input data"; return@forEach }
-                    else -> runCatching { json.writeValueAsString(d) }.getOrNull()
-                        ?: run { SKIP_REASONS[rel] = "input data not serialisable"; return@forEach }
+                // A fixture declares either a single `input:` block or a named `inputs:` map. Both
+                // are drivable through `execute(input: String)`, because the engine dispatches on the
+                // number of inputs the HEADER declares: one → the payload is that input's data,
+                // more than one → the payload is a JSON envelope keyed by input name.
+                val payload = when {
+                    doc.containsKey("inputs") -> namedInputsPayload(rel, doc) ?: return@forEach
+                    else -> singleInputPayload(rel, doc) ?: return@forEach
                 }
 
                 if (isNondeterministic(source)) {
@@ -289,6 +320,70 @@ class ConformanceStrategyParityTest {
                     "the corpus is missing, moved, or the loader stopped understanding it"
             }
             return out
+        }
+
+        /** `data` appears in the corpus both as a `|` string block and as inline YAML. */
+        private fun dataToString(d: Any?): String? = when (d) {
+            is String -> d
+            null -> null
+            else -> runCatching { json.writeValueAsString(d) }.getOrNull()
+        }
+
+        private fun singleInputPayload(rel: String, doc: Map<String, Any?>): String? {
+            @Suppress("UNCHECKED_CAST")
+            val input = doc["input"] as? Map<String, Any?>
+                ?: run { SKIP_REASONS[rel] = "no input block"; return null }
+            if (!input.containsKey("data")) { SKIP_REASONS[rel] = "no input data"; return null }
+            return dataToString(input["data"])
+                ?: run { SKIP_REASONS[rel] = "input data not serialisable"; return null }
+        }
+
+        /**
+         * Build the payload for a fixture that declares a named `inputs:` map.
+         *
+         * **One named input** behaves exactly like `input:` — the engine's `execute` dispatches on
+         * `header.inputs.size`, so a single declared input takes the ordinary path and wants that
+         * input's data verbatim. 17 fixtures were skipped purely because the loader looked for the
+         * wrong key.
+         *
+         * **Two or more** need the envelope the engine documents: a JSON object keyed by input name,
+         * where a JSON input is embedded as a value and a non-JSON input (xml/csv/yaml) is embedded
+         * as a JSON **string** holding its raw text. That is the shape `executeMultiInput` reads.
+         */
+        private fun namedInputsPayload(rel: String, doc: Map<String, Any?>): String? {
+            @Suppress("UNCHECKED_CAST")
+            val inputs = doc["inputs"] as? Map<String, Any?>
+                ?: run { SKIP_REASONS[rel] = "inputs is not a map"; return null }
+            if (inputs.isEmpty()) { SKIP_REASONS[rel] = "inputs is empty"; return null }
+
+            @Suppress("UNCHECKED_CAST")
+            val specs = inputs.mapValues { (_, v) -> v as? Map<String, Any?> }
+            if (specs.values.any { it == null }) {
+                SKIP_REASONS[rel] = "an input spec is not a map"; return null
+            }
+
+            if (specs.size == 1) {
+                val only = specs.values.first()!!
+                return dataToString(only["data"])
+                    ?: run { SKIP_REASONS[rel] = "input data not serialisable"; return null }
+            }
+
+            val envelope = json.createObjectNode()
+            for ((name, spec) in specs) {
+                val format = (spec!!["format"] as? String)?.lowercase() ?: "json"
+                val text = dataToString(spec["data"])
+                    ?: run { SKIP_REASONS[rel] = "input '$name' data not serialisable"; return null }
+                if (format == "json") {
+                    val node = runCatching { json.readTree(text) }.getOrNull()
+                        ?: run { SKIP_REASONS[rel] = "input '$name' is not valid JSON"; return null }
+                    envelope.set<com.fasterxml.jackson.databind.JsonNode>(name, node)
+                } else {
+                    // Non-JSON inputs travel as raw text in a JSON string, which is what
+                    // `executeMultiInput` extracts via `node.isTextual`.
+                    envelope.put(name, text)
+                }
+            }
+            return json.writeValueAsString(envelope)
         }
 
         /**
