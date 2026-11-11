@@ -94,38 +94,51 @@ object SerializationFunctions {
     }
     
     @UTLXFunction(
-        description = "Render a UDM object as a JSON string",
+        description = "Render a UDM value as a JSON string — the same JSON `output json` would write.",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 3,
         category = "Other",
         parameters = [
-            "obj: Obj value"
+            "value: the value to render",
+            "pretty: indent the output (default false)",
+            "writeAttributes: keep an attribute on a leaf element that also has text (default false, " +
+                "matching `output json`)"
         ],
-        returns = "Result of the operation",
-        example = "renderJson(data, pretty?)",
+        returns = "String - the rendered JSON",
+        example = "renderJson(data, pretty?, writeAttributes?)",
         tags = ["other"],
         since = "1.0"
     )
     /**
-     * Render a UDM object as a JSON string
-     * Usage: renderJson(data, pretty?)
+     * Render a UDM value as a JSON string.
+     *
+     * B47: delegates to the **same `JSONSerializer`** `output json` uses. It used to have its own
+     * `udmToJsonValue` conversion, and that second implementation was wrong in three ways at once:
+     *
+     * | | old renderJson | `output json` |
+     * |---|---|---|
+     * | an XML attribute | **dropped** — `properties` was read, `attributes` never was | `"@x": "1"` |
+     * | `9007199254740993` | **9007199254740992** | exact |
+     * | `1.50` | **1.5** | `1.50` |
+     *
+     * The numeric faults are B35/B37 in a fourth place: it narrowed every `Number` through
+     * `toDouble()` before writing. Sharing the serialiser fixes all three at once and makes the
+     * guarantee simple — `renderJson(x)` is exactly what `output json` would produce for `x`.
      */
     fun renderJson(args: List<UDM>): UDM {
-        requireArgs(args, 1..2, "renderJson")
-        val obj = args[0]
+        requireArgs(args, 1..3, "renderJson")
+        val value = args[0]
         val pretty = if (args.size > 1) args[1].asBoolean() else false
+        // Same default as `output json`, and the same option name, so the two cannot drift.
+        val writeAttributes = if (args.size > 2) args[2].asBoolean() else false
 
         return try {
-            val mapper = ObjectMapper()
-            if (pretty) {
-                mapper.enable(SerializationFeature.INDENT_OUTPUT)
-            }
-
-            // Convert UDM to JSON-serializable structure
-            val jsonValue = udmToJsonValue(obj)
-            val jsonString = mapper.writeValueAsString(jsonValue)
-
-            UDM.Scalar(jsonString)
+            UDM.Scalar(
+                com.glomidco.utlx.formats.json.JSONSerializer(
+                    prettyPrint = pretty,
+                    writeAttributes = writeAttributes
+                ).serialize(value)
+            )
         } catch (e: Exception) {
             throw FunctionArgumentException(
                 "renderJson failed to serialize to JSON: ${e.message}. " +

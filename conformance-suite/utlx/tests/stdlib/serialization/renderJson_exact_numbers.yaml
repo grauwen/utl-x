@@ -1,0 +1,28 @@
+name: "renderJson_exact_numbers"
+category: "stdlib/serialization"
+description: "B47: renderJson is numerically exact — it used to narrow every number through Double, corrupting large integers and dropping scale"
+tags: ["serialization", "json", "render", "numeric", "B35", "B37", "B47"]
+
+input:
+  format: json
+  data: |
+    {"big": 9007199254740993, "money": 1.50, "pct": 100.10}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  renderJson($input)
+
+expected:
+  format: json
+  data: "{\"big\":9007199254740993,\"money\":1.50,\"pct\":100.10}"
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B47-renderjson-and-object-rebuilds-drop-xml-attributes.md"]
+  notes:
+    - "Before B47: big -> 9007199254740992 (above 2^53, the B37 defect), money -> 1.5 and pct -> 100.1 (scale lost, the B35 defect)."
+    - "The faults came from renderJson owning a second serialiser that re-derived number handling; sharing JSONSerializer fixed all three at once."
+    - "renderJson returns a string, so this fixture compares the exact TEXT — a parsed-value comparison would not see 1.50 vs 1.5."

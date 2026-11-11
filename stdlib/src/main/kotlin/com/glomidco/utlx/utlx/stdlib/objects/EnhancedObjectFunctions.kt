@@ -600,7 +600,11 @@ object EnhancedObjectFunctions {
             result[newKey] = value
         }
 
-        return UDM.Object(result)
+        // B47: carry the attributes, name and metadata through. Rebuilding a UDM.Object from
+        // `properties` alone silently drops an XML element's attributes — so a script that renamed
+        // or cleaned keys across a tree lost every `@attr` on the way, with no error. The shape of
+        // the node is not the author's to discard; only the part the lambda touched should change.
+        return UDM.Object(result, obj.attributes, obj.name, obj.metadata)
     }
     
     @UTLXFunction(
@@ -654,7 +658,11 @@ object EnhancedObjectFunctions {
             result[key] = newValue
         }
 
-        return UDM.Object(result)
+        // B47: carry the attributes, name and metadata through. Rebuilding a UDM.Object from
+        // `properties` alone silently drops an XML element's attributes — so a script that renamed
+        // or cleaned keys across a tree lost every `@attr` on the way, with no error. The shape of
+        // the node is not the author's to discard; only the part the lambda touched should change.
+        return UDM.Object(result, obj.attributes, obj.name, obj.metadata)
     }
 
     @UTLXFunction(
@@ -731,7 +739,8 @@ object EnhancedObjectFunctions {
                         val childPath = "$path.$key"
                         newProps[key] = transformRecursive(childValue, childPath)
                     }
-                    UDM.Object(newProps)
+                    // B47: as above — a recursive walk must not flatten the node's own shape.
+                    UDM.Object(newProps, value.attributes, value.name, value.metadata)
                 }
                 is UDM.Array -> {
                     val newElements = value.elements.mapIndexed { index, childValue ->

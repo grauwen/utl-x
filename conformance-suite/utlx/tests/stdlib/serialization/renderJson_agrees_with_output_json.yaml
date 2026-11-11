@@ -1,0 +1,38 @@
+name: "renderJson_agrees_with_output_json"
+category: "stdlib/serialization"
+description: "B47: renderJson(x) renders exactly what `output json` would write for x — the invariant that made the bug impossible to see"
+tags: ["serialization", "json", "render", "xml", "attributes", "invariant", "B47"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Sales type="direct"/>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    rendered: renderJson($input),
+    attribute_survived: contains(renderJson($input), "@id"),
+    nested_attribute_survived: contains(renderJson($input), "@type")
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "rendered": "{\"Order\":{\"@id\":\"ORD-001\",\"Sales\":{\"@type\":\"direct\"}}}",
+      "attribute_survived": true,
+      "nested_attribute_survived": true
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B47-renderjson-and-object-rebuilds-drop-xml-attributes.md", "GitHub issue #10"]
+  notes:
+    - "This is the reporter's own reproduction shape: read an attribute with .@name, then check whether the rendered text contains it. Before B47 both booleans were false while .@name worked."
+    - "renderJson had its own serialiser; it now delegates to the same JSONSerializer `output json` uses, so the two can no longer disagree."

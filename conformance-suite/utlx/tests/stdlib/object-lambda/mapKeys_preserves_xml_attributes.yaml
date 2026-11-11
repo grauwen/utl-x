@@ -1,0 +1,36 @@
+name: "mapKeys_preserves_xml_attributes"
+category: "stdlib-object-lambda"
+description: "B47: mapKeys/mapValues/mapTree keep an element's attributes — renaming keys across an XML tree used to discard every @attr"
+tags: ["stdlib", "object", "lambda", "mapKeys", "xml", "attributes", "B47"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Customer>Alice</Customer>
+      <Sales type="direct"/>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  mapKeys($input.Order, (k) -> upper(k))
+
+expected:
+  format: json
+  data: |
+    {
+      "@id": "ORD-001",
+      "CUSTOMER": "Alice",
+      "SALES": { "@type": "direct" }
+    }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B47-renderjson-and-object-rebuilds-drop-xml-attributes.md", "GitHub issue #10"]
+  notes:
+    - "GitHub issue #10 suspected this without being able to verify it, because renderJson hid the loss. It was real."
+    - "@id is the node's OWN attribute and survives the rename; @type belongs to a child that passes through untouched."
+    - "The deeper cause was Interpreter.udmToRuntimeValue decomposing a UDM.Object into RuntimeValue.ObjectValue, which has no attribute slot — so fixing mapKeys alone changed nothing until that was fixed too."

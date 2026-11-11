@@ -1,0 +1,32 @@
+name: "renderJson_xml_attributes"
+category: "stdlib/serialization"
+description: "B47: renderJson keeps XML attributes as @name, the same as `output json` — they used to be dropped silently"
+tags: ["serialization", "json", "render", "xml", "attributes", "B47"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Customer vip="true">Alice</Customer>
+      <Total currency="EUR">299.99</Total>
+      <Sales type="direct"/>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  renderJson($input)
+
+expected:
+  format: json
+  data: "{\"Order\":{\"@id\":\"ORD-001\",\"Customer\":\"Alice\",\"Total\":299.99,\"Sales\":{\"@type\":\"direct\"}}}"
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B47-renderjson-and-object-rebuilds-drop-xml-attributes.md", "GitHub issue #10"]
+  notes:
+    - "renderJson returns a STRING, so the runner compares it as a string — this fixture pins the exact text, not merely the parsed shape."
+    - "@id on the root and @type on an empty element are the cases that always worked in `output json` and were lost only in renderJson."
+    - "Customer and Total are leaf elements that ALSO carry an attribute; by default that attribute is dropped, which is what `writeAttributes` exists for — see renderJson_xml_attributes_writeAttributes."

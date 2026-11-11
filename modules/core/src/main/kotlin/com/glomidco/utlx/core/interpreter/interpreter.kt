@@ -1746,7 +1746,18 @@ class Interpreter(
                 }
             }
             is com.glomidco.utlx.core.udm.UDM.Array -> RuntimeValue.ArrayValue(result.elements.map { udmToRuntimeValue(it) })
-            is com.glomidco.utlx.core.udm.UDM.Object -> RuntimeValue.ObjectValue(result.properties.mapValues { udmToRuntimeValue(it.value) })
+            // B47: an object that carries XML shape — attributes, an element name, namespace
+            // metadata — must stay a UDM. `RuntimeValue.ObjectValue` holds properties ONLY, with no
+            // slot for any of it, so decomposing here silently discarded every `@attr` on the way
+            // back from a stdlib call. That is why `mapKeys`/`mapTree`/`mapValues` lost attributes
+            // even after they were fixed to carry them: the loss was after they returned, not
+            // inside them.
+            is com.glomidco.utlx.core.udm.UDM.Object ->
+                if (result.attributes.isNotEmpty() || result.name != null) {
+                    RuntimeValue.UDMValue(result)
+                } else {
+                    RuntimeValue.ObjectValue(result.properties.mapValues { udmToRuntimeValue(it.value) })
+                }
             is com.glomidco.utlx.core.udm.UDM -> RuntimeValue.UDMValue(result)
             else -> RuntimeValue.StringValue(result.toString())
         }

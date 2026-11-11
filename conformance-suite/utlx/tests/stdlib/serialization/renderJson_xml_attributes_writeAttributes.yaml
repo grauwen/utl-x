@@ -1,0 +1,31 @@
+name: "renderJson_xml_attributes_writeAttributes"
+category: "stdlib/serialization"
+description: "B47: renderJson(data, pretty, writeAttributes) keeps the attribute on a leaf element that also has text"
+tags: ["serialization", "json", "render", "xml", "attributes", "writeAttributes", "B47"]
+
+input:
+  format: xml
+  data: |
+    <Order id="ORD-001">
+      <Customer vip="true">Alice</Customer>
+      <Total currency="EUR">299.99</Total>
+      <Sales type="direct"/>
+    </Order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  renderJson($input, false, true)
+
+expected:
+  format: json
+  data: "{\"Order\":{\"@id\":\"ORD-001\",\"Customer\":{\"@vip\":\"true\",\"#text\":\"Alice\"},\"Total\":{\"@currency\":\"EUR\",\"#text\":299.99},\"Sales\":{\"@type\":\"direct\"}}}"
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B47-renderjson-and-object-rebuilds-drop-xml-attributes.md", "GitHub issue #10"]
+  notes:
+    - "The third argument is the option GitHub issue #10 asked for; it is named writeAttributes to match the `output json { writeAttributes: true }` switch that already existed."
+    - "A leaf with text AND an attribute becomes {@attr, #text} rather than a bare scalar — that is the only shape this flag changes."
