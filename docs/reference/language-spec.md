@@ -856,7 +856,7 @@ See [Standard Library Reference](stdlib-reference.md)
 
 ### Appendix B: Format Specifications
 
-See [Format Guides](../formats/)
+See [Format Guides](../formats)
 
 ### Appendix C: Migration Guides
 

@@ -643,7 +643,7 @@ utlx transform $input.xml transform.utlx --pretty
 - 📖 [JSON to XML Examples](json-to-xml.md)
 - 🔧 [Function Reference](../reference/stdlib-reference.md)
 - 💡 [More Examples](cookbook.md)
-- 📚 [Language Guide](../language-guide/)
+- 📚 [Language Guide](../language-guide)
 
 ---
 

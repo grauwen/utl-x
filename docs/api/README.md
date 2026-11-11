@@ -4,7 +4,7 @@
 
 The UTL-X Daemon exposes a REST API for programmatic access to transformation, validation, schema inference, and UDM (Universal Data Model) operations.
 
-**OpenAPI Specification**: [`openapi.yaml`](./openapi.yaml)
+**OpenAPI Specification**: [`openapi.yaml`](openapi.yaml)
 
 ## Base URL
 
@@ -293,7 +293,7 @@ Zero code duplication between CLI and REST API ensures consistency.
 
 You can use tools like Swagger UI or Postman to explore the API interactively:
 
-1. Import the [OpenAPI spec](./openapi.yaml) into Swagger UI
+1. Import the [OpenAPI spec](openapi.yaml) into Swagger UI
 2. Or use Postman: Import → OpenAPI → Select file
 
 ## Related Documentation

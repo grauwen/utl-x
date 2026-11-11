@@ -569,7 +569,7 @@ output yaml
 1. [Syntax Guide](syntax.md)
 2. [Functions](functions.md)
 3. [Selectors](selectors.md)
-4. [Examples](../examples/)
+4. [Examples](../examples)
 
 ### Advanced
 
@@ -618,7 +618,7 @@ Ready to dive deeper?
 
 - 📖 [Syntax Guide](syntax.md) - Detailed syntax reference
 - 🔧 [Functions](functions.md) - Built-in functions
-- 💡 [Examples](../examples/) - Practical examples
+- 💡 [Examples](../examples) - Practical examples
 - 📚 [Language Spec](../reference/language-spec.md) - Complete specification
 
 **Happy transforming!** 🚀

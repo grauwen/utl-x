@@ -2,7 +2,7 @@
 
 Phase 0a (the runner) + Phase 0b (the baseline) of the `%utlx 1.1` build plan
 (`docs/architecture/utlx-1_1-build-plan.md`). Pairs with the policy spec
-(`docs/architecture/parser-strictness-profiles.md`) and the test doctrine
+(`devdocs/architecture/parser-strictness-profiles.md`) and the test doctrine
 (`docs/architecture/utlx-test-corpora.md` §5.7).
 
 ## What it measures

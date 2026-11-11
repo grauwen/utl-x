@@ -1,6 +1,6 @@
 # EF03: Bundle Management API
 
-> **See also:** **[IF19](IF19-shared-bundle-api-and-management-ui.md)** — EF03's **file persistence
+> **See also:** **IF19 *(IDE — development branch)*** — EF03's **file persistence
 > is now refactored onto the shared `modules/bundle` layer** (July 2026, `feature/utlxd-bundle-api`):
 > `AdminEndpoint`'s transformation deploy/delete and `SchemaStore` write through the same
 > `BundleStore` that **utlxd** uses, so the two stay in lockstep (identical layout + path-traversal

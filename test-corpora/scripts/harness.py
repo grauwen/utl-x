@@ -11,7 +11,7 @@ record whether it ACCEPTED or REJECTED the input, then compare that against each
 Why "current parser vs profile spec"
 ------------------------------------
 The lenient|standard|strict PROFILES are not implemented in the parsers yet (see
-docs/architecture/parser-strictness-profiles.md §3). So this run measures ONE current parser
+devdocs/architecture/parser-strictness-profiles.md §3). So this run measures ONE current parser
 behaviour against each profile's SPEC. The per-profile MISMATCHES are the Phase-0c hardening
 backlog — e.g. `strict` wants a trailing comma REJECTED but today's parser accepts it. That gap,
 per profile, is the whole point of the Phase-0b baseline.

@@ -592,8 +592,8 @@ Now that UTL-X is installed:
 
 1. ✅ **Learn the basics:** [Your First Transformation](your-first-transformation.md)
 2. 📖 **Understand concepts:** [Basic Concepts](basic-concepts.md)
-3. 💡 **Try examples:** [Examples](../examples/)
-4. 📚 **Deep dive:** [Language Guide](../language-guide/)
+3. 💡 **Try examples:** [Examples](../examples)
+4. 📚 **Deep dive:** [Language Guide](../language-guide)
 
 ---
 

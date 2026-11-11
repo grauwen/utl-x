@@ -4,7 +4,7 @@
 **Priority:** High (competitive differentiator for Tibco/MuleSoft migration)  
 **Created:** May 2026  
 **Reassessed:** May 2026  
-**IDE integration:** [IF02: IDE XSLT Migration Assistant](IF02-ide-xslt-migration-assistant.md)
+**IDE integration:** IF02: IDE XSLT Migration Assistant *(IDE — development branch)*
 
 ---
 

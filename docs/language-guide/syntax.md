@@ -1078,7 +1078,7 @@ let discount = if (quantity > 100) 0.20      // 20% for bulk
 - **Learn data types:** [Data Types Guide](data-types.md)
 - **Master selectors:** [Selectors Guide](selectors.md)
 - **Explore functions:** [Functions Reference](functions.md)
-- **Try examples:** [Examples](../examples/)
+- **Try examples:** [Examples](../examples)
 
 ---
 

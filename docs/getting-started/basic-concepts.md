@@ -738,7 +738,7 @@ Key concepts you learned:
 
 Now that you understand the core concepts:
 
-1. **Practice:** Try the [examples](../examples/)
+1. **Practice:** Try the [examples](../examples)
 2. **Deep dive:** Read the [Language Guide](../language-guide/overview.md)
 3. **Reference:** Bookmark the [Quick Reference](quick-reference.md)
 4. **Experiment:** Create your own transformations!

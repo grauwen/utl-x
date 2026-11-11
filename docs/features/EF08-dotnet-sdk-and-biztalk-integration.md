@@ -410,7 +410,7 @@ if (response.hasOutputMetadata()) {
 }
 ```
 
-See [Proto Reference](../../docs/sdk/proto-reference.md) for the complete proto documentation.
+See [Proto Reference](../sdk/proto-reference.md) for the complete proto documentation.
 
 ## Build pipeline changes
 

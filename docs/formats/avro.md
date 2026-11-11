@@ -647,7 +647,7 @@ UTL-X validates generated Avro schemas using the Apache Avro 1.11.3 library. Inv
 ## See Also
 
 - [USDL Specification](../language-guide/usdl.md)
-- [JSON Schema Support](./json-schema.md)
+- [JSON Schema Support](json-schema.md)
 - [XSD Support](./xsd.md)
 - [Multiple Inputs/Outputs](../language-guide/multiple-inputs-outputs.md)
 

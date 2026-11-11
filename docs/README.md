@@ -36,8 +36,8 @@ Working with different data formats:
 
 - **[XML](formats/xml.md)** - XML input and output
 - **[JSON](formats/json.md)** - JSON input and output
-- **[CSV](formats/csv.md)** - CSV input and output
-- **[YAML](formats/yaml.md)** - YAML input and output
+- **[CSV](csv/csv.md)** - CSV input and output
+- **[YAML](yaml/yaml.md)** - YAML input and output
 
 Also Meta Data formats are supported!
 
@@ -68,7 +68,7 @@ Understanding UTL-X internals:
 
 - **[Architecture Overview](architecture/overview.md)** - High-level design
 - **[Compiler Pipeline](architecture/compiler-pipeline.md)** - Compilation stages
-- **[Universal Data Model](architecture/universal-data-model.md)** - UDM explained
+- **[Universal Data Model](udm/universal-data-model.md)** - UDM explained
 - **[Runtime](architecture/runtime.md)** - Runtime architecture
 - **[Performance](architecture/performance.md)** - Optimization techniques
 - **[Validation Enforcement & Observability](architecture/utlxe-validation-enforcement-and-observability.md)** - What the engine does with a validation verdict: enforcement, logging, counters, dead-letter
@@ -101,7 +101,7 @@ Community resources and information:
 - [Installation Guide](getting-started/installation.md)
 - [Syntax Cheat Sheet](getting-started/quick-reference.md)
 - [Function Reference](reference/stdlib-reference.md)
-- [Examples Collection](examples/)
+- [Examples Collection](examples)
 - [FAQ](community/faq.md)
 
 ### Common Tasks
@@ -109,7 +109,7 @@ Community resources and information:
 - [Transform XML to JSON](examples/xml-to-json.md)
 - [Filter and Map Arrays](examples/cookbook.md#filtering-and-mapping)
 - [Template Matching](language-guide/templates.md)
-- [Handle Multiple Formats](formats/)
+- [Handle Multiple Formats](formats)
 - [Debug Transformations](getting-started/basic-concepts.md#debugging)
 
 ---
@@ -151,11 +151,11 @@ output json
 
 ### By Topic
 
-- **Beginners:** Start with [Getting Started](getting-started/)
-- **Language Features:** See [Language Guide](language-guide/)
-- **Format-Specific:** Check [Format Guides](formats/)
-- **Problem-Solving:** Browse [Examples](examples/) and [Cookbook](examples/cookbook.md)
-- **Technical Details:** Read [Reference](reference/) and [Architecture](architecture/)
+- **Beginners:** Start with [Getting Started](getting-started)
+- **Language Features:** See [Language Guide](language-guide)
+- **Format-Specific:** Check [Format Guides](formats)
+- **Problem-Solving:** Browse [Examples](examples) and [Cookbook](examples/cookbook.md)
+- **Technical Details:** Read [Reference](reference) and [Architecture](architecture)
 
 ### By Experience Level
 
@@ -169,7 +169,7 @@ output json
 1. [Template Matching](language-guide/templates.md)
 2. [Functions](language-guide/functions.md)
 3. [Complex Transformations](examples/complex-transformations.md)
-4. [Multiple Formats](formats/)
+4. [Multiple Formats](formats)
 
 **Advanced:**
 1. [Language Specification](reference/language-spec.md)
@@ -185,7 +185,7 @@ Found a typo? Want to improve an explanation? Documentation contributions are we
 
 - **Small fixes:** Edit directly on GitHub and submit a PR
 - **New sections:** Open an issue first to discuss
-- **Examples:** Add to the [examples/](examples/) directory
+- **Examples:** Add to the [examples/](examples) directory
 - **Guidelines:** Follow the [Contributing Guide](../CONTRIBUTING.md)
 
 ---

@@ -782,7 +782,7 @@ sum($input.Orders.Order[
 ## Next Steps
 
 - **Learn functions:** [Functions Guide](functions.md)
-- **Practice with examples:** [Examples](../examples/)
+- **Practice with examples:** [Examples](../examples)
 - **Read full spec:** [Language Specification](../reference/language-spec.md)
 
 ---

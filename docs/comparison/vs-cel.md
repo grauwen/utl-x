@@ -239,9 +239,9 @@ This is the cleanest visual signal of the boundary. If your environment already 
 
 ## See also
 
-- [vs jq](./vs-jq.md) — the closer comparison, on the JSON-tooling axis
-- [vs XSLT](./vs-xslt.md) — the historical predecessor for XML transformation
-- [vs DataWeave](./vs-dataweave.md) — the closest commercial peer
+- [vs jq](vs-jq.md) — the closer comparison, on the JSON-tooling axis
+- [vs XSLT](vs-xslt.md) — the historical predecessor for XML transformation
+- [vs DataWeave](vs-dataweave.md) — the closest commercial peer
 - [CEL specification](https://github.com/google/cel-spec) — official Google specification
 - [cel-go](https://github.com/google/cel-go) — reference implementation in Go
 

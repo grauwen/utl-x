@@ -1565,7 +1565,7 @@ output proto %usdl 1.0  // ProtoSerializer doesn't exist yet
 ## References
 
 - [USDL Syntax Rationale](../design/usdl-syntax-rationale.md) - Design decisions
-- [UTL-X Language Guide](./quick-reference.md) - Core language
+- [UTL-X Language Guide](../getting-started/quick-reference.md) - Core language
 - [UDM Specification](../architecture/udm-specification.md) - Universal Data Model
 - [XSD W3C Specification](https://www.w3.org/TR/xmlschema11-1/)
 - [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/schema)

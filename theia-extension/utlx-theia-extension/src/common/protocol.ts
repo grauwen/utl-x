@@ -15,7 +15,7 @@ export const UTLX_SERVICE_SYMBOL = Symbol('UTLXService');
 
 /**
  * IDE modes (distinct from the engine lifecycle phases design-time/init-time/runtime).
- * See docs/architecture/ide-modes-specification.md.
+ * See devdocs/architecture/ide-modes-specification.md.
  */
 export enum UTLXMode {
     /** Message Contract mode: contract-driven T1->T1 mapping against predefined

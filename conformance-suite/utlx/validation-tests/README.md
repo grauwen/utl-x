@@ -279,4 +279,4 @@ python3 utlx/runners/validation-runner.py validation-tests
 
 - [Lint Test Suite README](../lint-tests/README.md)
 - [Transform Test Suite README](../tests/README.md)
-- [Validation & Analysis Study](../../../docs/architecture/validation-and-analysis-study.md)
+- [Validation & Analysis Study](../../../devdocs/architecture/validation-and-analysis-study.md)

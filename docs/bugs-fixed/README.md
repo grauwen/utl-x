@@ -11,7 +11,7 @@ were misfiled as `B` in one sitting before anyone noticed — so the rule is wri
 | **B** | the shared language stack: `:core`, `formats/*`, `:stdlib` | [B35](B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md) — the numeric model |
 | **EB** | `modules/engine` — the execution strategies and the runtime they call | [EB07](EB07-compiled-index-access-ignores-string-keys.md) — `ASTCompiler` index access |
 | **CB** | `modules/cli` — the `utlx` binary and the tooling shipped with it | [CB01](CB01-auto-capture-emits-unparseable-yaml.md) — the capture writer |
-| **IB** | the IDE and the `utlxd` daemon | [IB02](IB02-ide-execute-hardcoded-input-name.md) |
+| **IB** | the IDE and the `utlxd` daemon | IB02 *(IDE — development branch)* |
 | **VB** | `validate.*` semantic validation | [VB03](VB03-validate-oneOf-numeric-membership-fails.md) |
 | **WB** | `wrappers/*` — the client libraries that drive the engine (.NET, Go) | [WB01](WB01-dotnet-wrapper-writes-frame-bytes-out-of-order.md) — stdio frame ordering |
 

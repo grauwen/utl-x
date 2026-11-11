@@ -422,8 +422,8 @@ utlx --version                                 # Version
 
 ## Useful Links
 
-- 📖 [Full Language Guide](../language-guide/)
-- 💡 [Examples](../examples/)
+- 📖 [Full Language Guide](../language-guide)
+- 💡 [Examples](../examples)
 - 📚 [Language Specification](../reference/language-spec.md)
 - 🔧 [Function Reference](../reference/stdlib-reference.md)
 

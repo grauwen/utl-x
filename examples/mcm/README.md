@@ -92,6 +92,6 @@ NN-name/
 
 ## Related
 
-- `docs/features/IF11-ide-message-contract-ai-assist.md` — coverage analysis, gap
+- `devdocs/features/IF11-ide-message-contract-ai-assist.md` — coverage analysis, gap
   refinement, archetype matrix, schema-based validation.
-- `docs/features/IF08-ide-ai-assist-mode-aware.md` — mode-aware AI assist.
+- `devdocs/features/IF08-ide-ai-assist-mode-aware.md` — mode-aware AI assist.

@@ -2697,7 +2697,7 @@ See [LICENSE.md](../../LICENSE.md) for details.
 ---
 
 **For complete examples and integration guides, see:**
-- [Language Guide](../language-guide/)
-- [Examples](../examples/)
+- [Language Guide](../language-guide)
+- [Examples](../examples)
 - [API Reference](api-reference.md)
 - [GitHub Repository](https://github.com/grauwen/utl-x)

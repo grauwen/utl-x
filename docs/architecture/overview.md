@@ -280,7 +280,7 @@ utlx/
 ## Next Sections
 
 - [Compiler Pipeline](compiler-pipeline.md) - Detailed compilation process
-- [Universal Data Model](universal-data-model.md) - UDM internals
+- [Universal Data Model](../udm/universal-data-model.md) - UDM internals
 - [Runtime](runtime.md) - Runtime execution details
 - [Performance](performance.md) - Optimization techniques
 

@@ -371,4 +371,4 @@ Common error codes:
 
 - [LSP Specification](https://microsoft.github.io/language-server-protocol/)
 - [JSON-RPC 2.0 Specification](https://www.jsonrpc.org/specification)
-- [UTL-X Architecture Documentation](./architecture/)
+- [UTL-X Architecture Documentation](architecture)

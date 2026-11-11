@@ -8,4 +8,4 @@ Third-party source code archived as safeguard copies.
 - **Source:** https://github.com/berhauz/reverseXSL
 - **License:** Apache 2.0
 - **Archived:** May 2026
-- **Purpose:** Anything-to-XML parser for EDI/EDIFACT, IATA, SWIFT MT, HL7 v2, X12, fixed-length records. Potential integration for UTL-X structured text format support. See `docs/architecture/reversexsl-integration-study.md`.
+- **Purpose:** Anything-to-XML parser for EDI/EDIFACT, IATA, SWIFT MT, HL7 v2, X12, fixed-length records. Potential integration for UTL-X structured text format support. See `devdocs/architecture/reversexsl-integration-study.md`.

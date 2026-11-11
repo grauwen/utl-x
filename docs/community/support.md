@@ -137,11 +137,11 @@ Any other relevant information.
 **Start here before asking:**
 
 1. **[FAQ](faq.md)** - Common questions answered
-2. **[Getting Started](../getting-started/)** - Tutorials for beginners
-3. **[Examples](../examples/)** - Real-world code examples
+2. **[Getting Started](../getting-started)** - Tutorials for beginners
+3. **[Examples](../examples)** - Real-world code examples
 4. **[Cookbook](../examples/cookbook.md)** - Common patterns
-5. **[Language Guide](../language-guide/)** - Detailed reference
-6. **[API Reference](../reference/)** - Complete API docs
+5. **[Language Guide](../language-guide)** - Detailed reference
+6. **[API Reference](../reference)** - Complete API docs
 
 ### Search Tips
 
@@ -414,9 +414,9 @@ output json
 ### Official Resources
 
 - 📖 **[Documentation](../README.md)** - Complete docs
-- 🎓 **[Getting Started](../getting-started/)** - Tutorials
-- 💡 **[Examples](../examples/)** - Code samples
-- 📚 **[Language Guide](../language-guide/)** - Reference
+- 🎓 **[Getting Started](../getting-started)** - Tutorials
+- 💡 **[Examples](../examples)** - Code samples
+- 📚 **[Language Guide](../language-guide)** - Reference
 
 ### Community Resources
 

@@ -1,0 +1,25 @@
+name: docs boundary
+
+# docs/    ships to main and must be self-contained.
+# devdocs/ is development-only and never reaches main.
+#
+# A link from docs/ into devdocs/ is a link that will be broken on main,
+# silently. This job is what stops that from shipping.
+
+on:
+  push:
+    paths: ['docs/**', 'devdocs/**', 'scripts/check-docs-boundary.py']
+  pull_request:
+    paths: ['docs/**', 'devdocs/**', 'scripts/check-docs-boundary.py']
+  workflow_dispatch:
+
+jobs:
+  boundary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check docs/ <-> devdocs/ boundary
+        run: python3 scripts/check-docs-boundary.py

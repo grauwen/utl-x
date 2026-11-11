@@ -1843,7 +1843,7 @@ Same USDL, different output!
 ## References
 
 - [Universal Schema DSL Specification](../language-guide/universal-schema-dsl.md)
-- [UTL-X Language Guide](../language-guide/quick-reference.md)
+- [UTL-X Language Guide](../getting-started/quick-reference.md)
 - [UDM Specification](../architecture/udm-specification.md)
 - [XSD Design Patterns](https://www.w3.org/TR/xmlschema-0/)
 - [JSON Schema 2020-12](https://json-schema.org/draft/2020-12/schema)

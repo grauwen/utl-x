@@ -38,7 +38,7 @@
 >    (not verified as implemented here).
 >
 > The precedence *intent* in §1 (config overrides header; EF03 runtime override on top) stands
-> as the target. [IF17](IF17-ide-header-level-schema-binding.md) surfaces the header `{schema}`
+> as the target. IF17 *(IDE — development branch)* surfaces the header `{schema}`
 > binding in the IDE and follows this EF02 order, flagging where the engine merge is absent.
 
 ## Summary

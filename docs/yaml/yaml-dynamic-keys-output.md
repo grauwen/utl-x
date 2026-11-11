@@ -778,7 +778,7 @@ You can mix static and dynamic keys:
 
 ## See Also
 
-- [YAML Dynamic Keys Support (INPUT)](./yaml-dynamic-keys-support.md) - Reading dynamic keys
+- [YAML Dynamic Keys Support (INPUT)](yaml-dynamic-keys-support.md) - Reading dynamic keys
 - [DataContract Specification v1.2.1](https://datacontract.com)
 - [UTL-X Function Reference](./stlib_complete_reference.md)
 

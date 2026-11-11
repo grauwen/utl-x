@@ -646,7 +646,7 @@ All existing single-input scripts continue to work without changes:
 ## See Also
 
 - [UTL-X Syntax Guide](syntax.md)
-- [Format Specifications](../formats/)
+- [Format Specifications](../formats)
 - [XML Encoding Guide](../formats/xml.md#encoding-handling)
 - [Selectors and Navigation](selectors.md)
 - [Functions Reference](functions.md)

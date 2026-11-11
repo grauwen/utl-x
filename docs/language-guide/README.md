@@ -27,8 +27,8 @@ Welcome to the UTL-X Language Guide. This documentation covers all aspects of th
 
 - [XML Format](../formats/xml.md)
 - [JSON Format](../formats/json.md)
-- [CSV Format](../formats/csv.md)
-- [YAML Format](../formats/yaml.md)
+- [CSV Format](../csv/csv.md)
+- [YAML Format](../yaml/yaml.md)
 - [Custom Formats](../formats/custom-format.md)
 
 ## Feature Status
