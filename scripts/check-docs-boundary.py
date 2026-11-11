@@ -80,12 +80,24 @@ def main():
             text, tgt = _m.group(1).strip(), _m.group(2)
             if _re.match(r'^(https?:|mailto:|#|/)', tgt):
                 continue
-            # the text must sit immediately BEFORE a stub marker, not merely
-            # appear somewhere in the file (live links would false-positive)
-            if not _re.search(_re.escape(text) + r'\s*' + MARK.pattern, body):
+            # The FULL stub text must equal this link's text. Matching a mere
+            # suffix makes "CLI Reference" collide with a "Reference" link and
+            # "UDM Documentation" with a "Documentation" link.
+            hit = False
+            for _sm in MARK.finditer(body):
+                before = body[:_sm.start()].rstrip()
+                before = before[before.rfind('\n') + 1:]
+                # strip list bullets, numbering, bold and leading emoji/symbols
+                cleaned = _re.sub(r'^\s*(?:[-*+]|\d+\.)\s*', '', before)
+                cleaned = cleaned.replace('**', '').strip()
+                cleaned = _re.sub(r'^[^\w(]+\s*', '', cleaned).strip()
+                if cleaned == text:
+                    hit = True
+                    break
+            if not hit:
                 continue
             cand = os.path.normpath(os.path.join(os.path.dirname(path), tgt.split('#')[0]))
-            if os.path.exists(cand) and cand.startswith('docs' + os.sep):
+            if os.path.isfile(cand) and cand.startswith('docs' + os.sep):
                 recoverable.append((path, text, cand))
 
     status = 0
