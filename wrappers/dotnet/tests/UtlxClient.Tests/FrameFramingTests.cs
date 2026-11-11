@@ -1,5 +1,6 @@
 using Xunit;
 using Glomidco.Utlx;
+using Utlxe.V1;
 
 namespace Glomidco.Utlx.Tests;
 
@@ -79,7 +80,7 @@ public class FrameFramingTests
     }
 
     [Fact]
-    public void AFrameIsWrittenAsASingleWrite()
+    public async Task AFrameIsWrittenAsASingleWrite()
     {
         // The property that makes the Windows ordering bug structurally impossible: one Write call,
         // so there are no two operations whose order the OS could decide.
@@ -89,7 +90,7 @@ public class FrameFramingTests
         payload.CopyTo(frame, offset);
 
         var stream = new RecordingStream();
-        stream.WriteAsync(frame).AsTask().Wait();
+        await stream.WriteAsync(frame);
 
         Assert.Single(stream.Writes);
         Assert.Equal(new byte[] { 0x02, 0x08, 0x05 }, stream.All);
@@ -110,5 +111,43 @@ public class FrameFramingTests
 
         using var ms = new MemoryStream(frame);
         Assert.Equal(300, VarintCodec.ReadVarint32(ms));
+    }
+}
+
+/// <summary>
+/// WB03 — which response types carry a correlation id.
+///
+/// `ExecuteBatchAsync` was sent through the correlated path, but `ExecuteBatchResponse` is
+/// `repeated ExecuteResponse results = 1;` — no id field at all. The reader could not match it, so
+/// it went to the sequential channel while the caller awaited a `TaskCompletionSource` nothing
+/// would ever complete: a hang, or a `ChannelClosedException` if the reader loop ended first.
+///
+/// This classification is the piece of knowledge that bug cost, so it gets a test. If a future
+/// message type is added to the correlated path, it needs a case in `ExtractRequestId` too — and
+/// if it has no id field, it belongs on the sequential path instead.
+/// </summary>
+public class CorrelationClassificationTests
+{
+    [Fact]
+    public void ExecuteResponse_CarriesACorrelationId()
+    {
+        Assert.True(UtlxeClient.CarriesCorrelationId(MessageType.ExecuteResponse));
+    }
+
+    [Fact]
+    public void ExecuteBatchResponse_DoesNot()
+    {
+        // The whole of WB03 in one assertion: batch has no correlation id, so it must never be
+        // awaited by one.
+        Assert.False(UtlxeClient.CarriesCorrelationId(MessageType.ExecuteBatchResponse));
+    }
+
+    [Theory]
+    [InlineData(MessageType.LoadTransformationResponse)]
+    [InlineData(MessageType.UnloadTransformationResponse)]
+    [InlineData(MessageType.HealthResponse)]
+    public void SequentialResponseTypes_DoNot(MessageType type)
+    {
+        Assert.False(UtlxeClient.CarriesCorrelationId(type));
     }
 }

@@ -160,8 +160,24 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
             });
         }
 
-        var resp = await SendCorrelatedAsync(
-            MessageType.ExecuteBatchRequest, req, batchReqId, ct);
+        // WB03: this used SendCorrelatedAsync, and could not possibly work.
+        //
+        // `ExecuteBatchResponse` is `repeated ExecuteResponse results = 1;` — it carries **no
+        // request_id of its own**, so `ExtractRequestId` returns null for it (it only knows how to
+        // read an `ExecuteResponse`). The reader loop then falls into its else branch and routes the
+        // envelope to `_sequentialChannel` — while `SendCorrelatedAsync` sits awaiting a
+        // `TaskCompletionSource` in `_pendingRequests` that nothing will ever complete.
+        //
+        // That is the hang. The fast-failure variant is the same bug seen from the other side: when
+        // the reader loop ends, its `finally` faults every pending request, so the await returns
+        // `ChannelClosedException` in milliseconds instead of blocking. One cause, two symptoms,
+        // depending on whether the process outlives the call.
+        //
+        // The method's own summary already said what it should do — "The entire batch is a single
+        // request/response — no correlation ID matching needed" — so it takes the sequential path,
+        // which is where the reader was putting the response all along.
+        var resp = await SendSequentialAsync(
+            MessageType.ExecuteBatchRequest, req, MessageType.ExecuteBatchResponse, ct);
 
         return ExecuteBatchResponse.Parser.ParseFrom(resp.Payload);
     }
@@ -308,6 +324,25 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
+    /// Does a response of this type carry a correlation identifier of its own?
+    ///
+    /// WB03: this distinction was implicit and got it wrong. `ExecuteBatchResponse` is
+    /// `repeated ExecuteResponse results = 1;` — it has **no** id, because a batch is a single
+    /// request/response at the protocol level. `ExecuteResponse` does. Sending a type that
+    /// answers `false` here through the correlated path hangs the caller, because nothing can
+    /// ever match the response to its `TaskCompletionSource`.
+    ///
+    /// **Adding a correlated message type?** Add it here AND give it a case in
+    /// <see cref="ExtractRequestId"/>. If it has no id field, it belongs on the sequential path
+    /// instead — see <c>SendSequentialAsync</c>.
+    ///
+    /// Internal rather than private so the classification can be asserted in tests; it is the
+    /// piece that encodes the knowledge this bug cost.
+    /// </summary>
+    internal static bool CarriesCorrelationId(MessageType type) =>
+        type == MessageType.ExecuteResponse;
+
+    /// <summary>
     /// Extract request_id from an ExecuteResponse payload for pipe-level dispatch.
     /// Falls back to correlation_id for backward compatibility with older UTLXe versions.
     /// </summary>
@@ -364,8 +399,31 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
                     }
                     else
                     {
-                        // No matching pending request — could be batch response or fallback
-                        // Route to sequential channel as fallback
+                        // WB03: this fallback is correct for a type that has no correlation id
+                        // (ExecuteBatchResponse) and a silent trap for one that should have had
+                        // one. The difference used to be invisible: the response went to a queue
+                        // the caller was not reading, the caller waited forever, and it surfaced
+                        // as a flaky test rather than as a diagnosable fault. Say so instead.
+                        if (CarriesCorrelationId(envelope.Type))
+                        {
+                            if (reqId == null)
+                            {
+                                _logger.LogWarning(
+                                    "A {Type} arrived with no extractable request id. It is being " +
+                                    "routed to the sequential channel, so any caller awaiting it by " +
+                                    "correlation will hang. Give this type a case in " +
+                                    "ExtractRequestId, or send it via SendSequentialAsync.",
+                                    envelope.Type);
+                            }
+                            else
+                            {
+                                _logger.LogWarning(
+                                    "A {Type} arrived for request {RequestId} with no caller " +
+                                    "waiting — late, duplicate, or already cancelled.",
+                                    envelope.Type, reqId);
+                            }
+                        }
+
                         await _sequentialChannel.Writer.WriteAsync(envelope);
                     }
                 }
