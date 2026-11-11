@@ -9,7 +9,7 @@ import com.glomidco.utlx.core.ast.Location
  * and providing more helpful suggestions based on common mistakes and lessons learned.
  *
  * This enhancer integrates lessons learned from real-world UTLX code errors,
- * documented in /docs/gen-ai/lsp-diagnostics-schema.json
+ * documented in /devdocs/gen-ai/lsp-diagnostics-schema.json
  *
  * The enhancer has access to:
  * - The full AST (for structural analysis)

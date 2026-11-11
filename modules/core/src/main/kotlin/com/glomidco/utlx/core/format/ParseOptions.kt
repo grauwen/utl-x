@@ -3,7 +3,7 @@ package com.glomidco.utlx.core.format
 /**
  * Parser strictness profile — the deployment policy governing how tolerant the format readers are of
  * imperfect input, and how tight their resource bounds are. See
- * `docs/architecture/parser-strictness-profiles.md` (the spec) and `test-corpora/expectations/`
+ * `devdocs/architecture/parser-strictness-profiles.md` (the spec) and `test-corpora/expectations/`
  * (the conformance: `profiles/{strict,standard,lenient}/` + `bounds.yaml`).
  *
  * The profile is set by the deployment, NOT by the `%utlx` header or the data; on a content guard it

@@ -501,7 +501,7 @@ object DesignCommand {
             |All communication uses the same LSP/JSON-RPC 2.0 protocol.
             |Only the transport layer differs.
             |
-            |See: docs/architecture/design-time-schema-analysis-enhanced.md
+            |See: devdocs/architecture/design-time-schema-analysis-enhanced.md
         """.trimMargin())
     }
 
@@ -799,8 +799,8 @@ object DesignCommand {
             |  --no-strict       Disable strict mode validation
             |
             |Documentation:
-            |  Design-time analysis: docs/architecture/design-time-schema-analysis.md
-            |  Daemon & IDE support: docs/architecture/design-time-schema-analysis-enhanced.md
+            |  Design-time analysis: devdocs/architecture/design-time-schema-analysis.md
+            |  Daemon & IDE support: devdocs/architecture/design-time-schema-analysis-enhanced.md
         """.trimMargin())
     }
 }
