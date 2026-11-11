@@ -52,10 +52,10 @@ base 1.1. See *Scope* below.
 
 - Spec: [`../architecture/utlx-1_1-semantic-validation.md`](../architecture/utlx-1_1-semantic-validation.md)
 - Naming + two-tier vocabulary: [`../architecture/utlx-validate-naming-and-guard-profile.md`](../architecture/utlx-validate-naming-and-guard-profile.md)
-- Vocabulary coverage (vs Schematron & FEEL): [`../architecture/utlx-validate-vocabulary-coverage.md`](../proposals/utlx-validate-vocabulary-coverage.md)
+- Vocabulary coverage (vs Schematron & FEEL): `../architecture/utlx-validate-vocabulary-coverage.md` *(design notes — development branch)*
 - Versioning / packaging (UTLXe vs UTLXs, the version gate): [`../architecture/utlx-language-versioning-validation.md`](../architecture/utlx-language-versioning-validation.md) §2.1/§3
 - Build plan (phases): [`../architecture/utlx-1_1-build-plan.md`](../architecture/utlx-1_1-build-plan.md)
-- Testing: [`../architecture/utlx-test-corpora.md`](../architecture/utlx-test-corpora.md); spike: [`../architecture/validate-module-spike.md`](../architecture/validate-module-spike.md)
+- Testing: `../architecture/utlx-test-corpora.md` *(design notes — development branch)*; spike: `../architecture/validate-module-spike.md` *(design notes — development branch)*
 
 ## Packaging — **revised 2026-10-12: in `:stdlib`, not a separate module**
 

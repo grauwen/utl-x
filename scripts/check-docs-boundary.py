@@ -16,7 +16,8 @@ Rule 2 (regression guard): the number of broken relative links under docs/
 import os, re, sys
 
 LINK = re.compile(r'\]\(([^)\s]+?)(?:\s+"[^"]*")?\)')
-BASELINE = 59          # pre-existing broken links under docs/ at the time the
+BASELINE = 27          # pre-existing broken links under docs/ (targets that were never written,
+                       # e.g. formats/xml.md). Set when the boundary was introduced; the
                        # boundary was introduced. Ratchet downwards only.
 
 def md_files(root):
@@ -48,6 +49,45 @@ def main():
             elif not os.path.exists(tgt):
                 broken.append((path, raw))
 
+    # Rule 3: a de-link marker inside devdocs/ is always a mistake. devdocs/ files
+    # may link to each other freely; a marker there means a link was stripped while
+    # the file still lived in docs/ and the file was moved afterwards.
+    import re as _re
+    MARK = _re.compile(r'\*\((?:design notes — development branch|development branch|IDE — development branch)\)\*')
+    stranded = []
+    for path in sorted(md_files('devdocs')) if os.path.isdir('devdocs') else []:
+        with open(path, encoding='utf-8', errors='surrogateescape') as fh:
+            hits = len(MARK.findall(fh.read()))
+        if hits:
+            stranded.append((path, hits))
+
+    # Rule 4: a de-link stub in docs/ whose target now exists in docs/ is wrong.
+    # This catches the ordering mistake where a link is stripped and the target is
+    # later promoted back into docs/ -- the stub is then pure loss.
+    import subprocess as _sp
+    recoverable = []
+    _LINKRX = _re.compile(r'\[([^\]]+)\]\(([^)\s]+?)(?:\s+"[^"]*")?\)')
+    for path in sorted(md_files('docs')):
+        with open(path, encoding='utf-8', errors='surrogateescape') as fh:
+            body = fh.read()
+        if not MARK.search(body):
+            continue
+        prev = _sp.run(['git', 'show', 'HEAD:' + path], capture_output=True)
+        if prev.returncode != 0:
+            continue
+        old = prev.stdout.decode('utf-8', 'surrogateescape')
+        for _m in _LINKRX.finditer(old):
+            text, tgt = _m.group(1).strip(), _m.group(2)
+            if _re.match(r'^(https?:|mailto:|#|/)', tgt):
+                continue
+            # the text must sit immediately BEFORE a stub marker, not merely
+            # appear somewhere in the file (live links would false-positive)
+            if not _re.search(_re.escape(text) + r'\s*' + MARK.pattern, body):
+                continue
+            cand = os.path.normpath(os.path.join(os.path.dirname(path), tgt.split('#')[0]))
+            if os.path.exists(cand) and cand.startswith('docs' + os.sep):
+                recoverable.append((path, text, cand))
+
     status = 0
     if crossings:
         status = 1
@@ -75,6 +115,25 @@ def main():
               % (len(broken), BASELINE))
         if len(broken) < BASELINE:
             print('      BASELINE in %s can be lowered to %d' % (__file__, len(broken)))
+
+    if stranded:
+        status = 1
+        print('FAIL  de-link markers stranded inside devdocs/ - %d file(s):'
+              % len(stranded))
+        for path, hits in stranded:
+            print('        %s (%d)' % (path, hits))
+        print('      These files may link to devdocs/ directly. Restore the links.')
+    else:
+        print('ok    no stranded de-link markers in devdocs/')
+
+    if recoverable:
+        status = 1
+        print('FAIL  %d de-link stub(s) in docs/ whose target is on main - restore them:'
+              % len(recoverable))
+        for path, text, cand in recoverable[:15]:
+            print('        %s: "%s" -> %s' % (path, text, cand))
+    else:
+        print('ok    no recoverable de-link stubs in docs/')
 
     return status
 

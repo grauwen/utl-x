@@ -1212,8 +1212,8 @@ No implementation work is required - users can start using these patterns immedi
 
 1. [DataContract Specification v1.2.1](https://datacontract.com)
 2. [UTL-X YAML Functions Guide](../stdlib/yaml_functions_guide.md)
-3. [UTL-X Stdlib Reference](./stlib_complete_reference.md)
-4. [YAML Maps and JSON Schema Limitations](../stdlib/yaml-maps-json-schema-summary.md)
+3. [UTL-X Stdlib Reference](../stdlib/stdlib-complete-reference.md)
+4. YAML Maps and JSON Schema Limitations *(development branch)*
 
 ---
 

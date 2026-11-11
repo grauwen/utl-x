@@ -108,67 +108,7 @@ function normalizeOrder(source: Object): Object {
 normalizeOrder(input)
 ```
 
-## Use Case 2: Healthcare Data Integration (HL7 to FHIR)
-
-### Scenario
-
-Transform HL7 v2 messages to FHIR resources for modern healthcare systems.
-
-### Input (HL7 v2)
-
-```
-MSH|^~\&|SendingApp|SendingFac|ReceivingApp|ReceivingFac|20251009120000||ADT^A01|MSG0001|P|2.5
-PID|1||12345^^^MRN||Doe^John^A||19800515|M|||123 Main St^^Seattle^WA^98101
-```
-
-### Transformation
-
-```utlx
-%utlx 1.0
-input hl7
-output json
----
-
-function parseHL7Segment(segment: String): Object {
-  let fields = split(segment, "|")
-  {
-    type: fields[0],
-    fields: fields
-  }
-}
-
-let segments = split(input, "\n") |> map(s => parseHL7Segment(s)),
-let pid = segments |> filter(s => s.type == "PID") |> first(),
-let patientName = split(pid.fields[5], "^"),
-let address = split(pid.fields[11], "^")
-
-{
-  resourceType: "Patient",
-  id: pid.fields[3],
-  name: [{
-    family: patientName[0],
-    given: [patientName[1]],
-    prefix: patientName[2]
-  }],
-  gender: match pid.fields[8] {
-    "M" => "male",
-    "F" => "female",
-    _ => "unknown"
-  },
-  birthDate: substring(pid.fields[7], 0, 4) + "-" + 
-             substring(pid.fields[7], 4, 6) + "-" +
-             substring(pid.fields[7], 6, 8),
-  address: [{
-    line: [address[0]],
-    city: address[2],
-    state: address[3],
-    postalCode: address[4],
-    country: "US"
-  }]
-}
-```
-
-## Use Case 3: Financial Data Reconciliation
+## Use Case 2: Financial Data Reconciliation
 
 ### Scenario
 
@@ -272,7 +212,7 @@ Aggregate and analyze sensor data from multiple IoT devices.
 
 ```utlx
 %utlx 1.0
-input jsonl
+input json
 output json
 ---
 

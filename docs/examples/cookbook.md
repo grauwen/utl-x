@@ -859,7 +859,7 @@ output json
 
 - 📖 [XML to JSON](xml-to-json.md) - Format conversions
 - 📖 [JSON to XML](json-to-xml.md) - Reverse conversions
-- 🔧 [Functions Reference](../reference/stdlib-reference.md) - All functions
+- 🔧 Functions Reference *(development branch)* - All functions
 - 💡 [Real-World Examples](real-world-use-cases.md) - Production use cases
 
 ---

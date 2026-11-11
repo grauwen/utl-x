@@ -385,7 +385,7 @@ See [Custom Formats](../formats/custom-formats.md) for details.
 - Streaming where possible
 - Target: ~1-5ms per transformation
 
-See [Performance](../architecture/performance.md) for details.
+See Performance *(design notes — development branch)* for details.
 
 ---
 

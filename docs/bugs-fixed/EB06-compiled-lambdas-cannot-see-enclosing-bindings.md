@@ -87,4 +87,4 @@ Revert-verified: removing the captured set fails 7 of the 10.
 - [EB05](EB05-lambda-bodies-cannot-reach-a-named-input.md) — the same shape one level out: the inputs
   map was unreachable for the same reason.
 - [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md) — the third defect in `compileLambda`.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*

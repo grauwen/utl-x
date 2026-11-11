@@ -55,7 +55,7 @@ Eight conformance fixtures were affected. All eight were passing, on both the Py
 engine suite, while running interpreted on the strategy whose entire purpose is not to.
 
 **It was found by counting.** The cross-strategy conformance run
-([conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md))
+(conformance-across-execution-strategies *(design notes — development branch)*)
 asks `ASTCompiler.compile` directly how many fixtures reach bytecode, precisely because a silent
 fallback is invisible to any assertion about output. That count went from 313 to **321** when this
 was fixed — the eight fixtures, exactly.
@@ -99,7 +99,7 @@ silently regress.
 
 ## Related
 
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*
   — the harness that found it, and why its compiled count is the load-bearing part.
 - [EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) — the gap that harness
   closed; this is the first defect it found on its own rather than being written to catch.

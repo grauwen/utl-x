@@ -4,7 +4,7 @@
 **Priority:** High — the largest gap in the `validate.*` vocabulary against Schematron and FEEL, and the prerequisite for per-node reporting
 **Created:** October 2026
 **Depends on:** [F21](F21-utlx-1-1-semantic-validation.md) (`validate.*`), VB01/VB02 (lambda `check` and `when`)
-**Closes gap #1 of:** [`../proposals/utlx-validate-vocabulary-coverage.md`](../proposals/utlx-validate-vocabulary-coverage.md)
+**Closes gap #1 of:** `../proposals/utlx-validate-vocabulary-coverage.md` *(design notes — development branch)*
 
 ---
 

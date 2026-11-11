@@ -90,5 +90,5 @@ product bug. The tests build these documents from named one-character pieces ins
   is the half that fixing it revealed.
 - [CB03](CB03-capture-yaml-writer-loses-data-in-three-ways.md) — three further lossy encodings in the
   same writer, found by asking whether these tests covered every case. They did not.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*
   — the harness whose skip tally started this thread.

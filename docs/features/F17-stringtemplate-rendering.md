@@ -314,7 +314,7 @@ Identical to the Mustache converter (F16) — ST4 also works with plain `Map`/`L
 - [F14: FreeMarker Template Rendering](F14-freemarker-template-rendering.md) — full-featured alternative
 - [F16: Mustache Template Rendering](F16-mustache-template-rendering.md) — logic-less alternative
 - [F18: Velocity Template Rendering](F18-velocity-template-rendering.md) — legacy template reuse
-- [stdlib function reference](../reference/stdlib-reference.md)
+- stdlib function reference *(development branch)*
 
 ---
 

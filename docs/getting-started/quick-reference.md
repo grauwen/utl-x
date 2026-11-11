@@ -425,7 +425,7 @@ utlx --version                                 # Version
 - 📖 [Full Language Guide](../language-guide)
 - 💡 [Examples](../examples)
 - 📚 [Language Specification](../reference/language-spec.md)
-- 🔧 [Function Reference](../reference/stdlib-reference.md)
+- 🔧 Function Reference *(development branch)*
 
 ---
 

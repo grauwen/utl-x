@@ -575,7 +575,7 @@ output yaml
 
 1. [Templates](templates.md)
 2. [Language Specification](../reference/language-spec.md)
-3. [Architecture](../architecture/overview.md)
+3. Architecture *(design notes — development branch)*
 4. [Custom Formats](../formats/custom-formats.md)
 
 ---

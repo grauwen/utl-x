@@ -91,4 +91,4 @@ them from COPY fails 4 — different strategies, same four cases, because each i
   independent sites losing the same thing silently.
 - [EB07](EB07-compiled-index-access-ignores-string-keys.md),
   [EB08](EB08-compiled-object-literals-drop-xml-attributes.md) — the other two mis-diagnoses.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*

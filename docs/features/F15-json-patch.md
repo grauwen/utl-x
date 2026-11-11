@@ -249,7 +249,7 @@ No risk. Pure UDM manipulation, no reflection, no external libraries.
 - [RFC 6902 — JSON Patch](https://datatracker.ietf.org/doc/html/rfc6902)
 - [RFC 6901 — JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901)
 - [RFC 7396 — JSON Merge Patch](https://datatracker.ietf.org/doc/html/rfc7396)
-- [stdlib function reference](../reference/stdlib-reference.md)
+- stdlib function reference *(development branch)*
 
 ---
 

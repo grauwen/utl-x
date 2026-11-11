@@ -5,7 +5,7 @@
 **Created:** October 2026
 **Depends on:** [F21](F21-utlx-1-1-semantic-validation.md) (`validate.*` + the `%utlx` namespace gate)
 **Overlaps / supersedes:** [EF02](EF02-engine-schema-validation.md) §4 (metrics) and §5 (error routing) — both still design; EF23 and those sections describe **one** layer and must land together
-**Design rationale:** [`../architecture/utlxe-validation-enforcement-and-observability.md`](../architecture/utlxe-validation-enforcement-and-observability.md) — current-state analysis, verified against the code
+**Design rationale:** `../architecture/utlxe-validation-enforcement-and-observability.md` *(design notes — development branch)* — current-state analysis, verified against the code
 
 ---
 

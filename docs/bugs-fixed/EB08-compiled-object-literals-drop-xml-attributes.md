@@ -107,7 +107,7 @@ interpreter and the compiled path together, and it belongs with that work rather
 
 ## Related
 
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*
   — the harness, and the masking flaw described above.
 - [EB07](EB07-compiled-index-access-ignores-string-keys.md) — the previous largest class, also a
   shared-compiler defect, also mis-diagnosed at first.

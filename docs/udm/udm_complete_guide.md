@@ -949,10 +949,10 @@ You typically don't work with UDM directly when writing UTL-X transformations. H
 
 ### Further Reading
 
-- [UTL-X Language Guide](./language-guide/overview.md)
+- [UTL-X Language Guide](../language-guide/overview.md)
 - [Format Support](./formats/README.md)
-- [Architecture Overview](./architecture/overview.md)
-- [Performance Tuning](../architecture/performance.md)
+- Architecture Overview *(development branch)*
+- Performance Tuning *(development branch)*
 
 ---
 

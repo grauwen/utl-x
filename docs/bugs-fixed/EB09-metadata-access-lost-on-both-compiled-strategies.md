@@ -90,4 +90,4 @@ Full suite **4488 tests, 0 failed**; conformance **563/563**.
   attributes rather than metadata, also silent, also in the shared compiler.
 - [EB07](EB07-compiled-index-access-ignores-string-keys.md) — the previous largest class; its
   diagnosis also had to be corrected before it could be fixed.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*

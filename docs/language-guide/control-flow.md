@@ -29,17 +29,41 @@ else
 
 ### Multi-Line If-Else
 
-Use braces for multiple expressions:
+There are three patterns for using let bindings with if-else:
 
+**Pattern 1: Let bindings before the if (simplest)**
 ```utlx
-if (condition) {
-  let x = calculate()
-  let y = transform(x)
-  y
-} else {
-  defaultValue
+{
+  let x = calculate(),
+  let y = transform(x),
+  result: if (condition) y else defaultValue
 }
 ```
+
+**Pattern 2: Let-in expressions inside branches (scoped)**
+```utlx
+{
+  result: if (condition)
+            (let x = calculate() in let y = transform(x) in y)
+          else
+            defaultValue
+}
+```
+
+**Pattern 3: Object literal branches (when you need to return an object)**
+```utlx
+{
+  result: if (condition) {
+    let x = calculate(),
+    let y = transform(x),
+    answer: y
+  } else {
+    answer: defaultValue
+  }
+}
+```
+
+Note: In UTL-X, `{}` is always an object literal, not a code block. To return a bare value from a let binding inside an if branch, use the `let ... in` syntax (Pattern 2).
 
 ### Else-If Chains
 
@@ -158,7 +182,7 @@ match $input.order {
 }
 ```
 
-### Destructuring in Patterns (v1.1+)
+### Destructuring in Patterns (Future)
 
 ```utlx
 match $input.customer {
@@ -292,7 +316,7 @@ try {
   riskyOperation()
 } catch (e) {
   {
-    error: e.message,
+    error: e,
     default: fallbackValue
   }
 }
@@ -303,12 +327,12 @@ try {
 ```utlx
 {
   result: try {
-    let value = parseNumber($input.value)
+    let value = parseNumber($input.value),
     value * 2
   } catch (e) {
     {
       success: false,
-      error: e.message,
+      error: e,
       input: $input.value
     }
   }
@@ -416,7 +440,7 @@ Include fields conditionally:
 }
 ```
 
-Or using the spread operator (v1.1+):
+Or using the spread operator:
 
 ```utlx
 {

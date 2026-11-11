@@ -223,7 +223,7 @@ UTL-X offers four template engine integrations, each with a clear use case:
 ## See Also
 
 - [Apache FreeMarker Documentation](https://freemarker.apache.org/docs/)
-- [stdlib function reference](../reference/stdlib-reference.md)
+- stdlib function reference *(development branch)*
 - [F12: XSLT to UTL-X Migration](F12-xslt-to-utlx-migration.md) — related: XSLT also generates text output from XML
 - [F16: Mustache Template Rendering](F16-mustache-template-rendering.md) — logic-less, portable alternative
 - [F17: StringTemplate Rendering](F17-stringtemplate-rendering.md) — code generation focus

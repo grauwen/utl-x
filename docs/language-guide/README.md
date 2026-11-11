@@ -208,7 +208,7 @@ See [CONTRIBUTING.md](../../CONTRIBUTING.md) for guidelines on:
 ## See Also
 
 - [Project Overview (CLAUDE.md)](../../CLAUDE.md)
-- [UDM Documentation](../udm/udm_documentation_index.md)
+- UDM Documentation *(development branch)*
 - [Function Reference](../../stdlib/README.md)
 
 ---

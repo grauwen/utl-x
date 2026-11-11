@@ -448,7 +448,7 @@ goes is deployment plumbing on top of this decision.
 > **Deployment status:** the enforce layer is built and unit-tested but **not yet wired into the
 > engine**, so today a verdict is ordinary output — nothing rejects on it, and no counter or log
 > records it. If you need enforcement now, branch in-script as shown above. See
-> [Validation Enforcement & Observability](../architecture/utlxe-validation-enforcement-and-observability.md)
+> Validation Enforcement & Observability *(design notes — development branch)*
 > for the current state and the target design.
 
 ---

@@ -641,7 +641,7 @@ utlx transform $input.xml transform.utlx --pretty
 ## Next Steps
 
 - 📖 [JSON to XML Examples](json-to-xml.md)
-- 🔧 [Function Reference](../reference/stdlib-reference.md)
+- 🔧 Function Reference *(development branch)*
 - 💡 [More Examples](cookbook.md)
 - 📚 [Language Guide](../language-guide)
 

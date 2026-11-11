@@ -337,7 +337,7 @@ This reduces migration risk — no need to rewrite all templates on day one.
 - [F14: FreeMarker Template Rendering](F14-freemarker-template-rendering.md) — modern successor
 - [F16: Mustache Template Rendering](F16-mustache-template-rendering.md) — logic-less alternative
 - [F17: StringTemplate Rendering](F17-stringtemplate-rendering.md) — code generation focus
-- [stdlib function reference](../reference/stdlib-reference.md)
+- stdlib function reference *(development branch)*
 
 ---
 

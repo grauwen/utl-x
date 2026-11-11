@@ -424,7 +424,7 @@ BufferedInputStream(FileInputStream("large.yaml")).use { input ->
 
 ## Resources
 
-- [Full YAML Documentation](yaml_readme.md)
+- Full YAML Documentation *(development branch)*
 - [YAML Specification](https://yaml.org/spec/)
 - [SnakeYAML Documentation](https://bitbucket.org/snakeyaml/snakeyaml)
 - [UTL-X Core Documentation](../../modules/core/README.md)

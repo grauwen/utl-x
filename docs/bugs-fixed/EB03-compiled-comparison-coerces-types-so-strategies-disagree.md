@@ -145,7 +145,7 @@ restored byte-identical.
 > `modules:engine`, so it would mean bundling the engine into the open-source CLI, which is a
 > packaging decision rather than a test-coverage one. The alternative was taken instead, and the
 > corpus now runs on all three strategies from inside `:engine`:
-> [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md).
+> conformance-across-execution-strategies *(design notes — development branch)*.
 >
 > It found **101 existing divergences** across 351 fixtures, now an asserted inventory. Notably
 > **COMPILED never produced different output** — it agrees or refuses to run — while **COPY differs

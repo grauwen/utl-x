@@ -83,4 +83,4 @@ revert that changes nothing observable proves nothing about the fix.
   exactly that combination.
 - [EB09](EB09-metadata-access-lost-on-both-compiled-strategies.md) — `spreadIntoObject` dropping
   metadata is the same omission, fixed here.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*

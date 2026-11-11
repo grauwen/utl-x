@@ -852,7 +852,7 @@ functionCall
 
 ### Appendix A: Built-in Functions Reference
 
-See [Standard Library Reference](stdlib-reference.md)
+See [Standard Library Reference](../stdlib/stdlib-complete-reference.md)
 
 ### Appendix B: Format Specifications
 

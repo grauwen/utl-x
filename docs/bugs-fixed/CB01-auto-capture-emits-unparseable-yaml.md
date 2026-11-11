@@ -112,7 +112,7 @@ test asserting the emitted string, which is the lesson worth keeping.
 
 ## Related
 
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*
   — the harness whose skip tally surfaced this; finding 5 in its inventory.
 - [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md),
   [EB05](EB05-lambda-bodies-cannot-reach-a-named-input.md) — the other two defects that harness found,

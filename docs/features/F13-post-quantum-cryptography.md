@@ -159,7 +159,7 @@ Prioritize F13 when any of these occur:
 ## See Also
 
 - [F11: Advanced Security Functions](F11-advanced-security-functions.md) — prerequisite
-- [JWS Analysis](../jws/jws_analysis.md) — JWS architecture decisions
+- JWS Analysis *(design notes — development branch)* — JWS architecture decisions
 - [stdlib/crypto package](/stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/crypto/) — implementation target
 - NIST PQC standards: [FIPS 203](https://csrc.nist.gov/pubs/fips/203/final), [FIPS 204](https://csrc.nist.gov/pubs/fips/204/final), [FIPS 205](https://csrc.nist.gov/pubs/fips/205/final)
 

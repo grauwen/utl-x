@@ -100,4 +100,4 @@ the dedicated tests above cover the rest.
   this one visible.
 - [EB03](EB03-compiled-comparison-coerces-types-so-strategies-disagree.md) — the other place the
   compiled path silently reinterpreted a value rather than failing.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*

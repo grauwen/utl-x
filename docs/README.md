@@ -27,7 +27,7 @@ Learn the UTL-X language:
 - **[Templates](language-guide/templates.md)** - XSLT-style template matching
 - **[Control Flow](language-guide/control-flow.md)** - Conditionals and pattern matching
 - **[Operators](language-guide/operators.md)** - Arithmetic, logical, comparison
-- **[UDM](udm/udm_documentation_index.md)** - Universal Data Model
+- **UDM *(development branch)*** - Universal Data Model
 - **[Schema Support ](https://github.com/grauwen/utl-x/blob/main/modules/analysis/schema_analysis_architecture.md)** - Integration support through design time schema generation (for example Apache Camel)
 
 ### 📄 Format Guides
@@ -57,8 +57,8 @@ Practical examples and patterns:
 Technical reference documentation:
 
 - **[Language Specification](reference/language-spec.md)** - Formal language specification
-- **[Standard Library](reference/stdlib-reference.md)** - Complete function reference
-- **[CLI Reference](reference/cli-reference.md)** - Command-line interface
+- **Standard Library *(development branch)*** - Complete function reference
+- **CLI Reference *(development branch)*** - Command-line interface
 - **[API Reference](reference/api-reference.md)** - Library API documentation
 - **[Grammar](reference/grammar.md)** - ANTLR grammar definition
 
@@ -66,12 +66,12 @@ Technical reference documentation:
 
 Understanding UTL-X internals:
 
-- **[Architecture Overview](architecture/overview.md)** - High-level design
-- **[Compiler Pipeline](architecture/compiler-pipeline.md)** - Compilation stages
+- **Architecture Overview *(design notes — development branch)*** - High-level design
+- **Compiler Pipeline *(design notes — development branch)*** - Compilation stages
 - **[Universal Data Model](udm/universal-data-model.md)** - UDM explained
-- **[Runtime](architecture/runtime.md)** - Runtime architecture
-- **[Performance](architecture/performance.md)** - Optimization techniques
-- **[Validation Enforcement & Observability](architecture/utlxe-validation-enforcement-and-observability.md)** - What the engine does with a validation verdict: enforcement, logging, counters, dead-letter
+- **Runtime *(design notes — development branch)*** - Runtime architecture
+- **Performance *(design notes — development branch)*** - Optimization techniques
+- **Validation Enforcement & Observability *(design notes — development branch)*** - What the engine does with a validation verdict: enforcement, logging, counters, dead-letter
 
 ### 🔄 Comparisons
 
@@ -100,7 +100,7 @@ Community resources and information:
 
 - [Installation Guide](getting-started/installation.md)
 - [Syntax Cheat Sheet](getting-started/quick-reference.md)
-- [Function Reference](reference/stdlib-reference.md)
+- Function Reference *(development branch)*
 - [Examples Collection](examples)
 - [FAQ](community/faq.md)
 
@@ -155,7 +155,7 @@ output json
 - **Language Features:** See [Language Guide](language-guide)
 - **Format-Specific:** Check [Format Guides](formats)
 - **Problem-Solving:** Browse [Examples](examples) and [Cookbook](examples/cookbook.md)
-- **Technical Details:** Read [Reference](reference) and [Architecture](architecture)
+- **Technical Details:** Read [Reference](reference)
 
 ### By Experience Level
 
@@ -173,8 +173,8 @@ output json
 
 **Advanced:**
 1. [Language Specification](reference/language-spec.md)
-2. [Architecture](architecture/overview.md)
-3. [Performance Optimization](architecture/performance.md)
+2. Architecture *(design notes — development branch)*
+3. Performance Optimization *(design notes — development branch)*
 4. [Custom Formats](formats/custom-formats.md)
 
 ---

@@ -302,7 +302,7 @@ UTL-X offers four template engine integrations, each with a clear use case:
 - [F14: FreeMarker Template Rendering](F14-freemarker-template-rendering.md) — full-featured alternative
 - [F17: StringTemplate Rendering](F17-stringtemplate-rendering.md) — code generation focus
 - [F18: Velocity Template Rendering](F18-velocity-template-rendering.md) — legacy template reuse
-- [stdlib function reference](../reference/stdlib-reference.md)
+- stdlib function reference *(development branch)*
 
 ---
 

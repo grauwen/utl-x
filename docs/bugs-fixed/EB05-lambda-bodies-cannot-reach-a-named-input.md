@@ -128,7 +128,7 @@ Full suite after the ABI change: **4437 tests, 0 failed** (`:engine` 845).
 - [EB04](EB04-nested-lambdas-emit-duplicate-method-names.md) — the other `ASTCompiler` defect found by
   the same harness, in the same `compileLambda`. Both were invisible because compilation failure
   falls back silently.
-- [conformance-across-execution-strategies](../architecture/conformance-across-execution-strategies.md)
+- conformance-across-execution-strategies *(design notes — development branch)*
   — the harness, and the inventory this moved.
 - [B34](B34-logical-operators-do-not-short-circuit.md) — origin of the discipline of asserting that
   something genuinely compiled.

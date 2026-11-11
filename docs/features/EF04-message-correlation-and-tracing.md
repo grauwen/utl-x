@@ -360,7 +360,7 @@ The following fields were added to the proto based on cross-host analysis (SAP C
 
 **New enums:** `ErrorCode` (10 specific codes), `MetadataForwarding`
 
-See [Proto Reference](../sdk/proto-reference.md) for the complete field-by-field documentation.
+See Proto Reference *(design notes — development branch)* for the complete field-by-field documentation.
 
 ## Files to modify
 
