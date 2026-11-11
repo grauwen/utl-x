@@ -47,7 +47,7 @@ expected:
         "orderId": "ORD-002",
         "customer": "Globex Inc",
         "lines": [
-          {"orderId": "ORD-002", "product": "Gizmo", "qty": 3, "price": 15.5}
+          {"orderId": "ORD-002", "product": "Gizmo", "qty": 3, "price": 15.500}
         ]
       }
     ]

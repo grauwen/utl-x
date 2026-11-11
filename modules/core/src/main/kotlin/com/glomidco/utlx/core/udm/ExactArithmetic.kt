@@ -82,9 +82,61 @@ object ExactArithmetic {
     fun subtract(left: Number?, right: Number?, fallback: Double): Number =
         apply(left, right, fallback) { a, b -> a.subtract(b) }
 
-    /** Exact product when both operands are exact, otherwise [fallback]. */
+    /**
+     * Exact product when both operands are exact, otherwise [fallback].
+     *
+     * The scale of the result is **normalised** — see [normaliseProduct].
+     */
     fun multiply(left: Number?, right: Number?, fallback: Double): Number =
-        apply(left, right, fallback) { a, b -> a.multiply(b) }
+        apply(left, right, fallback) { a, b ->
+            normaliseProduct(a.multiply(b), maxOf(a.scale(), b.scale()))
+        }
+
+    /**
+     * B46: trim a product's trailing zeros, but never below the widest operand's scale.
+     *
+     * `BigDecimal` (and ANSI SQL, and IEEE 754-2008 decimal) define a product's scale as the **sum**
+     * of the operand scales. That is correct arithmetic and it is how the digits fall out of long
+     * multiplication — but for multiplication, unlike addition, it manufactures decimal places that
+     * no operand had:
+     *
+     * ```
+     * 1.5  * 1.08  ->  1.620     the 3rd place is an artifact; 1.620 IS 1.62
+     * 0.75 * 1.08  ->  0.8100    four places claimed for a value worth 81 cents
+     * 1.50 * 1.50  ->  2.2500
+     * ```
+     *
+     * Addition cannot do this: `max(s1, s2)` never exceeds an operand's own scale, so `1.50 + 1.50
+     * = 3.00` is genuinely informative — both inputs were two-decimal money. A product's extra
+     * zeros are not information, and presenting them as precision is misleading in exactly the
+     * domain UTL-X serves.
+     *
+     * So the trailing zeros come off, with a floor at the widest operand's scale, which keeps every
+     * zero that *was* in the data:
+     *
+     * ```
+     * 1.5  * 1.08   ->  1.62        stripped to 2 (floor 2)
+     * 0.75 * 1.08   ->  0.81        stripped to 2 (floor 2)
+     * 1.50 * 3      ->  4.50        floor 2 holds the money formatting
+     * 1.5  * 2      ->  3.0         floor 1 holds it
+     * 0.001*0.001   ->  0.000001    6 places are NEEDED, so the floor does not cap it
+     * 1000 * 2      ->  2000        stripTrailingZeros gives 2E+3; the floor restores plain form
+     * ```
+     *
+     * This is a **presentation** rule over exact arithmetic: the value is unchanged, only how many
+     * places it reports. It is deliberately NOT what a database would print — a `DECIMAL(10,4)`
+     * column has a declared type to honour, and a transformation output does not.
+     *
+     * Applied here rather than in a serialiser for two reasons: the operand scales are only known
+     * at this point, and both the interpreter and `RuntimeOps` (the compiled path) call this
+     * function — so they cannot drift apart, which is the failure mode EB03-EB16 were all about.
+     */
+    private fun normaliseProduct(product: BigDecimal, floor: Int): BigDecimal {
+        val stripped = product.stripTrailingZeros()
+        // stripTrailingZeros can hand back a NEGATIVE scale (1000 -> 1E+3); the floor is never
+        // negative, so raising to it also restores plain form.
+        return if (stripped.scale() < floor) stripped.setScale(floor) else stripped
+    }
 
     /**
      * The exact negation of [n], or `null` when there is none.

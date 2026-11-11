@@ -145,11 +145,11 @@ expected:
         "account_id": "ACC-12345",
         "period": "2024-01",
         "transaction_count": 4,
-        "balance_change": 1059.2600000000002,
+        "balance_change": 1059.26,
         
         "credits": {
           "count": 1,
-          "total": 2500,
+          "total": 2500.00,
           "transactions": [
             {
               "id": "TXN-002",
@@ -211,7 +211,7 @@ expected:
         ],
         
         "financial_health": {
-          "net_income": 2500,
+          "net_income": 2500.00,
           "total_expenses": 1440.74,
           "savings_rate": 42.37,
           "largest_expense": {

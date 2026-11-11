@@ -1692,7 +1692,12 @@ class Interpreter(
     private fun runtimeValueToUDM(value: RuntimeValue): com.glomidco.utlx.core.udm.UDM {
         return when (value) {
             is RuntimeValue.StringValue -> com.glomidco.utlx.core.udm.UDM.Scalar(value.value)
-            is RuntimeValue.NumberValue -> com.glomidco.utlx.core.udm.UDM.Scalar(value.value)
+            // B45: carry the exact form, exactly as `toUDM()` does. This is the direction that
+            // hands a stdlib function its ARGUMENTS and its lambda RESULTS, so dropping `exact`
+            // here meant `mapValues($p, v => v * 2)` returned 3 where `$p.apple * 2` returned 3.0 —
+            // the operator was exact and the same arithmetic inside a stdlib lambda was not.
+            is RuntimeValue.NumberValue ->
+                com.glomidco.utlx.core.udm.UDM.Scalar(value.exact ?: value.value)
             is RuntimeValue.BooleanValue -> com.glomidco.utlx.core.udm.UDM.Scalar(value.value)
             is RuntimeValue.NullValue -> com.glomidco.utlx.core.udm.UDM.Scalar(null)
             is RuntimeValue.ArrayValue -> com.glomidco.utlx.core.udm.UDM.Array(value.elements.map { runtimeValueToUDM(it) })

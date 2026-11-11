@@ -45,7 +45,7 @@ expected:
         {
           "name": "Item1",
           "price": 10,
-          "taxedPrice": 10.8,
+          "taxedPrice": 10.80,
           "status": "success"
         },
         {

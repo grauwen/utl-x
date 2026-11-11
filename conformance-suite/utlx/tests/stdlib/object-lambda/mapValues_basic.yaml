@@ -47,9 +47,9 @@ expected:
   data: |
     {
       "doubledPrices": {
-        "apple": 3,
-        "orange": 4,
-        "banana": 1.5
+        "apple": 3.0,
+        "orange": 4.0,
+        "banana": 1.50
       },
       "capitalizedNames": {
         "user1": "ALICE",
@@ -76,6 +76,12 @@ expected:
 performance_limits:
   max_duration_ms: 200
   max_memory_mb: 20
+
+# B45: `doubledPrices` was authored as 3 / 4 / 1.5 under the pre-B35 Double model, where every
+# number narrowed to a Double and B37's integral-double rule rendered 3.0 as 3. The values are now
+# exact decimals, and the decimal standard fixes the scale of a product as the SUM of the operand
+# scales — so 1.5 * 2 is 3.0 and 0.75 * 2 is 1.50, which is what the `*` operator has always
+# returned outside a stdlib lambda. The fixture now matches the operator.
 
 metadata:
   author: "UTL-X Team"

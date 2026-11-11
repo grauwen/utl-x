@@ -114,11 +114,27 @@ Driving the named-input fixtures surfaced two further divergences, both diagnose
    | `sum([1.50, 1.50])` | `3` | **no** (`3.00` would be) |
 
    [B44](B44-stdlib-results-lose-the-exact-numeric-form.md) closed one such edge; these are further
-   ones. Left listed rather than patched because the right answer needs a **decision** first: should
-   a *computed* result keep BigDecimal's scale (`1.50 * 3 = 4.50`, as today) or normalise
-   (`3.0` → `3`)? [B35](B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md)
-   settled scale as **written**; it never settled computed scale, and these fixtures were authored
-   expecting normalisation.
+   ones.
+
+   **This is not a design question**, though it was first written up here as one. Measured against
+   Java `BigDecimal`, UTL-X's **operators already implement the decimal standard exactly** — and the
+   rule differs by operation, which is why the two cases look inconsistent but are not:
+
+   | | UTL-X | BigDecimal | rule |
+   |---|---|---|---|
+   | `1.50 + 1.50` | `3.00` | `3.00` | scale = **max**(s₁, s₂) |
+   | `1.50 * 3` | `4.50` | `4.50` | scale = **sum** s₁ + s₂ |
+   | `0.001 * 0.001` | `0.000001` | `0.000001` | sum |
+   | `1.50³` | `3.375000` | `3.375000` | sum |
+
+   ANSI SQL `DECIMAL`, IEEE 754-2008 decimal and XPath `xs:decimal` all specify the same two rules.
+   So the rule is settled and implemented; the **stdlib simply does not follow it**. TEMPLATE's `3`
+   and `1.5` are the defect, not a legitimate alternative, and the fixtures expecting them are
+   **stale** — authored under the pre-B35 Double model, like the 8 fixtures B35 already corrected.
+
+   Division is the one genuinely open case, because unlike `+`, `-` and `*` it has no exact answer
+   (`1/3`), so a precision and rounding mode must be *chosen* — the pending DECIMAL128 / HALF_EVEN
+   decision.
 
 ## The harness change that found all of this
 

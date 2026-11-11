@@ -80,7 +80,7 @@ expected:
             "ProductID": "PROD001",
             "Name": "Premium Widget",
             "Category": "Hardware",
-            "CostPrice": 15.5,
+            "CostPrice": 15.50,
             "Sales": [
               {
                 "Region": "North",

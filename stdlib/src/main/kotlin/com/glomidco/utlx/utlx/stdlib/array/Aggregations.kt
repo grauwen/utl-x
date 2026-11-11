@@ -1,6 +1,8 @@
 // stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/array/Aggregations.kt
 package com.glomidco.utlx.stdlib.array
 
+import com.glomidco.utlx.core.udm.ExactArithmetic
+import com.glomidco.utlx.core.udm.ScalarCanonical
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.FunctionArgumentException
 import com.glomidco.utlx.stdlib.annotations.UTLXFunction
@@ -25,10 +27,19 @@ object Aggregations {
                 "Hint: Use an array like [1,2,3] or ensure your value is an array."
             )
         
-        val total = array.elements.sumOf { element ->
-            element.asNumberStrict()
+        // B45: fold through ExactArithmetic so `sum([1.50, 1.50])` is 3.00 — the same answer the
+        // `+` operator already gives. `sumOf` takes a Double selector, so the whole aggregation was
+        // computed in Double and the scale was gone before the result was built. ExactArithmetic
+        // falls back to the Double sum the moment any element is a Double, so a mixed array behaves
+        // exactly as it did.
+        var total: Number = 0L
+        var fallback = 0.0
+        for (element in array.elements) {
+            val n = element.numberAsWritten()
+            fallback += n.toDouble()
+            total = ExactArithmetic.add(total, n, fallback)
         }
-        
+
         return UDM.Scalar(total)
     }
 
@@ -85,13 +96,24 @@ object Aggregations {
             if (array.elements.isEmpty()) {
                 return UDM.Scalar(null)
             }
-            val minValue = array.elements.minOf { it.asNumberStrict() }
-            return UDM.Scalar(minValue)
+            // B45: return the ORIGINAL element rather than a Double recomputed from it, so
+            // `min([1.50, 2.50])` keeps its scale. Ordering goes through ScalarCanonical, the one
+            // definition of numeric ordering in the product.
+            //
+            // Every element is validated FIRST: `reduce` never calls its lambda on a single-element
+            // list, so validating inside the comparator would have let `min(["a"])` through.
+            array.elements.forEach { it.numberAsWritten() }
+            return array.elements.reduce { a, b ->
+                if (ScalarCanonical.compareNumbers(a.numberAsWritten(), b.numberAsWritten()) <= 0) a else b
+            }.asSelectedNumber()
         }
 
         // Otherwise treat all arguments as numbers to compare
-        val minValue = args.minOf { it.asNumberStrict() }
-        return UDM.Scalar(minValue)
+        // B45: same for the varargs form, validated first for the same reason.
+        args.forEach { it.numberAsWritten() }
+        return args.reduce { a, b ->
+            if (ScalarCanonical.compareNumbers(a.numberAsWritten(), b.numberAsWritten()) <= 0) a else b
+        }.asSelectedNumber()
     }
 
     @UTLXFunction(
@@ -121,13 +143,24 @@ object Aggregations {
             if (array.elements.isEmpty()) {
                 return UDM.Scalar(null)
             }
-            val maxValue = array.elements.maxOf { it.asNumberStrict() }
-            return UDM.Scalar(maxValue)
+            // B45: return the ORIGINAL element rather than a Double recomputed from it, so
+            // `max([1.50, 2.50])` keeps its scale. Ordering goes through ScalarCanonical, the one
+            // definition of numeric ordering in the product.
+            //
+            // Every element is validated FIRST: `reduce` never calls its lambda on a single-element
+            // list, so validating inside the comparator would have let `max(["a"])` through.
+            array.elements.forEach { it.numberAsWritten() }
+            return array.elements.reduce { a, b ->
+                if (ScalarCanonical.compareNumbers(a.numberAsWritten(), b.numberAsWritten()) >= 0) a else b
+            }.asSelectedNumber()
         }
 
         // Otherwise treat all arguments as numbers to compare
-        val maxValue = args.maxOf { it.asNumberStrict() }
-        return UDM.Scalar(maxValue)
+        // B45: same for the varargs form, validated first for the same reason.
+        args.forEach { it.numberAsWritten() }
+        return args.reduce { a, b ->
+            if (ScalarCanonical.compareNumbers(a.numberAsWritten(), b.numberAsWritten()) >= 0) a else b
+        }.asSelectedNumber()
     }
 
     @UTLXFunction(
@@ -163,6 +196,39 @@ object Aggregations {
                 "Expected array value, but got ${getTypeDescription(this)}. " +
                 "Hint: Ensure the value is an array."
             )
+    }
+
+    /**
+     * B45: the validated numeric value **as written** — a `BigDecimal` or `Long` stays one.
+     *
+     * [asNumberStrict] narrows to `Double`, which is right where a `Double` is genuinely wanted
+     * (`avg`, which divides) and wrong where the value is only summed or compared.
+     *
+     * Anything that is not already a `Number` — a numeric string included — falls through to
+     * [asNumberStrict], which keeps ownership of both the string conversion and the error messages.
+     *
+     * **Not named `asNumber`.** `UDM` has a *member* `asNumber(): Double` that returns `0.0` for a
+     * null, a boolean or any non-numeric value, and a member always wins over an extension of the
+     * same name. Calling it `asNumber` here compiled, ran, and silently resolved to that member — so
+     * the exact fold below fell back to Double on every element and `min(["a"])` returned `"a"`
+     * instead of raising. The name has to differ for the resolution to be visible.
+     */
+    private fun UDM.numberAsWritten(): Number {
+        val v = (this as? UDM.Scalar)?.value
+        return if (v is Number) v else asNumberStrict()
+    }
+
+    /**
+     * The element [min]/[max] selected, as the value to return.
+     *
+     * A numeric scalar is handed back **unchanged**, which is the point of B45 — `min([1.50, 2.50])`
+     * keeps its scale. Anything else (a numeric string, an XML text node) is returned as the number
+     * it converts to, because returning the raw element would change the result's *type*:
+     * `min(["10", "20.5"])` must stay a number, not become the string `"10"`.
+     */
+    private fun UDM.asSelectedNumber(): UDM {
+        val v = (this as? UDM.Scalar)?.value
+        return if (v is Number) this else UDM.Scalar(asNumberStrict())
     }
 
     private fun UDM.asNumberStrict(): Double {

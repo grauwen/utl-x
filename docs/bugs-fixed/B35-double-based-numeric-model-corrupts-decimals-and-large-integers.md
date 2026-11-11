@@ -305,8 +305,56 @@ Stripping trailing zeros from arithmetic results would have turned `8.00` back i
 fixture churn from six files to one. It was rejected on consistency grounds: Stage 0 deliberately
 preserves a *parsed* `8.00`, so stripping a *computed* `8.00` would leave the language with two
 contradictory rules for the same value depending on where it came from. One rule — report what you
-computed — is worth more than the saved churn. It is also what DataWeave and XPath `xs:decimal`
-arithmetic do, so the behaviour will not surprise anyone arriving from either.
+computed — is worth more than the saved churn.
+
+> **Correction (2026-11-11).** This section previously ended: *"It is also what DataWeave and XPath
+> `xs:decimal` arithmetic do, so the behaviour will not surprise anyone arriving from either."*
+> **That claim was wrong on both counts**, and was never verified. It is corrected below. The
+> *decision* stands — the consistency argument above is the real reason — but it is a deliberate
+> departure from both products, not an alignment with them, and anyone arriving from either **will**
+> be surprised.
+
+### Where this sits relative to other products — verified
+
+| | trailing zeros on a decimal | so `1.50` becomes |
+|---|---|---|
+| **UTL-X** (this decision) | **preserved** | `1.50` |
+| XSD / XPath canonical `xs:decimal` | **prohibited** in canonical form, and explicitly *"not considered significant"* | `1.5` |
+| **DataWeave ≤ 2.4** (Mule ≤ 4.4) | preserved | `1.50` |
+| **DataWeave ≥ 2.5** (Mule ≥ 4.5) | **stripped** | `1.5` |
+| JSON (RFC 8259) | no decimal type; no rule either way | `1.5` for most consumers, which discard the distinction on parse |
+
+Three things follow, and they are worth keeping because they bear on whether this decision should
+eventually become configurable:
+
+1. **XML: valid but not canonical.** `1.50` *is* in the lexical space of `xs:decimal`, so it
+   validates and nothing rejects it. But XSD's canonical form prohibits the trailing zero and the
+   spec states outright that such zeros are **not significant**, so a canonicalising toolchain —
+   `fn:string(xs:decimal("1.50"))` in XPath/XSLT — renders `1.5`. UTL-X's position is that a
+   transformation is a *pipe* (the same principle as B39, B40, B42 and B43: do not silently alter
+   what the sender wrote), whereas XSD models a *value*. Both are coherent; they are not the same.
+
+2. **JSON: the preserved scale is largely invisible.** `JSON.parse('{"a":1.50}')` gives `1.5` in
+   JavaScript, and Python and Go behave the same. The scale survives only for a consumer that reads
+   the text or uses a decimal-aware parser. We violate no expectation — JSON has none — but we also
+   deliver little to a typical consumer.
+
+3. **DataWeave changed its mind, and its users pushed back.** Mule 4.5 began stripping trailing
+   zeros; MuleSoft documents it as expected behaviour with a workaround, there is a standing customer
+   request to restore the old behaviour, and the escape hatch shipped is a runtime flag
+   (`-Dcom.mulesoft.dw.stripTrailingZeroes=false`, or pinning `minMuleVersion` to `4.4.0`).
+
+   **That is the most useful datum here.** A comparable product tried both postures and found that
+   neither satisfies everyone — so it is evidence that this will eventually need to be configurable
+   in UTL-X too, rather than a question of taste. It also suggests the escape hatch belongs at the
+   *output* boundary (presentation) rather than in arithmetic, since the value is identical either
+   way. See [B46](B46-product-scale-reports-places-no-operand-had.md) for the sequencing argument and
+   the implementation hazard that has to be solved first.
+
+   Note separately that DataWeave does **not** change its default arithmetic to get controlled
+   precision — it exposes explicit functions (`dw::util::Math::decimalMultiply` with an
+   `OperationContext` carrying precision and rounding mode). That is a model worth copying for the
+   still-open division decision: an explicit, opt-in rounding call rather than a silent global rule.
 
 ### Both strategies, one definition
 

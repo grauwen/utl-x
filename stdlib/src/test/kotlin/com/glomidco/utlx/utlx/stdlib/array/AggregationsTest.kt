@@ -57,7 +57,10 @@ class AggregationsTest {
         
         val result = Aggregations.sum(listOf(array))
         
-        assertEquals(0.0, (result as UDM.Scalar).value)
+        // B45: assert the VALUE, not the boxed type. An all-integer or empty aggregation is
+        // now exact (Long/BigDecimal) rather than narrowed to Double; JSON output is
+        // identical either way, and what this test means to check is the number.
+        assertEquals(0.0, ((result as UDM.Scalar).value as Number).toDouble())
     }
 
     @Test
@@ -436,7 +439,10 @@ class AggregationsTest {
         
         val result = Aggregations.sum(listOf(array))
         
-        assertEquals(0.0, (result as UDM.Scalar).value)
+        // B45: assert the VALUE, not the boxed type. An all-integer or empty aggregation is
+        // now exact (Long/BigDecimal) rather than narrowed to Double; JSON output is
+        // identical either way, and what this test means to check is the number.
+        assertEquals(0.0, ((result as UDM.Scalar).value as Number).toDouble())
     }
 
     @Test
@@ -463,8 +469,11 @@ class AggregationsTest {
         val minResult = Aggregations.min(listOf(array))
         val maxResult = Aggregations.max(listOf(array))
         
-        assertEquals(5.0, (minResult as UDM.Scalar).value)
-        assertEquals(5.0, (maxResult as UDM.Scalar).value)
+        // B45: assert the VALUE, not the boxed type. An all-integer or empty aggregation is
+        // now exact (Long/BigDecimal) rather than narrowed to Double; JSON output is
+        // identical either way, and what this test means to check is the number.
+        assertEquals(5.0, ((minResult as UDM.Scalar).value as Number).toDouble())
+        assertEquals(5.0, ((maxResult as UDM.Scalar).value as Number).toDouble())
     }
 
     @Test

@@ -102,9 +102,14 @@ class ExactArithmeticTest {
     fun `repeated multiplication grows the scale linearly — known and documented`() {
         // 200 multiplications of a scale-2 value give scale 400. Correct, but worth knowing about
         // in a long reduction: round explicitly when a presentation value is wanted.
+        //
+        // B46 trims a product's trailing zeros, which shaved this from 402 to 400 — the padding
+        // zeros are gone, but the SIGNIFICANT digits still accumulate, so the lesson is unchanged.
+        // `1.05^n` is `105^n / 100^n` and `105^n` never ends in a zero, so there is nothing to trim
+        // after the first step: growth is a property of the arithmetic, not of the presentation.
         var acc = BigDecimal("1.00")
         repeat(200) { acc = ExactArithmetic.multiply(acc, BigDecimal("1.05"), -1.0) as BigDecimal }
-        assertEquals(402, acc.scale())
+        assertEquals(400, acc.scale())
     }
 
     // ── No rounding anywhere ──

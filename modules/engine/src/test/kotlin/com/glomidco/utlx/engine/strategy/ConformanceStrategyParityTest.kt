@@ -200,22 +200,11 @@ class ConformanceStrategyParityTest {
             // and not the stdlib.
             "datacontract/02_servers_wildcard.yaml" to Divergence.COPY_OUTPUT,
 
-            // Numeric exactness is not applied uniformly across the stdlib, so the strategies
-            // disagree on COMPUTED scale:
-            //   mapValues($d.prices, v => v * 2)   with prices {apple: 1.5, banana: 0.75}
-            //     TEMPLATE      -> 3,    1.5     (lambda parameter arrives WITHOUT an exact form)
-            //     COPY/COMPILED -> 3.0,  1.50    (exact BigDecimal arithmetic, scales multiplied)
-            // Measured on the interpreter, the seam is inside the stdlib rather than at one edge:
-            //   $d.prices.apple * 2            -> 3.0    exact
-            //   map([1.5, 0.75], v -> v * 2)   -> 3.0, 1.50   exact
-            //   mapValues(...,  v => v * 2)    -> 3,   1.5    NOT exact
-            //   sum([1.50, 1.50])              -> 3           NOT exact (3.00 would be exact)
-            // B44 fixed one such edge (`udmToRuntimeValue`); these are further ones. Left listed
-            // rather than patched because the right answer needs a DECISION first: should a
-            // *computed* result keep BigDecimal's scale (1.50 * 3 = 4.50, as today) or normalise
-            // (3.0 -> 3)? B35 preserves scale as WRITTEN; it never settled computed scale, and the
-            // fixtures were authored expecting normalisation.
-            "stdlib/object-lambda/mapValues_basic.yaml" to Divergence.BOTH_OUTPUT,
+            // mapValues_basic left this list when B45 made the stdlib follow the decimal rule the
+            // arithmetic operators already implemented: `runtimeValueToUDM` now carries the exact
+            // form into a stdlib lambda, and `sum`/`min`/`max` no longer narrow to Double. TEMPLATE
+            // had been the wrong one, producing 3 and 1.5 where the compiled strategies correctly
+            // gave 3.0 and 1.50. Two fixtures were re-authored to match; see the B45 report.
             // version_unsupported left this list when EB15 moved the %utlx version gate out of the
             // interpreter and into LanguageVersions, so every strategy applies it. It had been
             // labelled "only TEMPLATE can run it", which read as a TEMPLATE limitation; the truth
