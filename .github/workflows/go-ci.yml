@@ -68,8 +68,16 @@ jobs:
             --go_out=/tmp/gen \
             --go_opt=module=github.com/grauwen/utl-x/wrappers/go/utlxclient/proto \
             proto/utlxe/v1/utlxe.proto
-          if ! diff -u wrappers/go/utlxclient/proto/utlxe/v1/utlxe.pb.go \
-                       /tmp/gen/utlxe/v1/utlxe.pb.go; then
+          # The header records which protoc produced the file. That version is a
+          # property of the generating MACHINE, not of the bindings: CI's apt protoc
+          # (3.21.x) and a developer's protoc (5.x) emit identical code under a
+          # different stamp. Diffing it compares toolchains, not content -- so drop
+          # that one line from both sides. Everything else, descriptor bytes
+          # included, is still compared exactly; that is what catches WB02.
+          strip_stamp() { sed '/^\/\/[[:space:]]*protoc[[:space:]]/d' "$1"; }
+          if ! diff -u \
+               <(strip_stamp wrappers/go/utlxclient/proto/utlxe/v1/utlxe.pb.go) \
+               <(strip_stamp /tmp/gen/utlxe/v1/utlxe.pb.go); then
             echo "::error::Generated Go bindings differ from the .proto. Regenerate them — and never let a find-and-replace edit a .pb.go (see docs/bugs-fixed/WB02)."
             exit 1
           fi
