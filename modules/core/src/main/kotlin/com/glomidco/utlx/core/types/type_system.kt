@@ -193,7 +193,21 @@ sealed class TypeCheckResult {
 /**
  * Type inference and checking for expressions
  */
-class TypeChecker(private val stdlib: StandardLibrary) {
+/**
+ * B52: [knownFunctionNames] is the authoritative set of callable function names, supplied by
+ * whoever owns the real registry (`:stdlib`), which `:core` cannot see — the dependency runs
+ * stdlib -> core, and [StandardLibrary] here is core's own 15-signature table, not that one.
+ *
+ * When the set is empty the checker **stays silent** about unrecognised call targets rather
+ * than guessing. That matters: before B52 the callee of every function call was routed through
+ * variable resolution and reported as "Undefined variable", so `upper("a")` warned as loudly
+ * as a genuine typo. Erroring instead would be worse — with `--strict-types` every one of the
+ * ~750 functions core has no signature for would fail the run.
+ */
+class TypeChecker(
+    private val stdlib: StandardLibrary,
+    private val knownFunctionNames: Set<kotlin.String> = emptySet()
+) {
     private val errors = mutableListOf<TypeError>()
     
     /**
@@ -239,10 +253,24 @@ class TypeChecker(private val stdlib: StandardLibrary) {
             is Expression.ObjectLiteral -> {
                 val propTypes = mutableMapOf<String, UTLXType>()
 
+                // B52: `{ let f = (x) -> x * 2, r: f(21) }` — let bindings are visible to the
+                // sibling properties, which is how the interpreter binds them. The checker
+                // ignored `letBindings` entirely and reused the outer env for every property,
+                // so a call to a let-bound lambda resolved nowhere. That was harmless while an
+                // unresolved callee was silently treated as a variable; once B52 made an
+                // unresolved callee an "Undefined function", it became a false error.
+                val scope = if (expr.letBindings.isEmpty()) env else {
+                    val child = env.createChild()
+                    for (binding in expr.letBindings) {
+                        child.define(binding.name, inferType(binding.value, child))
+                    }
+                    child
+                }
+
                 for (prop in expr.properties) {
                     if (prop.isSpread) {
                         // Handle spread property
-                        val spreadType = inferType(prop.value, env)
+                        val spreadType = inferType(prop.value, scope)
                         when (spreadType) {
                             is UTLXType.Object -> {
                                 // Merge properties from spread object
@@ -255,10 +283,10 @@ class TypeChecker(private val stdlib: StandardLibrary) {
                     } else if (prop.computedKey != null) {
                         // Computed property: [expr]: value — key is dynamic, type is Any
                         // We can't statically determine the key, so we skip adding to propTypes
-                        inferType(prop.value, env) // still type-check the value
+                        inferType(prop.value, scope) // still type-check the value
                     } else {
                         val key = prop.key ?: error("Non-spread property must have a key")
-                        propTypes[key] = inferType(prop.value, env)
+                        propTypes[key] = inferType(prop.value, scope)
                     }
                 }
 
@@ -440,37 +468,65 @@ class TypeChecker(private val stdlib: StandardLibrary) {
             }
             
             is Expression.FunctionCall -> {
-                val funcType = inferType(expr.function, env)
-                
-                // Check if it's a known stdlib function
-                if (expr.function is Expression.Identifier) {
-                    val funcName = expr.function.name
-                    stdlib.getFunction(funcName)?.let { stdFunc ->
-                        // Validate argument count
+                val callee = expr.function
+
+                // B52: resolve a named callee as a FUNCTION before falling back to variable
+                // resolution. `inferType(expr.function, env)` used to run first and
+                // unconditionally, so an identifier in call position hit the Identifier branch
+                // and was recorded as "Undefined variable" — for real stdlib functions and
+                // typos alike — before the stdlib lookup below ever ran.
+                if (callee is Expression.Identifier) {
+                    val funcName = callee.name
+
+                    // (a) A binding of that name in scope — a lambda bound by `let` — SHADOWS
+                    // a stdlib function of the same name, so it is resolved first. The
+                    // interpreter does the same: `{ let upper = (x) -> "S", r: upper("a") }`
+                    // yields "S". Checking stdlib ahead of the environment reported a bogus
+                    // arity error for `{ let count = (a, b) -> a + b, r: count(1, 2) }` — a
+                    // script that runs fine. Such a callee falls through to the generic path
+                    // below, which resolves it as a value.
+                    if (env.lookup(funcName) == null) {
+
+                    // (b) core has a signature: check arity and argument types as before
+                    val stdFunc = stdlib.getFunction(funcName)
+                    if (stdFunc != null) {
                         if (expr.arguments.size != stdFunc.parameterTypes.size) {
                             errors.add(TypeError(
                                 "Function '$funcName' expects ${stdFunc.parameterTypes.size} arguments, got ${expr.arguments.size}",
                                 expr.location
                             ))
                         }
-                        
-                        // Check argument types
                         expr.arguments.zip(stdFunc.parameterTypes).forEach { (arg, expectedType) ->
                             val argType = inferType(arg, env)
                             if (!argType.isAssignableTo(expectedType)) {
                                 errors.add(TypeError(
-                                    "Argument type mismatch",
-                                    arg.location,
-                                    expected = expectedType,
-                                    actual = argType
+                                    "Argument type mismatch", arg.location,
+                                    expected = expectedType, actual = argType
                                 ))
                             }
                         }
-                        
                         return stdFunc.returnType
                     }
+
+                    // (c) neither a binding nor a signature. Only report when we have the
+                    // authoritative name set; otherwise we cannot distinguish "core has no
+                    // signature for this function" from "typo".
+                    if (knownFunctionNames.isNotEmpty() && funcName !in knownFunctionNames) {
+                        errors.add(TypeError(
+                            "Undefined function: $funcName",
+                            // the callee's own location, not the whole call's — the caret
+                            // must sit under the name the user mistyped
+                            callee.location
+                        ))
+                    }
+                    // Arguments are still checked for their own errors.
+                    expr.arguments.forEach { inferType(it, env) }
+                    return UTLXType.Unknown
+                    } // end: no binding of this name in scope
                 }
-                
+
+                val funcType = inferType(callee, env)
+
                 // Generic function call
                 when (funcType) {
                     is UTLXType.Function -> {

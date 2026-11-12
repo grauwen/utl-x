@@ -438,13 +438,35 @@ class ASTCompiler {
      * lets the newer segment win. That is exactly the interpreter's rule.
      */
     private fun compileObjectLiteral(ctx: CompileContext, expr: Expression.ObjectLiteral) {
-        // Process let bindings first
+        // EB17: an object literal's `let` bindings are scoped to THAT object literal. `allocLocal`
+        // writes straight into `ctx.locals`, so a nested object's binding used to overwrite an
+        // outer binding of the same name *permanently* — for the rest of the enclosing object, not
+        // just inside the nested one:
+        //
+        //   { let dbl = (x) -> x * 2,
+        //     shadowed: { let dbl = (x) -> x + 100, v: dbl(1) },  // 101, correctly
+        //     stillOuter: dbl(1) }                                // 101 compiled, 2 interpreted
+        //
+        // The slot numbers never collide (`localSlot` only increments), so only the name → slot
+        // map needs unwinding. Restored in a finally because the segment loop below has an early
+        // return for an empty object.
+        val shadowed = mutableMapOf<String, Int?>()
         for (binding in expr.letBindings) {
             compileExpression(ctx, binding.value)
+            if (binding.name !in shadowed) shadowed[binding.name] = ctx.locals[binding.name]
             val slot = ctx.allocLocal(binding.name)
             ctx.mv.visitVarInsn(ASTORE, slot)
         }
+        try {
+            compileObjectLiteralBody(ctx, expr)
+        } finally {
+            for ((name, previous) in shadowed) {
+                if (previous == null) ctx.locals.remove(name) else ctx.locals[name] = previous
+            }
+        }
+    }
 
+    private fun compileObjectLiteralBody(ctx: CompileContext, expr: Expression.ObjectLiteral) {
         // Split into segments that preserve source order: runs of keyed properties, and spreads.
         val segments = mutableListOf<Any>()
         var run = mutableListOf<Property>()
@@ -736,6 +758,24 @@ class ASTCompiler {
             // User-defined function: local variable holds a UDM.Lambda
             // Push: UDM (lambda), then List (args) → RuntimeOps.invokeLambda(UDM, List)
             ctx.mv.visitVarInsn(ALOAD, localSlot)
+            argList()
+            ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "invokeLambda",
+                "(${UDM_DESC}Ljava/util/List;)$UDM_DESC", false)
+        } else if (ctx.capturedSlot != null && funcName in ctx.capturedNames) {
+            // EB17: the same binding, reached through the captured environment instead of a local
+            // slot. EB06 taught `compileIdentifier` to look here but left CALL position behind, so
+            // a lambda bound by `let` and invoked from inside another lambda — `map(xs, (n) ->
+            // dbl(n))` — was not found as a local, fell through to the stdlib branch below, and
+            // threw "Undefined function: dbl" at runtime. The interpreter ran it correctly, so the
+            // compiled and interpreted paths disagreed on a script that is ordinary UTL-X.
+            //
+            // Precedence is locals, then captured, then stdlib — matching the interpreter, where a
+            // `let` shadows a stdlib function of the same name.
+            ctx.mv.visitVarInsn(ALOAD, ctx.capturedSlot)
+            ctx.mv.visitLdcInsn(funcName)
+            ctx.mv.visitMethodInsn(INVOKEINTERFACE, MAP_TYPE, "get",
+                "(Ljava/lang/Object;)Ljava/lang/Object;", true)
+            ctx.mv.visitTypeInsn(CHECKCAST, UDM_TYPE)
             argList()
             ctx.mv.visitMethodInsn(INVOKESTATIC, RUNTIME_OPS, "invokeLambda",
                 "(${UDM_DESC}Ljava/util/List;)$UDM_DESC", false)

@@ -164,7 +164,14 @@ object ValidateCommand {
             }
 
             val stdlib = StandardLibrary()
-            val typeChecker = TypeChecker(stdlib)
+            // B52: hand the checker the authoritative set of callable names. :core owns only
+            // 15 type signatures and cannot see :stdlib's ~750-function registry, so without
+            // this it could not tell an unlisted function from a typo — and reported every
+            // call as "Undefined variable". With the set, an unknown name is a real error.
+            val typeChecker = TypeChecker(
+                stdlib,
+                com.glomidco.utlx.stdlib.StandardLibrary.getAllFunctionNames()
+            )
             val typeCheckResult = typeChecker.check(program)
 
             when (typeCheckResult) {

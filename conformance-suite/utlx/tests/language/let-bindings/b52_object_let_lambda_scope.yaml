@@ -1,0 +1,57 @@
+name: "b52_object_let_lambda_scope"
+category: "language/let-bindings"
+description: "B52: a lambda bound by an object-literal let is callable from the properties of that object, is visible to nested objects, and is shadowed by a nearer binding of the same name"
+tags: ["let", "lambda", "scope", "shadowing", "b52"]
+
+input:
+  format: json
+  data: |
+    {"ns": [1, 2, 3]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    let dbl = (x) -> x * 2,
+    let factor = 10,
+    let scale = (x) -> x * factor,
+
+    direct: dbl(21),
+    overInput: map($input.ns, (n) -> dbl(n)),
+    usesEarlierLet: scale(7),
+
+    nested: {
+      let viaOuter = (x) -> dbl(x) + 1,
+      v: viaOuter(4)
+    },
+
+    shadowed: {
+      let dbl = (x) -> x + 100,
+      v: dbl(1)
+    },
+
+    stillOuter: dbl(1)
+  }
+
+expected:
+  format: json
+  data: {
+    "direct": 42,
+    "overInput": [2, 4, 6],
+    "usesEarlierLet": 70,
+    "nested": {"v": 9},
+    "shadowed": {"v": 101},
+    "stillOuter": 2
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references:
+    - "docs/bugs-fixed/B52-type-checker-reports-every-stdlib-function-as-an-undefined-variable.md"
+    - "docs/bugs-fixed/EB17-a-captured-binding-is-readable-but-not-callable.md"
+  notes:
+    - "The runtime always handled this; the type checker did not. Fixing B52 — resolving a named callee as a function before falling back to variable resolution — turned the ObjectLiteral branch's omission of letBindings into a hard 'Undefined function: dbl', because the lambda was no longer found as a variable either. The fix gives the properties a child scope."
+    - "Validation itself cannot be a conformance fixture: the runner hard-codes 'transform' and has no command dimension. The warning text and --strict exit code are pinned by B52ValidateFunctionNamesTest in :modules:cli."
+    - "Carried here so ConformanceStrategyParityTest checks the runtime half across TEMPLATE, COPY and COMPILED — which is what it did: on its first run COPY and COMPILED both threw 'Undefined function: dbl' on overInput, and stillOuter came back 101 instead of 2. Both are EB17, both pre-existing, neither related to the type checker. The overInput and stillOuter properties are therefore the load-bearing ones here."

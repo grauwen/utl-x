@@ -151,10 +151,17 @@ class ConformanceStrategyParityTest {
             COPY_OUTPUT("COPY produces different output from TEMPLATE"),
 
             /**
-             * A user-defined function (`function f(...) { ... }` / `let f = x => ...` used as a
-             * callee) is not visible to the compiled path: `compile()` compiles `program.body` and
-             * nothing else, so the call reports `Undefined function`. A missing capability, not a
-             * coding error.
+             * A user-defined function used as a callee reports `Undefined function` on the
+             * compiled path.
+             *
+             * The original diagnosis here — "`compile()` compiles `program.body` and nothing else
+             * ... a missing capability, not a coding error" — was wrong, and the wrong label is
+             * why the three fixtures that carried it sat untouched. The actual cause was EB17: a
+             * `let`-bound lambda *was* in the captured environment and readable, but
+             * `compileFunctionCall` looked only in `ctx.locals` and emitted a stdlib dispatch when
+             * it found nothing. One branch fixed all three. The value is kept because the symptom
+             * is a real class, but anything landing here again needs a fresh diagnosis rather than
+             * this label.
              */
             COMPILED_UNDEFINED_FUNCTION("COPY/COMPILED cannot see a user-defined function"),
 
@@ -180,9 +187,16 @@ class ConformanceStrategyParityTest {
          * shrinking. That second direction is what keeps the inventory honest.
          */
         private val KNOWN_DIVERGENCES: Map<String, Divergence> = mapOf(
-            "examples/intermediate/function_composition.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "examples/intermediate/function_definitions_in_objects.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
-            "formats/jsch/transformation/generate_typescript_interface.yaml" to Divergence.COMPILED_UNDEFINED_FUNCTION,
+            // ── COMPILED_UNDEFINED_FUNCTION: emptied by EB17 ──
+            // Three fixtures lived here (function_composition, function_definitions_in_objects,
+            // generate_typescript_interface) and the label blamed a missing capability —
+            // "compile() compiles program.body and nothing else". The real cause was narrower and
+            // fixable: EB06 taught `compileIdentifier` to read a captured binding but left CALL
+            // position looking only at `ctx.locals`, so a let-bound lambda invoked from inside
+            // another lambda fell through to stdlib dispatch and threw at runtime. All three now
+            // agree, and this test's second direction — a listed fixture that stops diverging also
+            // fails — is what forced them out of the list rather than letting them rot in it.
+            // The enum value is kept; the diagnosis in its doc comment is corrected there.
 
             // ── Found when this harness learned to drive the 39 named-input fixtures ──
             // Diagnosed, not just catalogued. The RUNS_ONLY_ON_TEMPLATE entry sat unexamined for a
