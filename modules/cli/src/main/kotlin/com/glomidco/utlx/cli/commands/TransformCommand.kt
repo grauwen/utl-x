@@ -8,6 +8,7 @@ import com.glomidco.utlx.core.debug.DebugConfig
 import com.glomidco.utlx.core.format.ParseProfile
 import java.io.File
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.formats.json.JSONSerializer
 
 /**
  * Transform command - CLI wrapper for TransformationService
@@ -34,6 +35,8 @@ object TransformCommand {
         val verbose: Boolean = false,
         val pretty: Boolean = true,
         val rawOutput: Boolean = false,                         // -r strip quotes from string output
+        val args: Map<String, String> = emptyMap(),             // F27: --arg name=value, bound as a string
+        val jsonArgs: Map<String, String> = emptyMap(),         // F27: --argjson name=<json>, parsed as JSON
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
@@ -280,6 +283,22 @@ object TransformCommand {
                 }
             }
 
+            // F27: --argjson values join the inputs map as JSON documents, so they are read by
+            // the real JSON parser under the resolved --parse-profile. Appended AFTER the real
+            // inputs: `inputs.values.first()` below selects the primary input, and an arg must
+            // never become it. `hasMultipleInputs` reads options.namedInputs, not this map, so
+            // adding entries here cannot flip the multi-input code paths either.
+            val inputsWithArgs = if (options.jsonArgs.isEmpty()) inputs else {
+                val clash = options.jsonArgs.keys.intersect(inputs.keys)
+                if (clash.isNotEmpty()) {
+                    return CommandResult.Failure(
+                        "--argjson name(s) ${clash.joinToString(", ")} collide with an input of the same name", 1)
+                }
+                inputs + options.jsonArgs.mapValues { (_, json) ->
+                    TransformationService.InputData(content = json, format = "json")
+                }
+            }
+
             // Step 1: Determine script content (file, expression, or identity)
             val scriptContent: String
             val effectiveOutputFormat: String?
@@ -298,11 +317,17 @@ object TransformCommand {
                         if (options.outputFormat != null) " (explicit)" else " (default json)")
                 }
 
+                // F27: --arg values become `let` bindings ahead of the body. A top-level let
+                // followed by the expression is valid UTL-X, so this needs no language change
+                // and no header plumbing. Values are bound as STRINGS, like jq's --arg.
+                val argBindings = options.args.entries.joinToString("") { (name, value) ->
+                    "let $name = \"${escapeUtlxString(value)}\"\n"
+                }
                 scriptContent = """%utlx 1.0
 input auto
 output $effectiveOutputFormat
 ---
-$expandedExpression"""
+$argBindings$expandedExpression"""
             } else if (options.identityMode) {
                 // Identity mode: synthesize a passthrough script with smart format flip
                 val primaryInput = inputs.values.first()
@@ -373,7 +398,7 @@ ${"$"}input"""
             // F27: -r needs to know whether the result is a scalar or a sequence, which the
             // serialized string cannot tell it reliably. transformWithUdm (added for EB14)
             // hands back the result UDM alongside the rendered text.
-            val outcome = transformationService.transformWithUdm(scriptContent, inputs, serviceOptions)
+            val outcome = transformationService.transformWithUdm(scriptContent, inputsWithArgs, serviceOptions)
             val outputData = outcome.output
             val outputFormat = outcome.outputFormat
             captureOutputData = outputData
@@ -520,6 +545,8 @@ ${"$"}input"""
         var verbose = false
         var pretty = true
         var rawOutput = false
+        val argValues = mutableMapOf<String, String>()
+        val jsonArgValues = mutableMapOf<String, String>()
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
@@ -556,6 +583,34 @@ ${"$"}input"""
                 }
                 "-r", "--raw-output" -> {
                     rawOutput = true
+                }
+                "--arg" -> {
+                    // F27: --arg name=value. jq passes args as strings and so do we; coerce in
+                    // the expression with toNumber()/toBoolean() when a typed value is wanted.
+                    val raw = args[++i]
+                    val eq = raw.indexOf('=')
+                    if (eq <= 0) throw IllegalArgumentException(
+                        "Invalid --arg '$raw' (expected name=value)")
+                    val name = raw.substring(0, eq)
+                    if (!name.matches(Regex("[A-Za-z_][A-Za-z0-9_]*"))) throw IllegalArgumentException(
+                        "Invalid --arg name '$name' (must be a valid identifier: letters, digits, underscore; not starting with a digit)")
+                    argValues[name] = raw.substring(eq + 1)
+                }
+                "--argjson" -> {
+                    // F27: --argjson name=<json>. The value is handed to the real JSON reader
+                    // (as a named input) rather than spliced into the script as a literal. The
+                    // expression lexer would *mostly* agree with the JSON parser, but not on
+                    // duplicate keys: the JSON reader rejects them under the standard profile
+                    // while the lexer silently takes the last (B01's failure mode, which F23's
+                    // strictness profiles exist to prevent). One JSON reader, one policy.
+                    val raw = args[++i]
+                    val eq = raw.indexOf('=')
+                    if (eq <= 0) throw IllegalArgumentException(
+                        "Invalid --argjson '$raw' (expected name=<json>)")
+                    val name = raw.substring(0, eq)
+                    if (!name.matches(Regex("[A-Za-z_][A-Za-z0-9_]*"))) throw IllegalArgumentException(
+                        "Invalid --argjson name '$name' (must be a valid identifier)")
+                    jsonArgValues[name] = raw.substring(eq + 1)
                 }
                 "--input-format", "--from" -> {
                     inputFormat = args[++i]
@@ -650,6 +705,8 @@ ${"$"}input"""
                 verbose = verbose,
                 pretty = pretty,
                 rawOutput = rawOutput,
+                args = argValues,
+                jsonArgs = jsonArgValues,
                 captureEnabled = captureEnabled,
                 debugLevel = debugLevel,
                 debugComponents = debugComponents,
@@ -658,6 +715,14 @@ ${"$"}input"""
                 parseProfile = parseProfile,
                 languageMode = languageMode
             )
+        }
+
+        // F27: --arg only has an injection point in expression mode. A script file brings its
+        // own header and body, and splicing bindings into someone else's source is the kind of
+        // textual surgery that breaks on the first script with `---` inside a string.
+        if ((argValues.isNotEmpty() || jsonArgValues.isNotEmpty()) && scriptFile != null) {
+            throw IllegalArgumentException(
+                "--arg/--argjson are only supported with -e/--expression. For a script file, pass values with --input name=file.")
         }
 
         // If no script file: identity mode (when allowed) or error
@@ -672,6 +737,8 @@ ${"$"}input"""
                     verbose = verbose,
                     pretty = pretty,
                     rawOutput = rawOutput,
+                args = argValues,
+                jsonArgs = jsonArgValues,
                     captureEnabled = captureEnabled,
                     debugLevel = debugLevel,
                     debugComponents = debugComponents,
@@ -709,6 +776,8 @@ ${"$"}input"""
             verbose = verbose,
             pretty = pretty,
             rawOutput = rawOutput,
+                args = argValues,
+                jsonArgs = jsonArgValues,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
             debugComponents = debugComponents,
@@ -733,7 +802,10 @@ ${"$"}input"""
             |  cat d.json | utlx transform -e '${'$'}input.tag'            One-off query, like jq
             |  cat d.json | utlx transform -e '${'$'}input.tag' -r          Unquoted scalar output
             |  cat d.json | utlx transform -e '${'$'}input.items[*].price'  Project over a sequence
+            |  cat d.json | utlx transform -e '${'$'}input.items[*].n' -r     One result per line
             |  utlx transform -e '${'$'}input.name' -i d.json              Read from a file instead of stdin
+            |  cat d.json | utlx transform -e '${'$'}t' --arg t=12           Pass a value in from the shell
+            |  cat d.json | utlx transform -e '${'$'}c.min' --argjson 'c={"min":12}'  Pass structured data
             |
             |Identity mode (no script, format conversion):
             |  cat data.xml | utlx                        Auto-detect XML, output JSON (smart flip)
@@ -755,8 +827,16 @@ ${"$"}input"""
             |  -e, --expression EXPR       Run EXPR as the transformation body instead of a script file.
             |                              The `%utlx` header is implied; use --from/--to to set formats.
             |                              Cannot be combined with a script file.
-            |  -r, --raw-output            Emit a string result unquoted (like jq -r). Applies to a
-            |                              scalar result; arrays and objects still render as JSON.
+            |  -r, --raw-output            Emit results unquoted, for shell use (like jq -r). A scalar
+            |                              prints bare; an array of scalars prints one per line.
+            |                              Objects and nested arrays still render as JSON.
+            |  --arg name=value            Bind a value as a string variable, usable as ${'$'}name in the
+            |                              expression. Repeatable. Coerce with toNumber() if needed.
+            |                              Expression mode only (-e); for a script file use --input.
+            |  --argjson name=<json>       Bind a JSON value (object, array or scalar), keeping its
+            |                              types. Read by the JSON parser under --parse-profile, so
+            |                              e.g. duplicate keys are rejected as they are for any input.
+            |                              Repeatable. Expression mode only.
             |  --charset NAME              Force the input character set (default: auto-detect)
             |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
             |  --from FORMAT               Alias for --input-format
@@ -809,6 +889,8 @@ ${"$"}input"""
             |  gh api repos/o/r/releases/latest | utlx transform -e '${'$'}input.tag_name' -r
             |  cat orders.json | utlx transform -e 'sum(${'$'}input.items[*].price)' -r
             |  cat data.xml | utlx transform -e '${'$'}input.r.i.n' --to json
+            |  for n in ${'$'}(cat d.json | utlx transform -e '${'$'}input.items[*].n' -r); do echo "${'$'}n"; done
+            |  cat d.json | utlx transform -e 'filter(${'$'}input.items, (i) -> i.p > toNumber(${'$'}min)).*.n' -r --arg min=12
         """.trimMargin())
     }
 
@@ -820,14 +902,29 @@ ${"$"}input"""
      * `while read` work at all — the previous behaviour left an array as pretty JSON, so
      * every list extraction needed a `tail`/`tr` pipeline to be usable.
      *
+     * Each scalar is rendered **by the JSON serializer**, then unquoted, rather than by
+     * calling `toString()` on the boxed value. That matters: `toString()` on a Double
+     * gives `2.0` where the serializer gives `2` (B37's integral-Long path) and gives
+     * `10.50` rather than `10.5` for an exact decimal (B35). Re-implementing numeric
+     * rendering here would silently disagree with every other output path.
+     *
      * Anything else — an object, or an array containing structure — falls back to the
      * serialized form untouched. Flattening those would invent a format, and quietly
      * emitting something lossy is worse than emitting JSON the caller can parse.
      */
     private fun renderRaw(result: UDM, serialized: String): String {
-        fun scalarText(u: UDM): String? = when (u) {
-            is UDM.Scalar -> u.value?.toString() ?: ""
-            else -> null
+        val json = JSONSerializer(prettyPrint = false)
+        fun scalarText(u: UDM): String? {
+            if (u !is UDM.Scalar) return null
+            val v = u.value
+            // A String is returned verbatim. Serializing it to JSON and un-escaping again
+            // would be a lossy round-trip: sequential replaces cannot undo JSON escaping
+            // correctly, because unescaping `\\` first leaves a backslash that then pairs
+            // with the following character (`a\tb` came back as `a<TAB>b`).
+            if (v is String) return v
+            // Everything else goes through the serializer so numbers match every other
+            // output path: `2` not `2.0` (B37) and `10.50` not `10.5` (B35).
+            return json.serialize(u).trim()
         }
         scalarText(result)?.let { return it }
         if (result is UDM.Array) {
@@ -836,5 +933,14 @@ ${"$"}input"""
         }
         return serialized
     }
+
+
+    /** F27: escape a `--arg` value for interpolation into a UTL-X double-quoted string literal. */
+    private fun escapeUtlxString(value: String): String =
+        value.replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\t", "\\t")
+            .replace("\r", "\\r")
 
 }
