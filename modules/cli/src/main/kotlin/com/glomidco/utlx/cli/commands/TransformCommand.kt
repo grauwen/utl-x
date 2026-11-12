@@ -7,6 +7,7 @@ import com.glomidco.utlx.cli.CommandResult
 import com.glomidco.utlx.core.debug.DebugConfig
 import com.glomidco.utlx.core.format.ParseProfile
 import java.io.File
+import com.glomidco.utlx.core.udm.UDM
 
 /**
  * Transform command - CLI wrapper for TransformationService
@@ -369,7 +370,12 @@ ${"$"}input"""
                 maxLanguageVersion = resolvedLanguageMode
             )
 
-            val (outputData, outputFormat) = transformationService.transform(scriptContent, inputs, serviceOptions)
+            // F27: -r needs to know whether the result is a scalar or a sequence, which the
+            // serialized string cannot tell it reliably. transformWithUdm (added for EB14)
+            // hands back the result UDM alongside the rendered text.
+            val outcome = transformationService.transformWithUdm(scriptContent, inputs, serviceOptions)
+            val outputData = outcome.output
+            val outputFormat = outcome.outputFormat
             captureOutputData = outputData
             captureSuccess = true
 
@@ -379,17 +385,7 @@ ${"$"}input"""
 
             // Write output (apply raw mode if requested)
             val finalOutput = if (options.rawOutput) {
-                // Strip surrounding quotes from JSON string values
-                val trimmed = outputData.trim()
-                if (trimmed.startsWith("\"") && trimmed.endsWith("\"")) {
-                    trimmed.substring(1, trimmed.length - 1)
-                        .replace("\\\"", "\"")
-                        .replace("\\n", "\n")
-                        .replace("\\t", "\t")
-                        .replace("\\\\", "\\")
-                } else {
-                    trimmed
-                }
+                renderRaw(outcome.outputUDM, outputData)
             } else {
                 outputData
             }
@@ -731,6 +727,13 @@ ${"$"}input"""
             |  utlx transform <script-file> [input-file] [options]
             |  utlx transform <script-file> [options] < input-file
             |  utlx transform <script-file> --input input1=file1.xml --input input2=file2.json [options]
+            |  utlx transform -e '<expression>' [input-file] [options]
+            |
+            |Inline expressions (no script file):
+            |  cat d.json | utlx transform -e '${'$'}input.tag'            One-off query, like jq
+            |  cat d.json | utlx transform -e '${'$'}input.tag' -r          Unquoted scalar output
+            |  cat d.json | utlx transform -e '${'$'}input.items[*].price'  Project over a sequence
+            |  utlx transform -e '${'$'}input.name' -i d.json              Read from a file instead of stdin
             |
             |Identity mode (no script, format conversion):
             |  cat data.xml | utlx                        Auto-detect XML, output JSON (smart flip)
@@ -749,6 +752,12 @@ ${"$"}input"""
             |      --output name=FILE      Named output for multi-output transformations
             |  -i, --input FILE            Read input from FILE
             |      --input name=FILE       Named input for multi-input transformations
+            |  -e, --expression EXPR       Run EXPR as the transformation body instead of a script file.
+            |                              The `%utlx` header is implied; use --from/--to to set formats.
+            |                              Cannot be combined with a script file.
+            |  -r, --raw-output            Emit a string result unquoted (like jq -r). Applies to a
+            |                              scalar result; arrays and objects still render as JSON.
+            |  --charset NAME              Force the input character set (default: auto-detect)
             |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
             |  --from FORMAT               Alias for --input-format
             |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata, osch)
@@ -795,6 +804,37 @@ ${"$"}input"""
             |
             |  # Multiple named outputs
             |  utlx transform script.utlx -i data.xml --output summary=sum.json --output details=det.xml
+            |
+            |  # Inline expressions, for shell pipelines
+            |  gh api repos/o/r/releases/latest | utlx transform -e '${'$'}input.tag_name' -r
+            |  cat orders.json | utlx transform -e 'sum(${'$'}input.items[*].price)' -r
+            |  cat data.xml | utlx transform -e '${'$'}input.r.i.n' --to json
         """.trimMargin())
     }
+
+    /**
+     * F27: render a result for shell consumption (`-r`), the equivalent of `jq -r`.
+     *
+     * A **scalar** renders as its own text with no JSON quoting. A **sequence of scalars**
+     * renders one element per line, which is what makes `for x in $(utlx ... -r)` and
+     * `while read` work at all — the previous behaviour left an array as pretty JSON, so
+     * every list extraction needed a `tail`/`tr` pipeline to be usable.
+     *
+     * Anything else — an object, or an array containing structure — falls back to the
+     * serialized form untouched. Flattening those would invent a format, and quietly
+     * emitting something lossy is worse than emitting JSON the caller can parse.
+     */
+    private fun renderRaw(result: UDM, serialized: String): String {
+        fun scalarText(u: UDM): String? = when (u) {
+            is UDM.Scalar -> u.value?.toString() ?: ""
+            else -> null
+        }
+        scalarText(result)?.let { return it }
+        if (result is UDM.Array) {
+            val parts = result.elements.map { scalarText(it) ?: return serialized }
+            return parts.joinToString("\n")
+        }
+        return serialized
+    }
+
 }
