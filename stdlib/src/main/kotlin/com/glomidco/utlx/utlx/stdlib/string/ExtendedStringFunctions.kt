@@ -20,16 +20,16 @@ object ExtendedStringFunctions {
         "delimiter: Delimiter value"
         ],
         returns = "Result of the operation",
-        example = "substring-before(\"hello-world\", \"-\") => \"hello\"",
+        example = "substringBefore(\"hello-world\", \"-\") => \"hello\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Substring before first occurrence
-     * Usage: substring-before("hello-world", "-") => "hello"
+     * Usage: substringBefore("hello-world", "-") => "hello"
      */
     fun substringBefore(args: List<UDM>): UDM {
-        requireArgs(args, 2, "substring-before")
+        requireArgs(args, 2, "substringBefore")
         val str = args[0].asString()
         val delimiter = args[1].asString()
 
@@ -50,16 +50,16 @@ object ExtendedStringFunctions {
         "padChar: Padchar value"
         ],
         returns = "Result of the operation",
-        example = "substring-after(\"hello-world\", \"-\") => \"world\"",
+        example = "substringAfter(\"hello-world\", \"-\") => \"world\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Substring after first occurrence
-     * Usage: substring-after("hello-world", "-") => "world"
+     * Usage: substringAfter("hello-world", "-") => "world"
      */
     fun substringAfter(args: List<UDM>): UDM {
-        requireArgs(args, 2, "substring-after")
+        requireArgs(args, 2, "substringAfter")
         val str = args[0].asString()
         val delimiter = args[1].asString()
         
@@ -79,16 +79,16 @@ object ExtendedStringFunctions {
         "padChar: Padchar value"
         ],
         returns = "Result of the operation",
-        example = "substring-before-last(\"a/b/c.txt\", \"/\") => \"a/b\"",
+        example = "substringBeforeLast(\"a/b/c.txt\", \"/\") => \"a/b\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Substring before last occurrence
-     * Usage: substring-before-last("a/b/c.txt", "/") => "a/b"
+     * Usage: substringBeforeLast("a/b/c.txt", "/") => "a/b"
      */
     fun substringBeforeLast(args: List<UDM>): UDM {
-        requireArgs(args, 2, "substring-before-last")
+        requireArgs(args, 2, "substringBeforeLast")
         val str = args[0].asString()
         val delimiter = args[1].asString()
         
@@ -108,16 +108,16 @@ object ExtendedStringFunctions {
         "padChar: Padchar value"
         ],
         returns = "Result of the operation",
-        example = "substring-after-last(\"a/b/c.txt\", \"/\") => \"c.txt\"",
+        example = "substringAfterLast(\"a/b/c.txt\", \"/\") => \"c.txt\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Substring after last occurrence
-     * Usage: substring-after-last("a/b/c.txt", "/") => "c.txt"
+     * Usage: substringAfterLast("a/b/c.txt", "/") => "c.txt"
      */
     fun substringAfterLast(args: List<UDM>): UDM {
-        requireArgs(args, 2, "substring-after-last")
+        requireArgs(args, 2, "substringAfterLast")
         val str = args[0].asString()
         val delimiter = args[1].asString()
         
@@ -171,16 +171,16 @@ object ExtendedStringFunctions {
         "padChar: Padchar value"
         ],
         returns = "Result of the operation",
-        example = "pad-right(\"42\", 5, \"0\") => \"42000\"",
+        example = "padRight(\"42\", 5, \"0\") => \"42000\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Pad string on right
-     * Usage: pad-right("42", 5, "0") => "42000"
+     * Usage: padRight("42", 5, "0") => "42000"
      */
     fun padRight(args: List<UDM>): UDM {
-        requireArgs(args, 3, "pad-right")
+        requireArgs(args, 3, "padRight")
         val str = args[0].asString()
         val length = args[1].asNumber().toInt()
         val padChar = args[2].asString().firstOrNull() ?: ' '
@@ -204,16 +204,16 @@ object ExtendedStringFunctions {
         "times: Times value"
         ],
         returns = "Result of the operation",
-        example = "normalize-space(\"hello    world\") => \"hello world\"",
+        example = "normalizeSpace(\"hello    world\") => \"hello world\"",
         tags = ["string"],
         since = "1.0"
     )
     /**
      * Normalize whitespace (collapse multiple spaces to single space)
-     * Usage: normalize-space("hello    world") => "hello world"
+     * Usage: normalizeSpace("hello    world") => "hello world"
      */
     fun normalizeSpace(args: List<UDM>): UDM {
-        requireArgs(args, 1, "normalize-space")
+        requireArgs(args, 1, "normalizeSpace")
         val str = args[0].asString()
         val normalized = str.trim().replace(Regex("\\s+"), " ")
         return UDM.Scalar(normalized)

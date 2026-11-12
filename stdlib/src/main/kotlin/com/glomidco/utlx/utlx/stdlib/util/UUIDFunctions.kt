@@ -55,7 +55,7 @@ object UUIDFunctions {
 Example:
 generateUuidV4()
 // Returns: "550e8400-e29b-41d4-a716-446655440000"
-Note: This is the same as the existing CoreFunctions::generateUuid""",
+Also registered as `generateUuid`, which this function took over from CoreFunctions.""",
         tags = ["utility"],
         since = "1.0"
     )
@@ -69,7 +69,8 @@ Note: This is the same as the existing CoreFunctions::generateUuid""",
      *   generateUuidV4()
      *   // Returns: "550e8400-e29b-41d4-a716-446655440000"
      * 
-     * Note: This is the same as the existing CoreFunctions::generateUuid
+     * Also registered as `generateUuid`: this function took that name over from
+     * CoreFunctions.generateUuid, which was removed in 2026-11-12 as unreachable.
      */
     fun generateUuidV4(args: List<UDM>): UDM {
         val uuid = UUID.randomUUID().toString()

@@ -165,7 +165,7 @@ object ExtendedDateFunctions {
         "dateStr: Datestr value"
         ],
         returns = ": -1 if date1 < date2, 0 if equal, 1 if date1 > date2",
-        example = "compare-dates(date1, date2)",
+        example = "compareDates(date1, date2)",
         notes = "Returns: -1 if date1 < date2, 0 if equal, 1 if date1 > date2",
         tags = ["date"],
         since = "1.0"
@@ -173,10 +173,10 @@ object ExtendedDateFunctions {
     /**
      * Compare two dates
      * Returns: -1 if date1 < date2, 0 if equal, 1 if date1 > date2
-     * Usage: compare-dates(date1, date2)
+     * Usage: compareDates(date1, date2)
      */
     fun compareDates(args: List<UDM>): UDM {
-        requireArgs(args, 2, "compare-dates")
+        requireArgs(args, 2, "compareDates")
         val date1 = extractDateTime(args[0])
         val date2 = extractDateTime(args[1])
         
@@ -198,20 +198,20 @@ object ExtendedDateFunctions {
             "pattern: Optional date pattern (defaults to 'ISO8601')"
         ],
         returns = "Boolean indicating if the string is a valid date",
-        example = "validate-date(\"2025-10-14T00:00:00Z\") => true",
+        example = "validateDate(\"2025-10-14T00:00:00Z\") => true",
         tags = ["date"],
         since = "1.0"
     )
     /**
      * Validate date string against a pattern or ISO 8601 format
-     * Usage: validate-date("2025-10-14T00:00:00Z") => true (uses ISO8601 default)
-     * Usage: validate-date("2025-10-14", "yyyy-MM-dd") => true
+     * Usage: validateDate("2025-10-14T00:00:00Z") => true (uses ISO8601 default)
+     * Usage: validateDate("2025-10-14", "yyyy-MM-dd") => true
      */
     fun validateDate(args: List<UDM>): UDM {
         if (args.isEmpty() || args.size > 2) {
             throw FunctionArgumentException(
-                "validate-date expects 1-2 arguments, got ${args.size}. " +
-                "Hint: Use validate-date(date) or validate-date(date, pattern)"
+                "validateDate expects 1-2 arguments, got ${args.size}. " +
+                "Hint: Use validateDate(date) or validateDate(date, pattern)"
             )
         }
 
@@ -219,7 +219,7 @@ object ExtendedDateFunctions {
         val dateArg = args[0]
         if (dateArg !is UDM.Scalar) {
             throw FunctionArgumentException(
-                "validate-date expects date to be a string, got ${getTypeDescription(dateArg)}. " +
+                "validateDate expects date to be a string, got ${getTypeDescription(dateArg)}. " +
                 "Hint: Provide the date as a string"
             )
         }
@@ -231,7 +231,7 @@ object ExtendedDateFunctions {
 
         if (dateArg.value !is String) {
             throw FunctionArgumentException(
-                "validate-date expects date to be a string, got ${getTypeDescription(dateArg)}. " +
+                "validateDate expects date to be a string, got ${getTypeDescription(dateArg)}. " +
                 "Hint: Provide the date as a string"
             )
         }
@@ -241,7 +241,7 @@ object ExtendedDateFunctions {
             val patternArg = args[1]
             if (patternArg !is UDM.Scalar || patternArg.value !is String) {
                 throw FunctionArgumentException(
-                    "validate-date expects pattern to be a string, got ${getTypeDescription(patternArg)}. " +
+                    "validateDate expects pattern to be a string, got ${getTypeDescription(patternArg)}. " +
                     "Hint: Use a date pattern like 'yyyy-MM-dd' or 'ISO8601'"
                 )
             }

@@ -22,19 +22,19 @@ object QNameFunctions {
             "element: Element value"
         ],
         returns = "Result of the operation",
-        example = "local-name(element) => \"Envelope\" (from \"soap:Envelope\")",
+        example = "localName(element) => \"Envelope\" (from \"soap:Envelope\")",
         notes = "For non-XML data, returns the property name.",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get local name (without namespace prefix) from XML element
-     * Usage: local-name(element) => "Envelope" (from "soap:Envelope")
+     * Usage: localName(element) => "Envelope" (from "soap:Envelope")
      * 
      * For non-XML data, returns the property name.
      */
     fun localName(args: List<UDM>): UDM {
-        requireArgs(args, 1, "local-name")
+        requireArgs(args, 1, "localName")
         val element = args[0]
 
         return when (element) {
@@ -53,7 +53,7 @@ object QNameFunctions {
                 UDM.Scalar(localName)
             }
             else -> throw FunctionArgumentException(
-                "local-name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "localName requires an XML element (object), but got ${getTypeDescription(element)}. " +
                 "Hint: Ensure you're passing an XML element/node."
             )
         }
@@ -68,20 +68,20 @@ object QNameFunctions {
             "element: Element value"
         ],
         returns = "empty string if no namespace.",
-        example = "namespace-uri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\"",
+        example = "namespaceUri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\"",
         notes = "Returns empty string if no namespace.",
         tags = ["cleanup", "xml"],
         since = "1.0"
     )
     /**
      * Get namespace URI from XML element
-     * Usage: namespace-uri(element) => "http://schemas.xmlsoap.org/soap/envelope/"
+     * Usage: namespaceUri(element) => "http://schemas.xmlsoap.org/soap/envelope/"
      *
      * Returns empty string if no namespace.
      * Supports inherited namespaces via __nsContext metadata from XMLParser.
      */
     fun namespaceUri(args: List<UDM>): UDM {
-        requireArgs(args, 1, "namespace-uri")
+        requireArgs(args, 1, "namespaceUri")
         val element = args[0]
 
         return when (element) {
@@ -133,16 +133,16 @@ object QNameFunctions {
             "element: Element value"
         ],
         returns = "Result of the operation",
-        example = "name(element) => \"soap:Envelope\"",
+        example = "qualifiedName(element) => \"soap:Envelope\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get qualified name (with prefix) from XML element
-     * Usage: name(element) => "soap:Envelope"
+     * Usage: qualifiedName(element) => "soap:Envelope"
      */
     fun qualifiedName(args: List<UDM>): UDM {
-        requireArgs(args, 1, "name")
+        requireArgs(args, 1, "qualifiedName")
         val element = args[0]
 
         return when (element) {
@@ -153,7 +153,7 @@ object QNameFunctions {
                 UDM.Scalar(nameStr)
             }
             else -> throw FunctionArgumentException(
-                "name requires an XML element (object), but got ${getTypeDescription(element)}. " +
+                "qualifiedName requires an XML element (object), but got ${getTypeDescription(element)}. " +
                 "Hint: Ensure you're passing an XML element/node."
             )
         }
@@ -169,19 +169,19 @@ object QNameFunctions {
         "context: Context value"
         ],
         returns = "empty string if no prefix.",
-        example = "namespace-prefix(element) => \"soap\" (from \"soap:Envelope\")",
+        example = "namespacePrefix(element) => \"soap\" (from \"soap:Envelope\")",
         notes = "Returns empty string if no prefix.",
         tags = ["cleanup", "xml"],
         since = "1.0"
     )
     /**
      * Get namespace prefix from XML element
-     * Usage: namespace-prefix(element) => "soap" (from "soap:Envelope")
+     * Usage: namespacePrefix(element) => "soap" (from "soap:Envelope")
      * 
      * Returns empty string if no prefix.
      */
     fun namespacePrefix(args: List<UDM>): UDM {
-        requireArgs(args, 1, "namespace-prefix")
+        requireArgs(args, 1, "namespacePrefix")
         val element = args[0]
 
         return when (element) {
@@ -213,7 +213,7 @@ object QNameFunctions {
         "context: Context value"
         ],
         returns = "Result of the operation",
-        example = "resolve-qname(\"soap:Envelope\", context)",
+        example = "resolveQname(\"soap:Envelope\", context)",
         notes = """=> { localName: "Envelope", prefix: "soap", uri: "http://..." }
 Context provides namespace bindings.""",
         tags = ["xml"],
@@ -221,13 +221,13 @@ Context provides namespace bindings.""",
     )
     /**
      * Resolve QName string to full qualified name with namespace
-     * Usage: resolve-qname("soap:Envelope", context) 
+     * Usage: resolveQname("soap:Envelope", context)
      *        => { localName: "Envelope", prefix: "soap", uri: "http://..." }
      * 
      * Context provides namespace bindings.
      */
     fun resolveQName(args: List<UDM>): UDM {
-        requireArgs(args, 2, "resolve-qname")
+        requireArgs(args, 2, "resolveQname")
         val qnameStr = args[0].asString()
         val context = args[1]
 
@@ -271,18 +271,18 @@ Context provides namespace bindings.""",
         "namespaceUri: Namespaceuri value"
         ],
         returns = "Result of the operation",
-        example = "create-qname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
+        example = "createQname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
         notes = "=> \"soap:Envelope\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Create QName string from local name and namespace URI
-     * Usage: create-qname("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
+     * Usage: createQname("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
      *        => "soap:Envelope"
      */
     fun createQName(args: List<UDM>): UDM {
-        requireArgs(args, 2..3, "create-qname")
+        requireArgs(args, 2..3, "createQname")
         val localName = args[0].asString()
         val namespaceUri = args[1].asString()
         val prefix = if (args.size > 2) args[2].asString() else ""
@@ -314,18 +314,18 @@ Context provides namespace bindings.""",
             "element: Element value"
         ],
         returns = "Boolean indicating the result",
-        example = "has-namespace(element) => true",
+        example = "hasNamespace(element) => true",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Check if element has namespace
-     * Usage: has-namespace(element) => true
+     * Usage: hasNamespace(element) => true
      *
      * Supports inherited namespaces via __nsContext metadata from XMLParser.
      */
     fun hasNamespace(args: List<UDM>): UDM {
-        requireArgs(args, 1, "has-namespace")
+        requireArgs(args, 1, "hasNamespace")
         val element = args[0]
 
         return when (element) {
@@ -381,18 +381,18 @@ Context provides namespace bindings.""",
         "qnamePattern: Qnamepattern value"
         ],
         returns = "Result of the operation",
-        example = "get-namespaces(element)",
+        example = "getNamespaces(element)",
         notes = "=> { \"soap\": \"http://...\", \"wsa\": \"http://...\" }",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get all namespace declarations from element
-     * Usage: get-namespaces(element) 
+     * Usage: getNamespaces(element)
      *        => { "soap": "http://...", "wsa": "http://..." }
      */
     fun getNamespaces(args: List<UDM>): UDM {
-        requireArgs(args, 1, "get-namespaces")
+        requireArgs(args, 1, "getNamespaces")
         val element = args[0]
 
         return when (element) {
@@ -435,16 +435,16 @@ Context provides namespace bindings.""",
         "qnamePattern: Qnamepattern value"
         ],
         returns = "Result of the operation",
-        example = "matches-qname(element, \"soap:Envelope\") => true",
+        example = "matchesQname(element, \"soap:Envelope\") => true",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Match element by qualified name
-     * Usage: matches-qname(element, "soap:Envelope") => true
+     * Usage: matchesQname(element, "soap:Envelope") => true
      */
     fun matchesQName(args: List<UDM>): UDM {
-        requireArgs(args, 2, "matches-qname")
+        requireArgs(args, 2, "matchesQname")
         val element = args[0]
         val qnamePattern = args[1]
 

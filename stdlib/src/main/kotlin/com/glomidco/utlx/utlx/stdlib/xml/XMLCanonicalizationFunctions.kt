@@ -357,7 +357,7 @@ object XMLCanonicalizationFunctions {
         ],
         returns = "Result of the operation",
         example = "canonicalizeWithAlgorithm(...) => result",
-        notes = "Supported algorithms:\n- \"c14n\" - Canonical XML 1.0 without comments\n- \"c14n-with-comments\" - Canonical XML 1.0 with comments\n- \"exc-c14n\" - Exclusive C14N without comments\n- \"exc-c14n-with-comments\" - Exclusive C14N with comments\n- \"c14n11\" - Canonical XML 1.1 without comments\n- \"c14n11-with-comments\" - Canonical XML 1.1 with comments\n- \"physical\" - Physical C14N\nExample:\n```\ncanonicalize(xmlDoc, \"exc-c14n\", \"ds xenc\")\n```",
+        notes = "Supported algorithms:\n- \"c14n\" - Canonical XML 1.0 without comments\n- \"c14n-with-comments\" - Canonical XML 1.0 with comments\n- \"exc-c14n\" - Exclusive C14N without comments\n- \"exc-c14n-with-comments\" - Exclusive C14N with comments\n- \"c14n11\" - Canonical XML 1.1 without comments\n- \"c14n11-with-comments\" - Canonical XML 1.1 with comments\n- \"physical\" - Physical C14N\nExample:\n```\ncanonicalizeWithAlgorithm(xmlDoc, \"exc-c14n\", \"ds xenc\")\n```",
         tags = ["xml"],
         since = "1.0"
     )
@@ -380,7 +380,7 @@ object XMLCanonicalizationFunctions {
      * 
      * Example:
      * ```
-     * canonicalize(xmlDoc, "exc-c14n", "ds xenc")
+     * canonicalizeWithAlgorithm(xmlDoc, "exc-c14n", "ds xenc")
      * ```
      */
     fun canonicalizeWithAlgorithm(args: List<UDM>): UDM {

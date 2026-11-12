@@ -95,9 +95,36 @@ class ConversionFunctionsTest {
     fun testParseFloat() {
         val result1 = ConversionFunctions.parseFloat(listOf(UDM.Scalar("3.14159")))
         assertEquals(3.14159, (result1 as UDM.Scalar).value)
-        
+
         val result2 = ConversionFunctions.parseFloat(listOf(UDM.Scalar("42")))
         assertEquals(42.0, (result2 as UDM.Scalar).value)
+    }
+
+    /**
+     * Inherited from `ExtendedMathFunctionsTest.testParseFloat`, which exercised an unregistered
+     * copy of parseFloat that B25 superseded and B55 removed. The assertions were re-pointed here
+     * rather than dropped, because this is the implementation `parseFloat` actually resolves to.
+     *
+     * The capability B25 added — grouping and currency separators, which the old `str.toDouble()`
+     * threw on — is asserted at the end.
+     */
+    @Test
+    fun `parseFloat covers the edge cases inherited from ExtendedMathFunctions`() {
+        fun parse(s: String) = (ConversionFunctions.parseFloat(listOf(UDM.Scalar(s))) as UDM.Scalar).value
+
+        assertEquals(-2.5, parse("-2.5"))
+        assertEquals(0.0, parse("0.0"))
+        assertEquals(123000.0, parse("1.23E5"))
+        assertEquals(0.00123, parse("1.23e-3"))
+        assertEquals(0.000001, parse("0.000001"))
+        assertEquals(123456789.987654321, parse("123456789.987654321"))
+        assertEquals(Double.POSITIVE_INFINITY, parse("Infinity"))
+        assertEquals(Double.NEGATIVE_INFINITY, parse("-Infinity"))
+        assertEquals(true, (parse("NaN") as Double).isNaN())
+
+        // What B25 bought: the removed implementation threw a NumberFormatException on both.
+        assertEquals(1234.56, parse("1,234.56"))
+        assertEquals(1234.56, parse("$1,234.56"))
     }
 
     @Test

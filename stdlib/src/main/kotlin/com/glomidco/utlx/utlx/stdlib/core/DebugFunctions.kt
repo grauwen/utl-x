@@ -560,25 +560,25 @@ object DebugFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "startTimer(...) => result",
-        notes = "Note: This is a placeholder for actual timing implementation\nin the UTL-X runtime.\nExample:\n```\nlet timer = startTimer(\"Data processing\")\n// ... do work ...\nendTimer(timer)\n```",
+        example = "startDebugTimer(\"Data processing\") => timer",
+        notes = "Registered as `startDebugTimer`; the Kotlin function is named `startTimer`.\nNote: This is a placeholder for actual timing implementation\nin the UTL-X runtime.\nExample:\n```\nlet timer = startDebugTimer(\"Data processing\")\n// ... do work ...\nendDebugTimer(timer)\n```",
         tags = ["core"],
         since = "1.0"
     )
     /**
      * Logs execution time of a block
-     * 
+     *
      * Note: This is a placeholder for actual timing implementation
      * in the UTL-X runtime.
-     * 
+     *
      * @param label Label for the timed operation
-     * @return Timer token for endTimer()
-     * 
+     * @return Timer token for endDebugTimer()
+     *
      * Example:
      * ```
-     * let timer = startTimer("Data processing")
+     * let timer = startDebugTimer("Data processing")
      * // ... do work ...
-     * endTimer(timer)
+     * endDebugTimer(timer)
      * ```
      */
     fun startTimer(args: List<UDM>): UDM {
@@ -593,37 +593,37 @@ object DebugFunctions {
     }
     
     @UTLXFunction(
-        description = "Logs elapsed time since startTimer()",
+        description = "Logs elapsed time since startDebugTimer()",
         minArgs = 1,
         maxArgs = 1,
         category = "Core",
         parameters = [
-            "array: Input array to process"
+            "timer: Timer token from startDebugTimer()"
         ],
-        returns = "Result of the operation",
-        example = "endTimer(...) => result",
-        notes = "Example:\n```\nlet timer = startTimer(\"Processing\")\n// ... work ...\nendTimer(timer) // Logs: \"Processing: 125.3ms\"\n```",
+        returns = "Elapsed time in milliseconds",
+        example = "endDebugTimer(timer) => 125.3",
+        notes = "Registered as `endDebugTimer`; the Kotlin function is named `endTimer`.\nExample:\n```\nlet timer = startDebugTimer(\"Processing\")\n// ... work ...\nendDebugTimer(timer) // Logs: \"Processing: 125.3ms\"\n```",
         tags = ["core"],
         since = "1.0"
     )
     /**
-     * Logs elapsed time since startTimer()
-     * 
-     * @param timer Timer token from startTimer()
+     * Logs elapsed time since startDebugTimer()
+     *
+     * @param timer Timer token from startDebugTimer()
      * @return Elapsed time in milliseconds
-     * 
+     *
      * Example:
      * ```
-     * let timer = startTimer("Processing")
+     * let timer = startDebugTimer("Processing")
      * // ... work ...
-     * endTimer(timer) // Logs: "Processing: 125.3ms"
+     * endDebugTimer(timer) // Logs: "Processing: 125.3ms"
      * ```
      */
     fun endTimer(args: List<UDM>): UDM {
         if (args.isEmpty()) {
             throw FunctionArgumentException(
-                "endTimer expects 1 argument, got 0. " +
-                "Hint: Provide the timer object returned by startTimer()."
+                "endDebugTimer expects 1 argument, got 0. " +
+                "Hint: Provide the timer object returned by startDebugTimer()."
             )
         }
         val timer = args[0]

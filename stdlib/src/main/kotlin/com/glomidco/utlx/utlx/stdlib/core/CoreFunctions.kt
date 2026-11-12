@@ -63,28 +63,21 @@ object CoreFunctions {
         return UDM.Scalar(null)
     }
     
-    @UTLXFunction(
-        description = "Generate UUID/GUID",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "Core",
-        parameters = [
-            "array: Input array to process"
-        ],
-        returns = "Result of the operation",
-        example = "generate-uuid()",
-        tags = ["core"],
-        since = "1.0"
-    )
-    /**
-     * Generate UUID/GUID
-     * Usage: generate-uuid()
-     */
-    fun generateUuid(args: List<UDM>): UDM {
-        requireArgs(args, 0, "generate-uuid")
-        return UDM.Scalar(java.util.UUID.randomUUID().toString())
-    }
-    
+    // `generateUuid` was the original v4 generator and lived here. When UUIDFunctions was added
+    // for UUID v7 it brought its own v4 along — its header still says "UUID v4: Random UUID
+    // (existing in CoreFunctions)" — and the registration was re-pointed at the newer class:
+    //
+    //     register("generateUuid", UUIDFunctions::generateUuidV4)     // Functions.kt
+    //
+    // Both produced `UUID.randomUUID().toString()`, so the behaviour is unchanged; the live one
+    // returns it via `UDM.fromNative`, which for a String is `Scalar.string` — identical output.
+    // The one difference is arity: the version removed here called `requireArgs(args, 0, …)` and
+    // rejected arguments, whereas `generateUuidV4` ignores them, so `generateUuid(1,2,3)` now
+    // silently returns a UUID.
+    //
+    // Nothing referenced this function. It remained with an `@UTLXFunction` annotation documenting
+    // it as `generate-uuid()`, a name that never resolved (B55). Removed 2026-11-12.
+
     @UTLXFunction(
         description = "Default value if undefined or null",
         minArgs = 1,

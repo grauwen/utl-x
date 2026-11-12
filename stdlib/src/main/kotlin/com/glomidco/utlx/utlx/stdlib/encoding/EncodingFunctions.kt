@@ -36,16 +36,16 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "base64-encode(\"Hello World\")",
+        example = "base64Encode(\"Hello World\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * Base64 encode
-     * Usage: base64-encode("Hello World")
+     * Usage: base64Encode("Hello World")
      */
     fun base64Encode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "base64-encode")
+        requireArgs(args, 1, "base64Encode")
         val str = args[0].asString()
         val encoded = Base64.getEncoder().encodeToString(str.toByteArray())
         return UDM.Scalar(encoded)
@@ -60,23 +60,23 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "base64-decode(\"SGVsbG8gV29ybGQ=\")",
+        example = "base64Decode(\"SGVsbG8gV29ybGQ=\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * Base64 decode
-     * Usage: base64-decode("SGVsbG8gV29ybGQ=")
+     * Usage: base64Decode("SGVsbG8gV29ybGQ=")
      */
     fun base64Decode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "base64-decode")
+        requireArgs(args, 1, "base64Decode")
         val str = args[0].asString()
         return try {
             val decoded = String(Base64.getDecoder().decode(str))
             UDM.Scalar(decoded)
         } catch (e: IllegalArgumentException) {
             throw FunctionArgumentException(
-                "base64-decode received invalid base64 string: $str. " +
+                "base64Decode received invalid base64 string: $str. " +
                 "Hint: Ensure the string contains only valid base64 characters (A-Z, a-z, 0-9, +, /, =)."
             )
         }
@@ -91,16 +91,16 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "url-encode(\"hello world!\")",
+        example = "urlEncode(\"hello world!\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * URL encode
-     * Usage: url-encode("hello world!")
+     * Usage: urlEncode("hello world!")
      */
     fun urlEncode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "url-encode")
+        requireArgs(args, 1, "urlEncode")
         val str = args[0].asString()
         // Use application/x-www-form-urlencoded format (spaces as +)
         val encoded = URLEncoder.encode(str, "UTF-8")
@@ -116,16 +116,16 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "url-decode(\"hello+world%21\")",
+        example = "urlDecode(\"hello+world%21\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * URL decode
-     * Usage: url-decode("hello+world%21")
+     * Usage: urlDecode("hello+world%21")
      */
     fun urlDecode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "url-decode")
+        requireArgs(args, 1, "urlDecode")
         val str = args[0].asString()
         val decoded = URLDecoder.decode(str, "UTF-8")
         return UDM.Scalar(decoded)
@@ -140,17 +140,17 @@ object EncodingFunctions {
             "text: Text to encode"
         ],
         returns = "URI component encoded string",
-        example = "url-encode-component(\"hello world!\")",
+        example = "urlEncodeComponent(\"hello world!\")",
         tags = ["encoding", "url", "uri"],
         since = "1.0"
     )
     /**
      * URL encode component (RFC 3986)
      * Encodes spaces as %20, suitable for URI paths and components
-     * Usage: url-encode-component("hello world!")
+     * Usage: urlEncodeComponent("hello world!")
      */
     fun urlEncodeComponent(args: List<UDM>): UDM {
-        requireArgs(args, 1, "url-encode-component")
+        requireArgs(args, 1, "urlEncodeComponent")
         val str = args[0].asString()
         // Use RFC 3986 percent-encoding (spaces as %20, not +)
         val encoded = URLEncoder.encode(str, "UTF-8").replace("+", "%20")
@@ -166,17 +166,17 @@ object EncodingFunctions {
             "text: Encoded text to decode"
         ],
         returns = "Decoded string",
-        example = "url-decode-component(\"hello%20world%21\")",
+        example = "urlDecodeComponent(\"hello%20world%21\")",
         tags = ["encoding", "url", "uri"],
         since = "1.0"
     )
     /**
      * URL decode component (RFC 3986)
      * Decodes %20 as spaces (does not decode + as space)
-     * Usage: url-decode-component("hello%20world%21")
+     * Usage: urlDecodeComponent("hello%20world%21")
      */
     fun urlDecodeComponent(args: List<UDM>): UDM {
-        requireArgs(args, 1, "url-decode-component")
+        requireArgs(args, 1, "urlDecodeComponent")
         val str = args[0].asString()
         // Decode %XX sequences but don't treat + as space
         val decoded = URLDecoder.decode(str.replace("+", "%2B"), "UTF-8")
@@ -192,16 +192,16 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "hex-encode(\"Hello\")",
+        example = "hexEncode(\"Hello\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * Hex encode
-     * Usage: hex-encode("Hello")
+     * Usage: hexEncode("Hello")
      */
     fun hexEncode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "hex-encode")
+        requireArgs(args, 1, "hexEncode")
         val str = args[0].asString()
         val hex = str.toByteArray().joinToString("") { 
             "%02x".format(it) 
@@ -218,23 +218,23 @@ object EncodingFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "hex-decode(\"48656c6c6f\")",
+        example = "hexDecode(\"48656c6c6f\")",
         tags = ["encoding"],
         since = "1.0"
     )
     /**
      * Hex decode
-     * Usage: hex-decode("48656c6c6f")
+     * Usage: hexDecode("48656c6c6f")
      */
     fun hexDecode(args: List<UDM>): UDM {
-        requireArgs(args, 1, "hex-decode")
+        requireArgs(args, 1, "hexDecode")
         val hex = args[0].asString()
         return try {
             val bytes = hex.chunked(2).map { it.toInt(16).toByte() }.toByteArray()
             UDM.Scalar(String(bytes))
         } catch (e: Exception) {
             throw FunctionArgumentException(
-                "hex-decode received invalid hex string: $hex. " +
+                "hexDecode received invalid hex string: $hex. " +
                 "Hint: Hex strings must contain only characters 0-9 and a-f (or A-F), with even length."
             )
         }

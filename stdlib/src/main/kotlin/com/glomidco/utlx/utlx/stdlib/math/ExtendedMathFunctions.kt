@@ -23,16 +23,16 @@ object ExtendedMathFunctions {
         "pattern: Pattern value"
         ],
         returns = "Result of the operation",
-        example = "format-number(1234.56, \"#,##0.00\") => \"1,234.56\"",
+        example = "formatNumber(1234.56, \"#,##0.00\") => \"1,234.56\"",
         tags = ["math"],
         since = "1.0"
     )
     /**
      * Format number with pattern
-     * Usage: format-number(1234.56, "#,##0.00") => "1,234.56"
+     * Usage: formatNumber(1234.56, "#,##0.00") => "1,234.56"
      */
     fun formatNumber(args: List<UDM>): UDM {
-        requireArgs(args, 2, "format-number")
+        requireArgs(args, 2, "formatNumber")
         val number = args[0].asNumber()
         val pattern = args[1].asString()
         
@@ -56,16 +56,16 @@ object ExtendedMathFunctions {
             "str: Str value"
         ],
         returns = "Result of the operation",
-        example = "parse-int(\"42\") => 42",
+        example = "parseInt(\"42\") => 42",
         tags = ["math"],
         since = "1.0"
     )
     /**
      * Parse integer from string
-     * Usage: parse-int("42") => 42
+     * Usage: parseInt("42") => 42
      */
     fun parseInt(args: List<UDM>): UDM {
-        requireArgs(args, 1, "parse-int")
+        requireArgs(args, 1, "parseInt")
         val str = args[0].asString()
         return try {
             UDM.Scalar(str.toInt().toDouble())
@@ -77,36 +77,20 @@ object ExtendedMathFunctions {
         }
     }
     
-    @UTLXFunction(
-        description = "Parse float from string",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "Math",
-        parameters = [
-            "str: Str value"
-        ],
-        returns = "Result of the operation",
-        example = "parse-float(\"3.14\") => 3.14",
-        tags = ["math"],
-        since = "1.0"
-    )
-    /**
-     * Parse float from string
-     * Usage: parse-float("3.14") => 3.14
-     */
-    fun parseFloat(args: List<UDM>): UDM {
-        requireArgs(args, 1, "parse-float")
-        val str = args[0].asString()
-        return try {
-            UDM.Scalar(str.toDouble())
-        } catch (e: NumberFormatException) {
-            throw FunctionArgumentException(
-                "Cannot parse float from '$str'. " +
-                "Hint: Ensure the string contains a valid decimal value (e.g., '3.14', '-2.5')."
-            )
-        }
-    }
-    
+    // `parseFloat` lived here until B25 moved it to ConversionFunctions, where it sits with its
+    // conversion siblings and delegates to `parseNumber`:
+    //
+    //     register("parseFloat", ConversionFunctions::parseFloat)     // Functions.kt
+    //
+    // The implementation removed from here did a plain `str.toDouble()`, which threw on grouping
+    // and currency separators — `parseFloat("1,234.56")` and `parseFloat("$1,234.56")` now return
+    // 1234.56 instead of failing. It also threw a FunctionArgumentException on unparseable input
+    // where the current one returns null, so the replacement is fail-soft rather than fail-loud.
+    //
+    // The function stayed here, unregistered and unreachable, with an `@UTLXFunction` annotation
+    // documenting it as `parse-float(...)` — a name that never resolved (B55). Removed 2026-11-12.
+    // `parseInt` and `formatNumber` above are still registered from this class and are live.
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException(

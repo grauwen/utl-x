@@ -1177,31 +1177,31 @@ object BinaryFunctions {
         maxArgs = 2,
         category = "Binary",
         parameters = [
-            "array: Input array to process",
-        "binary2: Binary2 value"
+            "binary1: First binary",
+        "binary2: Second binary"
         ],
-        returns = "Result of the operation",
-        example = "equals(...) => result",
-        notes = "Example:\n```\nequals(binary1, binary2)\n```",
+        returns = "true if the binaries are equal",
+        example = "equalsBinary(binary1, binary2) => true",
+        notes = "Registered as `equalsBinary`; the Kotlin function is named `equals` to sit\nalongside its siblings.\nExample:\n```\nequalsBinary(binary1, binary2)\n```",
         tags = ["binary"],
         since = "1.0"
     )
     /**
      * Compares two binaries for equality
-     * 
+     *
      * @param binary1 First binary
      * @param binary2 Second binary
      * @return true if binaries are equal
-     * 
+     *
      * Example:
      * ```
-     * equals(binary1, binary2)
+     * equalsBinary(binary1, binary2)
      * ```
      */
     fun equals(args: List<UDM>): UDM {
         if (args.size < 2) {
             throw FunctionArgumentException(
-                "equals expects 2 arguments, got ${args.size}. " +
+                "equalsBinary expects 2 arguments, got ${args.size}. " +
                 "Hint: Provide two binary values to compare for equality."
             )
         }

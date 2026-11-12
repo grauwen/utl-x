@@ -2,6 +2,8 @@ package com.glomidco.utlx.stdlib.math
 
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.FunctionArgumentException
+// B25 moved parseFloat here; the round-trip test below calls it from its real home.
+import com.glomidco.utlx.stdlib.type.ConversionFunctions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import kotlin.test.assertEquals
@@ -124,51 +126,11 @@ class ExtendedMathFunctionsTest {
         }
     }
 
-    @Test
-    fun testParseFloat() {
-        // Test basic float parsing
-        val result1 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("3.14")))
-        assertEquals(3.14, (result1 as UDM.Scalar).value)
-
-        // Test negative float
-        val result2 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("-2.5")))
-        assertEquals(-2.5, (result2 as UDM.Scalar).value)
-
-        // Test integer as float
-        val result3 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("42")))
-        assertEquals(42.0, (result3 as UDM.Scalar).value)
-
-        // Test zero
-        val result4 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("0.0")))
-        assertEquals(0.0, (result4 as UDM.Scalar).value)
-
-        // Test scientific notation
-        val result5 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("1.23E5")))
-        assertEquals(123000.0, (result5 as UDM.Scalar).value)
-
-        val result6 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("1.23e-3")))
-        assertEquals(0.00123, (result6 as UDM.Scalar).value)
-
-        // Test very small numbers
-        val result7 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("0.000001")))
-        assertEquals(0.000001, (result7 as UDM.Scalar).value)
-
-        // Test very large numbers
-        val result8 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("123456789.987654321")))
-        assertEquals(123456789.987654321, (result8 as UDM.Scalar).value)
-
-        // Test infinity
-        val result9 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("Infinity")))
-        assertEquals(Double.POSITIVE_INFINITY, (result9 as UDM.Scalar).value)
-
-        val result10 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("-Infinity")))
-        assertEquals(Double.NEGATIVE_INFINITY, (result10 as UDM.Scalar).value)
-
-        // Test NaN
-        val result11 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("NaN")))
-        val parsedValue = (result11 as UDM.Scalar).value as Double
-        assertEquals(true, parsedValue.isNaN())
-    }
+    // testParseFloat moved to ConversionFunctionsTest.
+    //
+    // It exercised an unregistered copy of parseFloat in this class. B25 moved the real
+    // registration to `ConversionFunctions::parseFloat`, and B55 removed the orphan — so the
+    // assertions were re-pointed at the function users can actually call rather than discarded.
 
     // Note: testParseFloatEdgeCases removed - validation is handled at runtime by the UTL-X engine
 
@@ -192,14 +154,14 @@ class ExtendedMathFunctionsTest {
             ExtendedMathFunctions.parseInt(listOf(UDM.Scalar("123"), UDM.Scalar("extra")))
         }
 
-        // Test wrong number of arguments for parseFloat
-        assertThrows<FunctionArgumentException> {
-            ExtendedMathFunctions.parseFloat(emptyList())
-        }
-
-        assertThrows<FunctionArgumentException> {
-            ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar("3.14"), UDM.Scalar("extra")))
-        }
+        // parseFloat's arity assertions were dropped here, not moved.
+        //
+        // They asserted a FunctionArgumentException from `requireArgs(args, 1, …)` in the copy of
+        // parseFloat that used to live in this class — unregistered since B25 moved the real one to
+        // ConversionFunctions, and removed with B55. The live `ConversionFunctions.parseFloat`
+        // delegates straight to `parseNumber` and carries no arity guard, so there is no equivalent
+        // behaviour to assert: that strictness was lost when the registration moved, and asserting
+        // it against the live function would simply fail.
     }
 
     // Note: testInvalidArgumentTypes removed - type validation is handled at runtime by the UTL-X engine
@@ -235,15 +197,17 @@ class ExtendedMathFunctionsTest {
         val formatted1 = ExtendedMathFunctions.formatNumber(listOf(parsed1, UDM.Scalar("0")))
         assertEquals("42", (formatted1 as UDM.Scalar).value)
 
-        // Test that parseFloat and formatNumber work together
+        // Test that parseFloat and formatNumber work together.
+        // parseFloat comes from ConversionFunctions: B25 moved it there, and the unregistered copy
+        // that used to live in ExtendedMathFunctions was removed with B55.
         val original2 = "3.14159"
-        val parsed2 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar(original2)))
+        val parsed2 = ConversionFunctions.parseFloat(listOf(UDM.Scalar(original2)))
         val formatted2 = ExtendedMathFunctions.formatNumber(listOf(parsed2, UDM.Scalar("0.00000")))
         assertEquals("3.14159", (formatted2 as UDM.Scalar).value)
 
         // Test precision preservation
         val highPrecision = "123.456789"
-        val parsed3 = ExtendedMathFunctions.parseFloat(listOf(UDM.Scalar(highPrecision)))
+        val parsed3 = ConversionFunctions.parseFloat(listOf(UDM.Scalar(highPrecision)))
         val formatted3 = ExtendedMathFunctions.formatNumber(listOf(parsed3, UDM.Scalar("0.000000")))
         assertEquals("123.456789", (formatted3 as UDM.Scalar).value)
     }

@@ -19,22 +19,22 @@ object XmlUtilityFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "node-type(node) => \"element\"",
+        example = "nodeType(node) => \"element\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get node type (element, attribute, text, etc.)
-     * Usage: node-type(node) => "element"
+     * Usage: nodeType(node) => "element"
      */
     fun nodeType(args: List<UDM>): UDM {
-        requireArgs(args, 1, "node-type")
+        requireArgs(args, 1, "nodeType")
         val node = args[0]
 
-        // node-type only works on Objects (XML nodes)
+        // nodeType only works on Objects (XML nodes)
         if (node !is UDM.Object) {
             throw FunctionArgumentException(
-                "node-type expects an Object (XML node), but got ${getTypeDescription(node)}. " +
+                "nodeType expects an Object (XML node), but got ${getTypeDescription(node)}. " +
                 "Hint: This function is for XML nodes represented as UDM.Object."
             )
         }
@@ -66,16 +66,16 @@ object XmlUtilityFunctions {
         "attrName: Attrname value"
         ],
         returns = "Result of the operation",
-        example = "text-content(element) => \"Hello World\"",
+        example = "textContent(element) => \"Hello World\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get text content from XML element (all text nodes concatenated)
-     * Usage: text-content(element) => "Hello World"
+     * Usage: textContent(element) => "Hello World"
      */
     fun textContent(args: List<UDM>): UDM {
-        requireArgs(args, 1, "text-content")
+        requireArgs(args, 1, "textContent")
         val element = args[0]
         
         return when (element) {
@@ -179,16 +179,16 @@ object XmlUtilityFunctions {
         "attrName: Attrname value"
         ],
         returns = "Boolean indicating the result",
-        example = "has-attribute(element, \"id\") => true",
+        example = "hasAttribute(element, \"id\") => true",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Check if element has attribute
-     * Usage: has-attribute(element, "id") => true
+     * Usage: hasAttribute(element, "id") => true
      */
     fun hasAttribute(args: List<UDM>): UDM {
-        requireArgs(args, 2, "has-attribute")
+        requireArgs(args, 2, "hasAttribute")
         val element = args[0]
         val attrName = args[1].asString()
 
@@ -216,16 +216,16 @@ object XmlUtilityFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "child-count(element) => 5",
+        example = "childCount(element) => 5",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Count child elements
-     * Usage: child-count(element) => 5
+     * Usage: childCount(element) => 5
      */
     fun childCount(args: List<UDM>): UDM {
-        requireArgs(args, 1, "child-count")
+        requireArgs(args, 1, "childCount")
         val element = args[0]
 
         return when (element) {
@@ -258,16 +258,16 @@ object XmlUtilityFunctions {
             "array: Input array to process"
         ],
         returns = "Result of the operation",
-        example = "child-names(element) => [\"Order\", \"Customer\", \"Items\"]",
+        example = "childNames(element) => [\"Order\", \"Customer\", \"Items\"]",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get child element names
-     * Usage: child-names(element) => ["Order", "Customer", "Items"]
+     * Usage: childNames(element) => ["Order", "Customer", "Items"]
      */
     fun childNames(args: List<UDM>): UDM {
-        requireArgs(args, 1, "child-names")
+        requireArgs(args, 1, "childNames")
         val element = args[0]
 
         return when (element) {
@@ -337,16 +337,16 @@ object XmlUtilityFunctions {
             "element: Element value"
         ],
         returns = "Result of the operation",
-        example = "element-path(element) => \"/Order/Customer/Name\"",
+        example = "elementPath(element) => \"/Order/Customer/Name\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Get element path (like XPath)
-     * Usage: element-path(element) => "/Order/Customer/Name"
+     * Usage: elementPath(element) => "/Order/Customer/Name"
      */
     fun elementPath(args: List<UDM>): UDM {
-        requireArgs(args, 1, "element-path")
+        requireArgs(args, 1, "elementPath")
         val element = args[0]
         
         return when (element) {
@@ -368,16 +368,16 @@ object XmlUtilityFunctions {
             "element: Element value"
         ],
         returns = "Boolean indicating the result",
-        example = "is-empty-element(element) => false",
+        example = "isEmptyElement(element) => false",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Check if element is empty (no children, no text)
-     * Usage: is-empty-element(element) => false
+     * Usage: isEmptyElement(element) => false
      */
     fun isEmptyElement(args: List<UDM>): UDM {
-        requireArgs(args, 1, "is-empty-element")
+        requireArgs(args, 1, "isEmptyElement")
         val element = args[0]
 
         return when (element) {
@@ -411,16 +411,16 @@ object XmlUtilityFunctions {
             "text: Text value"
         ],
         returns = "Result of the operation",
-        example = "xml-escape(\"<tag>\") => \"&lt;tag&gt;\"",
+        example = "xmlEscape(\"<tag>\") => \"&lt;tag&gt;\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Escape XML special characters
-     * Usage: xml-escape("<tag>") => "&lt;tag&gt;"
+     * Usage: xmlEscape("<tag>") => "&lt;tag&gt;"
      */
     fun xmlEscape(args: List<UDM>): UDM {
-        requireArgs(args, 1, "xml-escape")
+        requireArgs(args, 1, "xmlEscape")
         val text = args[0].asString()
         
         val escaped = text
@@ -488,16 +488,16 @@ object XmlUtilityFunctions {
             "text: Text value"
         ],
         returns = "Result of the operation",
-        example = "xml-unescape(\"&lt;tag&gt;\") => \"<tag>\"",
+        example = "xmlUnescape(\"&lt;tag&gt;\") => \"<tag>\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Unescape XML special characters
-     * Usage: xml-unescape("&lt;tag&gt;") => "<tag>"
+     * Usage: xmlUnescape("&lt;tag&gt;") => "<tag>"
      */
     fun xmlUnescape(args: List<UDM>): UDM {
-        requireArgs(args, 1, "xml-unescape")
+        requireArgs(args, 1, "xmlUnescape")
         val text = args[0].asString()
         
         val unescaped = text

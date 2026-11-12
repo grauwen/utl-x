@@ -102,24 +102,14 @@ class CoreFunctionsTest {
         assertEquals("value", ((result5 as UDM.Object).properties["key"] as UDM.Scalar).value)
     }
 
-    @Test
-    fun testGenerateUuid() {
-        val result1 = CoreFunctions.generateUuid(listOf())
-        
-        assertTrue(result1 is UDM.Scalar)
-        val uuid1 = (result1 as UDM.Scalar).value as String
-        
-        // Check UUID format (36 characters with hyphens)
-        assertEquals(36, uuid1.length)
-        assertTrue(uuid1.contains("-"))
-        assertTrue(uuid1.matches(Regex("[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}")))
-        
-        // Generate another UUID and ensure they're different
-        val result2 = CoreFunctions.generateUuid(listOf())
-        val uuid2 = (result2 as UDM.Scalar).value as String
-        
-        assertNotEquals(uuid1, uuid2)
-    }
+    // testGenerateUuid removed, not moved: UUIDFunctionsTest already covers the live
+    // implementation, and covers it more strictly.
+    //
+    // `generateUuid` resolves to `UUIDFunctions::generateUuidV4`; the copy in CoreFunctions was
+    // the original, orphaned when UUIDFunctions was added for v7, and removed with B55. This test
+    // asserted length, a hyphen, a hex-shaped regex and uniqueness —
+    // `UUIDFunctionsTest.generateUuidV4` asserts all of that plus the version nibble and variant
+    // bits (`-4[0-9a-f]{3}-[89ab]...`), which this regex did not check.
 
     @Test
     fun testDefault() {
@@ -207,10 +197,13 @@ class CoreFunctionsTest {
             CoreFunctions.default(listOf(UDM.Scalar("value"), UDM.Scalar("default"), UDM.Scalar("extra")))
         }
         
-        // Test generateUuid with arguments (should take none)
-        assertThrows<FunctionArgumentException> {
-            CoreFunctions.generateUuid(listOf(UDM.Scalar("arg")))
-        }
+        // generateUuid's arity assertion was dropped here, not moved.
+        //
+        // It asserted that passing an argument throws — the `requireArgs(args, 0, …)` guard in the
+        // CoreFunctions copy removed with B55. The live `generateUuid` is
+        // `UUIDFunctions::generateUuidV4`, which ignores its arguments entirely, so
+        // `generateUuid("arg")` now returns a UUID instead of failing. That laxness arrived when
+        // the registration was re-pointed, and there is no equivalent behaviour to assert.
     }
 
     @Test
