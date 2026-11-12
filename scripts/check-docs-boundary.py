@@ -16,7 +16,7 @@ Rule 2 (regression guard): the number of broken relative links under docs/
 import os, re, sys
 
 LINK = re.compile(r'\]\(([^)\s]+?)(?:\s+"[^"]*")?\)')
-BASELINE = 27          # pre-existing broken links under docs/ (targets that were never written,
+BASELINE = 26          # pre-existing broken links under docs/ (targets that were never written,
                        # e.g. formats/xml.md). Set when the boundary was introduced; the
                        # boundary was introduced. Ratchet downwards only.
 

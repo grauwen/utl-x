@@ -406,7 +406,7 @@ For questions or feedback on this architecture:
 - `/docs/architecture/theia-extension-design-with-design-time.md` - Existing Theia IDE architecture
 - `/docs/architecture/theia-monaco-lsp-mcp-integration.md` - Monaco Editor, LSP, and MCP integration guide
 - `/docs/architecture/cli-daemon-split-architecture.md` - CLI/Daemon architectural split guide
-- `/docs/gen-ai/CLAUDE.md` - Project overview for Claude Code
+- `/AGENTS.md` - Build, test and architecture facts for any AI agent (`CLAUDE.md` imports it)
 - `/modules/daemon/README.md` - Daemon API documentation (if exists)
 - `/stdlib/README.md` - Standard library documentation (if exists)
 

@@ -135,3 +135,9 @@ project.assets.json
 *.nuget.g.targets
 *.nuget.dgspec.json
 *.nuget.cache
+
+# Per-contributor agent overrides (personal workflow preferences, not project facts).
+# Shared agent guidance lives in AGENTS.md / CLAUDE.md.
+CLAUDE.local.md
+AGENTS.local.md
+.claude/settings.local.json
