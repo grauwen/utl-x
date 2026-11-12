@@ -76,8 +76,8 @@ split("one two three", " ")      // ["one", "two", "three"]
 Join array into string.
 
 ```utlx
-join(["a", "b", "c"], ",")       // "a,b,c"
-join(["one", "two"], " ")        // "one two"
+join(["a", "b", "c"], ",")     // "a,b,c"
+join(["one", "two"], " ")      // "one two"
 ```
 
 #### concat(str1: String, ...): String

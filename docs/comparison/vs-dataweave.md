@@ -204,6 +204,34 @@ function greet(person: Object): String {
 - Math functions: `abs`, `round`, `pow`, etc.
 - Date functions: `now`, `formatDate`, `addDays`, etc.
 
+#### Naming differences worth knowing
+
+UTL-X is intentionally close to DataWeave, but it does not copy names that would make its own
+vocabulary inconsistent. The `*By` suffix is the clearest case: in UTL-X it means **"by this
+criteria function, over an array"**, and 13 of the 14 `*By` functions take a function as their
+second argument (`sortBy`, `groupBy`, `distinctBy`, `maxBy`, `minBy`, `sumBy`, `avgBy`,
+`countBy`, `chunkBy`, `divideBy`, `lookupBy`, `nestBy`). DataWeave's `*By` is looser — both
+`splitBy` and `joinBy` take plain separators.
+
+| operation | DataWeave | UTL-X | note |
+|---|---|---|---|
+| split a string | `splitBy(s, sep)` | **`split(s, sep)`** | no criteria function, so no `*By` |
+| join an array into a string | `joinBy(arr, sep)` | **`join(arr, sep)`** | `joinBy` kept as a legacy alias |
+| relational inner join | `join(l, r, lKey, rKey)` | **`innerJoin(l, r, lKey, rKey)`** | names the join *type*, beside `leftJoin`, `rightJoin`, `fullOuterJoin`, `crossJoin` |
+| nest children under parents | — | `nestBy(parents, children, pKey, cKey, prop)` | no DataWeave equivalent |
+
+**What this means when migrating.** A DataWeave `joinBy(array, separator)` keeps working
+unchanged. A DataWeave relational `join(l, r, lCriteria, rCriteria)` must become
+`innerJoin` — and because the arity differs, the failure is immediate and explicit rather
+than silent:
+
+```
+join(orders, customers, (o) -> o.cid, (c) -> c.id)
+  -> Error: join expects 2 argument(s), got 4
+```
+
+Rationale and history: [B50](../bugs-fixed/B50-join-is-the-string-join-innerjoin-is-relational.md).
+
 ## Performance Comparison
 
 | Metric | DataWeave | UTL-X (JVM) | UTL-X (Native) |

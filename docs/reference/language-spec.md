@@ -286,7 +286,7 @@ trim(str)                          // Remove whitespace
 substring(str, start, end)         // Extract substring
 concat(str1, str2, ...)            // Concatenate strings
 split(str, delimiter)              // Split string
-join(array, delimiter)             // Join array elements
+join(array, delimiter)           // Join array elements into a string
 ```
 
 ### 6.4 Array Functions

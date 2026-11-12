@@ -191,13 +191,12 @@ object StringFunctions {
     
     @UTLXFunction(
         description = "Join array elements with delimiter",
-        minArgs = 1,
-        maxArgs = 1,
+        minArgs = 2,
+        maxArgs = 2,
         category = "String",
         parameters = [
             "array: Input array to process",
-        "delimiter: Delimiter value",
-        "replacement: Replacement value"
+        "delimiter: Delimiter value"
         ],
         returns = "Result of the operation",
         example = "join([\"a\", \"b\", \"c\"], \",\") => \"a,b,c\"",
@@ -205,8 +204,24 @@ object StringFunctions {
         since = "1.0"
     )
     /**
-     * Join array elements with delimiter
-     * Usage: join(["a", "b", "c"], ",") => "a,b,c"
+     * Join array elements with delimiter: `join(["a","b","c"], ",") => "a,b,c"`.
+     *
+     * **Named `join`, not `joinBy` — a deliberate deviation from DataWeave.** DataWeave puts
+     * the string join at `dw::core::Strings::joinBy` and the relational join at
+     * `dw::core::Arrays::join`. UTL-X reverses that, because its own `*By` convention is
+     * stronger than DataWeave's: of the 14 registered `*By` functions, 13 take a
+     * **criteria/key/mapping function** over an array (`sortBy`, `groupBy`, `distinctBy`,
+     * `maxBy`, `minBy`, `sumBy`, `avgBy`, `countBy`, `chunkBy`, `divideBy`, `lookupBy`,
+     * `nestBy`). A `joinBy` whose second argument is a plain delimiter is the only exception,
+     * and reads as if it took a key function.
+     *
+     * The codebase already made this choice elsewhere: the string split is `split`, not
+     * DataWeave's `splitBy`. So `split`/`join` is the plain string pair and `*By` is reserved
+     * for array-with-criteria. See B50.
+     *
+     * The Kotlin declaration name matches the registered name on purpose: the generated
+     * function catalogue keys on the Kotlin name (`@UTLXFunction` has no `name` field), so a
+     * mismatch files the entry under the wrong function — which is what B50 was.
      */
     fun join(args: List<UDM>): UDM {
         requireArgs(args, 2, "join")

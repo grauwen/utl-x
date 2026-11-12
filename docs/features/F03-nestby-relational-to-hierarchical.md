@@ -320,7 +320,18 @@ Adding `leftJoin()`, `rightJoin()`, `fullJoin()`, `crossJoin()` is premature. Th
 
 ## Naming: Why nestBy() (Not join())
 
-Originally proposed as `join()`, but renamed to `nestBy()` to avoid confusion with the string `join(array, separator)` function that already exists in UTL-X.
+> **Correction (2026-11-12, B50).** The premise below was false when written: at that time
+> UTL-X had no string function called `join` — it had been renamed to `joinBy` on 2025-10-16.
+> As of B50 the premise is true again: `join(array, delimiter)` **is** the string join, and
+> the relational inner join is `innerJoin`.
+>
+> The conclusion still holds — `nestBy()` is the right name, because it *nests* children
+> under parents rather than flattening matched pairs into rows, which is a genuinely
+> different operation from any join. But the reason is "different operation", not "the name
+> `join` is taken by a string function". See
+> [B50](../bugs-fixed/B50-join-is-the-string-join-innerjoin-is-relational.md).
+
+Originally proposed as `join()`, but renamed to `nestBy()` to avoid confusion with the string join function that already exists in UTL-X (named `joinBy`, following DataWeave).
 
 | Name considered | Verdict | Reason |
 |------|-----------|---------|

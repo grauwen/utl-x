@@ -15,7 +15,9 @@ object TestCategorizer {
         "substring" to "stdlib/string",
         "concat" to "stdlib/string",
         "split" to "stdlib/string",
-        "join" to "stdlib/string",
+        "join" to "stdlib/string",     // the string join (B50: deviates from DataWeave)
+        "joinBy" to "stdlib/string",   // legacy alias of join
+        "innerJoin" to "stdlib/array", // the relational join
         "replace" to "stdlib/string",
         "contains" to "stdlib/string",
         "startsWith" to "stdlib/string",

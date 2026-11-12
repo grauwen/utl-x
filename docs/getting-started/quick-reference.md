@@ -101,7 +101,7 @@ lower(str)              // lowercase
 trim(str)               // Remove whitespace
 concat(str1, str2)      // Concatenate
 split(str, delim)       // Split to array
-join(array, delim)      // Join to string
+join(array, delim)    // Join to string (DataWeave dw::core::Strings::joinBy)
 ```
 
 ### Array

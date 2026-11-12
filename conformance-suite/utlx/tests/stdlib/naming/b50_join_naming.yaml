@@ -1,0 +1,40 @@
+name: "b50_join_naming"
+category: "stdlib/naming"
+description: >
+  B50: join(array, delimiter) is the string join and innerJoin(l, r, lKey, rKey) is the
+  relational inner join — a deliberate deviation from DataWeave, because UTL-X reserves
+  the *By suffix for array-with-criteria functions (13 of 14 take a criteria function),
+  and already uses `split` rather than DataWeave's `splitBy`. joinBy is a legacy alias of
+  join. nestBy nests children under parents and is a third, distinct operation.
+tags: ["stdlib", "string", "join", "joinBy", "innerJoin", "nestBy", "naming", "B50"]
+
+input:
+  format: json
+  data: |
+    {"tags":["prod","eu","critical"],
+     "orders":[{"id":1,"c":"a"},{"id":2,"c":"b"}],
+     "lines":[{"ord":1,"sku":"x"},{"ord":1,"sku":"y"},{"ord":2,"sku":"z"}],
+     "custs":[{"k":"a","n":"Alice"},{"k":"b","n":"Bob"}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    joined:    join($input.tags, ", "),
+    joinedBy:  joinBy($input.tags, ", "),
+    innerRows: count(innerJoin($input.orders, $input.custs, (o) -> o.c, (c) -> c.k)),
+    nested:    count(nestBy($input.orders, $input.lines, (o) -> o.id, (l) -> l.ord, "lines")),
+    firstKids: count(nestBy($input.orders, $input.lines, (o) -> o.id, (l) -> l.ord, "lines")[0].lines)
+  }
+
+expected:
+  format: json
+  data: {
+    "joined": "prod, eu, critical",
+    "joinedBy": "prod, eu, critical",
+    "innerRows": 2,
+    "nested": 2,
+    "firstKids": 2
+  }

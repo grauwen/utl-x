@@ -24,7 +24,7 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("customerId" to UDM.Scalar(2), "product" to UDM.Scalar("Tool")))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             customers,
             orders,
             UDM.Scalar("id"),
@@ -55,7 +55,7 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("customerId" to UDM.Scalar(2), "product" to UDM.Scalar("Widget")))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             left,
             right,
             UDM.Scalar("id"),
@@ -271,7 +271,7 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("customerId" to UDM.Scalar("1"), "product" to UDM.Scalar("Widget")))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             left,
             right,
             UDM.Scalar("id"),
@@ -286,7 +286,7 @@ class JoinFunctionsTest {
     fun testJoinEdgeCases() {
         // Test with insufficient arguments
         assertThrows<IllegalArgumentException> {
-            JoinFunctions.join(listOf(
+            JoinFunctions.innerJoin(listOf(
                 UDM.Array(emptyList()),
                 UDM.Array(emptyList())
             ))
@@ -294,7 +294,7 @@ class JoinFunctionsTest {
 
         // Test with non-array arguments
         assertThrows<IllegalArgumentException> {
-            JoinFunctions.join(listOf(
+            JoinFunctions.innerJoin(listOf(
                 UDM.Scalar("not array"),
                 UDM.Array(emptyList()),
                 UDM.Scalar("id"),
@@ -303,7 +303,7 @@ class JoinFunctionsTest {
         }
 
         assertThrows<IllegalArgumentException> {
-            JoinFunctions.join(listOf(
+            JoinFunctions.innerJoin(listOf(
                 UDM.Array(emptyList()),
                 UDM.Scalar("not array"),
                 UDM.Scalar("id"),
@@ -346,7 +346,7 @@ class JoinFunctionsTest {
             ))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             departments,
             employees,
             UDM.Scalar("id"),
@@ -375,7 +375,7 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("refId" to UDM.Scalar(null), "data" to UDM.Scalar("NullRef")))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             left,
             right,
             UDM.Scalar("id"),
@@ -396,7 +396,7 @@ class JoinFunctionsTest {
             UDM.Object(mapOf("id" to UDM.Scalar(1), "data" to UDM.Scalar("HasId")))
         ))
         
-        val result = JoinFunctions.join(listOf(
+        val result = JoinFunctions.innerJoin(listOf(
             left,
             right,
             UDM.Scalar("id"), // Missing property in left

@@ -16,7 +16,7 @@
  *   let customers = [{id: 1, name: "Alice"}, {id: 2, name: "Bob"}]
  *   let orders = [{customerId: 1, product: "Widget"}]
  *   
- *   join(customers, orders, (c) => c.id, (o) => o.customerId)
+ *   innerJoin(customers, orders, (c) => c.id, (o) => o.customerId)
  *   // Returns: [{l: {id: 1, name: "Alice"}, r: {customerId: 1, product: "Widget"}}]
  */
 
@@ -39,9 +39,9 @@ object JoinFunctions {
         "rightKeyFn: Rightkeyfn value"
         ],
         returns = "Result of the operation",
-        example = "join(...) => result",
+        example = "innerJoin(customers, orders, (c) => c.id, (o) => o.customerId)",
         notes = """Example:
-join(customers, orders, (c) => c.id, (o) => o.customerId)""",
+innerJoin(customers, orders, (c) => c.id, (o) => o.customerId)""",
         tags = ["array"],
         since = "1.0"
     )
@@ -55,10 +55,10 @@ join(customers, orders, (c) => c.id, (o) => o.customerId)""",
      * @return Array of objects with 'l' (left item) and 'r' (right item) properties
      * 
      * Example:
-     *   join(customers, orders, (c) => c.id, (o) => o.customerId)
+     *   innerJoin(customers, orders, (c) => c.id, (o) => o.customerId)
      */
-    fun join(args: List<UDM>): UDM {
-        require(args.size >= 4) { "join requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
+    fun innerJoin(args: List<UDM>): UDM {
+        require(args.size >= 4) { "innerJoin requires 4 arguments: leftArray, rightArray, leftKeyFn, rightKeyFn" }
         
         val left = args[0].asArray() ?: throw IllegalArgumentException("First argument must be an array")
         val right = args[1].asArray() ?: throw IllegalArgumentException("Second argument must be an array")
@@ -521,7 +521,12 @@ private fun registerArrayFunctions() {
     // ... existing array functions ...
     
     // JOIN operations (SQL-style)
-    register("join", JoinFunctions::join)
+    // B50: the relational inner join is `innerJoin`, matching its leftJoin/rightJoin/
+    // fullOuterJoin/crossJoin siblings. It used to occupy the bare name `join`, which the
+    // function catalogue, docs/.../functions.md, the README examples and F03's own naming
+    // decision all describe as the STRING join. No UTL-X script called the relational form
+    // under that name; several call the string form, so `join` now dispatches to it.
+    register("innerJoin", JoinFunctions::innerJoin)
     register("leftJoin", JoinFunctions::leftJoin)
     register("rightJoin", JoinFunctions::rightJoin)
     register("fullOuterJoin", JoinFunctions::fullOuterJoin)

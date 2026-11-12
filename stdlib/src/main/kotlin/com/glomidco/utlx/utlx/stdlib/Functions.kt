@@ -349,7 +349,16 @@ object StandardLibrary {
         register("substring", StringFunctions::substring)
         //register("concat", StringFunctions::concat) // concat now resides in coreFunctions to handel concat of string, array, obejct, binary etc
         register("split", StringFunctions::split)
-        register("joinBy", StringFunctions::join)  //join used in SQL style join, rename to joinBy according to DW style
+        // B50: `join(array, delimiter)` is the STRING join — a deliberate deviation from
+        // DataWeave (which uses Strings::joinBy for this and Arrays::join for the relational
+        // one). UTL-X's `*By` convention is stronger: 13 of 14 `*By` functions take a
+        // criteria function over an array, so `joinBy` with a plain delimiter reads wrong.
+        // The codebase already chose `split` over DataWeave's `splitBy` for the same reason.
+        register("join", StringFunctions::join)
+        // Legacy alias: `joinBy` was the registered name for the string join from
+        // 2025-10-16 until 2026-11-12, and FunctionsTest asserts it. Kept so a year of
+        // scripts — and anyone arriving from DataWeave — keeps working.
+        registerAlias("joinBy", "join", "Legacy name; also DataWeave's name for the string join")
         register("replace", StringFunctions::replace)
         //register("contains", StringFunctions::contains)//contains function moved to UDM layer so now it can work with Strings and Arrays, with convention: objects check keys only
         register("startsWith", StringFunctions::startsWith)
@@ -1049,7 +1058,7 @@ object StandardLibrary {
      * SQL-style joins for combining arrays based on key matching
      */
     private fun registerJoinFunctions() {
-        register("join", JoinFunctions::join)
+        register("innerJoin", JoinFunctions::innerJoin)   // relational; see leftJoin/rightJoin/fullOuterJoin/crossJoin
         register("leftJoin", JoinFunctions::leftJoin)
         register("rightJoin", JoinFunctions::rightJoin)
         register("fullOuterJoin", JoinFunctions::fullOuterJoin)
