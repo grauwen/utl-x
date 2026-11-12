@@ -443,8 +443,11 @@ Describe the tests you ran and how to reproduce them.
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the documentation
 - [ ] My changes generate no new warnings
-- [ ] I have added tests that prove my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
+- [ ] I have added **Kotlin unit tests** that prove my fix is effective or that my feature works
+- [ ] I have added **conformance fixtures** if the change affects observable behaviour (new function, format, syntax, or a core fix)
+- [ ] `./gradlew test` passes locally
+- [ ] `./gradlew :modules:engine:test` passes — required for any change to core semantics (all three execution strategies agree)
+- [ ] The conformance suite passes: `cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py`
 - [ ] Any dependent changes have been merged and published
 - [ ] My commit messages follow the Conventional Commits format
 
@@ -642,6 +645,75 @@ fun transform(
 private fun validateNode(node: Node?) = 
     requireNotNull(node) { "Node cannot be null" }
 ```
+
+### What Tests Are Required
+
+Two layers, and they cover different things. Most contributions need both.
+
+**1. Kotlin unit tests — always, for any new or changed Kotlin.**
+
+```bash
+./gradlew :modules:core:test
+./gradlew :modules:core:test --tests "*MyFeature*"
+```
+
+A bug fix gets a regression test named after the report (`B48SequenceProjectionTest`),
+with a comment explaining the *root cause* rather than the symptom. Where a fixture
+could silently stop proving anything, add a guard assertion that fails if it does.
+
+**2. Conformance fixtures — for anything that changes observable behaviour.**
+
+That means a new stdlib function, a new format, new syntax, a changed selector, or a
+core bug fix. Fixtures are YAML, live under `conformance-suite/utlx/tests/<category>/`,
+and are run by:
+
+```bash
+cd conformance-suite
+python3 utlx/runners/cli-runner/simple-runner.py              # the whole suite
+python3 utlx/runners/cli-runner/simple-runner.py stdlib/array # one category
+```
+
+**Why both, and why the fixture is the more valuable of the two.** UTL-X has three
+execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the bytecode
+compiler, and what the UTLXe engine runs by default). A Kotlin unit test on the
+interpreter exercises **one** of them. A conformance fixture is picked up automatically
+by `ConformanceStrategyParityTest` and run through **all three**, asserting they agree.
+
+This is not hypothetical. Four bugs have been fixed in the interpreter while the
+compiled path silently kept the old behaviour — the most recent one passed the entire
+571-test conformance suite *and* the Kotlin tests, and still returned `null` on two of
+three strategies. So:
+
+> **A change to core semantics — member access, comparison, numerics, evaluation
+> order — is not verified until `./gradlew :modules:engine:test` passes.**
+
+Do not reason about whether the compiled path is affected. Run it.
+
+**Two fixture traps worth knowing before you spend an hour on them:**
+
+- **Output.** A fixture with `format: json` is compared by *parsed value*, so `100.10`
+  and `100.1` look identical. To pin numeric text — scale, trailing zeros, large
+  doubles — the fixture must output **XML or CSV**.
+- **Input.** Inline YAML `data: {"price": 10.50}` is parsed into a float by the test
+  runner before UTL-X ever sees it, and the trailing zero is gone. Use a block scalar:
+
+  ```yaml
+  input:
+    format: json
+    data: |
+      {"items": [{"price": 10.50}]}
+  ```
+
+**Run before opening a pull request:**
+
+```bash
+./gradlew test                                               # Kotlin, all modules
+./gradlew :modules:engine:test                               # cross-strategy parity
+cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
+```
+
+All three should be green. Note these assume a `development` checkout — see
+[Which Branch Do I Target?](#1-which-branch-do-i-target).
 
 ### Testing Standards
 
