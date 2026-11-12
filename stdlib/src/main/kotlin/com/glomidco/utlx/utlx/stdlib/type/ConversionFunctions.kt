@@ -231,13 +231,12 @@ object ConversionFunctions {
                 null -> ""
                 is String -> v
                 is Number -> {
-                    // Format numbers nicely (no unnecessary decimals)
-                    val d = v.toDouble()
-                    if (d == d.toLong().toDouble()) {
-                        d.toLong().toString()
-                    } else {
-                        d.toString()
-                    }
+                    // B51: render through the one shared path. This used to narrow via
+                    // `v.toDouble()` and then test `d == d.toLong().toDouble()`, which lost a
+                    // BigDecimal's scale (10.50 -> "10.5", 25.00 -> "25") and saturated for
+                    // large doubles (the pre-B37 integral test). B35 made the serialiser exact
+                    // and did not reach here, so two paths disagreed about the same value.
+                    com.glomidco.utlx.core.format.ExactNumber.renderScalarText(v)
                 }
                 is Boolean -> v.toString()
                 else -> v.toString()

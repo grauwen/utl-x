@@ -175,4 +175,27 @@ object ExactNumber {
         is BigInteger, is Long, is Int, is Short, is Byte -> n.toString()
         else -> null
     }
+
+    /**
+     * B51: render [n] as text the way **every** output path should.
+     *
+     * There were three places that turned a number into a string and only one was right.
+     * `JSONSerializer.serializeScalar` combined [renderExactOrNull] with [integralLongOrNull]
+     * correctly; `toString()` in the stdlib narrowed through `toDouble()` first (so `10.50`
+     * became `10.5` and `25.00` became `25`), and did so with the pre-B37 integral test that
+     * saturates for large doubles. B35 corrected the serialiser and left the others behind.
+     *
+     * The order matters and is the whole function:
+     *
+     *  1. an exact type renders **as written** — a `BigDecimal` keeps its scale,
+     *  2. otherwise an integral `Double` prints as an integer, but only when it round-trips
+     *     through `Long` ([integralLongOrNull]; `d == d.toLong().toDouble()` is true for every
+     *     large double and saturates),
+     *  3. otherwise the platform's own `Double` formatting.
+     */
+    fun renderScalarText(n: Number): String {
+        renderExactOrNull(n)?.let { return it }
+        if (n is Double) integralLongOrNull(n)?.let { return it.toString() }
+        return n.toString()
+    }
 }

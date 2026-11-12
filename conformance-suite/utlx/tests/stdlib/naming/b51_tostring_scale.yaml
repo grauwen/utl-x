@@ -1,0 +1,43 @@
+name: "b51_tostring_scale"
+category: "stdlib/naming"
+description: >
+  B51: toString() must render a number exactly as the serializer does. Output is XML so the
+  text is compared literally — a json fixture compares by parsed value and 10.5 vs 10.50
+  would look identical, letting the bug pass. Input is a literal block for the same reason
+  on the way in: inline YAML would strip the trailing zero before UTL-X saw it.
+tags: ["stdlib", "type", "toString", "scale", "B51", "B35"]
+
+input:
+  format: json
+  data: |
+    {"a":10.50,"b":25.00,"c":100.10,"d":15.25}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    r: {
+      serA: $input.a,        toStrA: toString($input.a),   concatA: "" + $input.a,
+      serB: $input.b,        toStrB: toString($input.b),
+      serC: $input.c,        toStrC: toString($input.c),
+      serD: $input.d,        toStrD: toString($input.d)
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <r>
+      <serA>10.50</serA>
+      <toStrA>10.50</toStrA>
+      <concatA>10.50</concatA>
+      <serB>25.00</serB>
+      <toStrB>25.00</toStrB>
+      <serC>100.10</serC>
+      <toStrC>100.10</toStrC>
+      <serD>15.25</serD>
+      <toStrD>15.25</toStrD>
+    </r>

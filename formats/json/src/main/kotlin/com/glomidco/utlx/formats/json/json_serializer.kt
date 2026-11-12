@@ -77,17 +77,11 @@ class JSONSerializer(
             null -> writer.write("null")
             is Boolean -> writer.write(value.toString())
             is Number -> {
-                // B35: exact types render as written; the Double path below is unchanged.
-                val exact = ExactNumber.renderExactOrNull(value)
-                if (exact != null) {
-                    writer.write(exact)
-                } else if (value is Double && ExactNumber.integralLongOrNull(value) != null) {
-                    // B37: round-trip through Long rather than `% 1.0 == 0.0`, which was true for
-                    // every large double and let toLong() saturate 1e30 to 9223372036854775807.
-                    writer.write(ExactNumber.integralLongOrNull(value).toString())
-                } else {
-                    writer.write(value.toString())
-                }
+                // B35/B37: exact types render as written, integral doubles print as integers
+                // only when they round-trip through Long. B51 moved that sequence into
+                // ExactNumber.renderScalarText so the stdlib's toString() shares it rather
+                // than re-deriving it — three call sites did, and only this one was right.
+                writer.write(ExactNumber.renderScalarText(value))
             }
             is String -> writer.write(escapeString(value))
             else -> writer.write(escapeString(value.toString()))
