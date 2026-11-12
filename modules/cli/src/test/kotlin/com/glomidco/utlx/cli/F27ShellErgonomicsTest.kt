@@ -222,4 +222,89 @@ class F27ShellErgonomicsTest {
         assertTrue(failure("-e", "\$x", "--argjson", "bad") is CommandResult.Failure)
         assertTrue(failure("-e", "\$x", "--argjson", "1x={}") is CommandResult.Failure)
     }
+    // ── -n / --null-input ──
+
+    @Test
+    fun `null input runs with no input document at all`() {
+        val out = tempDir.resolve("n1.txt").toFile()
+        val r = TransformCommand.execute(
+            arrayOf("-n", "-e", "1+1", "-r", "-o", out.absolutePath))
+        assertTrue(r is CommandResult.Success, "expected success, got $r")
+        assertEquals("2", out.readText().trim())
+    }
+
+    @Test
+    fun `null input binds input to null rather than failing`() {
+        val out = tempDir.resolve("n2.txt").toFile()
+        TransformCommand.execute(
+            arrayOf("-n", "-e", "isNull(\$input)", "-r", "-o", out.absolutePath))
+        assertEquals("true", out.readText().trim())
+    }
+
+    @Test
+    fun `null input composes with --arg`() {
+        val out = tempDir.resolve("n3.txt").toFile()
+        TransformCommand.execute(
+            arrayOf("-n", "-e", "\$v + \"!\"", "-r", "--arg", "v=hi", "-o", out.absolutePath))
+        assertEquals("hi!", out.readText().trim())
+    }
+
+    // ── --exit-status ──
+
+    private fun status(expr: String): Int {
+        val input = tempDir.resolve("st.json").toFile()
+            .apply { writeText("""{"enabled":true,"disabled":false,"n":5}""") }
+        val out = tempDir.resolve("st-${expr.hashCode()}.txt").toFile()
+        val r = TransformCommand.execute(arrayOf(
+            "-e", expr, "--exit-status", "-i", input.absolutePath, "-o", out.absolutePath))
+        return when (r) {
+            is CommandResult.Success -> 0
+            is CommandResult.Failure -> r.exitCode
+        }
+    }
+
+    @Test
+    fun `exit status is zero for a truthy result`() {
+        assertEquals(0, status("\$input.enabled"))
+        assertEquals(0, status("\$input.n"))
+        assertEquals(0, status("\$input.n > 3"))
+    }
+
+    @Test
+    fun `exit status is one for false and for null`() {
+        assertEquals(1, status("\$input.disabled"))
+        assertEquals(1, status("\$input.missing"))
+        assertEquals(1, status("\$input.n > 9"))
+    }
+
+    @Test
+    fun `exit status still writes the output — only the code changes`() {
+        val input = tempDir.resolve("st2.json").toFile().apply { writeText("""{"d":false}""") }
+        val out = tempDir.resolve("st2.txt").toFile()
+        val r = TransformCommand.execute(arrayOf(
+            "-e", "\$input.d", "--exit-status", "-r", "-i", input.absolutePath, "-o", out.absolutePath))
+        assertTrue(r is CommandResult.Failure && r.exitCode == 1)
+        assertEquals("false", out.readText().trim())
+    }
+
+    @Test
+    fun `a falsy result is not an error — no message is produced`() {
+        // Main.kt prints `Error: <message>` for a non-empty failure message. A predicate
+        // returning false must not look like a failure on stderr.
+        val input = tempDir.resolve("st3.json").toFile().apply { writeText("""{"d":false}""") }
+        val out = tempDir.resolve("st3.txt").toFile()
+        val r = TransformCommand.execute(arrayOf(
+            "-e", "\$input.d", "--exit-status", "-i", input.absolutePath, "-o", out.absolutePath))
+        assertTrue(r is CommandResult.Failure && r.message.isEmpty(),
+            "expected an empty failure message, got: $r")
+    }
+
+    @Test
+    fun `without --exit-status a falsy result still succeeds`() {
+        val input = tempDir.resolve("st4.json").toFile().apply { writeText("""{"d":false}""") }
+        val out = tempDir.resolve("st4.txt").toFile()
+        val r = TransformCommand.execute(arrayOf(
+            "-e", "\$input.d", "-i", input.absolutePath, "-o", out.absolutePath))
+        assertTrue(r is CommandResult.Success, "exit status must be opt-in, got $r")
+    }
 }

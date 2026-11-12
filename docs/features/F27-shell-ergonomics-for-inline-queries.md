@@ -150,10 +150,55 @@ Two side effects were checked rather than assumed:
 - A name colliding with an existing input is rejected rather than silently clobbering it.
 - `--from xml` still applies to the primary input while the arg stays JSON.
 
+## `-n/--null-input` and `--exit-status`
+
+Added after a jq-idiom comparison showed these were the only two remaining gaps that
+were *features* rather than consequences of the single-document model.
+
+**`-n/--null-input`** runs with no input at all, for computation and data generation:
+
+```bash
+utlx transform -n -e '1+1'                          # 2
+utlx transform -n -e '{a:1,b:[1,2]}'                # generate a document
+utlx transform -n -e 'upper(env("USER"))' -r        # read the environment
+```
+
+Implemented by synthesizing a bare `null` JSON document, which already binds `$input`
+to null — `typeOf($input)` reports `null` and `isNull($input)` is true — so this needed
+no new binding mechanism and no special case downstream. It also bypasses the
+interactive-stdin guard, which otherwise rejected the entirely reasonable
+`utlx -n -e '1+1'`.
+
+**`--exit-status`** makes a transformation usable as a shell test, matching `jq -e`:
+
+```bash
+if utlx transform -e '$input.enabled' --exit-status < config.json >/dev/null; then ...
+```
+
+Exit 1 when the result is `null` or `false`, 0 otherwise. Output is still written
+either way; only the status changes.
+
+Two deliberate choices:
+
+- **Long form only.** jq spells this `-e`, which here already means `--expression`.
+  An `-E` alias would sit one keystroke from silently selecting the wrong mode, so
+  there is no short form.
+- **The failure message is empty.** `Main.kt` prints `Error: <message>` for a non-empty
+  one, and a predicate returning false is not an error. Verified: stderr is empty
+  (0 bytes) and stdout carries the result.
+
 ## Still open
 
 **`-r` does not flatten nested structure**, by design (see above). `jq -r` on an object
 is also a type error, so this matches.
+
+**Not planned — consequences of the document model, not gaps:**
+
+| jq | why not |
+|---|---|
+| NDJSON / a stream of JSON values | jq is *stream in, stream out*; UTL-X is *one document in, one document out*, which is the single-pass guarantee. Wrapping the stream into an array works today. |
+| `-R` raw text input | UTL-X reads structured formats by definition. The mirror of the absent `output text`. |
+| `..` recursive descent | Needs a traversal order, a cycle policy, and a decision on attributes — see [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md). |
 
 ## Also worth knowing
 

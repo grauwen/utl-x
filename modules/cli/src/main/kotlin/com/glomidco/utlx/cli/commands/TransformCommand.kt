@@ -37,6 +37,8 @@ object TransformCommand {
         val rawOutput: Boolean = false,                         // -r strip quotes from string output
         val args: Map<String, String> = emptyMap(),             // F27: --arg name=value, bound as a string
         val jsonArgs: Map<String, String> = emptyMap(),         // F27: --argjson name=<json>, parsed as JSON
+        val nullInput: Boolean = false,                         // F27: -n, run with no input (${'$'}input = null)
+        val exitStatus: Boolean = false,                        // F27: --exit-status, exit 1 on null/false
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
@@ -212,7 +214,14 @@ object TransformCommand {
 
         try {
             // Step 2: Read input files and create InputData map
-            val inputs = if (options.namedInputs.isNotEmpty()) {
+            // F27: -n runs with no input at all (jq -n), for computation and data generation.
+            // A bare `null` JSON document already binds $input to null — typeOf() reports
+            // "null" and isNull() is true — so this needs no new binding mechanism and no
+            // special case downstream. It also bypasses the interactive-stdin guard below,
+            // which would otherwise fail for the entirely reasonable `utlx -n -e '1+1'`.
+            val inputs = if (options.nullInput) {
+                mapOf("input" to TransformationService.InputData(content = "null", format = "json"))
+            } else if (options.namedInputs.isNotEmpty()) {
                 // Named inputs from --input flags
                 options.namedInputs.mapValues { (name, file) ->
                     val inputFormat = options.inputFormat
@@ -445,6 +454,17 @@ ${"$"}input"""
                 )
             }
 
+            // F27: --exit-status mirrors `jq -e` — the result decides the exit code, so a
+            // transformation can be used as a shell predicate. Output has already been written
+            // above; only the status changes. The failure message is EMPTY on purpose: Main.kt
+            // prints `Error: <message>` for a non-empty one, and a predicate returning false is
+            // not an error.
+            if (options.exitStatus) {
+                val r = outcome.outputUDM
+                val falsy = r is UDM.Scalar && (r.value == null || r.value == false)
+                if (falsy) return CommandResult.Failure("", 1)
+            }
+
             return CommandResult.Success
 
         } catch (e: Exception) {
@@ -547,6 +567,8 @@ ${"$"}input"""
         var rawOutput = false
         val argValues = mutableMapOf<String, String>()
         val jsonArgValues = mutableMapOf<String, String>()
+        var nullInput = false
+        var exitStatus = false
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
@@ -583,6 +605,15 @@ ${"$"}input"""
                 }
                 "-r", "--raw-output" -> {
                     rawOutput = true
+                }
+                "-n", "--null-input" -> {
+                    nullInput = true
+                }
+                "--exit-status" -> {
+                    // Deliberately long-form only. jq spells this `-e`, which here already means
+                    // --expression; aliasing it to `-E` would be a one-keystroke typo away from
+                    // silently selecting the wrong mode.
+                    exitStatus = true
                 }
                 "--arg" -> {
                     // F27: --arg name=value. jq passes args as strings and so do we; coerce in
@@ -707,6 +738,8 @@ ${"$"}input"""
                 rawOutput = rawOutput,
                 args = argValues,
                 jsonArgs = jsonArgValues,
+                nullInput = nullInput,
+                exitStatus = exitStatus,
                 captureEnabled = captureEnabled,
                 debugLevel = debugLevel,
                 debugComponents = debugComponents,
@@ -739,6 +772,8 @@ ${"$"}input"""
                     rawOutput = rawOutput,
                 args = argValues,
                 jsonArgs = jsonArgValues,
+                nullInput = nullInput,
+                exitStatus = exitStatus,
                     captureEnabled = captureEnabled,
                     debugLevel = debugLevel,
                     debugComponents = debugComponents,
@@ -778,6 +813,8 @@ ${"$"}input"""
             rawOutput = rawOutput,
                 args = argValues,
                 jsonArgs = jsonArgValues,
+                nullInput = nullInput,
+                exitStatus = exitStatus,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
             debugComponents = debugComponents,
@@ -799,13 +836,14 @@ ${"$"}input"""
             |  utlx transform -e '<expression>' [input-file] [options]
             |
             |Inline expressions (no script file):
-            |  cat d.json | utlx transform -e '${'$'}input.tag'            One-off query, like jq
-            |  cat d.json | utlx transform -e '${'$'}input.tag' -r          Unquoted scalar output
-            |  cat d.json | utlx transform -e '${'$'}input.items[*].price'  Project over a sequence
-            |  cat d.json | utlx transform -e '${'$'}input.items[*].n' -r     One result per line
-            |  utlx transform -e '${'$'}input.name' -i d.json              Read from a file instead of stdin
-            |  cat d.json | utlx transform -e '${'$'}t' --arg t=12           Pass a value in from the shell
-            |  cat d.json | utlx transform -e '${'$'}c.min' --argjson 'c={"min":12}'  Pass structured data
+            |  cat d.json | utlx transform -e '${'$'}input.tag'                  One-off query, like jq
+            |  cat d.json | utlx transform -e '${'$'}input.tag' -r               Unquoted scalar output
+            |  cat d.json | utlx transform -e '${'$'}input.items[*].p'           Project over a sequence
+            |  cat d.json | utlx transform -e '${'$'}input.items[*].n' -r        One result per line
+            |  utlx transform -e '${'$'}input.tag' -i d.json                     Read a file instead of stdin
+            |  cat d.json | utlx transform -e '${'$'}t' --arg t=12               Pass a string in
+            |  cat d.json | utlx transform -e '${'$'}c.n' --argjson 'c={"n":1}'  Pass structured data
+            |  utlx transform -n -e '1+1'                                   No input at all
             |
             |Identity mode (no script, format conversion):
             |  cat data.xml | utlx                        Auto-detect XML, output JSON (smart flip)
@@ -837,6 +875,12 @@ ${"$"}input"""
             |                              types. Read by the JSON parser under --parse-profile, so
             |                              e.g. duplicate keys are rejected as they are for any input.
             |                              Repeatable. Expression mode only.
+            |  -n, --null-input            Run with no input at all; ${'$'}input is null. For computing
+            |                              or generating data (jq -n).
+            |  --exit-status               Exit 1 when the result is null or false, 0 otherwise, so a
+            |                              transformation can be used as a shell test (jq spells this
+            |                              -e, which here already means --expression). Output is
+            |                              written either way; only the exit code changes.
             |  --charset NAME              Force the input character set (default: auto-detect)
             |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
             |  --from FORMAT               Alias for --input-format
@@ -891,6 +935,8 @@ ${"$"}input"""
             |  cat data.xml | utlx transform -e '${'$'}input.r.i.n' --to json
             |  for n in ${'$'}(cat d.json | utlx transform -e '${'$'}input.items[*].n' -r); do echo "${'$'}n"; done
             |  cat d.json | utlx transform -e 'filter(${'$'}input.items, (i) -> i.p > toNumber(${'$'}min)).*.n' -r --arg min=12
+            |  utlx transform -n -e '1+1'                              # no input at all
+            |  if utlx transform -e '${'$'}input.enabled' --exit-status < cfg.json >/dev/null; then echo on; fi
         """.trimMargin())
     }
 
