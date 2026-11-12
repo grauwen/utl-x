@@ -954,10 +954,6 @@ Report to community@glomidco.com. All reports will be reviewed confidentially.
 - dev@glomidco.com - Technical discussions
 - cla@glomidco.com - CLA questions
 
-**Social Media:**
-- 🐦 [@UTLXLang](https://twitter.com/UTLXLang) - Updates and announcements
-- 💼 [LinkedIn](https://linkedin.com/company/utlx) - Professional updates
-
 ### Asking Questions
 
 **Good places to ask:**
@@ -1094,5 +1090,6 @@ Thank you for being part of the UTL-X community!
 
 **Glomidco B.V.**  
 Website: https://glomidco.com  
-UTL-X Project: https://utl-x.com  
+UTL-X Project: https://utlx.dev  
+Documentation: https://utlx-lang.org  
 GitHub: https://github.com/grauwen/utl-x
