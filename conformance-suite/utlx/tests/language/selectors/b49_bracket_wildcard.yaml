@@ -1,0 +1,46 @@
+name: "b49_bracket_wildcard"
+category: "language/selectors"
+description: >
+  B49: items[*] is every item, not every value of each item; B48: items[*].price projects.
+  Output is XML so the numeric text is compared literally — a json fixture compares by
+  parsed value and would not notice scale drift.
+tags: ["selectors", "wildcard", "projection", "B48", "B49"]
+
+input:
+  format: json
+  # Supplied as a literal block, NOT inline YAML: the runner's YAML loader turns
+  # inline 10.50 into a Python float and the trailing zero is gone before UTL-X
+  # ever sees it. A block scalar reaches the parser byte for byte.
+  data: |
+    {"items": [{"price": 10.50}, {"price": 25.00}, {"price": 15.25}]}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output xml
+  ---
+  {
+    out: {
+      count: count($input.items[*]),
+      viaBracket: { p: $input.items[*].price },
+      viaDot: { p: $input.items.*.price }
+    }
+  }
+
+expected:
+  format: xml
+  data: |
+    <?xml version="1.0" encoding="UTF-8"?>
+    <out>
+      <count>3</count>
+      <viaBracket>
+        <p>10.50</p>
+        <p>25.00</p>
+        <p>15.25</p>
+      </viaBracket>
+      <viaDot>
+        <p>10.50</p>
+        <p>25.00</p>
+        <p>15.25</p>
+      </viaDot>
+    </out>

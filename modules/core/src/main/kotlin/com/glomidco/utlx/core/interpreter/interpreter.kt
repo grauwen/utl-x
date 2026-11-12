@@ -592,10 +592,51 @@ class Interpreter(
         }
     }
     
-    private fun evaluateMemberAccess(expr: Expression.MemberAccess, env: Environment): RuntimeValue {
-        val target = evaluate(expr.target, env)
+    private fun evaluateMemberAccess(expr: Expression.MemberAccess, env: Environment): RuntimeValue =
+        accessMember(evaluate(expr.target, env), expr)
 
+    /**
+     * B48: project a member access over every element of a sequence.
+     *
+     * XPath node-set semantics: `r/i/n` over repeated `<i>` yields every `n`, one flat
+     * list. Steps that find nothing contribute nothing rather than a null hole, and a
+     * nested sequence is flattened one level so chained steps keep composing.
+     */
+    /**
+     * `*` applied to a SEQUENCE denotes the sequence itself -- `items[*]` and `items.*` are
+     * "every member of items", not "apply `*` to each member". Applied to an OBJECT it still
+     * means "every value", which is the pre-existing behaviour and is handled elsewhere.
+     *
+     * `@*` and `^*` are excluded: those project attributes/metadata over the members.
+     */
+    private fun isPlainWildcard(expr: Expression.MemberAccess): Boolean =
+        expr.property == "*" && !expr.isAttribute && !expr.isMetadata
+
+    private fun projectOverSequence(
+        elements: List<RuntimeValue>,
+        expr: Expression.MemberAccess
+    ): RuntimeValue = RuntimeValue.ArrayValue(
+        elements.flatMap { element ->
+            when (val result = accessMember(element, expr)) {
+                is RuntimeValue.ArrayValue -> result.elements
+                is RuntimeValue.NullValue -> emptyList()
+                else -> listOf(result)
+            }
+        }
+    )
+
+    /**
+     * Apply a member access to an ALREADY-EVALUATED target.
+     *
+     * Split out of [evaluateMemberAccess] so [projectOverSequence] can re-apply the same
+     * access to each element of a sequence without re-evaluating `expr.target`.
+     */
+    private fun accessMember(target: RuntimeValue, expr: Expression.MemberAccess): RuntimeValue {
         return when (target) {
+            // B48: a step that yielded many nodes projects over them instead of failing.
+            is RuntimeValue.ArrayValue ->
+                if (isPlainWildcard(expr)) RuntimeValue.ArrayValue(target.elements)
+                else projectOverSequence(target.elements, expr)
             is RuntimeValue.ObjectValue -> {
                 // Handle wildcard selector for regular objects
                 if (expr.property == "*") {
@@ -639,6 +680,12 @@ class Interpreter(
                                 RuntimeValue.NullValue
                             }
                         }
+                    }
+                    // B48: XML repeats elements as a UDM.Array -- `input.r.i.n` lands here.
+                    is UDM.Array -> {
+                        val members = udm.elements.map { RuntimeValue.UDMValue(unwrapTextNode(it)) }
+                        if (isPlainWildcard(expr)) RuntimeValue.ArrayValue(members)
+                        else projectOverSequence(members, expr)
                     }
                     else -> throw RuntimeError(
                         "Cannot access property on non-object UDM type",

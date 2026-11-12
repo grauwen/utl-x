@@ -1,0 +1,10 @@
+%utlx 1.0
+// Given a GitHub "list tags" response, emit each tag name on its own line.
+//
+// NOTE: `input.*.name` does NOT work when the document root is an array —
+// it raises "Cannot access property on non-object UDM type". map() over the
+// root is the working idiom.
+input json
+output csv
+---
+map(input, (t) -> t.name)

@@ -883,9 +883,16 @@ class Parser(
                 // F02: [ on same line = index access; [ on new line = stop (array literal)
                 check(TokenType.LBRACKET) && !hasNewlineBefore() -> {
                     advance() // consume [
-                    val index = parseExpression()
-                    consume(TokenType.RBRACKET, "Expected ']'")
-                    Expression.IndexAccess(expr, index, Location.from(previous()))
+                    // B49: `items[*]` is the bracket spelling of `items.*`. Emit the same
+                    // node so both forms share one evaluation path (and B48's projection).
+                    if (match(TokenType.STAR)) {
+                        consume(TokenType.RBRACKET, "Expected ']'")
+                        Expression.MemberAccess(expr, "*", false, false, Location.from(previous()))
+                    } else {
+                        val index = parseExpression()
+                        consume(TokenType.RBRACKET, "Expected ']'")
+                        Expression.IndexAccess(expr, index, Location.from(previous()))
+                    }
                 }
                 match(TokenType.LPAREN) -> {
                     val args = parseArguments()

@@ -1,0 +1,10 @@
+%utlx 1.0
+// Extract one top-level field from a GitHub API object as RAW text.
+//
+// `output csv` on a bare scalar emits the value with no quotes and no header —
+// the equivalent of `jq -r`. `output json` would wrap it in quotes, which is
+// wrong for shell capture.
+input json
+output csv
+---
+input.tag_name

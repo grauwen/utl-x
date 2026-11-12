@@ -180,6 +180,23 @@ object RuntimeOps {
     fun getProperty(target: UDM, name: String): UDM {
         val value = when (target) {
             is UDM.Object -> target.properties[name] ?: UDM.Scalar.nullValue()
+            // B48: a step onto a SEQUENCE projects across its members, flattening one level
+            // and dropping misses -- XPath node-set semantics, matching the interpreter's
+            // `projectOverSequence`. Without this, `$input.r.i.n` over repeated XML elements
+            // compiled cleanly and returned null, so COMPILED and COPY silently disagreed
+            // with TEMPLATE. The parity suite is what caught it.
+            //
+            // The wildcard spellings never arrive here: EB16 marks any MemberAccess whose
+            // property is "*" non-compilable, so `.*` and `[*]` fall back to the interpreter.
+            is UDM.Array -> return UDM.Array(
+                target.elements.flatMap { element ->
+                    when (val projected = getProperty(element, name)) {
+                        is UDM.Array -> projected.elements
+                        is UDM.Scalar -> if (projected.value == null) emptyList() else listOf(projected)
+                        else -> listOf(projected)
+                    }
+                }
+            )
             else -> UDM.Scalar.nullValue()
         }
         // Unwrap XML text nodes: <Element>value</Element> is parsed as

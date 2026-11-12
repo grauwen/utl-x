@@ -1,0 +1,20 @@
+name: "b48_projection_over_repeated_xml"
+category: "language/selectors"
+description: "B48: a step after a repeated XML element projects across it — XPath's r/i/n"
+tags: ["selectors", "wildcard", "projection", "xml", "B48"]
+
+input:
+  format: xml
+  data: |
+    <r><i><n>a</n></i><i><n>b</n></i><i><n>c</n></i></r>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  { names: $input.r.i.n }
+
+expected:
+  format: json
+  data: {"names": ["a", "b", "c"]}

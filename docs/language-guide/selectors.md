@@ -171,11 +171,31 @@ input.items[*].price        // [10.00, 25.00, 15.00]
 input.items.*.price         // Same as above (shorthand)
 ```
 
+A step after a sequence **projects** across its members and flattens one level, so
+repeated XML elements navigate the way XPath's `r/i/n` does:
+
+```utlx
+input.r.i.n                 // every <n>, across every repeated <i>
+```
+
+Members that lack the property contribute nothing rather than a null, and `*` applied
+to a sequence is that sequence — `items[*]` is every item, not every *value* of each
+item. Fixed in UTL-X 1.4; see
+[B48](../bugs-fixed/B48-path-steps-do-not-project-across-a-sequence.md).
+
 ---
 
-## Recursive Descent
+## Recursive Descent (Future)
 
 ### .. Operator
+
+> **Not implemented.** `input..name` is a parse error in UTL-X 1.4. The syntax below
+> describes the intended design; it is documented here so the shape is settled, not
+> because it works today. See
+> [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md).
+>
+> To search a known depth today, chain the steps — `input.order.items.id` projects
+> across repeated `items` as of UTL-X 1.4 (see Wildcard Selection above).
 
 Find properties at any depth:
 
