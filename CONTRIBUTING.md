@@ -7,6 +7,7 @@ Thank you for your interest in contributing to UTL-X! We welcome contributions f
 ## 📋 Table of Contents
 
 - [Before You Contribute](#before-you-contribute)
+- [AI-Assisted Contributions](#ai-assisted-contributions)
 - [Getting Started](#getting-started)
 - [Development Setup](#development-setup)
 - [Making Changes](#making-changes)
@@ -51,6 +52,73 @@ The CLA bot will automatically check your signature when you open a pull request
 
 If you're contributing on behalf of your employer, your company must sign a Corporate CLA.  
 Contact: cla@glomidco.com
+
+---
+
+## AI-Assisted Contributions
+
+**Short answer: yes, and you do not need special permission.**
+
+Using an AI coding assistant — Claude, Codex, Copilot, Cursor, or anything else — is
+fine. The maintainers use them on this project, so it would be odd to ask otherwise.
+
+### Why the CLA already covers it
+
+The CLA says nothing about tooling, and that is deliberate. What
+[CLA.md](./CLA.md) §4 asks you to warrant is **provenance and rights**, not how you
+typed the code:
+
+- each contribution is your original creation, or you have sufficient rights to grant
+  the licences,
+- it does not include someone else's copyrighted material,
+- **you have not copied code from proprietary sources.**
+
+An editor, a refactoring tool and an AI assistant are all tools. None of them changes
+who is responsible for the result. You reviewed it, you tested it, you are signing — so
+you are the author in the sense the agreement means.
+
+### What we do ask
+
+**1. Review the output as your own work.** Generated code that you have not read is not
+a contribution, it is a guess. The same standard applies as to anything you hand-wrote:
+you should be able to explain why it works and what it does not handle.
+
+**2. Satisfy yourself that it is not reproducing third-party code.** This is the one
+warranty where AI assistance genuinely raises the risk, because a model can reproduce
+material it memorised. For ordinary glue code the risk is slight; for a distinctive
+algorithm or a well-known library's internals it is not. If a generated block looks
+unusually polished for its context, check where it came from.
+
+**3. Declare your dependencies and their licences in the pull request.** This matters
+more than it may appear, because UTL-X is dual-licensed: a dependency that is fine for
+AGPL use can be unusable in the commercial edition. Permissive licences (MIT, Apache-2.0,
+BSD) are straightforward. Source-available and non-commercial licences — Polyform
+Noncommercial, BUSL, SSPL, CC BY-NC — are not, and a contribution that depends on one
+cannot be merged, however good it is. When in doubt, ask before you build.
+
+**4. Disclose assistance with a commit trailer.** Not a confession, just a provenance
+record for years from now:
+
+```
+Assisted-by: OpenAI Codex
+Assisted-by: Claude Code
+```
+
+One line per tool that materially contributed. Omit it for trivial autocomplete.
+
+### What we do not do
+
+- We do not reject contributions for being AI-assisted.
+- We do not require you to disclose which prompts you used.
+- We do not treat a trailer as a quality signal in either direction — the code is
+  reviewed on its merits.
+
+### If you discover a problem later
+
+CLA §8 asks you to tell us in writing if something turns up that makes your
+representations inaccurate — including discovering that a contribution contains
+third-party code. That applies here as anywhere else. Mail **cla@glomidco.com**; it is
+a correction, not an accusation, and we would much rather hear it from you.
 
 ---
 
@@ -178,12 +246,33 @@ If everything passes, you're ready to start developing! ✅
 
 ## Making Changes
 
-### 1. Create a Feature Branch
+### 1. Which Branch Do I Target?
+
+**Branch from `development`, and open your pull request against `development`.**
+
+| branch | what it is |
+|---|---|
+| **`development`** | The integration branch. All work lands here first. This is where the engine (`modules/engine`), the bundle module and the language wrappers (`wrappers/dotnet`, `wrappers/go`) live. |
+| **`main`** | The release branch. It carries a curated subset of the project and lags `development` substantially. |
+
+This matters more than it usually does. `main` does **not** contain `modules/engine`,
+`modules/bundle` or `wrappers/` at all — so a branch taken from `main` is missing the
+modules most contributions need, and `./gradlew build` will not even see them. If you
+branch from `main` you will discover this after you have written the code, not before.
+
+If you have already started from `main`, you are not stuck:
 
 ```bash
-# Make sure you're on main and up to date
-git checkout main
-git pull upstream main
+git fetch upstream
+git rebase --onto upstream/development upstream/main your-branch
+```
+
+### 2. Create a Feature Branch
+
+```bash
+# Start from development, not main
+git checkout development
+git pull upstream development
 
 # Create a new branch
 git checkout -b feature/my-awesome-feature
@@ -200,8 +289,7 @@ git checkout -b fix/bug-description
 - `test/test-name` - Test additions/fixes
 - `chore/task` - Maintenance tasks
 
-### 2. Make Your Changes
-
+### 3. Make Your Changes
 **Guidelines:**
 - Write clean, readable code
 - Follow the [coding standards](#coding-standards)
@@ -274,8 +362,7 @@ behavior against a *running* system, separate from the unit tests above:
 See `conformance-suite/CONFORMANCE-SUITES.md` for the full list of suites,
 categories, and per-runner options.
 
-### 3. Write Good Commit Messages
-
+### 4. Write Good Commit Messages
 Use [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```
@@ -326,23 +413,24 @@ Implements XSLT-style template matching for declarative transformations.
 Closes #42"
 ```
 
-### 4. Keep Your Fork Updated
-
+### 5. Keep Your Fork Updated
 ```bash
 # Fetch latest changes from upstream
 git fetch upstream
 
-# Merge upstream main into your branch
-git checkout main
-git merge upstream/main
+# Merge upstream development into your local development
+git checkout development
+git merge upstream/development
 
-# Rebase your feature branch on latest main
+# Rebase your feature branch on latest development
 git checkout feature/my-awesome-feature
-git rebase main
+git rebase development
 ```
 
-### 5. Push Your Changes
+`development` moves quickly — it is often hundreds of commits ahead of `main` — so
+rebasing before you open the pull request saves everyone a conflict.
 
+### 6. Push Your Changes
 ```bash
 # Push to your fork
 git push origin feature/my-awesome-feature
@@ -362,7 +450,7 @@ git push --force-with-lease origin feature/my-awesome-feature
 3. Click **"compare across forks"**
 4. Select:
    - **Base repository:** `grauwen/utl-x`
-   - **Base branch:** `main`
+   - **Base branch:** `development`
    - **Head repository:** `YOUR-USERNAME/utl-x`
    - **Compare branch:** `feature/my-awesome-feature`
 5. Click **"Create pull request"**
@@ -456,16 +544,16 @@ Add any other context about the PR here.
 
 **Congratulations! 🎉**
 
-- Your contribution is live in the `main` branch
+- Your contribution is live in the `development` branch, and ships to `main` at the next release
 - You'll be listed in the contributors
 - Close the issue if your PR fixed it
 - Consider tackling another issue!
 
 **Update your fork:**
 ```bash
-git checkout main
-git pull upstream main
-git push origin main
+git checkout development
+git pull upstream development
+git push origin development
 ```
 
 ---
@@ -695,7 +783,7 @@ Found a bug? Help us fix it!
 **Before reporting:**
 - Search existing issues to avoid duplicates
 - Try to reproduce with the latest version
-- Check if it's already fixed in main branch
+- Check whether it is already fixed on `development` — it is well ahead of `main`, so a bug you hit on a release may already be resolved
 
 **What to include:**
 ```markdown
@@ -920,9 +1008,9 @@ java -version  # Should be 11+
 # Undo uncommitted changes
 git checkout .
 
-# Reset to upstream main
+# Reset to upstream development (discards local work — be sure)
 git fetch upstream
-git reset --hard upstream/main
+git reset --hard upstream/development
 
 # Fix merge conflicts
 git mergetool
