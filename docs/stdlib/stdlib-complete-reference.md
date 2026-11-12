@@ -1,12 +1,12 @@
 # UTL-X Standard Library Reference
 
 **Generated**: 2026-04-06 23:22:42  
-**Total Functions**: 652  
+**Total Functions**: 650+  
 **Version**: 1.0.0
 
 ## Overview
 
-UTL-X provides 652 built-in functions across 18 categories for data transformation, processing, and integration tasks.
+UTL-X provides 650+ built-in functions for data transformation, processing, and integration tasks.
 
 ## Quick Reference
 

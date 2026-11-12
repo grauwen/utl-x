@@ -330,7 +330,7 @@ cat response.json | utlx --to odata > data.odata.json
 | YAML input/output | No | Yes |
 | OData support | No | Yes |
 | Format conversion | No | `cat data.xml \| utlx` |
-| 652 stdlib functions | ~50 | 652 |
+| Stdlib size | 189 builtins | 650+ functions |
 | Type safety | No | Yes |
 | Multi-input joins | No | Yes |
 | Schema transformation | No | XSD, JSON Schema, Avro, Protobuf |

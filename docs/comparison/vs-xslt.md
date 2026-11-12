@@ -15,7 +15,7 @@ XSLT (eXtensible Stylesheet Language Transformations) is the most mature transfo
 | **Formats** | XML only | XML, JSON, CSV, YAML, XSD, JSON Schema, Avro, Protobuf, OData |
 | **Paradigm** | Declarative templates | Functional, declarative |
 | **Syntax** | XML-based (verbose) | Custom DSL (concise) |
-| **Stdlib** | ~100 XPath functions | 652 functions across 18 categories |
+| **Stdlib** | ~100 XPath functions | 650+ functions |
 | **Learning Curve** | Steep | Medium |
 | **Performance** | Excellent (compiled) | Excellent (JVM or GraalVM native binary) |
 | **Tooling** | Mature (25+ years) | Growing (CLI, LSP, VS Code) |
@@ -39,7 +39,7 @@ XSLT (eXtensible Stylesheet Language Transformations) is the most mature transfo
 2. **Verbose syntax**: XML-based syntax requires significant boilerplate
 3. **Learning curve**: Complex for beginners
 4. **No CLI piping**: Cannot be used as a shell tool like jq or UTL-X
-5. **Limited stdlib**: ~100 XPath functions vs UTL-X's 652
+5. **Limited stdlib**: ~100 XPath functions vs UTL-X's 650+
 6. **No schema transformation**: Cannot convert between XSD, JSON Schema, Avro, Protobuf
 
 ## Side-by-Side Examples
@@ -170,9 +170,9 @@ cat data.csv | utlx --to xml      # CSV to XML
 
 XSLT has no CLI piping equivalent.
 
-### 3. 652 Standard Library Functions
+### 3. 650+ Standard Library Functions
 
-UTL-X provides 652 functions across 18 categories vs XSLT's ~100 XPath functions:
+UTL-X provides 650+ functions vs XSLT's ~100 XPath functions:
 
 | Category | UTL-X | XSLT/XPath |
 |----------|-------|------------|
@@ -256,7 +256,7 @@ UTL-X natively parses and serializes OData JSON and EDMX metadata, enabling inte
 - Need multi-format support (not just XML)
 - Need schema transformation (XSD, JSON Schema, Avro, Protobuf)
 - Need CLI piping and instant format conversion
-- Need a rich standard library (652 functions)
+- Need a rich standard library (650+ functions)
 - Need OData/enterprise integration
 - Building new transformations
 - Want concise, readable syntax
@@ -281,4 +281,4 @@ You don't have to choose one or the other:
 
 ## Conclusion
 
-UTL-X honors XSLT's proven declarative approach while modernizing it for today's multi-format data landscape. With 652 functions, 10+ supported formats, CLI piping, and schema transformation capabilities, UTL-X addresses the gaps that make XSLT insufficient for modern integration needs. For pure XML work with existing stylesheets, XSLT remains excellent. For everything else, UTL-X is the natural evolution.
+UTL-X honors XSLT's proven declarative approach while modernizing it for today's multi-format data landscape. With 650+ functions, 10+ supported formats, CLI piping, and schema transformation capabilities, UTL-X addresses the gaps that make XSLT insufficient for modern integration needs. For pure XML work with existing stylesheets, XSLT remains excellent. For everything else, UTL-X is the natural evolution.

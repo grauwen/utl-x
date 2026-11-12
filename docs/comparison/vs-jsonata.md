@@ -9,7 +9,7 @@
 | **Paradigm** | Functional, XPath-inspired | Functional, declarative |
 | **Runtime** | JavaScript only | JVM or GraalVM native binary |
 | **Type System** | Dynamic | Strong, inferred |
-| **Stdlib** | ~50 functions | 652 functions across 18 categories |
+| **Stdlib** | ~50 functions | 650+ functions |
 | **CLI piping** | Not a CLI tool | `cat data.xml \| utlx` (smart format flip) |
 | **Multi-input** | No | Yes (join multiple files/formats) |
 | **Schema support** | No | XSD, JSON Schema, Avro, Protobuf |
@@ -60,7 +60,7 @@ JSONata has no equivalent — it cannot process non-JSON input.
 
 **JSONata**: ~50 built-in functions focused on JSON manipulation.
 
-**UTL-X**: 652 functions across 18 categories including String (83), Array (67), Date (68), Math (37), XML (60), Encoding (30), Binary (47), CSV (12), YAML (22), Financial (16), Geospatial (8), Security (16).
+**UTL-X**: 650+ functions including String (83), Array (67), Date (68), Math (37), XML (60), Encoding (30), Binary (47), CSV (12), YAML (22), Financial (16), Geospatial (8), Security (16).
 
 ### 3. Schema Awareness
 
@@ -105,7 +105,7 @@ output json
 - Need format conversion without writing transformation logic
 - Need schema validation (XSD, JSON Schema, Avro, Protobuf)
 - Need multi-input transformations (joining data from different sources/formats)
-- Need a rich standard library (652 functions)
+- Need a rich standard library (650+ functions)
 - Need OData/enterprise integration
 - Want type safety and compile-time error checking
 

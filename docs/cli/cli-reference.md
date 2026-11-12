@@ -367,7 +367,7 @@ utlx lint script.utlx --format json    # Machine-readable output
 ### Exploring stdlib
 
 ```bash
-utlx functions                          # List all 652 functions
+utlx functions                          # List all 650+ functions
 utlx functions search xml               # Search by keyword
 utlx functions info map                  # Detailed function info
 utlx functions --category Array          # Filter by category

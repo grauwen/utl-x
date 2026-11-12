@@ -2,9 +2,17 @@
 
 ### Core Purpose
 
-**UTL-X** is a format-agnostic functional transformation language that works with XML, JSON, CSV, YAML, and other formats. Write your transformation logic once, apply it to any supported format. 652 built-in functions across 18 categories.
+**UTL-X** is a format-agnostic functional transformation language that works with XML, JSON, CSV, YAML, and other formats. Write your transformation logic once, apply it to any supported format. 650+ built-in functions.
 
 **jq** is a lightweight command-line JSON processor — like sed/awk/grep for JSON data. Focused exclusively on JSON manipulation.
+
+> Figures here are measured, not quoted, and deliberately stated as a floor. The UTL-X stdlib
+> grows every release; an exact count goes stale in a dozen documents at once, which is what
+> happened to the "652 functions across 18 categories" that this page carried for seven
+> months. For the current figure run `./utlx functions --format json`. jq:
+> `jq -n 'builtins | length'` → 218, of which 189 are distinct names. Comparison run against
+> **jq 1.7.1** on 2026-11-12. The same earlier revision put jq at "~50" builtins, which was
+> badly wrong in the unflattering direction.
 
 ### Key Differences
 
@@ -13,11 +21,14 @@
 | **Format Support** | XML, JSON, CSV, YAML, OData + 6 schema formats | JSON only |
 | **Language** | Written in Kotlin (JVM or GraalVM native binary) | Written in C, single native binary |
 | **License** | AGPL-3.0 (copyleft) / Commercial dual-license | MIT (permissive) |
-| **Type System** | Strongly typed with compile-time checking | Dynamically typed |
-| **Stdlib** | 652 functions across 18 categories | ~50 built-in functions |
+| **Type System** | Static checking of names and arity via `utlx validate`; argument types not yet trustworthy (B53) | Dynamically typed, no static check |
+| **Stdlib** | 650+ functions | 189 builtins (218 with arity variants) |
 | **Inline expressions** | `utlx -e '.name'` (dot shorthand like jq) | `jq '.name'` |
 | **Raw output** | `utlx -e '.name' -r` | `jq -r '.name'` |
 | **Piping** | `cat data.xml \| utlx` (smart format flip) | `cat data.json \| jq '.'` |
+| **Shell-supplied values** | `--arg name=value`, `--argjson name=<json>` | `--arg`, `--argjson` (same names) |
+| **No input** | `-n` / `--null-input` | `-n` |
+| **Exit status from the result** | `--exit-status` | `-e` |
 | **Script files** | `.utlx` files with header + body | Inline expressions or `.jq` files |
 | **Installation** | JVM (JDK 17+) or GraalVM native binary | Single binary, zero dependencies |
 
@@ -99,16 +110,113 @@ cat users.json | utlx -e '. |> map(u => {name: u.name, email: u.email})' --to cs
 cat config.yaml | utlx -e '.database.host' -r
 ```
 
+### Shell ergonomics: the jq flag set
+
+Added in [F27](../features/F27-shell-ergonomics-for-inline-queries.md). Each was checked
+against jq 1.7.1 and produces the same answer:
+
+```bash
+# Pass a value in from the shell
+jq   -r --arg min 10 '[.items[] | select(.p > ($min|tonumber)) | .n] | join(",")' j.json
+utlx -e 'join(filter(.items, (i) -> i.p > toNumber($min)).*.n, ",")' --arg min=10 -i j.json -r
+# both: y
+
+# Structured value in
+jq   -c --argjson o '{"k":7}' '.a + $o.k' j.json      # 8
+utlx -e '.a + $cfg.k' --argjson cfg='{"k":7}' -i j.json   # 8
+
+# No input at all
+jq   -n '1+1'                 # 2
+utlx -e '1+1' -n              # 2   (see the note below on flag order)
+
+# Exit status from the result, for use in `if`
+jq   -e '.enabled' cfg.json >/dev/null;              echo $?   # 0 true, 1 false
+utlx -e '.enabled' --exit-status -i cfg.json >/dev/null; echo $?   # 0 true, 1 false
+```
+
+**`-n` cannot come first.** `utlx -e '1+1' -n` and `utlx transform -n -e '1+1'` both work,
+but `utlx -n -e '1+1'` fails with `Unknown command: -n` — the CLI infers the `transform`
+subcommand from a leading `-e`, and `-n` is not in that set. jq has no subcommands, so a
+ported `jq -n …` needs reordering.
+
+**One flag collision to know when porting a script:** in jq, `-e` means *exit status*. In
+UTL-X, `-e` means `--expression`, and exit status is the long `--exit-status`. A jq script
+with `-e` in it will not mean what it did.
+
+### Numeric fidelity — where UTL-X is actually ahead
+
+jq 1.7 preserves a number's original literal when it passes through untouched, so these
+agree:
+
+```bash
+echo '{"id":9007199254740993}' | jq   -c '.id'    # 9007199254740993
+echo '{"id":9007199254740993}' | utlx -e '.id'    # 9007199254740993
+```
+
+The difference appears the moment you compute with it. jq converts to IEEE double;
+UTL-X keeps the value exact ([B35](../bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md),
+[B51](../bugs-fixed/B51-tostring-loses-decimal-scale-b35-incomplete.md)):
+
+| expression | jq 1.7.1 | UTL-X |
+|---|---|---|
+| `.id + 1` where `id` is `9007199254740993` | `9007199254740992` | `9007199254740994` |
+| `.price * 3` where `price` is `10.50` | `31.5` | `31.50` |
+
+The first row is worth a second look: jq's answer to *n + 1* is **lower than n**. For money,
+identifiers, or anything that round-trips, this is the difference that matters, and it is not
+a flag — it is the number model.
+
+### Known gap: compact expressions need a space
+
+[CB04](../bugs-fixed/CB04-dot-shorthand-needs-whitespace-so-compact-jq-expressions-fail.md).
+The `-e` dot shorthand expands `.name` to `$input.name` based on the character *before* the
+dot, and the accepted set is missing most punctuation. The jq-idiomatic compact spellings
+fail with a parse error:
+
+| | |
+|---|---|
+| `utlx -e '{p:.a}'` | parse error |
+| `utlx -e '{p: .a}'` | `{"p":1}` |
+| `utlx -e '[.a]'` | parse error |
+| `utlx -e '[ .a]'` | `[1]` |
+| `utlx -e '.a+.b'` | parse error |
+| `utlx -e '.a + .b'` | `3` |
+
+A space fixes every case **except one**: a leading decimal is rewritten rather than left
+alone, and no spacing helps —
+
+```bash
+utlx -e '1 + .5'     # Error: Expected property name   ( .5 became $input.5 )
+utlx -e '1 + 0.5'    # 1.5                             ( write the leading zero )
+```
+
+Until CB04 lands: space out `-e` expressions, and write `0.5` rather than `.5`. jq accepts
+both spellings.
+
 ### Where UTL-X wins
 
 - **Format agnostic** — one transformation works with XML, JSON, CSV, YAML; jq is JSON-only
 - **Zero-flag format conversion** — `cat data.xml | utlx` converts XML to JSON instantly; jq cannot read XML at all
 - **jq-like expressions** — `utlx -e '.name' -r` uses the same dot syntax as jq, with `-r` for raw output
-- **652 functions** — string, array, math, date, XML, CSV, YAML, binary, encoding, financial, geospatial, security
-- **Strong typing** — catches errors at compile time, not at runtime
+- **650+ functions** — string, array, math, date, XML, CSV, YAML, binary, encoding, financial, geospatial, security
+- **Static checking before you run** — `utlx validate` catches a misspelled function, a wrong argument count, `"abc" - 1`, and indexing a scalar; jq has no equivalent, so a typo surfaces as `null` deep in a pipeline. See the caveat below: argument *types* currently over-report
 - **Multi-input** — join data from multiple files/formats in one transformation
 - **OData support** — parse and serialize OData JSON and EDMX metadata; jq has no OData awareness
 - **Schema awareness** — XSD, JSON Schema, Avro, Protobuf, OData/EDMX, Table Schema
+
+### The typing caveat, stated plainly
+
+`utlx validate` reliably catches a misspelled function name, a wrong argument count, an
+operator applied to the wrong kind of value, and indexing a scalar — all before the script
+runs, which jq cannot do at all.
+
+What it does **not** yet do reliably is argument types. A value read from `$input` is typed
+`Any`, and `Any` currently satisfies no declared parameter type, so all 12 functions that
+have a core signature report a false mismatch on input-derived arguments while passing on
+literals — `upper("a")` validates, `upper($input.s)` does not, and both run.
+[B53](../bugs-fixed/B53-any-is-assignable-to-nothing-so-strict-types-rejects-every-real-script.md)
+has the one-line cause. Until it lands, treat `--strict` as a name-and-arity gate, not a type
+gate, and do not put it in CI expecting it to pass on real scripts.
 
 ### Where jq wins
 
@@ -125,9 +233,9 @@ cat config.yaml | utlx -e '.database.host' -r
 
 - Work with multiple data formats (XML, JSON, CSV, YAML)
 - Need format conversion without writing transformation logic
-- Need strong typing and compile-time validation
+- Want a script checked for typos and arity before it runs
 - Are building ETL pipelines or data migration tools
-- Need rich stdlib (652 functions across 18 categories)
+- Need rich stdlib (650+ functions)
 
 **Choose jq if you:**
 
@@ -139,4 +247,17 @@ cat config.yaml | utlx -e '.database.host' -r
 
 ### Bottom Line
 
-jq is the standard for JSON processing — fast, mature, universal. UTL-X targets a different space: format-agnostic transformation with a rich standard library. For pure JSON work in shell scripts, jq is hard to beat. For anything involving XML, CSV, YAML, or multi-format pipelines, UTL-X does what jq simply cannot. With `-e` expressions and `-r` raw output, UTL-X now matches jq's shell scripting ergonomics while adding format conversion that jq can't do.
+jq is the standard for JSON processing — fast, mature, universal. UTL-X targets a different
+space: format-agnostic transformation with a rich standard library. For pure JSON work in
+shell scripts, jq is hard to beat, and this page does not claim otherwise.
+
+What has genuinely changed: with `-e`, `-r`, `--arg`, `--argjson`, `-n` and `--exit-status`,
+a UTL-X one-liner now fits a shell script the way a jq one-liner does, and it reads XML, CSV
+and YAML on the way in. Two honest qualifications: compact expressions still need whitespace
+([CB04](../bugs-fixed/CB04-dot-shorthand-needs-whitespace-so-compact-jq-expressions-fail.md)),
+and `--strict` type enforcement over-reports on anything derived from input
+([B53](../bugs-fixed/B53-any-is-assignable-to-nothing-so-strict-types-rejects-every-real-script.md)),
+so use `utlx validate` for names and arity rather than as a type gate.
+
+Where UTL-X is unambiguously ahead is not the syntax — it is the number model (exact
+arithmetic, above) and the fact that the input need not be JSON at all.

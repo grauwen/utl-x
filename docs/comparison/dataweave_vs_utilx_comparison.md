@@ -1,7 +1,7 @@
 # DataWeave vs UTL-X Standard Library - Complete Comparison
 
 **Last Updated:** April 2026  
-**UTL-X Functions:** 652 (across 18 categories)  
+**UTL-X Functions:** 650+  
 **DataWeave Core Modules:** 18+
 
 ---
@@ -10,7 +10,7 @@
 
 | Metric | DataWeave | UTL-X | Status |
 |--------|-----------|-------|--------|
-| **Total Functions** | ~80-100 | 652 | **UTL-X has 6x more** |
+| **Total Functions** | ~80-100 | 650+ | **UTL-X has 6x more** |
 | **Categories** | 18 modules | 18 categories | Comparable structure |
 | **Array Functions** | 13 core | 67 | **+415% more** |
 | **String Functions** | 11 core | 83 | **+655% more** |
@@ -26,7 +26,7 @@
 | **Geospatial Functions** | N/A | 8 | **UTL-X only** |
 | **Security Functions** | N/A | 16 | **UTL-X only** |
 
-**Verdict:** UTL-X stdlib is significantly more comprehensive than DataWeave, with 652 functions vs ~100, covering more domains (financial, geospatial, security, binary) that DataWeave lacks entirely.
+**Verdict:** UTL-X stdlib is significantly more comprehensive than DataWeave, with 650+ functions vs ~100, covering more domains (financial, geospatial, security, binary) that DataWeave lacks entirely.
 
 See [stdlib-complete-reference.md](../stdlib/stdlib-complete-reference.md) for the full function reference.
 
@@ -428,7 +428,7 @@ private fun registerDataWeaveAliases() {
 
 ```
 DataWeave Core Functions:   ~80-100 functions
-UTL-X Standard Library:      652 functions (18 categories)
+UTL-X Standard Library:      650+ functions (18 categories)
 Coverage Ratio:              138%
 
 UTL-X Advantages:
@@ -449,7 +449,7 @@ DataWeave Advantages:
 **UTL-X stdlib is significantly more comprehensive than DataWeave**
 
 - **Functional parity:** 100% on core operations
-- **Extra functionality:** 652 vs ~100 functions (6x more)
+- **Extra functionality:** 650+ vs ~100 functions (6x more)
 - **Unique categories:** Binary, CSV, YAML, Financial, Geospatial, Security — not available in DataWeave
 - **Unique strengths:** Date/time, XML, string processing, logical operations
 
@@ -476,4 +476,4 @@ DataWeave Advantages:
 | XML | ███░░░░░░░ 30% | ██████████ 100% | +70% | ✅ UTL-X Better |
 | Logic | ████░░░░░░ 40% | ██████████ 100% | +60% | ✅ UTL-X Better |
 
-**Overall: UTL-X provides 652 functions across 18 categories vs DataWeave's ~100 functions**
+**Overall: UTL-X provides 650+ functions vs DataWeave's ~100 functions**

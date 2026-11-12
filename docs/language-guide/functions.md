@@ -6,10 +6,10 @@ UTL-X has two kinds of functions:
 |--|-----------------|----------------------|
 | **Naming** | lowercase/camelCase | **PascalCase (required)** |
 | **Examples** | `sum`, `map`, `filter`, `parseNumber`, `formatDate` | `CalculateTax`, `FormatName`, `ProcessOrder` |
-| **Count** | 652 built-in | Unlimited |
+| **Count** | 650+ built-in | Unlimited |
 | **Availability** | Always available, no import needed | Defined in your `.utlx` script |
 
-**Rule:** User-defined functions must start with an uppercase letter. Lowercase names are reserved for the 652 stdlib functions.
+**Rule:** User-defined functions must start with an uppercase letter. Lowercase names are reserved for the 650+ stdlib functions.
 
 ```utlx
 // Stdlib (lowercase) — built-in, always available
@@ -23,7 +23,7 @@ function CalculateTotal(price: Number, qty: Number): Number {
 }
 ```
 
-See the [Stdlib Reference](../stdlib/stdlib-complete-reference.md) for all 652 built-in functions.
+See the [Stdlib Reference](../stdlib/stdlib-complete-reference.md) for all 650+ built-in functions.
 
 ---
 
@@ -517,7 +517,7 @@ merge({a: 1, b: 2}, {b: 3, c: 4}) // {a: 1, b: 3, c: 4}
 
 ### Naming Convention: PascalCase Required
 
-User-defined functions **must** start with an uppercase letter (PascalCase). This prevents collisions with the 652 stdlib functions, which all use lowercase/camelCase.
+User-defined functions **must** start with an uppercase letter (PascalCase). This prevents collisions with the 650+ stdlib functions, which all use lowercase/camelCase.
 
 Functions can be declared anywhere in the script — order doesn't matter. You can use a function before declaring it.
 

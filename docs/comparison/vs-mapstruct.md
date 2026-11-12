@@ -21,7 +21,7 @@ They solve **different problems** but often appear in the same integration archi
 | **Standalone CLI** | No (library only) | Yes (`cat data.xml \| utlx`) |
 | **Format Awareness** | None (works with Java objects) | Built-in parsers for 11 formats |
 | **Schema Support** | None | XSD, JSON Schema, Avro, Protobuf, OData/EDMX |
-| **Stdlib** | N/A (uses Java methods) | 652 built-in functions |
+| **Stdlib** | N/A (uses Java methods) | 650+ built-in functions |
 
 ## What MapStruct Does Well
 
