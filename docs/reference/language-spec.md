@@ -183,7 +183,52 @@ input.Order.@id                  // Attribute access
 input.Order.Items[0]             // Index access
 input.Order.Items[*]             // All elements
 input..ProductCode               // Recursive descent
+input["order-id"]                // Bracket form, for any key
 ```
+
+### 4.1.1 Hyphens in names
+
+A name step may contain hyphens, because JSON keys, XML element and attribute names, and YAML
+keys may all contain them — and in XML they commonly do:
+
+```utlx
+$input.my-top.an-item            // the key "an-item"
+$input.doc.@content-type         // the attribute "content-type"
+```
+
+**A hyphen therefore binds into the name, and subtraction requires whitespace:**
+
+```utlx
+$input.total - $input.discount   // subtraction
+$input.total-discount            // ONE name — the key "total-discount"
+```
+
+Given `{"total": 100, "discount": 30}`, the second yields `null` — there is no key of that
+name. Note the converse: where the key *does* exist, the dotted form reads it correctly, so a
+hyphenated key needs no special syntax. The trap is only that an intended subtraction becomes
+a lookup of a key that is usually absent.
+
+This applies to `-` only; `+`, `*`, `/` and the comparison operators parse identically spaced
+or tight.
+
+The bracket form reaches a key that cannot be written as a name at all — one containing a
+space, or one that collides with a reserved word (§16):
+
+```utlx
+$input["order id"]               // $input.order id  is a parse error
+$input["input"]                  // $input.input     is a parse error
+```
+
+A reserved word is currently accepted as an object-literal key but **not** in a path step, so
+`{ input: 1 }` emits `{"input": 1}` while `$input.input` does not parse. Since `input`,
+`output`, `return`, `case`, `template` and `module` are ordinary element names in real
+documents, such keys must be read with the bracket form. See
+[B56](../bugs-fixed/B56-reserved-words-cannot-be-read-as-property-names.md).
+
+> The examples above use `$input`, the canonical spelling for the single unnamed input (named
+> inputs are `$orders`, `$customers`, …). Elsewhere this document writes `input.Order…` without
+> the `$`; both parse today, but `$input` is what the conformance corpus uses almost
+> exclusively and what the rest of the documentation teaches.
 
 ### 4.2 Predicates
 

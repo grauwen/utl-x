@@ -145,7 +145,7 @@ null
 
 **Valid identifiers:**
 - Start with letter or underscore
-- Contain letters, digits, underscores
+- Contain letters, digits, underscores **and hyphens**
 - Case-sensitive
 
 ```utlx
@@ -154,15 +154,64 @@ _private       // ✅ Valid
 user123        // ✅ Valid
 camelCase      // ✅ Valid
 snake_case     // ✅ Valid
+content-type   // ✅ Valid — see "Hyphens" below
 ```
 
 **Invalid identifiers:**
 ```utlx
 123name        // ❌ Cannot start with digit
-user-name      // ❌ Hyphens not allowed
 my.variable    // ❌ Dots not allowed
 class          // ❌ Reserved keyword
 ```
+
+#### Hyphens, and why subtraction needs spaces
+
+A hyphen is an identifier character, so that a path can address the data you actually have:
+JSON keys, XML element and attribute names, and YAML keys may all contain hyphens, and in XML
+they routinely do (`xml-lang`, `content-type`, `data-id`).
+
+```utlx
+$input.my-top.an-item           // the key "an-item"
+$input.doc.@content-type        // the attribute "content-type"
+```
+
+**The consequence: `-` only means subtraction when it has spaces around it.**
+
+```utlx
+$input.total - $input.discount  // subtraction
+$input.total-discount           // ONE name — the key "total-discount"
+```
+
+Given `{"total": 100, "discount": 30}` the second returns `null`, not `70`, because no key is
+called `total-discount`. This is the one place in UTL-X where whitespace changes meaning, and
+it applies to `-` alone — `+`, `*`, `/` and `==` parse the same spaced or tight. Write
+arithmetic spaced and the question never arises; the IDE's Function Builder inserts every
+operator with spaces for exactly this reason.
+
+The reverse is worth knowing too: if the document really does have a `total-discount` key,
+`$input.total-discount` returns it. Hyphenated keys need no special syntax.
+
+For a key that cannot be written as a name at all — one with a space in it, or one that is a
+**reserved word** — use the bracket form:
+
+```utlx
+$input["order id"]       // $input.order id  is a parse error
+$input["input"]          // $input.input     is a parse error
+```
+
+The reserved-word case catches people out, because the words are ordinary element names in
+real documents: `input` and `output` in workflow definitions (`<input>` is also an HTML
+element), `return` in tax and financial XML, `case` in legal and healthcare records,
+`template` and `module` in build configuration. Note the asymmetry — you can *write* such a
+key with the plain syntax but not *read* one:
+
+```utlx
+{ input: 1 }             // ✅ emits {"input": 1}
+$input.input             // ❌ parse error — use $input["input"]
+```
+
+This is [B56](../bugs-fixed/B56-reserved-words-cannot-be-read-as-property-names.md); until it
+is fixed, read such keys with brackets.
 
 ### Reserved Keywords
 
@@ -967,8 +1016,12 @@ output json
 **Invalid identifiers:**
 ```utlx
 let 123name = "test"  // ❌ ERROR: Cannot start with digit
-let my-var = 10       // ❌ ERROR: Hyphens not allowed
+let my.var = 10       // ❌ ERROR: Dots not allowed
 ```
+
+Hyphens **are** allowed — `let my-var = 10` is valid. See
+[Hyphens, and why subtraction needs spaces](#hyphens-and-why-subtraction-needs-spaces): the
+cost is that `a-b` is one name, so subtraction must be written `a - b`.
 
 ---
 
