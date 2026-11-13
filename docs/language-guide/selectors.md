@@ -178,10 +178,30 @@ repeated XML elements navigate the way XPath's `r/i/n` does:
 input.r.i.n                 // every <n>, across every repeated <i>
 ```
 
-Members that lack the property contribute nothing rather than a null, and `*` applied
-to a sequence is that sequence — `items[*]` is every item, not every *value* of each
-item. Fixed in UTL-X 1.4; see
-[B48](../bugs-fixed/B48-path-steps-do-not-project-across-a-sequence.md).
+A member that cannot answer the step **contributes nothing** rather than a null — whether it
+is an object lacking the property, or a value with no properties at all. That second case is
+what makes projection survive mixed content:
+
+```utlx
+// <order><title>ACME</title><line><sku>A1</sku></line><line><sku>B2</sku></line></order>
+$input.order.*.sku          // ["A1", "B2"] — <title> is text and is skipped
+```
+
+Skipping applies to **projection** only. Asking one named scalar for a property is still an
+error, because that is a mistake in the transformation rather than a shape of the data:
+
+```utlx
+$input.order.title.sku      // Error: Cannot access property on non-object UDM type
+```
+
+And `*` applied to a sequence is that sequence — `items[*]` is every item, not every *value*
+of each item, so stacking wildcards changes nothing.
+
+Fixed in UTL-X 1.4; see
+[B48](../bugs-fixed/B48-path-steps-do-not-project-across-a-sequence.md) for the projection
+itself and
+[B57](../bugs-fixed/B57-projection-throws-on-a-non-object-member-but-skips-a-missing-key.md)
+for the mixed-content half.
 
 ---
 
@@ -662,8 +682,8 @@ if ($input.order.customer != null)
 else 
   "No customer"
 
-// Use recursive search
-input..name  // Find 'name' anywhere
+// Use an explicit path — recursive search is NOT implemented (B49)
+$input.order.customer.name
 ```
 
 ### Predicate Not Matching

@@ -188,7 +188,7 @@ input["order-id"]                // Bracket form, for any key
 > **Not implemented:** `input..ProductCode` (recursive descent) was listed here but does not
 > parse — the `..` token is produced by the lexer and has no parser branch. There is no
 > equivalent spelling today; see
-> [B57](../bugs-fixed/B57-recursive-descent-is-lexed-documented-and-never-parsed.md).
+> [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md).
 
 ### 4.1.1 Hyphens in names
 

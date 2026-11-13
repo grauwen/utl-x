@@ -410,7 +410,7 @@ exists. Reach a nested value by naming its depth:
 $input.*.deep.name        // ✅
 ```
 
-Tracked as [B57](../bugs-fixed/B57-recursive-descent-is-lexed-documented-and-never-parsed.md).
+Tracked as [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md).
 
 ### Predicates
 

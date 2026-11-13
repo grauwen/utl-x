@@ -21,7 +21,7 @@
 | **Format Support** | XML, JSON, CSV, YAML, OData + 6 schema formats | JSON only |
 | **Language** | Written in Kotlin (JVM or GraalVM native binary) | Written in C, single native binary |
 | **License** | AGPL-3.0 (copyleft) / Commercial dual-license | MIT (permissive) |
-| **Type System** | Static checking of names and arity via `utlx validate`; argument types not yet trustworthy (B53) | Dynamically typed, no static check |
+| **Type System** | Static checking before the script runs — names, arity, argument types, operators | Dynamically typed, no static check |
 | **Stdlib** | 650+ functions | 189 builtins (218 with arity variants) |
 | **Inline expressions** | `utlx -e '.name'` (dot shorthand like jq) | `jq '.name'` |
 | **Raw output** | `utlx -e '.name' -r` | `jq -r '.name'` |
@@ -215,19 +215,33 @@ operator is fine tight or spaced.
 - **OData support** — parse and serialize OData JSON and EDMX metadata; jq has no OData awareness
 - **Schema awareness** — XSD, JSON Schema, Avro, Protobuf, OData/EDMX, Table Schema
 
-### The typing caveat, stated plainly
+### What the static checking actually covers
 
-`utlx validate` reliably catches a misspelled function name, a wrong argument count, an
-operator applied to the wrong kind of value, and indexing a scalar — all before the script
-runs, which jq cannot do at all.
+`utlx validate` catches, before the transformation runs, things jq cannot catch at all:
 
-What it does **not** yet do reliably is argument types. A value read from `$input` is typed
-`Any`, and `Any` currently satisfies no declared parameter type, so all 12 functions that
-have a core signature report a false mismatch on input-derived arguments while passing on
-literals — `upper("a")` validates, `upper($input.s)` does not, and both run.
-[B53](../bugs-fixed/B53-any-is-assignable-to-nothing-so-strict-types-rejects-every-real-script.md)
-has the one-line cause. Until it lands, treat `--strict` as a name-and-arity gate, not a type
-gate, and do not put it in CI expecting it to pass on real scripts.
+```bash
+utlx validate t.utlx --strict
+✗ Undefined function: totallyMadeUp        # a misspelled function
+✗ Undefined variable: nope
+✗ upper expects 1 arguments, got 2         # wrong arity
+✗ Argument type mismatch                   # upper(42), abs("x")
+✗ Arithmetic operators require numeric operands   # "abc" - 1
+```
+
+jq has no equivalent: a typo there surfaces as `null` somewhere downstream, or as a runtime
+error on the one input that reaches it.
+
+**`--strict` is safe to put in CI**, as of
+[B53](../bugs-fixed/B53-any-is-assignable-to-nothing-so-strict-types-rejects-every-real-script.md).
+Until that landed, a value read from `$input` was typed `Any` and `Any` satisfied no declared
+parameter type, so every one of the dozen functions with a signature reported a false mismatch
+the moment its argument came from the document — `upper("a")` validated and `upper($input.s)`
+did not, though both run.
+
+**What it is not, yet:** thorough. Only about a dozen functions carry a type signature, so most
+calls are checked for name and arity but not argument type; and `$input` is not typed from a
+schema, so no property is verified against the document's real shape — `$input.noSuchField`
+validates cleanly. Treat it as a strong lint rather than a type system.
 
 ### Where jq wins
 
