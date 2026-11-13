@@ -58,6 +58,7 @@ import com.glomidco.utlx.stdlib.StandardLibrary
 import com.glomidco.utlx.stdlib.OperatorRegistry
 import com.glomidco.utlx.schema.usdl.DirectiveRegistry
 import org.slf4j.LoggerFactory
+import com.glomidco.utlx.core.format.ParseProfile
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import java.time.Instant
@@ -71,9 +72,49 @@ class RestApiServer(
     private val port: Int = 7779,
     private val host: String = "0.0.0.0",
     private val shutdownCallback: (() -> Unit)? = null,
-    workspaceRoot: java.io.File? = BundleWorkspace.resolve()
+    workspaceRoot: java.io.File? = BundleWorkspace.resolve(),
+    /**
+     * B31: the parse profile this daemon applies to input it reads.
+     *
+     * Every other surface could already choose one — the CLI through `--parse-profile`, the
+     * engine through `EngineConfig.effectiveParseProfile()` — but the daemon constructed a
+     * bare `TransformationService()` and so always ran `STANDARD`. Not wrong, but a deployment
+     * that pins `strict` was silently not honoured here, and the preview a mapper sees could
+     * accept input the production engine rejects.
+     *
+     * Resolved the way this module already resolves its other deployment setting (see
+     * [BundleWorkspace.resolve]) rather than through [DaemonConfig], whose `load` is still a
+     * stub that returns defaults and drops overrides.
+     */
+    private val parseProfile: ParseProfile = resolveParseProfile()
 ) {
     private val logger = LoggerFactory.getLogger(RestApiServer::class.java)
+
+    companion object {
+        /**
+         * B31: `UTLX_PARSE_PROFILE` / `-Dutlx.parse.profile`, defaulting to the same `STANDARD`
+         * the daemon used before. An unrecognised value falls back to STANDARD with a warning
+         * rather than failing startup — a daemon that refuses to boot over a typo'd profile is
+         * worse than one that runs at the documented default and says so.
+         */
+        fun resolveParseProfile(): ParseProfile {
+            val raw = System.getenv("UTLX_PARSE_PROFILE")
+                ?: System.getProperty("utlx.parse.profile")
+                ?: return ParseProfile.STANDARD
+            return when (raw.lowercase().trim()) {
+                "strict" -> ParseProfile.STRICT
+                "standard" -> ParseProfile.STANDARD
+                "lenient" -> ParseProfile.LENIENT
+                else -> {
+                    LoggerFactory.getLogger(RestApiServer::class.java).warn(
+                        "Unrecognised parse profile '{}' (expected strict|standard|lenient); " +
+                        "using standard", raw
+                    )
+                    ParseProfile.STANDARD
+                }
+            }
+        }
+    }
     private var server: NettyApplicationEngine? = null
     private val startTime = Instant.now().toEpochMilli()
     private val scope = CoroutineScope(Dispatchers.Default)
@@ -407,7 +448,8 @@ class RestApiServer(
                             )),
                             options = TransformationService.TransformOptions(
                                 verbose = false,
-                                pretty = true
+                                pretty = true,
+                                parseProfile = parseProfile   // B31
                             )
                         )
 
@@ -523,7 +565,8 @@ class RestApiServer(
                             inputs = serviceInputs,
                             options = TransformationService.TransformOptions(
                                 verbose = false,
-                                pretty = true
+                                pretty = true,
+                                parseProfile = parseProfile   // B31
                             )
                         )
 
