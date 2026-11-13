@@ -612,12 +612,43 @@ class Interpreter(
     private fun isPlainWildcard(expr: Expression.MemberAccess): Boolean =
         expr.property == "*" && !expr.isAttribute && !expr.isMetadata
 
+    /**
+     * B57: can this value hold properties at all?
+     *
+     * Used only to decide whether a member of a projected sequence is *capable* of answering
+     * the step. A scalar is not — and during projection that means "contributes nothing",
+     * exactly as a missing key does. Asked ahead of [accessMember] rather than catching its
+     * exception, so a genuine failure inside the access still propagates.
+     */
+    private fun canHoldProperties(value: RuntimeValue): Boolean = when (value) {
+        is RuntimeValue.ObjectValue -> true
+        is RuntimeValue.ArrayValue -> true
+        is RuntimeValue.UDMValue -> value.udm is UDM.Object || value.udm is UDM.Array
+        else -> false
+    }
+
+    /**
+     * B48 projects a step across a sequence; B57 decides what an element that cannot answer
+     * contributes.
+     *
+     * B48 already dropped a `NullValue` — an object simply lacking the key adds nothing to the
+     * result. A **scalar** member threw instead, so `$input.*.name` died on
+     * `{"a":{"name":"A"}, "b":{"name":"B"}, "title":"ROOT"}` — a container holding child records
+     * beside a scalar label, which is an everyday JSON shape and exactly what XML mixed content
+     * looks like. Both cases are "this element cannot contribute a value", so both now skip.
+     *
+     * Note this is the *projecting* path only. `$input.title.name` still throws: asking one
+     * named scalar for a property is a mistake in the transformation, whereas a heterogeneous
+     * sequence is a shape of the data. Loud where the author is wrong, quiet where the document
+     * is mixed.
+     */
     private fun projectOverSequence(
         elements: List<RuntimeValue>,
         expr: Expression.MemberAccess
     ): RuntimeValue = RuntimeValue.ArrayValue(
         elements.flatMap { element ->
-            when (val result = accessMember(element, expr)) {
+            if (!canHoldProperties(element)) emptyList()
+            else when (val result = accessMember(element, expr)) {
                 is RuntimeValue.ArrayValue -> result.elements
                 is RuntimeValue.NullValue -> emptyList()
                 else -> listOf(result)

@@ -1,0 +1,48 @@
+name: "b57_mixed_content_projection"
+category: "language/selectors"
+description: "B57: projecting a step over a sequence skips a member that cannot answer it — a scalar child as well as an object missing the key — so XML mixed content does not break the projection"
+tags: ["selectors", "projection", "wildcard", "mixed-content", "xml", "b57"]
+
+input:
+  format: xml
+  data: |
+    <order>
+      <title>ACME</title>
+      <line><sku>A1</sku><qty>2</qty></line>
+      <line><sku>B2</sku></line>
+    </order>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    // <title> is a scalar child and cannot answer `.sku` — skipped, not fatal
+    skus: $input.order.*.sku,
+
+    // the second <line> has no <qty> — skipped too, which is B48's half of the rule
+    quantities: $input.order.*.qty,
+
+    // naming the element directly still projects across the repeats
+    byName: $input.order.line.sku
+  }
+
+expected:
+  format: json
+  data: {
+    "skus": ["A1", "B2"],
+    "quantities": [2],
+    "byName": ["A1", "B2"]
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references:
+    - "docs/bugs-fixed/B57-projection-throws-on-a-non-object-member-but-skips-a-missing-key.md"
+    - "docs/bugs-fixed/B48-path-steps-do-not-project-across-a-sequence.md"
+  notes:
+    - "Before B57 the `skus` property threw 'Cannot access property on non-object UDM type', because <title> is a text child. A container holding records beside a scalar label is an everyday shape, and XML mixed content is exactly that, so the projection was fragile where it was most useful."
+    - "`quantities` pins B48's existing behaviour in the same expression: a member lacking the key contributes nothing rather than a null hole."
+    - "Direct access on a scalar still throws — that is asserted in B57MixedSequenceProjectionTest, since a fixture cannot express an expected error."
+    - "Carried here so ConformanceStrategyParityTest checks it on all three strategies. RuntimeOps.getProperty already skipped scalars, so COMPILED and COPY were right and the interpreter was the outlier; this fixture would have caught that divergence."
