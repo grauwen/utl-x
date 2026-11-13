@@ -33,6 +33,31 @@ behaved **correctly**, rejecting a malformed frame. Filing it as `EB` would have
 mistake this document was written to prevent: naming the component where a symptom surfaced rather
 than the one that is wrong.
 
+## Write the status line one way
+
+Every report starts with a status line, and it must be spelled:
+
+```markdown
+**Status:** Fixed — 2026-11-13
+**Status:** Open
+**Status:** Partly fixed — <what is done, what is not>
+```
+
+**`**Status:**` — colon inside the bold, on its own line.** Three spellings are in the history
+(`**Status:**`, `**Status: Fixed**`, `**Status**: Fixed`) and a decorative ✅ in front of the
+word. A backlog sweep on 2026-11-13 read 24 reports as unresolved; **eleven were already
+fixed**, three of them only *looked* open because of the spelling. That is a real cost: stale
+"Open" hides the genuinely open work behind noise, exactly as a stale "Fixed" hides risk.
+
+Start the status with the state — `Fixed`, `Open`, `Closed`, `Partly fixed`, `Will not
+implement` — then the detail. A reader (or a script) should learn the state from the first
+word, not from a paragraph. If a report is a plan or an analysis rather than a defect, say
+`Not a defect` and explain what it is.
+
+And when a fix lands on another branch, say which branch *and* whether it is present here.
+"Fixes IMPLEMENTED on `feature/ide`" left B26, B27 and B28 ambiguous for months; all three
+turned out to be fine on `development`, but only testing showed it.
+
 ## Choosing the next number
 
 Take the highest number **already used anywhere** for that prefix and add one. "Used anywhere"

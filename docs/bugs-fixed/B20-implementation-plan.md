@@ -1,5 +1,8 @@
 # Plan: B20 — Non-UTF-8 Encoding Support (Core + Formats)
 
+**Status:** Not a defect — this is the implementation **plan** for B20 (non-UTF-8 encoding support), kept here beside the bug record. It has no
+open/closed state of its own; track the work on the B20 bug report.
+
 ## Context
 
 The entire UTL-X payload pipeline uses Java `String` as internal representation. The original byte encoding is lost at the entry point. All parsing, transformation, and serialization works with UTF-16 String and re-encodes to UTF-8 on output. This silently corrupts non-UTF-8 content (UTF-16 SAP, ISO-8859-1 legacy CSV, Shift-JIS). Blocks SAP/BizTalk integration.

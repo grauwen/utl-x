@@ -1,6 +1,6 @@
 # B25: stdlib functions fail **inside `map`/`filter`/`reduce`/templates** on the native binary — higher-order builtins evaluate lambdas on a throwaway `Interpreter()` that lacks the stdlib lookup
 
-**Status:** ✅ **RESOLVED** on `development`. Fix B (owner-reuse) + the Group-2 duplicate cleanup + reconciliation + regression guards all implemented and **verified on the GraalVM native binary** (both faces pass — see "Resolution (final)" below). JVM: all unit tests + **conformance 522/522**. Pending only: merge to `main`.
+**Status:** Fixed — resolved on `development`, verified on the GraalVM native binary (both faces pass; JVM unit tests green, conformance 522/522 at the time). Fix B (owner-reuse) plus the Group-2 duplicate cleanup, reconciliation and regression guards are all implemented. Outstanding: merge to `main` only.
 **Priority:** Critical — breaks the README example and shipped `.utlx` examples on v1.2.1 native (Windows/macOS/Linux), XML and JSON inputs.
 **Created:** June 2026
 **Reported:** GitHub issue #3 (@skin27 / Raymond Meester) — Windows 11, UTL-X CLI v1.2.1 (Oracle GraalVM native).
