@@ -1,6 +1,8 @@
 # B26: CLI error handling — errors printed twice, parse failures dump a stack trace, and `transform <script>` with no input hangs
 
-**Status:** Root cause **CONFIRMED** by source analysis. **Fixes IMPLEMENTED + TESTED** on `feature/ide` — `:modules:cli` and `:modules:core` compile clean; a 7-case subprocess regression suite (`CliErrorHandlingTest`) passes, full `:modules:cli:test` green (49 existing + 7 new). Pending: native rebuild to confirm on the v1.2.1-class binary.
+**Status:** **FIXED — 2026-11-13.** The three reported bugs were fixed earlier on
+`feature/ide`; two *further* print-and-rethrow sites survived on `development` and are now
+fixed too — see "Two sites the original fix missed" at the end.
 **Priority:** Medium — no incorrect transformation output; this is UX / input-validation quality. Bug 3 (hang) is the most user-hostile.
 **Created:** June 2026
 **Reported:** GitHub issue #2 (@skin27 / Raymond Meester) — Windows 11, UTL-X CLI v1.2.1 (Oracle GraalVM native, Java 25.0.3 LTS).
@@ -242,3 +244,58 @@ it unset.
 
 **Pending:** native rebuild to confirm on the v1.2.1-class binary. **Residual (accepted):** the
 `> out.json`-while-interactive stdin edge for Bug 3 (see the Bug 3 table above).
+
+---
+
+## Two sites the original fix missed (2026-11-13)
+
+Found by reading the output of an unrelated change, not by a test: an error from the B38 work
+appeared twice.
+
+The original fix removed the print from the **parse** handler in `TransformationService`,
+leaving the comment that still stands there:
+
+> `// B26: do NOT print here. The message is carried by the exception and printed once by
+> Main.kt (CommandResult.Failure). Printing here too duplicated the whole block.`
+
+Two sibling handlers in the same file kept the pattern:
+
+| line | handler | symptom |
+|---|---|---|
+| ~373 | input parsing | `Error parsing input: …` then `Error: …` |
+| ~521 | output serialising | `Error serializing output: …` then `Error: …` |
+
+Both did `System.err.println(...)` followed by `throw e`, so `Main.kt` printed the same
+failure again from `CommandResult.Failure`.
+
+### Fixed by carrying the context instead of printing it
+
+```kotlin
+} catch (e: Exception) {
+    throw IllegalStateException("Error parsing input: ${e.message}", e)
+}
+```
+
+The context those prints provided — *where* in the pipeline the failure happened — is worth
+keeping, so it moves onto the exception rather than being dropped. The user sees one message
+that still says which stage failed, and the original exception is preserved as the cause.
+
+### Verification
+
+| | |
+|---|---|
+| `:modules:cli:test` | **153**, 0 failures (`CliErrorHandlingTest` now 9) |
+| `:modules:core` / `:stdlib` / `:modules:engine` / `:formats:json` | 371 / 2339 / 1017 / 98, 0 failures |
+| conformance | 578/578 |
+
+```bash
+# each message, counted in stderr
+serialisation (NaN)   x1
+parse error           x1
+undefined function    x1
+input parse error     x1
+```
+
+The two new cases in `CliErrorHandlingTest` are subprocess tests like the rest of that suite,
+counting occurrences in real stderr rather than trusting an in-process capture — which is
+what lets them catch a duplicate introduced anywhere between the service and `Main.kt`.

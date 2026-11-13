@@ -370,8 +370,12 @@ class TransformationService {
                 else -> throw IllegalArgumentException("Unsupported input format: $format")
             }
         } catch (e: Exception) {
-            System.err.println("Error parsing input: ${e.message}")
-            throw e
+            // B26: do NOT print here. The message is carried by the exception and printed once
+            // by Main.kt via CommandResult.Failure. Printing *and* rethrowing showed the user
+            // the same error twice — the defect B26 fixed on the parse path at line ~237 and
+            // left on this one. The "Error parsing input" context is kept by wrapping rather
+            // than by printing, so it still reaches the single message the user sees.
+            throw IllegalStateException("Error parsing input: ${e.message}", e)
         }
     }
 
@@ -518,8 +522,9 @@ class TransformationService {
                 else -> throw IllegalArgumentException("Unsupported output format: $format")
             }
         } catch (e: Exception) {
-            System.err.println("Error serializing output: ${e.message}")
-            throw e
+            // B26: as above — carry the context on the exception instead of printing it, so the
+            // user sees one message rather than the same failure twice.
+            throw IllegalStateException("Error serializing output: ${e.message}", e)
         }
     }
 

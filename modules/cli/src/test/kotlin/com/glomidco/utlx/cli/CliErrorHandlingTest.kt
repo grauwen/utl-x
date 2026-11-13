@@ -170,6 +170,49 @@ class CliErrorHandlingTest {
         assertNoStackTrace(r.stderr)
     }
 
+    /**
+     * B26 left two of these behind. The parse path was fixed — `TransformationService` stopped
+     * printing and let `Main.kt` report it once — but the *input parsing* and *output
+     * serialising* handlers kept the print-and-rethrow pattern, so a failure in either showed
+     * the user the same message twice. Found by reading the output of an unrelated change.
+     */
+    @Test
+    fun `an input parse failure prints once`() {
+        val bad = tempDir.resolve("bad.json").toFile().apply { writeText("{bad json") }
+        val script = tempDir.resolve("id.utlx").toFile()
+        script.writeText("%utlx 1.0\ninput json\noutput json\n---\n\$input")
+
+        val r = runCli("transform", script.absolutePath, bad.absolutePath)
+
+        assertEquals(1, r.exitCode)
+        assertEquals(
+            1, r.stderr.countOf("Error parsing input:"),
+            "the input-parse message must appear exactly once. stderr:\n${r.stderr}"
+        )
+        assertTrue(
+            r.stderr.contains("JSON parse error"),
+            "the underlying cause must survive the wrapping. stderr:\n${r.stderr}"
+        )
+        assertNoStackTrace(r.stderr)
+    }
+
+    @Test
+    fun `an output serialisation failure prints once`() {
+        // B38: NaN cannot be represented in JSON, so the serialiser refuses — a convenient way
+        // to reach the output-serialising handler without contriving anything.
+        val script = tempDir.resolve("nan.utlx").toFile()
+        script.writeText("%utlx 1.0\ninput json\noutput json\n---\n{ r: sqrt(0 - 1) }")
+
+        val r = runCli("transform", script.absolutePath, inputJson().absolutePath)
+
+        assertEquals(1, r.exitCode)
+        assertEquals(
+            1, r.stderr.countOf("Cannot serialise NaN"),
+            "the serialisation message must appear exactly once. stderr:\n${r.stderr}"
+        )
+        assertNoStackTrace(r.stderr)
+    }
+
     @Test
     fun `empty script gives a friendly message, not parser internals`() {
         val empty = tempDir.resolve("empty.utlx").toFile()
