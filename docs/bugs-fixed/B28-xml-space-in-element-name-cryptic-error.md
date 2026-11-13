@@ -153,5 +153,5 @@ XML element names cannot contain spaces.
 That is the diagnostic the report asked for. Closed.
 
 The surrounding `Error parsing input:` prefix now reaches the user exactly once rather than
-twice — see [B26](B26-cli-error-handling.md), whose remaining print-and-rethrow sites were
+twice — see [B26](B26-cli-error-handling-double-print-and-stdin-hang.md), whose remaining print-and-rethrow sites were
 fixed the same day.

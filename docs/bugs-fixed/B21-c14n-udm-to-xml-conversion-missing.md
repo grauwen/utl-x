@@ -118,7 +118,7 @@ c14nHash($input)  => "23551dcb3411f7348fe6a603d7aaacd53fa521a6ad26dbfcd97d..."
 ```
 
 Verified on the JVM **and** on the GraalVM native binary, which is the configuration
-[B17](B17-native-binary-apache-xml-security-resource-bundle-missing.md) reported as broken.
+[B17](B17-native-binary-xml-security-resource-bundle.md) reported as broken.
 
 A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
 behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,

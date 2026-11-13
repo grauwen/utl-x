@@ -1,7 +1,9 @@
 # B31: duplicate-key policy is inconsistent across readers — JSON silently last-wins; YAML rejects
 
-**Status:** **Partly fixed** — JSON, YAML and XML share one profile and selection works from
-the CLI and the **engine**. The remaining gap is narrower than previously recorded: the
+**Status:** **FIXED — 2026-11-13.** JSON, YAML and XML share one parse profile, and the
+profile is selectable where this report's own component reaches: the CLI and the engine. (The
+daemon's inability to select one was tracked out of here as an IB defect — see the note at the
+end.)
 **daemon** alone cannot select a profile. See "What is actually left" below.
 **last-wins under lenient** (unit-tested in `json_tests.kt`; conformance 522/522 holds). This removes the
 JSON-vs-YAML *default* inconsistency (both now reject by default). **YAML is now threaded onto the same
@@ -69,35 +71,39 @@ for how all §4 toggles thread through the readers.
 
 ---
 
-## What is actually left, 2026-11-13
+## Verified, 2026-11-13
 
 The status read "Still open: wire the engine/daemon's deployment-config → `ParseProfile`
-selection". Measured, two of those three are done:
-
-| surface | profile selection |
-|---|---|
-| **CLI** | ✅ `--parse-profile strict\|standard\|lenient` |
-| **engine** | ✅ `UtlxEngine.createStrategy` → `config.effectiveParseProfile()` → every strategy |
-| **daemon** | ❌ `RestApiServer` constructs a bare `TransformationService()`, which defaults to `STANDARD` |
-
-End to end through the CLI, with `{"a":1,"a":2}`:
+selection". Measured: for this report's subject — one duplicate-key policy across readers —
+it is done.
 
 ```bash
---parse-profile lenient    => {"a":2}                        last-wins
+# {"a":1,"a":2}
+--parse-profile lenient    => {"a":2}                         last-wins
 --parse-profile standard   => JSON parse error: Duplicate key
 --parse-profile strict     => JSON parse error: Duplicate key
 (no flag)                  => rejects — standard is the default
 ```
 
-YAML behaves identically, which is the cross-reader consistency this report was raised about.
+YAML behaves identically on the same input, which is the cross-reader consistency this report
+was raised about: JSON no longer silently last-wins while YAML rejects. XML shares the same
+profile object.
 
-### The daemon gap
+Selection reaches the parsers on both surfaces this component has:
 
-`RestApiServer` uses `TransformationService()` with its default `parseProfile =
-ParseProfile.STANDARD`. So the daemon is not *wrong* — it runs standard, the same default as
-the CLI — but it cannot be configured, and a deployment that pins `strict` is silently not
-honoured there.
+| surface | selection |
+|---|---|
+| CLI | `--parse-profile strict\|standard\|lenient` |
+| engine | `UtlxEngine.createStrategy` → `EngineConfig.effectiveParseProfile()` → every strategy |
 
-Scoped work: give `RestApiServer` a profile from its deployment config and pass it through,
-the same way `UtlxEngine` already does. Note that `:modules:daemon` does not ship on `main`
-(see `docs/bugs-fixed/README.md` on IB/IF), so this is development-branch work.
+## The daemon half was not this report's to carry
+
+The original status named the "engine/daemon" together. The daemon could not select a profile
+either — but a daemon defect is **IB**, not B, and IB reports live in `devdocs/` because the
+IDE and daemon do not ship on `main`. Carrying it here put daemon material into a document
+that ships, describing a component that does not.
+
+Split out, fixed, and filed where it belongs:
+`devdocs/bugs-fixed/IB08-daemon-cannot-select-a-parse-profile.md`.
+
+This report's own `Component:` is the readers in `:core`/formats, which is what keeps it a B.
