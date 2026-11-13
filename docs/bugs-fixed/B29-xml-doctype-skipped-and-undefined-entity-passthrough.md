@@ -1,13 +1,8 @@
 # B29: XML parser silently *skips* a DOCTYPE and passes *undefined* entity references through as literal text — accepts malformed XML that a strict/guard profile must reject
 
-**Status:** **ADDRESSED (XML profile-driven) — pending engine profile-selection.** The XML reader now
-takes its DOCTYPE + undefined-entity policy from `core/format/ParseOptions`: part A — `strict` rejects a
-DOCTYPE outright (`allowDoctype=false`); part B — `standard`/`strict` reject an undefined entity as a
-well-formedness error, `lenient` keeps it literal (`allowUndefinedEntities`). External-entity resolution
-stays off in all profiles (the parser never resolves). Validated: XML unit tests (per profile) + full
-gradle + **conformance 522/522** + harness (**standard 22/22**). The engine applies the STANDARD default
-until profile-selection is wired, so DOCTYPE-with-entities and undefined-entity docs now reject by
-default. Found 2026-10-10 by the `test-corpora` per-profile baseline (Phase 0b).
+**Status:** **FIXED — 2026-11-13.** Profile-driven as designed, and profile selection is
+wired (CLI `--parse-profile`; engine via `EngineConfig.effectiveParseProfile()`), so the
+"pending engine profile-selection" caveat no longer applies. Measured per profile below.
 **Priority:** Medium (correctness + strict/guard fail-closed posture). **Not** a critical security vuln — see [Scope](#scope-this-is-not-xxe).
 **Created:** October 2026
 **Component:** `formats/xml/src/main/kotlin/com/glomidco/utlx/formats/xml/xml_parser.kt`
@@ -82,3 +77,25 @@ fetch / no expansion" guarantees as explicit negative tests).
 - `docs/architecture/utlx-test-corpora.md` §5.7 (malformed vs malicious; the leniency profile).
 - `test-corpora/baseline.json` (the Phase-0b measurement that surfaced this); `test-corpora/scripts/HARNESS.md`.
 - B27 (prolog/DOCTYPE skipping — the intended behaviour this refines for the strict profile).
+
+---
+
+## Measured per profile, 2026-11-13
+
+The status had read "ADDRESSED — pending engine profile-selection", with the default made
+strict *until* selection was wired. Selection is wired: the CLI exposes `--parse-profile` and
+`UtlxEngine.createStrategy` resolves `config.effectiveParseProfile()` into every strategy.
+Behaviour now matches `ParseOptions` exactly:
+
+| input | lenient | standard | strict |
+|---|---|---|---|
+| bare `<!DOCTYPE r SYSTEM "r.dtd">` | accepted | **accepted** | rejected |
+| DOCTYPE with an internal entity, `&e;` | kept as literal `&e;` | rejected | rejected |
+| undefined `&undefined;` | kept as literal | rejected | rejected |
+| built-in `&amp;` | `a & b` | `a & b` | `a & b` |
+
+That is the design this report asked for: a DOCTYPE is "tolerated in a prolog; only STRICT
+rejects outright", an unresolvable entity is a well-formedness error outside lenient, and the
+built-ins always resolve. The parser still never *resolves* declared entities — hence `&e;`
+surviving as text under lenient rather than becoming `x`, which is the deliberate
+no-entity-expansion stance (XXE).

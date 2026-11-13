@@ -10,13 +10,9 @@
 > backport the stricter-by-default grammar changes (B29/B31) or the profile feature — those are a
 > minor-release concern, not patch-safe.
 
-**Status:** **MITIGATED** (safety cap landed;) — a profile-independent hard cap
-`MAX_NESTING_DEPTH = 1000` now bounds recursion in the JSON (`parseValue`) and XML
-(`parseElementChecked`) readers: deeply-nested input throws a **clean** `JSONParseException`/
-`XMLParseException` instead of `StackOverflowError`. Verified: new module unit tests pass; the
-crash-depth probe flips JSON/XML from **crash → clean reject** (≈1000); the harness shows **0
-robustness-errors** (all profiles) with `deep_nesting_50000` now rejecting; **conformance 522/522**.
-Moderate nesting (100) still parses, so no legitimate-data regression — safe for a minor patch release.
+**Status:** **FIXED — 2026-11-13.** The per-profile `maxDepth` is implemented and live, not
+just the interim flat cap. Measured limits below. Note the report text says "standard 128";
+the implementation deliberately uses **256** — see the rationale in `ParseOptions.standard()`.
 **Update (Phase-1 plumbing):** the **JSON** reader now takes its depth bound from `core/format/ParseOptions`
 (`maxDepth`, per-profile: strict 64 / standard 128 / lenient 256) instead of the hardcoded 1000 cap —
 the *proper* per-profile fix (unit-tested). The **XML** reader is now threaded too: it uses
@@ -146,3 +142,29 @@ full strategy — see that file. Key points:
 - `docs/architecture/utlx-test-corpora.md` §5.7 (bounds always-on; "never crash, hang, or OOM").
 - `test-corpora/baseline.json`; `test-corpora/scripts/make-bounds-seeds.sh`.
 - **B29/B30/B31** — the parser-hardening theme; B32 is the first **crash** (vs silent-accept) in it.
+
+---
+
+## Measured, 2026-11-13
+
+Binary-searched the deepest JSON nesting each profile accepts, through the CLI:
+
+| profile | deepest accepted | limit | documented here |
+|---|---|---|---|
+| strict | 63 | **64** | 64 ✓ |
+| standard | 255 | **256** | 128 — **stale text, not a defect** |
+| lenient | 255 | **256** | 256 ✓ |
+
+So the limits are genuinely per-profile — strict rejects at 64 where standard and lenient
+accept — which is the "proper per-profile fix" this report listed as outstanding. The interim
+profile-independent cap is no longer what is doing the work.
+
+The one discrepancy is in this document, not the code. `ParseOptions.standard()` carries the
+reason inline:
+
+```kotlin
+maxDepth = 256,   // doubled from 128; ~15x margin below the recursive-parser crash (B32)
+```
+
+A deliberate change made after this report was written. The prose above has been left as
+written, with this note correcting it, rather than silently edited.

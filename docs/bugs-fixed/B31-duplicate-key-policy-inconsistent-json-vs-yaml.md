@@ -1,7 +1,8 @@
 # B31: duplicate-key policy is inconsistent across readers — JSON silently last-wins; YAML rejects
 
-**Status:** **PARTIALLY ADDRESSED** — JSON's duplicate-key handling is now **profile-driven** via the
-new `core/format/ParseOptions` (`allowDuplicateKeys`): it **rejects under standard/strict** and is
+**Status:** **Partly fixed** — JSON, YAML and XML share one profile and selection works from
+the CLI and the **engine**. The remaining gap is narrower than previously recorded: the
+**daemon** alone cannot select a profile. See "What is actually left" below.
 **last-wins under lenient** (unit-tested in `json_tests.kt`; conformance 522/522 holds). This removes the
 JSON-vs-YAML *default* inconsistency (both now reject by default). **YAML is now threaded onto the same
 profile** too: `YAMLParser.ParseOptions.fromProfile(core ParseOptions)` maps `allowDuplicateKeys` (and
@@ -65,3 +66,38 @@ for how all §4 toggles thread through the readers.
 - `docs/architecture/parser-strictness-profiles.md` §4 (duplicate-key row), §5 (one policy, all readers), §11.4 (parser differentials).
 - `docs/architecture/utlx-test-corpora.md` §5.7. `test-corpora/baseline.json`.
 - **B29**, **B30** — the same growing theme: readers accept/handle malformed input **inconsistently**; profiles must unify it.
+
+---
+
+## What is actually left, 2026-11-13
+
+The status read "Still open: wire the engine/daemon's deployment-config → `ParseProfile`
+selection". Measured, two of those three are done:
+
+| surface | profile selection |
+|---|---|
+| **CLI** | ✅ `--parse-profile strict\|standard\|lenient` |
+| **engine** | ✅ `UtlxEngine.createStrategy` → `config.effectiveParseProfile()` → every strategy |
+| **daemon** | ❌ `RestApiServer` constructs a bare `TransformationService()`, which defaults to `STANDARD` |
+
+End to end through the CLI, with `{"a":1,"a":2}`:
+
+```bash
+--parse-profile lenient    => {"a":2}                        last-wins
+--parse-profile standard   => JSON parse error: Duplicate key
+--parse-profile strict     => JSON parse error: Duplicate key
+(no flag)                  => rejects — standard is the default
+```
+
+YAML behaves identically, which is the cross-reader consistency this report was raised about.
+
+### The daemon gap
+
+`RestApiServer` uses `TransformationService()` with its default `parseProfile =
+ParseProfile.STANDARD`. So the daemon is not *wrong* — it runs standard, the same default as
+the CLI — but it cannot be configured, and a deployment that pins `strict` is silently not
+honoured there.
+
+Scoped work: give `RestApiServer` a profile from its deployment config and pass it through,
+the same way `UtlxEngine` already does. Note that `:modules:daemon` does not ship on `main`
+(see `docs/bugs-fixed/README.md` on IB/IF), so this is development-branch work.
