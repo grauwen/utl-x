@@ -1,0 +1,53 @@
+name: "b56_keyword_property_names"
+category: "language/selectors"
+description: "B56: an element whose name is a reserved word is readable with dotted path syntax — input, output, return, map, filter, as — and writable as an object key"
+tags: ["selectors", "keywords", "xml", "b56"]
+
+input:
+  format: xml
+  data: |
+    <doc>
+      <input><value>7</value></input>
+      <output>done</output>
+      <map><filter>on</filter></map>
+      <as>alias</as>
+    </doc>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    fromInput: $input.doc.input.value,
+    fromOutput: $input.doc.output,
+    nested: $input.doc.map.filter,
+    fromAs: $input.doc.as,
+    viaSafeNav: $input.doc?.input.value,
+    viaBracket: $input.doc["input"].value,
+
+    // the asymmetry B56 removed: emitting these keys always worked
+    input: "written",
+    output: "written"
+  }
+
+expected:
+  format: json
+  data: {
+    "fromInput": 7,
+    "fromOutput": "done",
+    "nested": "on",
+    "fromAs": "alias",
+    "viaSafeNav": 7,
+    "viaBracket": 7,
+    "input": "written",
+    "output": "written"
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B56-reserved-words-cannot-be-read-as-property-names.md"]
+  notes:
+    - "`<input>` is an HTML element and `input`/`output` are ordinary names in workflow definitions, so a format-agnostic language cannot reserve them against the documents it reads."
+    - "The object-literal parser already accepted keywords as keys; only the path steps required an IDENTIFIER token. The `input:`/`output:` properties in the output assert that half still works."
+    - "Carried here so ConformanceStrategyParityTest checks it on TEMPLATE, COPY and COMPILED — the compiled path builds member access from the same AST node."

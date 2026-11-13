@@ -859,14 +859,39 @@ class Parser(
         }
     }
     
+    /**
+     * B56: a property name may be a reserved word.
+     *
+     * The object-literal parser has always allowed this — `{ template: v, match: v, input: v }`
+     * emits those keys — but the path steps did not, so a document could be *written* with an
+     * `input` element and then not *read* back: `{ input: 1 }` worked while `$input.input` was
+     * `Expected property name`. 23 words were affected, among them `input`, `output`, `map`,
+     * `filter`, `json`, `xml` and `as` — ordinary element names in documents UTL-X does not
+     * define, which is the whole point of a format-agnostic language.
+     *
+     * Accepting them here is unambiguous: after `.` or `?.` the grammar expects exactly one
+     * thing, and the other continuations (`*`, `@`, `^`) are distinct tokens matched before this
+     * is reached. It is also strictly additive — every program that parsed before parses the
+     * same way; only previously-rejected ones become valid. JavaScript made the same change in
+     * ES5.
+     *
+     * Scope is deliberately the same set the object literal accepts, [Token.isKeyword]. The
+     * literals `true`, `false` and `null` are rejected in *both* positions, so they stay
+     * rejected: there is no asymmetry to fix there, and widening to them would be a separate
+     * decision.
+     */
+    private fun consumePropertyName(message: String): String =
+        if (peek().isKeyword()) advance().lexeme
+        else consume(TokenType.IDENTIFIER, message).lexeme
+
     private fun parsePostfix(): Expression {
         var expr = parsePrimary()
-        
+
         while (true) {
             expr = when {
                 match(TokenType.QUESTION_DOT) -> {
                     // Safe navigation: obj?.property
-                    val property = consume(TokenType.IDENTIFIER, "Expected property name after '?.'").lexeme
+                    val property = consumePropertyName("Expected property name after '?.'")
                     Expression.SafeNavigation(expr, property, Location.from(previous()))
                 }
                 match(TokenType.DOT) -> {
@@ -876,7 +901,7 @@ class Parser(
                     val property = if (match(TokenType.STAR)) {
                         "*"
                     } else {
-                        consume(TokenType.IDENTIFIER, "Expected property name").lexeme
+                        consumePropertyName("Expected property name")
                     }
                     Expression.MemberAccess(expr, property, isAttribute, isMetadata, Location.from(previous()))
                 }

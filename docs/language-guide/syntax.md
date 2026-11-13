@@ -161,7 +161,7 @@ content-type   // ✅ Valid — see "Hyphens" below
 ```utlx
 123name        // ❌ Cannot start with digit
 my.variable    // ❌ Dots not allowed
-class          // ❌ Reserved keyword
+if             // ❌ Reserved keyword (see below)
 ```
 
 #### Hyphens, and why subtraction needs spaces
@@ -196,32 +196,49 @@ For a key that cannot be written as a name at all — one with a space in it, or
 
 ```utlx
 $input["order id"]       // $input.order id  is a parse error
-$input["input"]          // $input.input     is a parse error
+$input["true"]           // $input.true      is a parse error
 ```
 
-The reserved-word case catches people out, because the words are ordinary element names in
-real documents: `input` and `output` in workflow definitions (`<input>` is also an HTML
-element), `return` in tax and financial XML, `case` in legal and healthcare records,
-`template` and `module` in build configuration. Note the asymmetry — you can *write* such a
-key with the plain syntax but not *read* one:
+A **reserved word is fine as a property name** — `$input.input`, `$input.doc.return` and
+`$input.map.filter` all read correctly, and `{ input: 1 }` emits `{"input": 1}`. That matters
+because the words are ordinary element names in real documents: `input`/`output` in workflow
+definitions (`<input>` is an HTML element), `return` in tax and financial XML, `map` and
+`filter` anywhere.
+
+The literals `true`, `false` and `null` are the exception, in both directions — `{ true: 1 }`
+and `$input.true` are both parse errors. Reach such a key with brackets:
 
 ```utlx
-{ input: 1 }             // ✅ emits {"input": 1}
-$input.input             // ❌ parse error — use $input["input"]
+$input["true"]
 ```
-
-This is [B56](../bugs-fixed/B56-reserved-words-cannot-be-read-as-property-names.md); until it
-is fixed, read such keys with brackets.
 
 ### Reserved Keywords
 
+A reserved word cannot be used as a **variable name** (`let if = 1` is a parse error). It
+*can* be used as a property name — `$input.input` and `{ input: 1 }` both work — so a document
+element named after one is read normally.
+
+**Language keywords:**
 ```
-and, apply, as, break, case, catch, const, continue,
-default, do, else, false, finally, for, function,
-if, import, in, input, let, match, module, null,
-or, output, return, template, throw, true, try,
-typeof, var, when, while
+apply, as, catch, def, else, false, function, if, import,
+in, input, let, match, null, output, template, true, try
 ```
+
+**Higher-order function keywords:**
+```
+filter, map, reduce
+```
+
+**Format names** (reserved by the `input`/`output` directives):
+```
+auto, avro, csv, jsch, json, odata, osch, proto, tsch, xml, xsd, yaml
+```
+
+> Earlier revisions of this page listed `and`, `break`, `case`, `const`, `continue`,
+> `default`, `do`, `finally`, `for`, `module`, `or`, `return`, `throw`, `typeof`, `var`,
+> `when` and `while` as reserved. They are not — `let case = 1` and `$input.return` both work
+> — and the list omitted the format names, which are. The list above was produced by testing
+> each word rather than by copying one.
 
 ---
 
@@ -376,12 +393,24 @@ input.items[*]            // All elements
 input.items.*.price       // All prices
 ```
 
-### Recursive Descent
+### Recursive Descent — not implemented
 
 ```utlx
-input..name               // All 'name' properties at any depth
-input..@id                // All 'id' attributes anywhere
+$input..name              // ❌ parse error
+$input..@id               // ❌ parse error
 ```
+
+These were documented but never built: the lexer produces a `..` token and the parser has no
+branch for it, so the result is `Expected expression`. There is no equivalent spelling —
+`.*` selects **one** level only (see [Array Wildcard](#array-wildcard) above), so
+`$input.*.name` finds children and not grandchildren, and no `descendants`-style function
+exists. Reach a nested value by naming its depth:
+
+```utlx
+$input.*.deep.name        // ✅
+```
+
+Tracked as [B57](../bugs-fixed/B57-recursive-descent-is-lexed-documented-and-never-parsed.md).
 
 ### Predicates
 

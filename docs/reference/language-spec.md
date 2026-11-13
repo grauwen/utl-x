@@ -182,9 +182,13 @@ input.Order.Customer.Name        // Simple path
 input.Order.@id                  // Attribute access
 input.Order.Items[0]             // Index access
 input.Order.Items[*]             // All elements
-input..ProductCode               // Recursive descent
 input["order-id"]                // Bracket form, for any key
 ```
+
+> **Not implemented:** `input..ProductCode` (recursive descent) was listed here but does not
+> parse — the `..` token is produced by the lexer and has no parser branch. There is no
+> equivalent spelling today; see
+> [B57](../bugs-fixed/B57-recursive-descent-is-lexed-documented-and-never-parsed.md).
 
 ### 4.1.1 Hyphens in names
 
@@ -216,14 +220,12 @@ space, or one that collides with a reserved word (§16):
 
 ```utlx
 $input["order id"]               // $input.order id  is a parse error
-$input["input"]                  // $input.input     is a parse error
+$input["true"]                   // $input.true      is a parse error
 ```
 
-A reserved word is currently accepted as an object-literal key but **not** in a path step, so
-`{ input: 1 }` emits `{"input": 1}` while `$input.input` does not parse. Since `input`,
-`output`, `return`, `case`, `template` and `module` are ordinary element names in real
-documents, such keys must be read with the bracket form. See
-[B56](../bugs-fixed/B56-reserved-words-cannot-be-read-as-property-names.md).
+A **reserved word is a legal property name** in both directions: `{ input: 1 }` emits
+`{"input": 1}` and `$input.input` reads it back (B56). Only the literals `true`, `false` and
+`null` need the bracket form.
 
 > The examples above use `$input`, the canonical spelling for the single unnamed input (named
 > inputs are `$orders`, `$customers`, …). Elsewhere this document writes `input.Order…` without
@@ -245,8 +247,14 @@ input.orders[total > 1000 && status == "pending"]  // Logical AND
 ```utlx
 input.Order.*              // All children
 input.Order.Items.*        // All items
-input.*.Name               // All Name properties at any level
+input.*.Name               // The Name of each child — ONE level, not recursive
 ```
+
+`.*` selects the immediate children and nothing deeper. Given
+`{"a": {"name":"A", "deep": {"name":"D"}}, "b": {"name":"B"}}`, `$input.*.name` yields
+`["A","B"]`; the nested `"D"` is reached only by naming its depth,
+`$input.*.deep.name`. (An earlier revision of this section described `input.*.Name` as
+matching "at any level", which is not the behaviour.)
 
 ---
 
