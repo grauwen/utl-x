@@ -302,11 +302,49 @@ class Interpreter(
             env.define(name, RuntimeValue.UDMValue(data))
         }
 
-        // Backward compatibility: if no "input" was provided, use first input
-        if (!namedInputs.containsKey("input") && namedInputs.isNotEmpty()) {
-            val firstInput = namedInputs.values.first()
-            logger.trace { "Binding first input as 'input' for backward compatibility" }
-            env.define("input", RuntimeValue.UDMValue(firstInput))
+        // B24: alias `$input` to the single input — but never SUBSTITUTE one input for another.
+        //
+        // This used to key off the runtime map alone: "if no 'input' arrived, use the first one".
+        // Empty inputs are dropped upstream before they reach here, so a header declaring
+        //
+        //     input: input json, enterprise-order json      # 'input' empty, the other has data
+        //
+        // left no `input` in the map, and every `$input` in the body silently resolved to
+        // *enterprise-order*. The transformation ran and produced plausible output from the wrong
+        // document, with no warning — and because the engine's strategies are stricter, it could
+        // pass in IDE preview and fail in production.
+        //
+        // The alias now consults the declared header, not just what happened to arrive:
+        //
+        //  1. the header declares an input named `input` → `$input` IS that input, bound by name
+        //     above. If it is empty or missing, leave it unbound so the reference surfaces as
+        //     null rather than quietly becoming a different document.
+        //  2. no `input` declared and exactly one input → alias it. This is the convenience that
+        //     makes single-input scripts read naturally, and it is unambiguous.
+        //  3. no `input` declared and more than one → no alias. `$input` has no defensible
+        //     meaning here; referencing it should fail rather than pick one.
+        val declaresInputByName = program.header.inputs.any { (name, _) -> name == "input" }
+        val declaredInputCount = program.header.inputs.size
+
+        when {
+            declaresInputByName -> {
+                logger.trace { "Header declares an input named 'input'; no alias applied" }
+            }
+            // `declaredInputCount == 0` covers the single-unnamed-input form, where the header
+            // names nothing and the caller supplies one entry — the commonest script of all.
+            declaredInputCount <= 1 && namedInputs.size == 1 -> {
+                namedInputs.values.firstOrNull()?.let {
+                    logger.trace { "Aliasing the single input to 'input'" }
+                    env.define("input", RuntimeValue.UDMValue(it))
+                }
+            }
+            else -> {
+                logger.debug {
+                    "Not aliasing 'input': ${namedInputs.size} inputs supplied for " +
+                        "$declaredInputCount declared, and none is named 'input'. " +
+                        "Reference an input by its own name."
+                }
+            }
         }
 
         // Evaluate body

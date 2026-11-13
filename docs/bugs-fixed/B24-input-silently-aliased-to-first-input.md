@@ -1,6 +1,6 @@
 # B24: Core — `$input` silently aliased to first input, masking a declared-but-empty input (preview ≠ engine)
 
-**Status:** Open — proposed fix below (not yet implemented)
+**Status:** Fixed — 2026-11-13, exactly as the proposed fix below set out
 **Priority:** High — silently routes the *wrong* input, and the IDE/daemon preview disagrees with the production engine (a transformation can pass in preview and fail in production)
 **Created:** June 2026
 **Related:** IB02 (IDE execute hardcoded input name), EF01 (multi-input per stage); engine strictness in `CompiledStrategy`/`CopyStrategy`
@@ -162,3 +162,57 @@ the data there, or reference each input by its declared name (use identifier-saf
 - Engine (strict, for parity): `modules/engine/.../strategy/CompiledStrategy.kt:130-175`,
   `CopyStrategy.kt`.
 - Trigger (upstream): empty inputs dropped when building `namedInputs` (daemon `/api/execute` / IDE).
+
+---
+
+## Implemented (2026-11-13)
+
+The three-case rule above, in `Interpreter.execute`, consulting `program.header.inputs` rather
+than the runtime map alone:
+
+| case | behaviour |
+|---|---|
+| header declares an input named `input` | `$input` **is** that input. If absent at runtime it stays unbound and the reference fails — never substituted. |
+| no `input` declared, exactly one input | aliased, as before. The single-input convenience is untouched. |
+| no `input` declared, more than one | no alias. `$input` has no defensible meaning and referencing it fails. |
+
+The declared-count test is `declaredInputCount <= 1 && namedInputs.size == 1`, so the
+commonest script of all — a header naming nothing, one document supplied — keeps working.
+
+### Measured
+
+```bash
+# input: input json, enterprise-order json     ('input' empty, the other carries the data)
+$input.orderId
+  was:  "FROM-ORDER"                      the wrong document, silently
+  now:  Error: Undefined variable: 'input' (UTLX-003)
+
+# the same header, both supplied — ordering must not decide it
+$input.orderId                            "FROM-INPUT"   the one actually named `input`
+
+# input: orders json, customers json       (no `input` declared)
+$input                                    Error — ambiguous, name one
+$orders.orderId / $customers.orderId      unchanged
+
+# input json                               (single, unnamed)
+$input.orderId                            unchanged
+```
+
+### Verification
+
+| | |
+|---|---|
+| `:modules:core:test` | **371**, 0 failures (incl. `B24InputAliasTest`, 6) |
+| `:modules:cli:test` | 151, 0 failures |
+| `:stdlib:test` | 2335, 0 failures |
+| `:modules:engine:test` | 1016, 0 failures |
+| `:formats:json:test` | 98, 0 failures |
+| conformance | 577/577 |
+
+The conformance corpus includes 39 named-input fixtures and none changed, which is the
+evidence that the convenience case was preserved rather than merely asserted.
+
+`B24InputAliasTest` pins both defects and the four behaviours that had to survive. The
+"declared `input` supplied alongside another" case deliberately puts the *other* input first
+in a `LinkedHashMap`, so a regression that reverts to "first entry wins" fails on the value
+rather than passing by luck.
