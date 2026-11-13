@@ -206,6 +206,62 @@ class B52ValidateFunctionNamesTest {
         assertEquals(emptyList(), undefinedLines(output))
     }
 
+    /**
+     * B53 — the 12 functions that carry a core signature, each in both spellings.
+     *
+     * `Any` was assignable to nothing, and everything from `$input` is typed `Any` without a
+     * schema, so every one of these failed `--strict` on the input-derived form while passing on
+     * the literal — and all of them run. The literal half is kept in the same test because it is
+     * what stops an over-broad fix silencing real mismatches.
+     */
+    @Test
+    fun `a signature accepts an input-derived argument as well as a literal`() {
+        val pairs = listOf(
+            "upper(\$input.s)" to "upper(\"a\")",
+            "lower(\$input.s)" to "lower(\"A\")",
+            "trim(\$input.s)" to "trim(\" a \")",
+            "length(\$input.s)" to "length(\"ab\")",
+            "abs(\$input.n)" to "abs(-1)",
+            "round(\$input.n)" to "round(1.5)",
+            "ceil(\$input.n)" to "ceil(1.2)",
+            "floor(\$input.n)" to "floor(1.8)",
+            "sum(\$input.a)" to "sum([1,2])",
+            "count(\$input.a)" to "count([1])",
+            "min(\$input.n, 1)" to "min(2, 1)",
+            "max(\$input.n, 1)" to "max(2, 1)"
+        )
+        val offenders = mutableListOf<String>()
+        for ((fromInput, fromLiteral) in pairs) {
+            for (expr in listOf(fromInput, fromLiteral)) {
+                val (result, _) = validate("{ r: $expr }", "--strict")
+                if (result !is CommandResult.Success) offenders.add(expr)
+            }
+        }
+        assertEquals(emptyList(), offenders,
+            "these fail --strict although they run; a signature must accept a value the " +
+                "checker cannot name")
+    }
+
+    @Test
+    fun `a realistic script passes --strict`() {
+        // The script from the B53 report. `filter` has a signature and `groupBy` does not, so
+        // before the fix this failed while the groupBy equivalent passed — adding a signature
+        // made validation worse.
+        val (result, _) = validate(
+            "{ r: map(filter(\$input.items, (i) -> i.p > 1), (i) -> i.p) }", "--strict")
+        assertTrue(result is CommandResult.Success, "expected success, got $result")
+    }
+
+    @Test
+    fun `--strict still rejects a genuine type mismatch`() {
+        // The other half of B53: the fix must not silence real errors. These are literal
+        // arguments, so `Any` never enters the question.
+        for (bad in listOf("upper(42)", "abs(\"x\")", "\"abc\" - 1")) {
+            val (result, _) = validate("{ r: $bad }", "--strict")
+            assertTrue(result is CommandResult.Failure, "`$bad` should fail --strict, got $result")
+        }
+    }
+
     @Test
     fun `a let shadowing a stdlib function is not checked against the stdlib signature`() {
         // The first cut of the B52 fix consulted stdlib BEFORE the environment, so a binding that

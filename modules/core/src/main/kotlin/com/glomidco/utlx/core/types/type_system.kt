@@ -93,7 +93,24 @@ sealed class UTLXType {
     fun isAssignableTo(other: UTLXType): kotlin.Boolean {
         return when {
             this == other -> true
-            other is Any -> true
+            // B53: `Any` is symmetric, like `Unknown` on the next line.
+            //
+            // Only `other is Any` was here, so a value of type `Any` could RECEIVE anything but
+            // could never be GIVEN to anything. Everything read from `$input` is typed `Any`
+            // when there is no schema, so every core signature rejected its argument the moment
+            // it came from the document: `upper("a")` passed `--strict` while `upper($input.s)`
+            // failed, and both run and return "HI".
+            //
+            // `Any` is not a type describing a value; it is the checker saying "I don't know,
+            // so don't complain". A type like that has to be permissive in both directions or
+            // it means "I know it is nothing" and poisons every expression downstream of the
+            // input. The recursion carries the symmetry into element and parameter types, so
+            // `Array<Any> -> Array<Number>` resolves through this same clause.
+            //
+            // Both halves must stay. Collapsing them into something that passes whenever either
+            // side is `Any`-SHAPED would let `String -> Number` through, which is why
+            // B53AnyAssignabilityTest asserts the negatives as hard as the positives.
+            this is Any || other is Any -> true
             this is Unknown || other is Unknown -> true
             this is Null && other !is Null -> false  // Null only to nullable types
             this is Union -> types.all { it.isAssignableTo(other) }
