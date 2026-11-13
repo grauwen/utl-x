@@ -1,6 +1,7 @@
 # B27: XML prolog/epilog comments crash the core XML→UDM parse
 
-**Status:** Root cause **CONFIRMED** by source analysis + a reproduced core-CLI failure. **Fix IMPLEMENTED + TESTED** on `development` — `:formats:xml` compiles clean, an 8-case `XmlPrologEpilogCommentTest` passes, full `:formats:xml:test` green, and `examples/xml/00-healthcare-claim.xml` parses end-to-end via the CLI (`$input.HealthcareClaim.@claimId` → `"CLM-2024-789456"`). **Pending:** cherry-pick to `main`.
+**Status:** **FIXED** — verified on `development` 2026-11-13. The report recorded the fix as
+living on `feature/ide`; the cross-branch check below confirms it is present here.
 **Priority:** **High** — a comment before or after the root element is valid, extremely common XML (schema headers, license banners, generator stamps). Any such instance fails to reach UDM at all, so *no* transformation can run against it.
 **Created:** July 2026
 **Reported:** IDE — `examples/xml/00-healthcare-claim.xml` "does not parse to UDM." The IDE only surfaces the failure; the defect is in core.
@@ -316,3 +317,20 @@ B27 implements exactly half of that principle — *stop crashing, skip the comme
 - [ ] (separate feature) schema-doc → USDL `%documentation` enrichment across all schema formats
       (XSD `<xs:documentation>`, JSCH `description`/`title`, Avro `doc`, OSCH `Documentation`,
       TSCH `description`, Protobuf leading `//`)
+
+---
+
+## Cross-branch check, 2026-11-13
+
+The status read "Fixes IMPLEMENTED + TESTED on `feature/ide`", which left it unclear whether
+`development` had them. Both documented shapes parse correctly here:
+
+```bash
+# <!-- leading --> <?xml …?> <r><a>1</a></r> <!-- trailing -->
+$input   =>  {"r":{"a":1}}
+
+# <?xml …?> <!-- after the declaration --> <r><a>1</a></r>
+$input   =>  {"r":{"a":1}}
+```
+
+No crash in either position. Closed on this branch.

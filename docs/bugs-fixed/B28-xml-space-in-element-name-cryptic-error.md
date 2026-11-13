@@ -1,6 +1,7 @@
 # B28: XML element-name-with-space gives a cryptic `Expected '='` error
 
-**Status:** Fix **PRESENT on `development`** (already implemented; see cross-branch note). **Untested** — no regression test yet. **NOT on `main`.**
+**Status:** **FIXED** — verified on `development` 2026-11-13. The report said the fix was
+"PRESENT on `development` (already implemented)" but **untested**; it is now tested.
 **Priority:** Low — diagnostic/DX quality, not a correctness bug. The parser already *rejected* the malformed input; this only improves the *message*.
 **Created:** September 2026
 **Reported:** Split out of the B27 review — spotted in the `main`..`development` diff of `xml_parser.kt` as a second, unrelated change riding inside the namespace-rename commit.
@@ -135,3 +136,22 @@ Add to `XmlPrologEpilogCommentTest` (or a new `XmlElementNameTest`):
 - [ ] Regression test added (`XmlElementNameTest` — cases above)
 - [ ] Ported to `main` as a **standalone** commit (can't cherry-pick — tangled in the rename)
 - [ ] This doc cherry-picked/copied alongside the `main` port
+
+---
+
+## Verified on `development`, 2026-11-13
+
+The status recorded the fix as present but untested here. The cryptic `Expected '='` is gone,
+replaced by a message that names the cause and the remedy:
+
+```
+Error parsing input: XML parse error at 1:13 - Found 'name' after element name 'bad'.
+This looks like a space inside an element name (e.g., '<bad name>' should be '<badname>').
+XML element names cannot contain spaces.
+```
+
+That is the diagnostic the report asked for. Closed.
+
+The surrounding `Error parsing input:` prefix now reaches the user exactly once rather than
+twice — see [B26](B26-cli-error-handling.md), whose remaining print-and-rethrow sites were
+fixed the same day.
