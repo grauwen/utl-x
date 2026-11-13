@@ -36,7 +36,6 @@ input.root.child              // Navigate path
 input.item.@attribute         // Access attribute
 input.items[0]                // Index access
 input.items[*]                // All elements
-input..recursive              // Recursive search
 input.items[price > 100]      // Filter with predicate
 ```
 

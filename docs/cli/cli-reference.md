@@ -67,7 +67,7 @@ In `-e` mode, `.` is shorthand for `$input`:
 | `.` | `$input` | Identity (entire input) |
 | `.name` | `$input.name` | Access property |
 | `.order.items[0]` | `$input.order.items[0]` | Nested access |
-| `..productCode` | `$input..productCode` | Recursive descent |
+| `..productCode` | *(not supported)* | No recursive descent in UTL-X; name the steps |
 | `.@id` | `$input.@id` | XML attribute |
 | `$input.name` | `$input.name` | Explicit (always works) |
 

@@ -437,9 +437,6 @@ input.items[*].price  // All prices
 // Attribute access
 input.order.@id
 
-// Recursive descent
-input..name  // All name properties at any depth
-
 // Predicate filtering
 input.items[price > 50]
 ```
@@ -856,10 +853,10 @@ output json
 ---
 {
   summary: {
-    totalOrders: count($input..order),
-    totalValue: sum($input..order.*.total),
-    averageValue: avg($input..order.*.total),
-    customers: distinct($input..customer.*.name)
+    totalOrders: count($input.orders.order),
+    totalValue: sum($input.orders.order.*.total),
+    averageValue: avg($input.orders.order.*.total),
+    customers: distinct($input.orders.order.customer.*.name)
   }
 }
 ```

@@ -201,14 +201,6 @@ input.order.items[*]             // All array elements
 input.order.@id                  // Attribute
 ```
 
-### Recursive Descent
-
-Find elements at any depth:
-
-```utlx
-input..productCode  // Find 'productCode' anywhere in structure
-```
-
 ### Predicates
 
 Filter elements by condition:

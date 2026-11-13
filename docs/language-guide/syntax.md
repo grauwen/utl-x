@@ -393,15 +393,16 @@ input.items[*]            // All elements
 input.items.*.price       // All prices
 ```
 
-### Recursive Descent — not implemented
+### Recursive Descent — not supported
 
 ```utlx
 $input..name              // ❌ parse error
 $input..@id               // ❌ parse error
 ```
 
-These were documented but never built: the lexer produces a `..` token and the parser has no
-branch for it, so the result is `Expected expression`. There is no equivalent spelling —
+These were documented but never built, and **will not be** — see
+[B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md) for the
+decision. Writing `..` now reports that by name, with the alternatives. There is no equivalent spelling —
 `.*` selects **one** level only (see [Array Wildcard](#array-wildcard) above), so
 `$input.*.name` finds children and not grandchildren, and no `descendants`-style function
 exists. Reach a nested value by naming its depth:

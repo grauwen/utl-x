@@ -229,7 +229,6 @@ input.order.customer.name        // Deep navigation
 input.items[0]                   // Index access
 input.items[*]                   // All elements
 input.order.@id                  // Attribute
-input..productCode               // Recursive search
 input.items[price > 100]         // Predicate filter
 ```
 

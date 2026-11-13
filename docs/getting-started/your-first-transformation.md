@@ -496,7 +496,8 @@ total: parseNumber(item.@quantity) * parseNumber(item.@price)
 
 **Solution:**
 - Verify the input path is correct
-- Use `$input..ElementName` to search recursively
+- Check the depth — a step over repeated elements projects across them, so
+  `$input.order.lines.line.sku` works without naming each repeat
 - Add default values: `$input.missing || "default"`
 
 ### Problem: Numbers appear as strings

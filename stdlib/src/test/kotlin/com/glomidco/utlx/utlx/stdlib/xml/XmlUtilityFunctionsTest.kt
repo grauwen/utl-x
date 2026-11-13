@@ -148,24 +148,15 @@ class XmlUtilityFunctionsTest {
         assertTrue(names.elements.any { (it as UDM.Scalar).value == "child2" })
     }
 
-    @Test
-    fun testParent() {
-        val parent = UDM.Object(mutableMapOf("__nodeName" to UDM.Scalar("parent")))
-        val element = UDM.Object(mutableMapOf(
-            "__parent" to parent
-        ))
-        val result = XmlUtilityFunctions.parent(listOf(element))
-        assertEquals(parent, result)
-    }
-
-    @Test
-    fun testParent_noParent() {
-        val element = UDM.Object(mutableMapOf(
-            "__nodeName" to UDM.Scalar("root")
-        ))
-        val result = XmlUtilityFunctions.parent(listOf(element))
-        assertNull((result as UDM.Scalar).value)
-    }
+    // B58: testParent / testParent_noParent removed with the function.
+    //
+    // They are the reason it survived a year: the first one hand-built the property the real
+    // parsers never create —
+    //
+    //     val element = UDM.Object(mutableMapOf("__parent" to parent))
+    //
+    // so the suite was green while the function returned null for every actual document. A
+    // test that manufactures its input validates a contract nothing honours.
 
     @Test
     fun testElementPath() {

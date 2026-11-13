@@ -205,52 +205,33 @@ for the mixed-content half.
 
 ---
 
-## Recursive Descent (Future)
+## Recursive Descent — not supported
 
-### .. Operator
+`input..name` does not parse, and **will not be implemented**. The decision and its reasoning
+are in
+[B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md); the
+short version is that descent is a *query* convenience while UTL-X is a *mapping* language,
+and the cases it would serve are already covered:
 
-> **Not implemented.** `input..name` is a parse error in UTL-X 1.4. The syntax below
-> describes the intended design; it is documented here so the shape is settled, not
-> because it works today. See
-> [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md).
->
-> To search a known depth today, chain the steps — `input.order.items.id` projects
-> across repeated `items` as of UTL-X 1.4 (see Wildcard Selection above).
+| what you want | use |
+|---|---|
+| a value over repeated elements | an ordinary path — a step **projects** across repeats: `$input.order.lines.line.sku` |
+| every child's value | `.*` — `$input.order.*.sku` |
+| nested data from flat records linked by a key (SAP IDoc segments, EDI, CSV with foreign keys) | **`nestBy()`** |
+| a value at a known depth | name the steps |
 
-Find properties at any depth:
+Writing `..` gives an error that says the same thing:
 
-```utlx
-input..propertyName
+```
+Recursive descent ('..') is not supported in UTL-X. To reach a value at a known depth,
+name the steps: $input.order.lines.line.sku — a step over repeated elements already
+projects across them. To build nested data from flat records linked by a key (SAP IDoc
+segments, EDI, CSV exports), use nestBy().
 ```
 
-**Example:**
-```json
-{
-  "order": {
-    "id": "001",
-    "customer": {
-      "id": "C001",
-      "address": {
-        "id": "A001"
-      }
-    },
-    "items": [
-      {"id": "I001"},
-      {"id": "I002"}
-    ]
-  }
-}
-```
-
-```utlx
-input..id
-// Result: ["001", "C001", "A001", "I001", "I002"]
-```
-
-**Use cases:**
-- Finding all occurrences of a property
-- Deep searches in nested structures
-- Working with variable structure depths
+The trade being made deliberately: an explicit path **breaks loudly** when a source document
+changes shape, and for a mapping contract that is usually what you want — a descent path would
+keep silently matching something else.
 
 ---
 
@@ -454,10 +435,16 @@ Here, `price` and `quantity` refer to properties of the current item being teste
 
 ### Parent Context
 
-Access parent elements (future feature):
+Access parent elements: **not supported, and not planned.** There is no `..` parent step and
+no `parent()` function — the latter was removed in 2026-11-13 because it read a property no
+parser writes and could not work without parent pointers in the UDM
+([B58](../bugs-fixed/B58-parent-function-never-worked-and-cannot-without-changing-the-udm.md)).
+
+Keep the ancestor in scope instead, which is the idiom the language is built for:
 
 ```utlx
-input..item[../category == "Electronics"]
+let order = $input.order
+{ lines: map(order.lines.line, (l) -> { sku: l.sku, orderId: order.@id }) }
 ```
 
 ---
@@ -587,10 +574,8 @@ input.categories[*].products[price > 100]
 input.order.items[price > 100]
 ```
 
-**⚠️ Slower - Recursive search:**
-```utlx
-input..items
-```
+**Not available — recursive search:** `input..items` does not parse (see *Recursive Descent*
+above). Name the path; a step already projects across repeated elements.
 
 ### Caching Results
 
@@ -648,12 +633,14 @@ input.customer.premium.benefits || $input.customer.standard.benefits
 // Try premium first, fallback to standard
 ```
 
-### Pattern 5: Deep Search
+### Pattern 5: Values across repeated elements
 
 ```utlx
-input..productCode
-// Find all product codes anywhere in structure
+$input.order.lines.line.productCode
+// Every productCode, projected across every repeated <line>
 ```
+
+For flat records linked by a key rather than nested, use `nestBy()`.
 
 ---
 
@@ -813,7 +800,6 @@ sum($input.Orders.Order[
 | `[index]` | Array index | `$input.items[0]` |
 | `[*]` | All elements | `$input.items[*]` |
 | `.*` | All properties | `$input.order.*` |
-| `..property` | Recursive search | `$input..productId` |
 | `[condition]` | Filter | `$input.items[price > 100]` |
 | `.text()` | Text content (XML) | `$input.element.text()` |
 

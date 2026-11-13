@@ -727,7 +727,8 @@ object StandardLibrary {
         register("hasAttribute", XmlUtilityFunctions::hasAttribute)
         register("childCount", XmlUtilityFunctions::childCount)
         register("childNames", XmlUtilityFunctions::childNames)
-        register("parent", XmlUtilityFunctions::parent)
+        // B58: `parent` removed — it read a `__parent` property no parser writes.
+        // For flat records linked by a parent key (IDoc, EDI), use nestBy() (F03).
         register("elementPath", XmlUtilityFunctions::elementPath)
         register("isEmptyElement", XmlUtilityFunctions::isEmptyElement)
         register("hasContent", XmlUtilityFunctions::hasContent)

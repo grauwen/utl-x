@@ -299,35 +299,30 @@ object XmlUtilityFunctions {
         }
     }
     
-    @UTLXFunction(
-        description = "Get parent element (if metadata available)",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "XML",
-        parameters = [
-            "element: Element value"
-        ],
-        returns = "Result of the operation",
-        example = "parent(element) => parentElement",
-        tags = ["xml"],
-        since = "1.0"
-    )
-    /**
-     * Get parent element (if metadata available)
-     * Usage: parent(element) => parentElement
-     */
-    fun parent(args: List<UDM>): UDM {
-        requireArgs(args, 1, "parent")
-        val element = args[0]
-        
-        return when (element) {
-            is UDM.Object -> {
-                element.properties["__parent"] ?: UDM.Scalar(null)
-            }
-            else -> UDM.Scalar(null)
-        }
-    }
-    
+    // `parent(element)` was removed in 2026-11-13. It read a `__parent` property, and **no
+    // parser has ever written one** — the readers set `__nodeName`, `__nsContext`,
+    // `__schemaType` and the `__xsd*` keys, never `__parent` — so it returned null for every
+    // document UTL-X can parse, from its first commit (2025-10-14) onwards. It had no callers.
+    //
+    // Its unit test passed because it hand-built the property:
+    //
+    //     val element = UDM.Object(mutableMapOf("__parent" to parent))
+    //
+    // which is why a registered, documented, green-tested function could be dead for a year.
+    //
+    // Implementing it properly would mean parent pointers in the UDM — a back-reference in a
+    // tree that is currently cheap to copy and share, and that would have to survive every
+    // transformation that rebuilds a node. That is a real design decision, not an oversight to
+    // patch, and nothing has asked for it.
+    //
+    // For the case people actually have — flat records linked by a parent key, as in SAP IDoc
+    // segments or EDI — use `nestBy()`, which was built for exactly that (F03):
+    //
+    //     nestBy($input.orders, $input.lines, (o) -> o.orderId, (l) -> l.orderId, "lines")
+    //
+    // IDoc parent/child is a key join, not structural containment, so a tree pointer would not
+    // have served it even if implemented. See B58.
+
     @UTLXFunction(
         description = "Get element path (like XPath)",
         minArgs = 1,

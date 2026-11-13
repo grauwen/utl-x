@@ -185,9 +185,10 @@ input.Order.Items[*]             // All elements
 input["order-id"]                // Bracket form, for any key
 ```
 
-> **Not implemented:** `input..ProductCode` (recursive descent) was listed here but does not
-> parse — the `..` token is produced by the lexer and has no parser branch. There is no
-> equivalent spelling today; see
+> **Not supported:** `input..ProductCode` (recursive descent) was listed here but does not
+> parse, and will not be implemented. Writing `..` reports that by name and points at the
+> alternatives — an ordinary path projects across repeated elements, and `nestBy()` builds
+> nested data from flat records linked by a key. See
 > [B49](../bugs-fixed/B49-documented-wildcard-and-descent-selectors-are-parse-errors.md).
 
 ### 4.1.1 Hyphens in names

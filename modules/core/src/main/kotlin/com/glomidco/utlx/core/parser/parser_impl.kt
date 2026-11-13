@@ -894,6 +894,20 @@ class Parser(
                     val property = consumePropertyName("Expected property name after '?.'")
                     Expression.SafeNavigation(expr, property, Location.from(previous()))
                 }
+                // B49: `..` lexes to its own token and has never had a parser branch, so a
+                // recursive-descent path failed as a bare "Expected expression" — a missing
+                // feature wearing the costume of a syntax error, at a column that explains
+                // nothing. The token is kept and answered here instead: if we are going to say
+                // no, say what to do instead.
+                check(TokenType.DOTDOT) -> {
+                    error(
+                        "Recursive descent ('..') is not supported in UTL-X. " +
+                        "To reach a value at a known depth, name the steps: " +
+                        "\$input.order.lines.line.sku — a step over repeated elements already " +
+                        "projects across them. To build nested data from flat records linked " +
+                        "by a key (SAP IDoc segments, EDI, CSV exports), use nestBy()."
+                    )
+                }
                 match(TokenType.DOT) -> {
                     val isAttribute = match(TokenType.AT)
                     val isMetadata = match(TokenType.CARET)

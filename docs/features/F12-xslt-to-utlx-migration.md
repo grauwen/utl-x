@@ -89,7 +89,7 @@ The core of the transpiler is converting XPath 1.0 expressions to UTL-X:
 | `item[1]` | `$input.item[0]` | 1-based → 0-based index |
 | `item[last()]` | `$input.item[count($input.item) - 1]` | `last()` expansion |
 | `item[price > 100]` | `filter($input.item, (i) -> i.price > 100)` | Predicate → filter |
-| `//name` | `$input..name` | Recursive descent |
+| `//name` | *(not supported)* | UTL-X has no recursive descent — name the steps, or use `nestBy()` for flat records linked by a key. See B49 |
 | `sum(item/price)` | `sumBy($input.item, (i) -> i.price)` | Aggregate functions |
 | `count(item)` | `count($input.item)` | Direct |
 | `string-length(name)` | `length($input.name)` | Rename |

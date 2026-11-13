@@ -251,12 +251,15 @@ class FunctionsTest {
             "localName", "namespaceUri", "qualifiedName", "namespacePrefix",
             "resolveQname", "createQname", "hasNamespace", "getNamespaces",
             "matchesQname", "nodeType", "textContent", "attributes", "attribute",
-            "hasAttribute", "childCount", "childNames", "parent", "elementPath",
+            "hasAttribute", "childCount", "childNames", "elementPath",
             "isEmptyElement", "xmlEscape", "xmlUnescape", "createCDATA", "isCDATA",
             "extractCDATA", "unwrapCDATA", "c14n", "c14nWithComments", "excC14n",
             "canonicalizeWithAlgorithm"
         )
         
+        // B58: `parent` was removed from this list with the function. It read a `__parent`
+        // property no parser writes, so it returned null for every real document; `nestBy()`
+        // serves the flat-records-linked-by-key case (IDoc, EDI) that it appeared to promise.
         xmlFunctions.forEach { funcName ->
             assertTrue(StandardLibrary.hasFunction(funcName), "Missing XML function: $funcName")
         }
