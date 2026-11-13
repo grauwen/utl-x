@@ -165,7 +165,105 @@ object MathFunctions {
         requireArgs(args, 0, "random")
         return UDM.Scalar(Math.random())
     }
-    
+
+    // ── B38: non-finite predicates ──
+    //
+    // JSON has no literal for Infinity, -Infinity or NaN, so the serialiser refuses to emit one
+    // rather than produce output a strict parser rejects. These exist so that refusal is
+    // something a transformation can work with instead of a wall: a mapping that might overflow
+    // (`1e308 * 10`), take a root of a negative (`sqrt(-1)`) or raise a large power can test the
+    // result and substitute.
+    //
+    //     { rate: if (isFinite(computed)) computed else null }
+    //
+    // Only Double and Float can be non-finite; every exact type UTL-X carries (BigDecimal, Long)
+    // is finite by construction, so the integral cases answer without converting.
+
+    @UTLXFunction(
+        description = "True when a number is NaN (not a number)",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "num: The number to test"
+        ],
+        returns = "true if the value is NaN",
+        example = "isNaN(sqrt(-1)) => true",
+        notes = "JSON cannot represent NaN, so test before emitting a computed value.",
+        tags = ["math", "predicate"],
+        since = "1.4"
+    )
+    fun isNaN(args: List<UDM>): UDM {
+        requireArgs(args, 1, "isNaN")
+        return UDM.Scalar(nonFiniteState(args[0]) == NonFinite.NAN)
+    }
+
+    @UTLXFunction(
+        description = "True when a number is positive or negative infinity",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "num: The number to test"
+        ],
+        returns = "true if the value is infinite",
+        example = "isInfinite(1.0e308 * 10) => true",
+        notes = "JSON cannot represent Infinity, so test before emitting a computed value.",
+        tags = ["math", "predicate"],
+        since = "1.4"
+    )
+    fun isInfinite(args: List<UDM>): UDM {
+        requireArgs(args, 1, "isInfinite")
+        return UDM.Scalar(nonFiniteState(args[0]) == NonFinite.INFINITE)
+    }
+
+    @UTLXFunction(
+        description = "True when a number is finite — neither infinite nor NaN",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Math",
+        parameters = [
+            "num: The number to test"
+        ],
+        returns = "true if the value is finite",
+        example = "isFinite(1.5) => true",
+        notes = "The one to reach for when guarding output: `if (isFinite(x)) x else null`.",
+        tags = ["math", "predicate"],
+        since = "1.4"
+    )
+    fun isFinite(args: List<UDM>): UDM {
+        requireArgs(args, 1, "isFinite")
+        return UDM.Scalar(nonFiniteState(args[0]) == NonFinite.FINITE)
+    }
+
+    private enum class NonFinite { FINITE, INFINITE, NAN }
+
+    /**
+     * Classify without going through `asNumber()`, which would convert an exact type to Double
+     * and could itself overflow — turning a finite BigDecimal into an "infinite" answer.
+     */
+    private fun nonFiniteState(value: UDM): NonFinite {
+        val n = (value as? UDM.Scalar)?.value as? Number
+            ?: throw FunctionArgumentException(
+                "Expected a number, got ${getTypeDescription(value)}. " +
+                "Hint: these predicates test numeric values only."
+            )
+        return when (n) {
+            is Double -> when {
+                n.isNaN() -> NonFinite.NAN
+                n.isInfinite() -> NonFinite.INFINITE
+                else -> NonFinite.FINITE
+            }
+            is Float -> when {
+                n.isNaN() -> NonFinite.NAN
+                n.isInfinite() -> NonFinite.INFINITE
+                else -> NonFinite.FINITE
+            }
+            else -> NonFinite.FINITE   // BigDecimal, Long, Int … finite by construction
+        }
+    }
+
+
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {
             throw FunctionArgumentException(

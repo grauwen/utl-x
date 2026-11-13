@@ -513,6 +513,10 @@ object StandardLibrary {
         register("pow", MathFunctions::pow)
         register("sqrt", MathFunctions::sqrt)
         register("random", MathFunctions::random)
+        // B38: so a mapping can test a computed value before the JSON serialiser refuses it.
+        register("isNaN", MathFunctions::isNaN)
+        register("isInfinite", MathFunctions::isInfinite)
+        register("isFinite", MathFunctions::isFinite)
         
         // Extended math
         register("formatNumber", ExtendedMathFunctions::formatNumber)

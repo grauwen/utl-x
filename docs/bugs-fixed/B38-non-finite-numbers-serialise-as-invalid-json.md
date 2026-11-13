@@ -3,9 +3,10 @@
 > **B = core bug** (shared core and the format serialisers built on it), the family of B01–B37.
 > This is **B38**.
 
-**Status:** **PARTLY FIXED — XML done, JSON open.** Re-measured 2026-11-10; the decision turned out
-to be narrower than first written (see *What measurement settled*), and the half that a standard
-settles has been implemented. The JSON half still needs a decision, not an implementation.
+**Status:** **FIXED — 2026-11-13.** XML was done earlier (standards-mandated). The JSON half is
+now decided and implemented: **reject**, as this report recommended, together with
+`isFinite`/`isNaN`/`isInfinite` so a mapping can test for the condition instead of discovering it
+at output.
 **Priority:** Medium–High. Revised upward: the first write-up assumed the output "fails loudly", and
 that is not what happens — most consumers accept it silently (below).
 **Component:** the **JSON** serialiser. XML has a standards answer and needs no decision; CSV has no
@@ -283,3 +284,69 @@ a result file the run did not produce proves nothing.
 - [B40](B40-yaml-reads-zero-padded-identifiers-as-octal.md),
   [B42](B42-xml-character-references-above-the-bmp-are-truncated.md) — the same "the standard already
   decided this" reasoning that settles the XML half here.
+
+---
+
+## The JSON half, implemented (2026-11-13)
+
+**Decision: reject**, per the ranking above. One guard in `serializeScalar`, which
+`serializeRuntimeValue` delegates to — so the two-renderer trap this report's own test header
+describes does not recur, and a test asserts both paths refuse.
+
+```
+Cannot serialise NaN to JSON: JSON has no literal for Infinity, -Infinity or NaN (RFC 8259),
+so emitting it would produce output a strict parser rejects. This value was computed, not read
+from the input — the usual causes are overflow (1.0e308 * 10), a root of a negative (sqrt(-1))
+or a large power (pow(10, 400)). Hint: guard it with isFinite(x), e.g. `if (isFinite(x)) x else
+null`; or emit it as text with toString(x), which yields "NaN".
+```
+
+### What the decision was re-checked against
+
+The objection raised before implementing was that UTL-X is a *mapping* tool and "garbage in
+should still work". Measured rather than argued, and the objection does not apply here —
+**a non-finite value cannot arrive from a document**:
+
+| input | result |
+|---|---|
+| JSON `{"x": Infinity}` | already a **parse error** — the token cannot enter |
+| XML `<x>Infinity</x>` | the **string** `"Infinity"` — passes through untouched |
+| CSV cell `Infinity` | the **string** `"Infinity"` |
+
+The only routes to a non-finite value are the transformation's own arithmetic — `1.0e308 * 10`,
+`pow(10, 400)`, `sqrt(-1)`. Division by zero already errored. So this is strict about what a
+mapping *computes*, not about what it is *given*, and nothing that previously produced valid
+output is affected: the only mappings that now fail are ones that were emitting JSON a strict
+consumer rejects while reporting success.
+
+### Why the predicates shipped with it
+
+Rejecting would have been unreasonable on its own: there was **no way to test for the
+condition** — no `isNaN`, no `isInfinite`, no `isFinite` anywhere in 728 registered functions.
+An author hitting this had only `toString(x)`, which changes the field's type. Now:
+
+```utlx
+{ rate: if (isFinite(computed)) computed else null }
+```
+
+The predicates classify without converting, so a `BigDecimal("1E+400")` — finite, but far
+beyond `Double` range — answers `isFinite: true` rather than being narrowed to `Infinity` by
+the test meant to detect it.
+
+### Verification
+
+| | |
+|---|---|
+| `:formats:json:test` | 98, 0 failures (`B38JsonNumberRendererTest`, 7 — both renderers, the message, finite values) |
+| `:stdlib:test` | **2335**, 0 failures (`B38NonFinitePredicatesTest`, 7) |
+| `:modules:core` / `:modules:cli` / `:modules:engine` | 365 / 151 / **1016**, 0 failures |
+| conformance | **577**/577 |
+
+`stdlib/math/b38_non_finite_predicates.yaml` pins the guard pattern and the `toString` escape
+hatch — the two remedies the error message names — so the message cannot drift from what
+actually works.
+
+### Still available, not done
+
+`null` and string output remain reasonable as **opt-in** behaviour, as ranked above. Both need
+the serialiser to take options, which it does not yet; neither is safe as a default.

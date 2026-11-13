@@ -1,0 +1,50 @@
+name: "b38_non_finite_predicates"
+category: "stdlib/math"
+description: "B38: isFinite/isNaN/isInfinite let a mapping guard a computed value before the JSON serialiser refuses it"
+tags: ["math", "predicate", "json", "b38"]
+
+input:
+  format: json
+  data: |
+    {"a": 2.0, "b": 0.5}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    // ordinary arithmetic is finite and passes straight through
+    product: $input.a * $input.b,
+    productIsFinite: isFinite($input.a * $input.b),
+
+    // overflow and a root of a negative are the two usual ways to reach a value
+    // JSON cannot represent — guard them rather than letting output fail
+    overflow: isInfinite(1.0e308 * 10),
+    rootOfNegative: isNaN(sqrt(0 - 1)),
+
+    // the guard pattern the serialiser's error recommends
+    guarded: if (isFinite(1.0e308 * 10)) 1.0e308 * 10 else null,
+
+    // the other way out: emit it as text, which is valid JSON
+    asText: toString(sqrt(0 - 1))
+  }
+
+expected:
+  format: json
+  data: {
+    "product": 1.0,
+    "productIsFinite": true,
+    "overflow": true,
+    "rootOfNegative": true,
+    "guarded": null,
+    "asText": "NaN"
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B38-non-finite-numbers-serialise-as-invalid-json.md"]
+  notes:
+    - "The serialiser refuses to emit Infinity or NaN, because JSON has no literal for them and the output would be rejected by a strict parser after the transformation reported success. These predicates exist so that refusal is something a mapping can work with."
+    - "Non-finite values cannot arrive from a document: JSON rejects the bare token on input, and XML and CSV hand back the string \"Infinity\". They only ever come from the transformation's own arithmetic, which is why guarding is the author's job."
+    - "`guarded` and `asText` are the two remedies the error message names; both are asserted here so the message cannot drift from what actually works."

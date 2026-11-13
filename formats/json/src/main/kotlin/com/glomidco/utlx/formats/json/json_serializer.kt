@@ -77,6 +77,20 @@ class JSONSerializer(
             null -> writer.write("null")
             is Boolean -> writer.write(value.toString())
             is Number -> {
+                // B38: JSON has no representation for Infinity, -Infinity or NaN. Emitting the
+                // bare tokens — Python's documented extension, and what this did — produces
+                // output that a strict parser rejects, *after* the transformation reported
+                // success. The failure then surfaces at the consumer, which is the most
+                // expensive place for it to surface.
+                //
+                // Rejecting is the only option that does not lie. `null` loses which of the
+                // three values it was (and is indistinguishable from a real null), and a string
+                // changes the field's type and breaks schema-validated consumers. Both remain
+                // reasonable as *opt-in* behaviour once the serialiser takes options; neither is
+                // safe as a default for an engine whose job is to hand correct data to the next
+                // hop. This matches `jcs()`, which already throws for these values per RFC 8785
+                // §3.2.2, and division by zero, which already errors.
+                rejectNonFinite(value)
                 // B35/B37: exact types render as written, integral doubles print as integers
                 // only when they round-trip through Long. B51 moved that sequence into
                 // ExactNumber.renderScalarText so the stdlib's toString() shares it rather
@@ -285,6 +299,38 @@ class JSONSerializer(
     /**
      * Escape string for JSON
      */
+    /**
+     * B38: refuse to emit a value JSON cannot represent.
+     *
+     * Only `Double` and `Float` can be non-finite; every exact type (`BigDecimal`, `Long`, …)
+     * is finite by construction, so this costs two type checks on the common path.
+     *
+     * The message names the value and the field-free fact that JSON has no such literal, because
+     * the author's next question is always "what should I write instead?" — and the answer
+     * depends on their consumer, which is why this is a rejection rather than a silent choice.
+     */
+    private fun rejectNonFinite(value: Number) {
+        val nonFinite = when (value) {
+            is Double -> !value.isFinite()
+            is Float -> !value.isFinite()
+            else -> false
+        }
+        if (nonFinite) {
+            // The error necessarily fires at serialisation, which is far from the arithmetic
+            // that produced the value — so the message carries the likely causes rather than
+            // leaving the author to find them.
+            throw IllegalArgumentException(
+                "Cannot serialise $value to JSON: JSON has no literal for Infinity, -Infinity " +
+                "or NaN (RFC 8259), so emitting it would produce output a strict parser " +
+                "rejects. This value was computed, not read from the input — the usual causes " +
+                "are overflow (1.0e308 * 10), a root of a negative (sqrt(-1)) or a large power " +
+                "(pow(10, 400)). " +
+                "Hint: guard it with isFinite(x), e.g. `if (isFinite(x)) x else null`; or emit " +
+                "it as text with toString(x), which yields \"$value\"."
+            )
+        }
+    }
+
     private fun escapeString(str: String): String {
         val sb = StringBuilder()
         sb.append('"')
