@@ -168,7 +168,117 @@ object TransformCommand {
 
         return result.toString()
     }
-    
+
+    /**
+     * CB04: the second, wider expansion, used **only** when [expandDotShorthand] produced something
+     * that does not parse.
+     *
+     * The conservative rule asks "is the character before this dot one of six I listed?", which
+     * leaves the compact jq spellings broken — `{p:.a}`, `[.a]`, `.a+.b`, `!.a` — because `:`, `[`,
+     * `=`, `!` and the arithmetic operators are not on that list, and a whitelist grown one
+     * spelling at a time never will be. This rule inverts the question: a dot **continues** a path
+     * only when the previous character could *end an operand*. Everywhere else it starts one.
+     *
+     * Three cases need more than a character class, and each was found by testing the flat rule
+     * rather than by reading it:
+     *
+     *  - **a digit after the dot is a decimal point** (`1 + .5`). Safe to assume only because
+     *    dot-indexing is not valid UTL-X: `.items.0` is `Expected property name`, indexing is
+     *    `.items[0]`. If that ever changes, this breaks.
+     *  - **`*` ends an operand only as a wildcard step**, i.e. when itself preceded by `.`.
+     *    `.items.*.n` must keep its wildcard; `.a*.b` is multiplication and must expand. Same
+     *    character, opposite answers.
+     *  - **`-` is an identifier character** (`lexer_impl.kt`), so `$input.a-b` is the key `"a-b"`,
+     *    not `a` minus `b`. A dot after a `-` that follows an identifier character belongs to the
+     *    name and must be left alone; unary minus at the start of an expression (`-.a`) expands.
+     *    See B54 — the language guide still claims hyphens are illegal.
+     *
+     * Unlike the conservative pass this does **not** bail out when the expression already mentions
+     * `$input`: that guard meant one explicit reference disabled expansion for the whole
+     * expression, so `$input.a + .b` left `.b` unexpanded. A dot already preceded by an identifier
+     * character is left alone by the rule itself, so no guard is needed.
+     */
+    private fun expandDotShorthandAggressive(expression: String): String {
+        if (!expression.contains('.')) return expression
+
+        fun endsOperand(c: Char) = c.isLetterOrDigit() || c == '_' || c in ")]}\"'"
+
+        val result = StringBuilder()
+        var i = 0
+        var inString = false
+        var stringChar = ' '
+
+        while (i < expression.length) {
+            val ch = expression[i]
+
+            if (!inString && (ch == '"' || ch == '\'')) {
+                inString = true
+                stringChar = ch
+                result.append(ch)
+                i++
+                continue
+            }
+            if (inString) {
+                if (ch == stringChar && (i == 0 || expression[i - 1] != '\\')) {
+                    inString = false
+                }
+                result.append(ch)
+                i++
+                continue
+            }
+
+            if (ch != '.') {
+                result.append(ch)
+                i++
+                continue
+            }
+
+            val prev = if (i > 0) expression[i - 1] else null
+            val next = if (i + 1 < expression.length) expression[i + 1] else null
+            val beforePrev = if (i > 1) expression[i - 2] else null
+
+            // A decimal point, not a path step.
+            if (next != null && next.isDigit()) {
+                result.append(ch)
+                i++
+                continue
+            }
+
+            val continuesPath = when (prev) {
+                null -> false
+                '*' -> beforePrev == '.'                       // `.*` wildcard step, not `a * b`
+                '-' -> beforePrev != null && endsOperand(beforePrev)  // part of a kebab identifier
+                else -> endsOperand(prev)
+            }
+
+            if (continuesPath) {
+                result.append(ch)
+                i++
+                continue
+            }
+
+            when {
+                expression.startsWith("..", i) -> { result.append("\$input.."); i += 2 }
+                next != null && (next.isLetter() || next == '_' || next == '@' || next == '*') -> {
+                    result.append("\$input."); i++
+                }
+                else -> { result.append("\$input"); i++ }
+            }
+        }
+
+        return result.toString()
+    }
+
+    /** Does this script parse? Used to decide whether the wider expansion is needed at all. */
+    private fun parses(scriptContent: String): Boolean =
+        try {
+            val tokens = com.glomidco.utlx.core.lexer.Lexer(scriptContent).tokenize()
+            com.glomidco.utlx.core.parser.Parser(tokens, scriptContent).parse() is
+                com.glomidco.utlx.core.parser.ParseResult.Success
+        } catch (_: Exception) {
+            false
+        }
+
     fun execute(args: Array<String>, identityMode: Boolean = false): CommandResult {
         val options = try {
             parseOptions(args, allowIdentityMode = identityMode)
@@ -315,16 +425,9 @@ object TransformCommand {
             if (options.expression != null) {
                 // Expression mode: synthesize script from inline expression
                 val primaryInput = inputs.values.first()
-                val expandedExpression = expandDotShorthand(options.expression)
 
                 // Expression mode defaults to JSON output
                 effectiveOutputFormat = options.outputFormat ?: "json"
-
-                if (options.verbose) {
-                    println("Expression (expanded): $expandedExpression")
-                    println("Output format: $effectiveOutputFormat" +
-                        if (options.outputFormat != null) " (explicit)" else " (default json)")
-                }
 
                 // F27: --arg values become `let` bindings ahead of the body. A top-level let
                 // followed by the expression is valid UTL-X, so this needs no language change
@@ -332,11 +435,67 @@ object TransformCommand {
                 val argBindings = options.args.entries.joinToString("") { (name, value) ->
                     "let $name = \"${escapeUtlxString(value)}\"\n"
                 }
-                scriptContent = """%utlx 1.0
+                fun wrap(body: String) = """%utlx 1.0
 input auto
 output $effectiveOutputFormat
 ---
-$argBindings$expandedExpression"""
+$argBindings$body"""
+
+                // CB04: expand conservatively, and fall back to the wider rule **only** when the
+                // result does not parse.
+                //
+                // The ordering is the entire safety argument. An expression that parses under the
+                // conservative expansion never meets the wider one, so no working expression can
+                // change meaning — which is why the ambiguous cases are not blockers here:
+                // `.a-b` parses as the key "a-b" and is served as written; `.items.*.n` parses and
+                // keeps its wildcard. Neither is ever re-expanded. Reversing these two steps would
+                // reintroduce every risk the wider rule carries.
+                //
+                // The fallback triggers on a **parse** failure only. `.a-.b` parses (as the key
+                // `a-`) and fails at *runtime*; retrying there would re-execute a transformation
+                // and dress a data error up as a syntax one.
+                val conservative = expandDotShorthand(options.expression)
+                var expandedExpression = conservative
+                var usedWiderRule = false
+                if (!parses(wrap(conservative))) {
+                    val wider = expandDotShorthandAggressive(options.expression)
+                    if (wider != conservative && parses(wrap(wider))) {
+                        expandedExpression = wider
+                        usedWiderRule = true
+                    } else if (wider != conservative) {
+                        // Neither parses. Report the WIDER expansion's error: its text is closest to
+                        // what the user typed. For `1 + .5` the conservative pass complains about
+                        // `$input.5`, which the user never wrote, while the wider one points at the
+                        // `.5` itself — and `.5` is not valid UTL-X in any spelling, so "write 0.5"
+                        // is the honest answer.
+                        expandedExpression = wider
+                    }
+
+                    // CB04: the error still lands on a generated script the user never wrote, so
+                    // say what to do about the one case no expansion rule can rescue. `.5` is not a
+                    // valid literal in UTL-X at all — `{ r: .5 }` is a parse error in a plain
+                    // script too — and jq accepts both spellings, so this is a real porting trap.
+                    if (!parses(wrap(expandedExpression)) &&
+                        Regex("""(^|[^A-Za-z0-9_)\]}])\.\d""").containsMatchIn(options.expression)
+                    ) {
+                        System.err.println(
+                            "hint: a leading decimal point is not valid UTL-X — write '0.5' rather " +
+                            "than '.5' (jq accepts both)."
+                        )
+                    }
+                }
+
+                if (options.verbose) {
+                    println("Expression (expanded): $expandedExpression")
+                    if (usedWiderRule) {
+                        println("  (the conservative dot expansion did not parse; used the wider " +
+                            "rule — CB04)")
+                    }
+                    println("Output format: $effectiveOutputFormat" +
+                        if (options.outputFormat != null) " (explicit)" else " (default json)")
+                }
+
+                scriptContent = wrap(expandedExpression)
             } else if (options.identityMode) {
                 // Identity mode: synthesize a passthrough script with smart format flip
                 val primaryInput = inputs.values.first()

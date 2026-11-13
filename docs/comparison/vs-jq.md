@@ -166,32 +166,43 @@ The first row is worth a second look: jq's answer to *n + 1* is **lower than n**
 identifiers, or anything that round-trips, this is the difference that matters, and it is not
 a flag — it is the number model.
 
-### Known gap: compact expressions need a space
+### Style difference: UTL-X spaces its operators
 
-[CB04](../bugs-fixed/CB04-dot-shorthand-needs-whitespace-so-compact-jq-expressions-fail.md).
-The `-e` dot shorthand expands `.name` to `$input.name` based on the character *before* the
-dot, and the accepted set is missing most punctuation. The jq-idiomatic compact spellings
-fail with a parse error:
+This is the one habit to unlearn coming from jq, and it is a convention rather than a
+shortcoming. **UTL-X is written with spaces around operators** — measured across the
+conformance corpus, the documentation and every `.utlx` file in the repo, it is 2513 spaced
+operators against a single tight one. The IDE's Function Builder inserts every operator
+surrounded by spaces, and `docs/language-guide/syntax.md` carries `{let x=100,let
+y=x*0.08,total:x+y}` explicitly labelled `// ❌ Bad`.
 
-| | |
-|---|---|
-| `utlx -e '{p:.a}'` | parse error |
-| `utlx -e '{p: .a}'` | `{"p":1}` |
-| `utlx -e '[.a]'` | parse error |
-| `utlx -e '[ .a]'` | `[1]` |
-| `utlx -e '.a+.b'` | parse error |
-| `utlx -e '.a + .b'` | `3` |
+There is a language reason, not just a stylistic one: `-` is a legal **identifier**
+character, so `$input.a-b` is the key `"a-b"`, not `a` minus `b`. On a document holding both,
+`.a-b` returns `99` where `.a - .b` returns `6`. Spacing is what disambiguates, which is
+exactly why the Function Builder enforces it.
 
-A space fixes every case **except one**: a leading decimal is rewritten rather than left
-alone, and no spacing helps —
+The `-e` dot shorthand used to insist on it too, and compact jq spellings were a parse error.
+Since [CB04](../bugs-fixed/CB04-dot-shorthand-needs-whitespace-so-compact-jq-expressions-fail.md)
+they work — the expression is expanded conservatively first and only re-expanded with a wider
+rule if that fails to parse, so nothing that already worked changed meaning:
 
 ```bash
-utlx -e '1 + .5'     # Error: Expected property name   ( .5 became $input.5 )
-utlx -e '1 + 0.5'    # 1.5                             ( write the leading zero )
+utlx -e '{p:.a}'      # {"p":1}
+utlx -e '[.a]'        # [1]
+utlx -e '.a+.b'       # 3
+utlx -e '.a==.b'      # false
+utlx -e '-.a'         # -1
 ```
 
-Until CB04 lands: space out `-e` expressions, and write `0.5` rather than `.5`. jq accepts
-both spellings.
+Two things to know when porting a jq line:
+
+```bash
+utlx -e '1 + .5'      # Error — a leading decimal point is not valid UTL-X; write 0.5
+utlx -e '.a-b'        # the KEY "a-b", not a minus b — '-' is an identifier character
+```
+
+The first is reported with a hint telling you to write `0.5`; jq accepts both spellings. The
+second is why `-` still wants spaces: `.a - .b` subtracts, `.a-b` reads a property. Every other
+operator is fine tight or spaced.
 
 ### Where UTL-X wins
 

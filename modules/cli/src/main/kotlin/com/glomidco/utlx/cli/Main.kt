@@ -101,8 +101,18 @@ object Main {
                     if (command.endsWith(".utlx")) {
                         TransformCommand.execute(args)
                     }
-                    // Check if first arg is -e (expression mode)
-                    else if (command in listOf("-e", "--expression")) {
+                    // Check if first arg is -e (expression mode), or any other flag that only
+                    // `transform` accepts.
+                    //
+                    // CB04: this used to list `-e`/`--expression` alone, so `utlx -n -e '1+1'`
+                    // failed with "Unknown command: -n" while `utlx -e '1+1' -n` worked — the
+                    // inference depended on which transform flag happened to come first. A ported
+                    // `jq -n …` one-liner hits that immediately. The F27 flags below are all
+                    // transform-only (unlike --to/--from, which also drive identity mode), so a
+                    // leading one is unambiguous.
+                    else if (command in listOf("-e", "--expression",
+                                               "-n", "--null-input",
+                                               "--arg", "--argjson", "--exit-status")) {
                         TransformCommand.execute(args)
                     }
                     // Check if first arg is a flag for identity mode (--to, --from, etc.)
