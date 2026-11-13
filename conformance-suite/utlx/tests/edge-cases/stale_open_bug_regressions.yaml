@@ -1,0 +1,81 @@
+name: "stale_open_bug_regressions"
+category: "edge-cases"
+description: "Pins the behaviour of five bug reports that were still marked Open on 2026-11-13 but no longer reproduced — so closing them cannot be undone silently"
+tags: ["regression", "b04", "b06", "b09", "b21", "b22"]
+
+input:
+  format: json
+  data: |
+    {
+      "lineItems": [{"description": "Cloud Infrastructure Services - Premium Tier"}],
+      "items": [{"value": 5}, {"value": 15}],
+      "count": 42
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  function MyFunc(x) {
+    if (x > 10) "HIGH" else "LOW"
+  }
+
+  {
+    // B05: unicode identifiers — `let` bindings must come before properties
+    let naïve = "ok",
+
+    // B04: truncate used to exit 1 with no output at all
+    b04: truncate($input.lineItems[0].description, 50),
+
+    // B06: a user-defined function called from a let inside a map lambda
+    b06: $input.items |> map((item) -> {
+      let computed = MyFunc(item.value),
+      result: computed
+    }),
+
+    // B09: the JSON parser turned every number into a Double — 42 came back as 42.0
+    b09: $input.count,
+    b09Type: typeOf($input.count),
+
+    // B22: isCanonicalJSON always returned false
+    b22: isCanonicalJSON("{\"a\":1}"),
+
+    // B03: an out-of-bounds substring surfaced as "Undefined function", masking the real cause
+    b03: substring("abc", 0, 99),
+
+    // B05: read it back
+    b05: naïve,
+
+    // B02: formatNumber followed the machine's locale — 1.234,56 in Germany
+    b02: formatNumber(1234.56, "#,##0.00")
+  }
+
+expected:
+  format: json
+  data: {
+    "b04": "Cloud Infrastructure Services - Premium Tier",
+    "b06": [{"result": "LOW"}, {"result": "HIGH"}],
+    "b09": 42,
+    "b09Type": "number",
+    "b22": true,
+    "b03": "abc",
+    "b05": "ok",
+    "b02": "1,234.56"
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references:
+    - "docs/bugs-fixed/B04-truncate-silent-crash.md"
+    - "docs/bugs-fixed/B06-interpreter-function-bugs.md"
+    - "docs/bugs-fixed/B09_json-parser-integer-precision-loss.md"
+    - "docs/bugs-fixed/B22-isCanonicalJSON-always-false.md"
+    - "docs/bugs-fixed/B02_locale_ExtendedMathFunctions_bug.md"
+    - "docs/bugs-fixed/B03-substring-out-of-bounds-masked-as-undefined-function.md"
+    - "docs/bugs-fixed/B05-support-unicode-identifiers.md"
+  notes:
+    - "Each of these reports still said Open when the backlog was swept on 2026-11-13, yet none reproduced — they were fixed incidentally by later work (B35 covers the numeric half, B52/B48 the interpreter half) and nobody revisited the reports."
+    - "A stale Open is as misleading as a stale Fixed: it hides real work behind noise. These assertions are the evidence for closing them, and they fail if any of the behaviours regresses."
+    - "B02's locale independence cannot be asserted from a fixture — the runner does not vary the JVM locale — so B02LocaleIndependenceTest formats under six locales instead. The value here pins the expected output; that test pins the guarantee."
+    - "B21 (c14n returning null) is covered separately by the XML canonicalisation fixtures; it needs XML input and does not belong in this document."

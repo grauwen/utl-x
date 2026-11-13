@@ -1,5 +1,7 @@
 Fixed
 
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
+
 should the utlx parser support unicode identifiers? Is it a bug? 
 
 ⏺ Yes, this is likely a bug/limitation that should be fixed. Here's the reasoning:
@@ -35,3 +37,20 @@ should the utlx parser support unicode identifiers? Is it a bug?
  This prevents Unicode letters like å, ø, ü, ş from being recognized as valid identifier start characters.
 
  Note: The continuation check at line 298 already uses isLetterOrDigit() which IS Unicode-aware, but it's never reached for Unicode-starting identifiers.
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+This report carried no `Status:` line at all, so it was indistinguishable from open work in a
+backlog sweep. The question it asked — should the parser accept unicode identifiers? — is answered by the implementation: it does.
+
+```bash
+{ let naïve = 1, r: naïve }   => {"r":1}
+{ "ключ": 1 }                 => {"ключ":1}
+```
+
+Both identifiers and object keys accept non-ASCII. Since the report was a question rather
+than a defect, it is closed as answered rather than fixed.
+
+Pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`.

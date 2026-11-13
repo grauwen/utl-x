@@ -1,5 +1,7 @@
 # B06: FunctionCall Cannot Be Cast to LetBinding
 
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
+
 **Status: FIXED**
 
 ## Summary
@@ -69,3 +71,24 @@ when (letExpr) {
 ## Bug 2: Moved to B07
 
 The "Cannot convert function to UDM" bug has been moved to [B07-function-to-udm-conversion.md](B07-function-to-udm-conversion.md) as it is a separate issue in the interpreter.
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but the exact reproducer from this report now evaluates correctly.
+
+```bash
+# function MyFunc called from a `let` inside a map lambda
+$input.items |> map((item) -> { let computed = MyFunc(item.value), result: computed })
+=> [{"result":"LOW"},{"result":"HIGH"}]
+```
+
+No cast failure. The interpreter's handling of let bindings inside lambdas was
+reworked by [B52](B52-type-checker-reports-every-stdlib-function-as-an-undefined-variable.md)
+and [EB17](EB17-a-captured-binding-is-readable-but-not-callable.md); this is almost certainly
+where it was fixed.
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

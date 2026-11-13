@@ -1,5 +1,7 @@
 BUG report 03
 
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
+
 # BUG: `substring` out-of-bounds exception masked as "Undefined function"
 
 ## Summary
@@ -138,3 +140,22 @@ appear to be "undefined" to the user. This affects at least `substring` and
 exceptions.
 
 Bug fixed
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+This report carried no `Status:` line at all, so it was indistinguishable from open work in a
+backlog sweep. The out-of-bounds case now clamps instead of throwing.
+
+```bash
+substring("abc", 0, 99)   => "abc"
+```
+
+No exception, and therefore nothing for the "Undefined function" handler to mask. The
+masking itself — an exception inside a stdlib call being reported as an unknown name — was
+the more serious half of this report, and is separately covered by
+[B52](B52-type-checker-reports-every-stdlib-function-as-an-undefined-variable.md), which
+made undefined-function reporting precise.
+
+Pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`.

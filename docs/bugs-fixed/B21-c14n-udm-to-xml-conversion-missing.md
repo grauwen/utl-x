@@ -1,6 +1,6 @@
 # B21: c14n Functions Silently Return Null — UDM-to-XML Conversion Missing
 
-**Status:** Open  
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
 **Severity:** High (all c14n/canonicalization functions are non-functional)  
 **Scope:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/xml/XMLCanonicalizationFunctions.kt`  
 **Affects:** JVM and native binary — not a GraalVM issue  
@@ -104,3 +104,22 @@ echo '<doc><b/><a/></doc>' | /tmp/utlx-release/utlx-macos-arm64 --from xml -e 'c
 ---
 
 *Bug B21. May 2026. Discovered during v1.2.0 native binary validation. All c14n functions have been non-functional since implementation — silent null return due to missing UDM-to-XML serialization in parseXML helper.*
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but the c14n functions return canonical XML, not null.
+
+```bash
+# <a><b>1</b></a>
+c14n($input)      => "<a><b>1</b></a>"
+c14nHash($input)  => "23551dcb3411f7348fe6a603d7aaacd53fa521a6ad26dbfcd97d..."
+```
+
+Verified on the JVM **and** on the GraalVM native binary, which is the configuration
+[B17](B17-native-binary-apache-xml-security-resource-bundle-missing.md) reported as broken.
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

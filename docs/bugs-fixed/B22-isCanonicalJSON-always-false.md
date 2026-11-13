@@ -1,6 +1,6 @@
 # B22: isCanonicalJSON() Always Returns False
 
-**Status:** Open  
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
 **Severity:** Low (validation helper, not a core function)  
 **Scope:** `stdlib/src/main/kotlin/com/glomidco/utlx/stdlib/json/JSONCanonicalizationFunctions.kt`  
 **Affects:** JVM and native binary  
@@ -64,3 +64,17 @@ Low. `isCanonicalJSON` is a validation helper. The actual canonicalization (`can
 ---
 
 *Bug B22. May 2026. Discovered during v1.2.0 release validation. Low severity — validation helper only.*
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but the function returns `true` for canonical input.
+
+```bash
+isCanonicalJSON("{\"a\":1}")   => true
+```
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

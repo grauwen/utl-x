@@ -1,6 +1,6 @@
 # Bug: JSON Parser Loses Integer Type — All Numbers Parsed as Double
 
-**Status:** Open
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
 **Component:** `formats/json` — `json_parser.kt`
 **Severity:** Medium
 **Affects:** All formats that consume JSON parser output (json, odata, jsch)
@@ -92,3 +92,23 @@ After the fix:
 - `formats/json/src/main/kotlin/.../json_parser.kt` — parser
 - `formats/json/src/main/kotlin/.../json_serializer.kt` — compensating hack
 - `formats/odata/src/test/.../ODataJSONParserTest.kt` — tests use `1.0` as workaround
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but integer type is preserved end to end.
+
+```bash
+# {"count": 42}
+$input.count          => 42        (not 42.0)
+typeOf($input.count)  => "number"
+```
+
+Superseded by [B35](B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md),
+which replaced the double-based numeric model wholesale: numbers are now preserved as written
+by every parser and serialiser. This report describes the symptom B35 was raised to fix.
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

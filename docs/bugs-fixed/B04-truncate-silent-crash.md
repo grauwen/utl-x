@@ -1,5 +1,7 @@
 # BUG: `truncate` causes silent crash (exit 1, no error output)
 
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
+
 ## Summary
 
 Calling `truncate(string, maxLength)` causes the transformation to fail
@@ -217,4 +219,22 @@ Summary of B04 fix and tests added:
       - Custom single-char ellipsis
       - String shorter than limit with custom ellipsis
 
-  All tests pass. 
+  All tests pass.
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but the documented reproducer now returns the documented expected output.
+
+```bash
+{ result: truncate($input.lineItems[0].description, 50) }
+=> {"result": "Cloud Infrastructure Services - Premium Tier"}
+```
+
+No crash, no silent exit 1. Called with the wrong arity it now reports
+`truncate expects 2-3 arguments, got 1` rather than failing mutely.
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

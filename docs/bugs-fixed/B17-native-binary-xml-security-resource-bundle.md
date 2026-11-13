@@ -1,6 +1,6 @@
 # B17: Native Binary — Apache XML Security Resource Bundle Missing
 
-**Status:** Open  
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
 **Priority:** Critical (native binary unusable)  
 **Created:** May 2026  
 **Affects:** v1.1.0 native binaries (macOS, Linux, Windows)
@@ -101,3 +101,22 @@ java -jar modules/cli/build/libs/cli-1.1.0.jar transform script.utlx < input.jso
 ---
 
 *Bug B17. May 2026. Critical — native binary broken since at least v1.0.2.*
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+Found during a backlog sweep: this report still said **Open**, but the native binary runs the Apache XML Security paths without a missing-bundle error.
+
+```bash
+# modules/cli/build/native/nativeCompile/utlx, rebuilt 2026-11-13
+c14n($input)      => "<a><b>1</b></a>"
+c14nHash($input)  => "23551dcb..."
+```
+
+The full 577-fixture conformance corpus also passes against the native binary, so the
+reflection and resource configuration covers these paths now.
+
+A stale `Open` is as misleading as a stale `Fixed` — it hides real work behind noise. The
+behaviour is now pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`,
+so closing it cannot be undone silently.

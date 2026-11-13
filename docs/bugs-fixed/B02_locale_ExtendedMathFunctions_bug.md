@@ -1,5 +1,7 @@
 # Bug Report B02: Locale-Dependent Number Formatting in ExtendedMathFunctions
 
+**Status:** Closed — 2026-11-13, verified no longer reproducing (see below)
+
 ## Metadata
 
 - **Bug ID**: B02
@@ -275,3 +277,27 @@ Special thanks to the sharp-eyed developer who reported this environment-specifi
 
 **Last Updated**: 2025-11-03
 **Author**: UTL-X Development Team
+
+---
+
+## Closed 2026-11-13 — verified no longer reproducing
+
+This report carried no `Status:` line at all, so it was indistinguishable from open work in a
+backlog sweep. The behaviour it asked for is now guaranteed at source.
+
+`ExtendedMathFunctions.formatNumber` builds its formatter from
+`DecimalFormatSymbols(Locale.US)` rather than the platform default, so the output no longer
+follows the machine:
+
+```bash
+formatNumber(1234.56, "#,##0.00")
+  default locale  => "1,234.56"
+  -Duser.language=de -Duser.country=DE  => "1,234.56"
+```
+
+A caller who *wants* locale-specific output has the regional functions
+(`formatEUNumber`, `formatFrenchNumber`, …), which is why this one is deliberately fixed.
+
+Pinned by `conformance-suite/utlx/tests/edge-cases/stale_open_bug_regressions.yaml`, and by `B02LocaleIndependenceTest`, which formats under six locales — US, Germany,
+France, Italy, India and Japan — because `DecimalFormat(pattern)` is the obvious spelling and
+would silently reintroduce the dependency.
