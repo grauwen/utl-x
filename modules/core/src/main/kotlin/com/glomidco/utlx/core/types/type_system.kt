@@ -230,12 +230,54 @@ class TypeChecker(
     /**
      * Type check a complete program
      */
-    fun check(program: Program): TypeCheckResult {
+    /**
+     * @param inputType the shape of `$input`, when the caller knows it — from `--schema`.
+     *
+     * B54/B53: this defaulted to [UTLXType.Any] with the note "will be refined by format
+     * parser", and nothing ever refined it. `Any` is the checker declining to have an opinion,
+     * so the `MemberAccess` branch returned `Any` for every property and the
+     * "Property 'x' does not exist on object" check it already contains could never fire on
+     * input data. `$input.noSuchField` validated clean even with `--schema` supplied, because
+     * the schema was parsed and handed to `AdvancedTypeInference` in `:modules:analysis` — a
+     * different type system that only infers the *output* shape.
+     *
+     * Core cannot see `:modules:analysis` (the dependency runs the other way), so the caller
+     * converts and passes the result, exactly as it does for `knownFunctionNames`.
+     */
+    /**
+     * B54: `a-b` is one name, so an intended subtraction becomes a property lookup.
+     *
+     * `-` is a legal identifier character — JSON keys, XML element and attribute names and YAML
+     * keys all permit hyphens, and `$input.content-type` has to mean that key — so subtraction
+     * requires whitespace. The cost is that `$input.total-discount` reads a key nobody defined
+     * and yields null, silently, with the author convinced they wrote arithmetic.
+     *
+     * The generic "property does not exist" is already correct here; this only adds the sentence
+     * that turns it into something actionable, and only when the evidence is strong: the name
+     * contains a hyphen, it is not a property of the target, and **both halves are**. A document
+     * that genuinely has a `content-type` key never reaches this, because the property exists.
+     *
+     * Measured against the corpus before adding it: hyphenated member access appears **0** times
+     * in 1442 UTL-X blocks, so the sentence fires on mistakes and essentially nothing else.
+     */
+    private fun subtractionHint(property: kotlin.String, target: UTLXType.Object): kotlin.String {
+        if ('-' !in property) return ""
+        val halves = property.split('-')
+        if (halves.size != 2) return ""
+        val (left, right) = halves
+        if (left.isEmpty() || right.isEmpty()) return ""
+        if (left !in target.properties || right !in target.properties) return ""
+        return ". Did you mean '$left - $right'? A hyphen is part of a name in UTL-X, so " +
+            "subtraction needs spaces around the '-'"
+    }
+
+    fun check(program: Program, inputType: UTLXType? = null): TypeCheckResult {
         errors.clear()
         val env = TypeEnvironment()
-        
-        // Add built-in 'input' identifier
-        env.define("input", UTLXType.Any) // Will be refined by format parser
+
+        // `$input` parses to the identifier `input`; when the caller knows its shape, say so —
+        // otherwise stay at Any, which asserts nothing.
+        env.define("input", inputType ?: UTLXType.Any)
         
         // Check the body expression
         val bodyType = inferType(program.body, env)
@@ -346,7 +388,8 @@ class TypeChecker(
                     is UTLXType.Object -> {
                         targetType.properties[expr.property] ?: run {
                             errors.add(TypeError(
-                                "Property '${expr.property}' does not exist on object",
+                                "Property '${expr.property}' does not exist on object" +
+                                    subtractionHint(expr.property, targetType),
                                 expr.location,
                                 actual = targetType
                             ))

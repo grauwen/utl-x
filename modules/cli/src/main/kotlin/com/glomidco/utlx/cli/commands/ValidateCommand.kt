@@ -5,6 +5,8 @@ import com.glomidco.utlx.core.lexer.Lexer
 import com.glomidco.utlx.core.parser.Parser
 import com.glomidco.utlx.core.parser.ParseResult
 import com.glomidco.utlx.core.types.TypeChecker
+import com.glomidco.utlx.core.types.UTLXType
+import com.glomidco.utlx.analysis.types.ScalarKind
 import com.glomidco.utlx.core.types.TypeCheckResult
 import com.glomidco.utlx.core.types.StandardLibrary
 import com.glomidco.utlx.analysis.schema.*
@@ -172,7 +174,13 @@ object ValidateCommand {
                 stdlib,
                 com.glomidco.utlx.stdlib.StandardLibrary.getAllFunctionNames()
             )
-            val typeCheckResult = typeChecker.check(program)
+            // B54: when a schema is supplied, give the checker the shape of `$input` too.
+            // Without it `$input` is `Any`, every property access answers `Any`, and the
+            // "Property 'x' does not exist on object" check the type system already contains
+            // can never fire on input data — so `--schema` validated a script referencing
+            // fields the schema does not define. The schema reached a *different* type system
+            // (AdvancedTypeInference, below), which only infers the output shape.
+            val typeCheckResult = typeChecker.check(program, schemaDerivedInputType(options))
 
             when (typeCheckResult) {
                 is TypeCheckResult.Success -> {
@@ -471,6 +479,55 @@ object ValidateCommand {
             SchemaFormat.CSV_SCHEMA -> throw NotImplementedError("CSV schema parsing not yet implemented")
             SchemaFormat.YAML_SCHEMA -> throw NotImplementedError("YAML schema parsing not yet implemented")
         }
+    }
+
+    /**
+     * B54: the shape of `$input` for the core type checker, derived from `--schema`.
+     *
+     * Returns null when no schema was given, or when it cannot be read — a malformed schema is
+     * reported by the dedicated schema section further down, and failing the *type* check for
+     * it here would attribute the error to the wrong thing.
+     */
+    private fun schemaDerivedInputType(options: ValidateOptions): UTLXType? {
+        val file = options.schemaFile ?: return null
+        return try {
+            val content = file.readText()
+            toUtlxType(parseSchemaToType(content, detectSchemaFormat(file.absolutePath, content)))
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * Bridge `:modules:analysis`'s schema types to `:core`'s checker types.
+     *
+     * The two type systems exist for different jobs and neither can see the other — core must
+     * not depend on analysis — so the CLI, which sees both, converts. This is the same shape as
+     * B52's `knownFunctionNames`: the layer that has the information supplies it.
+     *
+     * The mapping is deliberately lossy in one direction: constraints (min/max, pattern,
+     * required, additionalProperties) carry no meaning for the checker's assignability rules,
+     * so they are dropped rather than approximated. A property the schema marks nullable
+     * becomes a union with Null, because that is a distinction the checker *can* act on.
+     */
+    private fun toUtlxType(def: TypeDefinition): UTLXType = when (def) {
+        is TypeDefinition.Scalar -> when (def.kind) {
+            ScalarKind.STRING, ScalarKind.DATE, ScalarKind.DATETIME,
+            ScalarKind.TIME, ScalarKind.DURATION, ScalarKind.BINARY -> UTLXType.String
+            ScalarKind.INTEGER, ScalarKind.NUMBER -> UTLXType.Number
+            ScalarKind.BOOLEAN -> UTLXType.Boolean
+            ScalarKind.NULL -> UTLXType.Null
+        }
+        is TypeDefinition.Array -> UTLXType.Array(toUtlxType(def.elementType))
+        is TypeDefinition.Object -> UTLXType.Object(
+            def.properties.mapValues { (_, property) ->
+                val base = toUtlxType(property.type)
+                if (property.nullable) UTLXType.Union(setOf(base, UTLXType.Null)) else base
+            }
+        )
+        // Anything this bridge does not model yet — union/any-of shapes and future additions —
+        // becomes Any, which asserts nothing rather than guessing wrongly.
+        else -> UTLXType.Any
     }
 
     private fun printErrors(

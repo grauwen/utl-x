@@ -1,7 +1,8 @@
 # B54 — hyphens in identifiers: the lexer allows them, the guide says they are an error
 
-**Status:** Partly fixed — 2026-11-13. **Decision: hyphens stay**, because the data formats
-have them. The documentation is corrected; the diagnostic (item 3) is still open.
+**Status:** Fixed — 2026-11-13. **Decision: hyphens stay**, because the data formats have
+them. All three follow-ups are done: the guide and spec are corrected, the whitespace rule for
+`-` is written down, and the diagnostic now fires.
 **Component:** `:core` — `lexer/lexer_impl.kt:306,331` vs `docs/language-guide/syntax.md:162,970`
 **Found:** 2026-11-12, while checking a recollection that "operands need a space around them"
 **Severity:** Medium — nothing is broken at runtime, but the two sources disagree about what
@@ -116,7 +117,7 @@ Keeping hyphens makes the trap in the previous section permanent, so it has to b
    `docs/reference/language-spec.md`, both stating that `a - b` subtracts while `a-b` is one
    name, that this applies to `-` alone, and that the bracket form `input["total-discount"]`
    reaches any key. Every example in both was executed before being written down.
-3. **Add the diagnostic.** *(open)* The detector already exists and already fires when the target's type
+3. ~~**Add the diagnostic.**~~ **Done** — see below. The detector already exists and already fires when the target's type
    is known (see the next section); it never reaches `$input` because that is typed `Any`
    (B53) and because `--schema` is not wired into the core type checker. With those two fixed,
    plus a hyphen-specific "did you mean `total - discount`?", the silent `null` becomes a
@@ -236,3 +237,80 @@ reaches identifiers that are already PascalCase or are property names.
   added to `docs/reference/language-spec.md` — the absence of it is half this defect
 - a conformance fixture for `$input.a-b` against a document containing both `a-b` and `a`,
   so the chosen meaning is pinned across all three strategies
+
+---
+
+## The diagnostic, implemented (2026-11-13)
+
+Two things had to be true before any detector could work, and neither was:
+
+**1. `$input` had no shape.** `TypeChecker.check` hard-coded it to `UTLXType.Any` with the note
+*"Will be refined by format parser"* — nothing ever refined it. So the `MemberAccess` branch
+answered `Any` for every property, and the `Property 'x' does not exist on object` check the
+type system **already contained** could never fire on input data.
+
+**2. `--schema` never reached this checker.** `ValidateCommand` parsed it into a
+`TypeDefinition` and handed that to `AdvancedTypeInference` in `:modules:analysis` — a separate
+type system that only infers the *output* shape. So `utlx validate --schema … --strict`
+accepted a script referencing fields the schema does not define.
+
+### Bridged, not merged
+
+`check(program, inputType: UTLXType? = null)` now takes the shape when the caller knows it, and
+`ValidateCommand` converts `TypeDefinition` → `UTLXType`. Core cannot see `:modules:analysis`
+(the dependency runs the other way), so the CLI — which sees both — does the conversion, the
+same shape as B52's `knownFunctionNames`.
+
+The conversion is deliberately lossy: constraints (min/max, pattern, required,
+additionalProperties) mean nothing to the checker's assignability rules and are dropped rather
+than approximated. A nullable property becomes a union with `Null`, because that *is* something
+the checker can act on. Anything unmodelled becomes `Any`, which asserts nothing.
+
+### The hint
+
+The generic message was already correct; what it lacked was the sentence that makes it
+actionable:
+
+```
+⚠ 5:13 - Property 'total-discount' does not exist on object. Did you mean 'total - discount'?
+         A hyphen is part of a name in UTL-X, so subtraction needs spaces around the '-'
+```
+
+The evidence bar is high on purpose — the name must contain **one** hyphen, must not be a
+property, and **both halves must be**:
+
+| expression | result |
+|---|---|
+| `$input.total-discount` (both halves exist) | error **+ hint** |
+| `$input.total-nosuch` (one half) | error, no hint — subtraction would be a guess |
+| `$input.alpha-beta` (neither) | error, no hint |
+| `$input.a-b-c` | error, no hint — no single obvious reading |
+| `$input.content-type` **where the key exists** | nothing; the property resolves |
+| `$input.total - $input.discount` | nothing; real subtraction |
+| no schema supplied | nothing — `Any` means "I don't know" |
+
+### A second gap closed on the way
+
+With `$input` typed, `--schema` now does what it always appeared to:
+
+```bash
+utlx validate s.utlx --schema s.json --strict
+✗ Property 'noSuchField' does not exist on object
+```
+
+That was the limitation recorded in
+[B53](B53-any-is-assignable-to-nothing-so-strict-types-rejects-every-real-script.md) —
+"`$input` is still not typed from a schema, so no property is checked against the document's
+real shape". It is now, when a schema is given.
+
+### Verification
+
+| | |
+|---|---|
+| `:modules:core:test` | **379**, 0 failures (incl. `B54SubtractionHintTest`, 8) |
+| `:modules:cli:test` | 153, 0 failures |
+| `:stdlib` / `:modules:engine` / `:formats:json` | 2339 / 1017 / 98, 0 failures |
+| conformance | 578/578 |
+
+Without a schema nothing changes — every property check stays silent, which is what keeps this
+from becoming a wall of false positives on the scripts that have no schema to check against.
