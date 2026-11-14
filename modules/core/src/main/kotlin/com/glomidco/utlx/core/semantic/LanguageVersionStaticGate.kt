@@ -96,9 +96,17 @@ object LanguageVersionStaticGate {
                     val base = fn.target as? Expression.Identifier
                     if (base != null && base.name !in bound) {
                         val name = "${base.name}.${fn.property}"
-                        if (LanguageNamespaces.namespaceOf(name) != null &&
-                            !LanguageNamespaces.isAvailableAt(name, declaredVersion)
-                        ) {
+                        // Was: `if (LanguageNamespaces.namespaceOf(name) != null && !isAvailableAt(...))`.
+                        // The first half was meant to ask "is this a namespaced call at all?", but
+                        // namespaceOf() returns String (""), never null, so it was always true --
+                        // the compiler reported it as such. Removed in 1.4.0.
+                        //
+                        // Dropping it changes nothing: an unqualified name yields namespace "",
+                        // which is absent from NAMESPACE_MIN_VERSION, so minVersionFor() is null and
+                        // isAvailableAt() returns true. Unnamespaced calls are therefore never
+                        // gated, with or without the test. If you need the "is it namespaced?"
+                        // question explicitly, write namespaceOf(name).isNotEmpty().
+                        if (!LanguageNamespaces.isAvailableAt(name, declaredVersion)) {
                             violation(name, declaredVersion, expr)
                         }
                     }

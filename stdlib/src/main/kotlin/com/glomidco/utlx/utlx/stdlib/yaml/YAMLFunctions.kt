@@ -135,7 +135,11 @@ object YAMLFunctions {
      */
     fun yamlGetDocument(args: List<UDM>): UDM {
         requireArgs(args, 2, "yamlGetDocument")
-        val yaml = args[0].asString()
+        // Removed in 1.4.0: `val yaml = args[0].asString()`, never read -- args[0] is handed
+        // straight to yamlSplitDocuments() below, which does its own extraction. Reading it here
+        // looked like an argument check, but it was not one: asString() resolves to the permissive
+        // UDM member, which stringifies anything rather than rejecting it (see B59), so the line
+        // validated nothing either.
         val index = args[1].asInt()
         
         return try {

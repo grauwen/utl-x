@@ -1057,7 +1057,12 @@ class FunctionSignature(
             is ReturnTypeLogic.ArrayFlatten -> {
                 val firstArg = argumentTypes.firstOrNull()
                 if (firstArg is TypeDefinition.Array && firstArg.elementType is TypeDefinition.Array) {
-                    (firstArg.elementType as TypeDefinition.Array).elementType
+                    // Was `(firstArg.elementType as TypeDefinition.Array).elementType`. The cast was
+                    // removed in 1.4.0: the second half of the condition above already narrows
+                    // elementType to TypeDefinition.Array, so Kotlin smart-casts it here and the
+                    // compiler reported "No cast needed". The cast could not fail -- it restated the
+                    // check -- and the inner element type returned is the same either way.
+                    firstArg.elementType.elementType
                 } else {
                     firstArg ?: TypeDefinition.Any
                 }

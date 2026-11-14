@@ -644,8 +644,15 @@ class TypeChecker(
             }
             
             is Expression.Pipe -> {
-                val sourceType = inferType(expr.source, env)
-                // In a pipe, the source becomes the first argument to the target
+                // Was `val sourceType = inferType(expr.source, env)`, from the original
+                // type_system.kt draft (4845da9e), which presumably meant to check the source type
+                // against the target's first parameter. That check was never written and the
+                // binding went unread.
+                //
+                // The CALL must stay: inferType() appends to `errors`, so dropping it would stop
+                // type-checking everything inside a pipe's source expression. Only the unused
+                // binding was removed in 1.4.0.
+                inferType(expr.source, env)
                 inferType(expr.target, env)
             }
             
@@ -658,7 +665,14 @@ class TypeChecker(
             }
             
             is Expression.Match -> {
-                val valueType = inferType(expr.value, env)
+                // Was `val valueType = inferType(expr.value, env)`, also from 4845da9e. A match
+                // subject's type could be used to check each case pattern against it (a String
+                // subject matched against a numeric literal arm is a dead arm, which B35 showed is
+                // worth catching), but that was never implemented and the binding went unread.
+                //
+                // As in the Pipe branch above, the CALL stays for its error reporting; only the
+                // unused binding was removed in 1.4.0.
+                inferType(expr.value, env)
                 val caseTypes = expr.cases.map { case ->
                     inferType(case.expression, env)
                 }

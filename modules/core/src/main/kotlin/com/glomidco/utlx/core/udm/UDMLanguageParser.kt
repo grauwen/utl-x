@@ -74,7 +74,9 @@ object UDMLanguageParser {
 
                 // Strings
                 ch == '"' -> {
-                    val start = pos
+                    // Removed in 1.4.0: `val start = pos`, never read. It would only be useful for
+                    // slicing the raw source of the string, and this branch does not need that --
+                    // it builds the unescaped value into `sb` character by character below.
                     advance() // skip "
                     val sb = StringBuilder()
                     while (peek() != '"') {

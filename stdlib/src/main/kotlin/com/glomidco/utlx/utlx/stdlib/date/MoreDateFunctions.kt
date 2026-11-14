@@ -145,7 +145,11 @@ object MoreDateFunctions {
         
         // Get UTC offset for the current system timezone
         val kotlinxDate = toKotlinxInstant(date)
-        val localDateTime = kotlinxDate.toLocalDateTime(TimeZone.currentSystemDefault())
+        // Removed in 1.4.0: `val localDateTime = kotlinxDate.toLocalDateTime(TimeZone.currentSystemDefault())`,
+        // never read. Only the offset is needed to format "+01:00", and offsetAt() takes the
+        // instant directly -- converting to a local date-time first was a step on the way to
+        // nothing. (The same abandoned "convert to local, then ignore it" shape appears in
+        // TimezoneFunctions; see the notes there.)
         val offset = TimeZone.currentSystemDefault().offsetAt(kotlinxDate)
         
         val hours = offset.totalSeconds / 3600

@@ -213,8 +213,12 @@ class XSDParser(
         // Extract target namespace
         val targetNamespace = schema.attributes["targetNamespace"] ?: ""
 
-        // Enhance all child elements with scope tagging
-        val enhancedProperties = schema.properties.mapValues { (key, value) ->
+        // Enhance all child elements with scope tagging.
+        // The destructured key was named `key` and never used; 1.4.0 replaced it with `_`. Scope
+        // tagging here depends only on the value and the fixed isTopLevel = true, not on the
+        // element's name -- if it ever needs the name (to skip xsd:annotation by key, say), bind it
+        // again rather than reaching for schema.properties a second time.
+        val enhancedProperties = schema.properties.mapValues { (_, value) ->
             tagWithScope(value, isTopLevel = true)
         }
 

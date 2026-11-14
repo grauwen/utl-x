@@ -166,12 +166,19 @@ class JSONSchemaSerializer(
                     val properties = mutableMapOf<String, UDM>()
                     val requiredFields = mutableListOf<String>()
 
-                    fields.elements.forEach { fieldUdm ->
-                        if (fieldUdm !is UDM.Object) return@forEach
+                    // The `field@` label was added in 1.4.0; the three exits below said
+                    // `return@forEach`. Nothing was removed and behaviour is unchanged -- Kotlin
+                    // already resolved them to the innermost lambda, which is this one -- but both
+                    // this loop and the enclosing one over the type map are `forEach`, so the
+                    // implicit label was ambiguous to a reader (and the compiler warned that more
+                    // than one label of that name was in scope). Naming it makes "skip this field,
+                    // not this type" explicit.
+                    fields.elements.forEach field@{ fieldUdm ->
+                        if (fieldUdm !is UDM.Object) return@field
 
                         // Extract field directives
-                        val name = (fieldUdm.properties["%name"] as? UDM.Scalar)?.value as? String ?: return@forEach
-                        val type = (fieldUdm.properties["%type"] as? UDM.Scalar)?.value as? String ?: return@forEach
+                        val name = (fieldUdm.properties["%name"] as? UDM.Scalar)?.value as? String ?: return@field
+                        val type = (fieldUdm.properties["%type"] as? UDM.Scalar)?.value as? String ?: return@field
                         val required = (fieldUdm.properties["%required"] as? UDM.Scalar)?.value as? Boolean ?: false
                         val fieldDesc = (fieldUdm.properties["%description"] as? UDM.Scalar)?.value as? String
 

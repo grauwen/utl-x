@@ -124,9 +124,11 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
 
         if (declaredInputs.size <= 1) {
             // Single input
-            val inputName = transformConfig.inputs.firstOrNull()?.name
-                ?: declaredInputs.firstOrNull()?.first
-                ?: "input"
+            // Removed in 1.4.0: `val inputName = transformConfig.inputs.firstOrNull()?.name
+            //     ?: declaredInputs.firstOrNull()?.first ?: "input"`, from the original engine
+            // commit (4dcfcb0f). The single-input branch builds one skeleton and stores it without
+            // keying it by name -- only the multi-input branch below needs names -- so the
+            // carefully-ordered fallback chain resolved a name nothing asked for.
             val schemaSource = transformConfig.inputs.firstOrNull()?.schema
             val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase() ?: "json"
 

@@ -101,8 +101,12 @@ object ValidateCommand {
                 parseResult.program
             }
             is ParseResult.Failure -> {
-                hasErrors = true
-
+                // Removed in 1.4.0: `hasErrors = true` as the first statement of this branch. The
+                // flag is real and still used -- the Level 2/3 checks below set it and the final
+                // `return if (!hasErrors)` reads it -- but this branch never reaches that return:
+                // it prints the parse errors and returns CommandResult.Failure directly, a few
+                // lines down. So the assignment was dead, and the non-zero exit code for a parse
+                // failure comes from that explicit Failure, not from the flag.
                 // Group errors by section
                 val headerErrors = parseResult.errors.filter {
                     it.section == com.glomidco.utlx.core.parser.ScriptSection.HEADER ||

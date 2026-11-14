@@ -65,7 +65,7 @@ class Parser(
             logger.debug(e) { "Parse exception: ${e.message}" }
 
             // Enhance error message with contextual help
-            val enhancedError = ParseErrorEnhancer.enhance(e, source, tokens, current)
+            val enhancedError = ParseErrorEnhancer.enhance(e, tokens, current)
 
             // If we already have errors (from error() calls), don't duplicate
             // Otherwise, add the exception as an error
@@ -91,7 +91,10 @@ class Parser(
 
         // PASS 2: Parse header section (tokens before separator)
         currentSection = ScriptSection.HEADER
-        val savedPosition = current
+        // Removed in 1.4.0: `val savedPosition = current`, added with the header/body split
+        // (9e2dc4ae) so the parser could restore its position after reading the header. The
+        // two-pass design made that unnecessary -- PASS 2 jumps straight to separatorIndex below
+        // -- and nothing ever read it.
         val header = parseHeaderWithBoundary(separatorIndex)
 
         // Move to separator and consume it
@@ -319,8 +322,10 @@ class Parser(
         }
 
         if (nameTokens.isEmpty()) {
+            // error() records the ParseError and throws (its return type is Nothing), so the
+            // `return ""` that used to follow was unreachable and was removed in 1.4.0. The same
+            // applies to the placeholder values removed from the two when-branches below.
             error("Expected input/output name")
-            return ""
         }
 
         // Concatenate all lexemes to form the name
@@ -484,10 +489,8 @@ class Parser(
                     check(TokenType.IDENTIFIER) -> advance().lexeme
                     check(TokenType.INPUT) -> advance().lexeme
                     check(TokenType.OUTPUT) -> advance().lexeme
-                    else -> {
-                        error("Expected input/output name")
-                        ""
-                    }
+                    // Was: { error(...); "" } -- the trailing "" was an unreachable placeholder.
+                    else -> error("Expected input/output name")
                 }
 
                 val formatSpec = parseFormatSpec()
@@ -549,10 +552,9 @@ class Parser(
             match(TokenType.ODATA) -> FormatType.ODATA
             match(TokenType.OSCH) -> FormatType.OSCH
             match(TokenType.TSCH) -> FormatType.TSCH
-            else -> {
-                error("Expected format type (auto, xml, json, csv, yaml, odata, osch, tsch, xsd, jsch, avro, proto)")
-                FormatType.AUTO
-            }
+            // Was: { error(...); FormatType.AUTO } -- AUTO was an unreachable placeholder, not a
+            // fallback: error() throws, so no format was ever defaulted here.
+            else -> error("Expected format type (auto, xml, json, csv, yaml, odata, osch, tsch, xsd, jsch, avro, proto)")
         }
 
         // Optional dialect: %usdl 1.0
@@ -604,7 +606,9 @@ class Parser(
                     else -> error("Expected option value")
                 }
                 
-                options[key] = value!!
+                // Was `value!!`: the assertion became redundant once the when above gained a
+                // Nothing-typed else branch, which makes `value` non-null on every path here.
+                options[key] = value
             } while (match(TokenType.COMMA))
         }
         
@@ -954,11 +958,11 @@ class Parser(
                 // literal that Double cannot hold (an int64 above 2^53, a decimal such as 100.10)
                 // can still be compared as written. ofOrNull returns null for exponent forms,
                 // which stay on the Double path.
-                val token = previous()
+                val numberToken = previous()
                 Expression.NumberLiteral(
-                    token.literal as Double,
-                    Location.from(token),
-                    ExactNumber.ofOrNull(token.lexeme)
+                    numberToken.literal as Double,
+                    Location.from(numberToken),
+                    ExactNumber.ofOrNull(numberToken.lexeme)
                 )
             }
             match(TokenType.STRING) -> {
@@ -1086,7 +1090,7 @@ class Parser(
                         val allExpressions: List<Expression> = letBindings + letExpr
                         return Expression.Block(allExpressions, Location.from(startToken))
                     }
-                    else -> throw error("Unexpected expression type from let/function: ${letExpr::class.simpleName}")
+                    else -> error("Unexpected expression type from let/function: ${letExpr::class.simpleName}")
                 }
 
                 // F02: Accept newline, semicolon, or comma as separator after let/function in blocks
@@ -1097,7 +1101,7 @@ class Parser(
                     // More content follows that's not another let/function
                     // Accept newline as implicit separator (F02), or explicit ; or ,
                     if (!hasNewlineBefore() && !match(TokenType.SEMICOLON) && !match(TokenType.COMMA)) {
-                        throw error("Expected newline, ';' or ',' after let binding or function definition in block expression")
+                        error("Expected newline, ';' or ',' after let binding or function definition in block expression")
                     } else {
                         // Consume optional explicit separator even if newline already separated
                         match(TokenType.COMMA) || match(TokenType.SEMICOLON)
@@ -1174,12 +1178,14 @@ class Parser(
 
                     // Check for attribute syntax (@key or "@key") or directive syntax (%key)
                     var isAttribute = match(TokenType.AT)
-                    var isDirective = false
                     var key: String
 
                     if (match(TokenType.PERCENT)) {
                         // USDL directive: %namespace, %types, %kind, etc.
-                        isDirective = true
+                        // A local `isDirective = true` was set here (and in the quoted-name branch
+                        // below) by the USDL work in 2c9cd917. Nothing ever read it, so it was
+                        // removed in 1.4.0; see the note in the quoted branch for what carries the
+                        // information instead.
                         val directiveName = consume(TokenType.IDENTIFIER, "Expected directive name after %").lexeme
                         key = "%" + directiveName
                     } else if (check(TokenType.IDENTIFIER)) {
@@ -1201,11 +1207,11 @@ class Parser(
                             isAttribute = true
                             key = key.substring(1)  // Remove @ prefix
                         }
-                        // Check if it's a directive (starts with %)
-                        if (key.startsWith("%")) {
-                            isDirective = true
-                            // Keep the % prefix for directives
-                        }
+                        // Was: `if (key.startsWith("%")) { isDirective = true }`. The flag went
+                        // unread, because a directive keeps its leading % in the key and consumers
+                        // test for that directly -- DirectiveValidator, JSONSchemaParser, EDMXParser
+                        // and AvroSchemaParser all filter on key.startsWith("%"). Nothing to strip
+                        // or flag here, which is why the branch is now empty of logic.
                     } else if (peek().isKeyword()) {
                         // Allow keywords as property names in object literals
                         // e.g., { template: value, match: value, input: value }
@@ -1219,7 +1225,7 @@ class Parser(
                         properties.add(Property(null, value, Location.from(previous()), isAttribute = false, isSpread = false, computedKey = computedKeyExpr))
                         continue
                     } else {
-                        throw error("Expected property name or spread operator")
+                        error("Expected property name or spread operator")
                     }
 
                     consume(TokenType.COLON, "Expected ':' after property name")
@@ -1441,12 +1447,12 @@ class Parser(
 
         return when {
             match(TokenType.NUMBER) -> {
-                val token = previous()
+                val numberToken = previous()
                 // B35: same treatment as an expression literal. Without it, `match` against an
                 // int64 above 2^53 compared the Double reading of the arm, so the arm the author
                 // wrote never matched and a neighbouring arm could match instead.
-                val value: Any = ExactNumber.ofOrNull(token.lexeme) ?: (token.literal as Double)
-                Pattern.Literal(value, Location.from(token))
+                val value: Any = ExactNumber.ofOrNull(numberToken.lexeme) ?: (numberToken.literal as Double)
+                Pattern.Literal(value, Location.from(numberToken))
             }
             match(TokenType.STRING) -> {
                 val value = previous().literal as String

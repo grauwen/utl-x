@@ -9,18 +9,29 @@ import com.glomidco.utlx.core.lexer.TokenType
  */
 object ParseErrorEnhancer {
 
+    // Removed in 1.4.0: a `source: String` parameter that ran through enhance() ->
+    // detectCommonMistakes() -> detectFnWrapperInLambda(), and an `originalMessage: String`
+    // parameter on detectAtSignInsteadOfDollar(). Both came in with 25574c3e ("enhanced error
+    // handling - better feedback"), where the plan was evidently to quote the offending source
+    // line, and to fold the parser's original wording into the enhanced text.
+    //
+    // Neither detector ever read them -- they work purely from the token stream and rebuild the
+    // message from scratch -- so the arguments were threaded three levels deep for nothing. If
+    // source quoting is wanted, note that the CLI already renders a source excerpt from the
+    // exception's Location (see ValidateCommand's error output), so passing the text down here may
+    // not be the right design anyway.
+
     /**
      * Enhance a parse exception with a more helpful error message
      *
      * @param error The original parse exception
-     * @param source The original UTLX source code
      * @param tokens The list of all tokens
      * @param position The position where the error occurred
      * @return Enhanced parse exception with better error message
      */
-    fun enhance(error: ParseException, source: String, tokens: List<Token>, position: Int): ParseException {
+    fun enhance(error: ParseException, tokens: List<Token>, position: Int): ParseException {
         // Try to detect common patterns and provide better error messages
-        val enhancedMessage = detectCommonMistakes(error.message, source, tokens, position)
+        val enhancedMessage = detectCommonMistakes(error.message, tokens, position)
 
         return if (enhancedMessage != null) {
             ParseException(enhancedMessage, error.location)
@@ -32,13 +43,13 @@ object ParseErrorEnhancer {
     /**
      * Detect common mistake patterns and return enhanced error message
      */
-    private fun detectCommonMistakes(originalMessage: String?, source: String, tokens: List<Token>, position: Int): String? {
+    private fun detectCommonMistakes(originalMessage: String?, tokens: List<Token>, position: Int): String? {
         if (originalMessage == null) return null
 
         // Pattern: "Expected ')'" - often caused by fn() wrapper in lambda expressions
         // e.g., filter($data, fn(x) => x.value > 10) should be filter($data, x => x.value > 10)
         if (originalMessage.contains("Expected ')'")) {
-            val fnLambdaError = detectFnWrapperInLambda(tokens, position, source)
+            val fnLambdaError = detectFnWrapperInLambda(tokens, position)
             if (fnLambdaError != null) return fnLambdaError
         }
 
@@ -53,7 +64,7 @@ object ParseErrorEnhancer {
         if (originalMessage.contains("Undefined variable") ||
             originalMessage.contains("not found") ||
             originalMessage.contains("Expected")) {
-            return detectAtSignInsteadOfDollar(tokens, position, originalMessage)
+            return detectAtSignInsteadOfDollar(tokens, position)
         }
 
         return null
@@ -99,7 +110,7 @@ object ParseErrorEnhancer {
      *
      * This is one of the most common errors when coming from languages that use 'fn' or 'function' keywords.
      */
-    private fun detectFnWrapperInLambda(tokens: List<Token>, errorPosition: Int, source: String): String? {
+    private fun detectFnWrapperInLambda(tokens: List<Token>, errorPosition: Int): String? {
         // Look backward for pattern: IDENTIFIER("fn") LEFT_PAREN
         // This indicates someone tried to use fn(param) => expression syntax
 
@@ -159,7 +170,7 @@ object ParseErrorEnhancer {
      * Detect using @ instead of $ for input references in multi-input scenarios
      * Example: @input2.field should be $input2.field
      */
-    private fun detectAtSignInsteadOfDollar(tokens: List<Token>, errorPosition: Int, originalMessage: String): String? {
+    private fun detectAtSignInsteadOfDollar(tokens: List<Token>, errorPosition: Int): String? {
         // Look for AT token followed by IDENTIFIER that looks like an input name
         val token = tokens.getOrNull(errorPosition)
 

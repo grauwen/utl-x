@@ -430,10 +430,20 @@ object ValidateFunctions {
         val max = asNumber(args.getOrNull(3))
             ?: return malformedRule(payload, "inRange", "max must be a number", field)
         val v = asNumber(props(payload)[field])
+        // Removed in 1.4.0: the `min != null &&` / `max != null &&` guards that used to lead the
+        // two comparison branches below. They were vacuous -- the elvis-returns above already exit
+        // via malformedRule() when either bound is not a number, so min and max are non-null here
+        // and the compiler reported both tests as always true.
+        //
+        // This matters more than usual in this file: VB04 was a fail-OPEN defect, where malformed
+        // arguments made a validator report success. Dropping these guards does not reintroduce
+        // that, because the fail-closed behaviour lives in the elvis-returns, not here -- a
+        // non-numeric bound still produces malformedRule(), and the four paths (below / within /
+        // above / non-numeric field) were re-checked after the change.
         val issues = when {
             v == null -> listOf(ValidationIssue(field, "Field '$field' is not a number (inRange)"))
-            min != null && v < min -> listOf(ValidationIssue(field, "Field '$field' ($v) is below minimum $min"))
-            max != null && v > max -> listOf(ValidationIssue(field, "Field '$field' ($v) is above maximum $max"))
+            v < min -> listOf(ValidationIssue(field, "Field '$field' ($v) is below minimum $min"))
+            v > max -> listOf(ValidationIssue(field, "Field '$field' ($v) is above maximum $max"))
             else -> emptyList()
         }
         return validationResult(payload, issues, totalChecks = 1)

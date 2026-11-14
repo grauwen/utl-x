@@ -162,7 +162,13 @@ object PluralizationFunctions {
         
         // Check for irregular plurals
         irregularPlurals[singular]?.let {
-            return UDM.Scalar(matchCase(singular, it, (word as UDM.Scalar).value?.toString() ?: ""))
+            // 1.4.0 dropped a `(word as UDM.Scalar)` here and at the three equivalent spots in
+            // pluralize()/singularize() below. `word` is already narrowed to UDM.Scalar by the
+            // argument check at the top of each function, so Kotlin smart-casts it and the compiler
+            // reported "No cast needed". Nothing was being coerced -- the cast asserted a type the
+            // control flow had already proved. Case matching is unaffected: pluralize("Mouse") is
+            // still "Mice" and pluralize("CITY") still "CITIES".
+            return UDM.Scalar(matchCase(singular, it, word.value?.toString() ?: ""))
         }
         
         // Apply regular pluralization rules
@@ -203,7 +209,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDM.Scalar(matchCase(singular, plural, (word as UDM.Scalar).value?.toString() ?: ""))
+        return UDM.Scalar(matchCase(singular, plural, word.value?.toString() ?: ""))
     }
     
     @UTLXFunction(
@@ -257,7 +263,7 @@ object PluralizationFunctions {
         
         // Check for irregular singulars
         irregularSingulars[plural]?.let {
-            return UDM.Scalar(matchCase(plural, it, (word as UDM.Scalar).value?.toString() ?: ""))
+            return UDM.Scalar(matchCase(plural, it, word.value?.toString() ?: ""))
         }
         
         // Apply regular singularization rules
@@ -313,7 +319,7 @@ object PluralizationFunctions {
         }
         
         // Match the case of the original word
-        return UDM.Scalar(matchCase(plural, singular, (word as UDM.Scalar).value?.toString() ?: ""))
+        return UDM.Scalar(matchCase(plural, singular, word.value?.toString() ?: ""))
     }
     
     @UTLXFunction(

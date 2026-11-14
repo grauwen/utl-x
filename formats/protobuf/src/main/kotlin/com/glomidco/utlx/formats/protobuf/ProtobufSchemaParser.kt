@@ -356,9 +356,17 @@ class ProtobufSchemaParser {
         if (parts.size < 3) return null
 
         var label = ProtoField.FieldLabel.SINGULAR
-        var type = ""
-        var name = ""
-        var number = 0
+        // Were `var type = ""`, `var name = ""`, `var number = 0`. The initializers were removed in
+        // 1.4.0 because every branch of the `when` below assigns all three before anything reads
+        // them -- the compiler confirms that (it accepts the declarations without initializers,
+        // which it only does when assignment is definite on every path, and it had reported the
+        // initializers as redundant).
+        //
+        // Keeping them uninitialized is the stricter choice: add a `when` branch that forgets to
+        // set one and the compiler says so, instead of a field silently serialising as "" or 0.
+        var type: String
+        var name: String
+        var number: Int
         var mapKeyType: String? = null
         var mapValueType: String? = null
 

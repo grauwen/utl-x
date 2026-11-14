@@ -353,14 +353,21 @@ class RestApiServer(
                                         // No errors - valid!
                                     }
                                     is TypeCheckResult.Failure -> {
-                                        // Add type errors as diagnostics
+                                        // Add type errors as diagnostics.
+                                        // 1.4.0 dropped the `?.` from error.location?.line /
+                                        // ?.column here and in the parse-error block below (four
+                                        // in total). TypeError.location and ParseError.location are
+                                        // both declared non-null Location, so the safe calls could
+                                        // never short-circuit; Diagnostic.line/column stay nullable
+                                        // for callers that have no position. No defence was lost --
+                                        // a null location is not representable upstream.
                                         typeCheckResult.errors.forEach { error ->
                                             diagnostics.add(
                                                 Diagnostic(
                                                     severity = if (request.strict) "error" else "warning",
                                                     message = error.message,
-                                                    line = error.location?.line,
-                                                    column = error.location?.column,
+                                                    line = error.location.line,
+                                                    column = error.location.column,
                                                     source = "type-checker"
                                                 )
                                             )
@@ -375,8 +382,8 @@ class RestApiServer(
                                         Diagnostic(
                                             severity = "error",
                                             message = error.message,
-                                            line = error.location?.line,
-                                            column = error.location?.column,
+                                            line = error.location.line,
+                                            column = error.location.column,
                                             source = "parser"
                                         )
                                     )
@@ -439,8 +446,14 @@ class RestApiServer(
                         // (N inputs are handled by /api/execute-multipart.)
                         val inputName = firstDeclaredInputName(completeUtlx)
 
-                        // Use TransformationService for transformation
-                        val (outputData, outputFormat) = transformationService.transform(
+                        // Use TransformationService for transformation.
+                        // The second component was `outputFormat` here and in
+                        // /api/execute-multipart below; both went unread and became `_` in 1.4.0.
+                        // ExecutionResponse carries no format field (success, output,
+                        // executionTimeMs only), so the resolved format has nowhere to go. If a
+                        // client ever needs to know what format it got back, add the field to
+                        // ExecutionResponse and bind this component again -- the value is available.
+                        val (outputData, _) = transformationService.transform(
                             utlxSource = completeUtlx,
                             inputs = mapOf(inputName to TransformationService.InputData(
                                 content = request.input,
@@ -560,7 +573,7 @@ class RestApiServer(
                         }.toMap()
 
                         // Use TransformationService for transformation
-                        val (outputData, outputFormat) = transformationService.transform(
+                        val (outputData, _) = transformationService.transform(
                             utlxSource = utlxSource!!,
                             inputs = serviceInputs,
                             options = TransformationService.TransformOptions(

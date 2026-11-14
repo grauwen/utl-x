@@ -299,7 +299,11 @@ class AvroSchemaSerializer(
 
         if (default != null) {
             fieldProps["default"] = default
-        } else if (!required && default == null) {
+        } else if (!required) {
+            // Was `else if (!required && default == null)`; the `default == null` half was removed
+            // in 1.4.0 because reaching this branch already means default IS null -- the `if` above
+            // tested the opposite. The compiler reported it as always true. No condition was
+            // weakened: both forms select exactly the same fields.
             // For optional fields without explicit default, add null as default
             fieldProps["default"] = UDM.Scalar(null)
         }

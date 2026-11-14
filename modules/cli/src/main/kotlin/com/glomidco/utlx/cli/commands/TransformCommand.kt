@@ -318,9 +318,16 @@ object TransformCommand {
 
         // Track execution time for capture
         val startTime = System.currentTimeMillis()
-        var captureSuccess = false
-        var captureError: String? = null
-        var captureOutputData = ""
+        // Removed in 1.4.0: `var captureSuccess = false` and `var captureOutputData = ""`, both
+        // from the Auto-Test-Capture work (c4bb6be7). They were written on the success path and
+        // never read: both TestCaptureService.captureExecution() call sites pass their own locals
+        // (`outputData` / `success = true` on the happy path, `captureError` / `success = false` in
+        // the catch), so the two mirror variables duplicated state that was already to hand.
+        // Capturing itself is unaffected -- see the two call sites below.
+        //
+        // captureError stays, because the catch block does read it. Its `= null` initializer went
+        // too: it is assigned as the first statement of the catch, before any read.
+        var captureError: String?
 
         try {
             // Step 2: Read input files and create InputData map
@@ -424,8 +431,12 @@ object TransformCommand {
 
             if (options.expression != null) {
                 // Expression mode: synthesize script from inline expression
-                val primaryInput = inputs.values.first()
-
+                // Removed in 1.4.0: `val primaryInput = inputs.values.first()`, dating from the CLI
+                // rework (9acd3e69 / e29debdb). The synthesized script references $input by name
+                // rather than needing the InputData here, so the binding went unread. Its only
+                // other effect would have been to throw NoSuchElementException on an empty map,
+                // which is not reachable: even `-n` (no input) registers one entry, bound to a null
+                // document -- verified with `utlx -n -e '1+1'`.
                 // Expression mode defaults to JSON output
                 effectiveOutputFormat = options.outputFormat ?: "json"
 
@@ -523,8 +534,13 @@ ${"$"}input"""
                 // B26: friendly message for an empty script, instead of the parser-internal
                 // "Expected '---' separator after header" the user would otherwise see.
                 if (scriptContent.isBlank()) {
+                    // 1.4.0 dropped a redundant `!!` here and at the two captureExecution() calls
+                    // below: each sits inside a `options.scriptFile != null` check (or, here, after
+                    // the non-null read on the line above), so the compiler already smart-casts it.
+                    // Nothing was asserted that the surrounding control flow had not established --
+                    // no intent lost, just an assertion that could never fire.
                     return CommandResult.Failure(
-                        "Script file is empty: ${options.scriptFile!!.absolutePath}", 1)
+                        "Script file is empty: ${options.scriptFile.absolutePath}", 1)
                 }
                 effectiveOutputFormat = options.outputFormat
             }
@@ -569,8 +585,6 @@ ${"$"}input"""
             val outcome = transformationService.transformWithUdm(scriptContent, inputsWithArgs, serviceOptions)
             val outputData = outcome.output
             val outputFormat = outcome.outputFormat
-            captureOutputData = outputData
-            captureSuccess = true
 
             if (options.verbose) {
                 println("Output format: $outputFormat")
@@ -608,7 +622,7 @@ ${"$"}input"""
                     success = true,
                     error = null,
                     durationMs = durationMs,
-                    scriptFile = options.scriptFile!!,
+                    scriptFile = options.scriptFile,
                     overrideEnabled = options.captureEnabled
                 )
             }
@@ -652,7 +666,7 @@ ${"$"}input"""
                         success = false,
                         error = captureError,
                         durationMs = durationMs,
-                        scriptFile = options.scriptFile!!,
+                        scriptFile = options.scriptFile,
                         overrideEnabled = options.captureEnabled
                     )
                 } catch (captureException: Exception) {

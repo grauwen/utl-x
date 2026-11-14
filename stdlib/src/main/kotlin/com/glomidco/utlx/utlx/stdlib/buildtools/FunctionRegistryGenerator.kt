@@ -63,17 +63,19 @@ object FunctionRegistryGenerator {
             sb.appendLine("$category Functions (${functions.size}):")
             sb.appendLine("-".repeat(40))
             functions.forEach { func ->
-                val args = when {
-                    func.minArgs == func.maxArgs && func.minArgs != null -> " (${func.minArgs} args)"
-                    func.minArgs != null && func.maxArgs != null -> " (${func.minArgs}-${func.maxArgs} args)"
-                    func.minArgs != null -> " (${func.minArgs}+ args)"
-                    func.maxArgs != null -> " (≤${func.maxArgs} args)"
-                    else -> ""
-                }
+                // Was a five-branch `when` (duplicated in formatArguments() below) with cases for
+                // "minArgs only" -> " (N+ args)", "maxArgs only" -> " (<=N args)" and a final
+                // `else -> ""` for neither being known. All three were unreachable and were removed
+                // in 1.4.0: FunctionInfo declares `minArgs: Int = -1` / `maxArgs: Int = -1`, not
+                // Int?, so `!= null` is always true. The nullable shape the branches were written
+                // for no longer exists; -1 is the "unknown" marker now, and it prints verbatim.
+                // Renamed from `args` at the same time -- it shadowed the top-level `args` parameter.
+                val arity = if (func.minArgs == func.maxArgs) " (${func.minArgs} args)"
+                            else " (${func.minArgs}-${func.maxArgs} args)"
                 val aliasMarker = if (func.isAlias && func.aliasOf != null) {
                     " [alias → ${func.aliasOf}]"
                 } else ""
-                sb.appendLine("  ${func.name}${args}${aliasMarker} - ${func.description}")
+                sb.appendLine("  ${func.name}${arity}${aliasMarker} - ${func.description}")
             }
             sb.appendLine()
         }
@@ -107,9 +109,9 @@ private fun handleCommands(args: Array<String>) {
             println("UTL-X Standard Library Functions (${registry.totalFunctions} total):")
             println("=".repeat(60))
             registry.functions.forEach { func ->
-                val args = formatArguments(func)
+                val arity = formatArguments(func)
                 val aliasMarker = if (func.isAlias && func.aliasOf != null) " [alias → ${func.aliasOf}]" else ""
-                println("${func.name}${args}${aliasMarker} - ${func.description}")
+                println("${func.name}${arity}${aliasMarker} - ${func.description}")
             }
         }
         
@@ -120,8 +122,8 @@ private fun handleCommands(args: Array<String>) {
                 println("\n$category (${functions.size} functions):")
                 println("-".repeat(30))
                 functions.forEach { func ->
-                    val args = formatArguments(func)
-                    println("  ${func.name}${args}")
+                    val arity = formatArguments(func)
+                    println("  ${func.name}${arity}")
                 }
             }
         }
@@ -149,9 +151,9 @@ private fun handleCommands(args: Array<String>) {
             println("Functions matching '$pattern' (${matches.size} found):")
             println("=".repeat(50))
             matches.forEach { func ->
-                val args = formatArguments(func)
+                val arity = formatArguments(func)
                 val aliasMarker = if (func.isAlias && func.aliasOf != null) " [alias → ${func.aliasOf}]" else ""
-                println("${func.name}${args}${aliasMarker} - ${func.description}")
+                println("${func.name}${arity}${aliasMarker} - ${func.description}")
             }
         }
         
@@ -206,11 +208,17 @@ EXAMPLES:
 }
 
 private fun formatArguments(func: com.glomidco.utlx.stdlib.FunctionInfo): String {
-    return when {
-        func.minArgs == func.maxArgs && func.minArgs != null -> " (${func.minArgs} args)"
-        func.minArgs != null && func.maxArgs != null -> " (${func.minArgs}-${func.maxArgs} args)"
-        func.minArgs != null -> " (${func.minArgs}+ args)"
-        func.maxArgs != null -> " (≤${func.maxArgs} args)"
-        else -> ""
-    }
+    // Removed in 1.4.0, same as the inline copy in generateTextReport():
+    //     func.minArgs != null -> " (${'$'}{func.minArgs}+ args)"      // open-ended arity
+    //     func.maxArgs != null -> " (<=${'$'}{func.maxArgs} args)"     // capped arity
+    //     else -> ""                                                   // arity unknown
+    // All three were dead, because FunctionInfo holds `minArgs: Int = -1` / `maxArgs: Int = -1`
+    // rather than Int?, so the null tests were always true and the first two branches always won.
+    //
+    // Worth knowing: -1 IS the "unknown" marker in the current model (avg, count, max, min and sum
+    // carry it), and this renders it literally -- "(-1 args)". That is unchanged by the removal,
+    // but it is the display wart those `else` branches were presumably meant to avoid, and it is
+    // now the only place to fix it.
+    return if (func.minArgs == func.maxArgs) " (${func.minArgs} args)"
+           else " (${func.minArgs}-${func.maxArgs} args)"
 }

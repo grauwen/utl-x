@@ -96,10 +96,13 @@ fun detectBundleMode(dataDirPath: Path?): BundleInfo {
  */
 fun loadUtlar(utlarPath: Path, engine: UtlxEngine): Int {
     val zipBytes = Files.readAllBytes(utlarPath)
-    val jsonMapper = ObjectMapper().apply {
-        registerModule(kotlinModule())
-        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-    }
+    // Removed in 1.4.0: a sibling `jsonMapper = ObjectMapper()` configured exactly like the YAML
+    // one below. It was never used, and the archive format explains why: the loop below reads only
+    // `*.utlx` sources and `transform.yaml` configs, so there is no JSON entry in a .utlar for it
+    // to parse. A JSON manifest variant was evidently considered and the format settled on YAML
+    // (see docs/features/EF03-bundle-management-api.md, which documents transform.yaml as the
+    // optional per-transformation config). Supporting transform.json would mean adding a branch to
+    // the ZIP loop as well as a mapper -- the mapper alone bought nothing.
     val yamlMapper = ObjectMapper(YAMLFactory()).apply {
         registerModule(kotlinModule())
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)

@@ -234,9 +234,18 @@ object JsonPatchFunctions {
         val patchOps = args[1].asArray()
             ?: throw FunctionArgumentException("jsonPatch second argument must be an array of patch operations")
 
-        // Save original for rollback
-        val original = document
-
+        // Removed in 1.4.0:
+        //     // Save original for rollback
+        //     val original = document
+        // from the F15 (RFC 6902) implementation, 08aca185. RFC 6902 requires a patch to be applied
+        // atomically -- "if any operation fails, the whole patch fails" -- so keeping the original
+        // to restore was the right instinct. It was never used for that, and it does not need to
+        // be: UDM values are immutable, so each operation below builds a NEW document and the
+        // caller's input is never mutated. If an operation throws, the exception propagates and the
+        // caller still holds its original document, which is the atomicity the RFC asks for.
+        //
+        // Keep that in mind before introducing any in-place mutation here: the atomicity guarantee
+        // rests on immutability, not on a saved copy.
         try {
             for ((i, op) in patchOps.elements.withIndex()) {
                 val opObj = op.asObject()

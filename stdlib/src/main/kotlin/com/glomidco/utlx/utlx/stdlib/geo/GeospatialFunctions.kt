@@ -119,9 +119,15 @@ object GeospatialFunctions {
         }
 
         val lat1 = Math.toRadians(lat1Val)
-        val lon1 = Math.toRadians(lon1Val)
         val lat2 = Math.toRadians(lat2Val)
-        val lon2 = Math.toRadians(lon2Val)
+        // Removed in 1.4.0: `val lon1 = Math.toRadians(lon1Val)` and `val lon2 = ...`, which
+        // completed the set of four pre-converted radian values this function used to work from.
+        // The B25 rework below changed the formula to derive its deltas from the DEGREE values --
+        // `toRadians(lon2Val - lon1Val)` -- for bit-for-bit reproducibility, which left the two
+        // longitude conversions unread while lat1/lat2 are still needed for the cos() terms.
+        //
+        // Longitude is still fully part of the calculation (via dLon), and still validated below:
+        // distance(0,0,0,1) = 111.19 km and distance(0,0,0,2) = 222.39 km.
 
         // Validate coordinates
         validateCoordinates(lat1Val, lon1Val)

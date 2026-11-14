@@ -251,16 +251,16 @@ object InterpreterErrorEnhancer {
         return dp[len1][len2]
     }
 
-    /**
-     * Check if environment has input variables (variables starting with $)
-     *
-     * Note: This is a simplified check. Since we're in an execution context,
-     * we assume input variables exist. A more sophisticated check would
-     * traverse the environment chain, but that requires access to internal bindings.
-     */
-    private fun hasInputVariables(env: Environment): Boolean {
-        return true // Assume we're in execution context with inputs
-    }
+    // Removed in 1.4.0: `private fun hasInputVariables(env: Environment): Boolean`.
+    //
+    // It arrived with the error-feedback work in 25574c3e, intended to answer "does this
+    // environment hold any $input bindings?" so a message could distinguish a genuinely missing
+    // input from a typo. It never did that: the body was `return true`, and its own comment said a
+    // real check "would traverse the environment chain, but that requires access to internal
+    // bindings". Nothing ever called it, so the stub could not even mislead a caller.
+    //
+    // If that distinction is wanted again, it needs Environment to expose its bindings (or a
+    // `hasBinding(prefix)` query) rather than a constant -- which is the work the stub stood in for.
 
     /**
      * Enhance error message for type mismatches

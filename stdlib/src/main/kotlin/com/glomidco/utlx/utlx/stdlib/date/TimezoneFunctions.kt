@@ -39,14 +39,27 @@ object TimezoneFunctions {
         
         return try {
             val fromZone = TimeZone.of(fromTz)
-            val toZone = TimeZone.of(toTz)
-            
+            // Was `val toZone = TimeZone.of(toTz)`, paired with a
+            // `val localInTo = instantInUTC.toLocalDateTime(toZone)` further down (both from the
+            // original TimezoneFunctions.kt, f86d0e42). Together they computed the wall-clock time
+            // in the TARGET zone -- which is what a reader expects "convertTimezone" to return.
+            // Nothing read either: the function returns the instant instead, because UDM.DateTime
+            // holds an instant and an instant has no zone of its own, so there is nowhere to put
+            // the target zone. Both bindings were removed in 1.4.0.
+            //
+            // The CALL stays: TimeZone.of() throws for an unknown id and the catch below turns that
+            // into "Invalid timezone", so this line is the argument validation for toTz. Dropping
+            // it would silently accept convertTimezone(d, "UTC", "Nowhere/Fake").
+            //
+            // If zone-aware output is wanted, that needs a UDM type carrying a zone (or returning
+            // the formatted local time as a string) -- not a change here.
+            TimeZone.of(toTz)
+
             // Convert through UTC
             val kotlinxDate = toKotlinxInstant(date)
             val localInFrom = kotlinxDate.toLocalDateTime(fromZone)
             val instantInUTC = localInFrom.toInstant(fromZone)
-            val localInTo = instantInUTC.toLocalDateTime(toZone)
-            
+
             // Return the instant (which is timezone-agnostic)
             UDM.DateTime(toJavaInstant(instantInUTC))
         } catch (e: Exception) {
@@ -306,9 +319,20 @@ object TimezoneFunctions {
         val tzId = args[1].asString()
         
         return try {
-            val tz = TimeZone.of(tzId)
-            val kotlinxUtcDate = toKotlinxInstant(utcDate)
-            val localDateTime = kotlinxUtcDate.toLocalDateTime(tz)
+            // Was:
+            //     val tz = TimeZone.of(tzId)
+            //     val kotlinxUtcDate = toKotlinxInstant(utcDate)
+            //     val localDateTime = kotlinxUtcDate.toLocalDateTime(tz)
+            // i.e. the local wall-clock time in tzId -- exactly what this function's KDoc above
+            // promises ("Get local datetime from UTC in specified timezone"). It was computed and
+            // discarded; the function returns the UTC instant unchanged. Same root cause as
+            // convertTimezone(): UDM.DateTime carries an instant, which has no zone. Removed in
+            // 1.4.0, leaving only the validating call, because that is all the code actually did.
+            //
+            // So the KDoc overstates the behaviour. Fixing that means either returning a formatted
+            // local time or giving UDM a zoned type -- a behaviour change, deliberately not made in
+            // a warning-cleanup pass.
+            TimeZone.of(tzId)
             // Return as instant but user understands it's in that timezone
             UDM.DateTime(utcDate)
         } catch (e: Exception) {

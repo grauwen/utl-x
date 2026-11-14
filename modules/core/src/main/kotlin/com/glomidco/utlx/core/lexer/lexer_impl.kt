@@ -268,8 +268,11 @@ class Lexer(private val source: String) {
         }
         
         advance() // closing quote
-        
-        val lexeme = source.substring(start, current)
+
+        // Removed in 1.4.0: `val lexeme = source.substring(start, current)`, which was never read.
+        // number() and identifier() below do need their lexeme -- to parse the numeric value and to
+        // look up keywords -- but a string token's value is the unescaped text accumulated in
+        // `value`, not the raw source slice, so there was nothing here for the lexeme to do.
         addToken(TokenType.STRING, start, startColumn, value.toString())
     }
     
@@ -331,7 +334,9 @@ class Lexer(private val source: String) {
         // Allow hyphens in dollar identifiers: $input-name, $my-variable, etc.
         while (peek().isLetterOrDigit() || peek() == '_' || peek() == '-') advance()
 
-        val lexeme = source.substring(start, current)
+        // Removed in 1.4.0: `val lexeme = source.substring(start, current)`, never read. Unlike
+        // identifier(), this function deliberately does NOT consult Keywords -- see below -- so it
+        // had no use for the slice.
         // $identifier is always treated as an IDENTIFIER token (not a keyword)
         // The lexeme includes the $ prefix
         addToken(TokenType.IDENTIFIER, start, startColumn, null)

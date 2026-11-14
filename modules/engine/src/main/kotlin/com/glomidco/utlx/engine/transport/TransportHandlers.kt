@@ -194,7 +194,13 @@ object TransportHandlers {
         val contentType = req.contentType.ifEmpty { "application/json" }
         val charset = parseCharsetFromContentType(contentType)
         val payloadBytes = PayloadBytes(rawBytes, charset, contentType)
-        val input = payloadBytes.decodeToString()  // String fallback for existing code paths
+        // Removed in 1.4.0: `val input = payloadBytes.decodeToString()  // String fallback for
+        // existing code paths`, added by EB01 (7b8a54a5) while moving this handler from strings to
+        // raw bytes. It was a bridge for callers downstream that still wanted a String; by now
+        // every path below works from `payloadBytes` / `rawBytes` (deliberately -- EB01 exists
+        // because decoding early loses the sender's encoding), so the bridge had no users and the
+        // eager decode was pure cost. Note the size check below counts BYTES, not characters, for
+        // the same reason.
 
         // EF03: Per-transformation maxInputSize check (use byte length, not char length)
         val maxInputBytes = com.glomidco.utlx.engine.config.parseSizeToBytes(instance.config.maxInputSize)

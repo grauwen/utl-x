@@ -193,6 +193,14 @@ class XMLParser(
         // Decide whether to inherit namespace declarations
         // By default (inheritNamespaces=false), keep only declarations from this element (clean output)
         // If inheritNamespaces=true, merge parent namespaces (causes pollution but preserves full context)
+        //
+        // Either way xmlns declarations STAY in the attribute map: buildNsContextMetadata below
+        // and the serializers need the full set. Do not filter them here, and do not reintroduce a
+        // "has real attributes" test in the parser -- that distinction (xmlns bookkeeping vs. an
+        // actual attribute) decides whether a _text-only element may collapse to a bare value,
+        // which depends on writeAttributes and the output format. It is made where the output is
+        // produced: json_serializer.kt, YAMLSerializer.kt and Interpreter's unwrap. B14 added the
+        // test, and a copy of it sat unread in this function until the 1.4.0 warning cleanup.
         val finalAttributes = if (inheritNamespaces) {
             val merged = attributes.toMutableMap()
             merged.putAll(namespaces)
@@ -255,11 +263,6 @@ class XMLParser(
 
         // Build UDM based on content
         val content = textContent.trimmed()
-
-        // Check if element has real attributes (not just inherited xmlns declarations)
-        val hasRealAttributes = attributes.any { (key, _) ->
-            !key.startsWith("xmlns") && key != "xmlns"
-        }
 
         return when {
             children.isEmpty() && content.isEmpty() -> {
@@ -557,7 +560,11 @@ class XMLParser(
         repeat(9) { advance() } // Skip <!DOCTYPE
         var depth = 0 // bracket depth of an internal subset — a '>' inside it is not the end
         while (!isAtEnd()) {
-            when (val c = advance()) {
+            // Was `when (val c = advance())`. The binding was never referenced -- every branch
+            // matches a literal and none needs the character itself -- so 1.4.0 dropped it. The
+            // subject is still evaluated exactly once per iteration, so the scan advances
+            // identically; only the unused name is gone.
+            when (advance()) {
                 '['  -> depth++
                 ']'  -> if (depth > 0) depth--
                 '>'  -> if (depth == 0) return

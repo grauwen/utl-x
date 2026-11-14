@@ -34,7 +34,16 @@ object TestDeduplicator {
      * Check if a similar test exists (same transformation, different input)
      */
     fun findSimilarTests(transformation: String, captureLocation: String): List<File> {
-        val transformationHash = transformation.hashToMd5().substring(0, 8)
+        // Removed in 1.4.0: `val transformationHash = transformation.hashToMd5().substring(0, 8)`,
+        // from the Auto-Test-Capture work (c4bb6be7). It mirrors generateTestId() above, so the
+        // intent was presumably to recognise a sibling test by a hash of the transformation alone
+        // (that being the "same transformation, different input" case this function is named for).
+        // That was never wired up: the match below is a plain substring search of each file's text,
+        // which is what actually implements "same transformation". The hash went unread.
+        //
+        // Note the two are not equivalent -- a hash would match the whole transformation exactly,
+        // whereas contains() also matches a transformation embedded in a larger one. Switching to
+        // hash comparison would be a behaviour change, not a cleanup, so it was left alone.
         val captureDir = File(captureLocation)
         if (!captureDir.exists()) return emptyList()
 

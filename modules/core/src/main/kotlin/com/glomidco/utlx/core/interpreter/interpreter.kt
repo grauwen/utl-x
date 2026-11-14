@@ -282,9 +282,15 @@ class Interpreter(
             gatedProgram = program
         }
 
-        // Extract metadata from all inputs for smart error enhancement
+        // Extract metadata from all inputs for smart error enhancement.
+        // Was: `spec?.type?.name?.lowercase() ?: "unknown"`. Both safe calls and the "unknown"
+        // fallback were removed in 1.4.0: a declared input always carries a non-null FormatSpec
+        // whose FormatType is non-null, because a header without a format does not parse (see
+        // parseFormatSpec, where a missing format is a parse error rather than a default). The
+        // fallback therefore described a state the type system already rules out, and no input
+        // was ever labelled "unknown" at runtime.
         val inputFormats = program.header.inputs.associate { (name, spec) ->
-            name to (spec?.type?.name?.lowercase() ?: "unknown")
+            name to spec.type.name.lowercase()
         }
         val inputMetadata = InputMetadataExtractor.extractAll(namedInputs, inputFormats)
 
@@ -611,14 +617,10 @@ class Interpreter(
                 }
             }
             
-            is Expression.Block -> {
-                var result: RuntimeValue = RuntimeValue.NullValue
-                for (e in expr.expressions) {
-                    result = evaluate(e, env)
-                }
-                result
-            }
-            
+            // Removed in 1.4.0: a second `is Expression.Block ->` branch stood here, identical to
+            // the one above at the top of this `when` apart from its loop variable's name. Kotlin
+            // takes the first matching branch, so this copy was unreachable; the compiler flagged
+            // it as a duplicate label. Block evaluation itself is unchanged -- see the live branch.
             is Expression.Match -> evaluateMatch(expr, env)
 
             is Expression.TryCatch -> evaluateTryCatch(expr, env)
@@ -1835,7 +1837,14 @@ class Interpreter(
                     runtimeValueToUDM(result)
                 }
             }
-            else -> throw RuntimeError("Cannot convert ${value::class.simpleName} to UDM for stdlib function call")
+            // Removed in 1.4.0:
+            //   else -> throw RuntimeError("Cannot convert ${'$'}{value::class.simpleName} to UDM for stdlib function call")
+            // It came in with dynamic function injection (cc6dc20a) as a runtime guard for a value
+            // the converter did not recognise. The when is now exhaustive over the sealed
+            // RuntimeValue hierarchy, so the branch was unreachable and Kotlin reported the `else`
+            // as redundant. Dropping it is the stronger guarantee: adding a RuntimeValue subtype
+            // now fails to compile here instead of throwing at runtime on the first script that
+            // reaches it.
         }
     }
     

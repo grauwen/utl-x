@@ -305,9 +305,16 @@ class XSDSerializer(
 
         // Generate global xs:complexType nodes (Venetian Blind pattern)
         val xsdComplexTypes = mutableListOf<UDM>()
+        // Removed in 1.4.0: `if (typeDef !is UDM.Object) return@forEach` as the first line of this
+        // loop. globalTypes is declared Map<String, UDM.Object>, so the check could never be true
+        // and the compiler reported it as such ("Check for instance is always 'false'"). It was a
+        // defensive guard against a shape the type already excludes.
+        //
+        // partitionTypes() builds it as `mutableMapOf<String, UDM.Object>()`, so the narrowing
+        // happens there; the inlineTypes loop just above never had such a guard either, for the
+        // same reason. If partitionTypes' signature is ever widened back to plain UDM, this check
+        // becomes live again and needs restoring.
         globalTypes.forEach { (typeName, typeDef) ->
-            if (typeDef !is UDM.Object) return@forEach
-
             // Check %kind directive
             val kind = (typeDef.properties["%kind"] as? UDM.Scalar)?.value as? String
             if (kind == "structure") {

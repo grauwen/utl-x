@@ -90,7 +90,11 @@ object DataRestructuringFunctions {
 
         val groups = buildGroups(array, args[1])
 
-        return UDM.Object(groups.mapValues { (_, elements) -> UDM.Array(elements) as UDM })
+        // Removed in 1.4.0: an `as UDM` upcast on the lambda's result. It was there to widen the
+        // map's value type to UDM for UDM.Object's constructor, but Kotlin's Map is covariant in
+        // its value (`Map<K, out V>`), so Map<String, UDM.Array> already IS a Map<String, UDM>.
+        // The cast could never fail or change a value -- it only hid that fact.
+        return UDM.Object(groups.mapValues { (_, elements) -> UDM.Array(elements) })
     }
 
     @UTLXFunction(
