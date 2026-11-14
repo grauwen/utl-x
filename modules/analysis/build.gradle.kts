@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx.analysis"
-version = "1.3.0"
+// version: inherited from the root build (see `subprojects` there) — one source of truth
 
 // Repositories managed in settings.gradle.kts
 

@@ -2,10 +2,16 @@
 # UTL-X CLI wrapper script
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CLI_JAR="$SCRIPT_DIR/modules/cli/build/libs/cli-1.3.0.jar"
+LIB_DIR="$SCRIPT_DIR/modules/cli/build/libs"
 
-if [[ ! -f "$CLI_JAR" ]]; then
-    echo "Error: CLI JAR not found at $CLI_JAR" >&2
+# Resolve the most recently built cli-*.jar instead of pinning a version. A pinned
+# version silently keeps running the previous release's jar after a version bump --
+# that cost real debugging time at 1.4.0, where the stale jar reported a freshly
+# registered function as missing.
+CLI_JAR="$(ls -t "$LIB_DIR"/cli-*.jar 2>/dev/null | head -n 1)"
+
+if [[ -z "$CLI_JAR" ]]; then
+    echo "Error: no CLI JAR found in $LIB_DIR" >&2
     echo "Build it first: ./gradlew :modules:cli:jar" >&2
     exit 1
 fi

@@ -60,7 +60,7 @@ sequence:
           hoverProvider: true
         serverInfo:
           name: "UTL-X Language Server"
-          version: "1.3.0"
+          version: "1.4.0"
 ```
 
 ### Multi-Step Workflow Test

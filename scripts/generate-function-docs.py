@@ -209,8 +209,10 @@ def main():
     
     print(f"Loaded registry with {registry['totalFunctions']} functions")
     
-    # Create output directory
-    docs_dir = Path("docs/functions")
+    # Create output directory. These are IDE/editor artefacts, so they belong in
+    # devdocs/ and must never land in docs/ -- docs/ ships to main (see commit
+    # f324ea0b, "docs moved to devdocs to keep docs dir in sync for main").
+    docs_dir = Path("devdocs/functions")
     docs_dir.mkdir(parents=True, exist_ok=True)
     
     # Generate Markdown reference

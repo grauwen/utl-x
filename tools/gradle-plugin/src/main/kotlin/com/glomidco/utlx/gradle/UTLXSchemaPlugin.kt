@@ -13,7 +13,7 @@ import java.io.File
  * Usage:
  * ```kotlin
  * plugins {
- *     id("com.glomidco.utlx.schema") version "1.3.0"
+ *     id("com.glomidco.utlx.schema") version "1.4.0"
  * }
  * 
  * utlxSchema {

@@ -43,7 +43,7 @@ daemon-rest-api/
 
 - Python 3.7+
 - Java 11+ (for running UTLXD)
-- Built UTLXD JAR: `modules/server/build/libs/utlxd-1.3.0.jar`
+- Built UTLXD JAR: `modules/daemon/build/libs/utlxd-1.4.0.jar`
 
 ### Quick Start
 
@@ -72,7 +72,7 @@ If you want to manage the daemon yourself:
 
 ```bash
 # Start daemon manually with REST API on port 7779
-java -jar ../../modules/server/build/libs/utlxd-1.3.0.jar start --daemon-rest --daemon-rest-port 7779
+java -jar ../../modules/daemon/build/libs/utlxd-1.4.0.jar start --daemon-rest --daemon-rest-port 7779
 
 # Run tests without auto-starting daemon
 python3 runners/python-runner/daemon-rest-api-runner.py tests/ --no-auto-start
@@ -215,7 +215,7 @@ The Python test runner (`daemon-rest-api-runner.py`) provides:
 ### Tests fail with "Connection refused"
 
 The daemon may not have started. Check:
-- JAR exists at `modules/server/build/libs/utlxd-1.3.0.jar`
+- JAR exists at `modules/daemon/build/libs/utlxd-1.4.0.jar`
 - Build the JAR: `./gradlew :modules:server:jar`
 - Check daemon logs: `tail -f /tmp/utlxd-test.log`
 

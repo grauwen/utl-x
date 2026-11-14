@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx"
-version = "1.3.0"
+// version: inherited from the root build (see `subprojects` there) — one source of truth
 
 // IF19: shared, file-level Bundle Management layer. Intentionally dependency-light — it
 // manages bundle files (.utlx / transform.yaml / schemas / engine.yaml) as blobs so BOTH

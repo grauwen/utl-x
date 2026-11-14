@@ -1132,7 +1132,7 @@ object StandardLibrary {
         
         // UUID v4 generation (random) — canonical name + alias
         register("generateUuidV4", UUIDFunctions::generateUuidV4)
-        register("generateUuid", UUIDFunctions::generateUuidV4) // alias — backwards compatible
+        registerAlias("generateUuid", "generateUuidV4", "Legacy name predating the versioned UUID functions")
     }
 
     private fun registerCompressionFunctions() {

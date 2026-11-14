@@ -1,7 +1,7 @@
 # UTL-X Language Specification v1.0
 
 **Status:** Draft  
-**Version:** 1.3.0  
+**Version:** 1.4.0  
 **Authors:** Ir. Marcel A. Grauwen  
 **Organization:** Glomidco B.V.  
 **Last Updated:** January 2026
@@ -923,4 +923,4 @@ See [Migration Guides](../comparison/migration-guides.md)
 **Feedback:** Submit issues or suggestions at https://github.com/grauwen/utl-x/issues
 
 **Last Updated:** January 2026  
-**Version:** 1.3.0
+**Version:** 1.4.0

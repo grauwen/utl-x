@@ -3,7 +3,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx"
-version = "1.3.0"
+// version: inherited from the root build (see `subprojects` there) — one source of truth
 
 dependencies {
     // Core module (for UDM)

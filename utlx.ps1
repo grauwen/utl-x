@@ -2,10 +2,15 @@
 # UTL-X CLI wrapper script for Windows PowerShell
 
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-$JarPath = Join-Path $ScriptDir "modules\cli\build\libs\cli-1.3.0.jar"
+$LibDir = Join-Path $ScriptDir "modules\cli\build\libs"
 
-if (-not (Test-Path $JarPath)) {
-    Write-Error "Error: UTL-X CLI JAR not found at $JarPath"
+# Resolve the most recently built cli-*.jar instead of pinning a version -- a pinned
+# version silently keeps running the previous release's jar after a bump.
+$JarPath = Get-ChildItem -Path (Join-Path $LibDir "cli-*.jar") -ErrorAction SilentlyContinue |
+    Sort-Object LastWriteTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+
+if (-not $JarPath) {
+    Write-Error "Error: no UTL-X CLI JAR found in $LibDir"
     Write-Host "Please run '.\gradlew.bat :modules:cli:jar' first" -ForegroundColor Yellow
     exit 1
 }

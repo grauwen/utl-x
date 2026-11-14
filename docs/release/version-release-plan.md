@@ -9,105 +9,110 @@ Replace `PREV` with the previous version (e.g., `1.0.1`).
 ## Pre-release Checklist
 
 Before starting, verify:
-- [ ] All changes committed and pushed to `main`
+- [ ] All feature and fix work is committed on the release branch (1.4.0 was cut from
+      `development`, not `main` — the branch is whichever one carries the work)
+- [ ] `./gradlew test` passes — **not just** the conformance suite, which only exercises
+      the interpreted path
 - [ ] Conformance suite passes: `cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py`
-- [ ] No pending cherry-picks from `development`
-- [ ] Release notes drafted (what changed since vPREV)
+- [ ] No pending cherry-picks between `development` and `main`
+- [ ] Release notes drafted (what changed since vPREV), with breaking changes called out
+      first — removals and tightened validation belong at the top
 
 ---
 
-## Step 1: Version Bumps (Gradle Build Files)
+## Step 1: Version Bump (Gradle)
 
-All modules must have the same version number.
+There is **one** place to change. The root build sets the version and hands it to every
+module, so no module declares its own:
 
-### Root project
 ```
 build.gradle.kts                                    version = "X.Y.Z"
 ```
 
-### CLI module
-```
-modules/cli/build.gradle.kts                        version = "X.Y.Z"
-```
-
-### Core and library modules (all must match)
-```
-modules/core/build.gradle.kts                       version = "X.Y.Z"
-modules/analysis/build.gradle.kts                   version = "X.Y.Z"
-stdlib/build.gradle.kts                             version = "X.Y.Z"
-schema/build.gradle.kts                             version = "X.Y.Z"
+```kotlin
+// build.gradle.kts -- the root hands its version to every module
+subprojects {
+    version = rootProject.version
+}
 ```
 
-### Format modules (all must match)
-```
-formats/xml/build.gradle.kts                        version = "X.Y.Z"
-formats/json/build.gradle.kts                       version = "X.Y.Z"
-formats/csv/build.gradle.kts                        version = "X.Y.Z"
-formats/yaml/build.gradle.kts                       version = "X.Y.Z"
-formats/xsd/build.gradle.kts                        version = "X.Y.Z"
-formats/jsch/build.gradle.kts                       version = "X.Y.Z"
-formats/avro/build.gradle.kts                       version = "X.Y.Z"
-formats/protobuf/build.gradle.kts                   version = "X.Y.Z"
-formats/odata/build.gradle.kts                      version = "X.Y.Z"
-formats/osch/build.gradle.kts                       version = "X.Y.Z"
-formats/tsch/build.gradle.kts                       version = "X.Y.Z"
-```
+Module and format build files used to repeat `version = "PREV"`, and the 1.4.0 release
+found all 19 of them still on the previous number. They now carry a comment pointing
+back here instead. If you add a module, do **not** give it a `version =` line.
 
-**Quick check** (all should show the same version):
+**Quick check** (every artefact should carry the new version, and nothing should be left
+on the old one):
 ```bash
-grep -r 'version = "' --include="build.gradle.kts" | grep -v kotlin | grep -v dokka | grep -v graalvm | grep -v native
+./gradlew :modules:cli:jar :modules:daemon:jar :modules:engine:jar
+ls modules/cli/build/libs modules/daemon/build/libs modules/engine/build/libs
 ```
 
 ---
 
-## Step 2: Source Code Version Constant
+## Step 2: Source Code Version Constants
+
+Six hard-coded constants, one per surface that reports its own version. All six must
+match the Gradle version, or `--version` lies:
 
 ```
-modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt
-    Line: private const val VERSION = "X.Y.Z"
+modules/cli/src/main/kotlin/com/glomidco/utlx/cli/Main.kt                 private const val VERSION
+modules/engine/src/main/kotlin/com/glomidco/utlx/engine/Main.kt           private const val VERSION
+modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/Main.kt           private const val VERSION
+modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/mcp/McpService.kt private const val VERSION
+modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/DaemonServer.kt   "version" to "X.Y.Z"
+modules/daemon/src/main/kotlin/com/glomidco/utlx/daemon/rest/RestApiServer.kt  version = "X.Y.Z"
 ```
 
-This is what `utlx --version` displays.
+These feed `utlx --version`, `utlxe --version`, `utlxd --version`, the MCP handshake and
+the REST `/health` payload.
+
+**One of them is asserted by a conformance fixture** — the LSP suite checks the daemon's
+reported version, so it must be bumped in the same commit:
+```
+conformance-suite/lsp/tests/protocol/initialization/initialize_basic.yaml    version: "X.Y.Z"
+conformance-suite/lsp/README.md                                              (same snippet)
+```
 
 ---
 
-## Step 3: Wrapper Scripts (JAR filename references)
+## Step 3: Wrapper Scripts — nothing to do
 
-These scripts reference the JAR by exact filename. Update `cli-PREV.jar` to `cli-X.Y.Z.jar`:
+The launchers no longer name a version. Each resolves the most recently built jar in the
+module's `build/libs/` (`cli-*.jar`, `utlxd-*.jar`), so a bump needs no edit:
 
-### Root-level wrappers
 ```
-utlx                    CLI_JAR="$SCRIPT_DIR/modules/cli/build/libs/cli-X.Y.Z.jar"
-utlx.bat                set "JAR_PATH=%SCRIPT_DIR%modules\cli\build\libs\cli-X.Y.Z.jar"
-utlx.ps1                $JarPath = Join-Path $ScriptDir "modules\cli\build\libs\cli-X.Y.Z.jar"
-```
-
-### Module-level wrappers
-```
-modules/cli/scripts/utlx         JAR="$SCRIPT_DIR/../build/libs/cli-X.Y.Z.jar"
-modules/cli/scripts/utlx.bat     set JAR=%SCRIPT_DIR%..\build\libs\cli-X.Y.Z.jar
+utlx  utlx.bat  utlx.ps1  utlxd
+modules/cli/scripts/utlx      modules/cli/scripts/utlx.bat
+modules/daemon/scripts/utlxd  modules/daemon/scripts/utlxd.bat
 ```
 
-**Tip:** Consider changing these to use wildcards (`cli-*.jar`) to avoid updating every release. But if multiple JARs exist, wildcards may pick the wrong one.
+This was the Step 3 "Tip" in earlier releases, and the reason it got done: at 1.4.0 the
+pinned `./utlx` silently kept running the 1.3.0 jar, which reported a freshly registered
+stdlib function as missing and sent the investigation down a blind alley. A stale jar is
+indistinguishable from a real regression.
+
+**Consequence worth knowing:** old jars are not deleted by a build, so
+`modules/cli/build/libs/` accumulates them. The launchers pick the newest by modification
+time, which is what you want after a build -- but run `./gradlew clean` if you ever need
+to be certain which jar you are on.
 
 ---
 
 ## Step 4: README.md
 
-Update all version references:
-
 ```
 README.md
-    Badge:          [![Version](https://img.shields.io/badge/version-X.Y.Z-green)]
-    Download URL:   curl -L https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-linux-x64.bin -o utlx
-    Release link:   https://github.com/grauwen/utl-x/releases/tag/vX.Y.Z
-    Heading:        # UTL-X CLI vX.Y.Z
+    Badge:          [![Version](https://img.shields.io/badge/version-X.Y.Z-blue)]
+    Version output: # UTL-X version X.Y.Z
     Current ver:    **Current Version**: X.Y.Z
-    What's new:     ### What's in X.Y.Z
-    Release status: **X.Y.Z Released**
 ```
 
-**Quick find/replace:** Search for `PREV` (e.g., `1.0.1`) and replace with `X.Y.Z` (e.g., `1.0.2`). Then verify manually — not all instances should be replaced (e.g., historical references to older versions).
+The README carries no release download URLs or "What's in X.Y.Z" section -- earlier
+revisions of this plan listed both, and neither exists. The wrapper-script sentence is
+version-agnostic now too (see Step 3); leave it alone.
+
+**Quick find/replace:** search for `PREV`, then verify every hit by eye — historical
+references to older versions must stay as they are.
 
 ---
 
@@ -115,64 +120,184 @@ README.md
 
 ```
 docs/getting-started/installation.md
-    Release link:   https://github.com/grauwen/utl-x/releases/tag/vX.Y.Z
-    macOS URL:      curl -L https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-macos-arm64.bin -o utlx
-    Linux URL:      curl -L https://github.com/grauwen/utl-x/releases/download/vX.Y.Z/utlx-linux-x64.bin -o utlx
-    Windows link:   https://github.com/grauwen/utl-x/releases/tag/vX.Y.Z
     Version output: UTL-X CLI vX.Y.Z
-    JAR reference:  modules/cli/build/libs/cli-X.Y.Z.jar
+```
+
+The release download URLs this step used to list are not in the file; the JAR reference
+is version-agnostic as of 1.4.0. Nothing else to change here.
+
+```
+docs/cli/cli_quickstart.md            cli-X.Y.Z.jar (x4, one of them a Windows .bat example)
+docs/reference/language-spec.md       **Version:** X.Y.Z (x2)
+test-corpora/scripts/HARNESS.md       cli-X.Y.Z.jar
+conformance-suite/CONFORMANCE-SUITES.md   utlxd-X.Y.Z.jar (x2)
+conformance-suite/utlxe/README.md         utlxe-X.Y.Z.jar
+conformance-suite/daemon-rest-api/README.md   utlxd-X.Y.Z.jar (x3)
+conformance-suite/mcp-server/README.md        utlxd-X.Y.Z.jar (x3)
+conformance-suite/lsp/README.md               version: "X.Y.Z"
+wrappers/go/utlxclient/README.md          utlxe-X.Y.Z.jar
+wrappers/dotnet/README.md                 utlxe-X.Y.Z.jar (x2)
+tools/gradle-plugin/.../UTLXSchemaPlugin.kt   KDoc plugin-version example
+dockerfile.txt                            LABEL version="X.Y.Z" (x2)
 ```
 
 ---
 
-## Step 6: Other Documentation with Version References
+## Step 6: The Book and the Website Guide
+
+The book (`books/language/chapters/*.typ`) and the website guide
+(`website/guide/*.md`) are parallel copies of the same chapters — **every edit here is
+two edits**, and they drift silently if you do only one.
+
+```
+ch00-preface            "This book covers UTL-X vX.Y.Z."
+ch04-getting-started    # UTL-X CLI vX.Y.Z  +  three release download/tag URLs (vX.Y.Z)
+ch49-appendices         ADD a row to the version-history table -- do not overwrite the
+                        previous release's row. Say what changed, and lead with
+                        **Breaking** when something was removed or tightened.
+```
+
+The release URLs in ch04 point at a tag that does not exist until Step 9d, so they are
+briefly dead. That is expected; do not "fix" them by reverting the version.
 
 ```
 docs/comparison/vs-cel.md
     Footer:         *Last updated: <month> <year> — UTL-X vX.Y.Z*
-
-docs/getting-started/native-binary-quickstart.md
-    JAR reference:  cli-X.Y.Z.jar
 ```
+Only touch that footer if you actually re-read the document — it is a review date, not a
+build number. (It still reads v1.0.1.)
 
 ---
 
-## Step 7: Scripts with Hardcoded JAR Paths
+## Step 7: Scripts and CI with Hardcoded JAR Paths
 
-These test/build scripts reference the JAR filename. Update or make them version-agnostic:
+Still pinned — update `PREV` to `X.Y.Z` in each:
 
 ```
-scripts/test_stdlib_integration.sh          cli-X.Y.Z.jar
+scripts/test_stdlib_integration.sh          cli-X.Y.Z.jar (x4)
 scripts/test-cli-comprehensive.sh           cli-X.Y.Z.jar  AND  "UTL-X vX.Y.Z"
 scripts/cli_build_script.sh                 cli-X.Y.Z.jar
 scripts/benchmark-cli.sh                    cli-X.Y.Z.jar
+examples/utlxe/run-all-tests.sh             utlxe-X.Y.Z.jar
+examples/utlxe/*.utlxp/run-test.sh          utlxe-X.Y.Z.jar (x3)
 ```
 
-### CI workflow
+### CI workflows
 ```
-.github/workflows/cli-ci.yml               cli-X.Y.Z.jar (line ~75)
+.github/workflows/cli-ci.yml                cli-X.Y.Z.jar
+.github/workflows/go-ci.yml                 utlxe-X.Y.Z.jar  (UTLXE_JAR_PATH)
+.github/workflows/dotnet-ci.yml             utlxe-X.Y.Z.jar  (UTLXE_JAR_PATH)
+.github/workflows/schema-validation.yml     cli-X.Y.Z.jar (x4)
 ```
 
-### Conformance suite runner
+### Conformance suite and daemon runners
 ```
-conformance-suite/utlx/runners/validation-runner.py     cli-X.Y.Z.jar (line ~347)
+conformance-suite/daemon-rest-api/runners/python-runner/run-daemon-rest-api-tests.sh
+conformance-suite/daemon-rest-api/runners/python-runner/daemon-rest-api-runner.py
+conformance-suite/lsp/runners/python-runner/run-lsp-tests.sh
+conformance-suite/lsp/runners/python-runner/lsp-runner.py
+conformance-suite/mcp-server/runners/python-runner/run-mcp-server-tests.sh
 ```
+
+### Already version-agnostic — do not edit
+```
+conformance-suite/utlx/runners/validation-runner.py   globs cli-*.jar, newest first
+```
+
+### IDE extension defaults (devdocs-only, not shipped on main)
+```
+theia-extension/utlx-theia-extension/src/node/daemon/utlx-daemon-client.ts
+theia-extension/utlx-theia-extension/src/node/services/auto-start-services.ts
+theia-extension/utlx-theia-extension/src/node/services/service-lifecycle-manager.ts
+```
+All three are `UTLXD_JAR_PATH`-overridable defaults. Typecheck with
+`npx tsc --noEmit -p .` after editing; the extension build itself is a separate step.
+
+**Finding the stragglers.** `grep` here may be ugrep, which skips a file containing a NUL
+byte without saying so, and most `PREV` hits in the tree belong to third-party
+dependencies (`yarn.lock`, `package-lock.json`, `node_modules`, .NET `obj/`). Sweep with
+Python and match on *our* artefact names rather than the bare version:
+
+```bash
+python3 - <<'EOF'
+import os, re
+SKIP = {'.git','build','.gradle','obj','bin','node_modules'}
+PREV = '1.3.0'   # set to the version you are replacing
+ours = re.compile(rf'(cli|utlxd|utlxe)-{re.escape(PREV)}|UTL-X v{re.escape(PREV)}')
+for root, dirs, files in os.walk('.'):
+    dirs[:] = [d for d in dirs if d not in SKIP]
+    for fn in files:
+        if fn in {'yarn.lock','package-lock.json'}: continue
+        p = os.path.join(root, fn)
+        try: txt = open(p, encoding='utf-8', errors='replace').read()
+        except Exception: continue
+        for i, line in enumerate(txt.splitlines(), 1):
+            if ours.search(line): print(f'{p}:{i}  {line.strip()[:100]}')
+EOF
+```
+
+**Deliberately left on their historical version:** `devdocs/archive/**` (an archive is a
+record, not a live document), `docs/bugs-fixed/**` and `docs/features/**` (each report
+describes the version it was written against), and `docs/community/roadmap.md` (its
+`### v1.3.0` heading is a roadmap milestone, not a build reference).
 
 ---
 
-## Step 8: Build and Test
+## Step 8: Regenerate the Function Catalogue and IDE Index
+
+The stdlib catalogue is generated from `@UTLXFunction` annotations, **keyed on the Kotlin
+function name**. It is not derived from the dispatch table, so a function can be callable
+and absent from the catalogue at the same time — which is exactly what happened at 1.4.0
+when an annotated declaration was deleted while its name stayed registered as an alias.
 
 ```bash
-# Rebuild CLI
-./gradlew :modules:cli:jar
+./gradlew :stdlib:generateFunctionRegistry --rerun-tasks
+python3 scripts/generate-function-docs.py      # writes devdocs/functions/
+```
 
-# Test version output
-./utlx --version
-# Expected: UTL-X vX.Y.Z
+The first writes `stdlib/build/generated/function-registry/utlx-functions.json`, which
+`tasks.jar` bundles into the stdlib jar as `/function-registry/utlx-functions.json` --
+that resource is what `utlx functions` reads. The second refreshes the two checked-in IDE
+artefacts, `devdocs/functions/api-reference.json` and `utlx-snippets.json`.
 
-# Run conformance suite
+**These live in `devdocs/`, never `docs/`** (see commit f324ea0b). The generator wrote to
+`docs/functions/` until 1.4.0, so running an older copy of it re-creates a directory the
+docs-boundary rule forbids.
+
+**Verify a removed function is gone and an aliased one is present:**
+```bash
+./utlx functions --format json | python3 -c "
+import json,sys
+d=json.load(sys.stdin); f=d if isinstance(d,list) else d.get('functions',[])
+names={x['name'] for x in f if isinstance(x,dict) and 'name' in x}
+print(len(names),'functions')
+for n in ['<a function you removed>','<a function you aliased>']:
+    print(n, 'present' if n in names else 'ABSENT')"
+```
+
+A name registered with `register(...)` is callable but **uncatalogued**; use
+`registerAlias(alias, canonical, reason)` for a second name so it reaches the catalogue
+and the IDE's completion list.
+
+---
+
+## Step 8b: Build and Test
+
+```bash
+# Rebuild everything the release tags
+./gradlew :modules:cli:jar :modules:daemon:jar :modules:engine:jar
+
+# Each must report the new version -- these read the Step 2 constants, not Gradle
+./utlx --version          # UTL-X CLI vX.Y.Z
+./utlxd --version         # UTL-X Daemon vX.Y.Z
+java -jar modules/engine/build/libs/utlxe-X.Y.Z.jar --version   # utlxe vX.Y.Z
+
+# Full JVM test suite -- the interpreted conformance run below does NOT cover
+# the COPY and COMPILED strategies; :modules:engine:test is what does.
+./gradlew test
+
+# Conformance suite (interpreted path)
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
-# Expected: All tests passed
 
 # Quick smoke test
 echo '{"name":"Alice"}' | ./utlx -e '.name' -r
@@ -180,6 +305,12 @@ echo '{"name":"Alice"}' | ./utlx -e '.name' -r
 
 echo '<Order><Customer>Alice</Customer></Order>' | ./utlx --from xml --to json -e '$input'
 # Expected: {"Order":{"Customer":"Alice"}}
+```
+
+If the native binary is part of the release, build and smoke-test it too — a change can
+pass on the JVM and fail under GraalVM (reflection, resources, locale):
+```bash
+./gradlew :modules:cli:nativeCompile
 ```
 
 ---
@@ -191,7 +322,7 @@ echo '<Order><Customer>Alice</Customer></Order>' | ./utlx --from xml --to json -
 ### 9a. Review all changes before committing
 
 ```bash
-# List all changed files — should be ~34 files, all version-related
+# List all changed files -- all of them should be version, catalogue or doc changes
 git diff --stat
 
 # Review actual content — verify only version strings changed, nothing else
@@ -217,11 +348,11 @@ git commit -m "vX.Y.Z release — version bump, docs, and download URLs updated"
 vX.Y.Z release — version bump, docs, and download URLs updated
 
 Changes:
-- Version bumped from PREV to X.Y.Z across all modules
-- README badge, download URLs, and release notes updated
-- Installation docs updated with new download URLs
-- Wrapper scripts updated with new JAR filename
-- CI scripts updated with new JAR filename
+- Version bumped from PREV to X.Y.Z in the root build (every module inherits it)
+- Six in-source VERSION constants bumped (cli, engine, daemon x4 surfaces)
+- Function catalogue and IDE index regenerated
+- README, installation, CLI quickstart, language spec, book and website guide updated
+- Scripts, CI workflows and conformance runners updated with the new JAR filename
 ```
 
 ### 9c. Run conformance suite (post-commit verification)

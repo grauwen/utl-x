@@ -62,7 +62,7 @@
   "utlx-endTimer": {
     "prefix": "endTimer",
     "body": "endTimer(${1:arg1})",
-    "description": "Logs elapsed time since startTimer()",
+    "description": "Logs elapsed time since startDebugTimer()",
     "scope": "utlx"
   },
   "utlx-env": {
@@ -99,12 +99,6 @@
     "prefix": "filter",
     "body": "filter(${1:arg1})",
     "description": "Generic filter function that works on arrays, objects, and strings",
-    "scope": "utlx"
-  },
-  "utlx-generateUuid": {
-    "prefix": "generateUuid",
-    "body": "generateUuid(${1:arg1})",
-    "description": "Generate UUID/GUID",
     "scope": "utlx"
   },
   "utlx-getLogs": {
@@ -505,8 +499,14 @@
   },
   "utlx-join": {
     "prefix": "join",
-    "body": "join(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
-    "description": "Inner join - returns only items that have matches in both arrays",
+    "body": "join(${1:arg1}, ${2:arg2})",
+    "description": "Join array elements with delimiter",
+    "scope": "utlx"
+  },
+  "utlx-joinBy": {
+    "prefix": "joinBy",
+    "body": "joinBy(${1:arg1}, ${2:arg2})",
+    "description": "Join array elements with delimiter (Legacy name; also DataWeave's name for the string join)",
     "scope": "utlx"
   },
   "utlx-kebabCase": {
@@ -893,12 +893,6 @@
     "description": "Gets element at specific index (0-based)",
     "scope": "utlx"
   },
-  "utlx-groupBy": {
-    "prefix": "groupBy",
-    "body": "groupBy(${1:arg1}, ${2:arg2})",
-    "description": "Groups array elements by a key function.",
-    "scope": "utlx"
-  },
   "utlx-includes": {
     "prefix": "includes",
     "body": "includes(${1:arg1}, ${2:arg2})",
@@ -909,6 +903,12 @@
     "prefix": "indexOf",
     "body": "indexOf(${1:arg1})",
     "description": "Find index of value in array (simple equality)",
+    "scope": "utlx"
+  },
+  "utlx-innerJoin": {
+    "prefix": "innerJoin",
+    "body": "innerJoin(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4})",
+    "description": "Inner join - returns only items that have matches in both arrays",
     "scope": "utlx"
   },
   "utlx-insertAfter": {
@@ -1139,6 +1139,42 @@
     "description": "Zip arrays with indices",
     "scope": "utlx"
   },
+  "utlx-chunkBy": {
+    "prefix": "chunkBy",
+    "body": "chunkBy(${1:arg1}, ${2:arg2})",
+    "description": "Split a flat sequence into chunks by position. A new chunk starts whenever the predicate returns true.",
+    "scope": "utlx"
+  },
+  "utlx-groupBy": {
+    "prefix": "groupBy",
+    "body": "groupBy(${1:arg1}, ${2:arg2})",
+    "description": "Group array elements by key. Returns an Object for O(1) lookup by key.",
+    "scope": "utlx"
+  },
+  "utlx-lookupBy": {
+    "prefix": "lookupBy",
+    "body": "lookupBy(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Find one matching record from a reference array by key. Returns the first match or null.",
+    "scope": "utlx"
+  },
+  "utlx-mapGroups": {
+    "prefix": "mapGroups",
+    "body": "mapGroups(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Group array elements by key and transform each group. Returns array of transformed results.",
+    "scope": "utlx"
+  },
+  "utlx-nestBy": {
+    "prefix": "nestBy",
+    "body": "nestBy(${1:arg1}, ${2:arg2}, ${3:arg3}, ${4:arg4}, ${5:arg5})",
+    "description": "Nest children under parents by matching keys. Creates a 1:N parent-child hierarchy.",
+    "scope": "utlx"
+  },
+  "utlx-unnest": {
+    "prefix": "unnest",
+    "body": "unnest(${1:arg1}, ${2:arg2})",
+    "description": "Flatten nested children alongside parent fields. Reverse of nestBy \u2014 hierarchical to flat.",
+    "scope": "utlx"
+  },
   "utlx-abs": {
     "prefix": "abs",
     "body": "abs(${1:arg1})",
@@ -1223,6 +1259,24 @@
     "description": "Calculate interquartile range (IQR)",
     "scope": "utlx"
   },
+  "utlx-isFinite": {
+    "prefix": "isFinite",
+    "body": "isFinite(${1:arg1})",
+    "description": "True when a number is finite \u2014 neither infinite nor NaN",
+    "scope": "utlx"
+  },
+  "utlx-isInfinite": {
+    "prefix": "isInfinite",
+    "body": "isInfinite(${1:arg1})",
+    "description": "True when a number is positive or negative infinity",
+    "scope": "utlx"
+  },
+  "utlx-isNaN": {
+    "prefix": "isNaN",
+    "body": "isNaN(${1:arg1})",
+    "description": "True when a number is NaN (not a number)",
+    "scope": "utlx"
+  },
   "utlx-ln": {
     "prefix": "ln",
     "body": "ln(${1:arg1})",
@@ -1251,12 +1305,6 @@
     "prefix": "mode",
     "body": "mode(${1:arg1})",
     "description": "Calculate mode (most frequent value)",
-    "scope": "utlx"
-  },
-  "utlx-parseFloat": {
-    "prefix": "parseFloat",
-    "body": "parseFloat(${1:arg1})",
-    "description": "Parse float/decimal from string (alias for parseNumber)",
     "scope": "utlx"
   },
   "utlx-parseInt": {
@@ -1298,7 +1346,7 @@
   "utlx-round": {
     "prefix": "round",
     "body": "round(${1:arg1})",
-    "description": "Performs round operation",
+    "description": "Rounds to the nearest integer, or to N decimal places when a second argument is given",
     "scope": "utlx"
   },
   "utlx-sin": {
@@ -1565,6 +1613,18 @@
     "description": "Format datetime in specific timezone",
     "scope": "utlx"
   },
+  "utlx-fromEpochMicros": {
+    "prefix": "fromEpochMicros",
+    "body": "fromEpochMicros(${1:arg1})",
+    "description": "The date-time at a given number of epoch microseconds \u2014 the inverse of toEpochMicros.",
+    "scope": "utlx"
+  },
+  "utlx-fromEpochMillis": {
+    "prefix": "fromEpochMillis",
+    "body": "fromEpochMillis(${1:arg1})",
+    "description": "The date-time at a given number of epoch milliseconds \u2014 the inverse of toEpochMillis.",
+    "scope": "utlx"
+  },
   "utlx-fromUTC": {
     "prefix": "fromUTC",
     "body": "fromUTC(${1:arg1})",
@@ -1739,6 +1799,18 @@
     "description": "Convert string to date (alias for parseDate, simpler for single argument)",
     "scope": "utlx"
   },
+  "utlx-toEpochMicros": {
+    "prefix": "toEpochMicros",
+    "body": "toEpochMicros(${1:arg1})",
+    "description": "Epoch microseconds for an ISO-8601 date-time (or any UTL-X date value).",
+    "scope": "utlx"
+  },
+  "utlx-toEpochMillis": {
+    "prefix": "toEpochMillis",
+    "body": "toEpochMillis(${1:arg1})",
+    "description": "Epoch milliseconds for an ISO-8601 date-time (or any UTL-X date value).",
+    "scope": "utlx"
+  },
   "utlx-toUTC": {
     "prefix": "toUTC",
     "body": "toUTC(${1:arg1})",
@@ -1851,6 +1923,12 @@
     "prefix": "parseDouble",
     "body": "parseDouble(${1:arg1})",
     "description": "Parse double from string (alias for parseNumber)",
+    "scope": "utlx"
+  },
+  "utlx-parseFloat": {
+    "prefix": "parseFloat",
+    "body": "parseFloat(${1:arg1})",
+    "description": "Parse float/decimal from string (alias for parseNumber)",
     "scope": "utlx"
   },
   "utlx-parseNumber": {
@@ -2288,7 +2366,7 @@
   "utlx-renderJson": {
     "prefix": "renderJson",
     "body": "renderJson(${1:arg1})",
-    "description": "Render a UDM object as a JSON string",
+    "description": "Render a UDM value as a JSON string \u2014 the same JSON `output json` would write.",
     "scope": "utlx"
   },
   "utlx-renderXml": {
@@ -2801,12 +2879,6 @@
     "description": "Auto-detect and convert to target encoding",
     "scope": "utlx"
   },
-  "utlx-parent": {
-    "prefix": "parent",
-    "body": "parent(${1:arg1})",
-    "description": "Get parent element (if metadata available)",
-    "scope": "utlx"
-  },
   "utlx-prepareForSignature": {
     "prefix": "prepareForSignature",
     "body": "prepareForSignature(${1:arg1})",
@@ -2897,6 +2969,18 @@
     "description": "Unescape XML special characters",
     "scope": "utlx"
   },
+  "utlx-createJWT": {
+    "prefix": "createJWT",
+    "body": "createJWT(${1:arg1}, ${2:arg2})",
+    "description": "Create a signed JWT token (HS256). Automatically adds iat claim and optional exp.",
+    "scope": "utlx"
+  },
+  "utlx-createJWTSigned": {
+    "prefix": "createJWTSigned",
+    "body": "createJWTSigned(${1:arg1}, ${2:arg2})",
+    "description": "Create a signed JWT token with multi-algorithm support (HS256/HS384/HS512).",
+    "scope": "utlx"
+  },
   "utlx-decodeJWS": {
     "prefix": "decodeJWS",
     "body": "decodeJWS(${1:arg1})",
@@ -2907,6 +2991,12 @@
     "prefix": "decodeJWT",
     "body": "decodeJWT(${1:arg1})",
     "description": "Decodes a JWT token WITHOUT verification",
+    "scope": "utlx"
+  },
+  "utlx-generateRSAKeyPair": {
+    "prefix": "generateRSAKeyPair",
+    "body": "generateRSAKeyPair()",
+    "description": "Generate an RSA key pair (public + private). Default 2048-bit.",
     "scope": "utlx"
   },
   "utlx-getJWSAlgorithm": {
@@ -2981,6 +3071,12 @@
     "description": "Gets the subject (sub) claim from JWT",
     "scope": "utlx"
   },
+  "utlx-getXMLSignatureInfo": {
+    "prefix": "getXMLSignatureInfo",
+    "body": "getXMLSignatureInfo(${1:arg1})",
+    "description": "Extract metadata from an XML digital signature without verifying it. Returns algorithm, references, and certificate info.",
+    "scope": "utlx"
+  },
   "utlx-isJWSFormat": {
     "prefix": "isJWSFormat",
     "body": "isJWSFormat(${1:arg1})",
@@ -2991,6 +3087,78 @@
     "prefix": "isJWTExpired",
     "body": "isJWTExpired(${1:arg1})",
     "description": "Checks if JWT is expired based on 'exp' claim",
+    "scope": "utlx"
+  },
+  "utlx-rsaDecrypt": {
+    "prefix": "rsaDecrypt",
+    "body": "rsaDecrypt(${1:arg1}, ${2:arg2})",
+    "description": "Decrypt RSA-encrypted data with private key.",
+    "scope": "utlx"
+  },
+  "utlx-rsaEncrypt": {
+    "prefix": "rsaEncrypt",
+    "body": "rsaEncrypt(${1:arg1}, ${2:arg2})",
+    "description": "Encrypt data with RSA public key. Limited to small data (245 bytes for 2048-bit key).",
+    "scope": "utlx"
+  },
+  "utlx-rsaSign": {
+    "prefix": "rsaSign",
+    "body": "rsaSign(${1:arg1}, ${2:arg2})",
+    "description": "Sign data with an RSA private key. Returns Base64-encoded signature.",
+    "scope": "utlx"
+  },
+  "utlx-rsaVerify": {
+    "prefix": "rsaVerify",
+    "body": "rsaVerify(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Verify an RSA signature against data and public key.",
+    "scope": "utlx"
+  },
+  "utlx-signJWS": {
+    "prefix": "signJWS",
+    "body": "signJWS(${1:arg1}, ${2:arg2})",
+    "description": "Sign arbitrary data as a JWS compact serialization (header.payload.signature).",
+    "scope": "utlx"
+  },
+  "utlx-signXML": {
+    "prefix": "signXML",
+    "body": "signXML(${1:arg1}, ${2:arg2}, ${3:arg3})",
+    "description": "Create an enveloped XML digital signature (XMLDSig) using RSA. Appends ds:Signature to the document root.",
+    "scope": "utlx"
+  },
+  "utlx-validateJWTStructure": {
+    "prefix": "validateJWTStructure",
+    "body": "validateJWTStructure(${1:arg1})",
+    "description": "Validate JWT structure without signature verification. Returns header, payload, and signature presence.",
+    "scope": "utlx"
+  },
+  "utlx-verifyJWT": {
+    "prefix": "verifyJWT",
+    "body": "verifyJWT(${1:arg1}, ${2:arg2})",
+    "description": "Verify a JWT token's HMAC-SHA256 signature and return claims if valid.",
+    "scope": "utlx"
+  },
+  "utlx-verifyJWTSignature": {
+    "prefix": "verifyJWTSignature",
+    "body": "verifyJWTSignature(${1:arg1}, ${2:arg2})",
+    "description": "Verify a JWT token's HMAC signature (HS256/HS384/HS512) and return claims if valid.",
+    "scope": "utlx"
+  },
+  "utlx-verifyJWTWithJWKS": {
+    "prefix": "verifyJWTWithJWKS",
+    "body": "verifyJWTWithJWKS(${1:arg1}, ${2:arg2})",
+    "description": "Verify JWT with JWKS (JSON Web Key Set). Placeholder \u2014 not yet implemented.",
+    "scope": "utlx"
+  },
+  "utlx-verifyXMLSignature": {
+    "prefix": "verifyXMLSignature",
+    "body": "verifyXMLSignature(${1:arg1})",
+    "description": "Verify an XML digital signature using the embedded KeyInfo public key. Returns true if valid.",
+    "scope": "utlx"
+  },
+  "utlx-verifyXMLSignatureWithCert": {
+    "prefix": "verifyXMLSignatureWithCert",
+    "body": "verifyXMLSignatureWithCert(${1:arg1}, ${2:arg2})",
+    "description": "Verify an XML digital signature against a specific PEM-encoded X.509 certificate.",
     "scope": "utlx"
   },
   "utlx-canonicalJSONHash": {
@@ -3023,10 +3191,34 @@
     "description": "Alias for canonicalizeJSON - shorter form (JCS)",
     "scope": "utlx"
   },
+  "utlx-jsonDiff": {
+    "prefix": "jsonDiff",
+    "body": "jsonDiff(${1:arg1}, ${2:arg2})",
+    "description": "Generate RFC 6902 JSON Patch from two documents (before \u2192 after).",
+    "scope": "utlx"
+  },
   "utlx-jsonEquals": {
     "prefix": "jsonEquals",
     "body": "jsonEquals(${1:arg1})",
     "description": "Compares two JSON values for semantic equality using canonicalization",
+    "scope": "utlx"
+  },
+  "utlx-jsonMergePatch": {
+    "prefix": "jsonMergePatch",
+    "body": "jsonMergePatch(${1:arg1}, ${2:arg2})",
+    "description": "Apply RFC 7396 JSON Merge Patch. Null values remove keys.",
+    "scope": "utlx"
+  },
+  "utlx-jsonPatch": {
+    "prefix": "jsonPatch",
+    "body": "jsonPatch(${1:arg1}, ${2:arg2})",
+    "description": "Apply RFC 6902 JSON Patch operations to a document. Atomic: all-or-nothing.",
+    "scope": "utlx"
+  },
+  "utlx-validateJsonPatch": {
+    "prefix": "validateJsonPatch",
+    "body": "validateJsonPatch(${1:arg1})",
+    "description": "Validate that a patch array conforms to RFC 6902 structure.",
     "scope": "utlx"
   },
   "utlx-binaryConcat": {
@@ -3311,6 +3503,18 @@
     "description": "Create a zip archive from multiple files",
     "scope": "utlx"
   },
+  "utlx-parseOdata": {
+    "prefix": "parseOdata",
+    "body": "parseOdata(${1:arg1})",
+    "description": "Parse an OData JSON string into a UDM object with @odata annotations extracted as attributes",
+    "scope": "utlx"
+  },
+  "utlx-renderOdata": {
+    "prefix": "renderOdata",
+    "body": "renderOdata(${1:arg1})",
+    "description": "Render a UDM object as an OData JSON string with @odata annotations",
+    "scope": "utlx"
+  },
   "utlx-canCoerce": {
     "prefix": "canCoerce",
     "body": "canCoerce(${1:arg1}, ${2:arg2})",
@@ -3333,6 +3537,12 @@
     "prefix": "extractTimestampFromUuidV7",
     "body": "extractTimestampFromUuidV7(${1:arg1})",
     "description": "Extract timestamp from UUID v7",
+    "scope": "utlx"
+  },
+  "utlx-generateUuid": {
+    "prefix": "generateUuid",
+    "body": "generateUuid()",
+    "description": "Generate UUID v4 (random) (Legacy name predating the versioned UUID functions)",
     "scope": "utlx"
   },
   "utlx-generateUuidV4": {
@@ -3819,6 +4029,126 @@
     "prefix": "yamlValues",
     "body": "yamlValues(${1:arg1})",
     "description": "Get all values from a YAML object",
+    "scope": "utlx"
+  },
+  "utlx-parseEUNumber": {
+    "prefix": "parseEUNumber",
+    "body": "parseEUNumber(${1:arg1})",
+    "description": "Parse number in European/Latin American format (period thousands, comma decimal). Example: '1.234,56' \u2192 1234.56",
+    "scope": "utlx"
+  },
+  "utlx-parseFrenchNumber": {
+    "prefix": "parseFrenchNumber",
+    "body": "parseFrenchNumber(${1:arg1})",
+    "description": "Parse number in French/Belgian/Quebec format (space thousands, comma decimal). Example: '1 234,56' \u2192 1234.56",
+    "scope": "utlx"
+  },
+  "utlx-parseIndianNumber": {
+    "prefix": "parseIndianNumber",
+    "body": "parseIndianNumber(${1:arg1})",
+    "description": "Parse number in Indian format (lakh/crore grouping, comma thousands, period decimal). Example: '12,34,567.89' \u2192 1234567.89",
+    "scope": "utlx"
+  },
+  "utlx-parseNordicNumber": {
+    "prefix": "parseNordicNumber",
+    "body": "parseNordicNumber(${1:arg1})",
+    "description": "Parse number in Nordic/SI format (space thousands, comma decimal). Tolerant of regular (U+0020), no-break (U+00A0) and narrow-no-break (U+202F) spaces. Example: '1 234,56' \u2192 1234.56",
+    "scope": "utlx"
+  },
+  "utlx-parseSwissNumber": {
+    "prefix": "parseSwissNumber",
+    "body": "parseSwissNumber(${1:arg1})",
+    "description": "Parse number in Swiss format (apostrophe thousands, period decimal). Example: \"1'234.56\" \u2192 1234.56",
+    "scope": "utlx"
+  },
+  "utlx-parseUSNumber": {
+    "prefix": "parseUSNumber",
+    "body": "parseUSNumber(${1:arg1})",
+    "description": "Parse number in USA/UK/Asia format (comma thousands, period decimal). Example: '1,234.56' \u2192 1234.56",
+    "scope": "utlx"
+  },
+  "utlx-renderEUNumber": {
+    "prefix": "renderEUNumber",
+    "body": "renderEUNumber(${1:arg1})",
+    "description": "Format number as European/Latin American string (period thousands, comma decimal). Example: 1234.56 \u2192 '1.234,56'",
+    "scope": "utlx"
+  },
+  "utlx-renderFrenchNumber": {
+    "prefix": "renderFrenchNumber",
+    "body": "renderFrenchNumber(${1:arg1})",
+    "description": "Format number as French/Belgian/Quebec string (space thousands, comma decimal). Example: 1234.56 \u2192 '1 234,56'",
+    "scope": "utlx"
+  },
+  "utlx-renderIndianNumber": {
+    "prefix": "renderIndianNumber",
+    "body": "renderIndianNumber(${1:arg1})",
+    "description": "Format number in Indian style (lakh/crore 2-2-3 grouping, comma thousands, period decimal). Example: 1234567.89 \u2192 \"12,34,567.89\"",
+    "scope": "utlx"
+  },
+  "utlx-renderNordicNumber": {
+    "prefix": "renderNordicNumber",
+    "body": "renderNordicNumber(${1:arg1})",
+    "description": "Format number in Nordic/SI style (regular-space thousands, comma decimal). Example: 1234.56 \u2192 \"1 234,56\". Used by Sweden, Norway, Finland and the SI/ISO international style.",
+    "scope": "utlx"
+  },
+  "utlx-renderSwissNumber": {
+    "prefix": "renderSwissNumber",
+    "body": "renderSwissNumber(${1:arg1})",
+    "description": "Format number as Swiss string (apostrophe thousands, period decimal). Example: 1234.56 \u2192 \"1'234.56\"",
+    "scope": "utlx"
+  },
+  "utlx-renderUSNumber": {
+    "prefix": "renderUSNumber",
+    "body": "renderUSNumber(${1:arg1})",
+    "description": "Format number as USA/UK/Asia string (comma thousands, period decimal). Example: 1234.56 \u2192 '1,234.56'",
+    "scope": "utlx"
+  },
+  "utlx-parseAvroSchema": {
+    "prefix": "parseAvroSchema",
+    "body": "parseAvroSchema(${1:arg1})",
+    "description": "Parse an Avro schema JSON string into USDL format",
+    "scope": "utlx"
+  },
+  "utlx-parseJSONSchema": {
+    "prefix": "parseJSONSchema",
+    "body": "parseJSONSchema(${1:arg1})",
+    "description": "Parse a JSON Schema string into USDL format",
+    "scope": "utlx"
+  },
+  "utlx-parseProtobufSchema": {
+    "prefix": "parseProtobufSchema",
+    "body": "parseProtobufSchema(${1:arg1})",
+    "description": "Parse a Protocol Buffers (.proto) schema string into USDL format",
+    "scope": "utlx"
+  },
+  "utlx-parseXSDSchema": {
+    "prefix": "parseXSDSchema",
+    "body": "parseXSDSchema(${1:arg1})",
+    "description": "Parse an XSD schema XML string into USDL format",
+    "scope": "utlx"
+  },
+  "utlx-renderAvroSchema": {
+    "prefix": "renderAvroSchema",
+    "body": "renderAvroSchema(${1:arg1})",
+    "description": "Render a USDL schema object as an Avro schema JSON string",
+    "scope": "utlx"
+  },
+  "utlx-renderJSONSchema": {
+    "prefix": "renderJSONSchema",
+    "body": "renderJSONSchema(${1:arg1})",
+    "description": "Render a USDL schema object as a JSON Schema string",
+    "scope": "utlx"
+  },
+  "utlx-renderProtobufSchema": {
+    "prefix": "renderProtobufSchema",
+    "body": "renderProtobufSchema(${1:arg1})",
+    "description": "Render a USDL schema object as a Protocol Buffers (.proto) schema string",
+    "scope": "utlx"
+  },
+  "utlx-renderXSDSchema": {
+    "prefix": "renderXSDSchema",
+    "body": "renderXSDSchema(${1:arg1})",
+    "description": "Render a USDL schema object as an XSD schema XML string",
     "scope": "utlx"
   }
 }

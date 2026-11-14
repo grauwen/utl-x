@@ -1,9 +1,13 @@
 #!/bin/bash
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-JAR="$SCRIPT_DIR/../build/libs/utlxd-1.3.0.jar"
+LIB_DIR="$SCRIPT_DIR/../build/libs"
 
-if [ ! -f "$JAR" ]; then
-    echo "Error: JAR not found at $JAR"
+# Resolve the most recently built utlxd-*.jar instead of pinning a version -- a
+# pinned version silently keeps running the previous release's jar after a bump.
+JAR="$(ls -t "$LIB_DIR"/utlxd-*.jar 2>/dev/null | head -n 1)"
+
+if [ -z "$JAR" ]; then
+    echo "Error: no utlxd JAR found in $LIB_DIR"
     echo "Run './gradlew :modules:daemon:jar' first"
     exit 1
 fi

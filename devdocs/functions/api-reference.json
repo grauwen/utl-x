@@ -1,11 +1,11 @@
 {
   "utlx_version": "1.0.0",
-  "generated_at": "2026-04-06T20:36:24.194225Z",
-  "total_functions": 652,
+  "generated_at": "2026-11-13T22:53:35.439373Z",
+  "total_functions": 705,
   "categories": {
     "Core": {
       "description": "Utility functions",
-      "function_count": 49,
+      "function_count": 48,
       "functions": [
         {
           "name": "assert",
@@ -338,25 +338,25 @@
         {
           "name": "endTimer",
           "category": "Core",
-          "description": "Logs elapsed time since startTimer()",
-          "signature": "endTimer(array: Input array to process) => Any",
+          "description": "Logs elapsed time since startDebugTimer()",
+          "signature": "endTimer(timer: Timer token from startDebugTimer()) => Any",
           "minArgs": 1,
           "maxArgs": 1,
           "parameters": [
             {
-              "name": "array",
-              "type": "Input array to process",
+              "name": "timer",
+              "type": "Timer token from startDebugTimer()",
               "description": ""
             }
           ],
           "returns": {
             "type": "Any",
-            "description": "Result of the operation"
+            "description": "Elapsed time in milliseconds"
           },
           "examples": [
-            "endTimer(...) => result"
+            "endDebugTimer(timer) => 125.3"
           ],
-          "notes": "Example:\n```\nlet timer = startTimer(\"Processing\")\n// ... work ...\nendTimer(timer) // Logs: \"Processing: 125.3ms\"\n```",
+          "notes": "Registered as `endDebugTimer`; the Kotlin function is named `endTimer`.\nExample:\n```\nlet timer = startDebugTimer(\"Processing\")\n// ... work ...\nendDebugTimer(timer) // Logs: \"Processing: 125.3ms\"\n```",
           "tags": [
             "core"
           ],
@@ -568,38 +568,6 @@
             "core",
             "filter",
             "predicate"
-          ],
-          "seeAlso": [],
-          "since": "1.0",
-          "deprecated": false,
-          "deprecationMessage": null,
-          "isAlias": false,
-          "aliasOf": null
-        },
-        {
-          "name": "generateUuid",
-          "category": "Core",
-          "description": "Generate UUID/GUID",
-          "signature": "generateUuid(array: Input array to process) => Any",
-          "minArgs": 1,
-          "maxArgs": 1,
-          "parameters": [
-            {
-              "name": "array",
-              "type": "Input array to process",
-              "description": ""
-            }
-          ],
-          "returns": {
-            "type": "Any",
-            "description": "Result of the operation"
-          },
-          "examples": [
-            "generate-uuid()"
-          ],
-          "notes": null,
-          "tags": [
-            "core"
           ],
           "seeAlso": [],
           "since": "1.0",
@@ -1275,9 +1243,9 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "startTimer(...) => result"
+            "startDebugTimer(\"Data processing\") => timer"
           ],
-          "notes": "Note: This is a placeholder for actual timing implementation\nin the UTL-X runtime.\nExample:\n```\nlet timer = startTimer(\"Data processing\")\n// ... do work ...\nendTimer(timer)\n```",
+          "notes": "Registered as `startDebugTimer`; the Kotlin function is named `startTimer`.\nNote: This is a placeholder for actual timing implementation\nin the UTL-X runtime.\nExample:\n```\nlet timer = startDebugTimer(\"Data processing\")\n// ... do work ...\nendDebugTimer(timer)\n```",
           "tags": [
             "core"
           ],
@@ -1561,7 +1529,7 @@
     },
     "String": {
       "description": "Text processing, case conversion, and string manipulation",
-      "function_count": 83,
+      "function_count": 84,
       "functions": [
         {
           "name": "analyzeString",
@@ -2887,9 +2855,9 @@
           "name": "join",
           "category": "String",
           "description": "Join array elements with delimiter",
-          "signature": "join(array: Input array to process, delimiter: Delimiter value, replacement: Replacement value) => Any",
-          "minArgs": 1,
-          "maxArgs": 1,
+          "signature": "join(array: Input array to process, delimiter: Delimiter value) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
           "parameters": [
             {
               "name": "array",
@@ -2899,11 +2867,6 @@
             {
               "name": "delimiter",
               "type": "Delimiter value",
-              "description": ""
-            },
-            {
-              "name": "replacement",
-              "type": "Replacement value",
               "description": ""
             }
           ],
@@ -2924,6 +2887,43 @@
           "deprecationMessage": null,
           "isAlias": false,
           "aliasOf": null
+        },
+        {
+          "name": "joinBy",
+          "category": "String",
+          "description": "Join array elements with delimiter (Legacy name; also DataWeave's name for the string join)",
+          "signature": "join(array: Input array to process, delimiter: Delimiter value) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Input array to process",
+              "description": ""
+            },
+            {
+              "name": "delimiter",
+              "type": "Delimiter value",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Result of the operation"
+          },
+          "examples": [
+            "join([\"a\", \"b\", \"c\"], \",\") => \"a,b,c\""
+          ],
+          "notes": null,
+          "tags": [
+            "string"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": true,
+          "aliasOf": "join"
         },
         {
           "name": "kebabCase",
@@ -3200,7 +3200,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "normalize-space(\"hello    world\") => \"hello world\""
+            "normalizeSpace(\"hello    world\") => \"hello world\""
           ],
           "notes": null,
           "tags": [
@@ -3326,7 +3326,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "pad-right(\"42\", 5, \"0\") => \"42000\""
+            "padRight(\"42\", 5, \"0\") => \"42000\""
           ],
           "notes": null,
           "tags": [
@@ -4070,7 +4070,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "substring-after(\"hello-world\", \"-\") => \"world\""
+            "substringAfter(\"hello-world\", \"-\") => \"world\""
           ],
           "notes": null,
           "tags": [
@@ -4112,7 +4112,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "substring-after-last(\"a/b/c.txt\", \"/\") => \"c.txt\""
+            "substringAfterLast(\"a/b/c.txt\", \"/\") => \"c.txt\""
           ],
           "notes": null,
           "tags": [
@@ -4149,7 +4149,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "substring-before(\"hello-world\", \"-\") => \"hello\""
+            "substringBefore(\"hello-world\", \"-\") => \"hello\""
           ],
           "notes": null,
           "tags": [
@@ -4191,7 +4191,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "substring-before-last(\"a/b/c.txt\", \"/\") => \"a/b\""
+            "substringBeforeLast(\"a/b/c.txt\", \"/\") => \"a/b\""
           ],
           "notes": null,
           "tags": [
@@ -4559,7 +4559,7 @@
     },
     "Array": {
       "description": "Functional operations, filtering, mapping, and array manipulation",
-      "function_count": 67,
+      "function_count": 66,
       "functions": [
         {
           "name": "avg",
@@ -5472,43 +5472,6 @@
           "aliasOf": null
         },
         {
-          "name": "groupBy",
-          "category": "Array",
-          "description": "Groups array elements by a key function.",
-          "signature": "groupBy(array: Input array to process, keyFunctionArg: Keyfunctionarg value) => Any",
-          "minArgs": 2,
-          "maxArgs": 2,
-          "parameters": [
-            {
-              "name": "array",
-              "type": "Input array to process",
-              "description": ""
-            },
-            {
-              "name": "keyFunctionArg",
-              "type": "Keyfunctionarg value",
-              "description": ""
-            }
-          ],
-          "returns": {
-            "type": "Any",
-            "description": "an object where keys are the results of the key function"
-          },
-          "examples": [
-            "groupBy(...) => result"
-          ],
-          "notes": "Returns an object where keys are the results of the key function\nand values are arrays of elements with that key.\n[1] key function (item) => string key\nExample:\n```\n[1, 2, 3, 4, 5, 6] groupBy (x) => if (x % 2 == 0) \"even\" else \"odd\"\n\u2192 {odd: [1, 3, 5], even: [2, 4, 6]}\n[{city: \"NYC\", name: \"Alice\"}, {city: \"LA\", name: \"Bob\"}, {city: \"NYC\", name: \"Carol\"}]\ngroupBy (x) => x.city\n\u2192 {NYC: [{city: \"NYC\", name: \"Alice\"}, {city: \"NYC\", name: \"Carol\"}],\nLA: [{city: \"LA\", name: \"Bob\"}]}\n[\"apple\", \"apricot\", \"banana\", \"blueberry\"]\ngroupBy (x) => substring(x, 0, 1)\n\u2192 {a: [\"apple\", \"apricot\"], b: [\"banana\", \"blueberry\"]}\n```",
-          "tags": [
-            "array"
-          ],
-          "seeAlso": [],
-          "since": "1.0",
-          "deprecated": false,
-          "deprecationMessage": null,
-          "isAlias": false,
-          "aliasOf": null
-        },
-        {
           "name": "includes",
           "category": "Array",
           "description": "Check if array includes value",
@@ -5580,6 +5543,53 @@
           "tags": [
             "array",
             "index"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "innerJoin",
+          "category": "Array",
+          "description": "Inner join - returns only items that have matches in both arrays",
+          "signature": "innerJoin(array: Input array to process, right: Right value, leftKeyFn: Leftkeyfn value, rightKeyFn: Rightkeyfn value) => Any",
+          "minArgs": 4,
+          "maxArgs": 4,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Input array to process",
+              "description": ""
+            },
+            {
+              "name": "right",
+              "type": "Right value",
+              "description": ""
+            },
+            {
+              "name": "leftKeyFn",
+              "type": "Leftkeyfn value",
+              "description": ""
+            },
+            {
+              "name": "rightKeyFn",
+              "type": "Rightkeyfn value",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Result of the operation"
+          },
+          "examples": [
+            "innerJoin(customers, orders, (c) => c.id, (o) => o.customerId)"
+          ],
+          "notes": "Example:\ninnerJoin(customers, orders, (c) => c.id, (o) => o.customerId)",
+          "tags": [
+            "array"
           ],
           "seeAlso": [],
           "since": "1.0",
@@ -5699,53 +5709,6 @@
             "intersect(...) => result"
           ],
           "notes": "Returns intersection of two arrays (elements in both)",
-          "tags": [
-            "array"
-          ],
-          "seeAlso": [],
-          "since": "1.0",
-          "deprecated": false,
-          "deprecationMessage": null,
-          "isAlias": false,
-          "aliasOf": null
-        },
-        {
-          "name": "join",
-          "category": "Array",
-          "description": "Inner join - returns only items that have matches in both arrays",
-          "signature": "join(array: Input array to process, right: Right value, leftKeyFn: Leftkeyfn value, rightKeyFn: Rightkeyfn value) => Any",
-          "minArgs": 4,
-          "maxArgs": 4,
-          "parameters": [
-            {
-              "name": "array",
-              "type": "Input array to process",
-              "description": ""
-            },
-            {
-              "name": "right",
-              "type": "Right value",
-              "description": ""
-            },
-            {
-              "name": "leftKeyFn",
-              "type": "Leftkeyfn value",
-              "description": ""
-            },
-            {
-              "name": "rightKeyFn",
-              "type": "Rightkeyfn value",
-              "description": ""
-            }
-          ],
-          "returns": {
-            "type": "Any",
-            "description": "Result of the operation"
-          },
-          "examples": [
-            "join(...) => result"
-          ],
-          "notes": "Example:\njoin(customers, orders, (c) => c.id, (o) => o.customerId)",
           "tags": [
             "array"
           ],
@@ -7121,9 +7084,277 @@
         }
       ]
     },
+    "Data Restructuring": {
+      "description": "Utility functions",
+      "function_count": 6,
+      "functions": [
+        {
+          "name": "chunkBy",
+          "category": "Data Restructuring",
+          "description": "Split a flat sequence into chunks by position. A new chunk starts whenever the predicate returns true.",
+          "signature": "chunkBy(array: Flat sequence of records to chunk, isNewChunkPredicate: Lambda (element)) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Flat sequence of records to chunk",
+              "description": ""
+            },
+            {
+              "name": "isNewChunkPredicate",
+              "type": "Lambda (element)",
+              "description": "> boolean \u2014 returns true to start a new chunk"
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Array of arrays \u2014 each inner array is a chunk of consecutive elements"
+          },
+          "examples": [
+            "chunkBy(segments, (seg) -> seg.type == \"HEADER\") => [[HEADER, LINE, LINE], [HEADER, LINE]]"
+          ],
+          "notes": "For positional/sequential grouping where parent-child is determined by position, not key.\nUse chunkBy for SAP IDocs, EDI segments, log files, bank statements.\nUse nestBy for key-based nesting. Use groupBy for key-based grouping.\nPerformance: O(N) \u2014 single sequential scan.",
+          "tags": [
+            "restructuring",
+            "chunking",
+            "positional",
+            "sequential"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "groupBy",
+          "category": "Data Restructuring",
+          "description": "Group array elements by key. Returns an Object for O(1) lookup by key.",
+          "signature": "groupBy(array: Input array to group, keyFunction: Lambda (item)) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Input array to group",
+              "description": ""
+            },
+            {
+              "name": "keyFunction",
+              "type": "Lambda (item)",
+              "description": "> key, or string property name"
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Object keyed by group name, values are arrays of matching elements"
+          },
+          "examples": [
+            "groupBy(items, (i) -> i.dept) => {Eng: [...], Sales: [...]}"
+          ],
+          "notes": "Returns an Object where keys are group names and values are arrays of group members.\nUse groupBy for O(1) lookup: groups[\"Engineering\"].\nUse mapGroups for iteration/reporting.\nUse lookupBy for 1:1 enrichment (find one record).\nKey function can be a lambda or a string property name shorthand.",
+          "tags": [
+            "restructuring",
+            "grouping",
+            "lookup"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "lookupBy",
+          "category": "Data Restructuring",
+          "description": "Find one matching record from a reference array by key. Returns the first match or null.",
+          "signature": "lookupBy(searchValue: The value to search for (e.g., a customer ID), referenceArray: The array to search in (e.g., all customers), keyFunction: Lambda that extracts the comparison key from each reference record) => Any",
+          "minArgs": 3,
+          "maxArgs": 3,
+          "parameters": [
+            {
+              "name": "searchValue",
+              "type": "The value to search for (e.g., a customer ID)",
+              "description": ""
+            },
+            {
+              "name": "referenceArray",
+              "type": "The array to search in (e.g., all customers)",
+              "description": ""
+            },
+            {
+              "name": "keyFunction",
+              "type": "Lambda that extracts the comparison key from each reference record",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "The first matching record, or null if no match found"
+          },
+          "examples": [
+            "lookupBy(order.customerId, customers, (c) -> c.id) => {id: \"C-42\", name: \"Acme Corp\"}"
+          ],
+          "notes": "1:1 record enrichment \u2014 find ONE matching record by key.\nUse lookupBy for enrichment (add customer name to order).\nUse groupBy for 1:N grouping (all lines per order).\nUse nestBy (F03, planned) for nesting children under parents.",
+          "tags": [
+            "restructuring",
+            "lookup",
+            "enrichment"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "mapGroups",
+          "category": "Data Restructuring",
+          "description": "Group array elements by key and transform each group. Returns array of transformed results.",
+          "signature": "mapGroups(array: Input array to group, keySelector: Key function (lambda) or property name (string), transform: Lambda receiving group object with .key and .value properties) => Any",
+          "minArgs": 3,
+          "maxArgs": 3,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Input array to group",
+              "description": ""
+            },
+            {
+              "name": "keySelector",
+              "type": "Key function (lambda) or property name (string)",
+              "description": ""
+            },
+            {
+              "name": "transform",
+              "type": "Lambda receiving group object with .key and .value properties",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Array of transformed group results"
+          },
+          "examples": [
+            "mapGroups(employees, \"department\", group => {dept: group.key, count: count(group.value)})"
+          ],
+          "notes": "Groups array elements by key, then applies transform to each group.\nThe transform lambda receives {key: groupKey, value: [groupMembers]}.\nUse mapGroups for iteration/reporting.\nUse groupBy for O(1) lookup.",
+          "tags": [
+            "restructuring",
+            "grouping",
+            "reporting"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "nestBy",
+          "category": "Data Restructuring",
+          "description": "Nest children under parents by matching keys. Creates a 1:N parent-child hierarchy.",
+          "signature": "nestBy(parents: Array of parent records (e.g., orders), children: Array of child records (e.g., order lines), parentKeyFn: Lambda extracting the join key from each parent, childKeyFn: Lambda extracting the join key from each child, childPropertyName: String name for the new property added to each parent) => Any",
+          "minArgs": 5,
+          "maxArgs": 5,
+          "parameters": [
+            {
+              "name": "parents",
+              "type": "Array of parent records (e.g., orders)",
+              "description": ""
+            },
+            {
+              "name": "children",
+              "type": "Array of child records (e.g., order lines)",
+              "description": ""
+            },
+            {
+              "name": "parentKeyFn",
+              "type": "Lambda extracting the join key from each parent",
+              "description": ""
+            },
+            {
+              "name": "childKeyFn",
+              "type": "Lambda extracting the join key from each child",
+              "description": ""
+            },
+            {
+              "name": "childPropertyName",
+              "type": "String name for the new property added to each parent",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Array of parent objects, each with a new property containing its matched children"
+          },
+          "examples": [
+            "nestBy(orders, lines, (o) -> o.orderId, (l) -> l.orderId, \"lines\")"
+          ],
+          "notes": "Flat-to-hierarchical restructuring \u2014 the most common integration pattern.\nPerformance: O(N + M) \u2014 builds a hash index of children, then iterates parents.\nParents with no matching children get an empty array.\nThe 5th parameter is a string that becomes the property name on each parent.\nUse nestBy for 1:N nesting. Use lookupBy for 1:1 enrichment. Use groupBy for keyed map.",
+          "tags": [
+            "restructuring",
+            "nesting",
+            "join",
+            "hierarchy"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "unnest",
+          "category": "Data Restructuring",
+          "description": "Flatten nested children alongside parent fields. Reverse of nestBy \u2014 hierarchical to flat.",
+          "signature": "unnest(array: Array of parent objects with nested child arrays, childPropertyName: String name of the property containing the nested children) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "array",
+              "type": "Array of parent objects with nested child arrays",
+              "description": ""
+            },
+            {
+              "name": "childPropertyName",
+              "type": "String name of the property containing the nested children",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Flat array where each child is merged with its parent's fields (child overrides on collision)"
+          },
+          "examples": [
+            "unnest(orders, \"lines\") => [{orderId: \"A\", product: \"Widget\", qty: 10}, ...]"
+          ],
+          "notes": "Reverse of nestBy \u2014 takes hierarchical data and produces flat rows.\nParent fields are repeated for each child (denormalization).\nThe child property itself is removed from the output.\nChild fields override parent fields on name collision.\nParents with no/empty/null children are excluded (no rows to produce).\nFor multi-level: chain unnest calls: unnest(unnest(data, \"lines\"), \"schedules\")",
+          "tags": [
+            "restructuring",
+            "flatten",
+            "denormalize",
+            "csv"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        }
+      ]
+    },
     "Math": {
       "description": "Mathematical operations, arithmetic, and numeric functions",
-      "function_count": 37,
+      "function_count": 39,
       "functions": [
         {
           "name": "abs",
@@ -7520,7 +7751,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "format-number(1234.56, \"#,##0.00\") => \"1,234.56\""
+            "formatNumber(1234.56, \"#,##0.00\") => \"1,234.56\""
           ],
           "notes": null,
           "tags": [
@@ -7586,6 +7817,105 @@
           ],
           "seeAlso": [],
           "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "isFinite",
+          "category": "Math",
+          "description": "True when a number is finite \u2014 neither infinite nor NaN",
+          "signature": "isFinite(num: The number to test) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "num",
+              "type": "The number to test",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "true if the value is finite"
+          },
+          "examples": [
+            "isFinite(1.5) => true"
+          ],
+          "notes": "The one to reach for when guarding output: `if (isFinite(x)) x else null`.",
+          "tags": [
+            "math",
+            "predicate"
+          ],
+          "seeAlso": [],
+          "since": "1.4",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "isInfinite",
+          "category": "Math",
+          "description": "True when a number is positive or negative infinity",
+          "signature": "isInfinite(num: The number to test) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "num",
+              "type": "The number to test",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "true if the value is infinite"
+          },
+          "examples": [
+            "isInfinite(1.0e308 * 10) => true"
+          ],
+          "notes": "JSON cannot represent Infinity, so test before emitting a computed value.",
+          "tags": [
+            "math",
+            "predicate"
+          ],
+          "seeAlso": [],
+          "since": "1.4",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "isNaN",
+          "category": "Math",
+          "description": "True when a number is NaN (not a number)",
+          "signature": "isNaN(num: The number to test) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "num",
+              "type": "The number to test",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "true if the value is NaN"
+          },
+          "examples": [
+            "isNaN(sqrt(-1)) => true"
+          ],
+          "notes": "JSON cannot represent NaN, so test before emitting a computed value.",
+          "tags": [
+            "math",
+            "predicate"
+          ],
+          "seeAlso": [],
+          "since": "1.4",
           "deprecated": false,
           "deprecationMessage": null,
           "isAlias": false,
@@ -7804,38 +8134,6 @@
           "aliasOf": null
         },
         {
-          "name": "parseFloat",
-          "category": "Math",
-          "description": "Parse float from string",
-          "signature": "parseFloat(str: Str value) => Any",
-          "minArgs": 1,
-          "maxArgs": 1,
-          "parameters": [
-            {
-              "name": "str",
-              "type": "Str value",
-              "description": ""
-            }
-          ],
-          "returns": {
-            "type": "Any",
-            "description": "Result of the operation"
-          },
-          "examples": [
-            "parse-float(\"3.14\") => 3.14"
-          ],
-          "notes": null,
-          "tags": [
-            "math"
-          ],
-          "seeAlso": [],
-          "since": "1.0",
-          "deprecated": false,
-          "deprecationMessage": null,
-          "isAlias": false,
-          "aliasOf": null
-        },
-        {
           "name": "parseInt",
           "category": "Math",
           "description": "Parse integer from string",
@@ -7854,7 +8152,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "parse-int(\"42\") => 42"
+            "parseInt(\"42\") => 42"
           ],
           "notes": null,
           "tags": [
@@ -8029,19 +8327,19 @@
         {
           "name": "round",
           "category": "Math",
-          "description": "Performs round operation",
-          "signature": "round(num: Num value, exp: Exp value) => Any",
+          "description": "Rounds to the nearest integer, or to N decimal places when a second argument is given",
+          "signature": "round(num: the number to round, decimals: (optional) number of decimal places; omitted or <= 0 rounds to an integer) => Any",
           "minArgs": 1,
-          "maxArgs": 1,
+          "maxArgs": 2,
           "parameters": [
             {
               "name": "num",
-              "type": "Num value",
+              "type": "the number to round",
               "description": ""
             },
             {
-              "name": "exp",
-              "type": "Exp value",
+              "name": "decimals",
+              "type": "(optional) number of decimal places; omitted or <= 0 rounds to an integer",
               "description": ""
             }
           ],
@@ -8050,7 +8348,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "round(...) => result"
+            "round(3.14159, 2) => 3.14"
           ],
           "notes": null,
           "tags": [
@@ -8355,7 +8653,7 @@
     },
     "Date": {
       "description": "Date/time parsing, formatting, and manipulation",
-      "function_count": 68,
+      "function_count": 72,
       "functions": [
         {
           "name": "addDays",
@@ -8679,7 +8977,7 @@
             "description": "1 if date1 < date2, 0 if equal, 1 if date1 > date2"
           },
           "examples": [
-            "compare-dates(date1, date2)"
+            "compareDates(date1, date2)"
           ],
           "notes": "Returns: -1 if date1 < date2, 0 if equal, 1 if date1 > date2",
           "tags": [
@@ -9399,6 +9697,74 @@
           "notes": null,
           "tags": [
             "date"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "fromEpochMicros",
+          "category": "Date",
+          "description": "The date-time at a given number of epoch microseconds \u2014 the inverse of toEpochMicros.",
+          "signature": "fromEpochMicros(micros: microseconds since 1970) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "micros",
+              "type": "microseconds since 1970",
+              "description": "01-01T00:00:00Z"
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "DateTime"
+          },
+          "examples": [
+            "fromEpochMicros(1762263390438000) => 2026-11-04T13:36:30.438Z"
+          ],
+          "notes": null,
+          "tags": [
+            "date",
+            "epoch",
+            "timestamp"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "fromEpochMillis",
+          "category": "Date",
+          "description": "The date-time at a given number of epoch milliseconds \u2014 the inverse of toEpochMillis.",
+          "signature": "fromEpochMillis(millis: milliseconds since 1970) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "millis",
+              "type": "milliseconds since 1970",
+              "description": "01-01T00:00:00Z"
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "DateTime"
+          },
+          "examples": [
+            "fromEpochMillis(1762263390438) => 2026-11-04T13:36:30.438Z"
+          ],
+          "notes": null,
+          "tags": [
+            "date",
+            "epoch",
+            "timestamp"
           ],
           "seeAlso": [],
           "since": "1.0",
@@ -10279,6 +10645,84 @@
           "aliasOf": null
         },
         {
+          "name": "toEpochMicros",
+          "category": "Date",
+          "description": "Epoch microseconds for an ISO-8601 date-time (or any UTL-X date value).",
+          "signature": "toEpochMicros(value: ISO, zone: optional IANA zone, required only when the value carries no offset) => Number",
+          "minArgs": 1,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "value",
+              "type": "ISO",
+              "description": "8601 string with an offset (\u2026+01:00 or \u2026Z), or a date/date-time value"
+            },
+            {
+              "name": "zone",
+              "type": "optional IANA zone, required only when the value carries no offset",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Number",
+            "description": "whole microseconds since 1970-01-01T00:00:00Z"
+          },
+          "examples": [
+            "toEpochMicros(\"2026-11-04T14:36:30.438+01:00\") => 1762263390438000"
+          ],
+          "notes": null,
+          "tags": [
+            "date",
+            "epoch",
+            "timestamp"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "toEpochMillis",
+          "category": "Date",
+          "description": "Epoch milliseconds for an ISO-8601 date-time (or any UTL-X date value).",
+          "signature": "toEpochMillis(value: ISO, zone: optional IANA zone, required only when the value carries no offset) => Number",
+          "minArgs": 1,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "value",
+              "type": "ISO",
+              "description": "8601 string with an offset (\u2026+01:00 or \u2026Z), or a date/date-time value"
+            },
+            {
+              "name": "zone",
+              "type": "optional IANA zone, required only when the value carries no offset",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Number",
+            "description": "whole milliseconds since 1970-01-01T00:00:00Z"
+          },
+          "examples": [
+            "toEpochMillis(\"2026-11-04T14:36:30.438+01:00\") => 1762263390438"
+          ],
+          "notes": null,
+          "tags": [
+            "date",
+            "epoch",
+            "timestamp"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
           "name": "toUTC",
           "category": "Date",
           "description": "Get UTC datetime from local datetime and timezone",
@@ -10334,7 +10778,7 @@
             "description": "Boolean indicating if the string is a valid date"
           },
           "examples": [
-            "validate-date(\"2025-10-14T00:00:00Z\") => true"
+            "validateDate(\"2025-10-14T00:00:00Z\") => true"
           ],
           "notes": null,
           "tags": [
@@ -13643,23 +14087,33 @@
         {
           "name": "renderJson",
           "category": "Other",
-          "description": "Render a UDM object as a JSON string",
-          "signature": "renderJson(obj: Obj value) => Any",
+          "description": "Render a UDM value as a JSON string \u2014 the same JSON `output json` would write.",
+          "signature": "renderJson(value: the value to render, pretty: indent the output (default false), writeAttributes: keep an attribute on a leaf element that also has text (default false, matching `output json`)) => String",
           "minArgs": 1,
-          "maxArgs": 1,
+          "maxArgs": 3,
           "parameters": [
             {
-              "name": "obj",
-              "type": "Obj value",
+              "name": "value",
+              "type": "the value to render",
+              "description": ""
+            },
+            {
+              "name": "pretty",
+              "type": "indent the output (default false)",
+              "description": ""
+            },
+            {
+              "name": "writeAttributes",
+              "type": "keep an attribute on a leaf element that also has text (default false, matching `output json`)",
               "description": ""
             }
           ],
           "returns": {
-            "type": "Any",
-            "description": "Result of the operation"
+            "type": "String",
+            "description": "the rendered JSON"
           },
           "examples": [
-            "renderJson(data, pretty?)"
+            "renderJson(data, pretty?, writeAttributes?)"
           ],
           "notes": null,
           "tags": [
@@ -14115,7 +14569,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "base64-decode(\"SGVsbG8gV29ybGQ=\")"
+            "base64Decode(\"SGVsbG8gV29ybGQ=\")"
           ],
           "notes": null,
           "tags": [
@@ -14147,7 +14601,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "base64-encode(\"Hello World\")"
+            "base64Encode(\"Hello World\")"
           ],
           "notes": null,
           "tags": [
@@ -14423,7 +14877,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "hex-decode(\"48656c6c6f\")"
+            "hexDecode(\"48656c6c6f\")"
           ],
           "notes": null,
           "tags": [
@@ -14455,7 +14909,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "hex-encode(\"Hello\")"
+            "hexEncode(\"Hello\")"
           ],
           "notes": null,
           "tags": [
@@ -14959,7 +15413,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "url-decode(\"hello+world%21\")"
+            "urlDecode(\"hello+world%21\")"
           ],
           "notes": null,
           "tags": [
@@ -14991,7 +15445,7 @@
             "description": "Decoded string"
           },
           "examples": [
-            "url-decode-component(\"hello%20world%21\")"
+            "urlDecodeComponent(\"hello%20world%21\")"
           ],
           "notes": null,
           "tags": [
@@ -15025,7 +15479,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "url-encode(\"hello world!\")"
+            "urlEncode(\"hello world!\")"
           ],
           "notes": null,
           "tags": [
@@ -15057,7 +15511,7 @@
             "description": "URI component encoded string"
           },
           "examples": [
-            "url-encode-component(\"hello world!\")"
+            "urlEncodeComponent(\"hello world!\")"
           ],
           "notes": null,
           "tags": [
@@ -15076,7 +15530,7 @@
     },
     "XML": {
       "description": "XML parsing, encoding detection, and namespace handling",
-      "function_count": 60,
+      "function_count": 59,
       "functions": [
         {
           "name": "addBOM",
@@ -15556,7 +16010,7 @@
           "examples": [
             "canonicalizeWithAlgorithm(...) => result"
           ],
-          "notes": "Supported algorithms:\n- \"c14n\" - Canonical XML 1.0 without comments\n- \"c14n-with-comments\" - Canonical XML 1.0 with comments\n- \"exc-c14n\" - Exclusive C14N without comments\n- \"exc-c14n-with-comments\" - Exclusive C14N with comments\n- \"c14n11\" - Canonical XML 1.1 without comments\n- \"c14n11-with-comments\" - Canonical XML 1.1 with comments\n- \"physical\" - Physical C14N\nExample:\n```\ncanonicalize(xmlDoc, \"exc-c14n\", \"ds xenc\")\n```",
+          "notes": "Supported algorithms:\n- \"c14n\" - Canonical XML 1.0 without comments\n- \"c14n-with-comments\" - Canonical XML 1.0 with comments\n- \"exc-c14n\" - Exclusive C14N without comments\n- \"exc-c14n-with-comments\" - Exclusive C14N with comments\n- \"c14n11\" - Canonical XML 1.1 without comments\n- \"c14n11-with-comments\" - Canonical XML 1.1 with comments\n- \"physical\" - Physical C14N\nExample:\n```\ncanonicalizeWithAlgorithm(xmlDoc, \"exc-c14n\", \"ds xenc\")\n```",
           "tags": [
             "xml"
           ],
@@ -15586,7 +16040,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "child-count(element) => 5"
+            "childCount(element) => 5"
           ],
           "notes": null,
           "tags": [
@@ -15618,7 +16072,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "child-names(element) => [\"Order\", \"Customer\", \"Items\"]"
+            "childNames(element) => [\"Order\", \"Customer\", \"Items\"]"
           ],
           "notes": null,
           "tags": [
@@ -15729,7 +16183,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "create-qname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")"
+            "createQname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")"
           ],
           "notes": "=> \"soap:Envelope\"",
           "tags": [
@@ -15872,7 +16326,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "element-path(element) => \"/Order/Customer/Name\""
+            "elementPath(element) => \"/Order/Customer/Name\""
           ],
           "notes": null,
           "tags": [
@@ -16159,7 +16613,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "get-namespaces(element)"
+            "getNamespaces(element)"
           ],
           "notes": "=> { \"soap\": \"http://...\", \"wsa\": \"http://...\" }",
           "tags": [
@@ -16196,7 +16650,7 @@
             "description": "Boolean indicating the result"
           },
           "examples": [
-            "has-attribute(element, \"id\") => true"
+            "hasAttribute(element, \"id\") => true"
           ],
           "notes": null,
           "tags": [
@@ -16292,7 +16746,7 @@
             "description": "Boolean indicating the result"
           },
           "examples": [
-            "has-namespace(element) => true"
+            "hasNamespace(element) => true"
           ],
           "notes": null,
           "tags": [
@@ -16361,7 +16815,7 @@
             "description": "Boolean indicating the result"
           },
           "examples": [
-            "is-empty-element(element) => false"
+            "isEmptyElement(element) => false"
           ],
           "notes": null,
           "tags": [
@@ -16393,7 +16847,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "local-name(element) => \"Envelope\" (from \"soap:Envelope\")"
+            "localName(element) => \"Envelope\" (from \"soap:Envelope\")"
           ],
           "notes": "For non-XML data, returns the property name.",
           "tags": [
@@ -16430,7 +16884,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "matches-qname(element, \"soap:Envelope\") => true"
+            "matchesQname(element, \"soap:Envelope\") => true"
           ],
           "notes": null,
           "tags": [
@@ -16467,7 +16921,7 @@
             "description": "empty string if no prefix."
           },
           "examples": [
-            "namespace-prefix(element) => \"soap\" (from \"soap:Envelope\")"
+            "namespacePrefix(element) => \"soap\" (from \"soap:Envelope\")"
           ],
           "notes": "Returns empty string if no prefix.",
           "tags": [
@@ -16500,7 +16954,7 @@
             "description": "empty string if no namespace."
           },
           "examples": [
-            "namespace-uri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\""
+            "namespaceUri(element) => \"http://schemas.xmlsoap.org/soap/envelope/\""
           ],
           "notes": "Returns empty string if no namespace.",
           "tags": [
@@ -16533,7 +16987,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "node-type(node) => \"element\""
+            "nodeType(node) => \"element\""
           ],
           "notes": null,
           "tags": [
@@ -16626,38 +17080,6 @@
           "aliasOf": null
         },
         {
-          "name": "parent",
-          "category": "XML",
-          "description": "Get parent element (if metadata available)",
-          "signature": "parent(element: Element value) => Any",
-          "minArgs": 1,
-          "maxArgs": 1,
-          "parameters": [
-            {
-              "name": "element",
-              "type": "Element value",
-              "description": ""
-            }
-          ],
-          "returns": {
-            "type": "Any",
-            "description": "Result of the operation"
-          },
-          "examples": [
-            "parent(element) => parentElement"
-          ],
-          "notes": null,
-          "tags": [
-            "xml"
-          ],
-          "seeAlso": [],
-          "since": "1.0",
-          "deprecated": false,
-          "deprecationMessage": null,
-          "isAlias": false,
-          "aliasOf": null
-        },
-        {
           "name": "prepareForSignature",
           "category": "XML",
           "description": "Prepares XML for digital signature (XMLDSig)",
@@ -16708,7 +17130,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "name(element) => \"soap:Envelope\""
+            "qualifiedName(element) => \"soap:Envelope\""
           ],
           "notes": null,
           "tags": [
@@ -16777,7 +17199,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "resolve-qname(\"soap:Envelope\", context)"
+            "resolveQname(\"soap:Envelope\", context)"
           ],
           "notes": "=> { localName: \"Envelope\", prefix: \"soap\", uri: \"http://...\" }\nContext provides namespace bindings.",
           "tags": [
@@ -16898,7 +17320,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "text-content(element) => \"Hello World\""
+            "textContent(element) => \"Hello World\""
           ],
           "notes": null,
           "tags": [
@@ -17157,7 +17579,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "xml-escape(\"<tag>\") => \"&lt;tag&gt;\""
+            "xmlEscape(\"<tag>\") => \"&lt;tag&gt;\""
           ],
           "notes": null,
           "tags": [
@@ -17189,7 +17611,7 @@
             "description": "Result of the operation"
           },
           "examples": [
-            "xml-unescape(\"&lt;tag&gt;\") => \"<tag>\""
+            "xmlUnescape(\"&lt;tag&gt;\") => \"<tag>\""
           ],
           "notes": null,
           "tags": [
@@ -17206,8 +17628,65 @@
     },
     "Security": {
       "description": "Utility functions",
-      "function_count": 16,
+      "function_count": 32,
       "functions": [
+        {
+          "name": "createJWT",
+          "category": "Security",
+          "description": "Create a signed JWT token (HS256). Automatically adds iat claim and optional exp.",
+          "signature": "createJWT() => String",
+          "minArgs": 2,
+          "maxArgs": 4,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Signed JWT token (header.payload.signature)"
+          },
+          "examples": [
+            "createJWT({sub: 'user1', name: 'John'}, 'secret') => 'eyJ...'"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "creation",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "createJWTSigned",
+          "category": "Security",
+          "description": "Create a signed JWT token with multi-algorithm support (HS256/HS384/HS512).",
+          "signature": "createJWTSigned() => String",
+          "minArgs": 2,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Signed JWT token (header.payload.signature)"
+          },
+          "examples": [
+            "createJWTSigned({sub: 'user1'}, 'secret', 'HS256') => 'eyJ...'"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "jws",
+            "signing",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
         {
           "name": "decodeJWS",
           "category": "Security",
@@ -17267,6 +17746,35 @@
           ],
           "seeAlso": [],
           "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "generateRSAKeyPair",
+          "category": "Security",
+          "description": "Generate an RSA key pair (public + private). Default 2048-bit.",
+          "signature": "generateRSAKeyPair() => Object",
+          "minArgs": 0,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{publicKey, privateKey, algorithm, keySize}"
+          },
+          "examples": [
+            "generateRSAKeyPair() => {publicKey: 'MII...', privateKey: 'MII...', algorithm: 'RSA', keySize: 2048}"
+          ],
+          "notes": null,
+          "tags": [
+            "rsa",
+            "keypair",
+            "security",
+            "crypto"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
           "deprecated": false,
           "deprecationMessage": null,
           "isAlias": false,
@@ -17655,6 +18163,35 @@
           "aliasOf": null
         },
         {
+          "name": "getXMLSignatureInfo",
+          "category": "Security",
+          "description": "Extract metadata from an XML digital signature without verifying it. Returns algorithm, references, and certificate info.",
+          "signature": "getXMLSignatureInfo() => Object",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{found, algorithm, canonicalizationMethod, referenceCount, references, keyInfo, certificate?}"
+          },
+          "examples": [
+            "getXMLSignatureInfo($signedXml) => {found: true, algorithm: '...rsa-sha256', ...}"
+          ],
+          "notes": null,
+          "tags": [
+            "xmldsig",
+            "inspection",
+            "xml",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
           "name": "isJWSFormat",
           "category": "Security",
           "description": "Checks if a string is in valid JWS format",
@@ -17717,12 +18254,360 @@
           "deprecationMessage": null,
           "isAlias": false,
           "aliasOf": null
+        },
+        {
+          "name": "rsaDecrypt",
+          "category": "Security",
+          "description": "Decrypt RSA-encrypted data with private key.",
+          "signature": "rsaDecrypt() => String",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Decrypted plaintext"
+          },
+          "examples": [
+            "rsaDecrypt($encrypted, $privateKey) => 'secret'"
+          ],
+          "notes": null,
+          "tags": [
+            "rsa",
+            "decryption",
+            "security",
+            "crypto"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "rsaEncrypt",
+          "category": "Security",
+          "description": "Encrypt data with RSA public key. Limited to small data (245 bytes for 2048-bit key).",
+          "signature": "rsaEncrypt() => String",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Base64-encoded encrypted data"
+          },
+          "examples": [
+            "rsaEncrypt('secret', $publicKey) => 'encrypted...'"
+          ],
+          "notes": null,
+          "tags": [
+            "rsa",
+            "encryption",
+            "security",
+            "crypto"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "rsaSign",
+          "category": "Security",
+          "description": "Sign data with an RSA private key. Returns Base64-encoded signature.",
+          "signature": "rsaSign() => String",
+          "minArgs": 2,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Base64-encoded RSA signature"
+          },
+          "examples": [
+            "rsaSign('hello', $privateKey) => 'a1b2c3...'"
+          ],
+          "notes": null,
+          "tags": [
+            "rsa",
+            "signing",
+            "security",
+            "crypto"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "rsaVerify",
+          "category": "Security",
+          "description": "Verify an RSA signature against data and public key.",
+          "signature": "rsaVerify() => Boolean",
+          "minArgs": 3,
+          "maxArgs": 4,
+          "parameters": [],
+          "returns": {
+            "type": "Boolean",
+            "description": "true if signature is valid"
+          },
+          "examples": [
+            "rsaVerify('hello', $signature, $publicKey) => true"
+          ],
+          "notes": null,
+          "tags": [
+            "rsa",
+            "verification",
+            "security",
+            "crypto"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "signJWS",
+          "category": "Security",
+          "description": "Sign arbitrary data as a JWS compact serialization (header.payload.signature).",
+          "signature": "signJWS() => String",
+          "minArgs": 2,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "JWS compact token"
+          },
+          "examples": [
+            "signJWS('payload data', 'secret', 'HS256') => 'eyJ...'"
+          ],
+          "notes": null,
+          "tags": [
+            "jws",
+            "signing",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "signXML",
+          "category": "Security",
+          "description": "Create an enveloped XML digital signature (XMLDSig) using RSA. Appends ds:Signature to the document root.",
+          "signature": "signXML() => String",
+          "minArgs": 3,
+          "maxArgs": 4,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "Signed XML document with embedded ds:Signature element"
+          },
+          "examples": [
+            "signXML($input, $privateKey, $publicKey) => '<Invoice>...<ds:Signature>...</ds:Signature></Invoice>'"
+          ],
+          "notes": null,
+          "tags": [
+            "xmldsig",
+            "signing",
+            "xml",
+            "security",
+            "peppol"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "validateJWTStructure",
+          "category": "Security",
+          "description": "Validate JWT structure without signature verification. Returns header, payload, and signature presence.",
+          "signature": "validateJWTStructure() => Object",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{valid: boolean, header?: {...}, payload?: {...}, hasSignature?: boolean, error?: string}"
+          },
+          "examples": [
+            "validateJWTStructure($token) => {valid: true, header: {alg: 'HS256'}, ...}"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "validation",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "verifyJWT",
+          "category": "Security",
+          "description": "Verify a JWT token's HMAC-SHA256 signature and return claims if valid.",
+          "signature": "verifyJWT() => Object",
+          "minArgs": 2,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{verified: boolean, claims?: {...}, header?: {...}, error?: string}"
+          },
+          "examples": [
+            "verifyJWT($token, 'secret') => {verified: true, claims: {sub: 'user1'}}"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "verification",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "verifyJWTSignature",
+          "category": "Security",
+          "description": "Verify a JWT token's HMAC signature (HS256/HS384/HS512) and return claims if valid.",
+          "signature": "verifyJWTSignature() => Object",
+          "minArgs": 2,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{valid: boolean, claims?: {...}, header?: {...}, error?: string}"
+          },
+          "examples": [
+            "verifyJWTSignature($token, 'secret') => {valid: true, claims: {...}}"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "jws",
+            "verification",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "verifyJWTWithJWKS",
+          "category": "Security",
+          "description": "Verify JWT with JWKS (JSON Web Key Set). Placeholder \u2014 not yet implemented.",
+          "signature": "verifyJWTWithJWKS() => Object",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{verified: false, error: 'not implemented', jwksUrl: '...'}"
+          },
+          "examples": [
+            "verifyJWTWithJWKS($token, 'https://example.com/.well-known/jwks.json')"
+          ],
+          "notes": null,
+          "tags": [
+            "jwt",
+            "jwks",
+            "verification",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "verifyXMLSignature",
+          "category": "Security",
+          "description": "Verify an XML digital signature using the embedded KeyInfo public key. Returns true if valid.",
+          "signature": "verifyXMLSignature() => Boolean",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Boolean",
+            "description": "true if the XML signature is valid, false otherwise"
+          },
+          "examples": [
+            "verifyXMLSignature($signedXml) => true"
+          ],
+          "notes": null,
+          "tags": [
+            "xmldsig",
+            "verification",
+            "xml",
+            "security",
+            "peppol"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "verifyXMLSignatureWithCert",
+          "category": "Security",
+          "description": "Verify an XML digital signature against a specific PEM-encoded X.509 certificate.",
+          "signature": "verifyXMLSignatureWithCert() => Object",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [],
+          "returns": {
+            "type": "Object",
+            "description": "{valid: boolean, error?: string}"
+          },
+          "examples": [
+            "verifyXMLSignatureWithCert($signedXml, $certPem) => {valid: true}"
+          ],
+          "notes": null,
+          "tags": [
+            "xmldsig",
+            "verification",
+            "certificate",
+            "xml",
+            "security"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
         }
       ]
     },
     "JSON": {
       "description": "JSON canonicalization, formatting, and processing",
-      "function_count": 6,
+      "function_count": 10,
       "functions": [
         {
           "name": "canonicalJSONHash",
@@ -17895,6 +18780,45 @@
           "aliasOf": null
         },
         {
+          "name": "jsonDiff",
+          "category": "JSON",
+          "description": "Generate RFC 6902 JSON Patch from two documents (before \u2192 after).",
+          "signature": "jsonDiff(before: Original document, after: Modified document) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "before",
+              "type": "Original document",
+              "description": ""
+            },
+            {
+              "name": "after",
+              "type": "Modified document",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Array of RFC 6902 patch operations"
+          },
+          "examples": [
+            "jsonDiff({\"name\":\"Alice\"}, {\"name\":\"Bob\"}) => [{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"Bob\"}]"
+          ],
+          "notes": null,
+          "tags": [
+            "json",
+            "diff",
+            "rfc6902"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
           "name": "jsonEquals",
           "category": "JSON",
           "description": "Compares two JSON values for semantic equality using canonicalization",
@@ -17926,6 +18850,118 @@
           ],
           "seeAlso": [],
           "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "jsonMergePatch",
+          "category": "JSON",
+          "description": "Apply RFC 7396 JSON Merge Patch. Null values remove keys.",
+          "signature": "jsonMergePatch(document: The document to patch, mergePatch: Partial document to merge) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "document",
+              "type": "The document to patch",
+              "description": ""
+            },
+            {
+              "name": "mergePatch",
+              "type": "Partial document to merge",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Merged document"
+          },
+          "examples": [
+            "jsonMergePatch(doc, {\"name\":\"Jan\",\"phone\":null})"
+          ],
+          "notes": null,
+          "tags": [
+            "json",
+            "merge",
+            "rfc7396"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "jsonPatch",
+          "category": "JSON",
+          "description": "Apply RFC 6902 JSON Patch operations to a document. Atomic: all-or-nothing.",
+          "signature": "jsonPatch(document: The document to patch, patchOps: Array of RFC 6902 patch operations) => Any",
+          "minArgs": 2,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "document",
+              "type": "The document to patch",
+              "description": ""
+            },
+            {
+              "name": "patchOps",
+              "type": "Array of RFC 6902 patch operations",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Patched document. Throws if any operation fails (including test)."
+          },
+          "examples": [
+            "jsonPatch(doc, [{\"op\":\"replace\",\"path\":\"/name\",\"value\":\"Jan\"}])"
+          ],
+          "notes": null,
+          "tags": [
+            "json",
+            "patch",
+            "rfc6902"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "validateJsonPatch",
+          "category": "JSON",
+          "description": "Validate that a patch array conforms to RFC 6902 structure.",
+          "signature": "validateJsonPatch(patchOps: Array of patch operations to validate) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "patchOps",
+              "type": "Array of patch operations to validate",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Object with 'valid' boolean and optional 'errors' array"
+          },
+          "examples": [
+            "validateJsonPatch([{\"op\":\"add\",\"path\":\"/x\",\"value\":1}]) => {\"valid\":true}"
+          ],
+          "notes": null,
+          "tags": [
+            "json",
+            "patch",
+            "validation"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
           "deprecated": false,
           "deprecationMessage": null,
           "isAlias": false,
@@ -18370,29 +19406,29 @@
           "name": "equals",
           "category": "Binary",
           "description": "Compares two binaries for equality",
-          "signature": "equals(array: Input array to process, binary2: Binary2 value) => Any",
+          "signature": "equals(binary1: First binary, binary2: Second binary) => Any",
           "minArgs": 2,
           "maxArgs": 2,
           "parameters": [
             {
-              "name": "array",
-              "type": "Input array to process",
+              "name": "binary1",
+              "type": "First binary",
               "description": ""
             },
             {
               "name": "binary2",
-              "type": "Binary2 value",
+              "type": "Second binary",
               "description": ""
             }
           ],
           "returns": {
             "type": "Any",
-            "description": "Result of the operation"
+            "description": "true if the binaries are equal"
           },
           "examples": [
-            "equals(...) => result"
+            "equalsBinary(binary1, binary2) => true"
           ],
-          "notes": "Example:\n```\nequals(binary1, binary2)\n```",
+          "notes": "Registered as `equalsBinary`; the Kotlin function is named `equals` to sit\nalongside its siblings.\nExample:\n```\nequalsBinary(binary1, binary2)\n```",
           "tags": [
             "binary"
           ],
@@ -19509,9 +20545,83 @@
         }
       ]
     },
+    "Serialization": {
+      "description": "Utility functions",
+      "function_count": 2,
+      "functions": [
+        {
+          "name": "parseOdata",
+          "category": "Serialization",
+          "description": "Parse an OData JSON string into a UDM object with @odata annotations extracted as attributes",
+          "signature": "parseOdata(odataJson: OData JSON string to parse) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "odataJson",
+              "type": "OData JSON string to parse",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "UDM object with OData annotations as attributes"
+          },
+          "examples": [
+            "parseOdata('{\"@odata.context\":\"...\",\"value\":[...]}')"
+          ],
+          "notes": null,
+          "tags": [
+            "odata",
+            "parse",
+            "serialization"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderOdata",
+          "category": "Serialization",
+          "description": "Render a UDM object as an OData JSON string with @odata annotations",
+          "signature": "renderOdata(data: UDM object to serialize as OData JSON) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "data",
+              "type": "UDM object to serialize as OData JSON",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "OData JSON string with @odata annotations restored from UDM attributes"
+          },
+          "examples": [
+            "renderOdata(data)"
+          ],
+          "notes": null,
+          "tags": [
+            "odata",
+            "render",
+            "serialization"
+          ],
+          "seeAlso": [],
+          "since": "1.2",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        }
+      ]
+    },
     "Utility": {
       "description": "Utility functions",
-      "function_count": 27,
+      "function_count": 28,
       "functions": [
         {
           "name": "canCoerce",
@@ -19658,6 +20768,32 @@
           "aliasOf": null
         },
         {
+          "name": "generateUuid",
+          "category": "Utility",
+          "description": "Generate UUID v4 (random) (Legacy name predating the versioned UUID functions)",
+          "signature": "generateUuidV4() => Any",
+          "minArgs": 0,
+          "maxArgs": 0,
+          "parameters": [],
+          "returns": {
+            "type": "Any",
+            "description": "Result of the operation"
+          },
+          "examples": [
+            "generateUuidV4() => result"
+          ],
+          "notes": "Standard random UUID using cryptographically strong random number generator\nExample:\ngenerateUuidV4()\n// Returns: \"550e8400-e29b-41d4-a716-446655440000\"\nAlso registered as `generateUuid`, which this function took over from CoreFunctions.",
+          "tags": [
+            "utility"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": true,
+          "aliasOf": "generateUuidV4"
+        },
+        {
           "name": "generateUuidV4",
           "category": "Utility",
           "description": "Generate UUID v4 (random)",
@@ -19672,7 +20808,7 @@
           "examples": [
             "generateUuidV4() => result"
           ],
-          "notes": "Standard random UUID using cryptographically strong random number generator\nExample:\ngenerateUuidV4()\n// Returns: \"550e8400-e29b-41d4-a716-446655440000\"\nNote: This is the same as the existing CoreFunctions::generateUuid",
+          "notes": "Standard random UUID using cryptographically strong random number generator\nExample:\ngenerateUuidV4()\n// Returns: \"550e8400-e29b-41d4-a716-446655440000\"\nAlso registered as `generateUuid`, which this function took over from CoreFunctions.",
           "tags": [
             "utility"
           ],
@@ -22599,6 +23735,672 @@
           "notes": null,
           "tags": [
             "yaml"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        }
+      ]
+    },
+    "Regional": {
+      "description": "Utility functions",
+      "function_count": 12,
+      "functions": [
+        {
+          "name": "parseEUNumber",
+          "category": "Regional",
+          "description": "Parse number in European/Latin American format (period thousands, comma decimal). Example: '1.234,56' \u2192 1234.56",
+          "signature": "parseEUNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseEUNumber(\"1.234,56\") => 1234.56"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing",
+            "european"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseFrenchNumber",
+          "category": "Regional",
+          "description": "Parse number in French/Belgian/Quebec format (space thousands, comma decimal). Example: '1 234,56' \u2192 1234.56",
+          "signature": "parseFrenchNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseFrenchNumber(\"1 234,56\") => 1234.56"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing",
+            "french"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseIndianNumber",
+          "category": "Regional",
+          "description": "Parse number in Indian format (lakh/crore grouping, comma thousands, period decimal). Example: '12,34,567.89' \u2192 1234567.89",
+          "signature": "parseIndianNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseIndianNumber(\"12,34,567.89\") => 1234567.89"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing",
+            "indian",
+            "lakh",
+            "crore"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseNordicNumber",
+          "category": "Regional",
+          "description": "Parse number in Nordic/SI format (space thousands, comma decimal). Tolerant of regular (U+0020), no-break (U+00A0) and narrow-no-break (U+202F) spaces. Example: '1 234,56' \u2192 1234.56",
+          "signature": "parseNordicNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseNordicNumber(\"1 234,56\") => 1234.56"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing",
+            "nordic",
+            "scandinavian",
+            "si"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseSwissNumber",
+          "category": "Regional",
+          "description": "Parse number in Swiss format (apostrophe thousands, period decimal). Example: \"1'234.56\" \u2192 1234.56",
+          "signature": "parseSwissNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseSwissNumber(\"1'234.56\") => 1234.56"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing",
+            "swiss"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseUSNumber",
+          "category": "Regional",
+          "description": "Parse number in USA/UK/Asia format (comma thousands, period decimal). Example: '1,234.56' \u2192 1234.56",
+          "signature": "parseUSNumber() => Number",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [],
+          "returns": {
+            "type": "Number",
+            "description": "The parsed numeric value with standard decimal representation"
+          },
+          "examples": [
+            "parseUSNumber(\"1,234.56\") => 1234.56"
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "parsing"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderEUNumber",
+          "category": "Regional",
+          "description": "Format number as European/Latin American string (period thousands, comma decimal). Example: 1234.56 \u2192 '1.234,56'",
+          "signature": "renderEUNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in European format"
+          },
+          "examples": [
+            "renderEUNumber(1234.56, 2, true) => \"1.234,56\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output",
+            "european"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderFrenchNumber",
+          "category": "Regional",
+          "description": "Format number as French/Belgian/Quebec string (space thousands, comma decimal). Example: 1234.56 \u2192 '1 234,56'",
+          "signature": "renderFrenchNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in French format"
+          },
+          "examples": [
+            "renderFrenchNumber(1234.56, 2, true) => \"1 234,56\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output",
+            "french"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderIndianNumber",
+          "category": "Regional",
+          "description": "Format number in Indian style (lakh/crore 2-2-3 grouping, comma thousands, period decimal). Example: 1234567.89 \u2192 \"12,34,567.89\"",
+          "signature": "renderIndianNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in Indian (lakh/crore) format"
+          },
+          "examples": [
+            "renderIndianNumber(1234567.89, 2, true) => \"12,34,567.89\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output",
+            "indian",
+            "lakh",
+            "crore"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderNordicNumber",
+          "category": "Regional",
+          "description": "Format number in Nordic/SI style (regular-space thousands, comma decimal). Example: 1234.56 \u2192 \"1 234,56\". Used by Sweden, Norway, Finland and the SI/ISO international style.",
+          "signature": "renderNordicNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in Nordic (regular-space) format"
+          },
+          "examples": [
+            "renderNordicNumber(1234.56, 2, true) => \"1 234,56\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output",
+            "nordic",
+            "scandinavian",
+            "si"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderSwissNumber",
+          "category": "Regional",
+          "description": "Format number as Swiss string (apostrophe thousands, period decimal). Example: 1234.56 \u2192 \"1'234.56\"",
+          "signature": "renderSwissNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in Swiss format"
+          },
+          "examples": [
+            "renderSwissNumber(1234.56, 2, true) => \"1'234.56\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output",
+            "swiss"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderUSNumber",
+          "category": "Regional",
+          "description": "Format number as USA/UK/Asia string (comma thousands, period decimal). Example: 1234.56 \u2192 '1,234.56'",
+          "signature": "renderUSNumber() => String",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [],
+          "returns": {
+            "type": "String",
+            "description": "The formatted number string in USA/UK/Asia format"
+          },
+          "examples": [
+            "renderUSNumber(1234.56, 2, true) => \"1,234.56\""
+          ],
+          "notes": null,
+          "tags": [
+            "regional",
+            "numbers",
+            "formatting",
+            "output"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        }
+      ]
+    },
+    "Schema": {
+      "description": "Utility functions",
+      "function_count": 8,
+      "functions": [
+        {
+          "name": "parseAvroSchema",
+          "category": "Schema",
+          "description": "Parse an Avro schema JSON string into USDL format",
+          "signature": "parseAvroSchema(avroSchemaString: Avro schema JSON string) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "avroSchemaString",
+              "type": "Avro schema JSON string",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "USDL schema object with %types, %namespace, etc."
+          },
+          "examples": [
+            "parseAvroSchema(\"{\"type\": \"record\", \"name\": \"User\", \"fields\": [...]}\")"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "avro",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseJSONSchema",
+          "category": "Schema",
+          "description": "Parse a JSON Schema string into USDL format",
+          "signature": "parseJSONSchema(jsonSchemaString: JSON Schema string) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "jsonSchemaString",
+              "type": "JSON Schema string",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "USDL schema object with %types, %namespace, etc."
+          },
+          "examples": [
+            "parseJSONSchema(\"{\\\"type\\\": \\\"object\\\", \\\"properties\\\": {...}}\")"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "json-schema",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseProtobufSchema",
+          "category": "Schema",
+          "description": "Parse a Protocol Buffers (.proto) schema string into USDL format",
+          "signature": "parseProtobufSchema(protoSchemaString: Protocol Buffers schema (.proto) string) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "protoSchemaString",
+              "type": "Protocol Buffers schema (.proto) string",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "USDL schema object with %types, %namespace, etc."
+          },
+          "examples": [
+            "parseProtobufSchema(\"syntax = \\\"proto3\\\"; message User { string name = 1; }\")"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "protobuf",
+            "proto3",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "parseXSDSchema",
+          "category": "Schema",
+          "description": "Parse an XSD schema XML string into USDL format",
+          "signature": "parseXSDSchema(xsdSchemaString: XSD schema XML string) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "xsdSchemaString",
+              "type": "XSD schema XML string",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "USDL schema object with %types, %namespace, etc."
+          },
+          "examples": [
+            "parseXSDSchema(\"<xs:schema>...</xs:schema>\")"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "xsd",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderAvroSchema",
+          "category": "Schema",
+          "description": "Render a USDL schema object as an Avro schema JSON string",
+          "signature": "renderAvroSchema(usdlSchema: USDL schema object with %types directive, prettyPrint: Optional boolean for formatted output (default: true)) => Any",
+          "minArgs": 1,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "usdlSchema",
+              "type": "USDL schema object with %types directive",
+              "description": ""
+            },
+            {
+              "name": "prettyPrint",
+              "type": "Optional boolean for formatted output (default: true)",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Avro schema JSON string"
+          },
+          "examples": [
+            "renderAvroSchema(usdlSchema, pretty?)"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "avro",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderJSONSchema",
+          "category": "Schema",
+          "description": "Render a USDL schema object as a JSON Schema string",
+          "signature": "renderJSONSchema(usdlSchema: USDL schema object with %types directive, prettyPrint: Optional boolean for formatted output (default: true)) => Any",
+          "minArgs": 1,
+          "maxArgs": 2,
+          "parameters": [
+            {
+              "name": "usdlSchema",
+              "type": "USDL schema object with %types directive",
+              "description": ""
+            },
+            {
+              "name": "prettyPrint",
+              "type": "Optional boolean for formatted output (default: true)",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "JSON Schema string"
+          },
+          "examples": [
+            "renderJSONSchema(usdlSchema, pretty?)"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "json-schema",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderProtobufSchema",
+          "category": "Schema",
+          "description": "Render a USDL schema object as a Protocol Buffers (.proto) schema string",
+          "signature": "renderProtobufSchema(usdlSchema: USDL schema object with %types directive) => Any",
+          "minArgs": 1,
+          "maxArgs": 1,
+          "parameters": [
+            {
+              "name": "usdlSchema",
+              "type": "USDL schema object with %types directive",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "Protocol Buffers (.proto) schema string (proto3)"
+          },
+          "examples": [
+            "renderProtobufSchema(usdlSchema)"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "protobuf",
+            "proto3",
+            "usdl"
+          ],
+          "seeAlso": [],
+          "since": "1.0",
+          "deprecated": false,
+          "deprecationMessage": null,
+          "isAlias": false,
+          "aliasOf": null
+        },
+        {
+          "name": "renderXSDSchema",
+          "category": "Schema",
+          "description": "Render a USDL schema object as an XSD schema XML string",
+          "signature": "renderXSDSchema(usdlSchema: USDL schema object with %types directive, prettyPrint: Optional boolean for formatted output (default: true), preservePattern: Optional boolean to preserve Russian Doll pattern (default: true)) => Any",
+          "minArgs": 1,
+          "maxArgs": 3,
+          "parameters": [
+            {
+              "name": "usdlSchema",
+              "type": "USDL schema object with %types directive",
+              "description": ""
+            },
+            {
+              "name": "prettyPrint",
+              "type": "Optional boolean for formatted output (default: true)",
+              "description": ""
+            },
+            {
+              "name": "preservePattern",
+              "type": "Optional boolean to preserve Russian Doll pattern (default: true)",
+              "description": ""
+            }
+          ],
+          "returns": {
+            "type": "Any",
+            "description": "XSD schema XML string"
+          },
+          "examples": [
+            "renderXSDSchema(usdlSchema, pretty?, preservePattern?)"
+          ],
+          "notes": null,
+          "tags": [
+            "schema",
+            "xsd",
+            "usdl"
           ],
           "seeAlso": [],
           "since": "1.0",

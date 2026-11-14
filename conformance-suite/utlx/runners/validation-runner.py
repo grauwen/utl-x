@@ -342,9 +342,16 @@ def main():
     else:
         # Try to find utlx in common locations
         script_dir = Path(__file__).parent.parent.parent.parent
+        # Resolve the jar by glob rather than a pinned version: a pinned name silently
+        # stops matching after a release bump, and the fallback then picks the wrong CLI.
+        built_jars = sorted(
+            (script_dir / 'modules' / 'cli' / 'build' / 'libs').glob('cli-*.jar'),
+            key=lambda j: j.stat().st_mtime,
+            reverse=True,
+        )
         possible_paths = [
             script_dir / 'utlx',
-            script_dir / 'modules' / 'cli' / 'build' / 'libs' / 'cli-1.3.0.jar',
+            *built_jars,
             'utlx',  # In PATH
         ]
 
