@@ -247,12 +247,29 @@ object FunctionsCommand {
         }
     }
 
+    /**
+     * CB05: this listed `registry.categories` and ignored [functions] entirely, so
+     * `--category <name>` filtered correctly for `--format json` and not at all for the default
+     * text output — it printed all 705 entries under a header claiming the full total. Group the
+     * list it was given instead, so both output paths answer the same question.
+     */
     private fun printTextList(functions: List<FunctionInfo>, registry: FunctionRegistry) {
-        println("UTL-X Standard Library Functions (${registry.totalFunctions} total)")
+        val filtered = functions.size != registry.totalFunctions
+        val heading = if (filtered) {
+            "UTL-X Standard Library Functions (${functions.size} of ${registry.totalFunctions})"
+        } else {
+            "UTL-X Standard Library Functions (${registry.totalFunctions} total)"
+        }
+        println(heading)
         println("=".repeat(60))
         println()
 
-        registry.categories.entries.sortedBy { it.key }.forEach { (category, funcs) ->
+        if (functions.isEmpty()) {
+            println("  No functions matched.")
+            println()
+        }
+
+        functions.groupBy { it.category }.entries.sortedBy { it.key }.forEach { (category, funcs) ->
             println("$category (${funcs.size}):")
             funcs.sortedBy { it.name }.forEach { func ->
                 println("  ${func.name.padEnd(20)} - ${func.description.take(50)}")
