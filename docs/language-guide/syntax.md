@@ -300,56 +300,78 @@ let second = [4, 5, 6]
 ### Simple Path
 
 ```utlx
-input.order
-input.order.customer
-input.order.customer.name
+$input.order
+$input.order.customer
+$input.order.customer.name
 ```
 
 ### Attribute Access
 
 ```utlx
-input.order.@id           // XML attribute
-input.order.@date         // XML attribute
+$input.order.@id           // XML attribute
+$input.order.@date         // XML attribute
 ```
 
 ### Array Index
 
 ```utlx
-input.items[0]            // First element
-input.items[1]            // Second element
-input.items[-1]           // Last element (future)
+$input.items[0]            // First element
+$input.items[1]            // Second element
+$input.items[-1]           // Last element (future)
 ```
 
 ### Array Wildcard
 
 ```utlx
-input.items[*]            // All elements
-input.items.*.price       // All prices
-```
-
-### Recursive Descent
-
-```utlx
-input..name               // All 'name' properties at any depth
-input..@id                // All 'id' attributes anywhere
+$input.items[*]            // All elements
+$input.items.*.price       // All prices
 ```
 
 ### Predicates
 
-**Simple predicate:**
+**XPath-style bare-field predicates are not implemented, by design.**
+
+> [!WARNING]
+> **NOT SUPPORTED, and not planned.**
+>
+> Bracket predicates would require `[...]` to open an implicit scope in which a bare name means
+> "field of the current element". That collides with the enclosing scope. For example, if
+> `let price = 200` is followed by `$input.items[price > 100]`, the expression has no unambiguous
+> reading. Today it resolves to the outer `price` and fails with:
+>
+> ```
+> Index must be a number or string, got BooleanValue
+> ```
+>
+> Use a lambda instead, because it names the element: `filter($input.items, i => i.price > 100)`.
+> Every reference is then explicit, so the shadowing question never comes up. Filtering also stays
+> one composable mechanism alongside `map`, `reduce` and `|>`, instead of a second, syntax-only
+> mechanism that can't be passed around or reused.
+
+#### Replacing predicates
+
+**Simple predicate**
+
 ```utlx
-input.items[price > 100]
+$input.items[price > 100]                       // ❌ not supported
+$input.items |> filter(i => i.price > 100)      // ✅ use instead
 ```
 
-**Complex predicate:**
+**Compound predicate**
+
 ```utlx
-input.items[price > 100 && quantity < 10]
-input.orders[status == "pending" || status == "processing"]
+$input.items[price > 100 && quantity < 10]                                    // ❌ not supported
+$input.items |> filter(i => i.price > 100 && i.quantity < 10)                 // ✅ use instead
+
+$input.orders[status == "pending" || status == "processing"]                  // ❌ not supported
+$input.orders |> filter(o => o.status == "pending" || o.status == "processing") // ✅ use instead
 ```
 
-**Predicate with functions:**
+**Predicate with functions**
+
 ```utlx
-input.items[upper(category) == "ELECTRONICS"]
+$input.items[upper(category) == "ELECTRONICS"]                 // ❌ not supported
+$input.items |> filter(i => upper(i.category) == "ELECTRONICS") // ✅ use instead
 ```
 
 ---
