@@ -221,18 +221,6 @@ typeof, var, when, while
 }
 ```
 
-### Shorthand Properties
-
-```utlx
-let name = "Alice"
-let age = 30
-
-{
-  name,      // Shorthand for name: name
-  age        // Shorthand for age: age
-}
-```
-
 ### Spread Operator
 
 ```utlx
