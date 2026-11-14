@@ -1,0 +1,39 @@
+name: "newline_separated_properties"
+category: "level1-syntax"
+description: "Properties separated by newlines instead of commas are valid (F02); validation must pass"
+tags: ["syntax", "object", "comma", "newline-separator", "F02"]
+
+# Replaces the former "missing_comma_in_object" fixture, which asserted that omitting the comma
+# between two object properties was a parse error. F02 (1.1.0, May 2026) deliberately made the
+# comma optional in multi-line objects and match cases, so that script is now legal and the old
+# expectation inverted silently -- it reported a failure for behaviour the language had chosen.
+# Keeping the same script and flipping the expectation turns a stale negative test into a guard
+# for the feature: if newline separation ever stops parsing, this fails.
+#
+# The input references were also modernised from bare `input.x` to `$input.x`. Both resolve
+# identically today, but `$input` is the documented form (AGENTS.md) and the corpus is ~693
+# `$input` to ~66 bare, so a fixture rewritten now should not model the legacy spelling.
+script: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    name: $input.customerName
+    email: $input.emailAddress
+  }
+
+validation_expected:
+  should_pass: true
+  exit_code: 0
+
+  errors: []
+  warnings: []
+
+metadata:
+  author: "UTL-X Team"
+  created: "2025-11-01"
+  updated: "2026-11-14"
+  references:
+    - "validation-and-analysis-study.md#level-1-syntax"
+    - "docs/features/F02-let-binding-separator-consistency.md"
