@@ -1,0 +1,47 @@
+name: "f29_shorthand_properties"
+category: "language/let-bindings"
+description: "F29: `{ name }` is shorthand for `{ name: name }` — the form syntax.md documents — including mixed with explicit properties, F02 newline separators and an F30 trailing comma"
+tags: ["object-literal", "shorthand", "f29", "f02", "f30"]
+
+input:
+  format: json
+  data: |
+    {"city": "Utrecht"}
+
+# Shorthand desugars at parse time to the node the explicit form already builds, so this fixture
+# running identically under TEMPLATE, COPY and COMPILED (via ConformanceStrategyParityTest) is the
+# evidence that no engine-side work was needed.
+#
+# The exclusions -- `{ input }`, `{ @id }`, `{ "name" }` must all still require a colon -- are
+# asserted in F29ShorthandPropertyTest, since the corpus runner has no expect-a-parse-error form.
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let name = "Alice"
+  let age = 30
+  let city = $input.city
+  {
+    name,
+    age,
+    city,
+    explicit: age + 1,
+    nested: {
+      name
+      age
+    },
+  }
+
+expected:
+  format: json
+  data: |
+    {"name": "Alice", "age": 30, "city": "Utrecht", "explicit": 31,
+     "nested": {"name": "Alice", "age": 30}}
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-11-15"
+  references:
+    - "docs/features/F29-shorthand-object-properties.md"
+    - "docs/language-guide/syntax.md"

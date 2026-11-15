@@ -1,11 +1,12 @@
 # F29: shorthand object properties (`{ name, age }`)
 
-**Status:** Proposed
+**Status:** Implemented (2026-11-15)
 **Priority:** Low-Medium — pure syntactic sugar, but it is documented on **both** branches with no
 warning, it is unambiguous, and it costs one parser branch with no runtime change.
 **Component:** `:core` — `parser_impl.kt`, `parseObjectLiteral()` only. **No engine change:** see
 "Why this is cheap" below.
-**Raised:** 2026-11-14, from `docs/language-guide/syntax.md` documenting it as working syntax.
+**Raised:** 2026-11-14, from `docs/language-guide/syntax.md` documenting it as working syntax —
+which it now is on `development`.
 
 ## The gap
 
@@ -73,50 +74,64 @@ Shorthand means: if the next token is **not** `:` and the property position is c
 token is `,`, `}`, or a newline, per the F02 separator rule on the `do/while` just below — build
 `Property(key, Expression.Identifier(key), …)` instead of erroring.
 
-## Decisions to settle
+## What was implemented
 
-**Identifiers only, not keywords.** B56 allows a reserved word as a property *name*
-(`{ template: v }`, `{ input: v }`). Shorthand should **not** extend to those: `{ input }` would
-desugar to `input: input`, and bare `input` still resolves to the whole input document, so
-`{ input }` would silently emit the entire document under the key `input`. Require an explicit
-colon for keyword keys, and keep today's error message for them.
+Two small changes in `parseObjectLiteral()`. A flag records that the key came from the *plain
+identifier* branch, and the colon became conditional:
 
-**Not for attributes or directives.** `{ @id }` and `{ %kind }` should keep requiring a colon —
-`@id: id` reads as a coincidence rather than an intention, and `%kind` is a USDL directive whose
-value is never a same-named variable.
+```kotlin
+val isShorthand = keyIsPlainIdentifier && !isAttribute && !check(TokenType.COLON) &&
+    (check(TokenType.COMMA) || check(TokenType.RBRACE) || hasNewlineBefore())
 
-**Not for quoted keys.** `{ "name" }` has no implied variable to read; leave it an error.
-
-**Undefined name behaviour.** `{ nope }` where `nope` is unbound should fail exactly as
-`{ nope: nope }` does today (`Undefined variable: nope`), not silently produce null — no new
-leniency.
-
-**Mixed and multi-line forms must work:**
-
-```utlx
-{ name, age: age + 1, email }           // mixed with explicit
-{                                        // F02 newline separators
-  name
-  age
+val value = if (isShorthand) {
+    Expression.Identifier(key, Location.from(previous()))   // `{ name }` == `{ name: name }`
+} else {
+    consume(TokenType.COLON, "Expected ':' after property name")
+    parseExpression()
 }
 ```
 
+Requiring the property position to be *complete* (`,`, `}` or a newline — F02's separators) is what
+keeps the existing error for a genuine mistake: `{ name 5 }` still reports
+`Expected ':' after property name` rather than silently taking `name` as shorthand and then
+failing somewhere stranger.
+
+All the exclusions from the section above were implemented and are asserted:
+
+| form | result |
+|---|---|
+| `{ name }`, `{ name, age }` | shorthand |
+| `{ input }`, `{ match }` (keywords, B56) | **still `Expected ':'`** |
+| `{ @id }` (attribute) | **still `Expected ':'`** |
+| `{ "name" }` (quoted) | **still `Expected ':'`** |
+| `{ name 5 }` | **still `Expected ':'`** |
+| `{ input: 1 }`, `{ match: 2 }` | unchanged — B56 intact |
+| `{ nope }` where `nope` is unbound | `Undefined variable: nope`, exactly as `{ nope: nope }` |
+
 ## Tests
 
-- `F29ShorthandPropertyTest` in `:modules:core`: single shorthand, several shorthand, mixed with
-  explicit properties, newline-separated (F02), an unbound name, a keyword key (must still error),
-  `@attr` and quoted keys (must still error), and shorthand alongside a spread.
-- A conformance fixture under `language/object-literals/` — this gets all three execution
-  strategies through `ConformanceStrategyParityTest`, which for a pure desugaring should pass
-  without any engine work. That is also the check that the desugaring really is semantics-free: if
-  parity fails, the AST produced is not the one the explicit form produces.
-- Replace the `syntax.md` example with a runnable one, on **both** branches.
+`F29ShorthandPropertyTest` (14 tests, `:modules:core`). One of them is the load-bearing test:
+**`shorthand produces exactly the AST the explicit form produces`** parses both forms and compares
+the resulting `Property`, since "no engine change is needed" is a claim about the tree, not about
+the output. If the desugaring ever stops matching, that test fails rather than some distant
+strategy.
 
-## If this is declined
+`conformance-suite/utlx/tests/language/let-bindings/f29_shorthand_properties.yaml` covers shorthand
+alone, mixed with explicit properties, nested, with F02 newline separators and an F30 trailing
+comma. Running identically under TEMPLATE, COPY and COMPILED via `ConformanceStrategyParityTest` is
+the second piece of evidence that the change is parse-level only.
 
-Mark the section `NOT SUPPORTED` in `syntax.md` on both branches and show `{ name: name }`
-instead. What must not persist is the current state: a documented construct, on two branches,
-with no warning, that fails at the first property.
+**Revert-verified:** removing the conditional fails seven of the fourteen — every positive case —
+while the five exclusion tests and the two unchanged-behaviour tests pass either way, which is
+correct: they assert what this feature must *not* change.
+
+Full regression: **4915 JVM tests, 0 failures**; **581/581 conformance on the JVM and on the
+GraalVM native binary**.
+
+## Still to do
+
+`docs/language-guide/syntax.md` publishes the example on both branches. It is now accurate on
+`development`; `main` still documents a form its code rejects until this ships there.
 
 ## Related
 

@@ -1190,6 +1190,10 @@ class Parser(
                     // Check for attribute syntax (@key or "@key") or directive syntax (%key)
                     var isAttribute = match(TokenType.AT)
                     var key: String
+                    // F29: only a plain, unprefixed identifier may use the `{ name }` shorthand.
+                    // Keywords, quoted names, @attributes and %directives all keep requiring a
+                    // colon -- see the shorthand branch below for why each is excluded.
+                    var keyIsPlainIdentifier = false
 
                     if (match(TokenType.PERCENT)) {
                         // USDL directive: %namespace, %types, %kind, etc.
@@ -1201,6 +1205,7 @@ class Parser(
                         key = "%" + directiveName
                     } else if (check(TokenType.IDENTIFIER)) {
                         key = advance().lexeme
+                        keyIsPlainIdentifier = true
                     } else if (check(TokenType.STRING)) {
                         // Handle quoted property names like "@id", "%namespace", or "name"
                         val token = advance()
@@ -1239,8 +1244,30 @@ class Parser(
                         error("Expected property name or spread operator")
                     }
 
-                    consume(TokenType.COLON, "Expected ':' after property name")
-                    val value = parseExpression()
+                    // F29: shorthand property. `{ name }` means `{ name: name }`, and is desugared
+                    // here so everything downstream — interpreter, ASTCompiler, RuntimeOps — sees
+                    // the node the explicit form already produces. No engine change is involved.
+                    //
+                    // It applies only to a plain identifier that is immediately followed by the end
+                    // of the property position (',', '}' or a newline, matching F02's separators).
+                    // Deliberate exclusions:
+                    //   - keywords (B56 allows `{ input: v }` as a NAME): `{ input }` would mean
+                    //     `input: input`, and bare `input` still resolves to the whole document, so
+                    //     it would silently emit the entire input under the key "input".
+                    //   - `@attr` and `%directive`: `@id: id` reads as coincidence, and a directive's
+                    //     value is never a same-named variable.
+                    //   - quoted names: `{ "name" }` has no implied variable to read.
+                    // Anything else falls through and still requires its colon, which also keeps the
+                    // existing error message for a genuine mistake like `{ name 5 }`.
+                    val isShorthand = keyIsPlainIdentifier && !isAttribute && !check(TokenType.COLON) &&
+                        (check(TokenType.COMMA) || check(TokenType.RBRACE) || hasNewlineBefore())
+
+                    val value = if (isShorthand) {
+                        Expression.Identifier(key, Location.from(previous()))
+                    } else {
+                        consume(TokenType.COLON, "Expected ':' after property name")
+                        parseExpression()
+                    }
 
                     properties.add(Property(key, value, Location.from(previous()), isAttribute))
                 // F02: accept newline or comma between properties
