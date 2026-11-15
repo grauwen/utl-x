@@ -659,7 +659,9 @@ class Parser(
                         current = checkpoint
                         return parsePipe()
                     }
-                } while (match(TokenType.COMMA))
+                // F30: a comma directly before the closer is a trailing separator, not a
+                // missing element -- stop rather than demand another lambda.
+                } while (match(TokenType.COMMA) && !check(TokenType.RPAREN))
             }
 
             if (match(TokenType.RPAREN) && match(TokenType.ARROW)) {
@@ -1242,7 +1244,10 @@ class Parser(
 
                     properties.add(Property(key, value, Location.from(previous()), isAttribute))
                 // F02: accept newline or comma between properties
-                } while (match(TokenType.COMMA) || (hasNewlineBefore() && !check(TokenType.RBRACE)))
+                // F30: the newline arm already stops at the closer; the comma arm now does too, so a
+                // trailing comma before '}' ends the object literal instead of demanding another entry.
+                } while ((match(TokenType.COMMA) && !check(TokenType.RBRACE)) ||
+                          (hasNewlineBefore() && !check(TokenType.RBRACE)))
             }
         }
 
@@ -1265,7 +1270,9 @@ class Parser(
                 } else {
                     elements.add(parseExpression())
                 }
-            } while (match(TokenType.COMMA))
+            // F30: a comma directly before the closer is a trailing separator, not a
+            // missing element -- stop rather than demand another array.
+            } while (match(TokenType.COMMA) && !check(TokenType.RBRACKET))
         }
 
         consume(TokenType.RBRACKET, "Expected ']' after array elements")
@@ -1337,7 +1344,9 @@ class Parser(
                 }
 
                 parameters.add(Parameter(paramName, paramType, Location.from(previous())))
-            } while (match(TokenType.COMMA))
+            // F30: a comma directly before the closer is a trailing separator, not a
+            // missing element -- stop rather than demand another function.
+            } while (match(TokenType.COMMA) && !check(TokenType.RPAREN))
         }
 
         consume(TokenType.RPAREN, "Expected ')' after parameters")
@@ -1443,7 +1452,10 @@ class Parser(
                 cases.add(MatchCase(pattern, guard, expression, Location.from(caseStartToken)))
 
             // F02: accept newline or comma between match cases
-            } while (match(TokenType.COMMA) || (hasNewlineBefore() && !check(TokenType.RBRACE)))
+            // F30: the newline arm already stops at the closer; the comma arm now does too, so a
+            // trailing comma before '}' ends the match cases instead of demanding another entry.
+            } while ((match(TokenType.COMMA) && !check(TokenType.RBRACE)) ||
+                      (hasNewlineBefore() && !check(TokenType.RBRACE)))
         }
 
         consume(TokenType.RBRACE, "Expected '}' after match cases")
@@ -1593,7 +1605,9 @@ class Parser(
         if (!check(TokenType.RPAREN)) {
             do {
                 args.add(parseArgument())
-            } while (match(TokenType.COMMA))
+            // F30: a comma directly before the closer is a trailing separator, not a
+            // missing element -- stop rather than demand another call.
+            } while (match(TokenType.COMMA) && !check(TokenType.RPAREN))
         }
         
         return args
@@ -1625,7 +1639,9 @@ class Parser(
                         current = checkpoint
                         return parseExpression()
                     }
-                } while (match(TokenType.COMMA))
+                // F30: a comma directly before the closer is a trailing separator, not a
+                // missing element -- stop rather than demand another lambda.
+                } while (match(TokenType.COMMA) && !check(TokenType.RPAREN))
             }
             
             if (match(TokenType.RPAREN) && match(TokenType.ARROW)) {

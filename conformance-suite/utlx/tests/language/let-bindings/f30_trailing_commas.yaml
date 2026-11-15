@@ -1,0 +1,48 @@
+name: "f30_trailing_commas"
+category: "language/let-bindings"
+description: "F30: a trailing comma is accepted before the closer in object literals, array literals, call arguments, lambda parameters and match cases — the form syntax.md documented as 'Trailing comma OK'"
+tags: ["object-literal", "array", "trailing-comma", "separator", "f30", "f02"]
+
+# Filed alongside the f02_* fixtures because it is the same family of rule: F02 made separators
+# optional between entries, F30 makes one harmless separator before the closer legal too.
+input:
+  format: json
+  data: |
+    {"n": 2}
+
+# Every construct the feature covers, in one script, so any single regression fails the fixture.
+# The negative cases (`[1,,2]`, `[,1]`) are asserted in F30TrailingCommaTest instead: the corpus
+# runner has no expect-a-parse-error form.
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let xs = [10, 20,]
+  {
+    arrayLiteral: xs,
+    objectLiteral: { a: 1, b: 2, },
+    callArguments: max(1, $input.n,),
+    lambdaParams: ((a, b,) -> a + b)(3, 4),
+    matchCase: match ($input.n) {
+      2 => "two",
+      _ => "other",
+    },
+    multiLine: [
+      1,
+      2,
+    ],
+  }
+
+expected:
+  format: json
+  data: |
+    {"arrayLiteral": [10, 20], "objectLiteral": {"a": 1, "b": 2}, "callArguments": 2,
+     "lambdaParams": 7, "matchCase": "two", "multiLine": [1, 2]}
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-11-15"
+  references:
+    - "docs/features/F30-trailing-commas-in-literals.md"
+    - "docs/features/F02-let-binding-separator-consistency.md"

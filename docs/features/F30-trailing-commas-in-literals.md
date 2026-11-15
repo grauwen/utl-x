@@ -1,11 +1,12 @@
 # F30: accept a trailing comma in literals, argument lists and match cases
 
-**Status:** Proposed — **recommended**
+**Status:** Implemented (2026-11-15)
 **Priority:** Medium — small and risk-free in implementation, but it removes a whole class of bug
 from every script *generator* this project ships, and it is documented as working on both branches.
 **Component:** `:core` — `parser_impl.kt` (`parseObjectLiteral`, `parseArrayLiteral`, the call
 argument list, and `parseMatchExpression`). **No engine change** — see "Risk".
-**Raised:** 2026-11-14, from `docs/language-guide/syntax.md` claiming "Trailing comma OK" twice.
+**Raised:** 2026-11-14, from `docs/language-guide/syntax.md` claiming "Trailing comma OK" twice —
+a claim that is now true.
 
 ## The gap
 
@@ -75,9 +76,9 @@ closing token. These are errors today and must stay errors:
 So the rule is "a separator directly before the closer is ignored", **not** "empty elements are
 allowed". Anything laxer silently accepts a typo that drops a value.
 
-## Implementation sketch
+## Scope analysis (written before implementing; kept for the reasoning)
 
-Both loops already consume the separator in their `while` condition; each needs a break when the
+Both loops already consume the separator in their `while` condition; each needed a break when the
 next token closes the construct.
 
 ```kotlin
@@ -115,29 +116,61 @@ The body constructs are the clear win. The header ones are a judgement call: a t
 the last declared input looks more like an editing accident than an intention, and headers are not
 what generators emit repeatedly.
 
-## Decisions to settle
+## What was implemented
 
-- **Scope.** Recommendation: the four body constructs plus the two parameter lists (see the table
-  above), and **not** the header ones. A generator emitting an argument list has the same
-  last-element problem as one emitting an array, and a reader who learns the rule for `[...]` will
-  expect it in `f(...)` — so stopping at literals leaves an arbitrary seam. Headers are different:
-  they are hand-written once, and `input: a xml, b json,` reads like a dropped input rather than a
-  style choice.
-- **Interaction with newline separators.** `{ a: 1,\n }` and `{ a: 1\n }` must both work; the
-  object rule above covers them because each arm independently checks for the closer.
-- **Spread.** `{ ...base, }` and `[...xs, ]` should be accepted on the same rule — no special case.
-- **Error-message quality.** When the construct is genuinely malformed (`[1,,2]`), the message
-  should keep pointing at the empty element, not at the closer.
+Seven loops gained a guard against their closing token. Five were the plain form:
+
+```kotlin
+} while (match(TokenType.COMMA) && !check(TokenType.RBRACKET))   // and RPAREN, per site
+```
+
+and the two compound loops (object literal, match cases) already guarded the **newline** arm on
+`RBRACE`; the comma arm now does the same.
+
+| site | construct |
+|---|---|
+| `parseArrayLiteral` | `[1, 2, 3,]` |
+| `parseObjectLiteral` | `{ a: 1, b: 2, }` |
+| `parseArguments` | `max(1, 2,)` |
+| `parseLambdaOrExpression`, `parseArgument` | `((a, b,) -> a + b)` |
+| `parseFunctionDefinition` | parameter list |
+| `parseMatchExpression` | `match (x) { 1 => "a", _ => "b", }` |
+
+**Headers were deliberately left out** (`parseInputsOrOutputs*`, `parseFormatOptions`): a trailing
+comma after the last declared input reads like a dropped input, and headers are hand-written once
+rather than emitted repeatedly. The three loops in `parseObjectLiteral`'s let/function prelude
+belong to F02 and were not touched.
+
+**The limit holds.** Empty elements are still errors, which is the whole safety argument:
+
+```
+[1,,2]   => Expected expression
+[,1]     => Expected expression
+[,]      => Expected expression
+```
 
 ## Tests
 
-- `F30TrailingCommaTest` in `:modules:core`: object, array, argument list and match cases, each
-  single-line and multi-line; combined with spread; combined with F02 newline separators; plus the
-  negative cases `[1,,2]`, `[,1]`, `{a: 1,,b: 2}` which must still error.
-- Conformance fixtures under `language/object-literals/` and `language/arrays/`, which also assert
-  the AST is unchanged via `ConformanceStrategyParityTest`.
-- Replace the two `// Trailing comma OK` examples in `syntax.md` with runnable ones, on **both**
-  branches.
+`F30TrailingCommaTest` (12 tests, `:modules:core`) covers each construct single-line and
+multi-line, spread as the last entry, the combination with F02 newline separators, the unchanged
+no-trailing-comma forms, and the three negative cases above.
+
+`conformance-suite/utlx/tests/language/let-bindings/f30_trailing_commas.yaml` exercises all six
+constructs in one script, filed beside the `f02_*` fixtures because it is the same family of rule.
+It also earns cross-strategy coverage: `ConformanceStrategyParityTest` runs it through TEMPLATE,
+COPY and COMPILED, confirming the parse-level change is invisible to all three.
+
+**Revert-verified:** removing the guards fails seven of the twelve — every positive case — while
+the three negative cases and the two unchanged-behaviour cases pass either way, which is correct.
+
+Full regression: **4900 JVM tests, 0 failures**; **580/580 conformance on the JVM and on the
+GraalVM native binary**.
+
+## Still to do
+
+`docs/language-guide/syntax.md` shows the trailing comma in two places (lines 263 and 338) and both
+branches carry it. The claim is now true on `development`; `main` still documents a form its code
+rejects until this ships there.
 
 ## Related
 
