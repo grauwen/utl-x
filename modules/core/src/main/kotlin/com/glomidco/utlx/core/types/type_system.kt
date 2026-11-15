@@ -326,7 +326,35 @@ class TypeChecker(
                     child
                 }
 
+                // B62: a key written twice at the SAME level silently loses one of them —
+                // `{ id: $input.a.id, id: $input.b.id }` evaluates to just the second, and until
+                // now neither validate nor lint said anything. Tracked here rather than in the
+                // parser so it surfaces as a type warning (and an error under --strict), and so
+                // the daemon turns it into an LSP diagnostic the mapper can show at drop time.
+                //
+                // Only *explicit* keys count, which keeps three legitimate shapes legal:
+                //   - `{ ...base, id: "NEW" }`  a spread followed by a deliberate override
+                //   - `{ @id: "a", id: "b" }`   attributes and properties are separate namespaces
+                //   - `{ [k]: 1, [k2]: 2 }`     computed keys are unknowable statically
+                // Nesting needs no special handling: each object literal runs this branch with
+                // its own set, so `{ a: { id: 1 }, b: { id: 2 } }` is two different levels.
+                val explicitKeys = mutableSetOf<Pair<kotlin.String, Boolean>>()
+
                 for (prop in expr.properties) {
+                    if (!prop.isSpread && prop.computedKey == null && prop.key != null) {
+                        val seen = prop.key!! to prop.isAttribute
+                        if (!explicitKeys.add(seen)) {
+                            val what = if (prop.isAttribute) "attribute" else "property"
+                            errors.add(
+                                TypeError(
+                                    "Duplicate $what '${prop.key}' in the same object — the earlier " +
+                                        "one is discarded. Give one of them a different name.",
+                                    prop.location
+                                )
+                            )
+                        }
+                    }
+
                     if (prop.isSpread) {
                         // Handle spread property
                         val spreadType = inferType(prop.value, scope)
