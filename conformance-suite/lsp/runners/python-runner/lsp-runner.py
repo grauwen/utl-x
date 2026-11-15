@@ -683,7 +683,7 @@ def main():
 
     if not server_jar.exists():
         print_error(f"Server JAR not found: {server_jar}")
-        print_info("Run: ./gradlew :modules:server:jar")
+        print_info("Run: ./gradlew :modules:daemon:jar")
         return 1
 
     # Discover tests

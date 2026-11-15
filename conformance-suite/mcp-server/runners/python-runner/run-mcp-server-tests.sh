@@ -50,7 +50,7 @@ if [ ! -f "$DAEMON_JAR" ]; then
     echo -e "${YELLOW}Daemon JAR not found. MCP server requires daemon REST API.${NC}"
     echo -e "${YELLOW}Building daemon...${NC}"
     cd "$PROJECT_ROOT"
-    ./gradlew :modules:server:jar --console=plain
+    ./gradlew :modules:daemon:jar --console=plain
     cd "$SCRIPT_DIR"
 fi
 

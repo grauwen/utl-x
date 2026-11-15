@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SERVER_JAR="$SCRIPT_DIR/../../../../modules/daemon/build/libs/utlxd-1.4.0.jar"
 if [ ! -f "$SERVER_JAR" ]; then
     echo "Error: Server JAR not found: $SERVER_JAR"
-    echo "Run: ./gradlew :modules:server:jar"
+    echo "Run: ./gradlew :modules:daemon:jar"
     exit 1
 fi
 

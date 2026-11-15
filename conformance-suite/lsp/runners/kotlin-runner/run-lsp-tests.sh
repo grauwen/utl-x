@@ -9,7 +9,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFORMANCE_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 PROJECT_ROOT="$(cd "$CONFORMANCE_ROOT/.." && pwd)"
-UTLXD="$PROJECT_ROOT/modules/server/scripts/utlxd"
+UTLXD="$PROJECT_ROOT/modules/daemon/scripts/utlxd"
 TESTS_PATH="$CONFORMANCE_ROOT/lsp/tests"
 
 # Colors
@@ -102,7 +102,7 @@ done
 # Check if daemon exists
 if [[ ! -x "$UTLXD" ]]; then
     log "ERROR" "UTL-X daemon not found at: $UTLXD"
-    log "INFO" "Build the daemon first: cd $PROJECT_ROOT && ./gradlew :modules:server:jar :modules:server:createScripts"
+    log "INFO" "Build the daemon first: cd $PROJECT_ROOT && ./gradlew :modules:daemon:jar :modules:daemon:createScripts"
     exit 1
 fi
 

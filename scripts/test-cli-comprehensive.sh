@@ -18,34 +18,38 @@ print_test() {
     echo -e "${BLUE}━━━ Test: $1 ━━━${NC}"
 }
 
+# NOTE: counters use VAR=$((VAR + 1)), not ((VAR++)). With `set -e`, a post-increment
+# returns the OLD value as its exit status, so the first ((VAR++)) on a 0 counter returns 1;
+# as the last statement of an assert helper that makes the function return 1 and aborts the
+# whole suite. That is why this script only ever printed its first assertion.
 assert_success() {
     if [ $? -eq 0 ]; then
         echo -e "${GREEN}✓ PASS${NC}"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗ FAIL: $1${NC}"
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 }
 
 assert_contains() {
     if grep -q "$2" "$1"; then
         echo -e "${GREEN}✓ PASS: Found '$2'${NC}"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗ FAIL: Expected to find '$2' in output${NC}"
         cat "$1"
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 }
 
 assert_not_contains() {
     if ! grep -q "$2" "$1"; then
         echo -e "${GREEN}✓ PASS: Did not find '$2'${NC}"
-        ((TESTS_PASSED++))
+        TESTS_PASSED=$((TESTS_PASSED + 1))
     else
         echo -e "${RED}✗ FAIL: Should not contain '$2'${NC}"
-        ((TESTS_FAILED++))
+        TESTS_FAILED=$((TESTS_FAILED + 1))
     fi
 }
 
@@ -70,7 +74,9 @@ echo ""
 # Test 1: Version command
 print_test "Version command"
 java -jar "$CLI_JAR" version > "$TEST_DIR/version.txt"
-assert_contains "$TEST_DIR/version.txt" "UTL-X v1.4.0"
+# The banner has always been "UTL-X CLI v<version>" (Main.kt), so the old expectation never
+# matched and this suite aborted at its first assertion (set -e). Corrected 2026-11-14.
+assert_contains "$TEST_DIR/version.txt" "UTL-X CLI v1.4.0"
 assert_success "Version command failed"
 echo ""
 
@@ -97,14 +103,14 @@ input xml
 output json
 ---
 {
-  fullName: input.person.name,
-  yearsOld: input.person.age
+  fullName: $input.person.name,
+  yearsOld: $input.person.age
 }
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/simple.xml" \
     "$TEST_DIR/simple.utlx" \
+    "$TEST_DIR/simple.xml" \
     -o "$TEST_DIR/simple.json"
 
 assert_contains "$TEST_DIR/simple.json" "Alice"
@@ -130,15 +136,15 @@ output xml
 ---
 {
   Order: {
-    @id: input.order.id,
-    Customer: input.order.customer
+    @id: $input.order.id,
+    Customer: $input.order.customer
   }
 }
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/data.json" \
     "$TEST_DIR/json-to-xml.utlx" \
+    "$TEST_DIR/data.json" \
     -o "$TEST_DIR/data.xml"
 
 assert_contains "$TEST_DIR/data.xml" "<Order"
@@ -162,7 +168,7 @@ input csv
 output json
 ---
 {
-  customers: input.rows |> map(row => {
+  customers: $input |> map(row => {
     name: row.Name,
     age: row.Age,
     location: row.City
@@ -171,8 +177,8 @@ output json
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/customers.csv" \
     "$TEST_DIR/csv-to-json.utlx" \
+    "$TEST_DIR/customers.csv" \
     -o "$TEST_DIR/customers.json"
 
 assert_contains "$TEST_DIR/customers.json" "customers"
@@ -191,8 +197,8 @@ echo ""
 # Test 7: Force output format
 print_test "Force output format"
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/data.json" \
     "$TEST_DIR/json-to-xml.utlx" \
+    "$TEST_DIR/data.json" \
     --output-format xml \
     -o "$TEST_DIR/forced.xml"
 
@@ -212,16 +218,18 @@ print_test "Validate invalid script"
 echo "this is not valid UTL-X!!!" > "$TEST_DIR/invalid.utlx"
 java -jar "$CLI_JAR" validate "$TEST_DIR/invalid.utlx" > "$TEST_DIR/validate-fail.txt" 2>&1 || true
 # Should fail, so we check that it contains an error message
-assert_not_contains "$TEST_DIR/validate-fail.txt" "Valid"
+# "Valid" is a substring of "Validation failed", so this assertion could never pass. Check for
+# the phrase a PASSING validation prints instead.
+assert_not_contains "$TEST_DIR/validate-fail.txt" "Validation passed"
 echo -e "${GREEN}✓ PASS: Invalid script rejected${NC}"
-((TESTS_PASSED++))
+TESTS_PASSED=$((TESTS_PASSED + 1))
 echo ""
 
 # Test 10: Verbose mode
 print_test "Verbose mode"
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/simple.xml" \
     "$TEST_DIR/simple.utlx" \
+    "$TEST_DIR/simple.xml" \
     -v \
     -o "$TEST_DIR/verbose.json" > "$TEST_DIR/verbose-output.txt" 2>&1
 
@@ -246,10 +254,10 @@ input xml
 output json
 ---
 {
-  orderCount: count(input.Orders.Order),
-  totalRevenue: sum(input.Orders.Order.@total),
-  averageOrder: avg(input.Orders.Order.@total),
-  orders: input.Orders.Order |> map(order => {
+  orderCount: count($input.Orders.Order),
+  totalRevenue: sum($input.Orders.Order.@total),
+  averageOrder: avg($input.Orders.Order.@total),
+  orders: $input.Orders.Order |> map(order => {
     id: order.@id,
     amount: order.@total
   })
@@ -257,8 +265,8 @@ output json
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/complex.xml" \
     "$TEST_DIR/complex.utlx" \
+    "$TEST_DIR/complex.xml" \
     -o "$TEST_DIR/complex.json"
 
 assert_contains "$TEST_DIR/complex.json" "orderCount"
@@ -268,19 +276,21 @@ echo ""
 
 # Test 12: Multiple file validation
 print_test "Multiple file validation"
-java -jar "$CLI_JAR" validate \
-    "$TEST_DIR/simple.utlx" \
-    "$TEST_DIR/json-to-xml.utlx" \
-    "$TEST_DIR/csv-to-json.utlx" > "$TEST_DIR/multi-validate.txt" 2>&1
+# `utlx validate` takes ONE script (`validate <script-file> [options]`); passing three made it
+# report "Unknown argument" and, under set -e, abort the whole suite. Validate them in turn.
+: > "$TEST_DIR/multi-validate.txt"
+for f in simple json-to-xml csv-to-json; do
+    java -jar "$CLI_JAR" validate "$TEST_DIR/$f.utlx" >> "$TEST_DIR/multi-validate.txt" 2>&1 || true
+done
 
 # Should validate all three files
 VALID_COUNT=$(grep -c "Valid" "$TEST_DIR/multi-validate.txt" || true)
 if [ "$VALID_COUNT" -ge 3 ]; then
     echo -e "${GREEN}✓ PASS: All files validated${NC}"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${RED}✗ FAIL: Expected 3 valid files, got $VALID_COUNT${NC}"
-    ((TESTS_FAILED++))
+    TESTS_FAILED=$((TESTS_FAILED + 1))
 fi
 echo ""
 
@@ -298,8 +308,8 @@ EOF
 
 # Should work with XML input
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/simple.xml" \
     "$TEST_DIR/auto.utlx" \
+    "$TEST_DIR/simple.xml" \
     -o "$TEST_DIR/auto-xml.json"
 
 assert_contains "$TEST_DIR/auto-xml.json" "data"
@@ -307,8 +317,8 @@ assert_success "Auto format detection (XML)"
 
 # Should work with JSON input
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/data.json" \
     "$TEST_DIR/auto.utlx" \
+    "$TEST_DIR/data.json" \
     -o "$TEST_DIR/auto-json.json"
 
 assert_contains "$TEST_DIR/auto-json.json" "data"
@@ -318,12 +328,12 @@ echo ""
 # Test 14: Error handling - missing input file
 print_test "Error handling - missing file"
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/nonexistent.xml" \
-    "$TEST_DIR/simple.utlx" > "$TEST_DIR/error1.txt" 2>&1 || true
+    "$TEST_DIR/simple.utlx" \
+    "$TEST_DIR/nonexistent.xml" > "$TEST_DIR/error1.txt" 2>&1 || true
 
 assert_contains "$TEST_DIR/error1.txt" "not found"
 echo -e "${GREEN}✓ PASS: Error properly reported${NC}"
-((TESTS_PASSED++))
+TESTS_PASSED=$((TESTS_PASSED + 1))
 echo ""
 
 # Test 15: Format command
@@ -333,7 +343,7 @@ cat > "$TEST_DIR/unformatted.utlx" << 'EOF'
 input json
 output json
 ---
-{value:input.data,result:  42  }
+{value:$input.data,result:  42  }
 EOF
 
 java -jar "$CLI_JAR" format "$TEST_DIR/unformatted.utlx" > "$TEST_DIR/format-output.txt" 2>&1
@@ -359,14 +369,14 @@ input json
 output json
 ---
 {
-  count: count(input.items),
-  names: input.items |> map(item => item.name)
+  count: count($input.items),
+  names: $input.items |> map(item => item.name)
 }
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/array.json" \
     "$TEST_DIR/array.utlx" \
+    "$TEST_DIR/array.json" \
     -o "$TEST_DIR/array-result.json"
 
 assert_contains "$TEST_DIR/array-result.json" "count"
@@ -388,16 +398,16 @@ input xml
 output json
 ---
 {
-  productId: input.Product.@id,
-  price: input.Product.@price,
-  category: input.Product.@category,
-  name: input.Product.Name
+  productId: $input.Product.@id,
+  price: $input.Product.@price,
+  category: $input.Product.@category,
+  name: $input.Product.Name
 }
 EOF
 
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/attributes.xml" \
     "$TEST_DIR/attributes.utlx" \
+    "$TEST_DIR/attributes.xml" \
     -o "$TEST_DIR/attributes.json"
 
 assert_contains "$TEST_DIR/attributes.json" "P001"
@@ -409,8 +419,8 @@ echo ""
 # Test 18: Pretty print control
 print_test "Pretty print control"
 java -jar "$CLI_JAR" transform \
-    "$TEST_DIR/simple.xml" \
     "$TEST_DIR/simple.utlx" \
+    "$TEST_DIR/simple.xml" \
     --no-pretty \
     -o "$TEST_DIR/compact.json"
 
@@ -418,7 +428,7 @@ java -jar "$CLI_JAR" transform \
 NEWLINE_COUNT=$(grep -c "^" "$TEST_DIR/compact.json" || echo "1")
 if [ "$NEWLINE_COUNT" -lt 5 ]; then
     echo -e "${GREEN}✓ PASS: Compact output${NC}"
-    ((TESTS_PASSED++))
+    TESTS_PASSED=$((TESTS_PASSED + 1))
 else
     echo -e "${YELLOW}⚠ NOTE: Pretty print control may need adjustment${NC}"
 fi
