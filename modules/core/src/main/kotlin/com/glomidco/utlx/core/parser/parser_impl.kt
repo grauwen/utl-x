@@ -114,6 +114,15 @@ class Parser(
         while (!isAtEnd()) {
             val expr = parseExpression()
             allExpressions.add(expr)
+
+            // B61: accept an explicit `;` or `,` between top-level expressions, as F02 already does
+            // inside a block. Newlines work here by being whitespace the parser never sees, so this
+            // loop had no separator handling at all and `let x = 1;` — the form F02's own document
+            // gives as valid — died with "Expected expression" on the semicolon.
+            //
+            // Exactly one separator is consumed, not a run of them: `let a = 1;; let b = 2` stays an
+            // error, because a doubled separator is a typo, not a style.
+            match(TokenType.SEMICOLON) || match(TokenType.COMMA)
         }
 
         // Separate let bindings (including function definitions) from other expressions

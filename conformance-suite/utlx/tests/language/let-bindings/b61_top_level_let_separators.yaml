@@ -1,0 +1,48 @@
+name: "b61_top_level_let_separators"
+category: "language/let-bindings"
+description: "B61: a top-level let accepts an explicit ';' or ',' separator, as F02 already allows inside a block — including F02's own single-line example, which used to be a parse error"
+tags: ["let", "separator", "semicolon", "f02", "b61"]
+
+input:
+  format: json
+  data: |
+    {"n": 4}
+
+# Three separator styles in one script, so the fixture fails if any of them regresses:
+#   - `;` on a single line (the form F02's feature document gives as valid)
+#   - `;` at the end of a multi-line binding
+#   - `,` as the alternative separator
+#   - no separator at all (the newline form the rest of the corpus uses)
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  let a = 10; let b = 20
+  let c = $input.n;
+  let d = 2,
+  let e = 3
+  {
+    singleLine: a + b,
+    semicolon: c,
+    comma: d,
+    newline: e,
+    total: a + b + c + d + e
+  }
+
+expected:
+  format: json
+  data: |
+    {"singleLine": 30, "semicolon": 4, "comma": 2, "newline": 3, "total": 39}
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-11-15"
+  references:
+    - "docs/bugs-fixed/B61-top-level-let-rejects-the-semicolon-separator-that-blocks-accept.md"
+    - "docs/features/F02-let-binding-separator-consistency.md"
+  notes: |
+    Adding this fixture also buys cross-strategy coverage: ConformanceStrategyParityTest
+    auto-discovers the corpus and runs every fixture through TEMPLATE, COPY and COMPILED. A
+    parse-level change should be invisible to all three, and parity failing here would mean it
+    was not.

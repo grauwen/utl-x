@@ -3,18 +3,18 @@ category: "clean"
 description: "Test that clean, well-written code produces no lint warnings"
 tags: ["lint", "clean", "best-practices"]
 
-# The semicolons after the two top-level `let` bindings were removed on 2026-11-14: they do not
-# parse, so `utlx lint` refused the file with "Cannot lint: File has syntax errors" and this
-# fixture tested a parse failure instead of linting. That rejection is a real defect -- F02
-# documents `let x = 10; let y = 20; {...}` as valid -- tracked as B61. Restore the semicolons
-# once B61 is fixed, so this fixture covers both forms.
+# The semicolons here were briefly removed on 2026-11-14 because they did not parse: `utlx lint`
+# refused the file with "Cannot lint: File has syntax errors", so this fixture tested a parse
+# failure rather than linting. That rejection was B61 -- F02 documents `let x = 10; let y = 20;`
+# as valid and only the block half had been implemented. B61 is fixed, so the semicolon form is
+# restored and this fixture now exercises both the separator and the linter.
 script: |
   %utlx 1.0
   input json
   output json
   ---
-  let customerName = $input.name
-  let customerEmail = $input.email
+  let customerName = $input.name;
+  let customerEmail = $input.email;
   {
     name: customerName,
     email: customerEmail,
