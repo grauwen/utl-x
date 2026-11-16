@@ -350,7 +350,7 @@ containers: [
   }
   {
     name: 'utlxe-ui'
-    image: 'ghcr.io/grauwen/utlxe-ui:latest'
+    image: 'ghcr.io/utlx-lang/utlxe-ui:latest'
     resources: { cpu: json('0.25'), memory: '0.5Gi' }
   }
 ]

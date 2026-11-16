@@ -110,7 +110,7 @@ variable "delete_after" {
 variable "utlx_image" {
   description = "Container image for the UTL-X engine."
   type        = string
-  default     = "ghcr.io/glomidco/utlxe:latest"   # adjust to your registry
+  default     = "ghcr.io/utlx-lang/utlxe:latest"   # adjust to your registry
 }
 
 variable "utlx_cpu" {
