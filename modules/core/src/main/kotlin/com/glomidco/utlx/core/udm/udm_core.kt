@@ -292,8 +292,41 @@ sealed class UDM {
                 null -> ""
                 else -> unwrapped.value.toString()
             }
-            else -> this.toString()
+            // B59: the temporal types have a text form, so give it rather than failing.
+            // They reached the `else` below before, which returned the Kotlin data-class
+            // toString() — none of them overrides it, so `upperCase(now())` produced
+            // "DATETIME(INSTANT=2026-11-16T...)" rather than the timestamp.
+            is DateTime -> unwrapped.toISOString()
+            is Date -> unwrapped.toISOString()
+            is LocalDateTime -> unwrapped.toISOString()
+            is Time -> unwrapped.toISOString()
+
+            // B59: everything else has no defensible text form, and the old fallback
+            // (`this.toString()`) leaked the engine's internal representation into user data:
+            //
+            //     upperCase($input)  =>  "OBJECT(PROPERTIES={A=SCALAR(VALUE=1)}, ATTRIBUTES={}, ...)"
+            //
+            // which a downstream system then received as if it were a value. Dozens of stdlib
+            // files wrote their own strict `UDM.asString()` helper to prevent exactly this, but
+            // a member always wins over an extension, so every one of those guards was dead code
+            // (see the report). Failing here makes them unnecessary: the guard now lives in the
+            // one place all ~289 call sites go through.
+            else -> throw com.glomidco.utlx.core.FunctionArgumentException(
+                "Expected a text value but got ${describeKind()}. " +
+                "Hint: select a field first (e.g. \$input.name), or render the whole value " +
+                "with toString() or renderJson()."
+            )
         }
+    }
+
+    /** A user-facing name for this value's kind, for error messages. */
+    private fun describeKind(): String = when (this) {
+        is Scalar -> "a scalar"
+        is Array -> "an array"
+        is Object -> if (name != null) "an object (<$name>)" else "an object"
+        is Binary -> "binary data (${data.size} bytes)"
+        is Lambda -> "a function"
+        else -> this::class.simpleName ?: "an unsupported value"
     }
 
     fun asNumber(): Double {

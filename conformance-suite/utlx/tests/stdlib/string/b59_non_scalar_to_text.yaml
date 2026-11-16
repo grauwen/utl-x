@@ -1,0 +1,41 @@
+name: "b59_non_scalar_to_text"
+category: "stdlib/string"
+description: "B59: a temporal value converts to its ISO text rather than the engine's internal representation; this fixture also carries the cross-strategy check via ConformanceStrategyParityTest"
+tags: ["string", "udm", "date", "b59"]
+
+input:
+  format: json
+  data: |
+    {"when": "2026-01-15T10:30:00Z", "name": "alice"}
+
+# The failure half of B59 (upperCase on an object must throw) lives in B59AsStringNonScalarTest:
+# the corpus runner has no expect-an-error form. What belongs here is the half that must keep
+# WORKING on all three strategies — temporal values rendering as ISO, and ordinary strings
+# untouched. Before B59 the date path produced "DATETIME(INSTANT=2026-01-15T10:30:00Z)".
+# Note on the concat line: concat() keeps its own type guard and rejects a date outright,
+# pointing the author at toString(). That guard works because concat checks the type BEFORE
+# reaching asString(); B59 is about the functions that did not. (And '#' is not a UTL-X comment
+# -- it only works out here, in the YAML.)
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    fromDateTime: upperCase(parseDate($input.when)),
+    fromDate: upperCase(parseDate("2026-01-15")),
+    plainString: upperCase($input.name),
+    concatenated: concat("at ", toString(parseDate("2026-01-15")))
+  }
+
+expected:
+  format: json
+  data: |
+    {"fromDateTime": "2026-01-15T10:30:00Z", "fromDate": "2026-01-15",
+     "plainString": "ALICE", "concatenated": "at 2026-01-15"}
+
+metadata:
+  author: "UTL-X Team"
+  created: "2026-11-16"
+  references:
+    - "docs/bugs-fixed/B59-private-udm-coercion-helpers-are-shadowed-so-argument-guards-never-run.md"

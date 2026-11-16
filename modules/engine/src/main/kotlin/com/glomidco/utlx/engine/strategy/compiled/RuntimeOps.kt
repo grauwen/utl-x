@@ -488,11 +488,39 @@ object RuntimeOps {
         }
     }
 
+    /**
+     * B59: the compiled path's copy of `UDM.asString()`. **Semantics live in two places** — the
+     * interpreter uses the member on UDM; this is the one the ASTCompiler emits calls to — so the
+     * two must agree, or a wrong-typed argument behaves differently per strategy. That divergence
+     * is exactly what B34, B35, EB03 and B48 were.
+     *
+     * Both previously fell back to the Kotlin data-class `toString()`, leaking the internal
+     * representation into user data. Temporal values get their ISO form; everything else fails
+     * with the same message as the interpreter.
+     */
     private fun toStringValue(udm: UDM): String {
         return when (udm) {
             is UDM.Scalar -> udm.value?.toString() ?: "null"
-            else -> udm.toString()
+            is UDM.DateTime -> udm.toISOString()
+            is UDM.Date -> udm.toISOString()
+            is UDM.LocalDateTime -> udm.toISOString()
+            is UDM.Time -> udm.toISOString()
+            else -> throw com.glomidco.utlx.core.FunctionArgumentException(
+                "Expected a text value but got ${describeKind(udm)}. " +
+                "Hint: select a field first (e.g. \$input.name), or render the whole value " +
+                "with toString() or renderJson()."
+            )
         }
+    }
+
+    /** Mirrors `UDM.describeKind()` so both strategies word the failure identically. */
+    private fun describeKind(udm: UDM): String = when (udm) {
+        is UDM.Scalar -> "a scalar"
+        is UDM.Array -> "an array"
+        is UDM.Object -> if (udm.name != null) "an object (<${udm.name}>)" else "an object"
+        is UDM.Binary -> "binary data (${udm.data.size} bytes)"
+        is UDM.Lambda -> "a function"
+        else -> udm::class.simpleName ?: "an unsupported value"
     }
 
     /** The raw numeric value behind a scalar, with no coercion and no narrowing. */
