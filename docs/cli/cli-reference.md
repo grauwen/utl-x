@@ -233,6 +233,53 @@ cat data.xml | utlx transform script.utlx -o output.json
 |------|-------------|---------|
 | `--strict-types` | Fail on type errors | off (warnings only) |
 
+### Input strictness (`--parse-profile`)
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--parse-profile strict\|standard\|lenient` | How much malformed input to tolerate | `standard` |
+
+A transformation often has to read data from a system you do not control. The profile decides
+whether questionable input is **rejected loudly** or **accepted on a documented rule** — the same
+policy for JSON, XML and YAML (B31).
+
+| | `strict` | `standard` (default) | `lenient` |
+|---|---|---|---|
+| duplicate keys (JSON/YAML) | reject | reject | **accept** — last value wins |
+| max nesting depth | 64 | 256 | 256 |
+| XML DOCTYPE | reject | skip | skip |
+| undefined XML entities | reject | reject | pass through as text |
+
+```bash
+# a feed you cannot control: take it as-is
+utlx transform --parse-profile lenient script.utlx messy.json
+
+# a contract you want enforced at the door
+utlx transform --parse-profile strict script.utlx partner.xml
+```
+
+**The flag must come before the file arguments.** `utlx transform script.utlx in.json
+--parse-profile lenient` prints usage instead of running.
+
+When input is rejected for a reason a profile governs, the error says which profile would accept
+it:
+
+```
+Error: Error parsing input: JSON parse error at 1:28 - Duplicate object key: 'id'
+       Hint: this input is rejected under the 'standard' parse profile. Re-run with
+       --parse-profile lenient to accept it (the last value wins).
+```
+
+No hint appears when no profile would help — a truncated document is a syntax error at every
+level, and nesting beyond 256 is refused by `standard` and `lenient` alike.
+
+Note the asymmetry worth knowing: depth is a **resource bound**, not a grammar rule, so `lenient`
+does not relax it beyond `standard`. Only `strict` is tighter.
+
+**Where else it can be set.** The engine reads it from `EngineConfig`; the daemon from the
+`UTLX_PARSE_PROFILE` environment variable or `-Dutlx.parse.profile` (IB08), so a deployment that
+must swallow malformed input can select it once rather than per call.
+
 ### Test capture
 
 | Flag | Description | Default |
