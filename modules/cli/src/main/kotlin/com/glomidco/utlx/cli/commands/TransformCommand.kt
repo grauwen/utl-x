@@ -1062,7 +1062,10 @@ ${"$"}input"""
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)
-            |  --parse-profile PROFILE     Parser strictness: strict | standard | lenient (default standard)
+            |  --parse-profile PROFILE     Parser strictness: strict | standard | lenient (default standard).
+            |                              standard and strict REJECT malformed input (duplicate keys,
+            |                              excessive nesting); lenient ACCEPTS it — last value wins on a
+            |                              duplicate — for feeds you do not control.
             |  --language-mode MODE        Engine language mode: 1.0 | 1.1 | utlxe | utlxs (default latest/1.1).
             |                              1.0 (utlxe) rejects %utlx 1.1 scripts (e.g. validate.*)
             |  --capture                   Force enable test capture (overrides config)

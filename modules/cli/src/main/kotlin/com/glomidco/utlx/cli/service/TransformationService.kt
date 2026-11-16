@@ -375,8 +375,60 @@ class TransformationService {
             // the same error twice — the defect B26 fixed on the parse path at line ~237 and
             // left on this one. The "Error parsing input" context is kept by wrapping rather
             // than by printing, so it still reaches the single message the user sees.
-            throw IllegalStateException("Error parsing input: ${e.message}", e)
+            // The profiles exist precisely so a caller can decide how much malformed input to
+            // tolerate (F23/B31), but a user who meets the rejection has no way to learn that
+            // from the message — the parsers live in :formats and cannot name a CLI flag. Add
+            // the hint here, where the active profile is known and the flag is ours to name.
+            //
+            // Only when a LESS strict profile would actually help: silent on lenient (there is
+            // nothing stricter to blame) and silent for failures no profile governs, so the hint
+            // never promises a fix it cannot deliver.
+            throw IllegalStateException("Error parsing input: ${e.message}${profileHint(parseOpts, e)}", e)
         }
+    }
+
+    /**
+     * A one-line suggestion naming the profile that would accept this input, or "" when no
+     * profile change would help. Kept deliberately narrow: it matches on the conditions the
+     * profile actually governs (§4 — duplicate keys, nesting depth, comments, DOCTYPE/entities),
+     * rather than appending itself to every parse failure, where it would be noise at best and
+     * misleading at worst.
+     */
+    private fun profileHint(parseOpts: ParseOptions, e: Exception): String {
+        if (parseOpts.profile == ParseProfile.LENIENT) return ""
+        val lenient = ParseOptions.of(ParseProfile.LENIENT)
+        val message = (e.message ?: "").lowercase()
+
+        // Each arm asks the profile table whether lenient is ACTUALLY more permissive for this
+        // specific setting, instead of assuming it. That is not pedantry: maxDepth is 256 under
+        // BOTH standard and lenient (only strict differs, at 64), so a depth failure on standard
+        // cannot be relieved by any profile — an assumed hint would have sent the user to a dead
+        // end. Reading the real options also keeps this correct if the §4 table is ever retuned.
+        val relief = when {
+            "duplicate" in message &&
+                lenient.allowDuplicateKeys && !parseOpts.allowDuplicateKeys ->
+                "the last value wins"
+
+            ("depth" in message || "nesting" in message) &&
+                lenient.maxDepth > parseOpts.maxDepth ->
+                "the depth limit rises from ${parseOpts.maxDepth} to ${lenient.maxDepth}"
+
+            "comment" in message &&
+                lenient.allowComments && !parseOpts.allowComments ->
+                "comments are allowed"
+
+            "doctype" in message &&
+                lenient.allowDoctype && !parseOpts.allowDoctype ->
+                "a DOCTYPE is allowed"
+
+            "entity" in message &&
+                lenient.allowUndefinedEntities && !parseOpts.allowUndefinedEntities ->
+                "undefined entities pass through"
+
+            else -> return ""
+        }
+        return "\n       Hint: this input is rejected under the '${parseOpts.profile.name.lowercase()}' " +
+            "parse profile. Re-run with --parse-profile lenient to accept it ($relief)."
     }
 
     /**
