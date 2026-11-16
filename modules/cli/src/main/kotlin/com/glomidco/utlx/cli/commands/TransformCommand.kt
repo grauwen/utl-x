@@ -8,6 +8,7 @@ import com.glomidco.utlx.core.debug.DebugConfig
 import com.glomidco.utlx.core.format.ParseProfile
 import java.io.File
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.validate.ValidationRoutingPolicy
 import com.glomidco.utlx.formats.json.JSONSerializer
 
 /**
@@ -39,6 +40,9 @@ object TransformCommand {
         val jsonArgs: Map<String, String> = emptyMap(),         // F27: --argjson name=<json>, parsed as JSON
         val nullInput: Boolean = false,                         // F27: -n, run with no input (${'$'}input = null)
         val exitStatus: Boolean = false,                        // F27: --exit-status, exit 1 on null/false
+        // CB07: --validation-budget / --fail-on-invalid. null = no gating (the default, and today's
+        // behaviour); non-null = gate the exit code on a validate.* verdict using these budgets.
+        val validationBudget: ValidationRoutingPolicy? = null,
         val captureEnabled: Boolean? = null,  // null = use config, true = force enable, false = force disable
         val debugLevel: DebugConfig.LogLevel? = null,  // Global debug level
         val debugComponents: Set<DebugConfig.Component> = emptySet(),  // Component-specific debug
@@ -53,6 +57,44 @@ object TransformCommand {
         val outputFile: File? get() = namedOutputs["output"] ?: namedOutputs.values.firstOrNull()
         val hasMultipleInputs: Boolean get() = namedInputs.size > 1
         val hasMultipleOutputs: Boolean get() = namedOutputs.size > 1
+    }
+
+    /**
+     * CB07: parse `errors=N,warnings=N` into the engine's [ValidationRoutingPolicy].
+     *
+     * Both budgets default to 0, so a bare `--validation-budget` is FAIL_CLOSED — any error or
+     * warning fails. Notices are deliberately not settable: the policy never gates on them, and
+     * offering a knob that does nothing is the CB06 mistake.
+     *
+     * Unknown keys and non-numeric values are rejected rather than ignored. A silently dropped
+     * budget would be the worst outcome here: the user would believe a gate is in place when the
+     * run is in fact ungated.
+     */
+    internal fun parseValidationBudget(spec: String): ValidationRoutingPolicy {
+        var maxErrors = 0
+        var maxWarnings = 0
+        for (part in spec.split(',')) {
+            val piece = part.trim()
+            if (piece.isEmpty()) continue
+            val key = piece.substringBefore('=').trim().lowercase()
+            val rawValue = piece.substringAfter('=', "").trim()
+            val value = rawValue.toIntOrNull()
+                ?: throw IllegalArgumentException(
+                    "--validation-budget: '$piece' needs a whole number, e.g. warnings=3")
+            if (value < 0) {
+                throw IllegalArgumentException("--validation-budget: '$key' cannot be negative")
+            }
+            when (key) {
+                "errors" -> maxErrors = value
+                "warnings" -> maxWarnings = value
+                "notices" -> throw IllegalArgumentException(
+                    "--validation-budget: notices never gate a result, so a budget for them has " +
+                    "no effect. Use errors= and/or warnings=.")
+                else -> throw IllegalArgumentException(
+                    "--validation-budget: unknown key '$key'. Expected errors= and/or warnings=.")
+            }
+        }
+        return ValidationRoutingPolicy(maxErrors = maxErrors, maxWarnings = maxWarnings)
     }
 
     /**
@@ -638,6 +680,28 @@ ${"$"}input"""
                 if (falsy) return CommandResult.Failure("", 1)
             }
 
+            // CB07: gate the exit code on a `validate.*` verdict. The verdict itself is already
+            // correct on every path (EB14) and already written to stdout above — what was missing
+            // was any surface that ACTS on it, so a failing check exited 0 and a pipeline forwarded
+            // data the transformation had judged invalid.
+            //
+            // The decision is delegated to ValidationRoutingPolicy, the same type the engine uses,
+            // so `--validation-budget warnings=3` here means exactly what that budget means in a
+            // deployment. Re-deriving `failed <= max` locally would be the two-implementations
+            // divergence that produced B34, B35, EB03 and B48.
+            //
+            // Not the default: without the flag the exit code is unchanged, because `validate.*`
+            // is deliberately pure — it decides, the deployment enforces, a guard locks the
+            // budgets. A script that performs no validation is unaffected either way, since
+            // decide() forwards anything that is not a ValidationResult.
+            options.validationBudget?.let { policy ->
+                val decision = policy.decide(outcome.outputUDM)
+                if (!decision.forwarded) {
+                    System.err.println("Validation failed: ${decision.reason}")
+                    return CommandResult.Failure("", 1)
+                }
+            }
+
             return CommandResult.Success
 
         } catch (e: Exception) {
@@ -742,6 +806,7 @@ ${"$"}input"""
         val jsonArgValues = mutableMapOf<String, String>()
         var nullInput = false
         var exitStatus = false
+        var validationBudget: ValidationRoutingPolicy? = null
         var captureEnabled: Boolean? = null
         var debugLevel: DebugConfig.LogLevel? = null
         val debugComponents = mutableSetOf<DebugConfig.Component>()
@@ -781,6 +846,16 @@ ${"$"}input"""
                 }
                 "-n", "--null-input" -> {
                     nullInput = true
+                }
+                // CB07: gate the exit code on a validate.* verdict, using the engine's budgets.
+                "--fail-on-invalid" -> {
+                    // The common case, spelled short: any error or any warning fails.
+                    validationBudget = ValidationRoutingPolicy.FAIL_CLOSED
+                }
+                "--validation-budget" -> {
+                    val spec = args.getOrNull(++i)
+                        ?: throw IllegalArgumentException("--validation-budget requires errors=N,warnings=N")
+                    validationBudget = parseValidationBudget(spec)
                 }
                 "--exit-status" -> {
                     // Deliberately long-form only. jq spells this `-e`, which here already means
@@ -913,6 +988,7 @@ ${"$"}input"""
                 jsonArgs = jsonArgValues,
                 nullInput = nullInput,
                 exitStatus = exitStatus,
+                validationBudget = validationBudget,
                 captureEnabled = captureEnabled,
                 debugLevel = debugLevel,
                 debugComponents = debugComponents,
@@ -947,6 +1023,7 @@ ${"$"}input"""
                 jsonArgs = jsonArgValues,
                 nullInput = nullInput,
                 exitStatus = exitStatus,
+                validationBudget = validationBudget,
                     captureEnabled = captureEnabled,
                     debugLevel = debugLevel,
                     debugComponents = debugComponents,
@@ -988,6 +1065,7 @@ ${"$"}input"""
                 jsonArgs = jsonArgValues,
                 nullInput = nullInput,
                 exitStatus = exitStatus,
+                validationBudget = validationBudget,
             captureEnabled = captureEnabled,
             debugLevel = debugLevel,
             debugComponents = debugComponents,
@@ -1050,6 +1128,14 @@ ${"$"}input"""
             |                              Repeatable. Expression mode only.
             |  -n, --null-input            Run with no input at all; ${'$'}input is null. For computing
             |                              or generating data (jq -n).
+            |  --fail-on-invalid           Exit 1 when a %utlx 1.1 validate.* verdict reports any error
+            |                              or warning. The verdict is still written in full; only the
+            |                              exit code changes. Without the flag a failed validation
+            |                              exits 0 (the historic behaviour).
+            |  --validation-budget SPEC    As above, with budgets: errors=N,warnings=N (both default 0).
+            |                              e.g. --validation-budget warnings=3 fails only above 3
+            |                              warnings. Notices never gate. These are the budgets the
+            |                              engine applies, so a check behaves the same once deployed.
             |  --exit-status               Exit 1 when the result is null or false, 0 otherwise, so a
             |                              transformation can be used as a shell test (jq spells this
             |                              -e, which here already means --expression). Output is

@@ -1,10 +1,16 @@
-package com.glomidco.utlx.engine.routing
+package com.glomidco.utlx.stdlib.validate
 
 import com.glomidco.utlx.core.udm.UDM
-import com.glomidco.utlx.stdlib.validate.ValidateFunctions
 
 /**
  * F21 / Phase 4 — **fail-closed routing policy** over a `validate.*` `ValidationResult`.
+ *
+ * **Why this lives in `:stdlib` and not `:engine`** (moved 2026-11-16, CB07): both the engine and
+ * the CLI must gate on the same counts with the same meaning, and `:modules:cli` does not depend
+ * on `:modules:engine` — it would have had to re-derive the comparison, which is exactly the
+ * two-implementations divergence behind B34, B35, EB03 and B48. Both modules already depend on
+ * `:stdlib`, which also *owns* the ValidationResult shape (`ValidateFunctions.looksLikeValidationResult`),
+ * so the policy over that shape belongs beside it.
  *
  * The `validate.*` functions are **pure**: they report counts (`failed` = errors, `warnings`, `notices`)
  * and never apply a threshold (`valid` is purely `failed == 0`). The forward/reject decision is an

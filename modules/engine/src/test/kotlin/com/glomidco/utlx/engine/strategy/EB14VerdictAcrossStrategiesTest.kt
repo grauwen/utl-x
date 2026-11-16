@@ -1,8 +1,9 @@
 package com.glomidco.utlx.engine.strategy
 
+import com.glomidco.utlx.stdlib.validate.ValidationRoutingPolicy
+
 import com.glomidco.utlx.engine.config.InputSlot
 import com.glomidco.utlx.engine.config.TransformConfig
-import com.glomidco.utlx.engine.routing.ValidationRoutingPolicy
 import com.glomidco.utlx.engine.routing.VerdictCheck
 import org.junit.jupiter.api.Test
 import kotlin.test.assertEquals

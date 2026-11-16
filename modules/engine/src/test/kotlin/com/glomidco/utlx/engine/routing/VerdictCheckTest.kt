@@ -1,5 +1,7 @@
 package com.glomidco.utlx.engine.routing
 
+import com.glomidco.utlx.stdlib.validate.ValidationRoutingPolicy
+
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.engine.strategy.ExecutionResult
 import org.junit.jupiter.api.Test
