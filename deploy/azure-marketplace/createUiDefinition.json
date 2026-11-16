@@ -6,7 +6,7 @@
     "config": {
       "isWizard": true,
       "basics": {
-        "description": "Deploy **UTL-X Transformation Engine** as a managed application in your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 652 built-in functions.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
+        "description": "Deploy **UTL-X Transformation Engine** as a managed application in your Azure subscription. Transform JSON, XML, CSV, and YAML messages at 86K+ msg/s with 650+ built-in functions.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
         "subscription": {
           "resourceProviders": [
             "Microsoft.App",
@@ -40,7 +40,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "UTL-X transforms data between JSON, XML, CSV, YAML, and OData natively — without converting to XML first. Supports 652 stdlib functions, schema validation, and pipeline chaining.",
+              "text": "UTL-X transforms data between JSON, XML, CSV, YAML, and OData natively — without converting to XML first. Supports 650+ stdlib functions, schema validation, and pipeline chaining.",
               "style": "Info"
             }
           },

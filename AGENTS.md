@@ -43,7 +43,7 @@ code change is invisible to it until you rebuild that jar.
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
 ```
 
-**578 tests** (2026-11-14). Must run from `conformance-suite/`; the runner uses
+**582 tests** (2026-11-16). Must run from `conformance-suite/`; the runner uses
 relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 `language/selectors`.
 

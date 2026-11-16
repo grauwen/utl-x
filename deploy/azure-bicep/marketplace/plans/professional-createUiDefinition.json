@@ -39,7 +39,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Professional plan: 32 concurrent worker threads, up to 10 auto-scaling instances. Transforms JSON, XML, CSV, YAML, and OData natively with 652 stdlib functions, schema validation, and pipeline chaining. Ideal for production workloads with multiple integration flows.",
+              "text": "Professional plan: 32 concurrent worker threads, up to 10 auto-scaling instances. Transforms JSON, XML, CSV, YAML, and OData natively with 650+ stdlib functions, schema validation, and pipeline chaining. Ideal for production workloads with multiple integration flows.",
               "style": "Info"
             }
           },

@@ -18,14 +18,14 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.1.0",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.0",
       "metadata": {
         "description": "Docker image to deploy"
       }
     },
     "cpuCores": {
       "type": "string",
-      "defaultValue": "2.0",
+      "defaultValue": "4.0",
       "allowedValues": [
         "0.5",
         "1.0",
@@ -116,7 +116,7 @@
     },
     "workers": {
       "type": "int",
-      "defaultValue": 8,
+      "defaultValue": 32,
       "allowedValues": [
         8,
         32,
@@ -301,7 +301,7 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.1.0",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.0",
               "metadata": {
                 "description": "Docker image to deploy"
               }
@@ -501,7 +501,7 @@
                     },
                     {
                       "name": "utlxe-ui",
-                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.0.0",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.0",
                       "resources": {
                         "cpu": "[json('0.25')]",
                         "memory": "0.5Gi"
@@ -747,7 +747,7 @@
     "adminKeyNote": {
       "type": "string",
       "metadata": {
-        "description": "Admin key — use this to log in to the Web UI"
+        "description": "Admin key \u2014 use this to log in to the Web UI"
       },
       "value": "The admin key you entered during deployment. If you lost it, reset with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>"
     }

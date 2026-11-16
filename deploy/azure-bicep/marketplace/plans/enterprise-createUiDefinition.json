@@ -39,7 +39,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Enterprise plan: 64 concurrent worker threads, up to 30 auto-scaling instances. Full access to all features: JSON, XML, CSV, YAML, OData, 652 stdlib functions, schema validation, pipeline chaining, Dapr messaging integration. Priority support included.",
+              "text": "Enterprise plan: 64 concurrent worker threads, up to 30 auto-scaling instances. Full access to all features: JSON, XML, CSV, YAML, OData, 650+ stdlib functions, schema validation, pipeline chaining, Dapr messaging integration. Priority support included.",
               "style": "Info"
             }
           },

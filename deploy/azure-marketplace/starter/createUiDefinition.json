@@ -75,7 +75,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Starter plan: 8 concurrent worker threads, up to 2 auto-scaling instances. Transforms JSON, XML, CSV, YAML, and OData natively with 652 stdlib functions, schema validation, and pipeline chaining. Upgrade to Professional for 32 workers and up to 10 instances.",
+              "text": "Starter plan: 8 concurrent worker threads, up to 2 auto-scaling instances. Transforms JSON, XML, CSV, YAML, and OData natively with 650+ stdlib functions, schema validation, and pipeline chaining. Upgrade to Professional for 32 workers and up to 10 instances.",
               "style": "Info"
             }
           },
@@ -150,7 +150,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": 2,
       "workers": 8,
-      "containerImage": "ghcr.io/utlx-lang/utlxe:1.1.0",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.0",
       "namePrefix": "utlxe"
     }
   }

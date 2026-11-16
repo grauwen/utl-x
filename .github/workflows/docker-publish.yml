@@ -1,0 +1,217 @@
+name: Publish container images
+
+# Builds and pushes the two images the Azure Marketplace offering runs:
+#
+#   ghcr.io/utlx-lang/utlxe     the engine      (deploy/docker/Dockerfile.engine)
+#   ghcr.io/utlx-lang/utlxe-ui  the admin UI    (utlxe-ui/Dockerfile)
+#
+# Until this workflow existed, nothing in CI built or pushed either image — the 1.1.0 and
+# 1.2.1 images that the live offering pulls were built and pushed by hand, which is why the
+# Marketplace packages drifted from the repository.
+#
+# THE IMAGES MUST BE PUBLIC. The Marketplace templates carry no `registryCredentials`, so
+# Azure pulls anonymously; a private package fails the deployment with an image-pull error.
+# The last job verifies exactly that, with no credentials, and fails the run if it cannot.
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to build and push (e.g. 1.4.0)'
+        required: true
+        type: string
+      push_latest:
+        description: 'Also move the :latest tag to this version'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  REGISTRY: ghcr.io
+  NAMESPACE: utlx-lang
+
+jobs:
+  # ──────────────────────────────────────────────────────────────────────────
+  # Resolve the version and refuse to build if it disagrees with the source.
+  # ──────────────────────────────────────────────────────────────────────────
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.v.outputs.version }}
+      push_latest: ${{ steps.v.outputs.push_latest }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Resolve version
+        id: v
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "push" ]; then
+            version="${GITHUB_REF_NAME#v}"
+            push_latest=true
+          else
+            version="${{ inputs.version }}"
+            version="${version#v}"
+            push_latest="${{ inputs.push_latest }}"
+          fi
+
+          # A tag is a claim about what the code is. Publishing :1.4.0 built from 1.3.0
+          # sources produces an image that lies about itself and cannot be told apart later.
+          declared=$(grep -m1 -E '^version = ' build.gradle.kts | cut -d'"' -f2)
+          if [ "$version" != "$declared" ]; then
+            echo "::error::tag says ${version} but build.gradle.kts says ${declared}" \
+                 "— bump the version or fix the tag"
+            exit 1
+          fi
+
+          # A prerelease must never move :latest.
+          case "$version" in
+            *-*) echo "::notice::${version} is a prerelease — :latest will not be moved"
+                 push_latest=false ;;
+          esac
+
+          echo "version=$version"         >> "$GITHUB_OUTPUT"
+          echo "push_latest=$push_latest" >> "$GITHUB_OUTPUT"
+          echo "Building ${version} (move :latest = ${push_latest})"
+
+      - name: Check the push credential is present
+        env:
+          GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
+        run: |
+          set -euo pipefail
+          # The default GITHUB_TOKEN is scoped to this repository (grauwen/utl-x) and cannot
+          # write packages owned by the utlx-lang organisation. A PAT with `write:packages`
+          # on utlx-lang must be stored as the GHCR_TOKEN secret.
+          if [ -z "${GHCR_TOKEN:-}" ]; then
+            echo "::error::secret GHCR_TOKEN is not set. Create a PAT with write:packages" \
+                 "(and read:packages) authorised for the ${{ env.NAMESPACE }} organisation," \
+                 "then add it as the GHCR_TOKEN repository secret."
+            exit 1
+          fi
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # Build and push both images.
+  # ──────────────────────────────────────────────────────────────────────────
+  publish:
+    needs: preflight
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: utlxe
+            # The engine build context is the repository root: the Dockerfile's builder
+            # stage compiles every module the engine jar needs.
+            context: .
+            dockerfile: deploy/docker/Dockerfile.engine
+          - image: utlxe-ui
+            context: utlxe-ui
+            dockerfile: utlxe-ui/Dockerfile
+
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: docker/setup-buildx-action@v3
+
+      - name: Log in to ${{ env.REGISTRY }}
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Tags
+        id: tags
+        run: |
+          set -euo pipefail
+          repo="${{ env.REGISTRY }}/${{ env.NAMESPACE }}/${{ matrix.image }}"
+          tags="${repo}:${{ needs.preflight.outputs.version }}"
+          if [ "${{ needs.preflight.outputs.push_latest }}" = "true" ]; then
+            tags="${tags},${repo}:latest"
+          fi
+          echo "tags=$tags" >> "$GITHUB_OUTPUT"
+          echo "$tags"
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          tags: ${{ steps.tags.outputs.tags }}
+          # Azure Container Apps runs linux/amd64. Building arm64 as well would roughly
+          # double the engine build (the Gradle stage compiles every module) for a platform
+          # the offering never schedules on.
+          platforms: linux/amd64
+          # Plain manifests rather than an attestation index: Azure Container Apps and the
+          # anonymous pull check below both handle these without special handling.
+          provenance: false
+          cache-from: type=gha,scope=${{ matrix.image }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          labels: |
+            org.opencontainers.image.version=${{ needs.preflight.outputs.version }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  # ──────────────────────────────────────────────────────────────────────────
+  # The check that matters: can Azure pull this with no credentials at all?
+  # ──────────────────────────────────────────────────────────────────────────
+  verify-anonymous-pull:
+    needs: [preflight, publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull each tag with no credentials
+        run: |
+          set -uo pipefail
+          version="${{ needs.preflight.outputs.version }}"
+          failed=0
+
+          check() {
+            repo="$1"; tag="$2"
+            # GHCR hands out an anonymous pull token only for public packages; a private one
+            # and a non-existent one both answer UNAUTHORIZED, so this cannot say which.
+            token=$(curl -sf "https://ghcr.io/token?scope=repository:${repo}:pull&service=ghcr.io" \
+                    | jq -r '.token // empty')
+            if [ -z "$token" ]; then
+              echo "::error::${repo}:${tag} — no anonymous pull token: the package is PRIVATE."
+              failed=1
+              return
+            fi
+            code=$(curl -s -o /dev/null -w '%{http_code}' \
+                   -H "Authorization: Bearer ${token}" \
+                   -H 'Accept: application/vnd.oci.image.manifest.v1+json' \
+                   -H 'Accept: application/vnd.oci.image.index.v1+json' \
+                   -H 'Accept: application/vnd.docker.distribution.manifest.v2+json' \
+                   -H 'Accept: application/vnd.docker.distribution.manifest.list.v2+json' \
+                   "https://ghcr.io/v2/${repo}/manifests/${tag}")
+            if [ "$code" = "200" ]; then
+              echo "  OK   ${repo}:${tag}"
+            else
+              echo "::error::${repo}:${tag} — manifest HTTP ${code}"
+              failed=1
+            fi
+          }
+
+          for image in utlxe utlxe-ui; do
+            repo="${{ env.NAMESPACE }}/${image}"
+            check "$repo" "$version"
+            if [ "${{ needs.preflight.outputs.push_latest }}" = "true" ]; then
+              check "$repo" latest
+            fi
+          done
+
+          if [ "$failed" != "0" ]; then
+            echo "::error::One or more images are not anonymously pullable."
+            echo "The Azure Marketplace templates pass no registryCredentials, so Azure"
+            echo "pulls these images anonymously. A private package means every new"
+            echo "deployment of the offering fails with an image-pull error."
+            echo "Fix, per image:"
+            echo "  https://github.com/orgs/${{ env.NAMESPACE }}/packages/container/<image>/settings"
+            echo "  -> Danger Zone -> Change visibility -> Public"
+            exit 1
+          fi
+          echo "All tags are anonymously pullable — the Marketplace templates can pull them."

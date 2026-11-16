@@ -149,10 +149,42 @@ declares an input literally called `input` keeps `$input` meaning that input. Se
 4. Nothing else requires action. The remaining changes make previously-failing scripts
    work, not the reverse.
 
+## Containers and the Azure offering
+
+The engine and the admin UI now ship as published images, built in CI rather than by hand:
+
+```
+ghcr.io/utlx-lang/utlxe:1.4.0      ghcr.io/utlx-lang/utlxe:latest
+ghcr.io/utlx-lang/utlxe-ui:1.4.0   ghcr.io/utlx-lang/utlxe-ui:latest
+```
+
+`.github/workflows/docker-publish.yml` builds both on a `v*` tag, pushes the version and
+`latest`, and then verifies that each tag can be pulled **with no credentials** — the
+Azure Marketplace templates pass no `registryCredentials`, so a private package breaks
+every new deployment of the offering. Before 1.4.0 nothing in CI built or pushed either
+image.
+
+The Marketplace packages are rebuilt against 1.4.0:
+
+```
+deploy/azure-marketplace/zips/utlxe-starter-1.4.0.zip
+deploy/azure-marketplace/zips/utlxe-professional-1.4.0.zip
+```
+
+These are produced by `deploy/azure-marketplace/build-zips.sh` from the plan directories,
+which were regenerated from the shipped 1.2.1 packages: they had drifted far enough that
+`professional/` described a Professional plan with the Starter worker count. Plan sizing is
+unchanged from 1.2.1 — Starter 8 workers, Professional 32.
+
+The release procedure for the offering, and a shipped inconsistency between the wizard
+defaults and the template defaults that 1.4.0 deliberately does not change, are documented
+in `deploy/azure-marketplace/README.md`. (The `deploy/` tree is not published to `main`,
+so that is a path rather than a link.)
+
 ## Verification
 
-- 4867 JVM tests, 0 failures
-- 578/578 conformance tests, on both the JVM and the GraalVM native binary
+- 4956 JVM tests, 0 failures
+- 582/582 conformance tests, on both the JVM and the GraalVM native binary
 - The conformance corpus runs through all three execution strategies — TEMPLATE
   (interpreted), COPY and COMPILED — via `ConformanceStrategyParityTest` (411 cases)
 
