@@ -24,13 +24,23 @@ You do *not* need to provision these yourself. The Marketplace handles it. Your 
 
 == Managing Multiple Environments
 
-For DTAP (Dev/Test/Acc/Prd), deploy UTLXe from the Marketplace once per environment. Each environment has its own:
+For DTAP (Dev/Test/Acc/Prd), each stage needs its own:
 
 - Container App (separate resource group)
 - Service Bus namespace (separate connection)
 - Admin key (separate secret)
 
-The same `.utlar` bundle deploys to all environments --- it contains transformation logic and queue/topic names. The connection to the actual Service Bus namespace differs per environment (via Dapr component configuration or Managed Identity).
+The same `.utlar` bundle deploys to every stage --- it contains transformation logic and queue/topic names. The connection to the actual Service Bus namespace differs per stage (via Dapr component configuration or Managed Identity).
+
+*Mind the Container Apps environment quota.* Each Marketplace deployment creates its own Container Apps environment, and Azure caps how many you may hold per region --- on some subscription types the cap is one. Four Marketplace deployments in a single subscription and region therefore require four environment slots, which may exceed your quota.
+
+A Container Apps environment is built to host many applications, so spending one per DTAP stage buys nothing in isolation. Until the offer can attach to an existing environment, the practical options are:
+
+- Place stages in *different regions*, since the quota is counted per region.
+- Split across subscriptions --- Dev and Test in one, Acceptance and Production in another. This is good practice for production isolation regardless.
+- Request a quota increase through Azure support before deploying.
+
+Check your current usage with the command in Chapter 2 (Before You Start).
 
 See Chapter 7 (DTAP) for the full environment strategy.
 

@@ -4,25 +4,66 @@ This chapter gets you from zero to a running transformation in under fifteen min
 
 == What You Get
 
-When you deploy UTLXe from the Azure Marketplace, Azure creates a Container App running the UTLXe production engine. The container exposes two ports:
+When you deploy UTLXe from the Azure Marketplace, Azure creates a Container App running two containers side by side:
 
-- *Port 8085* — the data plane. Your applications send messages here for transformation. This port is exposed via the Container App ingress.
-- *Port 8081* — the admin and health port. You manage transformations here. This port stays internal to your VNet.
+- *`utlxe`* --- the transformation engine. It listens on port 8085 for messages (the data plane) and on port 8081 for administration, health and metrics.
+- *`utlxe-ui`* --- an nginx container serving the Admin Web UI on port 8088.
 
-The container starts empty --- no transformations are loaded. You deploy them via the Admin API.
+Container Apps ingress publishes exactly one port, and that port is *8088* --- the Web UI. The UI container also proxies three paths through to the engine's admin port: `/admin/...` (the Admin API), `/health`, and `/metrics`.
+
+Two consequences follow, and both are easy to assume the other way round:
+
+*The Admin API is reachable from the public internet.* It is proxied through the same public ingress as the Web UI and is protected only by the admin key you choose at deployment. Treat that key as a production credential, not a convenience.
+
+*The data plane on port 8085 is not published.* Nothing proxies it, and ingress has no second port to give it. Messages reach the engine through Azure Service Bus, not by posting to a public URL. To run a transformation by hand, use the Admin API's test endpoint.
+
+The container starts empty --- no transformations are loaded. Whether they survive a restart depends on the *Persistent storage* option you choose at deployment. With it enabled, an Azure Files share is mounted at `/utlxe/data` and uploads persist across restarts; without it the engine holds transformations in memory only and you re-upload after every restart. A `.utlar` bundle placed on that share starts the engine in *locked mode* instead --- see Chapter 6.
+
+== Before You Start
+
+Two subscription-level prerequisites are easy to miss, and both produce errors that look like
+a problem with UTLXe rather than with the subscription.
+
+*Register the resource providers.* A subscription that has never run Azure Container Apps may
+not have them enabled:
+
+```bash
+az provider register --namespace Microsoft.App --wait
+az provider register --namespace Microsoft.OperationalInsights --wait
+```
+
+Azure often registers these automatically on first use, but when it does not, the deployment
+fails with `MissingSubscriptionRegistration`.
+
+*Check your Container Apps environment quota.* UTLXe creates its own Container Apps
+environment. Azure limits how many you may have per region, and the limit depends on your
+subscription type --- some carry a limit of one:
+
+```bash
+az rest --method get \
+  --url "https://management.azure.com/subscriptions/SUBSCRIPTION_ID/providers/Microsoft.App/locations/westeurope/usages?api-version=2024-03-01" \
+  --query "value[?name.value=='ManagedEnvironmentCount'].{used:currentValue,limit:limit}" \
+  -o table
+```
+
+If `used` already equals `limit`, deploy to a different region --- the quota is per region ---
+or request an increase through Azure support before you start. The failure otherwise appears
+only at deployment time, as `MaxNumberOfRegionalEnvironmentsInSubExceeded`.
 
 == Deploy from the Azure Marketplace
 
 + Open the Azure Portal and search for "UTLXe" in the Marketplace.
-+ Select your plan:
-  - *Starter* (1 vCPU, 4 GB) --- suitable for messages up to ~100 KB, development and light production workloads.
-  - *Professional* (2 vCPU, 8 GB) --- suitable for messages up to ~500 KB, production workloads with higher throughput.
++ Select your plan. The plans differ only in how much load they carry:
+  - *Starter* --- 8 worker threads. Defaults to 1 vCPU and 2 GB, selectable up to 2 vCPU and 4 GB. Development and light production workloads.
+  - *Professional* --- 32 worker threads. Defaults to 2 vCPU and 4 GB, selectable up to 4 vCPU and 8 GB. Production workloads with higher throughput.
 + Configure the deployment:
   - Resource group and region.
-  - Container App name.
-  - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 8 characters), but a UUID is recommended for security.
-  - Persistent storage toggle --- enable this if you want transformations to survive container restarts.
-+ Click *Create*. The deployment takes approximately two minutes.
+  - Name prefix for the created resources.
+  - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 8 characters), but a UUID is recommended. The Admin API is reachable over the public internet, so this key is the only thing protecting it.
+  - CPU and memory per instance, and the minimum instance count.
+  - *Persistent storage* --- enabled by default. Creates a storage account and a file share in the same resource group, mounted at `/utlxe/data`, so uploaded transformations survive container restarts.
+  - *Message source* --- HTTP only, or Azure Service Bus. Choosing Service Bus asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth.
++ Click *Create*. Expect *10 to 20 minutes*, most of it Azure provisioning the Container Apps environment rather than starting UTLXe itself.
 
 Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment.
 

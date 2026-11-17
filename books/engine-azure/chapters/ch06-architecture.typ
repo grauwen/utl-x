@@ -156,7 +156,7 @@ Step by step:
 
 + Azure Container Apps starts both containers in the same pod (UTLXe and Dapr sidecar).
 + UTLXe starts the admin API on port 8081 --- health checks, metrics, and bundle management are immediately available.
-+ UTLXe scans `/utlxe/data/` --- if Azure Files is mounted with transformations from a previous session, they are compiled now. If a `.utlar` file is found (e.g., `sales.utlar`), UTLXe enters *locked mode* instead (see below).
++ UTLXe scans `/utlxe/data/` --- if Azure Files is mounted with transformations from a previous session, they are compiled now. If a `.utlar` file is found (e.g., `sales.utlar`), UTLXe enters *locked mode* instead (see below). Both depend on the *Persistent storage* option being enabled: with no share mounted the directory is empty on every start, so neither restored transformations nor locked mode are possible.
 + UTLXe starts the data plane on port 8085.
 + Dapr sends an `OPTIONS /orders-in` probe to port 8085. This is Dapr asking: "Do you handle bindings?" The `OPTIONS` method is an HTTP verb (like GET or POST) used to check capabilities.
 + UTLXe responds 200 OK --- *always*, regardless of whether the `orders-in` transformation exists yet. This tells Dapr "yes, I handle bindings." The actual transformation check happens when the first message arrives.
@@ -805,7 +805,7 @@ UTLXe is available as a pre-built container on the Azure Marketplace. You deploy
 - *Azure Container Apps* runs the container and handles scaling, health checks, networking, and TLS.
 - *Dapr sidecar* connects to Azure messaging services. Configured with YAML, no code.
 - *UTLXe* transforms messages. Configured with `.utlx` files, no code.
-- *Azure Files* (optional) persists uploaded transformations across container restarts.
+- *Azure Files* persists uploaded transformations across container restarts. It is mounted when the *Persistent storage* option is enabled at deployment; without it the engine keeps transformations in memory only.
 
 == The Deployment Workflow
 
