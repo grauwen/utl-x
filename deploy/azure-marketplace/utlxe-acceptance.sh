@@ -526,11 +526,11 @@ run_suite() {
   local health; health=$(curl -fsS "https://${fqdn}/health")
   assert_eq "fresh container reports 0 transformations" \
     "$(jq -r '.engine.transformations // "missing"' <<<"$health")" "0"
-  # Readiness lives on /health/ready, not /health. It answers 503 while no transformation is
-  # loaded (EB18) — which is correct for the endpoint and exactly why it must not gate the
-  # container. Assert the status code rather than a field /health never had.
+  # Readiness lives on /health/ready, not /health. Since EB19 it reports 200 for a RUNNING
+  # engine regardless of how much work is loaded — a container that starts empty must still be
+  # routable, or the Admin API that would load something is unreachable (EB18).
   ready_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://${fqdn}/health/ready")
-  assert_eq "fresh container is not ready (no transformations yet)" "$ready_code" "503"
+  assert_eq "fresh container is ready before anything is loaded" "$ready_code" "200"
 
   # ---- admin API auth ------------------------------------------------------
   # nginx on 8088 proxies /admin/ to the engine on 8081, so the admin API *is*

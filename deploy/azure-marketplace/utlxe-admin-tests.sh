@@ -147,6 +147,9 @@ req GET /health;      check "/health is 200" "$CODE" "200"
 note "engine state" "$(jqv '.engine.state // .status')"
 req GET /health/live; check "/health/live is 200" "$CODE" "200"
 req GET /metrics;     check "/metrics is 200" "$CODE" "200"
+# EB18/EB19: this runs BEFORE anything is uploaded. A 503 here is the deadlock that made every
+# Azure deployment unreachable, so it is worth asserting on an empty engine specifically.
+req GET /health/ready; check "/health/ready is 200 on an empty engine" "$CODE" "200"
 [[ "$BODY" == *"utlxe_up"* ]] && ok "/metrics exposes utlxe_up" || bad "/metrics exposes utlxe_up" "gauge missing"
 
 # ── 2. admin authentication ─────────────────────────────────────────────────
@@ -349,11 +352,11 @@ UTLX
     && ok "health reports the new transformations" \
     || bad "health reports the new transformations" "before=$BEFORE after=$AFTER"
 
-  # EB18: /health/ready answers 503 until at least one transformation is loaded. With some
-  # loaded it must answer 200 — a check on the endpoint, and a live reminder of why it must
-  # never gate a container that starts empty.
+  # EB18/EB19: readiness is about the instance, not its workload. It answered 503 until a
+  # transformation was loaded, which deadlocked every Azure deployment; it now reports 200 for
+  # a RUNNING engine either way. Checked here with work loaded, and in section 1 without.
   req GET /health/ready
-  check "/health/ready is 200 once loaded" "$CODE" "200"
+  check "/health/ready is 200 with transformations loaded" "$CODE" "200"
 
   # ── 6. operational control ────────────────────────────────────────────────
   printf '\n%s[6] operational control%s\n' "$C_DIM" "$C_OFF"
