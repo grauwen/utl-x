@@ -342,6 +342,11 @@ Rolling back is not an option, and was never one:
 | 1.2.1 generation | amd64 | **arm64** | no |
 | 1.4.0 | amd64 | amd64 | **yes** |
 
+The arm64 images are **deliberately kept** on ghcr.io rather than deleted — `utlxe:1.1.0`,
+`utlxe:1.2.0`, `utlxe-ui:1.0.0`. Nothing in this repository references them and no one is
+expected to pull them; they are retained as a record of what was built and when. Do not
+propose removing them again without a reason beyond tidiness.
+
 Azure Container Apps runs linux/amd64 only. The 1.1.0 images were built by hand on an Apple
 Silicon machine before any CI existed, and the 28 May rebuild fixed the engine but left the UI
 sidecar on the arm64 `utlxe-ui:1.0.0` — and one unrunnable container fails the whole revision.

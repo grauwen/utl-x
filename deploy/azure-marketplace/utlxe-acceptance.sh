@@ -49,6 +49,14 @@
 #   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.1
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 #
+#   --param passes extra ARM parameters, repeatable. This matters more than it looks: the
+#   template's defaults are not what a customer receives. createUiDefinition supplies every
+#   value, and its defaults differ — persistent storage is false in the template and ENABLED
+#   in the wizard. Testing without --param tests a configuration nobody is ever given.
+#
+#   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json \
+#       --param enablePersistentStorage=true
+#
 # CHECKING STATE
 #
 #   --status answers the two questions worth asking around a run: can one start now,
@@ -70,6 +78,32 @@
 #
 #   Deletion is asynchronous, and a Container Apps environment can hold the
 #   one-per-region quota slot for 10-20 minutes after the command returns.
+#
+#
+# TODO — replace jq with our own CLI once the released build catches up.
+#
+#   These scripts parse JSON with jq while shipping a JSON transformation engine, which is a
+#   quiet vote of no confidence in our own tool. `utlx transform -e` already exists for
+#   exactly this and is documented as "One-off query, like jq", with -r for raw scalars and
+#   --arg / --argjson / --exit-status for parity:
+#
+#       utlx transform -e '$input.engine.state' -r -i response.json
+#
+#   Speed is not the obstacle. Measured 2026-11-17 on the same query:
+#       jq                                 0.01s
+#       utlx native (GraalVM binary)       0.01s     <- parity
+#       ./utlx JVM wrapper                 0.79s     <- 79x, unusable across ~35 calls
+#
+#   The obstacle is the released CLI. `brew` installs v1.3.0 from main while this repo is on
+#   1.4.1, so a resolver preferring PATH would silently run a CLI two releases behind — the
+#   same stale-artifact trap that made a correct fix look broken earlier in this work. Full
+#   jq parity should be confirmed on the released build before these scripts depend on it.
+#
+#   When it lands, resolve in this order and print which was chosen:
+#       1. modules/cli/build/native/nativeCompile/utlx   this repo, current
+#       2. utlx on PATH                                   warn if its version != build.gradle.kts
+#       3. ./utlx                                         warn: JVM, ~79x slower
+#       4. jq                                             last resort
 #
 # Requires: az (logged in), jq, curl.
 
@@ -98,7 +132,7 @@ TARGET_PORT="${TARGET_PORT:-8088}"
 ADMIN_KEY_ENV="${ADMIN_KEY_ENV:-UTLXE_ADMIN_KEY}"
 
 # ── internals ────────────────────────────────────────────────────────────────
-TEMPLATE="" ; IMAGE="" ; KEEP=0 ; TEARDOWN=0 ; DRY_RUN=0 ; STATUS=0
+TEMPLATE="" ; IMAGE="" ; KEEP=0 ; TEARDOWN=0 ; DRY_RUN=0 ; STATUS=0 ; declare -a EXTRA_PARAMS=()
 CURRENT_RG="" ; KEEP_FQDN="" ; KEEP_KEY="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
 
 C_OK=$'\033[0;32m' ; C_BAD=$'\033[0;31m' ; C_WARN=$'\033[0;33m'
@@ -156,6 +190,11 @@ cleanup() {
       printf '  resource g %s\n' "$CURRENT_RG"
       printf '  delete it  ./utlxe-acceptance.sh --teardown\n'
       printf '  check it   ./utlxe-acceptance.sh --status\n'
+      # This script smoke-tests one transformation so a non --keep run still proves something.
+      # The depth — XML, arrays, decimal scale, %utlx 1.1 validation — lives in the admin
+      # suite, which needs a running instance and is therefore only useful after --keep.
+      printf '  test it    ./utlxe-admin-tests.sh --url https://%s --key %s\n' \
+        "$KEEP_FQDN" "$KEEP_KEY"
       printf '  cost       ./utlxe-costs.sh --hours N\n'
     fi
     log "--keep set; $CURRENT_RG left running"
@@ -172,10 +211,11 @@ while [[ $# -gt 0 ]]; do
     --image)    IMAGE="$2";    shift 2 ;;
     --location) LOCATION="$2"; shift 2 ;;
     --keep)     KEEP=1; shift ;;
+    --param)    EXTRA_PARAMS+=("$2"); shift 2 ;;
     --status)   STATUS=1; shift ;;
     --teardown) TEARDOWN=1; shift ;;
     --dry-run)  DRY_RUN=1; shift ;;
-    -h|--help)  sed -n '2,74p' "$0"; exit 0 ;;
+    -h|--help)  sed -n '2,108p' "$0"; exit 0 ;;
     *) die "unknown argument: $1" ;;
   esac
 done
@@ -250,7 +290,7 @@ deploy() {
       --resource-group "$CURRENT_RG" \
       --name "$DEPLOYMENT_NAME" \
       --template-file "$TEMPLATE" \
-      --parameters "$P_APP_NAME=$app" "$P_ADMIN_KEY=$key" \
+      --parameters "$P_APP_NAME=$app" "$P_ADMIN_KEY=$key" ${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"} \
       --only-show-errors -o none
   else
     log "deploying container image directly"
@@ -472,7 +512,8 @@ run_suite() {
   printf '\n%s── reachable now (until teardown) ──%s\n' "$C_DIM" "$C_OFF"
   printf '  Web UI     https://%s\n' "$fqdn"
   printf '  admin key  %s\n' "$key"
-  printf '  probe      curl -s -o /dev/null -w "%%{http_code}\\n" https://%s/health\n\n' "$fqdn"
+  printf '  probe      curl -s -o /dev/null -w "%%{http_code}\\n" https://%s/health\n' "$fqdn"
+  printf '  deeper     ./utlxe-admin-tests.sh --url https://%s --key %s\n\n' "$fqdn" "$key"
 
   if ! wait_for_health "$fqdn"; then
     assert_eq "/health reachable within ${HEALTH_TIMEOUT}s" "timeout" "ok"
@@ -484,9 +525,12 @@ run_suite() {
   # ---- empty-engine state --------------------------------------------------
   local health; health=$(curl -fsS "https://${fqdn}/health")
   assert_eq "fresh container reports 0 transformations" \
-    "$(jq -r '.transformations' <<<"$health")" "0"
-  assert_eq "fresh container reports ready=false" \
-    "$(jq -r '.ready' <<<"$health")" "false"
+    "$(jq -r '.engine.transformations // "missing"' <<<"$health")" "0"
+  # Readiness lives on /health/ready, not /health. It answers 503 while no transformation is
+  # loaded (EB18) — which is correct for the endpoint and exactly why it must not gate the
+  # container. Assert the status code rather than a field /health never had.
+  ready_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://${fqdn}/health/ready")
+  assert_eq "fresh container is not ready (no transformations yet)" "$ready_code" "503"
 
   # ---- admin API auth ------------------------------------------------------
   # nginx on 8088 proxies /admin/ to the engine on 8081, so the admin API *is*
@@ -532,16 +576,17 @@ UTLX
         "https://${fqdn}/admin/transformations/hello/test" 2>/dev/null || echo '{}')
   assert_eq "test endpoint reports ok" \
     "$(jq -r '.status // "no-response"' <<<"$res")" "ok"
+  tx_out=$(jq -r '.output // ""' <<<"$res")
   assert_eq "transformation output is correct" \
-    "$(jq -r '.output.greeting // "none"' <<<"$res")" "Hello, acceptance!"
+    "$(jq -r '.greeting // "none"' <<<"$tx_out" 2>/dev/null || echo "unparseable")" "Hello, acceptance!"
   note "transform latency" "$(jq -r '.duration_ms // "?"' <<<"$res") ms"
 
   # ---- loaded state --------------------------------------------------------
   health=$(curl -fsS "https://${fqdn}/health")
-  assert_eq "container becomes ready after upload" \
-    "$(jq -r '.ready' <<<"$health")" "true"
+  ready_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "https://${fqdn}/health/ready")
+  assert_eq "container becomes ready after upload" "$ready_code" "200"
   assert_eq "health reports 1 transformation" \
-    "$(jq -r '.transformations' <<<"$health")" "1"
+    "$(jq -r '.engine.transformations // "missing"' <<<"$health")" "1"
 
   local info persistence
   info=$(curl -fsS -H "X-Admin-Key: ${key}" "https://${fqdn}/admin/info" 2>/dev/null || echo '{}')
@@ -737,7 +782,7 @@ preflight
 run_suite
 
 printf '\n%s── summary ──%s\n' "$C_DIM" "$C_OFF"
-for r in "${RESULTS[@]}"; do
+for r in ${RESULTS[@]+"${RESULTS[@]}"}; do
   IFS='|' read -r kind name detail <<<"$r"
   case "$kind" in
     PASS) printf '  %s✓%s %s\n'       "$C_OK"   "$C_OFF" "$name" ;;

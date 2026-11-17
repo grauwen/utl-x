@@ -39,6 +39,32 @@
 #   ./utlxe-costs.sh --region northeurope
 #   ./utlxe-costs.sh --actual --days 30
 #
+#
+# TODO — replace jq with our own CLI once the released build catches up.
+#
+#   These scripts parse JSON with jq while shipping a JSON transformation engine, which is a
+#   quiet vote of no confidence in our own tool. `utlx transform -e` already exists for
+#   exactly this and is documented as "One-off query, like jq", with -r for raw scalars and
+#   --arg / --argjson / --exit-status for parity:
+#
+#       utlx transform -e '$input.engine.state' -r -i response.json
+#
+#   Speed is not the obstacle. Measured 2026-11-17 on the same query:
+#       jq                                 0.01s
+#       utlx native (GraalVM binary)       0.01s     <- parity
+#       ./utlx JVM wrapper                 0.79s     <- 79x, unusable across ~35 calls
+#
+#   The obstacle is the released CLI. `brew` installs v1.3.0 from main while this repo is on
+#   1.4.1, so a resolver preferring PATH would silently run a CLI two releases behind — the
+#   same stale-artifact trap that made a correct fix look broken earlier in this work. Full
+#   jq parity should be confirmed on the released build before these scripts depend on it.
+#
+#   When it lands, resolve in this order and print which was chosen:
+#       1. modules/cli/build/native/nativeCompile/utlx   this repo, current
+#       2. utlx on PATH                                   warn if its version != build.gradle.kts
+#       3. ./utlx                                         warn: JVM, ~79x slower
+#       4. jq                                             last resort
+#
 # Requires: curl, jq. --actual additionally requires az (logged in).
 
 set -euo pipefail
@@ -90,7 +116,7 @@ while [[ $# -gt 0 ]]; do
     --requests) REQUESTS="$2"; shift 2 ;;
     --region)   REGION="$2";   shift 2 ;;
     --days)     DAYS="$2";     shift 2 ;;
-    -h|--help)  sed -n '2,42p' "$0"; exit 0 ;;
+    -h|--help)  sed -n '2,68p' "$0"; exit 0 ;;
     *) die "unknown argument: $1" ;;
   esac
 done
