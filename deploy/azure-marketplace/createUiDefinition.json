@@ -144,7 +144,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "workers": "[steps('engineConfig').tier]",
-      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.1",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.2",
       "namePrefix": "utlxe"
     }
   }

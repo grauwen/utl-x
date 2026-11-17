@@ -307,7 +307,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "workers": 32,
-      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.1",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.2",
       "namePrefix": "utlxe",
       "enableDapr": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]",
       "scalingMode": "[steps('engineConfig').messagingSection.messagingMode]",

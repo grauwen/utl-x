@@ -18,7 +18,7 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.1",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.2",
       "metadata": {
         "description": "Docker image to deploy"
       }
@@ -370,7 +370,7 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.1",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.2",
               "metadata": {
                 "description": "Docker image to deploy"
               }
@@ -584,7 +584,7 @@
                     },
                     {
                       "name": "utlxe-ui",
-                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.1",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.2",
                       "resources": {
                         "cpu": "[json('0.25')]",
                         "memory": "0.5Gi"
