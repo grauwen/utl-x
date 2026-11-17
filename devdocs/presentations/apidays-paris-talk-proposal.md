@@ -4,12 +4,17 @@
 
 ## Title
 
-**No Pass-Through: Rebuilding Every API Message at the Trust Boundary**
-
-*(67 characters)*
+**Never Forward, Always Rebuild: Zero-Trust Payloads for APIs**
 
 ## Abstract
 
+No Pass-Through: Rebuilding Every API Message at the Trust Boundary API gateways route traffic and WAFs block known-bad patterns, but what happens when an approved payload carries something nobody anticipated? Cross-domain guards solve this with a stricter rule: never forward a message as received. Parse it, inspect it, and rebuild it clean. This talk shows how UTL-X, an open-source, format-agnostic transformation language, becomes such a guard. Every incoming message, whether JSON, XML, CSV, YAML or OData, is parsed into one Universal Data Model, and its schema can be checked against an approved contract (XSD, JSON Schema and more). UTL-X 1.1's pure, deterministic validation layer then inspects that tree: field allow-lists, value constraints and cross-field checks. What passes is re-serialized into a strict canonical form, in the same format or a different one. Comments, duplicate keys, smuggled bytes and unexpected fields simply do not survive. What fails is rejected with an audit record. We'll walk through a concrete example: a partner's JSON order enters, only approved fields are kept, and canonical XML leaves for the internal system. You'll see why this ""parse, inspect, rebuild"" pattern matches NIST and NCSC cross-domain guidance, and how to apply it to your own APIs.
+
+*(67 characters)*
+
+------
+
+No Pass-Through: Rebuilding Every API Message at the Trust Boundary 
 API gateways route traffic and WAFs block known-bad patterns, but what happens when an approved payload carries something nobody anticipated? Cross-domain guards solve this with a stricter rule: never forward a message as received. Parse it, inspect it, and rebuild it clean.
 
 This talk shows how UTL-X, an open-source, format-agnostic transformation language, becomes such a guard. Every incoming message, whether JSON, XML, CSV, YAML or OData, is parsed into one Universal Data Model, and its schema can be checked against an approved contract (XSD, JSON Schema and more). UTL-X 1.1's pure, deterministic validation layer then inspects that tree: field allow-lists, value constraints and cross-field checks. What passes is re-serialized into a strict canonical form, in the same format or a different one. Comments, duplicate keys, smuggled bytes and unexpected fields simply do not survive. What fails is rejected with an audit record.
