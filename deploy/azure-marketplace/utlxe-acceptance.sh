@@ -58,7 +58,9 @@ LOCATION="${LOCATION:-westeurope}"
 RG_PREFIX="${RG_PREFIX:-rg-utlxe-acceptance}"
 DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-utlxe-acceptance}"
 SUBSCRIPTION="${SUBSCRIPTION:-}"          # empty = current az context
-HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-300}"   # seconds to wait for first healthy response
+HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-300}"      # wait for the first healthy response
+ENV_WAIT_TIMEOUT="${ENV_WAIT_TIMEOUT:-1500}" # wait for the one-per-region environment slot;
+                                             # a ScheduledForDelete environment can hold it 20 min
 
 # ARM template parameters actually accepted by starter/mainTemplate.json.
 # There is no planType parameter — Starter vs Professional is which package you
@@ -150,6 +152,31 @@ preflight() {
   az account show >/dev/null 2>&1 || die "not logged in — run 'az login'"
   [[ -n "$SUBSCRIPTION" ]] && az account set --subscription "$SUBSCRIPTION"
   log "subscription: $(az account show --query name -o tsv)"
+
+  # Azure allows ONE Container Apps environment per region per subscription by default
+  # (MaxNumberOfRegionalEnvironmentsInSubExceeded). Teardown is async, so a back-to-back
+  # run collides with the previous environment while its resource group is still being
+  # deleted. Wait for that rather than failing with an error that looks like a template
+  # defect but is really a quota and a race.
+  local existing deadline=$((SECONDS + ENV_WAIT_TIMEOUT)) announced=0
+  while :; do
+    existing=$(az containerapp env list -o json 2>/dev/null | jq -r --arg loc \
+      "$(printf '%s' "$LOCATION" | tr -d ' ' | tr 'A-Z' 'a-z')" \
+      '[.[] | select(((.location // "") | ascii_downcase | gsub(" ";"")) == $loc)] | length' \
+      2>/dev/null || echo 0)
+    [[ "$existing" == "0" ]] && break
+    if (( announced == 0 )); then
+      log "an existing Container Apps environment occupies ${LOCATION} (limit is 1 per region)"
+      log "waiting up to ${ENV_WAIT_TIMEOUT}s for it to go away"
+      announced=1
+    fi
+    if (( SECONDS >= deadline )); then
+      die "still ${existing} Container Apps environment(s) in ${LOCATION} after ${ENV_WAIT_TIMEOUT}s.
+  Azure permits one per region per subscription. Delete the leftover resource group, pick
+  another region with --location, or request a quota increase."
+    fi
+    sleep 15
+  done
 
   # A customer's fresh subscription may not have these registered. Yours does,
   # which is exactly why the check belongs here rather than in your head.

@@ -94,6 +94,86 @@ Four steps, in this order. Steps 1–2 are the images, 3–4 are the offer.
    run is a few cents at retail and normally inside the monthly free grant. Run it with
    `--hours 24` before using the acceptance script's `--keep`.
 
+## Subscription prerequisites, and the environment quota
+
+Both of these surfaced on 2026-11-17, during the first real deployment this offer has ever
+had — six months after it went Live. Neither is visible from the templates, and neither is
+stated in the offer listing.
+
+### Resource providers must be registered
+
+`Microsoft.App` and `Microsoft.OperationalInsights` were `NotRegistered` on a subscription
+that had never run Container Apps. Azure usually auto-registers on first use, but it is not
+guaranteed, and when it does not the failure (`MissingSubscriptionRegistration`) reads like a
+template defect:
+
+```bash
+az provider register --namespace Microsoft.App --wait
+az provider register --namespace Microsoft.OperationalInsights --wait
+```
+
+### The managed-environment quota — and why it is partly our doing
+
+```
+MaxNumberOfRegionalEnvironmentsInSubExceeded: cannot have more than 1
+Container App Environments in West Europe
+```
+
+Three things are easy to conflate here, and the first reading of this error got it wrong:
+
+1. **It is a quota on `Microsoft.App/managedEnvironments`, not a limit on Marketplace
+   deployments.** Microsoft does not cap how many times an offer may be deployed.
+2. **The limit depends on subscription type.** The MPN benefit subscription used for testing
+   is capped at **1**; standard pay-as-you-go and EA subscriptions get a substantially higher
+   default. So most customers will not meet this, but we always will.
+3. **It only bites because this template creates its own environment every time.** One
+   environment can host many Container Apps. A template that accepted an existing
+   environment would not consume a quota slot at all.
+
+Check the real number for any subscription:
+
+```bash
+az rest --method get --url "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.App/locations/westeurope/usages?api-version=2024-03-01" \
+  --query "value[?name.value=='ManagedEnvironmentCount'].{used:currentValue,limit:limit}" -o table
+```
+
+**This contradicts the DTAP guidance in the book.** `books/engine-azure` ch08 says *"For DTAP
+(Dev/Test/Acc/Prd), deploy UTLXe from the Marketplace once per environment."* Four
+deployments in one subscription and region means four managed environments. On a
+limit-of-1 subscription that fails at the second; on a limit-of-15 subscription it works but
+spends four slots on something environments exist to share. Either the book changes or the
+template does — see **Open: environment reuse** below.
+
+### What it means for testing here
+
+The quota is per region, and teardown is asynchronous, so on this subscription acceptance
+runs are strictly serial with a slow turnaround:
+
+```
+wait for slot   10-20 min   previous run's environment in ScheduledForDelete
+deploy           8-18 min   managed-environment provisioning dominates
+assert            ~2 min
+teardown issue    instant   but the next run pays for it
+```
+
+About **30 minutes per iteration**. Two ways to cut it:
+
+- **Alternate regions** — the quota is per region, so `--location northeurope` runs while
+  West Europe is still cleaning up.
+- **`--keep` on a failing run** — leaves the environment up to inspect, skipping a full
+  provision/delete cycle. Roughly $0.30/hour; `./utlxe-costs.sh --hours N` gives the number.
+
+`utlxe-acceptance.sh` waits for the slot in preflight (`ENV_WAIT_TIMEOUT`, default 1500s)
+rather than failing with an error that looks like a template defect.
+
+### Open: environment reuse
+
+Adding an optional `existingEnvironmentId` parameter — use the customer's environment when
+supplied, create one only when it is not — would remove the quota collision, make the DTAP
+story work as documented, and cut the slowest step out of every test run. It is the normal
+shape for a Container Apps marketplace offer. Not in 1.4.1; it is a template change that
+needs its own deployment test.
+
 ## Package archive
 
 Partner Center **retains only the latest package**: once a new one is published, previously
