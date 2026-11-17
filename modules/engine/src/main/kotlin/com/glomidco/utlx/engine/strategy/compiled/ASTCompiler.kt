@@ -161,6 +161,20 @@ class ASTCompiler {
             is Expression.Ternary -> isCompilable(expr.condition, false) &&
                 isCompilable(expr.thenExpr, false) && isCompilable(expr.elseExpr, false)
             is Expression.LetBinding -> isCompilable(expr.value, false)
+            // EB20: a namespaced call — `validate.assert(...)` — is a FunctionCall whose function
+            // is a MemberAccess, not an Identifier, so it lands here and is refused. That makes
+            // every %utlx 1.1 script fall back to the interpreter, and the fallback is NOT merely
+            // a performance characteristic: it is currently the only thing keeping COPY and
+            // COMPILED correct.
+            //
+            // Enabling it was tried and reverted. The dotted registry keys resolve fine and
+            // `compilePipe` was taught to desugar a namespaced callee, but six
+            // ConformanceStrategyParityTest fixtures under language/validate/ then disagreed with
+            // TEMPLATE — the ones whose rules carry lambdas, `when` guards or per-element `every`.
+            // The compiled path does not reproduce the interpreter's semantics for those, and a
+            // wrong verdict is far worse than a slow one: validation exists to be trusted.
+            //
+            // See docs/bugs-fixed/EB20 for what a real fix requires.
             is Expression.FunctionCall -> {
                 val fn = expr.function
                 fn is Expression.Identifier && expr.arguments.all { isCompilable(it, false) }
@@ -734,10 +748,12 @@ class ASTCompiler {
     private fun compileFunctionCall(ctx: CompileContext, expr: Expression.FunctionCall) {
         val fn = expr.function
         if (fn !is Expression.Identifier) {
+            // EB20: unreachable while isCompilable refuses namespaced calls, and deliberately so.
             throw UnsupportedOperationException("Only direct function calls supported in compiled mode")
         }
 
         val funcName = fn.name
+
         val localSlot = ctx.locals[funcName]
 
         // Build argument list as UDM array
@@ -807,15 +823,25 @@ class ASTCompiler {
         val target = expr.target
         if (target is Expression.FunctionCall) {
             val fn = target.function
-            if (fn is Expression.Identifier) {
-                // Build: funcName(source, ...originalArgs)
+            // EB20: a NAMESPACED callee must desugar the same way. This tested only for
+            // Identifier, so `$input |> validate.assert([rules])` fell through to the discard
+            // path below and called `validate.assert([rules])` with the rules array as its only
+            // argument — the rules became the payload and every verdict came back
+            // passed=0, failed=0. It was unreachable while namespaced calls never compiled;
+            // making them compilable turned a dormant wrong answer into a live one.
+            if (fn is Expression.Identifier ||
+                (fn is Expression.MemberAccess && fn.target is Expression.Identifier)
+            ) {
+                // Build: func(source, ...originalArgs)
                 val allArgs = listOf(expr.source) + target.arguments
                 val newCall = Expression.FunctionCall(fn, allArgs, expr.location)
                 compileFunctionCall(ctx, newCall)
                 return
             }
         }
-        // Fallback: evaluate source, discard, evaluate target
+        // Fallback: evaluate source, discard, evaluate target. This DROPS the piped value, so
+        // it is only correct for a target that does not consume it; isCompilable must keep any
+        // other shape out of the compiler.
         compileExpression(ctx, expr.source)
         ctx.mv.visitInsn(POP)
         compileExpression(ctx, expr.target)

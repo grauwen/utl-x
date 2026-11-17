@@ -23,6 +23,9 @@ object LanguageNamespaces {
     /** The namespace of a (possibly dotted) function name, or "" for a flat/un-namespaced name. */
     fun namespaceOf(functionName: String): String = functionName.substringBefore('.', missingDelimiterValue = "")
 
+    /** Is [name] a declared language namespace (as opposed to an ordinary identifier)? */
+    fun isKnownNamespace(name: String): Boolean = NAMESPACE_MIN_VERSION.containsKey(name)
+
     /** The minimum `%utlx` version a function's namespace requires, or null if ungated (always available). */
     fun minVersionFor(functionName: String): String? = NAMESPACE_MIN_VERSION[namespaceOf(functionName)]
 

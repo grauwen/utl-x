@@ -77,4 +77,17 @@ internal fun requireSupportedLanguageVersion(program: com.glomidco.utlx.core.ast
         ?.let {
             throw com.glomidco.utlx.core.interpreter.RuntimeError(it, program.header.location)
         }
+
+    // EB20: the NAMESPACE gate (validate.* requires %utlx 1.1) lived only in the interpreter.
+    // That was safe only by accident: no `validate.*` call could be compiled, so every script
+    // using one fell back to the interpreter, which enforced it. The gate's enforcement was
+    // therefore a side effect of an unrelated limitation in ASTCompiler — and removing that
+    // limitation (as EB20 does) would have silently reopened EB15's failure mode on the
+    // engine's default strategy.
+    //
+    // Checked here instead, where all three strategies already converge, so it holds for
+    // TEMPLATE, COPY and COMPILED alike regardless of what the compiler can or cannot emit.
+    // The interpreter still runs its own memoised check; this walk is cheap and idempotent.
+    com.glomidco.utlx.core.semantic.LanguageVersionStaticGate
+        .check(program, program.header.version)
 }
