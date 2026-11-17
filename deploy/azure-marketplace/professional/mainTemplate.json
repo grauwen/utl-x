@@ -18,7 +18,7 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.0",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.1",
       "metadata": {
         "description": "Docker image to deploy"
       }
@@ -274,6 +274,9 @@
           },
           "workers": {
             "value": "[parameters('workers')]"
+          },
+          "adminKey": {
+            "value": "[parameters('adminKey')]"
           }
         },
         "template": {
@@ -301,9 +304,15 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.0",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.1",
               "metadata": {
                 "description": "Docker image to deploy"
+              }
+            },
+            "adminKey": {
+              "type": "secureString",
+              "metadata": {
+                "description": "Admin API key, forwarded to the engine as UTLXE_ADMIN_KEY."
               }
             },
             "cpuCores": {
@@ -421,7 +430,18 @@
                 }
               }
             },
-            "scaleRules": "[if(equals(parameters('scalingMode'), 'http'), createArray(variables('httpScaleRule')), if(equals(parameters('scalingMode'), 'servicebus'), createArray(variables('serviceBusScaleRule')), createArray(variables('httpScaleRule'), variables('serviceBusScaleRule'))))]"
+            "scaleRules": "[if(equals(parameters('scalingMode'), 'http'), createArray(variables('httpScaleRule')), if(equals(parameters('scalingMode'), 'servicebus'), createArray(variables('serviceBusScaleRule')), createArray(variables('httpScaleRule'), variables('serviceBusScaleRule'))))]",
+            "baseEnv": [
+              {
+                "name": "JAVA_OPTS",
+                "value": "[variables('javaOpts')]"
+              },
+              {
+                "name": "UTLXE_ADMIN_KEY",
+                "value": "[parameters('adminKey')]"
+              }
+            ],
+            "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]"
           },
           "resources": [
             {
@@ -456,16 +476,7 @@
                         "--workers",
                         "[string(parameters('workers'))]"
                       ],
-                      "env": [
-                        {
-                          "name": "JAVA_OPTS",
-                          "value": "[variables('javaOpts')]"
-                        },
-                        {
-                          "name": "UTLXE_ADMIN_KEY",
-                          "value": "[parameters('adminKey')]"
-                        }
-                      ],
+                      "env": "[variables('containerEnv')]",
                       "probes": [
                         {
                           "type": "Liveness",
@@ -501,7 +512,7 @@
                     },
                     {
                       "name": "utlxe-ui",
-                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.0",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.1",
                       "resources": {
                         "cpu": "[json('0.25')]",
                         "memory": "0.5Gi"

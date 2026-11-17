@@ -103,14 +103,16 @@ package that has been uploaded is committed to this repository.
 Record the SHA-256 and the upload date here whenever a package is submitted, so it stays
 possible to say exactly which bytes Microsoft received.
 
-| package | sha256 | engine | UI | uploaded |
-|---|---|---|---|---|
-| `utlxe-starter.zip` | `2c17540a8056849e…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) |
-| `utlxe-professional.zip` | `b2d61adfd5685931…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) |
-| `utlxe-starter-1.2.1.zip` | `7dd1acfc2c5b413b…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown |
-| `utlxe-professional-1.2.1.zip` | `aa34b6d4f7b5633a…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown |
-| `utlxe-starter-1.4.0.zip` | `f195fc75825708f1…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | *pending* |
-| `utlxe-professional-1.4.0.zip` | `9f3791f1afd4118f…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | *pending* |
+| package | sha256 | engine | UI | submitted | deployable |
+|---|---|---|---|---|---|
+| `utlxe-starter.zip` | `2c17540a8056849e…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) | no — adminKey, arm64 |
+| `utlxe-professional.zip` | `b2d61adfd5685931…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) | no — adminKey, arm64 |
+| `utlxe-starter-1.2.1.zip` | `7dd1acfc2c5b413b…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown | no — adminKey, UI arm64 |
+| `utlxe-professional-1.2.1.zip` | `aa34b6d4f7b5633a…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown | no — adminKey, UI arm64 |
+| `utlxe-starter-1.4.0.zip` | `f195fc75825708f1…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | **2026-11-16** | **no — adminKey** |
+| `utlxe-professional-1.4.0.zip` | `9f3791f1afd4118f…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | **2026-11-16** | **no — adminKey** |
+| `utlxe-starter-1.4.1.zip` | `10248e1d26bf06ee…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | *pending* | yes |
+| `utlxe-professional-1.4.1.zip` | `ba65e143129d0ae7…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | *pending* | yes |
 
 Full digests:
 
@@ -121,6 +123,8 @@ b2d61adfd5685931af021dc6203123ad5b6c8ebc7d236cab80f2b8410a7fa0d5  utlxe-professi
 aa34b6d4f7b5633a20948f2450e8ecd6cc73599be0cc746e362270d507bb5fd6  utlxe-professional-1.2.1.zip
 f195fc75825708f166478e5f144dd713aab06f7907f9a73e7f3e1de47aa7c76e  utlxe-starter-1.4.0.zip
 9f3791f1afd4118f07beadc0ccfebc82ce7ea07ab62bb055bb022a9f7a080c59  utlxe-professional-1.4.0.zip
+10248e1d26bf06ee0f011a52c0c27b76be86b6e160ddc22798794654f91dcbde  utlxe-starter-1.4.1.zip
+ba65e143129d0ae7583754dae0d1d1f3fe53fc3ec38cb0ebd4e8e5e62d76720b  utlxe-professional-1.4.1.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
@@ -128,6 +132,33 @@ Verify with `shasum -a 256 zips/<file>`.
 The 11 May upload date is inferred from the Partner Center publish timestamp and the push time
 of `utlxe:1.1.0`, not read back from Partner Center — by the time this was written the live
 package could no longer be downloaded. That is the gap this table exists to prevent repeating.
+
+### The templates could not deploy at all before 1.4.0
+
+Found while tracing the Service Bus path, and it outranks everything else here: the
+`container-app` nested deployment runs with `expressionEvaluationOptions.scope = "inner"`
+and referenced `parameters('adminKey')`, which was never declared in that nested template
+nor passed to it. Under inner scope a nested template sees only its own parameters, so that
+reference resolves to nothing and ARM rejects the deployment with `InvalidTemplate` before
+creating a single resource.
+
+It is present in the 1.1.0 and 1.2.1 packages as well — so no generation of this offer has
+ever been deployable, independently of the image architecture problem below. Both failures
+had to be fixed before a customer could get a running container.
+
+Fixed in 1.4.0 by declaring `adminKey` as a `secureString` on the nested template and
+passing it through from the parent.
+
+**This is a static analysis, not an observed failure** — it was found by comparing parameter
+references against declarations, not by deploying. Confirm it the cheap way before any
+upload:
+
+```bash
+az deployment group validate \
+  --resource-group <a throwaway rg> \
+  --template-file starter/mainTemplate.json \
+  --parameters adminKey=<any-8-chars>
+```
 
 ### Neither earlier package can be rolled back to
 

@@ -6,7 +6,7 @@
     "config": {
       "isWizard": true,
       "basics": {
-        "description": "Deploy **UTL-X Transformation Engine — Starter** into your Azure subscription.\n\n**Starter plan:** 8 worker threads, up to 2 auto-scaling instances. Handles 10+ integrations at ~40K msg/s.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
+        "description": "Deploy **UTL-X Transformation Engine \u2014 Starter** into your Azure subscription.\n\n**Starter plan:** 8 worker threads, up to 2 auto-scaling instances. Handles 10+ integrations at ~40K msg/s.\n\nBilling is handled automatically through your Azure bill. A 14-day free trial is included.",
         "subscription": {
           "resourceProviders": [
             "Microsoft.App",
@@ -39,7 +39,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "[concat('Suggested admin key (copy this): **', guid(), '**  — Paste it into the Admin API Key field below and save it in a password manager. You can also choose your own key (minimum 8 characters).')]",
+              "text": "[concat('Suggested admin key (copy this): **', guid(), '**  \u2014 Paste it into the Admin API Key field below and save it in a password manager. You can also choose your own key (minimum 8 characters).')]",
               "style": "Info"
             }
           },
@@ -50,7 +50,7 @@
               "password": "Admin API Key",
               "confirmPassword": "Confirm Admin Key"
             },
-            "toolTip": "Protects the Admin API and Web UI. Use the suggested UUID above, or enter your own (minimum 8 characters). Save it securely — it cannot be retrieved after deployment.",
+            "toolTip": "Protects the Admin API and Web UI. Use the suggested UUID above, or enter your own (minimum 8 characters). Save it securely \u2014 it cannot be retrieved after deployment.",
             "constraints": {
               "required": true,
               "regex": "^.{8,}$",
@@ -66,7 +66,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Save this key securely — it cannot be retrieved after deployment. If you lose it, you can reset it with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>, then restart the container.",
+              "text": "Save this key securely \u2014 it cannot be retrieved after deployment. If you lose it, you can reset it with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>, then restart the container.",
               "style": "Warning"
             }
           },
@@ -88,9 +88,18 @@
             "constraints": {
               "required": true,
               "allowedValues": [
-                { "label": "0.5 cores (dev/test)", "value": "0.5" },
-                { "label": "1.0 core (standard)", "value": "1.0" },
-                { "label": "2.0 cores (production)", "value": "2.0" }
+                {
+                  "label": "0.5 cores (dev/test)",
+                  "value": "0.5"
+                },
+                {
+                  "label": "1.0 core (standard)",
+                  "value": "1.0"
+                },
+                {
+                  "label": "2.0 cores (production)",
+                  "value": "2.0"
+                }
               ]
             },
             "visible": true
@@ -100,13 +109,22 @@
             "type": "Microsoft.Common.DropDown",
             "label": "Memory per instance",
             "toolTip": "Memory allocation per container instance. XML/JSON transformation expands messages 10-50x in memory. Choose based on your largest message size.",
-            "defaultValue": "2 GB — messages up to 200 KB (standard)",
+            "defaultValue": "2 GB \u2014 messages up to 200 KB (standard)",
             "constraints": {
               "required": true,
               "allowedValues": [
-                { "label": "1 GB — messages up to 50 KB (dev/test)", "value": "1.0" },
-                { "label": "2 GB — messages up to 200 KB (standard)", "value": "2.0" },
-                { "label": "4 GB — messages up to 500 KB (production)", "value": "4.0" }
+                {
+                  "label": "1 GB \u2014 messages up to 50 KB (dev/test)",
+                  "value": "1.0"
+                },
+                {
+                  "label": "2 GB \u2014 messages up to 200 KB (standard)",
+                  "value": "2.0"
+                },
+                {
+                  "label": "4 GB \u2014 messages up to 500 KB (production)",
+                  "value": "4.0"
+                }
               ]
             },
             "visible": true
@@ -138,6 +156,96 @@
               }
             ],
             "visible": true
+          },
+          {
+            "name": "messagingSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Message Source",
+            "elements": [
+              {
+                "name": "messagingInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                  "icon": "Info",
+                  "text": "By default your application posts messages to UTLXe over HTTP. Choose Azure Service Bus to have the engine consume from a queue and publish results to a topic on its own, with auto-scaling driven by queue depth."
+                }
+              },
+              {
+                "name": "messagingMode",
+                "type": "Microsoft.Common.DropDown",
+                "label": "How messages reach UTLXe",
+                "toolTip": "HTTP: your application calls the engine. Azure Service Bus: the engine consumes from a queue you own and publishes results to a topic you own.",
+                "defaultValue": "HTTP only \u2014 your application calls UTLXe",
+                "constraints": {
+                  "required": true,
+                  "allowedValues": [
+                    {
+                      "label": "HTTP only \u2014 your application calls UTLXe",
+                      "value": "http"
+                    },
+                    {
+                      "label": "Azure Service Bus \u2014 queue in, topic out",
+                      "value": "servicebus"
+                    }
+                  ]
+                },
+                "visible": true
+              },
+              {
+                "name": "serviceBusConnection",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                  "password": "Service Bus connection string"
+                },
+                "toolTip": "A connection string for your Service Bus namespace with Send and Listen rights. The namespace, queue and topic must already exist \u2014 this offer does not create them.",
+                "constraints": {
+                  "required": true,
+                  "regex": "^Endpoint=sb://.+",
+                  "validationMessage": "Paste the full connection string, starting with Endpoint=sb://"
+                },
+                "options": {
+                  "hideConfirmation": true
+                },
+                "visible": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]"
+              },
+              {
+                "name": "inputQueueName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Input queue name",
+                "defaultValue": "utlx-input",
+                "toolTip": "The existing queue UTLXe consumes from.",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,258}$",
+                  "validationMessage": "1-259 characters: letters, digits, and . _ / -"
+                },
+                "visible": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]"
+              },
+              {
+                "name": "outputTopicName",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Output topic name",
+                "defaultValue": "utlx-output",
+                "toolTip": "The existing topic UTLXe publishes transformed messages to.",
+                "constraints": {
+                  "required": true,
+                  "regex": "^[A-Za-z0-9][A-Za-z0-9._/-]{0,258}$",
+                  "validationMessage": "1-259 characters: letters, digits, and . _ / -"
+                },
+                "visible": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]"
+              },
+              {
+                "name": "namingInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]",
+                "options": {
+                  "icon": "Warning",
+                  "text": "Name your transformation 'servicebus-input' when you upload it. Messages arriving on the queue are routed to the transformation whose name matches the input binding, so a differently named transformation leaves messages consumed but not transformed."
+                }
+              }
+            ],
+            "visible": true
           }
         ]
       }
@@ -150,8 +258,13 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": 2,
       "workers": 8,
-      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.0",
-      "namePrefix": "utlxe"
+      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.1",
+      "namePrefix": "utlxe",
+      "enableDapr": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]",
+      "scalingMode": "[steps('engineConfig').messagingSection.messagingMode]",
+      "serviceBusConnection": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.serviceBusConnection, '')]",
+      "inputQueueName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.inputQueueName, 'utlx-input')]",
+      "outputTopicName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.outputTopicName, 'utlx-output')]"
     }
   }
 }

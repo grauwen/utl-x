@@ -46,7 +46,7 @@
 # USAGE
 #
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json
-#   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.0
+#   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.1
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 #
 # Requires: az (logged in), jq, curl.
