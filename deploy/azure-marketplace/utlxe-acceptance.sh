@@ -56,6 +56,7 @@ set -euo pipefail
 # ── configuration ────────────────────────────────────────────────────────────
 LOCATION="${LOCATION:-westeurope}"
 RG_PREFIX="${RG_PREFIX:-rg-utlxe-acceptance}"
+DEPLOYMENT_NAME="${DEPLOYMENT_NAME:-utlxe-acceptance}"
 SUBSCRIPTION="${SUBSCRIPTION:-}"          # empty = current az context
 HEALTH_TIMEOUT="${HEALTH_TIMEOUT:-300}"   # seconds to wait for first healthy response
 
@@ -181,6 +182,7 @@ deploy() {
     log "deploying marketplace template"
     az deployment group create \
       --resource-group "$CURRENT_RG" \
+      --name "$DEPLOYMENT_NAME" \
       --template-file "$TEMPLATE" \
       --parameters "$P_APP_NAME=$app" "$P_ADMIN_KEY=$key" \
       --only-show-errors -o none
@@ -236,9 +238,10 @@ diagnose_startup_failure() {
 
 # ── the suite ────────────────────────────────────────────────────────────────
 run_suite() {
-  local stamp app key
+  local stamp prefix app key
   stamp=$(date +%Y%m%d-%H%M%S)
-  app="utlxe-${stamp}"
+  prefix="utlxe-${stamp}"          # what we pass as namePrefix
+  app=""                           # discovered after deployment — see below
   key=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)
   CURRENT_RG="${RG_PREFIX}-${stamp}"
 
@@ -249,8 +252,32 @@ run_suite() {
     --tags purpose=utlxe-acceptance ttl=ephemeral --only-show-errors -o none
 
   local t0=$SECONDS
-  deploy "$app" "$key"
+  deploy "$prefix" "$key"
   note "deploy duration" "$((SECONDS - t0))s"
+
+  if [[ -n "$TEMPLATE" ]]; then
+    local dstate
+    dstate=$(az deployment group show --resource-group "$CURRENT_RG" \
+               --name "$DEPLOYMENT_NAME" --query "properties.provisioningState" \
+               -o tsv 2>/dev/null || echo "unknown")
+    assert_eq "ARM deployment succeeded" "$dstate" "Succeeded"
+  fi
+
+  # The template does NOT name the app after namePrefix: it builds
+  # "[format('{0}-app', parameters('namePrefix'))]". The first run of this script
+  # assumed otherwise, queried the wrong name, found no FQDN and reported a failed
+  # deployment that had in fact succeeded — a false negative on the single assertion
+  # the whole run existed to make. So discover the name rather than reconstructing
+  # the template's convention here; only fall back to the convention if discovery
+  # turns up nothing.
+  app=$(az containerapp list --resource-group "$CURRENT_RG" \
+          --query "[0].name" -o tsv 2>/dev/null || true)
+  if [[ -z "$app" ]]; then
+    app="${prefix}-app"
+    note "container app name" "not discoverable; assuming ${app}"
+  else
+    note "container app" "$app"
+  fi
 
   local fqdn
   fqdn=$(az containerapp show --name "$app" --resource-group "$CURRENT_RG" \
