@@ -77,7 +77,7 @@ ADMIN_KEY_ENV="${ADMIN_KEY_ENV:-UTLXE_ADMIN_KEY}"
 
 # ── internals ────────────────────────────────────────────────────────────────
 TEMPLATE="" ; IMAGE="" ; KEEP=0
-CURRENT_RG="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
+CURRENT_RG="" ; KEEP_FQDN="" ; KEEP_KEY="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
 
 C_OK=$'\033[0;32m' ; C_BAD=$'\033[0;31m' ; C_WARN=$'\033[0;33m'
 C_DIM=$'\033[0;90m' ; C_OFF=$'\033[0m'
@@ -123,6 +123,17 @@ cleanup() {
       || printf '%swarning:%s could not delete %s — remove it by hand\n' \
            "$C_BAD" "$C_OFF" "$CURRENT_RG" >&2
   elif [[ -n "$CURRENT_RG" ]]; then
+    # --keep exists so the deployment can be inspected, and the Web UI needs the admin
+    # key to log in. The key is generated per run and otherwise never printed; without
+    # it a kept deployment is a running app nobody can get into. Printed ONLY here, and
+    # only because this resource group is deliberately being left alive.
+    if [[ -n "$KEEP_KEY" ]]; then
+      printf '\n%s── kept deployment ──%s\n' "$C_DIM" "$C_OFF"
+      [[ -n "$KEEP_FQDN" ]] && printf '  Web UI     https://%s\n' "$KEEP_FQDN"
+      printf '  admin key  %s\n' "$KEEP_KEY"
+      printf '  delete it  az group delete --name %s --yes --no-wait\n' "$CURRENT_RG"
+      printf '  cost       ./utlxe-costs.sh --hours N\n'
+    fi
     log "--keep set; $CURRENT_RG left running"
   fi
   CURRENT_RG=""
@@ -231,36 +242,145 @@ deploy() {
   fi
 }
 
+# Poll /health, but KEEP the evidence. The first version used `curl -fsS … >/dev/null`
+# and returned only success/failure, so a 502 from nginx, a TLS failure and "nothing is
+# listening" were indistinguishable — a whole 30-minute cycle produced the single word
+# "timeout". Every attempt now records the HTTP status and curl's own exit code, and the
+# last one is reported.
+LAST_HTTP="" ; LAST_CURL_EXIT="" ; LAST_BODY=""
+probe() {
+  local url="$1" body code
+  body=$(curl -s --max-time 10 -w '\n%{http_code}' "$url" 2>/dev/null); LAST_CURL_EXIT=$?
+  code="${body##*$'\n'}"
+  LAST_BODY="${body%$'\n'*}"
+  LAST_HTTP="${code:-000}"
+  [[ "$LAST_HTTP" =~ ^2 ]]
+}
+
 wait_for_health() {
-  local fqdn="$1" deadline=$((SECONDS + HEALTH_TIMEOUT))
+  local fqdn="$1" deadline=$((SECONDS + HEALTH_TIMEOUT)) n=0
   while (( SECONDS < deadline )); do
-    curl -fsS --max-time 10 "https://${fqdn}/health" >/dev/null 2>&1 && return 0
+    if probe "https://${fqdn}/health"; then return 0; fi
+    n=$((n+1))
+    # Report early rather than only at the end: if nginx is answering 502 we want to know
+    # at 15 seconds, not at 300.
+    if (( n == 3 )); then
+      log "still unhealthy — HTTP ${LAST_HTTP}, curl exit ${LAST_CURL_EXIT}"
+      [[ -n "${LAST_BODY// }" ]] && log "body: $(head -c 200 <<<"$LAST_BODY")"
+    fi
     sleep 5
   done
   return 1
+}
+
+# Which layer is broken? Each path exercises a different part of the chain:
+#   /          nginx static only          -> nginx is up and serving
+#   /health    nginx -> engine:8081       -> the sidecar proxy works
+#   /metrics   nginx -> engine:8081       -> same, different route
+# A 200 on / with a 502 on /health localises the fault to the proxy hop; failures on all
+# three mean nothing is listening on 8088.
+probe_surface() {
+  local fqdn="$1" path
+  printf '%s--- public surface ---%s\n' "$C_DIM" "$C_OFF"
+  for path in "/" "/health" "/metrics" "/admin/info"; do
+    probe "https://${fqdn}${path}" || true
+    printf '  %-14s HTTP %-4s curl_exit=%-3s %s\n' \
+      "$path" "$LAST_HTTP" "$LAST_CURL_EXIT" "$(head -c 80 <<<"${LAST_BODY//$'\n'/ }")"
+  done
+}
+
+# What the platform believes it published, and what it is routing to.
+dump_ingress() {
+  local app="$1"
+  printf '%s--- ingress ---%s\n' "$C_DIM" "$C_OFF"
+  az containerapp show --name "$app" --resource-group "$CURRENT_RG" \
+    --query "properties.configuration.ingress.{external:external,targetPort:targetPort,transport:transport,fqdn:fqdn}" \
+    -o json 2>/dev/null || true
+  printf '%s--- containers as deployed ---%s\n' "$C_DIM" "$C_OFF"
+  az containerapp show --name "$app" --resource-group "$CURRENT_RG" \
+    --query "properties.template.containers[].{name:name,image:image,cpu:resources.cpu,memory:resources.memory}" \
+    -o table 2>/dev/null || true
+}
+
+# Probe from INSIDE the replica. This is the only way to tell "nginx cannot reach the
+# engine" from "the engine is fine but ingress is not routing to nginx".
+probe_internal() {
+  local app="$1"
+  printf '%s--- from inside utlxe-ui (nginx) ---%s\n' "$C_DIM" "$C_OFF"
+  az containerapp exec --name "$app" --resource-group "$CURRENT_RG" --container utlxe-ui \
+    --command "sh -c 'echo ---listening---; (netstat -ltn 2>/dev/null || ss -ltn 2>/dev/null); echo ---config---; cat /etc/nginx/conf.d/default.conf 2>/dev/null | head -30; echo ---engine---; (wget -qO- -T5 http://localhost:8081/health || echo UNREACHABLE)'" \
+    2>&1 | head -60 || printf '  exec unavailable\n'
 }
 
 # A health timeout is a slow, ambiguous signal. Name the actual cause so that a
 # wrong-architecture image reads as "wrong architecture" and not as 300 seconds
 # of silence.
 diagnose_startup_failure() {
-  local app="$1" logs
+  local app="$1" logs ui_logs sys_logs
   log "container never became healthy — diagnosing"
-  logs=$(az containerapp logs show --name "$app" --resource-group "$CURRENT_RG" \
-          --tail 60 2>/dev/null || echo "")
 
-  if grep -qi "exec format error" <<<"$logs"; then
+  # Order matters: what the platform published, what answers from outside, what the
+  # containers say, then what is visible from inside the replica. Each narrows the fault
+  # to one hop, and all of it comes from the SAME deployment — a second run costs 30 min.
+  dump_ingress "$app"
+  probe_surface "$KEEP_FQDN"
+
+  # A Container App replica here runs TWO containers, and only one of them is on the
+  # path the health check uses:
+  #
+  #     ingress :8088  ->  utlxe-ui (nginx)  ->  proxy_pass localhost:8081  ->  utlxe
+  #
+  # The first version of this function fetched the default container's logs only and
+  # concluded "engine started but never reported healthy" on a run where the engine had
+  # logged `Health endpoint started on port 8081`. The engine was fine; nothing had
+  # looked at the proxy in front of it. Collect every container, and say which layer
+  # actually failed.
+  logs=$(az containerapp logs show --name "$app" --resource-group "$CURRENT_RG" \
+          --container utlxe --tail 80 2>/dev/null || echo "")
+  ui_logs=$(az containerapp logs show --name "$app" --resource-group "$CURRENT_RG" \
+          --container utlxe-ui --tail 40 2>/dev/null || echo "")
+  sys_logs=$(az containerapp logs show --name "$app" --resource-group "$CURRENT_RG" \
+          --type system --tail 40 2>/dev/null || echo "")
+
+  local all="${logs}
+${ui_logs}
+${sys_logs}"
+
+  local engine_up=1
+  grep -qiE "Health endpoint started|Engine .* is RUNNING" <<<"$logs" || engine_up=0
+
+  if grep -qi "exec format error" <<<"$all"; then
     warn "startup diagnosis" "exec format error — image architecture mismatch (arm64 image on an amd64 host)"
-  elif grep -qiE "oomkill|out of memory|killed process" <<<"$logs"; then
-    warn "startup diagnosis" "OOM-killed during startup — container memory below engine requirement"
-  elif grep -qiE "manifest unknown|unauthorized|pull access denied|not found" <<<"$logs"; then
+  elif grep -qiE "oomkill|out of memory|killed process" <<<"$all"; then
+    warn "startup diagnosis" "OOM-killed during startup — container memory below requirement"
+  elif grep -qiE "manifest unknown|unauthorized|pull access denied|ImagePull|ErrImage" <<<"$all"; then
     warn "startup diagnosis" "image pull failed — check registry path, tag and visibility"
-  elif [[ -z "${logs// }" ]]; then
-    warn "startup diagnosis" "no logs produced at all — image pull almost certainly failed"
+  elif [[ -z "${logs// }" && -z "${ui_logs// }" ]]; then
+    warn "startup diagnosis" "no logs from either container — image pull almost certainly failed"
+  elif (( engine_up == 1 )) && [[ -z "${ui_logs// }" ]]; then
+    warn "startup diagnosis" \
+      "ENGINE IS HEALTHY on 8081, but the utlxe-ui proxy produced no logs. Ingress targets 8088 (nginx), so the public path is broken in front of a working engine."
+  elif (( engine_up == 1 )); then
+    warn "startup diagnosis" \
+      "ENGINE IS HEALTHY on 8081 — the failure is the public path through utlxe-ui (nginx on 8088), not the engine."
   else
-    warn "startup diagnosis" "engine started but never reported healthy; log tail follows"
+    warn "startup diagnosis" "engine did not report healthy; logs follow"
   fi
-  [[ -z "${logs// }" ]] || { printf '%s--- log tail ---%s\n' "$C_DIM" "$C_OFF"; tail -40 <<<"$logs"; }
+
+  local section
+  for section in "utlxe:$logs" "utlxe-ui:$ui_logs" "system:$sys_logs"; do
+    local name="${section%%:*}" body="${section#*:}"
+    [[ -z "${body// }" ]] && { printf '%s--- %s: no output ---%s\n' "$C_DIM" "$name" "$C_OFF"; continue; }
+    printf '%s--- %s ---%s\n' "$C_DIM" "$name" "$C_OFF"
+    tail -30 <<<"$body"
+  done
+
+  printf '%s--- replicas ---%s\n' "$C_DIM" "$C_OFF"
+  az containerapp replica list --name "$app" --resource-group "$CURRENT_RG" \
+    --query "[].{replica:name, containers:properties.containers[].{name:name, started:started, ready:ready, restarts:restartCount}}" \
+    -o json 2>/dev/null || true
+
+  probe_internal "$app"
 }
 
 # ── the suite ────────────────────────────────────────────────────────────────
@@ -270,6 +390,7 @@ run_suite() {
   prefix="utlxe-${stamp}"          # what we pass as namePrefix
   app=""                           # discovered after deployment — see below
   key=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)
+  KEEP_KEY="$key"
   CURRENT_RG="${RG_PREFIX}-${stamp}"
 
   printf '\n%s── acceptance suite ──%s\n' "$C_DIM" "$C_OFF"
@@ -313,7 +434,17 @@ run_suite() {
     assert_eq "ingress FQDN published" "none" "an fqdn"; return
   fi
   assert_eq "ingress FQDN published" "yes" "yes"
+  KEEP_FQDN="$fqdn"
   log "fqdn: $fqdn"
+
+  # Print the URL and key as soon as they exist, not only under --keep. The deployment is
+  # live for the whole health-poll window, and that window is exactly when someone wants to
+  # open the UI by hand and see what the script is seeing. Withholding the key until the end
+  # protected nothing: the resource group — and the key with it — is deleted either way.
+  printf '\n%s── reachable now (until teardown) ──%s\n' "$C_DIM" "$C_OFF"
+  printf '  Web UI     https://%s\n' "$fqdn"
+  printf '  admin key  %s\n' "$key"
+  printf '  probe      curl -s -o /dev/null -w "%%{http_code}\\n" https://%s/health\n\n' "$fqdn"
 
   if ! wait_for_health "$fqdn"; then
     assert_eq "/health reachable within ${HEALTH_TIMEOUT}s" "timeout" "ok"

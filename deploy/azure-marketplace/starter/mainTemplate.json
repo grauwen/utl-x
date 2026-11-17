@@ -563,7 +563,7 @@
                           "type": "Readiness",
                           "httpGet": {
                             "port": 8081,
-                            "path": "/health/ready"
+                            "path": "/health"
                           },
                           "initialDelaySeconds": 10,
                           "periodSeconds": 5,

@@ -191,7 +191,7 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.2.1.zip` | `aa34b6d4f7b5633a…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown | no — adminKey, UI arm64 |
 | `utlxe-starter-1.4.0.zip` | `f195fc75825708f1…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | **2026-11-16** | **no — adminKey** |
 | `utlxe-professional-1.4.0.zip` | `9f3791f1afd4118f…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | **2026-11-16** | **no — adminKey** |
-| `utlxe-starter-1.4.1.zip` | `41c79d61d14ba09b…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | *pending* | yes |
+| `utlxe-starter-1.4.1.zip` | `a8bb00865df6ce76…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | *pending* | yes |
 | `utlxe-professional-1.4.1.zip` | `ba65e143129d0ae7…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | *pending* | yes |
 
 Full digests:
@@ -203,8 +203,8 @@ b2d61adfd5685931af021dc6203123ad5b6c8ebc7d236cab80f2b8410a7fa0d5  utlxe-professi
 aa34b6d4f7b5633a20948f2450e8ecd6cc73599be0cc746e362270d507bb5fd6  utlxe-professional-1.2.1.zip
 f195fc75825708f166478e5f144dd713aab06f7907f9a73e7f3e1de47aa7c76e  utlxe-starter-1.4.0.zip
 9f3791f1afd4118f07beadc0ccfebc82ce7ea07ab62bb055bb022a9f7a080c59  utlxe-professional-1.4.0.zip
-d218c9fffbfdbc0b7fc2ee40cb51e3d19be12ff8d5c36d028683c041bbc4f89f  utlxe-starter-1.4.1.zip
-41c79d61d14ba09bb1e420669ae83c16de2747bc6804fde1ce90514473f0d450  utlxe-professional-1.4.1.zip
+5b8522b72384d7f2e91604613687125eda2063887ea57024c8048ee4f5d970f4  utlxe-starter-1.4.1.zip
+a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professional-1.4.1.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
