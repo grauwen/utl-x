@@ -142,7 +142,15 @@ fun Application.configureHealth(engine: UtlxEngine) {
 
         get("/health/ready") {
             val txCount = engine.registry.list().size
-            val isReady = engine.state == EngineState.RUNNING && txCount > 0
+            // EB18/EB19: readiness is "can this instance accept requests", not "does it already
+            // have work". Requiring txCount > 0 made a freshly started engine permanently
+            // unready — and the engine ships empty by design, so an orchestrator probing this
+            // never routed to it, which meant the Admin API needed to upload a transformation
+            // was itself unreachable. A deadlock that made the Azure offering undeployable.
+            //
+            // The count stays in the body for anything that genuinely wants "has work loaded";
+            // it is simply no longer conflated with readiness.
+            val isReady = engine.state == EngineState.RUNNING
             if (isReady) {
                 call.respond(HttpStatusCode.OK, mapOf(
                     "status" to "UP",

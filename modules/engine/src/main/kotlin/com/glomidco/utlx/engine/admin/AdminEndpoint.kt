@@ -1141,7 +1141,15 @@ fun configureAdmin(
             // ── Engine info ──
             get("/info") {
                 call.respond(HttpStatusCode.OK, mapOf<String, Any?>(
-                    "version" to "1.0.1",
+                    // EB19: was the literal "1.0.1", unchanged since it was typed, and therefore
+                    // wrong on every release since — the Web UI header showed v1.0.1 while running
+                    // 1.4.1. The build already stamps the real value into the jar manifest
+                    // (Implementation-Version, from project.version in build.gradle.kts), so read
+                    // that. Null when the classes come from a plain classpath rather than a jar
+                    // (tests, a build directory): "unknown" is honest where a literal is
+                    // confidently wrong.
+                    "version" to (com.glomidco.utlx.engine.UtlxEngine::class.java.`package`
+                        ?.implementationVersion ?: "unknown"),
                     "mode" to bundleInfo.mode,
                     "bundle_version" to bundleInfo.bundleVersion,
                     "bundle_checksum" to bundleInfo.bundleChecksum,
@@ -1149,7 +1157,9 @@ fun configureAdmin(
                     "uptime_seconds" to engine.uptimeMs() / 1000,
                     "transformations" to registry.list().size,
                     "schemas" to schemaStore.list().size,
-                    "ready" to (engine.state == com.glomidco.utlx.engine.EngineState.RUNNING && registry.list().isNotEmpty()),
+                    // EB18/EB19: the same conflation as /health/ready, duplicated here. Two
+                    // endpoints answering "ready" must not disagree about one engine.
+                    "ready" to (engine.state == com.glomidco.utlx.engine.EngineState.RUNNING),
                     "admin_key_set" to adminKey.isNotEmpty(),
                     "data_dir" to dataDir,
                     "persistence" to if (dataDir != null) "disk" else "memory-only",

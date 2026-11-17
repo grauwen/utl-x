@@ -242,12 +242,17 @@ class AdminEndpointTest {
     // ── Readiness ──
 
     @Test
-    fun `readiness returns not ready when no transformations`() {
+    fun `readiness is ready with no transformations, because the engine ships empty`() {
+        // This test previously asserted 503 here, encoding the defect rather than the contract.
+        // EB18: readiness is "can this instance accept requests", not "does it already have
+        // work". The engine starts empty by design, so requiring a loaded transformation made
+        // a fresh instance permanently unready — and an orchestrator that routes only to ready
+        // replicas then cannot reach the Admin API that would load one. That deadlock made every
+        // Azure deployment of the offering unreachable.
         val url = URL("http://localhost:$adminPort/health/ready")
         val conn = url.openConnection() as HttpURLConnection
         conn.connectTimeout = 5000
-        val status = conn.responseCode
-        assertEquals(503, status, "Should be 503 with no transformations")
+        assertEquals(200, conn.responseCode, "a running engine is ready to receive transformations")
     }
 
     @Test

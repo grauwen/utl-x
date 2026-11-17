@@ -106,7 +106,7 @@ changed:
 `/health/ready` still answers 503 — the endpoint is unchanged. That is the proof: nothing about
 the engine was altered, and the offering went from entirely unreachable to fully serving.
 
-## Still open — the endpoint itself
+## The endpoint itself — fixed in EB19
 
 `isReady = RUNNING && txCount > 0` remains the underlying defect, and the template change only
 routes around it. An engine with no transformations is ready to *receive* them; conflating
@@ -115,5 +115,8 @@ Dapr, or a future deployment target. Fixing it properly means changing the endpo
 and shipping a new image, and should carry a test that asserts a freshly started engine reports
 ready.
 
-Until then, `/health/ready` is accurate about what it measures and must simply not be used as a
-readiness gate.
+**Resolved on 2026-11-17 in [EB19](EB19-admin-info-reports-a-hardcoded-version.md)**, which
+changed both sites — `HealthEndpoint.kt` and `/admin/info` — to `engine.state == RUNNING`, with
+the transformation count still reported separately. The Marketplace template keeps pointing the
+readiness probe at `/health`, which is now equivalent and avoids depending on a single
+endpoint's semantics.
