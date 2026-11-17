@@ -132,6 +132,13 @@
       "metadata": {
         "description": "Admin API key for the Web UI and REST API. Required to manage transformations."
       }
+    },
+    "enablePersistentStorage": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "Mount an Azure Files share at /utlxe/data so uploaded transformations survive restarts, and so a .utlar bundle can be placed there to run the engine in locked mode."
+      }
     }
   },
   "resources": [
@@ -150,6 +157,9 @@
           },
           "namePrefix": {
             "value": "[parameters('namePrefix')]"
+          },
+          "enablePersistentStorage": {
+            "value": "[parameters('enablePersistentStorage')]"
           }
         },
         "template": {
@@ -175,6 +185,9 @@
               "metadata": {
                 "description": "Name prefix for resources"
               }
+            },
+            "enablePersistentStorage": {
+              "type": "bool"
             }
           },
           "resources": [
@@ -207,6 +220,52 @@
               "dependsOn": [
                 "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix')))]"
               ]
+            },
+            {
+              "condition": "[parameters('enablePersistentStorage')]",
+              "type": "Microsoft.Storage/storageAccounts",
+              "apiVersion": "2023-05-01",
+              "name": "[variables('storageAccountName')]",
+              "location": "[parameters('location')]",
+              "sku": {
+                "name": "Standard_LRS"
+              },
+              "kind": "StorageV2",
+              "properties": {
+                "minimumTlsVersion": "TLS1_2",
+                "allowBlobPublicAccess": false,
+                "supportsHttpsTrafficOnly": true
+              }
+            },
+            {
+              "condition": "[parameters('enablePersistentStorage')]",
+              "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
+              "apiVersion": "2023-05-01",
+              "name": "[format('{0}/default/utlxe-data', variables('storageAccountName'))]",
+              "properties": {
+                "shareQuota": 100
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName'))]"
+              ]
+            },
+            {
+              "condition": "[parameters('enablePersistentStorage')]",
+              "type": "Microsoft.App/managedEnvironments/storages",
+              "apiVersion": "2024-03-01",
+              "name": "[format('{0}/utlxe-data', variables('envName'))]",
+              "properties": {
+                "azureFile": {
+                  "accountName": "[variables('storageAccountName')]",
+                  "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-05-01').keys[0].value]",
+                  "shareName": "utlxe-data",
+                  "accessMode": "ReadWrite"
+                }
+              },
+              "dependsOn": [
+                "[resourceId('Microsoft.App/managedEnvironments', variables('envName'))]",
+                "[resourceId('Microsoft.Storage/storageAccounts/fileServices/shares', variables('storageAccountName'), 'default', 'utlxe-data')]"
+              ]
             }
           ],
           "outputs": {
@@ -222,6 +281,10 @@
               "type": "string",
               "value": "[resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix')))]"
             }
+          },
+          "variables": {
+            "storageAccountName": "[toLower(take(format('{0}st{1}', replace(parameters('namePrefix'), '-', ''), uniqueString(resourceGroup().id)), 24))]",
+            "envName": "[format('{0}-env', parameters('namePrefix'))]"
           }
         }
       }
@@ -277,6 +340,9 @@
           },
           "adminKey": {
             "value": "[parameters('adminKey')]"
+          },
+          "enablePersistentStorage": {
+            "value": "[parameters('enablePersistentStorage')]"
           }
         },
         "template": {
@@ -395,6 +461,9 @@
               "metadata": {
                 "description": "Worker threads for transformation processing (Starter: 8, Professional: 32, Enterprise: 64+)"
               }
+            },
+            "enablePersistentStorage": {
+              "type": "bool"
             }
           },
           "variables": {
@@ -441,7 +510,9 @@
                 "value": "[parameters('adminKey')]"
               }
             ],
-            "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]"
+            "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]",
+            "appVolumes": "[if(parameters('enablePersistentStorage'), createArray(createObject('name', 'utlxe-data', 'storageType', 'AzureFile', 'storageName', 'utlxe-data')), createArray())]",
+            "engineVolumeMounts": "[if(parameters('enablePersistentStorage'), createArray(createObject('volumeName', 'utlxe-data', 'mountPath', '/utlxe/data')), createArray())]"
           },
           "resources": [
             {
@@ -508,7 +579,8 @@
                           "periodSeconds": 3,
                           "failureThreshold": 10
                         }
-                      ]
+                      ],
+                      "volumeMounts": "[variables('engineVolumeMounts')]"
                     },
                     {
                       "name": "utlxe-ui",
@@ -533,7 +605,8 @@
                     "minReplicas": "[parameters('minReplicas')]",
                     "maxReplicas": "[parameters('maxReplicas')]",
                     "rules": "[variables('scaleRules')]"
-                  }
+                  },
+                  "volumes": "[variables('appVolumes')]"
                 }
               }
             }

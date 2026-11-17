@@ -158,6 +158,44 @@
             "visible": true
           },
           {
+            "name": "storageSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Persistent Storage",
+            "elements": [
+              {
+                "name": "storageInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                  "icon": "Info",
+                  "text": "Without persistent storage the engine keeps transformations in memory only: they are lost on every restart and must be re-uploaded through the Admin API. Enabling it mounts an Azure Files share at /utlxe/data, so uploads survive restarts \u2014 and a .utlar bundle placed on the share starts the engine in locked mode, where transformations come from CI/CD and the Admin API refuses changes."
+                }
+              },
+              {
+                "name": "enablePersistentStorage",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Persistent storage",
+                "toolTip": "Creates a Standard_LRS storage account and a 100 GiB file share in this resource group, mounted at /utlxe/data.",
+                "defaultValue": "Enabled \u2014 transformations survive restarts (recommended)",
+                "constraints": {
+                  "required": true,
+                  "allowedValues": [
+                    {
+                      "label": "Enabled \u2014 transformations survive restarts (recommended)",
+                      "value": true
+                    },
+                    {
+                      "label": "Disabled \u2014 in-memory only, re-upload after every restart",
+                      "value": false
+                    }
+                  ]
+                },
+                "visible": true
+              }
+            ],
+            "visible": true
+          },
+          {
             "name": "messagingSection",
             "type": "Microsoft.Common.Section",
             "label": "Message Source",
@@ -264,7 +302,8 @@
       "scalingMode": "[steps('engineConfig').messagingSection.messagingMode]",
       "serviceBusConnection": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.serviceBusConnection, '')]",
       "inputQueueName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.inputQueueName, 'utlx-input')]",
-      "outputTopicName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.outputTopicName, 'utlx-output')]"
+      "outputTopicName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.outputTopicName, 'utlx-output')]",
+      "enablePersistentStorage": "[steps('engineConfig').storageSection.enablePersistentStorage]"
     }
   }
 }
