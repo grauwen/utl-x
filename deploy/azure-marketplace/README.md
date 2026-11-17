@@ -47,6 +47,12 @@ The pair at the top level predates the two-plan split: it has no `adminKey` para
 `utlxe-ui` sidecar, and it is not what any shipped package contains. Nothing builds from it.
 It is kept only because the `azure-bicep/` templates still reference the same shape.
 
+Its image pins are kept current anyway — they were bumped to `1.4.0` even though nothing
+packages them. Not because the files are maintained (they are two generations behind
+structurally) but because a stale pin here is a loaded gun: the version it carried,
+`utlxe:1.1.0`, is an arm64 image that cannot run on Azure at all. A dead template that still
+parses is far more likely to be copied than rewritten.
+
 ## Releasing a new version of the offering
 
 Four steps, in this order. Steps 1–2 are the images, 3–4 are the offer.
@@ -73,6 +79,57 @@ Four steps, in this order. Steps 1–2 are the images, 3–4 are the offer.
 4. **Upload in Partner Center**, one zip per plan, then Review and publish. The pipeline is
    automated validation → preview → publisher signoff → certification → publish; the 1.2.1
    round took two days end to end.
+
+## Package archive
+
+Partner Center **retains only the latest package**: once a new one is published, previously
+published packages are no longer accessible there. So `zips/` is the only archive, and every
+package that has been uploaded is committed to this repository.
+
+Record the SHA-256 and the upload date here whenever a package is submitted, so it stays
+possible to say exactly which bytes Microsoft received.
+
+| package | sha256 | engine | UI | uploaded |
+|---|---|---|---|---|
+| `utlxe-starter.zip` | `2c17540a8056849e…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) |
+| `utlxe-professional.zip` | `b2d61adfd5685931…` | `utlxe:1.1.0` | `utlxe-ui:1.0.0` | 2026-05-11 (assumed) |
+| `utlxe-starter-1.2.1.zip` | `7dd1acfc2c5b413b…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown |
+| `utlxe-professional-1.2.1.zip` | `aa34b6d4f7b5633a…` | `utlxe:1.2.1` | `utlxe-ui:1.0.0` | unknown |
+| `utlxe-starter-1.4.0.zip` | `f195fc75825708f1…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | *pending* |
+| `utlxe-professional-1.4.0.zip` | `9f3791f1afd4118f…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | *pending* |
+
+Full digests:
+
+```
+2c17540a8056849e97abe5871c1cbb6ed9f7d19cdaf548c22f3c7feb73dfb455  utlxe-starter.zip
+b2d61adfd5685931af021dc6203123ad5b6c8ebc7d236cab80f2b8410a7fa0d5  utlxe-professional.zip
+7dd1acfc2c5b413b120b466bc1a27e28196c274fe6b99a60cb4aa9730edc9ce7  utlxe-starter-1.2.1.zip
+aa34b6d4f7b5633a20948f2450e8ecd6cc73599be0cc746e362270d507bb5fd6  utlxe-professional-1.2.1.zip
+f195fc75825708f166478e5f144dd713aab06f7907f9a73e7f3e1de47aa7c76e  utlxe-starter-1.4.0.zip
+9f3791f1afd4118f07beadc0ccfebc82ce7ea07ab62bb055bb022a9f7a080c59  utlxe-professional-1.4.0.zip
+```
+
+Verify with `shasum -a 256 zips/<file>`.
+
+The 11 May upload date is inferred from the Partner Center publish timestamp and the push time
+of `utlxe:1.1.0`, not read back from Partner Center — by the time this was written the live
+package could no longer be downloaded. That is the gap this table exists to prevent repeating.
+
+### Neither earlier package can be rolled back to
+
+Rolling back is not an option, and was never one:
+
+| package | engine arch | UI arch | runs on Azure |
+|---|---|---|---|
+| 1.1.0 generation | arm64 | arm64 | no |
+| 1.2.1 generation | amd64 | **arm64** | no |
+| 1.4.0 | amd64 | amd64 | **yes** |
+
+Azure Container Apps runs linux/amd64 only. The 1.1.0 images were built by hand on an Apple
+Silicon machine before any CI existed, and the 28 May rebuild fixed the engine but left the UI
+sidecar on the arm64 `utlxe-ui:1.0.0` — and one unrunnable container fails the whole revision.
+**1.4.0 is the first package whose images can actually start on Azure.** This is why the
+publish workflow pins `platforms: linux/amd64` rather than relying on whoever runs the build.
 
 ## Why `build-zips.sh` exists
 
