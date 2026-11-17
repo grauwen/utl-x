@@ -49,6 +49,28 @@
 #   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.1
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 #
+# CHECKING STATE
+#
+#   --status answers the two questions worth asking around a run: can one start now,
+#   and is anything still deployed that is costing money? It reports the regional
+#   environment quota, every Container Apps environment, the acceptance resource
+#   groups, and the URL of any deployment left running by --keep.
+#
+#   ./utlxe-acceptance.sh --status
+#
+# CLEANING UP
+#
+#   --keep leaves a deployment running; --teardown removes every resource group this
+#   script has ever created, found by the tag it applies (purpose=utlxe-acceptance)
+#   rather than by name. Use it after a --keep run, or to clear groups left behind by
+#   an interrupted one.
+#
+#   ./utlxe-acceptance.sh --teardown --dry-run   # list what would be deleted
+#   ./utlxe-acceptance.sh --teardown             # delete them
+#
+#   Deletion is asynchronous, and a Container Apps environment can hold the
+#   one-per-region quota slot for 10-20 minutes after the command returns.
+#
 # Requires: az (logged in), jq, curl.
 
 set -euo pipefail
@@ -76,7 +98,7 @@ TARGET_PORT="${TARGET_PORT:-8088}"
 ADMIN_KEY_ENV="${ADMIN_KEY_ENV:-UTLXE_ADMIN_KEY}"
 
 # ── internals ────────────────────────────────────────────────────────────────
-TEMPLATE="" ; IMAGE="" ; KEEP=0
+TEMPLATE="" ; IMAGE="" ; KEEP=0 ; TEARDOWN=0 ; DRY_RUN=0 ; STATUS=0
 CURRENT_RG="" ; KEEP_FQDN="" ; KEEP_KEY="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
 
 C_OK=$'\033[0;32m' ; C_BAD=$'\033[0;31m' ; C_WARN=$'\033[0;33m'
@@ -131,7 +153,9 @@ cleanup() {
       printf '\n%s── kept deployment ──%s\n' "$C_DIM" "$C_OFF"
       [[ -n "$KEEP_FQDN" ]] && printf '  Web UI     https://%s\n' "$KEEP_FQDN"
       printf '  admin key  %s\n' "$KEEP_KEY"
-      printf '  delete it  az group delete --name %s --yes --no-wait\n' "$CURRENT_RG"
+      printf '  resource g %s\n' "$CURRENT_RG"
+      printf '  delete it  ./utlxe-acceptance.sh --teardown\n'
+      printf '  check it   ./utlxe-acceptance.sh --status\n'
       printf '  cost       ./utlxe-costs.sh --hours N\n'
     fi
     log "--keep set; $CURRENT_RG left running"
@@ -148,12 +172,16 @@ while [[ $# -gt 0 ]]; do
     --image)    IMAGE="$2";    shift 2 ;;
     --location) LOCATION="$2"; shift 2 ;;
     --keep)     KEEP=1; shift ;;
-    -h|--help)  sed -n '2,52p' "$0"; exit 0 ;;
+    --status)   STATUS=1; shift ;;
+    --teardown) TEARDOWN=1; shift ;;
+    --dry-run)  DRY_RUN=1; shift ;;
+    -h|--help)  sed -n '2,74p' "$0"; exit 0 ;;
     *) die "unknown argument: $1" ;;
   esac
 done
 
-[[ -n "$TEMPLATE" || -n "$IMAGE" ]] || die "pass --template <mainTemplate.json> or --image <ref>"
+(( TEARDOWN || STATUS )) || [[ -n "$TEMPLATE" || -n "$IMAGE" ]] || \
+  die "pass --template <mainTemplate.json>, --image <ref>, --status, or --teardown"
 [[ -z "$TEMPLATE" || -f "$TEMPLATE" ]] || die "template not found: $TEMPLATE"
 
 # ── preflight ────────────────────────────────────────────────────────────────
@@ -565,7 +593,146 @@ UTLX
   fi
 }
 
+
+
+# ── status ───────────────────────────────────────────────────────────────────
+# Answers the two questions worth knowing before and after a run: can I start one
+# right now, and is anything still running that I am paying for?
+#
+# The regional environment quota is the binding constraint — one per region on some
+# subscription types — and a Container Apps environment holds that slot for 10-20
+# minutes after its resource group is deleted. A run started in that window fails with
+# MaxNumberOfRegionalEnvironmentsInSubExceeded, which reads like a template defect.
+status() {
+  local used limit envs groups apps
+
+  printf '\n%s── quota: %s ──%s\n' "$C_DIM" "$LOCATION" "$C_OFF"
+  local usage
+  usage=$(az rest --method get --url \
+    "https://management.azure.com/subscriptions/$(az account show --query id -o tsv)/providers/Microsoft.App/locations/${LOCATION}/usages?api-version=2024-03-01" \
+    2>/dev/null || echo '{}')
+  used=$(jq -r '[.value[]? | select(.name.value=="ManagedEnvironmentCount")][0].currentValue // "?"' <<<"$usage")
+  limit=$(jq -r '[.value[]? | select(.name.value=="ManagedEnvironmentCount")][0].limit // "?"' <<<"$usage")
+  printf '  managed environments  %s of %s' "$used" "$limit"
+  if [[ "$used" == "0" ]]; then
+    printf '   %s-> a run can start now%s\n' "$C_OK" "$C_OFF"
+  elif [[ "$used" == "$limit" ]]; then
+    printf '   %s-> FULL; a run will fail until a slot frees%s\n' "$C_BAD" "$C_OFF"
+  else
+    printf '\n'
+  fi
+
+  printf '\n%s── Container Apps environments ──%s\n' "$C_DIM" "$C_OFF"
+  envs=$(az containerapp env list \
+          --query "[].{name:name,rg:resourceGroup,loc:location,state:properties.provisioningState}" \
+          -o tsv 2>/dev/null || true)
+  if [[ -z "${envs// }" ]]; then printf '  none\n'; else
+    while IFS=$'\t' read -r n rg loc st; do
+      [[ -z "$n" ]] && continue
+      printf '  %-30s %-36s %-14s %s\n' "$n" "$rg" "$loc" "$st"
+    done <<<"$envs"
+  fi
+
+  printf '\n%s── acceptance resource groups ──%s\n' "$C_DIM" "$C_OFF"
+  groups=$(az group list --tag purpose=utlxe-acceptance \
+            --query "[].{name:name,state:properties.provisioningState}" -o tsv 2>/dev/null || true)
+  if [[ -z "${groups// }" ]]; then printf '  none\n'; else
+    while IFS=$'\t' read -r n st; do
+      [[ -z "$n" ]] && continue
+      printf '  %-44s %s\n' "$n" "$st"
+    done <<<"$groups"
+  fi
+
+  # A --keep deployment is the one that quietly costs money. Surface its URL so it can be
+  # used, and make the teardown command obvious.
+  printf '\n%s── running acceptance deployments ──%s\n' "$C_DIM" "$C_OFF"
+  local found=0
+  while IFS=$'\t' read -r rg st; do
+    [[ -z "$rg" || "$st" == "Deleting" ]] && continue
+    apps=$(az containerapp list -g "$rg" \
+            --query "[].{name:name,fqdn:properties.configuration.ingress.fqdn}" -o tsv 2>/dev/null || true)
+    while IFS=$'\t' read -r an af; do
+      [[ -z "$an" ]] && continue
+      found=1
+      printf '  %s\n    https://%s\n' "$an" "$af"
+    done <<<"$apps"
+  done <<<"$groups"
+  if (( found )); then
+    printf '\n  still billing — remove with:  ./utlxe-acceptance.sh --teardown\n'
+    printf '  estimate the cost with:       ./utlxe-costs.sh --hours N\n'
+  else
+    printf '  none\n'
+  fi
+  echo
+}
+
+# ── teardown ─────────────────────────────────────────────────────────────────
+# --keep leaves a deployment running, and until now the script had no way to remove it:
+# cleanup lived in an EXIT trap belonging to the run that created the group, so anything
+# kept — or left behind by an interrupted run — could only be deleted by hand-typing an
+# `az group delete` with a timestamped name. The script even printed that command, which
+# is a fair sign it was missing one of its own.
+#
+# Groups are found by the tag the script applies at creation, not by name pattern, so a
+# group that was renamed is still found and an unrelated group that merely looks similar
+# is not touched.
+teardown() {
+  local groups count
+  groups=$(az group list --tag purpose=utlxe-acceptance \
+             --query "[].{name:name,state:properties.provisioningState}" -o tsv 2>/dev/null || true)
+
+  if [[ -z "${groups// }" ]]; then
+    log "no acceptance resource groups found (tag purpose=utlxe-acceptance)"
+    return 0
+  fi
+
+  count=$(wc -l <<<"$groups" | tr -d ' ')
+  printf '\n%s── acceptance resource groups ──%s\n' "$C_DIM" "$C_OFF"
+  while IFS=$'\t' read -r name state; do
+    [[ -z "$name" ]] && continue
+    printf '  %-44s %s\n' "$name" "$state"
+  done <<<"$groups"
+  echo
+
+  if (( DRY_RUN )); then
+    log "--dry-run: nothing deleted ($count group(s) would be)"
+    return 0
+  fi
+
+  while IFS=$'\t' read -r name state; do
+    [[ -z "$name" ]] && continue
+    if [[ "$state" == "Deleting" ]]; then
+      log "already deleting: $name"
+      continue
+    fi
+    log "deleting $name"
+    az group delete --name "$name" --yes --no-wait 2>/dev/null \
+      && log "  delete issued (async)" \
+      || printf '%swarning:%s could not delete %s\n' "$C_BAD" "$C_OFF" "$name" >&2
+  done <<<"$groups"
+
+  echo
+  log "deletion is asynchronous; the Container Apps environment can hold the"
+  log "one-per-region quota slot for 10-20 minutes after this returns."
+}
+
 # ── main ─────────────────────────────────────────────────────────────────────
+if (( STATUS )); then
+  for b in az jq; do command -v "$b" >/dev/null || die "$b not on PATH"; done
+  az account show >/dev/null 2>&1 || die "not logged in — run 'az login'"
+  log "subscription: $(az account show --query name -o tsv)"
+  status
+  exit 0
+fi
+
+if (( TEARDOWN )); then
+  for b in az jq; do command -v "$b" >/dev/null || die "$b not on PATH"; done
+  az account show >/dev/null 2>&1 || die "not logged in — run 'az login'"
+  log "subscription: $(az account show --query name -o tsv)"
+  teardown
+  exit 0
+fi
+
 preflight
 run_suite
 

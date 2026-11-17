@@ -94,6 +94,98 @@ Four steps, in this order. Steps 1–2 are the images, 3–4 are the offer.
    run is a few cents at retail and normally inside the monthly free grant. Run it with
    `--hours 24` before using the acceptance script's `--keep`.
 
+## Testing a deployment — `utlxe-acceptance.sh`
+
+The offer was published on 2026-05-11 and first actually deployed on 2026-11-17. That gap is
+where six defects lived, none of them findable by code review, unit tests or the conformance
+suite. This script is what closes it: it deploys the real template into a throwaway resource
+group, asserts the result, and destroys it.
+
+`./utlxe-acceptance.sh --help` prints the full header. The summary:
+
+### Modes
+
+```bash
+./utlxe-acceptance.sh --status                 # can a run start? is anything still billing?
+./utlxe-acceptance.sh --template ./starter/mainTemplate.json
+./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
+./utlxe-acceptance.sh --teardown --dry-run     # what cleanup would remove
+./utlxe-acceptance.sh --teardown               # remove it
+./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.1   # engine only, NOT the offer
+```
+
+`--template` is the one that tests what a customer receives. `--image` deploys a bare container
+app and exercises the engine, so a green run there says nothing about the Marketplace artifacts.
+
+`--status` and `--teardown` need no template. Groups are found by the tag the script applies
+(`purpose=utlxe-acceptance`), never by name pattern.
+
+### What it asserts
+
+18 assertions across the deployment, the public surface and the engine:
+
+| | |
+|---|---|
+| deployment | ARM deployment succeeded · ingress FQDN published |
+| reachability | `/health` reachable within `HEALTH_TIMEOUT` |
+| empty state | fresh container reports 0 transformations · reports `ready=false` |
+| security | admin API rejects an unauthenticated request |
+| function | transformation uploads and compiles · test endpoint reports ok · output is correct |
+| loaded state | container becomes ready after upload · health reports 1 transformation |
+| durability | container recovers after restart · (restart-survival is SKIPped without storage) |
+| cleanup | resource group deletes cleanly |
+
+Results are PASS / FAIL / SKIP / WARN. Exit 0 all passed, 1 at least one FAIL, 2 fatal
+(bad arguments, missing tool, not logged in).
+
+### Reading a failure
+
+On an unhealthy container the script collects, from the same deployment, what would otherwise
+cost another 30-minute cycle to gather:
+
+| block | what it settles |
+|---|---|
+| `--- ingress ---` | whether `targetPort` and `external` are what the template intended |
+| `--- public surface ---` | `/`, `/health`, `/metrics`, `/admin/info` with HTTP status and curl exit |
+| `--- utlxe ---` / `--- utlxe-ui ---` | each container's logs separately |
+| `--- system ---` | platform events: pull failures, OOM kills, **probe failures** |
+| `--- replicas ---` | per-container `ready`, `started`, `restartCount` |
+| `--- from inside utlxe-ui ---` | listening sockets, the rendered nginx config, loopback reach to the engine |
+
+Two readings worth knowing, both learned the hard way:
+
+- **Every path timing out, including `/`, with both containers healthy** means a container is
+  not *ready*. Container Apps routes nothing to a replica with any not-ready container, so a
+  working proxy looks dead. Check `--- replicas ---` and the probe failures in `--- system ---`
+  before suspecting the sidecar. That is [EB18](../../docs/bugs-fixed/EB18-readiness-requires-a-transformation-so-no-deployment-can-serve.md).
+- **`/` returning 200 while `/health` returns 502** is the opposite: nginx is fine and the proxy
+  hop to the engine is broken.
+
+### Tunables
+
+All are environment variables with defaults:
+
+| variable | default | |
+|---|---|---|
+| `LOCATION` | `westeurope` | quota is per region — use another region to run in parallel |
+| `RG_PREFIX` | `rg-utlxe-acceptance` | |
+| `DEPLOYMENT_NAME` | `utlxe-acceptance` | fixed so the deployment can be asserted on regardless of template filename |
+| `SUBSCRIPTION` | current `az` context | |
+| `HEALTH_TIMEOUT` | `300` | seconds to wait for the first healthy response |
+| `ENV_WAIT_TIMEOUT` | `1500` | seconds to wait for the one-per-region environment slot |
+| `P_APP_NAME` / `P_ADMIN_KEY` | `namePrefix` / `adminKey` | the only offer-specific parameter names |
+
+### Cost and cadence
+
+A full run is a few cents and normally inside the monthly free grant — `./utlxe-costs.sh`
+sizes it. The real cost is time: roughly 30 minutes per iteration on a subscription with a
+one-environment quota, because teardown is asynchronous and the next run waits for the slot.
+
+Two ways to cut it: `--location northeurope` runs while West Europe is still cleaning up, and
+`--keep` leaves a deployment alive so the next hypothesis can be tested in seconds instead of
+half an hour. A kept deployment bills about $0.30/hour and holds the quota slot, so `--status`
+will remind you it exists.
+
 ## Subscription prerequisites, and the environment quota
 
 Both of these surfaced on 2026-11-17, during the first real deployment this offer has ever
