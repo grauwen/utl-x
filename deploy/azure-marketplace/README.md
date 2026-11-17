@@ -39,7 +39,11 @@ runs this check after every push and fails the run if either image is unreachabl
 starter/          mainTemplate.json + createUiDefinition.json   <- source of truth
 professional/     mainTemplate.json + createUiDefinition.json   <- source of truth
 zips/             the packages uploaded to Partner Center, one per plan per version
-build-zips.sh     builds zips/ from the plan directories
+
+build-zips.sh         builds zips/ from the plan directories
+utlxe-acceptance.sh   deploys a throwaway copy, asserts it works, destroys it
+utlxe-costs.sh        what a run costs — estimated from retail rates, or actual
+
 mainTemplate.json, createUiDefinition.json   <- SUPERSEDED, see below
 ```
 
@@ -79,6 +83,16 @@ Four steps, in this order. Steps 1–2 are the images, 3–4 are the offer.
 4. **Upload in Partner Center**, one zip per plan, then Review and publish. The pipeline is
    automated validation → preview → publisher signoff → certification → publish; the 1.2.1
    round took two days end to end.
+
+5. **Verify the published offer actually deploys.** `./utlxe-acceptance.sh --template
+   ./starter/mainTemplate.json` creates a throwaway resource group, deploys, asserts, and
+   deletes it again. This is the step that had never existed, and its absence is why three
+   broken generations shipped: the packages validated, the images pulled, and nothing ever
+   checked that a container started.
+
+   `./utlxe-costs.sh` sizes what such a run costs before you make it — a ten-minute Starter
+   run is a few cents at retail and normally inside the monthly free grant. Run it with
+   `--hours 24` before using the acceptance script's `--keep`.
 
 ## Package archive
 
