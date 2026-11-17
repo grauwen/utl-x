@@ -512,7 +512,8 @@
             ],
             "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]",
             "appVolumes": "[if(parameters('enablePersistentStorage'), createArray(createObject('name', 'utlxe-data', 'storageType', 'AzureFile', 'storageName', 'utlxe-data')), createArray())]",
-            "engineVolumeMounts": "[if(parameters('enablePersistentStorage'), createArray(createObject('volumeName', 'utlxe-data', 'mountPath', '/utlxe/data')), createArray())]"
+            "engineVolumeMounts": "[if(parameters('enablePersistentStorage'), createArray(createObject('volumeName', 'utlxe-data', 'mountPath', '/utlxe/data')), createArray())]",
+            "engineArgs": "[if(parameters('enablePersistentStorage'), createArray('--mode', 'http', '--workers', string(parameters('workers')), '--data-dir', '/utlxe/data'), createArray('--mode', 'http', '--workers', string(parameters('workers'))))]"
           },
           "resources": [
             {
@@ -541,12 +542,7 @@
                         "cpu": "[json(parameters('cpuCores'))]",
                         "memory": "[format('{0}Gi', parameters('memoryGi'))]"
                       },
-                      "args": [
-                        "--mode",
-                        "http",
-                        "--workers",
-                        "[string(parameters('workers'))]"
-                      ],
+                      "args": "[variables('engineArgs')]",
                       "env": "[variables('containerEnv')]",
                       "probes": [
                         {

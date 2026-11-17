@@ -594,15 +594,20 @@ UTLX
   persistence=$(jq -r '.persistence // "?"' <<<"$info")
   note "persistence mode reported by engine" "$persistence"
 
-  # ---- PERSISTENCE GAP -----------------------------------------------------
-  # starter/mainTemplate.json contains no Azure Files mount and no toggle, so
-  # there is nothing for transformations to survive on. The book documents the
-  # toggle (ch02), the mount (ch06, ch10.2), crash safety (ch10.3), a
-  # troubleshooting entry (ch14.7) and a volume-backed value for
-  # /admin/info.persistence (ch04.12). Until the template catches up, this is
-  # the assertion that cannot run.
-  skip "transformations survive restart (persistent)" \
-       "template exposes no Azure Files mount — see ch10.2"
+  # ---- PERSISTENCE ---------------------------------------------------------
+  # This skip used to be UNCONDITIONAL, written when the template had no Azure Files mount at
+  # all. Once the mount was added it kept firing, and so hid a real failure: the mount existed,
+  # the engine reported "memory-only", and the suite reported a skip instead of a problem. A
+  # permanently-skipped assertion is indistinguishable from one that cannot fail.
+  #
+  # Decide from what the ENGINE reports, not from an assumption about the template. The engine
+  # answers "disk" only when it was given --data-dir, which is the thing that actually
+  # determines whether anything survives — a mounted volume the engine never reads is not
+  # persistence.
+  if [[ "$persistence" != "disk" ]]; then
+    skip "transformations survive restart (persistent)" \
+         "engine reports persistence=$persistence; deploy with --param enablePersistentStorage=true"
+  fi
 
   # What we can still prove: the container comes back, and what it loses.
   local rev
@@ -616,12 +621,19 @@ UTLX
     if wait_for_health "$fqdn"; then
       assert_eq "container recovers after restart" "ok" "ok"
       local after
-      after=$(jq -r '.transformations' <<<"$(curl -fsS "https://${fqdn}/health")")
-      if [[ "$after" == "0" ]]; then
-        warn "state after restart" \
-             "all transformations lost on restart — customers on the consumption plan hit this whenever the app scales to zero"
+      # EB19 fixed the shape: the COUNT is .engine.transformations; the top-level
+      # .transformations is a map of name -> status. Reading the map printed a JSON blob where
+      # a number belonged and could never compare equal to "0".
+      after=$(jq -r '.engine.transformations // 0' <<<"$(curl -fsS "https://${fqdn}/health")")
+      if [[ "$persistence" == "disk" ]]; then
+        # With a data dir the uploaded transformation must come back. This is the assertion the
+        # unconditional skip was standing in front of.
+        assert_eq "transformations survive restart (persistent)" "$after" "1"
+      elif [[ "$after" == "0" ]]; then
+        note "state after restart" \
+             "0 retained, as expected without persistent storage"
       else
-        note "state after restart" "$after transformation(s) retained"
+        warn "state after restart" "$after retained without a data dir — unexpected"
       fi
     else
       assert_eq "container recovers after restart" "timeout" "ok"
