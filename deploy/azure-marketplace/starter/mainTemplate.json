@@ -608,9 +608,9 @@
             }
           ],
           "outputs": {
-            "containerAppUrl": {
+            "containerAppAddress": {
               "type": "string",
-              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('{0}-app', parameters('namePrefix'))), '2026-07-01').configuration.ingress.fqdn)]"
+              "value": "[concat('https://', reference(resourceId('Microsoft.App/containerApps', format('{0}-app', parameters('namePrefix'))), '2026-07-01').configuration.ingress.fqdn)]"
             },
             "containerAppName": {
               "type": "string",
@@ -794,7 +794,7 @@
       "metadata": {
         "description": "UTL-X API endpoint URL"
       },
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value]"
     },
     "containerAppName": {
       "type": "string",
@@ -806,30 +806,30 @@
     "healthUrl": {
       "type": "string",
       "metadata": {
-        "description": "Health check URL"
+        "description": "Health check URL (proxied to the engine by the Web UI container)"
       },
-      "value": "[format('{0}/api/health', reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value)]"
+      "value": "[uri(reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value, 'health')]"
     },
     "metricsNote": {
       "type": "string",
       "metadata": {
-        "description": "Prometheus metrics URL (internal only \u2014 use port-forward or VNet)"
+        "description": "Prometheus metrics URL"
       },
-      "value": "Prometheus metrics available at port 8081 inside the container (not exposed via ingress)"
+      "value": "[uri(reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value, 'metrics')]"
     },
     "adminUiUrl": {
       "type": "string",
       "metadata": {
         "description": "Open this URL in your browser to access the UTLXe Admin UI"
       },
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value]"
     },
     "adminKeyNote": {
       "type": "string",
       "metadata": {
         "description": "Admin key \u2014 use this to log in to the Web UI"
       },
-      "value": "The admin key you entered during deployment. If you lost it, reset with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>"
+      "value": "The admin key you entered during deployment. It cannot be read back from the Admin API; redeploy with a new key if it is lost."
     }
   }
 }

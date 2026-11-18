@@ -266,11 +266,55 @@ story work as documented, and cut the slowest step out of every test run. It is 
 shape for a Container Apps marketplace offer. Not in 1.4.1; it is a template change that
 needs its own deployment test.
 
-## Certification: apiVersion recency
+## Certification: run arm-ttk before you submit
 
 The 1.4.2 submission was rejected on 2026-11-18 under **policy 300.4.1.1 — Best Practice
 Tests**, which is Microsoft running the [ARM template test toolkit](https://aka.ms/arm-ttk)
-against `mainTemplate.json`.
+against `mainTemplate.json` and `createUiDefinition.json`. The round trip is two days; the
+toolkit names every failure in thirty seconds.
+
+```bash
+brew install powershell
+git clone --depth 1 https://github.com/Azure/arm-ttk.git /tmp/arm-ttk
+pwsh -c "Import-Module /tmp/arm-ttk/arm-ttk/arm-ttk.psd1; Test-AzTemplate -TemplatePath ./starter"
+```
+
+`build-zips.sh` now runs it for both plans and refuses to package on any failure. It skips
+loudly when `pwsh` is absent, because a missing toolkit must never read as a clean build.
+
+### What actually failed, and what did not
+
+The rejection was diagnosed first as stale apiVersions. **That was wrong**, and worth recording
+because the wrong diagnosis cost a release cycle. The toolkit reports apiVersion problems as
+`[?]` — *indeterminate*, not failed: it ships a version cache that lags the live providers, so
+it cannot confirm a version newer than its cache. The four real failures were:
+
+| test | cause |
+|---|---|
+| Credential Confirmation Should Not Be Hidden | `hideConfirmation: true` on the Service Bus connection box |
+| PasswordBoxes Must Have Min Length | `adminKey` regex allowed 8 characters; the toolkit requires 12 |
+| PasswordBoxes Must Have Min Length | the connection-string regex had no length constraint |
+| URIs Should Be Properly Constructed | `format()` — and then `concat()` — inside URI-named outputs |
+
+Two of those came from the messaging wizard added in 1.4.1. The apiVersion work was still worth
+doing — `2021-04-01` was five years stale and would fail a current toolkit — but it was not the
+reported failure, and running the toolkit first would have said so immediately.
+
+### The URI rule cannot be satisfied directly
+
+`URIs Should Be Properly Constructed` flags `concat` and `format` inside any output whose name
+looks like a URI, and wants `uri()`. But `uri()` takes an **absolute base** plus a relative
+path; building the absolute base from a hostname needs string construction, and ARM has no
+function for it.
+
+The nested deployment therefore returns `containerAppAddress` — a name the rule does not match
+— and the parent's URL-named outputs consume it with `uri()` without constructing anything.
+That is partly working around the linter, and it is recorded here rather than hidden: the rule
+exists to stop hand-built relative paths, which the parent outputs genuinely now avoid.
+
+## Certification: apiVersion recency
+
+Separate from the above, and still worth keeping current.
 
 The toolkit's *apiVersions Should Be Recent* test fails any apiVersion older than **730 days**
 when a newer GA version exists. Eight of nine resource declarations were over, the worst by
@@ -294,6 +338,20 @@ lookup. Grep the whole file for date strings, not just `"apiVersion"` keys.
 
 **The `2019-04-01` in `$schema` is not an apiVersion** and must not be bumped. It is the
 current deploymentTemplate schema URI and arm-ttk requires it.
+
+### The two plans must agree
+
+`professional/` has silently diverged from `starter/` twice:
+
+- **1.1.0 → 1.2.1** — it kept Starter's worker count for two releases, so a Professional
+  package would have billed as Professional and run at a quarter of the advertised concurrency
+- **1.4.3** — a `break` in an edit script renamed an output in `starter/` only; `arm-ttk`
+  passed one plan and failed the other
+
+Both were found by accident. `build-zips.sh` now compares the two templates directly and fails
+on any difference outside the sizing parameters (`workers`, `cpuCores`, `memoryGi`,
+`maxReplicas`), printing a diff of where they diverge. The plans differ by load and nothing
+else; the guard enforces exactly that.
 
 ### Checking before you submit
 

@@ -50,11 +50,11 @@
               "password": "Admin API Key",
               "confirmPassword": "Confirm Admin Key"
             },
-            "toolTip": "Protects the Admin API and Web UI. Use the suggested UUID above, or enter your own (minimum 8 characters). Save it securely \u2014 it cannot be retrieved after deployment.",
+            "toolTip": "Protects the Admin API and Web UI. Use the suggested UUID above, or enter your own (minimum 12 characters). Save it securely \u2014 it cannot be retrieved after deployment.",
             "constraints": {
               "required": true,
-              "regex": "^.{8,}$",
-              "validationMessage": "The admin key must be at least 8 characters."
+              "regex": "^.{12,}$",
+              "validationMessage": "The admin key must be at least 12 characters."
             },
             "options": {
               "hideConfirmation": false
@@ -234,16 +234,14 @@
                 "name": "serviceBusConnection",
                 "type": "Microsoft.Common.PasswordBox",
                 "label": {
-                  "password": "Service Bus connection string"
+                  "password": "Service Bus connection string",
+                  "confirmPassword": "Confirm connection string"
                 },
                 "toolTip": "A connection string for your Service Bus namespace with Send and Listen rights. The namespace, queue and topic must already exist \u2014 this offer does not create them.",
                 "constraints": {
                   "required": true,
-                  "regex": "^Endpoint=sb://.+",
+                  "regex": "^Endpoint=sb://.{12,}$",
                   "validationMessage": "Paste the full connection string, starting with Endpoint=sb://"
-                },
-                "options": {
-                  "hideConfirmation": true
                 },
                 "visible": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]"
               },

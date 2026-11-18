@@ -90,6 +90,70 @@ if len({tuple(sorted(v.items())) for v in vals.values()}) != len(vals):
 sys.exit(1 if bad else 0)
 PY
 
+# ── the plans must be identical apart from sizing ──
+# The sizing check above catches a plan carrying the WRONG numbers. It cannot catch a plan
+# carrying the wrong everything-else, and that has now happened twice:
+#
+#   1.1.0 -> 1.2.1   professional/ kept starter's worker count for two releases
+#   1.4.3            a `break` in an edit script renamed an output in starter only, and
+#                    arm-ttk failed professional alone
+#
+# Both were found by accident. Compare the two plans directly: outside the three sizing
+# parameters and the plan-specific wording, they must agree exactly.
+python3 - "${PLANS[@]}" <<'PY2'
+import json, sys
+
+SIZING = {"workers", "cpuCores", "memoryGi", "maxReplicas"}
+plans = sys.argv[1:]
+if len(plans) != 2:
+    sys.exit(0)   # only meaningful for a two-plan offer
+
+def normalise(path):
+    d = json.load(open(path))
+    for k in list(d.get("parameters", {})):
+        if k in SIZING:
+            d["parameters"][k].pop("defaultValue", None)
+    return d
+
+a, b = (normalise(f"{p}/mainTemplate.json") for p in plans)
+if a != b:
+    # Report WHERE, not just THAT — a bare "they differ" on a 900-line template is useless.
+    sa, sb = json.dumps(a, indent=1).split("\n"), json.dumps(b, indent=1).split("\n")
+    import difflib
+    diff = [l for l in difflib.unified_diff(sa, sb, plans[0], plans[1], lineterm="", n=1)][:40]
+    print(f"ERROR: {plans[0]} and {plans[1]} differ outside sizing:", file=sys.stderr)
+    for l in diff:
+        print("  " + l, file=sys.stderr)
+    sys.exit(1)
+PY2
+
+# ── arm-ttk, when it is available ──
+# Microsoft runs the ARM template test toolkit against these files under certification policy
+# 300.4.1.1. The 1.4.2 submission was rejected by it, and the round trip cost two days for
+# failures the toolkit names in thirty seconds. Run it here when pwsh is present; skip loudly
+# when it is not, so a missing toolkit never silently becomes a passing build.
+ARM_TTK="${ARM_TTK:-$HOME/arm-ttk/arm-ttk/arm-ttk.psd1}"
+[ -f "$ARM_TTK" ] || ARM_TTK="/tmp/arm-ttk/arm-ttk/arm-ttk.psd1"
+
+if command -v pwsh >/dev/null 2>&1 && [ -f "$ARM_TTK" ]; then
+  for plan in "${PLANS[@]}"; do
+    echo "  arm-ttk: $plan"
+    out=$(pwsh -NoProfile -c "Import-Module '$ARM_TTK'; Test-AzTemplate -TemplatePath './$plan'" 2>&1) || true
+    fails=$(printf '%s\n' "$out" | grep -E "^Fail\s*:" | grep -oE "[0-9]+" | head -1)
+    if [ "${fails:-0}" != "0" ]; then
+      printf '%s\n' "$out" | grep -B1 -A3 "^\s*\[-\]" || true
+      fail "arm-ttk reported ${fails} failure(s) for ${plan}.
+  Fix them before packaging — certification runs the same suite and the round trip is two days.
+  Note: [?] apiVersion results are indeterminate, not failures: the toolkit ships a version
+  cache that lags the live providers."
+    fi
+  done
+else
+  printf '  %s\n' "NOTE: arm-ttk not run (needs pwsh and the toolkit)."
+  printf '  %s\n' "      brew install powershell && git clone --depth 1 https://github.com/Azure/arm-ttk.git /tmp/arm-ttk"
+  printf '  %s\n' "      Certification runs it regardless; a clean build here does not mean a clean submission."
+fi
+
 # ── build ──
 mkdir -p "$OUT"
 for plan in "${PLANS[@]}"; do
