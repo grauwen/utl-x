@@ -391,7 +391,7 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.4.1.zip` | `a8bb00865df6ce76…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | superseded before submission | yes |
 | `utlxe-starter-1.4.2.zip` | `1bc9c769eab3c07c…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
 | `utlxe-professional-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
-| `utlxe-starter-1.4.3.zip` | `8d97202384f89175…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
+| `utlxe-starter-1.4.3.zip` | `65e051638b1cb14b…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
 | `utlxe-professional-1.4.3.zip` | `cbc4884d805dd442…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
 
 Full digests:
@@ -407,8 +407,8 @@ f195fc75825708f166478e5f144dd713aab06f7907f9a73e7f3e1de47aa7c76e  utlxe-starter-
 a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professional-1.4.1.zip
 1bc9c769eab3c07c1fed0c8f8573b565a28c8da96aab2c097426c6180a1c2dce  utlxe-starter-1.4.2.zip
 23dc175915e14a90ee57690d4dc6f7f3c64276702268a3161e975e22273976bf  utlxe-professional-1.4.2.zip
-8d97202384f891755498af5a48af17237579e2ca819e8a7fda606d598ecc179f  utlxe-starter-1.4.3.zip
-cbc4884d805dd442ef652e1d359a6da6bb8bee1c5efd02973cc6d09f8f9cdf94  utlxe-professional-1.4.3.zip
+cf6f6a47d416e506cad6382e88faff771fd9ad6f0e8e1d3e4b8d4eb4cbc144e1  utlxe-starter-1.4.3.zip
+65e051638b1cb14b61677f7c41567dc96313c2fcdf4ac06d4c80bde1462b1b4d  utlxe-professional-1.4.3.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
