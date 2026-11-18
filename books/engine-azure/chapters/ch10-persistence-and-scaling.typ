@@ -180,7 +180,36 @@ The admin upload response reports the compile time directly, e.g. `"compiled_in_
 
 For higher throughput, deploy multiple container replicas behind the Azure load balancer. Each replica runs an independent UTLXe instance.
 
-If using persistent storage, all replicas share the same Azure File Share. Upload transformations once --- all replicas see the same files.
+If using persistent storage, all replicas mount the same Azure File Share --- but *sharing the files is not the same as sharing the state*. Each replica reads `/utlxe/data/` once, at startup, and holds its transformations in memory from then on. There is no file watcher and no coordination between replicas.
+
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *An upload through the Admin API or Web UI reaches exactly one replica.* The ingress
+  load-balances your request to one of them; that replica compiles the transformation and
+  writes it to the share. Any replica already running does not see it until it next starts.
+
+  With more than one replica, that produces a split view:
+
+  - The Web UI is served by whichever replica you were routed to, and queries that replica.
+    Refreshing can land you on another one and show a different list of transformations.
+  - A message routed to the replica that lacks the transformation fails, while an identical
+    message routed to the other succeeds.
+]
+
+This is the reason *locked mode is the deployment model for a scaled-out estate*. A `.utlar`
+bundle on the share is read by every replica at startup, including replicas KEDA creates later,
+so all of them are identical by construction and the Admin API refuses the runtime changes that
+would break that. Operator-managed (open) mode is sound on a *single* replica --- set both
+minimum and maximum instances to 1 --- and the UI will then always show you the one engine that
+exists.
+
+If you must upload at runtime on a scaled-out deployment, restart the app afterwards so every
+replica re-reads the share:
+
+```bash
+az containerapp revision restart --name utlxe-app --resource-group <rg> \
+  --revision $(az containerapp revision list -n utlxe-app -g <rg> \
+    --query "[?properties.active].name | [0]" -o tsv)
+```
 
 If using CI/CD re-deploy, the pipeline must deploy to each replica (or use a shared storage backend for the bundle).
 
