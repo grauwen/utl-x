@@ -82,6 +82,15 @@ The `env()` function is restricted in the CLI for security, but available in the
 
 == VNet Integration
 
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *This section describes a custom deployment, not the Marketplace offer.* The Marketplace
+  templates provision a standard Container Apps environment with no VNet parameter, and the
+  storage account they create has public network access enabled with no private endpoint.
+  Everything below requires the Enterprise deployment templates --- see Chapter 8. If you
+  deployed from the Marketplace, treat it as the target architecture rather than a description
+  of what you have.
+]
+
 For production deployments, place the Container App Environment in a VNet:
 
 - The admin port (8081) is accessible only from within the VNet.
@@ -99,6 +108,37 @@ A typical production network layout:
   [Storage Account], [Private endpoint in same VNet (for Azure Files)],
   [Prometheus], [In same VNet, scrapes port 8081],
 )
+
+== The Data Volume Is a Second Control Path
+
+The admin key above protects `/admin/*`. It is not the only way to change what UTLXe runs.
+
+When persistent storage is enabled, transformations live on an Azure Files share, and the
+engine reads that share on startup. A `.utlar` bundle placed there puts the engine into
+*locked mode* with that bundle as the production transformation set --- see Chapter 12. That is
+the intended deployment path for CI/CD (Chapter 8), and it has a consequence worth stating
+directly:
+
+*Write access to the file share is control over what logic runs on your data.* It is more
+powerful than the admin key, not less, because a bundle on the volume also causes the Admin API
+to refuse changes --- an operator holding the admin key can no longer correct it through the Web
+UI and must go back to the share.
+
+So the storage account key deserves the same handling as the admin key:
+
+- Treat it as a production credential. It is not "just storage access".
+- Scope it narrowly. A CI pipeline that deploys bundles needs it; a dashboard that reads
+  metrics does not.
+- Rotate it when people leave, and when a pipeline that used it is retired.
+- Keep it out of shared variable groups that a wider team can read.
+
+A deployment where the admin key is carefully protected and the storage key sits in a
+team-wide CI variable has secured the front door and left the back one open.
+
+Note that the account key never appears in the Marketplace template as a literal: ARM reads it
+with `listKeys()` at deployment time and hands it to the Container Apps environment. Obtaining
+it requires Azure RBAC on the storage account, so the exposure is to whoever holds that
+permission --- which is a question about your subscription's role assignments, not about UTLXe.
 
 == TLS and HTTPS
 
