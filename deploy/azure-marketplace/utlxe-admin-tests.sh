@@ -146,11 +146,17 @@ printf '%s[1] public endpoints%s\n' "$C_DIM" "$C_OFF"
 req GET /health;      check "/health is 200" "$CODE" "200"
 note "engine state" "$(jqv '.engine.state // .status')"
 req GET /health/live; check "/health/live is 200" "$CODE" "200"
-req GET /metrics;     check "/metrics is 200" "$CODE" "200"
+# $BODY and $CODE hold the LAST response, so a body assertion must follow its own request
+# with nothing in between. Inserting the readiness check here once left the utlxe_up grep
+# reading the readiness JSON, which reported a missing gauge on an engine that was serving it.
+req GET /metrics
+check "/metrics is 200" "$CODE" "200"
+[[ "$BODY" == *"utlxe_up"* ]] && ok "/metrics exposes utlxe_up" || bad "/metrics exposes utlxe_up" "gauge missing"
+
 # EB18/EB19: this runs BEFORE anything is uploaded. A 503 here is the deadlock that made every
 # Azure deployment unreachable, so it is worth asserting on an empty engine specifically.
-req GET /health/ready; check "/health/ready is 200 on an empty engine" "$CODE" "200"
-[[ "$BODY" == *"utlxe_up"* ]] && ok "/metrics exposes utlxe_up" || bad "/metrics exposes utlxe_up" "gauge missing"
+req GET /health/ready
+check "/health/ready is 200 on an empty engine" "$CODE" "200"
 
 # ── 2. admin authentication ─────────────────────────────────────────────────
 # The Admin API is reachable over the public ingress; the key is the only thing in front of
