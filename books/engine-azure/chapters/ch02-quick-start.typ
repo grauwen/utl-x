@@ -62,7 +62,7 @@ only at deployment time, as `MaxNumberOfRegionalEnvironmentsInSubExceeded`.
   - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 12 characters), but a UUID is recommended. The Admin API is reachable over the public internet, so this key is the only thing protecting it.
   - CPU and memory per instance, and the minimum instance count.
   - *Persistent storage* --- enabled by default. Creates a storage account and a file share in the same resource group, mounted at `/utlxe/data`, so uploaded transformations survive container restarts.
-  - *Message source* --- HTTP only, or Azure Service Bus. Choosing Service Bus asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth.
+  - *Message source* --- *Admin API only*, or *Azure Service Bus*. Choosing Service Bus asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth. Choosing Admin API only deploys the engine with no message source: you can upload transformations and run them from the Web UI's test page, but applications cannot post messages to the engine over HTTP --- there is no public data endpoint in this release. See Chapter 5 for the Service Bus setup.
 + Click *Create*. Expect *15 minutes to an hour*, almost all of it Azure provisioning the Container Apps environment rather than starting UTLXe itself. Observed times vary widely for the same template in the same region.
 
 When the deployment finishes, its *Outputs* tab gives you the addresses you need:
