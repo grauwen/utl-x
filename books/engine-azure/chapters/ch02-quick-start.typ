@@ -59,11 +59,21 @@ only at deployment time, as `MaxNumberOfRegionalEnvironmentsInSubExceeded`.
 + Configure the deployment:
   - Resource group and region.
   - Name prefix for the created resources.
-  - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 8 characters), but a UUID is recommended. The Admin API is reachable over the public internet, so this key is the only thing protecting it.
+  - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 12 characters), but a UUID is recommended. The Admin API is reachable over the public internet, so this key is the only thing protecting it.
   - CPU and memory per instance, and the minimum instance count.
   - *Persistent storage* --- enabled by default. Creates a storage account and a file share in the same resource group, mounted at `/utlxe/data`, so uploaded transformations survive container restarts.
   - *Message source* --- HTTP only, or Azure Service Bus. Choosing Service Bus asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth.
-+ Click *Create*. Expect *10 to 20 minutes*, most of it Azure provisioning the Container Apps environment rather than starting UTLXe itself.
++ Click *Create*. Expect *15 minutes to an hour*, almost all of it Azure provisioning the Container Apps environment rather than starting UTLXe itself. Observed times vary widely for the same template in the same region.
+
+When the deployment finishes, its *Outputs* tab gives you the addresses you need:
+
+#table(
+  columns: (auto, 1fr),
+  [`utlxeUrl` / `adminUiUrl`], [The Web UI. Open it in a browser and log in with the admin key.],
+  [`healthUrl`], [Health and readiness, unauthenticated.],
+  [`metricsNote`], [Prometheus metrics, unauthenticated.],
+  [`containerAppName`], [The Container App name, for `az containerapp` commands.],
+)
 
 Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment.
 
