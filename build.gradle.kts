@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "com.glomidco.utlx"
-version = "1.4.2"
+version = "1.4.3"
 
 allprojects {
     repositories {

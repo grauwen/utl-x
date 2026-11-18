@@ -18,7 +18,7 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.2",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
       "metadata": {
         "description": "Docker image to deploy"
       }
@@ -144,7 +144,7 @@
   "resources": [
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
+      "apiVersion": "2026-06-01",
       "name": "environment",
       "properties": {
         "expressionEvaluationOptions": {
@@ -193,7 +193,7 @@
           "resources": [
             {
               "type": "Microsoft.OperationalInsights/workspaces",
-              "apiVersion": "2022-10-01",
+              "apiVersion": "2026-03-01",
               "name": "[format('{0}-logs', parameters('namePrefix'))]",
               "location": "[parameters('location')]",
               "properties": {
@@ -205,15 +205,15 @@
             },
             {
               "type": "Microsoft.App/managedEnvironments",
-              "apiVersion": "2024-03-01",
+              "apiVersion": "2026-07-01",
               "name": "[format('{0}-env', parameters('namePrefix'))]",
               "location": "[parameters('location')]",
               "properties": {
                 "appLogsConfiguration": {
                   "destination": "log-analytics",
                   "logAnalyticsConfiguration": {
-                    "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2022-10-01').customerId]",
-                    "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2022-10-01').primarySharedKey]"
+                    "customerId": "[reference(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2026-03-01').customerId]",
+                    "sharedKey": "[listKeys(resourceId('Microsoft.OperationalInsights/workspaces', format('{0}-logs', parameters('namePrefix'))), '2026-03-01').primarySharedKey]"
                   }
                 }
               },
@@ -224,7 +224,7 @@
             {
               "condition": "[parameters('enablePersistentStorage')]",
               "type": "Microsoft.Storage/storageAccounts",
-              "apiVersion": "2023-05-01",
+              "apiVersion": "2026-09-01",
               "name": "[variables('storageAccountName')]",
               "location": "[parameters('location')]",
               "sku": {
@@ -240,7 +240,7 @@
             {
               "condition": "[parameters('enablePersistentStorage')]",
               "type": "Microsoft.Storage/storageAccounts/fileServices/shares",
-              "apiVersion": "2023-05-01",
+              "apiVersion": "2026-09-01",
               "name": "[format('{0}/default/utlxe-data', variables('storageAccountName'))]",
               "properties": {
                 "shareQuota": 100
@@ -252,12 +252,12 @@
             {
               "condition": "[parameters('enablePersistentStorage')]",
               "type": "Microsoft.App/managedEnvironments/storages",
-              "apiVersion": "2024-03-01",
+              "apiVersion": "2026-07-01",
               "name": "[format('{0}/utlxe-data', variables('envName'))]",
               "properties": {
                 "azureFile": {
                   "accountName": "[variables('storageAccountName')]",
-                  "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2023-05-01').keys[0].value]",
+                  "accountKey": "[listKeys(resourceId('Microsoft.Storage/storageAccounts', variables('storageAccountName')), '2026-09-01').keys[0].value]",
                   "shareName": "utlxe-data",
                   "accessMode": "ReadWrite"
                 }
@@ -291,7 +291,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
+      "apiVersion": "2026-06-01",
       "name": "container-app",
       "properties": {
         "expressionEvaluationOptions": {
@@ -303,7 +303,7 @@
             "value": "[parameters('location')]"
           },
           "environmentId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2025-04-01').outputs.environmentId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2026-06-01').outputs.environmentId.value]"
           },
           "containerImage": {
             "value": "[parameters('containerImage')]"
@@ -370,7 +370,7 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.2",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
               "metadata": {
                 "description": "Docker image to deploy"
               }
@@ -518,7 +518,7 @@
           "resources": [
             {
               "type": "Microsoft.App/containerApps",
-              "apiVersion": "2024-03-01",
+              "apiVersion": "2026-07-01",
               "name": "[format('{0}-app', parameters('namePrefix'))]",
               "location": "[parameters('location')]",
               "properties": {
@@ -580,7 +580,7 @@
                     },
                     {
                       "name": "utlxe-ui",
-                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.2",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.3",
                       "resources": {
                         "cpu": "[json('0.25')]",
                         "memory": "0.5Gi"
@@ -610,7 +610,7 @@
           "outputs": {
             "containerAppUrl": {
               "type": "string",
-              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('{0}-app', parameters('namePrefix'))), '2024-03-01').configuration.ingress.fqdn)]"
+              "value": "[format('https://{0}', reference(resourceId('Microsoft.App/containerApps', format('{0}-app', parameters('namePrefix'))), '2026-07-01').configuration.ingress.fqdn)]"
             },
             "containerAppName": {
               "type": "string",
@@ -626,7 +626,7 @@
     {
       "condition": "[parameters('enableDapr')]",
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2025-04-01",
+      "apiVersion": "2026-06-01",
       "name": "dapr-components",
       "properties": {
         "expressionEvaluationOptions": {
@@ -635,7 +635,7 @@
         "mode": "Incremental",
         "parameters": {
           "environmentId": {
-            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2025-04-01').outputs.environmentId.value]"
+            "value": "[reference(resourceId('Microsoft.Resources/deployments', 'environment'), '2026-06-01').outputs.environmentId.value]"
           },
           "serviceBusConnection": {
             "value": "[parameters('serviceBusConnection')]"
@@ -700,7 +700,7 @@
             {
               "condition": "[parameters('enableServiceBus')]",
               "type": "Microsoft.App/managedEnvironments/daprComponents",
-              "apiVersion": "2024-03-01",
+              "apiVersion": "2026-07-01",
               "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'servicebus-input')]",
               "properties": {
                 "componentType": "bindings.azure.servicebus.queues",
@@ -737,7 +737,7 @@
             {
               "condition": "[parameters('enableServiceBus')]",
               "type": "Microsoft.App/managedEnvironments/daprComponents",
-              "apiVersion": "2024-03-01",
+              "apiVersion": "2026-07-01",
               "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'servicebus-output')]",
               "properties": {
                 "componentType": "bindings.azure.servicebus.topics",
@@ -776,7 +776,7 @@
     },
     {
       "type": "Microsoft.Resources/deployments",
-      "apiVersion": "2021-04-01",
+      "apiVersion": "2026-06-01",
       "name": "pid-44ab35db-fe99-48ef-b182-ffe9d0c919e3-partnercenter",
       "properties": {
         "mode": "Incremental",
@@ -794,21 +794,21 @@
       "metadata": {
         "description": "UTL-X API endpoint URL"
       },
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value]"
     },
     "containerAppName": {
       "type": "string",
       "metadata": {
         "description": "Container App name (for CLI management)"
       },
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppName.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppName.value]"
     },
     "healthUrl": {
       "type": "string",
       "metadata": {
         "description": "Health check URL"
       },
-      "value": "[format('{0}/api/health', reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value)]"
+      "value": "[format('{0}/api/health', reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value)]"
     },
     "metricsNote": {
       "type": "string",
@@ -822,7 +822,7 @@
       "metadata": {
         "description": "Open this URL in your browser to access the UTLXe Admin UI"
       },
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2025-04-01').outputs.containerAppUrl.value]"
+      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppUrl.value]"
     },
     "adminKeyNote": {
       "type": "string",

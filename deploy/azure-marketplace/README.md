@@ -111,7 +111,7 @@ group, asserts the result, and destroys it.
 ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 ./utlxe-acceptance.sh --teardown --dry-run     # what cleanup would remove
 ./utlxe-acceptance.sh --teardown               # remove it
-./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.2   # engine only, NOT the offer
+./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.3   # engine only, NOT the offer
 ```
 
 `--template` is the one that tests what a customer receives. `--image` deploys a bare container
@@ -266,6 +266,52 @@ story work as documented, and cut the slowest step out of every test run. It is 
 shape for a Container Apps marketplace offer. Not in 1.4.1; it is a template change that
 needs its own deployment test.
 
+## Certification: apiVersion recency
+
+The 1.4.2 submission was rejected on 2026-11-18 under **policy 300.4.1.1 — Best Practice
+Tests**, which is Microsoft running the [ARM template test toolkit](https://aka.ms/arm-ttk)
+against `mainTemplate.json`.
+
+The toolkit's *apiVersions Should Be Recent* test fails any apiVersion older than **730 days**
+when a newer GA version exists. Eight of nine resource declarations were over, the worst by
+more than five years:
+
+```
+Microsoft.Resources/deployments            2021-04-01   2057d
+Microsoft.OperationalInsights/workspaces   2022-10-01   1509d
+Microsoft.Storage/storageAccounts          2023-05-01   1297d
+Microsoft.App/*                            2024-03-01    992d
+```
+
+These predate all of the 2026-11 work — the versions were inherited from the existing template
+and carried forward, including into the storage resources added for persistence. The same
+submission would have been rejected as 1.4.0 or 1.4.1.
+
+**`reference()` and `listKeys()` carry their own apiVersion**, separate from the resource
+declaration. Three such expressions kept 2022 and 2024 versions alive after every declaration
+was current — the Log Analytics `customerId`/`sharedKey` lookups and the container app's FQDN
+lookup. Grep the whole file for date strings, not just `"apiVersion"` keys.
+
+**The `2019-04-01` in `$schema` is not an apiVersion** and must not be bumped. It is the
+current deploymentTemplate schema URI and arm-ttk requires it.
+
+### Checking before you submit
+
+Current GA versions come from the subscription, not from memory:
+
+```bash
+az provider show --namespace Microsoft.App \
+  --query "resourceTypes[?resourceType=='containerApps'].apiVersions[0]" -o tsv
+```
+
+Two child types are **not listed** in the provider manifest —
+`Microsoft.App/managedEnvironments/storages` and
+`Microsoft.Storage/storageAccounts/fileServices/shares` — so their versions are taken from the
+parent family, whose listed siblings all move together. That is reasoned rather than verified,
+which is why an acceptance run has to follow any apiVersion change: ARM rejects an unsupported
+version at deployment, and it is better to learn that in fifteen minutes than in a two-day
+certification cycle.
+
 ## Package archive
 
 Partner Center **retains only the latest package**: once a new one is published, previously
@@ -285,8 +331,10 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.4.0.zip` | `9f3791f1afd4118f…` | `utlxe:1.4.0` | `utlxe-ui:1.4.0` | **2026-11-16** | **no — adminKey** |
 | `utlxe-starter-1.4.1.zip` | `5b8522b72384d7f2…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | superseded before submission | yes |
 | `utlxe-professional-1.4.1.zip` | `a8bb00865df6ce76…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | superseded before submission | yes |
-| `utlxe-starter-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | *pending* | yes |
-| `utlxe-professional-1.4.2.zip` | `bfbfad0c0283599d…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | *pending* | yes |
+| `utlxe-starter-1.4.2.zip` | `1bc9c769eab3c07c…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
+| `utlxe-professional-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
+| `utlxe-starter-1.4.3.zip` | `8d97202384f89175…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
+| `utlxe-professional-1.4.3.zip` | `cbc4884d805dd442…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
 
 Full digests:
 
@@ -301,6 +349,8 @@ f195fc75825708f166478e5f144dd713aab06f7907f9a73e7f3e1de47aa7c76e  utlxe-starter-
 a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professional-1.4.1.zip
 1bc9c769eab3c07c1fed0c8f8573b565a28c8da96aab2c097426c6180a1c2dce  utlxe-starter-1.4.2.zip
 23dc175915e14a90ee57690d4dc6f7f3c64276702268a3161e975e22273976bf  utlxe-professional-1.4.2.zip
+8d97202384f891755498af5a48af17237579e2ca819e8a7fda606d598ecc179f  utlxe-starter-1.4.3.zip
+cbc4884d805dd442ef652e1d359a6da6bb8bee1c5efd02973cc6d09f8f9cdf94  utlxe-professional-1.4.3.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
