@@ -43,7 +43,7 @@ code change is invisible to it until you rebuild that jar.
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
 ```
 
-**582 tests** (2026-11-16). Must run from `conformance-suite/`; the runner uses
+**583 tests** (2026-11-19). Must run from `conformance-suite/`; the runner uses
 relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 `language/selectors`.
 
@@ -52,16 +52,20 @@ relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
 execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
-`ASTCompiler`, and what the UTLXe engine runs by default). A green 578/578 says
+`ASTCompiler`, and what the UTLXe engine runs by default). A green 583/583 says
 nothing about two of them:
 
 ```bash
-./gradlew :modules:engine:test       # 1017 tests, incl. ConformanceStrategyParityTest (411)
+./gradlew :modules:engine:test       # 1029 tests, incl. ConformanceStrategyParityTest (417)
 ```
 
-**Four bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
-EB03 (`"5" == 5`), B48 (path steps projecting over a sequence) — each fixed in the
-interpreter while the compiled path silently diverged. B48 is the clearest warning:
+**Five bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
+EB03 (`"5" == 5`), B48 (path steps projecting over a sequence), B63 (a document
+`null` vs the `null` literal) — each a case where the two paths disagreed. Four were
+fixed in the interpreter while the compiled path silently diverged; **B63 ran the
+other way** — the compiled path was right and the interpreter was wrong, so a script
+tested with the CLI misbehaved only in the engine. Do not assume the CLI is the
+reference. B48 is the clearest warning:
 the interpreter-only fix passed core, stdlib, CLI *and* all 571 conformance tests,
 and still returned `null` on COPY and COMPILED where TEMPLATE returned the right
 answer. It turned a loud consistent error into a silent strategy-dependent one.

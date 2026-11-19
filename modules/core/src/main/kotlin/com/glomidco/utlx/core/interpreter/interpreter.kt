@@ -1183,6 +1183,25 @@ class Interpreter(
             left is RuntimeValue.BooleanValue && right is RuntimeValue.BooleanValue -> 
                 left.value == right.value
             left is RuntimeValue.NullValue && right is RuntimeValue.NullValue -> true
+
+            // B63: a null that came from a DOCUMENT is `UDMValue(UDM.Scalar(null))`; the `null`
+            // LITERAL is `NullValue`. Without these two cases they fell through to `else -> false`,
+            // so `$input.x == null` was false for `{"x": null}` while true for an ABSENT `x` — and
+            // `!= null` was correspondingly true, which let a null guard pass and the member access
+            // behind it fail. `typeOf` already reported "null" and `??` already treated it as
+            // nullish, so three notions of null disagreed.
+            //
+            // Written with an explicit `is UDM.Scalar` check rather than `(…as? UDM.Scalar)?.value
+            // == null`: the latter also yields true for an Object or an Array, because `as?` returns
+            // null and `null == null` holds.
+            left is RuntimeValue.UDMValue && right is RuntimeValue.NullValue -> {
+                val udm = left.udm
+                udm is UDM.Scalar && udm.value == null
+            }
+            left is RuntimeValue.NullValue && right is RuntimeValue.UDMValue -> {
+                val udm = right.udm
+                udm is UDM.Scalar && udm.value == null
+            }
             
             // Handle UDM value comparisons
             left is RuntimeValue.UDMValue && right is RuntimeValue.StringValue -> {

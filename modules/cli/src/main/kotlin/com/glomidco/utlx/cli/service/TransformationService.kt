@@ -106,7 +106,21 @@ class TransformationService {
     /**
      * Transformation options
      */
-    data class TransformOptions(
+    /**
+     * Options for [transform].
+     *
+     * Every field has a default, so Kotlin callers are unaffected when a field is added. Java
+     * callers are not: Kotlin default arguments do not exist on the JVM, so a Java `new
+     * TransformOptions(...)` binds to one exact constructor and stops compiling the moment the
+     * parameter list grows. That has now happened twice to an embedding integration — `parseProfile`
+     * and `maxLanguageVersion` turned a 4-argument call into a 6-argument one.
+     *
+     * `@JvmOverloads` emits one constructor per trailing-parameter prefix, so an existing Java call
+     * keeps compiling. **This only holds if new fields are APPENDED.** Inserting a field in the
+     * middle changes the meaning of an existing positional call rather than breaking it, which is
+     * worse than a compile error. Append only.
+     */
+    data class TransformOptions @JvmOverloads constructor(
         val verbose: Boolean = false,
         val pretty: Boolean = true,
         val strictTypes: Boolean = false,

@@ -1,0 +1,80 @@
+name: "null_equality_document_vs_literal"
+category: "core/operators"
+description: "B63: a null read from a document must equal the null literal, exactly as an absent property does"
+tags: ["core", "operators", "null", "equality", "B63"]
+
+input:
+  format: json
+  # A block scalar, so the explicit null reaches the parser as JSON `null` rather than being
+  # round-tripped through the runner's YAML loader first.
+  data: |
+    {
+      "nulled": null,
+      "str": "a",
+      "num": 0,
+      "obj": {"k": 1},
+      "arr": [1, 2]
+    }
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    docNullEqNull:    $input.nulled == null,
+    docNullNeNull:    $input.nulled != null,
+    absentEqNull:     $input.missing == null,
+    absentNeNull:     $input.missing != null,
+    guardProtects:    $input.nulled != null && $input.nulled.x == "y",
+    docNullEqDocNull: $input.nulled == $input.nulled,
+    strNotNull:       $input.str == null,
+    numNotNull:       $input.num == null,
+    objNotNull:       $input.obj == null,
+    arrNotNull:       $input.arr == null,
+    typeAgrees:       typeOf($input.nulled),
+    coalesceAgrees:   $input.nulled ?? "fallback",
+
+    // The literal on the LEFT. `valuesEqual` is written as two one-sided cases, so
+    // operand order is a separate code path, not a symmetry the compiler gives us.
+    litLeftEqDocNull: null == $input.nulled,
+    litLeftNeDocNull: null != $input.nulled,
+    litLeftEqAbsent:  null == $input.missing,
+    litLeftEqObj:     null == $input.obj,
+    litLeftEqStr:     null == $input.str
+  }
+
+expected:
+  format: json
+  data: {
+    "docNullEqNull": true,
+    "docNullNeNull": false,
+    "absentEqNull": true,
+    "absentNeNull": false,
+    "guardProtects": false,
+    "docNullEqDocNull": true,
+    "strNotNull": false,
+    "numNotNull": false,
+    "objNotNull": false,
+    "arrNotNull": false,
+    "typeAgrees": "null",
+    "coalesceAgrees": "fallback",
+    "litLeftEqDocNull": true,
+    "litLeftNeDocNull": false,
+    "litLeftEqAbsent": true,
+    "litLeftEqObj": false,
+    "litLeftEqStr": false
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B63-document-null-is-not-equal-to-the-null-literal.md"]
+  notes:
+    - "docNullEqNull / docNullNeNull are the defect: a document null is UDMValue(UDM.Scalar(null)) while the literal is NullValue, and valuesEqual had no case pairing them."
+    - "absentEqNull / absentNeNull are the regression guard — an ABSENT property already worked, and the asymmetry between the two is what made the bug so hard to see."
+    - "guardProtects is the author-facing case: `x != null && x.y` must not reach the member access. Before the fix this raised \"Cannot access property on non-object UDM type\"."
+    - "strNotNull / numNotNull / objNotNull / arrNotNull are the OVER-reach guard. The tempting one-line fix, `(left.udm as? UDM.Scalar)?.value == null`, returns true for an Object and an Array because `as?` yields null and null == null holds. Without these four, that wrong fix passes."
+    - "numNotNull uses 0 deliberately: 0 is falsy in many languages and must still not be null."
+    - "typeAgrees and coalesceAgrees pin the two subsystems that were ALREADY right, so the three notions of null stay in agreement."
+    - "The litLeft* cases carry the literal on the LEFT. The fix is two one-sided `when` branches -- UDMValue x NullValue and NullValue x UDMValue -- so each operand order is its own code path. The first version of this fixture tested only `$input.nulled == null`, which left the second branch entirely uncovered."
+    - "Via ConformanceStrategyParityTest this fixture runs on TEMPLATE, COPY and COMPILED. That matters here: before the fix the interpreter answered false and the compiled path answered true, so the two strategies disagreed."
