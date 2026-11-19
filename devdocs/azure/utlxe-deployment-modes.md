@@ -321,12 +321,13 @@ multiplication and the per-replica resource ceiling.
 
 **What it buys.**
 - One nginx for the whole deployment instead of one per engine replica.
-- The engine gets the full **4.0 vCPU**. This matters now: the environment is created
-  with no `workloadProfiles`, so it is Consumption-only, which caps a replica at
-  4 vCPU / 8 GiB — and `professional` asks for `4.0 + 0.25 = 4.25 vCPU` and
-  `8.0 + 0.5 = 8.5 GiB` in one replica. Every example in `utlxe-acceptance.sh` uses
-  `./starter/mainTemplate.json`, so the professional plan appears never to have been
-  deployed. **Needs verifying before 1.4.4 is submitted.**
+- The engine gets the full **4.0 vCPU** in a replica of its own. The arithmetic that makes
+  this interesting: the environment is created with no `workloadProfiles`, so it is
+  Consumption-only, and `professional` asks for `4.0 + 0.25 = 4.25 vCPU` and
+  `8.0 + 0.5 = 8.5 GiB` of declared containers in one replica. Whether that exceeds a
+  Consumption replica's ceiling is a platform question this repository cannot answer, and
+  the `daprd` sidecar's accounting (§6.6) is part of it. The offer has been published and
+  deployed, so if `professional` provisions, the answer is simply that it fits — see §13.
 - A second ingress, which is what publishing the data plane requires (EF24).
 - Dapr belongs on the engine app, and the UI app carries no sidecar — see §6.5.
 - No extra quota: one environment, two apps.
@@ -666,9 +667,16 @@ deployment is unable to keep.
 
 ## 13. Open questions
 
-1. **Does `professional` deploy at all?** `4.25 vCPU / 8.5 GiB` per replica against a
-   Consumption cap of 4 / 8. Needs one deployment to settle, and it is a packaging bug
-   in an unsubmitted release if it fails.
+1. **Does a `professional` replica fit under the Consumption ceiling?** It declares
+   `4.25 vCPU / 8.5 GiB` of containers (engine 4.0/8.0 plus the 0.25/0.5 UI sidecar). The
+   question is about the platform limit, not about whether anyone has tried: the offer is
+   published and has been deployed from the portal, so a successful `professional`
+   provisioning settles it in the affirmative and also answers §6.6. Recorded here because
+   nothing in this repository captures which plan a given deployment used — the acceptance
+   script takes `--template <path>` and does not log the plan, so deployment history lives
+   only in the subscription. **An earlier revision of this document inferred from the
+   script's worked examples that `professional` had never been deployed. That was an
+   unfounded claim from absent evidence and has been removed.**
 2. **Should `production` default to `minReplicas: 2` or `3`?** Two survives a node
    loss; during a revision update it can briefly be one.
 3. **Is `custom` worth exposing in the Marketplace wizard**, or should it stay
