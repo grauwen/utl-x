@@ -52,13 +52,21 @@ So:
 ```
                      |  1 replica            |  N replicas
   -------------------+-----------------------+---------------------------
-   open   (no .utlar)|  A  sound             |  C  UNSOUND - ships default
-   locked (a .utlar) |  B' sound, pointless  |  B  sound
+   open   (no .utlar)|  A  sound - SHIPPED   |  C  UNSOUND - unreachable
+   locked (a .utlar) |  B' sound, pointless  |  B  sound, not yet declarable
 ```
 
-The shipped default — `1 … 5` with a share that ARM creates **empty**, hence open
-mode — lands in C. It is the only quadrant that can give two different answers to the
-same question.
+Until 1.4.4 the shipped default was `1 … 5` with a share that ARM creates **empty**,
+hence open mode — which landed in **C**, the only quadrant that can give two different
+answers to the same question.
+
+**As of 1.4.4 the offering ships shape A.** `maxReplicas` is pinned with
+`defaultValue: 1, minValue: 1, maxValue: 1` in both plans and both wizards, and
+`minReplicas` is capped at 1 so it cannot exceed the maximum. The right-hand column is
+therefore unreachable from the Marketplace *and* from a direct ARM deployment of these
+templates. Shapes B and D stay documented here because the pin is a deliberate
+simplification, not a verdict on them — lifting it is gated on §9's `--bundle-mode`,
+without which N replicas falls back into C rather than reaching B.
 
 ---
 
@@ -205,7 +213,7 @@ This is the only sound multi-replica shape today.
 
 ---
 
-## 4. Shape C — one app, N replicas, open mode *(the shipped default)*
+## 4. Shape C — one app, N replicas, open mode *(unreachable as of 1.4.4; was the default)*
 
 ```
                             Internet
@@ -351,7 +359,7 @@ to address individually.
 | largest single payload   | one heap           | one heap               | one heap            | **larger heap**     |
 | data plane publishable   | no                 | no                     | no                  | **yes**             |
 | config change            | live, via console  | new `.utlar` + restart | undefined           | new `.utlar` + restart |
-| available today          | needs `maxReplicas: 1` | needs a `.utlar`   | **this is default** | needs EF24          |
+| available today          | **shipped (1.4.4)**    | needs a `.utlar` *and* §9 | **unreachable** | needs EF24          |
 
 ---
 
@@ -638,10 +646,13 @@ Three current inaccuracies in the listing resolve as a side effect:
 
 ## 12. Scope and sequencing
 
-| | work | risk |
+| | work | status |
 |---|---|---|
-| 1.4.4 | text only: plan descriptions, instance counts, drop `--workers` from `engineArgs` | none beyond rebuilding the zips |
-| 1.4.4 | Dapr `scopes` -> `[format('{0}-app', parameters('namePrefix'))]` in both plans (§6.4) | one expression; removes a latent break |
+| 1.4.4 | plan descriptions and instance counts rewritten in both wizards; `--workers` dropped from `engineArgs` and the parameter removed from both templates and both wizards | **done** 2026-11-19 |
+| 1.4.4 | Dapr `scopes` -> `[format('{0}-app', parameters('namePrefix'))]` in both plans (§6.4) | **done** — latent break removed |
+| 1.4.4 | `maxReplicas` pinned to 1 and `minReplicas` capped at 1, in both templates and both wizards; professional's `maxReplicas` slider removed | **done** — shape C is now unreachable |
+| 1.4.4 | `build-zips.sh` gains two guards: no `workers` mention, and no hardcoded Dapr scope. Both verified to fail the build when the defect is reintroduced | **done** |
+| 1.4.4 | `books/engine-azure` ch02 / ch06 / ch10 / appendix-b corrected; ch06 gains "Which concurrency knob applies" | **done** — 141 pages |
 | 1.5.0 | `--bundle-mode` + readiness enforcement + tests | behaviour change at startup and on the readiness path |
 | 1.5.0 | `deploymentMode` in both templates and both wizards | the plan-equivalence guard keeps the two in step |
 | 1.5.0 | ch10 gains the §5 table and drops its implicit assumption of shape C | documentation only |

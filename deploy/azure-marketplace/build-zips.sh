@@ -59,6 +59,37 @@ $stale"
     fail "$plan/mainTemplate.json pins $(tag_of "$plan"), not ${VERSION}"
 done
 
+# ── guards for two traps removed in 1.4.4 ──
+# Both were invisible for several releases, and both are one careless edit away from returning.
+python3 - "${PLANS[@]}" <<'PY0'
+import json, sys
+
+bad = False
+for plan in sys.argv[1:]:
+    raw = open(f"{plan}/mainTemplate.json").read()
+    d = json.loads(raw)
+
+    # (a) --workers is not read in HTTP mode. Passing it is how the plans came to be sold on a
+    #     number that controls nothing. The parameter is gone; keep it gone.
+    if "workers" in raw:
+        print(f"ERROR: {plan} mentions 'workers'. --workers is read only by StdioProtoTransport;"
+              f" the offering runs --mode http, where it has no effect.", file=sys.stderr)
+        bad = True
+
+    # (b) Dapr component `scopes` must track the appId, which is format('{0}-app', namePrefix).
+    #     A literal here matches only while namePrefix happens to be its default: any other prefix
+    #     leaves the components scoped to an appId that does not exist, so the input binding never
+    #     delivers and the output binding fails -- silently, at runtime.
+    for res in json.dumps(d).split('"scopes":')[1:]:
+        scope = res.split(']')[0] + ']'
+        if "parameters('namePrefix')" not in scope:
+            print(f"ERROR: {plan} has a hardcoded Dapr scope {scope.strip()};"
+                  f" use \"[format('{{0}}-app', parameters('namePrefix'))]\"", file=sys.stderr)
+            bad = True
+
+sys.exit(1 if bad else 0)
+PY0
+
 # ── the drift guard: the plans must not be copies of each other ──
 python3 - "${PLANS[@]}" <<'PY'
 import json, sys
@@ -67,11 +98,14 @@ plans = sys.argv[1:]
 vals  = {}
 for p in plans:
     d = json.load(open(f"{p}/mainTemplate.json"))["parameters"]
-    vals[p] = {k: d[k]["defaultValue"] for k in ("workers", "cpuCores", "memoryGi")}
+    vals[p] = {k: d[k]["defaultValue"] for k in ("cpuCores", "memoryGi")}
 
+# `workers` used to appear here. It was removed from the templates in 1.4.4: the offering runs
+# `--mode http`, and --workers is read only by StdioProtoTransport, so the 8-vs-32 difference this
+# guard was checking controlled nothing while the listing sold it as the difference between plans.
 expected = {
-    "starter":      {"workers": 8,  "cpuCores": "2.0", "memoryGi": "4.0"},
-    "professional": {"workers": 32, "cpuCores": "4.0", "memoryGi": "8.0"},
+    "starter":      {"cpuCores": "2.0", "memoryGi": "4.0"},
+    "professional": {"cpuCores": "4.0", "memoryGi": "8.0"},
 }
 
 bad = False
@@ -103,7 +137,7 @@ PY
 python3 - "${PLANS[@]}" <<'PY2'
 import json, sys
 
-SIZING = {"workers", "cpuCores", "memoryGi", "maxReplicas"}
+SIZING = {"cpuCores", "memoryGi", "maxReplicas"}
 plans = sys.argv[1:]
 if len(plans) != 2:
     sys.exit(0)   # only meaningful for a two-plan offer

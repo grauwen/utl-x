@@ -393,8 +393,8 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
 | `utlxe-starter-1.4.3.zip` | `cf6f6a47d416e506…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
 | `utlxe-professional-1.4.3.zip` | `65e051638b1cb14b…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
-| `utlxe-starter-1.4.4.zip` | `7fa247fcae892d10…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending* | yes |
-| `utlxe-professional-1.4.4.zip` | `6d5d96bcec6eb2f3…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending* | yes |
+| `utlxe-starter-1.4.4.zip` | `f3022c1819213ba3…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
+| `utlxe-professional-1.4.4.zip` | `1900a3120bca5908…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
 
 Full digests:
 
@@ -411,8 +411,8 @@ a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professi
 23dc175915e14a90ee57690d4dc6f7f3c64276702268a3161e975e22273976bf  utlxe-professional-1.4.2.zip
 cf6f6a47d416e506cad6382e88faff771fd9ad6f0e8e1d3e4b8d4eb4cbc144e1  utlxe-starter-1.4.3.zip
 65e051638b1cb14b61677f7c41567dc96313c2fcdf4ac06d4c80bde1462b1b4d  utlxe-professional-1.4.3.zip
-7fa247fcae892d10dece5abd8746f1f42cba57d53018cd4bd327086324e9f334  utlxe-starter-1.4.4.zip
-6d5d96bcec6eb2f3177ad903b8861dcff1f3bd47b24081341e09a6e1d728465c  utlxe-professional-1.4.4.zip
+f3022c1819213ba38966f9141674a328377e4b00a98e931e9193194544df0cfe  utlxe-starter-1.4.4.zip
+1900a3120bca590869232f77bc801a33434c5bc772bb1e79f1435ff65635f480  utlxe-professional-1.4.4.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
@@ -494,9 +494,15 @@ what a customer actually gets**, and the two disagree:
 Worker counts agree (8 and 32) — but see **Concurrency** below: that figure does not reach
 anything in the deployed configuration. This has been shipped behaviour since 1.2.1 and is
 recorded here rather than changed, because it determines what customers are billed for and
-what the offer listing promises. `books/engine-azure` ch02 documents a third combination again
-— Starter *(1 vCPU, 4 GB)*, Professional *(2 vCPU, 8 GB)* — taking vCPU from the wizard and
-memory from the template.
+what the offer listing promises.
+
+`books/engine-azure` ch02 was previously recorded here as documenting a *third* combination. It does
+not: it states the wizard's defaults and selectable ranges — Starter *(1 vCPU / 2 GB, up to
+2 / 4)*, Professional *(2 / 4, up to 4 / 8)* — which is exactly what the `createUiDefinition.json`
+dropdowns offer, and the right thing for a reader following the Marketplace path. Verified against
+both wizards 2026-11-19. The book's error was elsewhere, in calling the plans "8 worker threads"
+and "32 worker threads"; that is corrected, and ch06 now carries the three concurrency knobs and
+which one applies where.
 
 The wizard also hardcodes replica counts rather than defaulting them: `starter` emits
 `maxReplicas: 2`, `professional` reads it from a slider, and both templates default to `5`

@@ -53,18 +53,18 @@
       "type": "int",
       "defaultValue": 1,
       "minValue": 0,
-      "maxValue": 10,
+      "maxValue": 1,
       "metadata": {
-        "description": "Minimum instances (0 = scale to zero when idle, 1 = always on)"
+        "description": "Minimum instances. 1 keeps the single instance always on; 0 lets it scale to zero when idle, at the cost of a cold start (JVM boot plus bundle compile) on the first message. Capped at 1 because maxReplicas is pinned to 1 -- a minimum above the maximum is an ARM deployment error."
       }
     },
     "maxReplicas": {
       "type": "int",
-      "defaultValue": 5,
+      "defaultValue": 1,
       "minValue": 1,
-      "maxValue": 30,
+      "maxValue": 1,
       "metadata": {
-        "description": "Maximum instances for auto-scaling"
+        "description": "Maximum instances. Pinned to 1: more than one replica is only sound with a fixed .utlar bundle, because every replica reads the data volume once at startup with no watcher and no coordination between them. Declaring that mode is not yet supported. See devdocs/azure/utlxe-deployment-modes.md."
       }
     },
     "namePrefix": {
@@ -112,19 +112,6 @@
       ],
       "metadata": {
         "description": "Scaling mode: http (default), servicebus, or both"
-      }
-    },
-    "workers": {
-      "type": "int",
-      "defaultValue": 8,
-      "allowedValues": [
-        8,
-        32,
-        64,
-        128
-      ],
-      "metadata": {
-        "description": "Worker threads for transformation processing (determines tier: Starter=8, Professional=32, Enterprise=64+)"
       }
     },
     "adminKey": {
@@ -335,9 +322,6 @@
           "scalingMode": {
             "value": "[parameters('scalingMode')]"
           },
-          "workers": {
-            "value": "[parameters('workers')]"
-          },
           "adminKey": {
             "value": "[parameters('adminKey')]"
           },
@@ -399,14 +383,18 @@
               "type": "int",
               "defaultValue": 1,
               "metadata": {
-                "description": "Minimum number of instances (0 = scale to zero)"
-              }
+                "description": "Minimum instances. 1 keeps the single instance always on; 0 lets it scale to zero when idle, at the cost of a cold start (JVM boot plus bundle compile) on the first message. Capped at 1 because maxReplicas is pinned to 1 -- a minimum above the maximum is an ARM deployment error."
+              },
+              "maxValue": 1,
+              "minValue": 0
             },
             "maxReplicas": {
               "type": "int",
-              "defaultValue": 5,
+              "defaultValue": 1,
+              "minValue": 1,
+              "maxValue": 1,
               "metadata": {
-                "description": "Maximum number of instances"
+                "description": "Maximum instances. Pinned to 1: more than one replica is only sound with a fixed .utlar bundle, because every replica reads the data volume once at startup with no watcher and no coordination between them. Declaring that mode is not yet supported. See devdocs/azure/utlxe-deployment-modes.md."
               }
             },
             "namePrefix": {
@@ -447,19 +435,6 @@
               ],
               "metadata": {
                 "description": "Scaling mode: http, servicebus, or both"
-              }
-            },
-            "workers": {
-              "type": "int",
-              "defaultValue": 8,
-              "allowedValues": [
-                8,
-                32,
-                64,
-                128
-              ],
-              "metadata": {
-                "description": "Worker threads for transformation processing (Starter: 8, Professional: 32, Enterprise: 64+)"
               }
             },
             "enablePersistentStorage": {
@@ -513,7 +488,7 @@
             "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]",
             "appVolumes": "[if(parameters('enablePersistentStorage'), createArray(createObject('name', 'utlxe-data', 'storageType', 'AzureFile', 'storageName', 'utlxe-data')), createArray())]",
             "engineVolumeMounts": "[if(parameters('enablePersistentStorage'), createArray(createObject('volumeName', 'utlxe-data', 'mountPath', '/utlxe/data')), createArray())]",
-            "engineArgs": "[if(parameters('enablePersistentStorage'), createArray('--mode', 'http', '--workers', string(parameters('workers')), '--data-dir', '/utlxe/data'), createArray('--mode', 'http', '--workers', string(parameters('workers'))))]"
+            "engineArgs": "[if(parameters('enablePersistentStorage'), createArray('--mode','http','--data-dir','/utlxe/data'), createArray('--mode','http'))]"
           },
           "resources": [
             {
@@ -730,7 +705,7 @@
                   }
                 ],
                 "scopes": [
-                  "utlxe-app"
+                  "[format('{0}-app', parameters('namePrefix'))]"
                 ]
               }
             },
@@ -763,7 +738,7 @@
                   }
                 ],
                 "scopes": [
-                  "utlxe-app"
+                  "[format('{0}-app', parameters('namePrefix'))]"
                 ]
               }
             }
