@@ -77,23 +77,39 @@ where you read it, which is worse than a gap.
 ## A gap is usually a branch, not a deletion
 
 Prefixes and numbers were introduced over time, so a branch carries only what its history contains.
-Measured counts:
+Measured 2026-11-19 (`IB` counted under `devdocs/bugs-fixed/`, the rest under `docs/bugs-fixed/`):
 
 | branch | B | EB | CB | IB | VB | WB |
 |---|---|---|---|---|---|---|
-| `main` | 27 | 0 | 0 | 0 | 0 | 0 |
-| `development` | 26 | 2 | 0 | 7 | 0 | 0 |
-| this feature branch | 39 | 16 | 3 | 7 | 7 | 3 |
+| `main` | 23 | 0 | 0 | 0 | 0 | 0 |
+| `development` | 58 | 20 | 7 | 8 | 7 | 3 |
+| `feature/utlx-1.1-semantic-validation` | 58 | 20 | 7 | 8 | 7 | 3 |
 
-So **B02–B08 are missing from feature branches but present on `main`** — they were added there by
-`ca735747` ("major reshuffle of doc files"), which is not an ancestor of the feature line. Nothing
-was deleted. Likewise the `EB`, `CB` and `VB` prefixes are newer than `main`, so a reader standing
-on `main` will not see them at all.
+The feature line is now a **superset** of `main` for every prefix: nothing present on `main` is
+missing from it. An earlier note here claimed B02–B08 were missing from feature branches — that
+was true when the branch had not caught up with `ca735747` ("major reshuffle of doc files") and is
+no longer. The asymmetry runs the other way: `main` has none of the `EB`, `CB`, `VB` or `WB`
+prefixes, and 35 of the `B` reports, so a reader standing on `main` will not see them at all.
 
-Before concluding that a number is free, check the other branches:
+Numbers can still be in flight in an uncommitted working tree — EB21 was written before this table
+was last measured and is not counted above. So before concluding that a number is free, check both
+the other branches and your own tree:
 
 ```bash
 git ls-tree -r --name-only main -- docs/bugs-fixed/ | sed 's|.*/||' | grep -E '^B[0-9]+'
+ls docs/bugs-fixed/ | grep -oE '^EB[0-9]+' | sort -u | tail -1
+```
+
+Regenerate the table rather than editing it by hand:
+
+```bash
+for ref in main development HEAD; do
+  printf '%-40s' "$ref"
+  for p in B EB CB; do printf ' %s=%s' "$p" \
+    "$(git ls-tree -r --name-only $ref -- docs/bugs-fixed/ | sed 's|.*/||' | grep -cE "^${p}[0-9]+-")"; done
+  printf ' IB=%s\n' \
+    "$(git ls-tree -r --name-only $ref -- devdocs/bugs-fixed/ | sed 's|.*/||' | grep -cE '^IB[0-9]+-')"
+done
 ```
 
 ## What a report should contain

@@ -8,7 +8,7 @@ themselves: the wizard provisions a Container App, and the Container App pulls f
 |---|---|
 | Offer id | `44ab35db-fe99-48ef-b182-ffe9d0c919e3` |
 | Publisher id | `glomidcobv1777133923122` |
-| Plans | `starter` (8 workers), `professional` (32 workers) |
+| Plans | `starter` (2.0 vCPU / 4 GiB), `professional` (4.0 vCPU / 8 GiB) — see **Concurrency** below |
 | Engine image | `ghcr.io/utlx-lang/utlxe` |
 | Admin UI image | `ghcr.io/utlx-lang/utlxe-ui` |
 
@@ -491,8 +491,95 @@ what a customer actually gets**, and the two disagree:
 | starter | 1.0 core, 2 GB | 2.0 cores, 4 GB |
 | professional | 2.0 cores, 4 GB | 4.0 cores, 8 GB |
 
-Worker counts agree (8 and 32). This has been shipped behaviour since 1.2.1 and is recorded
-here rather than changed, because it determines what customers are billed for and what the
-offer listing promises. `books/engine-azure` ch02 documents a third combination again —
-Starter *(1 vCPU, 4 GB)*, Professional *(2 vCPU, 8 GB)* — taking vCPU from the wizard and
+Worker counts agree (8 and 32) — but see **Concurrency** below: that figure does not reach
+anything in the deployed configuration. This has been shipped behaviour since 1.2.1 and is
+recorded here rather than changed, because it determines what customers are billed for and
+what the offer listing promises. `books/engine-azure` ch02 documents a third combination again
+— Starter *(1 vCPU, 4 GB)*, Professional *(2 vCPU, 8 GB)* — taking vCPU from the wizard and
 memory from the template.
+
+The wizard also hardcodes replica counts rather than defaulting them: `starter` emits
+`maxReplicas: 2`, `professional` reads it from a slider, and both templates default to `5`
+with `maxValue: 30`. So the same plan scales differently depending on whether it was deployed
+from the Marketplace or straight from ARM.
+
+
+---
+
+## Concurrency — what actually differs between the plans
+
+The plans are sold on worker counts: Starter 8, Professional 32. **Neither figure reaches
+anything in the deployed configuration.** Three separate mechanisms are involved and it is
+worth being precise about which is which, because two of them are inert and the third is
+identical across both plans.
+
+### `--workers` is passed, parsed, and never read
+
+`engineArgs` sends it on every deployment:
+
+```
+--mode http --workers 8          (starter)
+--mode http --workers 32         (professional)
+```
+
+`Main.kt` parses it, and then reads the value in exactly two places — both
+`StdioProtoTransport` (`Main.kt:222`, `Main.kt:237`). `HttpTransport`'s constructor takes
+`engine, port, host, maxRequestBodyBytes`; there is no workers parameter to pass it to. The
+offering runs `--mode http`, so the flag has no effect and nothing logs a warning.
+
+That is defensible transport design rather than a transport bug: `StdioProtoTransport` reads
+length-framed protobuf off a single stdin stream and must build its own pool to fan requests
+out, whereas Netty already supplies one. The bug is passing a stdio-mode flag to an HTTP-mode
+process, and then selling the number.
+
+Note the wizard does not expose it either — `createUiDefinition.json` emits `"workers": 8`
+and `"workers": 32` as literals, so a customer cannot change it even if it worked.
+
+### `maxConcurrentHandlers` is the real knob in Service Bus mode — and it is 8 in both plans
+
+The Dapr input binding carries the setting that actually decides how many messages a replica
+processes at once:
+
+| plan | `maxConcurrentHandlers` |
+|---|---|
+| starter | 8 |
+| professional | 8 |
+
+Per replica, Professional processes exactly as many concurrent messages as Starter. It has
+twice the CPU and twice the heap to do each one with, which is a real difference — but not the
+4× concurrency the listing implies.
+
+Scaling out does multiply it, because Dapr injects one `daprd` sidecar per replica and N
+sidecars on one queue are competing consumers: five replicas × 8 handlers is up to 40 messages
+in flight. That is a replica-count effect, not a plan effect.
+
+**`build-zips.sh` currently prevents fixing this.** The plan-equivalence guard normalises only
+`workers`, `cpuCores`, `memoryGi` and `maxReplicas` before diffing the two templates, so any
+difference in `maxConcurrentHandlers` fails the build. If the plans should differ here, the
+key has to join the `SIZING` set in that guard first.
+
+### `maxConcurrent` is per transformation and defaults to unlimited
+
+`TransformConfig.maxConcurrent` (EF21) is the only in-engine throttle on the HTTP path, and
+`0` means unlimited (`TransformConfig.kt:15`). Neither template sets it, so in-flight work is
+bounded only by CPU. It is settable per transformation via `transform.yaml` or
+`POST /admin/transformations/{name}/config`.
+
+### So the honest difference
+
+| | starter | professional |
+|---|---|---|
+| engine CPU | 2.0 vCPU | 4.0 vCPU |
+| engine memory | 4.0 GiB | 8.0 GiB |
+| JVM heap (`jvmHeapMb`) | 3072 MB | 6144 MB |
+| HTTP concurrency | Netty default, off cgroup CPU | same mechanism, more CPU |
+| Service Bus concurrency | 8 handlers/replica | **8 handlers/replica** |
+| `--workers` | inert | inert |
+
+Nothing is throttled to 8 or 32, and no customer gets less than they paid for — Professional
+genuinely is twice the machine. The defect is in the labelling, and in a release that has not
+yet been submitted it is still cheap to fix.
+
+The deployment shapes, the Dapr sidecar topology and a proposed `deploymentMode` parameter are
+written up in `devdocs/azure/utlxe-deployment-modes.md` (§6.3 for this finding). `devdocs/` is
+not merged to `main`, so that is a path rather than a link.
