@@ -390,6 +390,51 @@ HTTP is connection-based --- the 200 response goes back on the *same TCP connect
 
 If message ordering matters, set `maxConcurrentHandlers: 1` in the Dapr input component metadata, or use Service Bus sessions. But that is a Service Bus concern, not a UTLXe or Dapr correlation concern.
 
+===== One engine, several transports
+
+UTLXe is a single JVM process holding a single `UtlxEngine` and a single transformation
+registry. What it is *not* is a single protocol: `Main` builds a list of transports and hands
+that list to `engine.start(transports)`, so one process can serve several at once.
+
+```
+utlxe --mode http                             HTTP data plane + admin API
+utlxe --mode http        --also-grpc          HTTP + gRPC SDK (hybrid)
+utlxe --mode stdio-proto --also-http          embedded subprocess + admin API
+utlxe --mode grpc        --also-stdio         gRPC + embedded subprocess
+```
+
+Every transport shares the same registry, so a transformation uploaded through the Admin API is
+immediately visible to all of them --- there is no per-transport state and no synchronisation to
+arrange. The health and admin listener on 8081 is separate again, a Ktor server inside
+`HealthEndpoint`, and runs regardless of which transports were asked for.
+
+This is worth knowing for two reasons. It explains why `--workers` applies to one transport and
+not the others (below). And it sets the limit of what multiple transports can buy you on
+Container Apps: a container app publishes *one* ingress on *one* `targetPort`, so starting gRPC
+on 9090 beside HTTP on 8085 gives you two listeners inside the replica and still only one of
+them reachable from outside. The Marketplace offering publishes 8088 --- the admin UI's nginx
+--- and starts no `--also-*` transport at all.
+
+===== Which concurrency knob applies
+
+Three settings carry the word "concurrency" or "workers" and only one of them governs the Service Bus path. Confusing them is easy and has already produced a wrong plan description in the Marketplace listing.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Setting*], [*Where it lives*], [*What it governs*],
+  [`maxConcurrentHandlers`], [Dapr input component metadata], [*The Service Bus path.* How many messages one replica's `daprd` delivers to the engine at once --- in-flight messages inside a single engine process, not instances of the engine. The Marketplace templates set it to `8` --- in *both* plans.],
+  [`maxConcurrent`], [`transform.yaml`, or `POST /admin/transformations/{name}/config`], [Per-transformation ceiling on in-flight executions, across every transport. `0` means unlimited, which is the default and what the Marketplace templates leave it at. Exceeding it returns 503.],
+  [`--workers`], [engine command line], [Read only where a *stdio-proto* transport runs --- as `--mode stdio-proto`, or beside another mode via `--also-stdio`. It sizes the pool `StdioProtoTransport` builds to fan requests off one stdin stream. `HttpTransport` and `GrpcTransport` have no such parameter; each request arrives on its own socket and Netty supplies the pool. The Marketplace templates run `--mode http` with no `--also-*`, so nothing reads it there --- and since 1.4.4 they no longer pass it.],
+)
+
+Two consequences worth stating plainly.
+
+*Professional and Starter process the same number of concurrent messages.* Both plans run *one* UTLXe instance --- the Marketplace templates pin maximum instances to 1 --- and both ship `maxConcurrentHandlers: 8`. So eight messages are in flight at once on either plan. Professional has twice the CPU and twice the heap to do each one with, which is a real difference in how fast and how large, but not in how many.
+
+*On the Marketplace plans the handler count is the whole story.* With one instance there is one `daprd`, so eight is the ceiling. Raising CPU and memory makes each of those eight faster and lets each message be larger; it does not make them nine.
+
+*Scaling out would multiply it --- but not on these plans.* Dapr injects one `daprd` sidecar per replica, and N sidecars on one queue are competing consumers, so five replicas at eight handlers each would be up to 40 messages in flight. That applies to a *custom* deployment of the engine, not to the Marketplace offering, which ships a single instance deliberately; Chapter 10 explains why, and what locked mode has to do with it.
+
 ==== Message tracing and correlation
 
 In production, you need to trace which input message produced which output message. UTLXe preserves the following metadata across the transformation:

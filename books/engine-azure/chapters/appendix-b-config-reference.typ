@@ -25,7 +25,7 @@ The engine configuration file is optional. If present in the bundle, it override
   columns: (auto, auto, 1fr),
   [*Field*], [*Default*], [*Description*],
   [`maxInputSize`], [`5MB`], [Engine-level maximum message size. Messages larger than this are rejected with 413. Can also be set per transformation.],
-  [`workers`], [CPU cores], [Worker thread pool size.],
+  [`workers`], [CPU cores], [Worker thread pool size --- read *only where a stdio-proto transport runs*, whether as `--mode stdio-proto` or alongside another mode via `--also-stdio`. It sizes the pool that `StdioProtoTransport` builds to fan requests off a single stdin stream, and with it the back-pressure budget (`workers × 128` pending responses). `HttpTransport` and `GrpcTransport` take no such parameter --- each request arrives on its own socket and Netty supplies the pool. So `--mode http` alone ignores `--workers`; `--mode http --also-stdio` does not. The Marketplace templates pass neither.],
   [`healthPort`], [`8081`], [Health + admin API port.],
   [`dataPort`], [`8085`], [Data plane port.],
   [`grpcPort`], [`9090`], [gRPC port (when `--also-grpc` is used).],

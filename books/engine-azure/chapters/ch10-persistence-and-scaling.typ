@@ -162,7 +162,7 @@ Each transformation runs under an execution strategy, set with `strategy:` in `t
   [`AUTO`], [Varies], [Safe default. Picks `COPY` when an output schema is present, otherwise `TEMPLATE`.],
 )
 
-Throughput figures are for a single container (8 workers, 1 vCPU) on ~1KB JSON-to-JSON messages; larger or XML payloads scale the numbers down proportionally. For the engine mechanics behind these strategies, see Chapter 32 (Engine Lifecycle) in _UTL-X: One Language, All Formats_.
+Throughput figures are for a single container at 1 vCPU on ~1KB JSON-to-JSON messages; larger or XML payloads scale the numbers down proportionally. For the engine mechanics behind these strategies, see Chapter 32 (Engine Lifecycle) in _UTL-X: One Language, All Formats_.
 
 === Compilation Is Eager --- No First-Message Penalty
 
@@ -178,7 +178,20 @@ The admin upload response reports the compile time directly, e.g. `"compiled_in_
 
 == Horizontal Scaling
 
-For higher throughput, deploy multiple container replicas behind the Azure load balancer. Each replica runs an independent UTLXe instance.
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *This section is about custom deployments, not the Marketplace plans.* Both
+  Marketplace plans ship a *single* instance: `maxReplicas` is pinned to 1 in the
+  templates and the wizard offers no choice about it. The reason is the split view
+  described below --- with no file watcher and no coordination between replicas, open
+  mode is only sound on one engine, and the mode that makes a scaled-out estate sound
+  (locked, from a `.utlar` bundle) cannot yet be *declared* at deployment time, only
+  inferred from what happens to be on the share at startup.
+
+  So read this section if you are deploying the engine yourself --- Terraform, your own
+  ARM template, AKS --- or to understand what the pin is protecting you from.
+]
+
+For higher throughput on a custom deployment, run multiple container replicas behind the Azure load balancer. Each replica runs an independent UTLXe instance.
 
 If using persistent storage, all replicas mount the same Azure File Share --- but *sharing the files is not the same as sharing the state*. Each replica reads `/utlxe/data/` once, at startup, and holds its transformations in memory from then on. There is no file watcher and no coordination between replicas.
 
@@ -200,7 +213,7 @@ bundle on the share is read by every replica at startup, including replicas KEDA
 so all of them are identical by construction and the Admin API refuses the runtime changes that
 would break that. Operator-managed (open) mode is sound on a *single* replica --- set both
 minimum and maximum instances to 1 --- and the UI will then always show you the one engine that
-exists.
+exists. That is exactly what the Marketplace plans do, and why they do it.
 
 If you must upload at runtime on a scaled-out deployment, restart the app afterwards so every
 replica re-reads the share:

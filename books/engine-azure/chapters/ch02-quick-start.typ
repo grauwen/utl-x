@@ -54,8 +54,8 @@ only at deployment time, as `MaxNumberOfRegionalEnvironmentsInSubExceeded`.
 
 + Open the Azure Portal and search for "UTLXe" in the Marketplace.
 + Select your plan. The plans differ only in how much load they carry:
-  - *Starter* --- 8 worker threads. Defaults to 1 vCPU and 2 GB, selectable up to 2 vCPU and 4 GB. Development and light production workloads.
-  - *Professional* --- 32 worker threads. Defaults to 2 vCPU and 4 GB, selectable up to 4 vCPU and 8 GB. Production workloads with higher throughput.
+  - *Starter* --- defaults to 1 vCPU and 2 GB, selectable up to 2 vCPU and 4 GB. Development and light production workloads.
+  - *Professional* --- defaults to 2 vCPU and 4 GB, selectable up to 4 vCPU and 8 GB. Production workloads with higher throughput.
 + Configure the deployment:
   - Resource group and region.
   - Name prefix for the created resources.
@@ -76,6 +76,26 @@ When the deployment finishes, its *Outputs* tab gives you the addresses you need
 )
 
 Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment.
+
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *What the plans actually differ in.* vCPU and memory, and nothing else.
+
+  Both plans run *one* UTLXe instance. Neither plan gives you more instances, and the plan you pick
+  does not change how many messages that instance works on at once: on the Service Bus path that is
+  the Dapr input component's `maxConcurrentHandlers` --- how many messages are in flight *inside the
+  single engine process*, handled by its own threads --- and the templates set it to `8` in *both*
+  plans. On the HTTP path it is bounded by the container's CPU allocation.
+
+  What Professional buys is a bigger machine for the same eight messages: twice the CPU, so each one
+  is transformed faster, and twice the JVM heap, so each one may be larger. The memory dropdown in
+  the wizard says so directly --- 2 GB for messages up to 200 KB, 8 GB for 1 MB and above. It is a
+  difference in message *size* and *speed*, not in message *count*.
+
+  Earlier editions of this chapter described the plans as "8 worker threads" and "32 worker
+  threads". Those figures come from the `workers` parameter, which the offering passes to an engine
+  running in HTTP mode, where it is not read at all. Chapter 6 (Architecture) sets out the three
+  concurrency knobs and which one applies where.
+]
 
 == Running Azure CLI Commands
 
