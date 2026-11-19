@@ -111,7 +111,7 @@ group, asserts the result, and destroys it.
 ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 ./utlxe-acceptance.sh --teardown --dry-run     # what cleanup would remove
 ./utlxe-acceptance.sh --teardown               # remove it
-./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.3   # engine only, NOT the offer
+./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.4   # engine only, NOT the offer
 ```
 
 `--template` is the one that tests what a customer receives. `--image` deploys a bare container
@@ -391,8 +391,10 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.4.1.zip` | `a8bb00865df6ce76…` | `utlxe:1.4.1` | `utlxe-ui:1.4.1` | superseded before submission | yes |
 | `utlxe-starter-1.4.2.zip` | `1bc9c769eab3c07c…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
 | `utlxe-professional-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
-| `utlxe-starter-1.4.3.zip` | `65e051638b1cb14b…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
-| `utlxe-professional-1.4.3.zip` | `cbc4884d805dd442…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | *pending* | yes |
+| `utlxe-starter-1.4.3.zip` | `cf6f6a47d416e506…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
+| `utlxe-professional-1.4.3.zip` | `65e051638b1cb14b…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
+| `utlxe-starter-1.4.4.zip` | `7fa247fcae892d10…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending* | yes |
+| `utlxe-professional-1.4.4.zip` | `6d5d96bcec6eb2f3…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending* | yes |
 
 Full digests:
 
@@ -409,6 +411,8 @@ a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professi
 23dc175915e14a90ee57690d4dc6f7f3c64276702268a3161e975e22273976bf  utlxe-professional-1.4.2.zip
 cf6f6a47d416e506cad6382e88faff771fd9ad6f0e8e1d3e4b8d4eb4cbc144e1  utlxe-starter-1.4.3.zip
 65e051638b1cb14b61677f7c41567dc96313c2fcdf4ac06d4c80bde1462b1b4d  utlxe-professional-1.4.3.zip
+7fa247fcae892d10dece5abd8746f1f42cba57d53018cd4bd327086324e9f334  utlxe-starter-1.4.4.zip
+6d5d96bcec6eb2f3177ad903b8861dcff1f3bd47b24081341e09a6e1d728465c  utlxe-professional-1.4.4.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.

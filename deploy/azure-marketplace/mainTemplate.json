@@ -18,7 +18,7 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.4",
       "metadata": {
         "description": "Docker image to deploy"
       }
@@ -295,7 +295,7 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.4",
               "metadata": {
                 "description": "Docker image to deploy"
               }

@@ -39,7 +39,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "[concat('Suggested admin key (copy this): **', guid(), '**  \u2014 Paste it into the Admin API Key field below and save it in a password manager. You can also choose your own key (minimum 8 characters).')]",
+              "text": "[concat('Suggested admin key (copy this): **', guid(), '**  \u2014 Paste it into the Admin API Key field below and save it in a password manager. You can also choose your own key (minimum 12 characters).')]",
               "style": "Info"
             }
           },
@@ -66,7 +66,7 @@
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
             "options": {
-              "text": "Save this key securely \u2014 it cannot be retrieved after deployment. If you lose it, you can reset it with: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>, then restart the container.",
+              "text": "Save this key securely \u2014 it is stored as a Container App secret and cannot be read back after deployment. To change it: az containerapp secret set --name <app> -g <rg> --secrets admin-key=<new-key>, then restart the container.",
               "style": "Warning"
             }
           },
@@ -217,20 +217,20 @@
                 "visible": true,
                 "options": {
                   "icon": "Info",
-                  "text": "By default your application posts messages to UTLXe over HTTP. Choose Azure Service Bus to have the engine consume from a queue and publish results to a topic on its own, with auto-scaling driven by queue depth."
+                  "text": "UTLXe receives messages from Azure Service Bus: it consumes from a queue you own and publishes results to a topic you own, with auto-scaling driven by queue depth.\n\nChoosing 'Admin API only' deploys the engine with no message source. You can upload transformations and run them from the Web UI's test page, which is enough to evaluate the engine \u2014 but applications cannot post messages to it over HTTP. A public HTTP endpoint for application traffic is not available in this release."
                 }
               },
               {
                 "name": "messagingMode",
                 "type": "Microsoft.Common.DropDown",
                 "label": "How messages reach UTLXe",
-                "toolTip": "HTTP: your application calls the engine. Azure Service Bus: the engine consumes from a queue you own and publishes results to a topic you own.",
-                "defaultValue": "HTTP only \u2014 your application calls UTLXe",
+                "toolTip": "Admin API only: no message source \u2014 upload and test transformations from the Web UI, but applications cannot post messages over HTTP. Azure Service Bus: the engine consumes from a queue you own and publishes results to a topic you own.",
+                "defaultValue": "Admin API only \u2014 evaluate now, add a message source later",
                 "constraints": {
                   "required": true,
                   "allowedValues": [
                     {
-                      "label": "HTTP only \u2014 your application calls UTLXe",
+                      "label": "Admin API only \u2014 evaluate now, add a message source later",
                       "value": "http"
                     },
                     {
@@ -305,7 +305,7 @@
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": "[steps('engineConfig').scalingSection.maxReplicas]",
       "workers": 32,
-      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.3",
+      "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.4",
       "namePrefix": "utlxe",
       "enableDapr": "[equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus')]",
       "scalingMode": "[steps('engineConfig').messagingSection.messagingMode]",

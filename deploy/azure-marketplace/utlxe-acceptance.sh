@@ -46,7 +46,7 @@
 # USAGE
 #
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json
-#   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.3
+#   ./utlxe-acceptance.sh --image ghcr.io/utlx-lang/utlxe:1.4.4
 #   ./utlxe-acceptance.sh --template ./starter/mainTemplate.json --keep
 #
 #   --param passes extra ARM parameters, repeatable. This matters more than it looks: the

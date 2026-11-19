@@ -18,7 +18,7 @@
     },
     "containerImage": {
       "type": "string",
-      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
+      "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.4",
       "metadata": {
         "description": "Docker image to deploy"
       }
@@ -370,7 +370,7 @@
             },
             "containerImage": {
               "type": "string",
-              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.3",
+              "defaultValue": "ghcr.io/utlx-lang/utlxe:1.4.4",
               "metadata": {
                 "description": "Docker image to deploy"
               }
@@ -507,7 +507,7 @@
               },
               {
                 "name": "UTLXE_ADMIN_KEY",
-                "value": "[parameters('adminKey')]"
+                "secretRef": "admin-key"
               }
             ],
             "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]",
@@ -531,7 +531,7 @@
                     "transport": "http",
                     "allowInsecure": false
                   },
-                  "secrets": "[if(and(parameters('enableDapr'), not(empty(parameters('serviceBusConnection')))), createArray(createObject('name', 'servicebus-connection', 'value', parameters('serviceBusConnection'))), createArray())]"
+                  "secrets": "[concat(createArray(createObject('name', 'admin-key', 'value', parameters('adminKey'))), if(and(parameters('enableDapr'), not(empty(parameters('serviceBusConnection')))), createArray(createObject('name', 'servicebus-connection', 'value', parameters('serviceBusConnection'))), createArray()))]"
                 },
                 "template": {
                   "containers": [
@@ -580,7 +580,7 @@
                     },
                     {
                       "name": "utlxe-ui",
-                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.3",
+                      "image": "ghcr.io/utlx-lang/utlxe-ui:1.4.4",
                       "resources": {
                         "cpu": "[json('0.25')]",
                         "memory": "0.5Gi"
