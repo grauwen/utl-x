@@ -75,6 +75,46 @@ tasks.jar {
     dependsOn(configurations.runtimeClasspath)
 }
 
+// CB08: the banner used to restate the version as a Kotlin constant and drifted three releases
+// behind — a field report arrived describing "v1.4.0" printed by a cli-1.4.3.jar, which cost a
+// round of diagnosis before the real bug could be isolated. Main.kt now reads
+// Implementation-Version from the manifest above.
+//
+// No unit test can protect that. In a test run there is no jar, so `implementationVersion` is null
+// and only the "dev" fallback is reachable; a test would pin the fallback, not the behaviour. The
+// one thing that catches someone re-hardcoding the constant is running the artefact and reading
+// what it says, so that is what this does. It is wired to `jar`, because a check nobody runs is
+// theatre.
+val verifyVersionBanner by tasks.registering {
+    dependsOn(tasks.jar)
+    description = "Assert the built jar's banner reports project.version (CB08)."
+    group = "verification"
+
+    val jarFile = tasks.jar.flatMap { it.archiveFile }
+    val expected = project.version.toString()
+    inputs.file(jarFile)
+    outputs.upToDateWhen { false }
+
+    doLast {
+        val javaExe = "${System.getProperty("java.home")}/bin/java"
+        val out = providers.exec {
+            commandLine(javaExe, "-jar", jarFile.get().asFile.absolutePath, "version")
+        }.standardOutput.asText.get().trim()
+
+        if (!out.contains(expected)) {
+            throw GradleException(
+                "CB08: the jar's banner does not report ${expected}.\n" +
+                "  expected the output to contain: ${expected}\n" +
+                "  actual first line:              ${out.lineSequence().firstOrNull()}\n" +
+                "The version must come from the manifest, not a literal in Main.kt."
+            )
+        }
+        logger.lifecycle("  CB08 ok — banner reports ${expected}")
+    }
+}
+
+tasks.jar { finalizedBy(verifyVersionBanner) }
+
 // GraalVM Native Image configuration
 graalvmNative {
     binaries {

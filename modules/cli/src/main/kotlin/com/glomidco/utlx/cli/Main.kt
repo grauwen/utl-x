@@ -11,7 +11,14 @@ import kotlin.system.exitProcess
  * A practical CLI for transforming data between formats using UTL-X transformations.
  */
 object Main {
-    private const val VERSION = "1.4.0"
+    // CB08: read the version from the jar manifest rather than restating it here. The constant was
+    // last bumped at 1.4.0 and the banner still said so on a cli-1.4.3.jar, which made a field
+    // report ambiguous about which build had been tested. `modules/cli/build.gradle.kts` already
+    // writes "Implementation-Version" to project.version, so the jar has always known the answer.
+    // The fallback covers running from classes rather than a jar (tests, IDE), where there is no
+    // manifest to read.
+    private val VERSION: String =
+        Main::class.java.`package`?.implementationVersion ?: "dev"
     
     @JvmStatic
     fun main(args: Array<String>) {
