@@ -62,6 +62,27 @@ class HttpTransport(
         const val MAX_REQUEST_BODY_BYTES = 10L * 1024 * 1024
     }
 
+    /**
+     * EB21: turn a payload that arrived as TEXT into the bytes the proto field expects.
+     *
+     * The `payload` field of ExecuteRequest is `bytes`, and `TransportHandlers.handleExecute`
+     * decodes it with the charset named in the Content-Type. Encoding it as UTF-8 regardless
+     * handed the engine UTF-8 bytes while telling it they were something else, so a caller who
+     * declared `charset=ISO-8859-1` honestly got mojibake back with HTTP 200.
+     *
+     * Encoding with the DECLARED charset closes the round trip: the caller decoded the document
+     * to text to put it in a JSON string, and this re-encodes it the same way, so the engine
+     * receives the bytes the caller started with.
+     *
+     * This cannot rescue a payload that was never text -- a JSON string holds no arbitrary bytes,
+     * so Avro and Protobuf stay inexpressible on the enveloped routes. Paths that still HAVE the
+     * original bytes must pass them with `ByteString.copyFrom`, never through here.
+     */
+    private fun encodeDeclared(text: String, contentType: String): ByteString {
+        val charset = TransportHandlers.parseCharsetFromContentType(contentType) ?: Charsets.UTF_8
+        return ByteString.copyFrom(text.toByteArray(charset))
+    }
+
     override fun start(registry: TransformationRegistry) {
         logger.info("HttpTransport: starting on {}:{}", host, port)
 
@@ -109,7 +130,7 @@ class HttpTransport(
                     // Execute
                     val execProto = ExecuteRequest.newBuilder()
                         .setTransformationId(req.transformationId)
-                        .setPayload(ByteString.copyFromUtf8(req.payload))
+                        .setPayload(encodeDeclared(req.payload, req.contentType))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -165,7 +186,7 @@ class HttpTransport(
 
                     val proto = ExecuteRequest.newBuilder()
                         .setTransformationId(id)
-                        .setPayload(ByteString.copyFromUtf8(req.payload))
+                        .setPayload(encodeDeclared(req.payload, req.contentType))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -207,7 +228,7 @@ class HttpTransport(
                         .setTransformationId(id)
                     req.items.forEach { item ->
                         proto.addItems(BatchItem.newBuilder()
-                            .setPayload(ByteString.copyFromUtf8(item.payload))
+                            .setPayload(encodeDeclared(item.payload, item.contentType))
                             .setContentType(item.contentType)
                             .setCorrelationId(item.correlationId ?: "")
                             .build())
@@ -241,7 +262,7 @@ class HttpTransport(
 
                     val proto = ExecutePipelineRequest.newBuilder()
                         .addAllTransformationIds(req.transformationIds)
-                        .setPayload(ByteString.copyFromUtf8(req.payload))
+                        .setPayload(encodeDeclared(req.payload, req.contentType))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -454,7 +475,10 @@ class HttpTransport(
         // Build the execute request with full messaging triad
         val execProto = ExecuteRequest.newBuilder()
             .setTransformationId(transformId)
-            .setPayload(ByteString.copyFromUtf8(payload))
+            // EB21: the raw request body, not the UTF-8 String above. A Service Bus message in
+            // ISO-8859-1 or UTF-16 lost bytes outright here: String(bytes, UTF_8) turns an invalid
+            // sequence into U+FFFD, and no later charset handling can recover it.
+            .setPayload(ByteString.copyFrom(payloadBytes))
             .setContentType(contentType)
             .setCorrelationId(incomingCorrelationId)
             .setMessageId(incomingMessageId)
@@ -680,7 +704,14 @@ class HttpTransport(
             ?: call.request.contentType().toString()
         val execProto = ExecuteRequest.newBuilder()
             .setTransformationId(transformName)
-            .setPayload(ByteString.copyFromUtf8(payload))
+            // EB21: when nothing was unwrapped, `payload` IS the body and the original bytes are
+            // exact. unwrapCloudEvents returns rawBody unchanged where there is no envelope, so the
+            // comparison is reliable. A payload extracted from a structured CloudEvents document
+            // came out of a JSON string and can only be re-encoded, not recovered.
+            .setPayload(
+                if (payload == rawBody) ByteString.copyFrom(rawBodyBytes)
+                else encodeDeclared(payload, contentType)
+            )
             .setContentType(contentType)
             .setCorrelationId(incomingCorrelationId)
             .setMessageId(incomingMessageId)

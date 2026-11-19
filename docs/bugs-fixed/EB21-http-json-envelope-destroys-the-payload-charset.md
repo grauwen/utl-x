@@ -1,8 +1,10 @@
 # EB21 — the HTTP data plane's JSON envelope destroys the payload charset, and cannot carry binary at all
 
-**Status:** Open — found 2026-11-19
-**Priority:** High — silent data corruption on any non-UTF-8 payload that declares its charset
-honestly; and a published API shape that would be expensive to change later
+**Status:** **FIXED (2026-11-19)** — all six `setPayload` sites in `HttpTransport` corrected, with
+`EB21PayloadCharsetTest` (7 tests) and the full engine suite green.
+**Priority:** High — silent data corruption on any non-UTF-8 payload. **Revised upward after the
+first draft of this report**: the Dapr paths were originally described here as correct, and they
+were not. They were the only affected paths reachable in the shipped Azure offering.
 **Component:** `:modules:engine` — `transport/HttpTransport.kt`, `transport/HttpModels.kt`
 **Found:** 2026-11-19, while deciding what the Azure offering should publish as its data plane
 (EF24). Not by review and not by any test.
@@ -88,18 +90,55 @@ careful.
 `/api/transform` carries the same `payload: String` field and the same defect.
 `/api/execute-batch/{id}` and `/api/execute-pipeline` carry it per item.
 
-## Why the other paths are fine
+## Correction: the Dapr paths were NOT fine
 
-| path | reads body as | correct |
+The first draft of this report said the Dapr paths were correct, on the evidence that they call
+`call.receive<ByteArray>()`. They do — and then discard the result on the next line:
+
+```
+grep -n "payloadBytes|rawBodyBytes"
+  425:  val payloadBytes = call.receive<ByteArray>()
+  427:  val payload = String(payloadBytes, Charsets.UTF_8)   ← the ONLY use
+  638:  val rawBodyBytes = call.receive<ByteArray>()
+  639:  val rawBody = String(rawBodyBytes, Charsets.UTF_8)   ← the ONLY use
+```
+
+Both then built the proto from the String. So **all six `setPayload` sites** used
+`copyFromUtf8(<String>)` and not one passed raw bytes. The `receive<ByteArray>()` calls looked
+like EB01's fix and were inert.
+
+The Dapr form is strictly worse than the enveloped form, because the decode is hardcoded UTF-8
+with no charset consulted at all, so an invalid sequence is **destroyed rather than mis-decoded**:
+
+```
+Service Bus body (Latin-1):    b'<Item>Caf\xe9</Item>'
+String(bytes, UTF_8):           '<Item>Caf\ufffd</Item>'      ← invalid UTF-8 → U+FFFD
+bytes handed to the engine:     b'<Item>Caf\xef\xbf\xbd</Item>'
+original 0xE9 recoverable?      False
+```
+
+And it was the reachable one:
+
+| path | line | reachable in the shipped Azure offering? |
 |---|---|---|
-| `POST /{bindingName}` — Dapr input binding, `HttpTransport.kt:425` | `call.receive<ByteArray>()` | yes |
-| `POST /pubsub/{name}` — Dapr pub/sub, `HttpTransport.kt:638` | `call.receive<ByteArray>()` | yes |
-| `POST /admin/transformations/{name}/test`, `AdminEndpoint.kt:263` | `call.receive<ByteArray>()` | yes |
-| **`POST /api/execute/{id}`**, `HttpTransport.kt:164` | **`ExecuteRequestBody.payload: String`** | **no** |
+| `POST /api/transform` | 112 | no — port 8085 is not published |
+| `POST /api/execute/{id}` | 168 | no |
+| `POST /api/execute-batch/{id}` | 210 | no |
+| `POST /api/execute-pipeline` | 244 | no |
+| **`handleDaprInput()` — Service Bus queue in** | **457** | **yes** |
+| **`handlePubSubInput()` — Service Bus topic in** | **683** | **yes** |
 
-The `/admin/.../test` call site even carries the comment `// EB01: Read raw bytes for test
-execute — supports non-UTF-8 payloads`. The fix was applied beside the broken path and not to
-it.
+So the severity was backwards in the first draft. Any customer feeding ISO-8859-1 or UTF-16 XML
+over Service Bus — ordinary in European ERP and EDI traffic — was getting corrupted input with
+HTTP 200 and no error.
+
+`POST /admin/transformations/{name}/test` is genuinely correct: it passes
+`ByteString.copyFrom(inputBytes)` and never decodes.
+
+**The wrappers are unaffected.** Both the .NET and Go clients spawn `--mode stdio-proto`
+(`wrappers/dotnet/src/UtlxClient/UtlxeProcess.cs:46`,
+`wrappers/go/utlxclient/client.go:71`), so they submit protobuf `bytes` and reach the correct
+handler. gRPC is likewise unaffected: its `ExecuteRequest.payload` is proto `bytes`.
 
 **The wrappers are not affected.** Both the .NET and Go clients spawn
 `--mode stdio-proto` (`wrappers/dotnet/src/UtlxClient/UtlxeProcess.cs:46`,
@@ -123,45 +162,73 @@ binary two, excludes them.
 
 ## Fix
 
-The shape that works already exists three times over. Give single execute the same shape:
+Two shapes, because the two groups lose the bytes differently.
 
-- transformation id in the path (it already is)
-- raw body, `call.receive<ByteArray>()` — not a JSON field
-- `Content-Type` read from the header, which is what the handler already does
-- `correlationId` from a header (`X-Correlation-Id`), as Dapr already passes metadata
+**The Dapr paths still HAVE the original bytes** — pass them:
 
-`ExecuteRequestBody` then has no remaining field and can go. The structured envelope stays
-correct for `/api/execute-batch/{id}` and `/api/execute-pipeline`, where several payloads
-genuinely need a body with structure — though those should take base64 or move to proto if
-binary formats are ever to work in batch.
+```kotlin
+.setPayload(ByteString.copyFrom(payloadBytes))                 // handleDaprInput
+```
 
-This changes a request shape that is documented, so it needs a deprecation path rather than a
-silent swap:
+Pub/sub needs one distinction: when the payload came out of a *structured* CloudEvents document it
+was a JSON string field, so the raw body is the envelope rather than the payload.
+`unwrapCloudEvents` returns `rawBody` unchanged when there is no envelope, which makes the test
+reliable:
 
-1. Add the raw-body route alongside the existing one.
-2. Keep `/api/execute/{id}` accepting the envelope, but when `contentType` declares a charset
-   other than UTF-8, either honour it (decode the JSON string back to the declared charset
-   before handing bytes on) or reject with 415. Silently corrupting is the one behaviour to
-   remove immediately.
-3. Document the raw-body route as the data plane; retire the envelope at the next major.
+```kotlin
+.setPayload(
+    if (payload == rawBody) ByteString.copyFrom(rawBodyBytes)
+    else encodeDeclared(payload, contentType)
+)
+```
 
-## Tests
+**The enveloped routes only ever had text** — re-encode it with the charset the caller declared,
+which closes the round trip, since the caller decoded the document to text to put it in a JSON
+string in the first place:
 
-`EB21HttpPayloadCharsetTest.kt`, with a vacuity guard — a fixture asserting only ASCII would
-pass against the defect:
+```kotlin
+private fun encodeDeclared(text: String, contentType: String): ByteString {
+    val charset = TransportHandlers.parseCharsetFromContentType(contentType) ?: Charsets.UTF_8
+    return ByteString.copyFrom(text.toByteArray(charset))
+}
+```
 
-1. Latin-1 XML submitted with `charset=ISO-8859-1` via the enveloped route returns mojibake
-   today. The test pins the correct output and must fail before the fix.
-2. The same document via `POST /admin/transformations/{name}/test` already returns the right
-   answer — proves the handler is innocent and the transport is at fault.
-3. UTF-16 input, since `parseCharsetFromContentType` advertises `charset=UTF-16` support in its
-   own doc comment.
-4. A payload with a byte sequence that is not valid UTF-8 at all, which the envelope cannot
-   represent — asserts a clear error rather than silent substitution.
-5. **Non-ASCII must be in the fixture.** A pure-ASCII payload is byte-identical under every
-   charset involved and would make the whole test vacuous.
+`TransportHandlers.parseCharsetFromContentType` changed from `private` to `internal` to be reused;
+no new charset logic was written.
 
-Use `ServerSocket(0)` for the port.
+This does **not** make binary formats expressible on the enveloped routes — a JSON string holds no
+arbitrary bytes, so Avro and Protobuf still cannot be submitted that way. That is an API-shape
+limitation, recorded below, not a charset bug.
+
+## Verification
+
+`EB21PayloadCharsetTest` — 7 tests, `:modules:engine:test` 1036 tests and `:modules:core:test` 441
+tests, 0 failures.
+
+Proven load-bearing by restoring the defect at all six sites:
+
+```
+dapr binding preserves an ISO-8859-1 payload()      FAILED
+dapr binding preserves a UTF-16 payload()           FAILED
+enveloped execute honours the declared charset()    FAILED
+dapr binding still handles plain UTF-8()            PASSED   ← regression guard, correctly insensitive
+the guard transformation really discriminates()     PASSED   ← negative control
+the fixture is actually non-ASCII()                 PASSED   ← vacuity guard
+```
+
+Three details of the test worth keeping:
+
+- **The Dapr route returns a messaging acknowledgement, not the output** — in a real flow the
+  output goes to the output binding. So the transformation itself is the detector: it returns
+  `"intact"` when the accented character survived and divides by zero when it did not, turning the
+  question into the ack's `success` field. A failed transformation answers HTTP 500, which is how
+  Dapr learns to abandon the message, so the test accepts 200 or 500 and reads the flag.
+- **The negative control is the important one.** Latin-1 bytes *declared as UTF-8* must fail.
+  Without it, a transformation that returned `"intact"` for everything would make the three
+  positive tests vacuous.
+- **Every payload is non-ASCII on purpose**, and one test asserts that the fixture's Latin-1 and
+  UTF-8 encodings differ in length. ASCII is byte-identical under both, so an ASCII fixture passes
+  against the defect and proves nothing.
 
 ## Notes
 

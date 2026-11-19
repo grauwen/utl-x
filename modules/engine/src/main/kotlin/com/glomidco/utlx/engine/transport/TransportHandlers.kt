@@ -581,7 +581,7 @@ object TransportHandlers {
      * EB01: Extract charset from Content-Type header value.
      * Example: "application/xml; charset=UTF-16" → Charset.UTF_16
      */
-    private fun parseCharsetFromContentType(contentType: String): java.nio.charset.Charset? {
+    internal fun parseCharsetFromContentType(contentType: String): java.nio.charset.Charset? {
         val match = Regex("""charset\s*=\s*["']?([^"';\s]+)""", RegexOption.IGNORE_CASE).find(contentType)
         return match?.groupValues?.get(1)?.let {
             try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
