@@ -50,6 +50,43 @@ Container App secrets are encrypted at rest and injected as environment variable
 
 To rotate the key, update the secret and restart the container. No code change is needed.
 
+== Two Keys, Two Jobs
+
+The offering issues *two* credentials, and the separation between them is the main thing standing between a message sender and your transformation estate.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Key*], [*Header*], [*What it can do*],
+  [Admin key], [`X-Admin-Key`], [Everything on `/admin/*`: deploy, delete, pause, list, upload bundles, change config, read logs. Full control of what the engine runs.],
+  [Data path key], [`X-Api-Key`], [*Only* `POST /api/transformations/{id}/run` --- send a document to a transformation that is already loaded and receive the result. It cannot deploy, delete, or list anything.],
+)
+
+Use *different values*. If they are the same string, the separation is decorative: whoever holds the data path key holds admin. The deployment wizard asks for both separately for exactly this reason, and the acceptance suite asserts that the admin key is *rejected* on the data path --- if those two were ever wired to the same secret, every other test would still pass.
+
+=== Where the check happens, and why not in the engine
+
+The data path key is verified by *nginx*, in the admin UI container, not by the engine:
+
+```
+caller ──X-Api-Key──> nginx :8088 ──> engine :8085
+                        │
+                        └── wrong or missing key: 401, never reaches the engine
+                            key not configured:   503, the route is closed
+```
+
+The engine authenticates nothing on its data plane. That is deliberate on two grounds. Authentication is a gateway concern, and a transformation engine should transform --- a change to the auth story should not require a new engine release. And it keeps the credential out of the engine's logs: nginx clears the header before proxying.
+
+The consequence to be clear about: *the engine's data plane must never be published directly.* It is reachable only over loopback inside the replica, and the ingress publishes port 8088 --- nginx --- not 8085. A deployment that exposed 8085 would have an unauthenticated remote execution path. The template does not, and the acceptance suite checks that `/api/load`, `/api/transformations` and `/api/execute/{id}` are all unreachable through the public address.
+
+=== What a leaked data path key gets an attacker
+
+Enough to matter, and bounded:
+
+- They can run any transformation that is already loaded, with data of their choosing, and read the output. If a transformation enriches data from a connection string held in the engine, that output is reachable.
+- They can consume CPU and heap --- the per-transformation `maxConcurrent` and the EF15 heap guard are the limits.
+
+What they cannot do: load a transformation, change one, delete one, see what exists, read logs, or reach Service Bus credentials. Rotating it is a template redeploy with a new value, and it does not disturb the admin key.
+
 == Non-Root Container
 
 The UTLXe Docker image runs as a non-root user (`utlxe:utlxe`). The Dockerfile creates a dedicated user and group:

@@ -9,13 +9,24 @@ When you deploy UTLXe from the Azure Marketplace, Azure creates a Container App 
 - *`utlxe`* --- the transformation engine. It listens on port 8085 for messages (the data plane) and on port 8081 for administration, health and metrics.
 - *`utlxe-ui`* --- an nginx container serving the Admin Web UI on port 8088.
 
-Container Apps ingress publishes exactly one port, and that port is *8088* --- the Web UI. The UI container also proxies three paths through to the engine's admin port: `/admin/...` (the Admin API), `/health`, and `/metrics`.
+Container Apps ingress publishes exactly one port, and that port is *8088* --- nginx, in the `utlxe-ui` container. Nothing else is reachable from outside the replica. Everything the deployment offers therefore arrives through that one port, and what you can reach is exactly what nginx routes:
 
-Two consequences follow, and both are easy to assume the other way round:
+#table(
+  columns: (auto, auto, 1fr),
+  [*Path*], [*Credential*], [*Goes to*],
+  [`/`], [none], [the Admin Web UI's static files],
+  [`/admin/...`], [`X-Admin-Key`], [the engine's admin port, 8081 --- deploy, delete, list, bundles, config, logs],
+  [`/health`, `/metrics`], [none], [the engine's admin port, 8081],
+  [`/api/transformations/{id}/run`], [`X-Api-Key`], [the engine's *data plane*, 8085 --- send a document, get the result],
+)
+
+Three consequences follow, and the first two are easy to assume the other way round.
 
 *The Admin API is reachable from the public internet.* It is proxied through the same public ingress as the Web UI and is protected only by the admin key you choose at deployment. Treat that key as a production credential, not a convenience.
 
-*The data plane on port 8085 is not published.* Nothing proxies it, and ingress has no second port to give it. Messages reach the engine through Azure Service Bus, not by posting to a public URL. To run a transformation by hand, use the Admin API's test endpoint.
+*The data plane is published through exactly one path.* Since 1.4.4 an application can POST a document to `/api/transformations/{id}/run` and read the transformed result from the response. That single path is all of port 8085 that nginx routes --- the engine's other data-plane endpoints, including the one that *unloads* a transformation and the one that lists them, stay unreachable from outside the replica. See *Posting your first message over HTTP* below, and Chapter 11 for why the key is a different one.
+
+*gRPC is not offered.* The engine can serve it, on port 9090, but a Container App publishes one port with one protocol and that port is carrying HTTP for the UI. Offering gRPC as well would need a second container app --- see Chapter 10.
 
 The container starts empty --- no transformations are loaded. Whether they survive a restart depends on the *Persistent storage* option you choose at deployment. With it enabled, an Azure Files share is mounted at `/utlxe/data` and uploads persist across restarts; without it the engine holds transformations in memory only and you re-upload after every restart. A `.utlar` bundle placed on that share starts the engine in *locked mode* instead --- see Chapter 6.
 
@@ -59,10 +70,11 @@ only at deployment time, as `MaxNumberOfRegionalEnvironmentsInSubExceeded`.
 + Configure the deployment:
   - Resource group and region.
   - Name prefix for the created resources.
+  - *Data path API key* --- a *second* key, for the HTTP data path. An application holding it can run your transformations and nothing else: it cannot deploy, delete, or list them. Use a different value from the admin key, so whichever one leaks the other still holds.
   - *Admin key* --- the wizard generates a strong UUID for you. Copy it and save it in a password manager. You can also enter your own key (minimum 12 characters), but a UUID is recommended. The Admin API is reachable over the public internet, so this key is the only thing protecting it.
   - CPU and memory per instance, and the minimum instance count.
   - *Persistent storage* --- enabled by default. Creates a storage account and a file share in the same resource group, mounted at `/utlxe/data`, so uploaded transformations survive container restarts.
-  - *Message source* --- *Admin API only*, or *Azure Service Bus*. Choosing Service Bus asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth. Choosing Admin API only deploys the engine with no message source: you can upload transformations and run them from the Web UI's test page, but applications cannot post messages to the engine over HTTP --- there is no public data endpoint in this release. See Chapter 5 for the Service Bus setup.
+  - *Message source* --- *HTTP* or *Azure Service Bus*. With HTTP, applications POST a document to the published data path and get the transformed result back in the response; see below. With Service Bus, the wizard asks for a connection string, an input queue and an output topic, and switches auto-scaling to queue depth --- see Chapter 5. The two are not exclusive: a Service Bus deployment keeps the HTTP data path.
 + Click *Create*. Expect *15 minutes to an hour*, almost all of it Azure provisioning the Container Apps environment rather than starting UTLXe itself. Observed times vary widely for the same template in the same region.
 
 When the deployment finishes, its *Outputs* tab gives you the addresses you need:
@@ -71,11 +83,27 @@ When the deployment finishes, its *Outputs* tab gives you the addresses you need
   columns: (auto, 1fr),
   [`utlxeUrl` / `adminUiUrl`], [The Web UI. Open it in a browser and log in with the admin key.],
   [`healthUrl`], [Health and readiness, unauthenticated.],
+  [`dataPlaneUrl`], [The HTTP data path. Append `{transformationId}/run` and POST your document to it.],
   [`metricsNote`], [Prometheus metrics, unauthenticated.],
   [`containerAppName`], [The Container App name, for `az containerapp` commands.],
 )
 
-Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment.
+Once complete, you need the admin key to log in to the Web UI. If you used the generated UUID, make sure you saved it --- it cannot be retrieved after deployment. The same is true of the data path key.
+
+=== Posting your first message over HTTP
+
+Upload a transformation through the Web UI, then send it a document. The body is the document itself --- there is no envelope to build, and `Content-Type` tells the engine what format it is in:
+
+```bash
+curl -X POST "https://<dataPlaneUrl>/my-map/run" \
+  -H "X-Api-Key: <your data path key>" \
+  -H "Content-Type: application/xml" \
+  --data-binary @order.xml
+```
+
+The response is the transformed output in the transformation's own output format --- JSON if the script says `output json`, CSV if it says `output csv` --- not a wrapper object with the result nested inside it. A transformation that fails answers `422`; an unknown id answers `404`.
+
+Two things this path deliberately will not do. It will not accept a transformation script: the caller sends *data*, never code. And it will not accept the admin key --- that is the point of there being two.
 
 #block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
   *What the plans actually differ in.* vCPU and memory, and nothing else.
