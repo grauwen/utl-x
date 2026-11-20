@@ -78,6 +78,42 @@ class HttpTransport(
      * so Avro and Protobuf stay inexpressible on the enveloped routes. Paths that still HAVE the
      * original bytes must pass them with `ByteString.copyFrom`, never through here.
      */
+    /**
+     * EF24: the media type to answer with, from the transformation's declared output format.
+     *
+     * Unknown or absent falls back to octet-stream rather than guessing JSON -- a caller is better
+     * told "bytes" than told the wrong thing.
+     *
+     * Two entries need explaining:
+     *
+     * `odata` serialises to JSON (`ODataJSONSerializer`, with `@odata.*` annotations), so the type
+     * is `application/json`. The OData v4 content type carries a metadata level --
+     * `application/json;odata.metadata=minimal|full|none` -- but the level is a serializer option
+     * that is not visible here, and naming the wrong one is worse than omitting it. An OData client
+     * treats a missing parameter as the default.
+     *
+     * `osch` is EDMX, the OData CSDL schema document (`EDMXSerializer`), which is XML and not JSON
+     * -- an easy pair to conflate, since both have "odata" in the name.
+     *
+     * `usa`, `european`, `french` and `swiss` are regional CSV dialects: separator and decimal
+     * conventions differ, the media type does not.
+     */
+    private fun contentTypeFor(outputFormat: String?): io.ktor.http.ContentType = when (outputFormat?.lowercase()) {
+        "json"                -> io.ktor.http.ContentType.Application.Json
+        "odata"               -> io.ktor.http.ContentType.Application.Json
+        "jsch"                -> io.ktor.http.ContentType("application", "schema+json")
+        "xml"                 -> io.ktor.http.ContentType.Application.Xml
+        "xsd", "osch"         -> io.ktor.http.ContentType.Application.Xml
+        "csv",
+        "usa", "european",
+        "french", "swiss"     -> io.ktor.http.ContentType.Text.CSV
+        "yaml", "yml"         -> io.ktor.http.ContentType("application", "yaml")
+        "avro"                -> io.ktor.http.ContentType("application", "avro")
+        "protobuf"            -> io.ktor.http.ContentType("application", "x-protobuf")
+        "text", "txt"         -> io.ktor.http.ContentType.Text.Plain
+        else                  -> io.ktor.http.ContentType.Application.OctetStream
+    }
+
     private fun encodeDeclared(text: String, contentType: String): ByteString {
         val charset = TransportHandlers.parseCharsetFromContentType(contentType) ?: Charsets.UTF_8
         return ByteString.copyFrom(text.toByteArray(charset))
@@ -208,6 +244,87 @@ class HttpTransport(
                             ValidationErrorDto(it.message, it.path, it.severity)
                         }
                     ))
+                }
+
+                // ── EF24: the published data path ──
+                // Raw body, id in the path, Content-Type honoured, output returned in its own
+                // format. This is the shape `handleDaprInput`, `handlePubSubInput` and
+                // `/admin/transformations/{name}/test` already use, so it is a proven path rather
+                // than a new one -- see docs/features/EF24-*.md.
+                //
+                // Named to the convention the admin API already follows 13 times over --
+                // transformations/{name}/{action} -- rather than under a /v1/ prefix nothing else
+                // in this codebase uses. An unversioned path does not foreclose a versioned one
+                // later; a new path can simply appear if the shape ever has to break. The plural
+                // and the /run suffix also keep it clear of `DELETE /api/transform/{id}`, which
+                // unloads a transformation and must never be published.
+                //
+                // Deliberately NOT a variant of /api/execute/{id}: that route carries the payload
+                // as a JSON string, which cannot hold arbitrary bytes, so Avro and Protobuf are
+                // inexpressible on it (EB21). Nothing here authenticates -- the credential belongs
+                // in the proxy, and a deployment that publishes this route without one is a
+                // remote execution path.
+                post("/api/transformations/{id}/run") {
+                    // EF15: reject before processing, as /api/execute/{id} does.
+                    if (engine.isHeapPressure()) {
+                        call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
+                            "error" to "Heap memory pressure \u2014 retry later",
+                            "error_code" to "HEAP_PRESSURE"
+                        ))
+                        return@post
+                    }
+                    val id = call.parameters["id"]
+                        ?: return@post call.respond(HttpStatusCode.BadRequest,
+                            mapOf("error" to "Missing transformation ID",
+                                  "error_code" to "BAD_REQUEST"))
+
+                    // 404 rather than letting handleExecute answer 503 for an unknown name: a
+                    // caller that typed the wrong id should not be told to retry later.
+                    val instance = registry.get(id)
+                        ?: return@post call.respond(HttpStatusCode.NotFound,
+                            mapOf("error" to "No transformation '$id' is loaded",
+                                  "error_code" to "TRANSFORMATION_NOT_FOUND"))
+
+                    val bytes = call.receive<ByteArray>()
+                    val correlationId = call.request.header("X-Correlation-Id") ?: ""
+                    val proto = ExecuteRequest.newBuilder()
+                        .setTransformationId(id)
+                        // EB21: the body as sent. handleExecute derives the charset from the
+                        // content type, so nothing here may decode or re-encode it.
+                        .setPayload(ByteString.copyFrom(bytes))
+                        .setContentType(call.request.contentType().toString())
+                        .setCorrelationId(correlationId)
+                        .setMessageId(call.request.header("X-Message-Id") ?: UuidV7.generate())
+                        .build()
+                    val resp = TransportHandlers.handleExecute(proto, engine)
+
+                    if (correlationId.isNotEmpty()) {
+                        call.response.header("X-Correlation-Id", correlationId)
+                    }
+
+                    if (resp.success) {
+                        // The output in its OWN format, not nested inside a JSON object. A caller
+                        // that asked for CSV gets CSV.
+                        call.respondBytes(
+                            resp.output.toByteArray(),
+                            contentTypeFor(instance.strategy.getHeaderSchemaInfo()?.outputFormat),
+                            HttpStatusCode.OK
+                        )
+                    } else {
+                        // Status codes, not a success flag in a 200 body. Same classification
+                        // /api/execute/{id} uses.
+                        val status = if (resp.errorClass == ErrorClass.TRANSIENT)
+                            HttpStatusCode.ServiceUnavailable else HttpStatusCode.UnprocessableEntity
+                        call.respond(status, mapOf(
+                            "error" to resp.error,
+                            "error_code" to resp.errorCode.name,
+                            "errorPhase" to if (resp.errorPhase != ErrorPhase.ERROR_PHASE_UNSPECIFIED)
+                                resp.errorPhase.name else null,
+                            "validationErrors" to resp.validationErrorsList.map {
+                                mapOf("message" to it.message, "path" to it.path, "severity" to it.severity)
+                            }
+                        ))
+                    }
                 }
 
                 // ── Batch execute ──

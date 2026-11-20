@@ -284,7 +284,9 @@ fun configureAdmin(
                         "error_code" to execResp.errorCode.name
                     ))
                 }
-                // Test calls are NOT counted in metrics (don't call recordExecution)
+                // Counted in metrics like any other execution: TransportHandlers.handleExecute
+                // calls instance.recordExecution() itself. An earlier comment here claimed the
+                // opposite and described a caller obligation the shared handler had taken over.
             }
 
             // ── Upload bundle (ZIP / .utlar) — auto-syncs messaging to Dapr ──
