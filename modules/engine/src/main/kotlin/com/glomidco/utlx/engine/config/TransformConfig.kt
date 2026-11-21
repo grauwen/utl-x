@@ -89,7 +89,18 @@ data class MessagingEndpoint(
     val topic: String? = null,              // Service Bus topic → pubsub.azure.servicebus.topics
     val eventhub: String? = null,           // Event Hub → bindings.azure.eventhubs (or pubsub if consumerGroup set)
     val subscription: String? = null,       // Required for topic input (Service Bus subscription name)
-    val consumerGroup: String? = null       // Optional for eventhub input (triggers pub/sub mode)
+    val consumerGroup: String? = null,      // Optional for eventhub input (triggers pub/sub mode)
+    // EF26 2d: the Dapr COMPONENT to go through, when it is not named after the resource.
+    //
+    // Dapr keeps these separate — `/v1.0/publish/<component>/<topic>` and
+    // `/v1.0/bindings/<component>` — while UTLXe inferred the component from `resourceName`.
+    // That holds only under UTLXe's own convention, where a component is named after its queue
+    // (which is what DaprIntegration generates for self-hosted). Azure Container Apps names
+    // components after their ROLE — `servicebus-output` — so the inference breaks, and the gap
+    // was papered over with a UTLXE_OUTPUT_BINDING_* environment variable per deployment.
+    //
+    // Null keeps the inference, so every existing transform.yaml behaves exactly as before.
+    val component: String? = null
 ) {
     /** The resource name (queue name, topic name, or eventhub name). */
     val resourceName: String?

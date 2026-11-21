@@ -701,10 +701,17 @@ class HttpTransport(
         if (outputBinding != null) {
             try {
                 // EF10: Use different Dapr endpoint for pub/sub vs binding
+                // EF26 2d: the COMPONENT and the RESOURCE are separate things to Dapr, and a
+                // transformation may now name the component explicitly. Absent that, fall back to
+                // the historical inference: the shared pub/sub component for a topic, and the
+                // resource's own name for a binding.
+                val outComponent = messagingOutput?.component
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:$daprPort/v1.0/publish/${com.glomidco.utlx.engine.config.DaprComponents.pubsubName}/$outputBinding"
+                    val pubsub = outComponent
+                        ?: com.glomidco.utlx.engine.config.DaprComponents.pubsubName
+                    "http://localhost:$daprPort/v1.0/publish/$pubsub/$outputBinding"
                 } else {
-                    "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/bindings/${outComponent ?: outputBinding}"
                 }
 
                 // Build output metadata including messaging triad
@@ -930,10 +937,17 @@ class HttpTransport(
 
         if (outputBinding != null) {
             try {
+                // EF26 2d: the COMPONENT and the RESOURCE are separate things to Dapr, and a
+                // transformation may now name the component explicitly. Absent that, fall back to
+                // the historical inference: the shared pub/sub component for a topic, and the
+                // resource's own name for a binding.
+                val outComponent = messagingOutput?.component
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:$daprPort/v1.0/publish/${com.glomidco.utlx.engine.config.DaprComponents.pubsubName}/$outputBinding"
+                    val pubsub = outComponent
+                        ?: com.glomidco.utlx.engine.config.DaprComponents.pubsubName
+                    "http://localhost:$daprPort/v1.0/publish/$pubsub/$outputBinding"
                 } else {
-                    "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/bindings/${outComponent ?: outputBinding}"
                 }
 
                 val outputMetadata = mutableMapOf(

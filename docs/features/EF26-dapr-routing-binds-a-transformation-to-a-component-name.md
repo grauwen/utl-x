@@ -36,8 +36,17 @@ their transformation `servicebus-input`, or every message returned:
 503  "No transformation loaded for binding 'servicebus-input'"
 ```
 
-Nothing documented that — not the book, not the wizard, not the README. A customer following the
-documentation would have had a deployment that accepted messages and processed none.
+The documentation is half right, which is worse than silent. `books/engine-azure` ch05 Step 6 does
+state the rule — *"the transformation name must match the Dapr input component name
+(`orders-in`)"* — but it states it for the **hand-built** walkthrough, where the reader creates the
+component themselves with `az containerapp env dapr-component set` and can therefore name it after
+their transformation. ch05 never addresses the **Marketplace** deployment, where the template has
+already fixed the component as `servicebus-input` and the customer cannot choose it.
+
+So a Marketplace customer following ch05 names their transformation `orders-in` to match the
+component the book told them to create, while the component their deployment actually has is
+called something else. Their deployment accepts messages and processes none. Nothing in the
+wizard, the README or the offer listing mentions the constraint at all.
 
 It also capped a deployment at **one queue**: a binding is one component per queue, the component
 name is the transformation id, so a second queue would need a second transformation named after it
@@ -141,7 +150,7 @@ rest is not all in one place:
 | 2b | **stop hardcoding the component name** — *done 2026-11-21* | `modules/engine/config/TransformConfig.kt` (`DaprComponents`) | **UTLXe code** |
 | 2c | check the engine and the templates agree on component names — *done 2026-11-21* | `deploy/azure-marketplace/build-zips.sh` | build guard |
 | 3 | Service Bus assertions | `deploy/azure-marketplace/utlxe-acceptance.sh` | test script + a real namespace |
-| 4 | document how a message finds its transformation | `books/engine-azure` ch05 | documentation |
+| 4 | document how a message finds its transformation — *done 2026-11-21* | `books/engine-azure` ch05 | documentation |
 
 ### 1 — several queues: Azure configuration only
 
@@ -232,7 +241,7 @@ this is correct-by-construction, not correct-by-observation.
 It is also deliberately **not** claimed in the Marketplace listing yet. `offer-listing.md` still
 says queue in, topic out, because that is what has been tested — see item 3.
 
-### 2d — a transformation should declare its component AND its resource
+### 2d — a transformation declares its component AND its resource *(done 2026-11-21)*
 
 The same boundary, in the output direction, and this one is purely **UTLXe code**.
 
@@ -272,6 +281,55 @@ field alongside `queue`/`topic`/`eventhub`, defaulting to today's behaviour when
 transformation can say "publish to topic `orders-out` through component `servicebus-output`", the
 env-var patch can go, `outputIsPubSub` stops being disabled by it, and the Azure naming stops being
 a special case rather than being worked around.
+
+**Implemented.** `MessagingEndpoint` gains an optional `component`, null by default so every
+existing `transform.yaml` behaves exactly as before:
+
+```yaml
+output:
+  topic: results-out          # the RESOURCE
+  component: servicebus-output  # the Dapr COMPONENT, when it is not named after the resource
+```
+
+Both output call sites now use it — `/v1.0/publish/<component ?: pubsubName>/<topic>` and
+`/v1.0/bindings/<component ?: resourceName>` — so the historical inference survives untouched when
+the field is absent.
+
+Verified against a real sidecar, with a deliberately discriminating case: point `component` at
+something that does not exist and the publish must fail, because if the field were ignored the
+engine would publish to the real pub/sub component and get a 204.
+
+```
+WARN  Dapr output topic 'results-out' returned 404
+```
+
+Two things that first run got wrong, both worth recording because both would have produced a
+false pass:
+
+- **The data class alone was not enough.** `parseMessagingEndpoint` in the Admin API did not read
+  the field, so it never reached the config — the first test showed a successful publish and the
+  config echoing `output=topic:results-out` with no component. Parsing and `endpointToMap` both
+  needed it.
+- **I was reading the wrong log line.** `[orders] … → OutputMessageId=…` is logged
+  *unconditionally*, whatever the output publish returned. The real signal is the `WARN` above.
+
+### A finding this turned up — a failed output is ACKed as success
+
+Worth separating from EF26 and deciding on its own. When the output publish fails, the engine logs
+at WARN and then **returns success to Dapr**, which acknowledges the message:
+
+```kotlin
+if (daprStatus !in 200..299) { logger.warn("Dapr output {} '{}' returned {} …") }
+…
+logger.info("[{}] MessageId={} → OutputMessageId={} …")   // unconditional
+// Return success to Dapr (acknowledges the message)
+```
+
+So a misconfigured or unavailable output binding silently drops every result while Dapr considers
+each message handled — no retry, no dead-letter, and an `info` line that reads like success. The
+counter-argument is real: failing the delivery risks a poison-message loop on a permanent
+misconfiguration. That is a design decision about at-least-once semantics, not a typo, so it
+belongs in its own report rather than being changed here.
 
 ### 2e — the Dapr sidecar port was a literal (fixed 2026-11-21)
 
@@ -382,8 +440,25 @@ any deployment we have made. Until that changes, the next release has the same b
 the assertions is easy; having a Service Bus namespace to run them against is a decision about test
 infrastructure, and it is what has kept this untested.
 
-## Documentation
+## Documentation — done 2026-11-21
 
-Not yet updated. `books/engine-azure` ch05 describes Service Bus setup and does not mention how a
-message finds its transformation — which, until this change, was the single most important thing a
-customer needed to know and the one thing that would have made their deployment work.
+ch05 gains a section, *How a Message Finds Its Transformation*, and Step 6 loses its absolute
+claim.
+
+What was there before was not silence but a half-truth, which is worse. Step 6 said *"the
+transformation name must match the Dapr input component name (`orders-in`)"* — correct for that
+walkthrough, where the reader creates the component themselves and can name it anything. It is
+wrong for a Marketplace deployment, where the template fixes the component as `servicebus-input`.
+A customer reading ch05 and deploying from the Marketplace would follow a rule that cannot be
+satisfied.
+
+The new section states the three resolutions in order, says plainly which to use on a Marketplace
+deployment and why (option 2 — declare the queue, keep your own name), gives the `curl` for it,
+and covers the one-queue-many-transformations case with the `X-UTLXe-Transform` property. It also
+records the pub/sub caveat the local harness surfaced: Dapr asks for subscriptions **once**, at
+sidecar startup, so a transformation uploaded afterwards is not subscribed until the revision
+restarts.
+
+Book rebuilt: 147 pages. One wrinkle worth noting for anyone editing these chapters — Typst uses
+single asterisks for bold, and a markdown-style `**bold**` compiles with a warning rather than an
+error, so it is easy to leave behind.
