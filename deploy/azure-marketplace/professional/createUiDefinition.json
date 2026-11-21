@@ -107,50 +107,25 @@
             }
           },
           {
-            "name": "cpuCores",
+            "name": "instanceSize",
             "type": "Microsoft.Common.DropDown",
-            "label": "CPU Cores per instance",
-            "toolTip": "CPU allocation per container instance. Higher values support more concurrent transformations.",
-            "defaultValue": "2.0 cores (production)",
+            "label": "Instance size",
+            "defaultValue": "4 vCPU / 8 GB \u2014 large payloads (recommended)",
+            "toolTip": "Total CPU and memory for the instance. Azure allows only fixed CPU/memory pairs, so these are chosen together rather than separately. The figure shown is the whole instance; the admin UI sidecar takes 0.25 vCPU and 0.5 GB of it.",
             "constraints": {
               "required": true,
               "allowedValues": [
                 {
-                  "label": "1.0 core (light workloads)",
-                  "value": "1.0"
+                  "label": "2 vCPU / 4 GB \u2014 light production",
+                  "value": "1.75"
                 },
                 {
-                  "label": "2.0 cores (production)",
-                  "value": "2.0"
+                  "label": "3 vCPU / 6 GB \u2014 production",
+                  "value": "2.75"
                 },
                 {
-                  "label": "4.0 cores (high throughput)",
-                  "value": "4.0"
-                }
-              ]
-            },
-            "visible": true
-          },
-          {
-            "name": "memoryGi",
-            "type": "Microsoft.Common.DropDown",
-            "label": "Memory per instance",
-            "toolTip": "Memory allocation per container instance. XML/JSON transformation expands messages 10-50x in memory. Choose based on your largest message size.",
-            "defaultValue": "4 GB \u2014 messages up to 500 KB (production)",
-            "constraints": {
-              "required": true,
-              "allowedValues": [
-                {
-                  "label": "2 GB \u2014 messages up to 200 KB (light)",
-                  "value": "2.0"
-                },
-                {
-                  "label": "4 GB \u2014 messages up to 500 KB (production)",
-                  "value": "4.0"
-                },
-                {
-                  "label": "8 GB \u2014 messages up to 1 MB+ (large payloads)",
-                  "value": "8.0"
+                  "label": "4 vCPU / 8 GB \u2014 large payloads (recommended)",
+                  "value": "3.75"
                 }
               ]
             },
@@ -386,8 +361,8 @@
       "location": "[location()]",
       "adminKey": "[steps('engineConfig').adminKey]",
       "dataPlaneKey": "[steps('engineConfig').dataPlaneKey]",
-      "cpuCores": "[steps('engineConfig').cpuCores]",
-      "memoryGi": "[steps('engineConfig').memoryGi]",
+      "cpuCores": "[steps('engineConfig').instanceSize]",
+      "memoryGi": "[if(equals(steps('engineConfig').instanceSize,'1.75'),'3.5',if(equals(steps('engineConfig').instanceSize,'2.75'),'5.5','7.5'))]",
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": 1,
       "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.4",

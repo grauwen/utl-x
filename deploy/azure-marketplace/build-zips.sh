@@ -99,6 +99,60 @@ for plan in sys.argv[1:]:
 sys.exit(1 if bad else 0)
 PY1
 
+# ── every offered size must add up to a legal Container Apps total ──
+# Azure refuses a replica whose containers do not sum to one of its allowed CPU/memory pairs, and
+# in every pair memory is exactly 2x CPU. The engine's cpuCores/memoryGi are only PART of the
+# replica — the 0.25 vCPU / 0.5 Gi admin-UI sidecar is the rest — so a size that looks reasonable
+# on its own can be rejected at deployment.
+#
+# That is not hypothetical: professional shipped asking for 4.0 + 0.25 = 4.25 vCPU, one notch over
+# the Consumption maximum, and the deployment failed with ContainerAppInvalidResourceTotal after
+# the resource group and environment had already been created. arm-ttk does not catch it; only a
+# real deployment did. This checks every value the templates OFFER, not just the default.
+python3 - "${PLANS[@]}" <<'PYSZ'
+import json, sys
+
+SIDECAR_CPU, SIDECAR_MEM = 0.25, 0.5
+LEGAL = {(round(0.25 * i, 2), round(0.5 * i, 2)) for i in range(1, 17)}   # up to 4.0 / 8.0
+
+bad = False
+for plan in sys.argv[1:]:
+    pr = json.load(open(f"{plan}/mainTemplate.json"))["parameters"]
+    cpus = pr["cpuCores"]["allowedValues"]
+    mems = pr["memoryGi"]["allowedValues"]
+
+    if len(cpus) != len(mems):
+        print(f"ERROR: {plan} offers {len(cpus)} CPU values and {len(mems)} memory values; they "
+              f"are chosen as a PAIR, so the lists must be the same length", file=sys.stderr)
+        bad = True
+        continue
+
+    for c, m in zip(cpus, mems):
+        total = (round(float(c) + SIDECAR_CPU, 2), round(float(m) + SIDECAR_MEM, 2))
+        if total not in LEGAL:
+            print(f"ERROR: {plan} offers engine {c} vCPU / {m} Gi; with the sidecar that is "
+                  f"{total[0]} / {total[1]}, which Azure rejects "
+                  f"(ContainerAppInvalidResourceTotal)", file=sys.stderr)
+            bad = True
+
+    for key in ("cpuCores", "memoryGi"):
+        dv = pr[key]["defaultValue"]
+        if dv not in pr[key]["allowedValues"]:
+            print(f"ERROR: {plan} {key} default {dv!r} is not in its own allowedValues",
+                  file=sys.stderr)
+            bad = True
+
+    heap = json.loads(json.dumps(
+        json.load(open(f"{plan}/mainTemplate.json"))["resources"][1]["properties"]["template"]["variables"]["jvmHeapMb"]))
+    missing = [m for m in mems if m not in heap]
+    if missing:
+        print(f"ERROR: {plan} jvmHeapMb has no entry for memoryGi {', '.join(missing)} — the "
+              f"template would resolve -Xmx to nothing", file=sys.stderr)
+        bad = True
+
+sys.exit(1 if bad else 0)
+PYSZ
+
 # ── the engine and the templates must agree on Dapr component names ──
 # Dapr component names are a CONTRACT between the app and its sidecar config, not Azure resource
 # names. The engine addresses components by name; the templates create them by name; nothing
@@ -205,9 +259,14 @@ for p in plans:
 # `workers` used to appear here. It was removed from the templates in 1.4.4: the offering runs
 # `--mode http`, and --workers is read only by StdioProtoTransport, so the 8-vs-32 difference this
 # guard was checking controlled nothing while the listing sold it as the difference between plans.
+# These are the ENGINE's share, not the replica's. The replica also carries the 0.25 vCPU /
+# 0.5 Gi admin-UI sidecar, and Azure validates the TOTAL. professional used to read 4.0 / 8.0
+# here, which totalled 4.25 / 8.5 and was rejected at deployment with
+# ContainerAppInvalidResourceTotal — so the plan could not be deployed at all. It is now 3.75 /
+# 7.5, which totals exactly 4.0 / 8.0: the largest a Consumption replica may be.
 expected = {
-    "starter":      {"cpuCores": "2.0", "memoryGi": "4.0"},
-    "professional": {"cpuCores": "4.0", "memoryGi": "8.0"},
+    "starter":      {"cpuCores": "1.75", "memoryGi": "3.5"},   # total 2.0  / 4.0
+    "professional": {"cpuCores": "3.75", "memoryGi": "7.5"},   # total 4.0  / 8.0
 }
 
 bad = False
@@ -248,7 +307,13 @@ def normalise(path):
     d = json.load(open(path))
     for k in list(d.get("parameters", {})):
         if k in SIZING:
+            # Both the default AND the offered range are plan-specific: that is the whole point
+            # of having two plans. Only defaultValue used to be stripped, which was enough while
+            # the plans happened to offer identical lists. Since professional's sizes had to
+            # change (its old default totalled 4.25 vCPU and could not deploy), the lists differ
+            # legitimately and the guard must stop reading that as drift.
             d["parameters"][k].pop("defaultValue", None)
+            d["parameters"][k].pop("allowedValues", None)
     return d
 
 a, b = (normalise(f"{p}/mainTemplate.json") for p in plans)

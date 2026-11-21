@@ -25,28 +25,24 @@
     },
     "cpuCores": {
       "type": "string",
-      "defaultValue": "2.0",
+      "defaultValue": "1.75",
       "allowedValues": [
-        "0.5",
-        "1.0",
-        "2.0",
-        "4.0"
+        "0.75",
+        "1.75"
       ],
       "metadata": {
-        "description": "CPU cores per instance (0.25, 0.5, 1.0, 2.0, 4.0)"
+        "description": "vCPU for the ENGINE container. The replica also runs the 0.25 vCPU admin-UI sidecar, and Azure requires the TOTAL to be one of its allowed CPU/memory pairs (memory is always exactly 2x CPU). Only values whose total is legal are offered \u2014 pick cpuCores and memoryGi from the same position in their lists."
       }
     },
     "memoryGi": {
       "type": "string",
-      "defaultValue": "4.0",
+      "defaultValue": "3.5",
       "allowedValues": [
-        "1.0",
-        "2.0",
-        "4.0",
-        "8.0"
+        "1.5",
+        "3.5"
       ],
       "metadata": {
-        "description": "Memory per instance in Gi (0.5, 1.0, 2.0, 4.0, 8.0)"
+        "description": "Memory in Gi for the ENGINE container, paired with cpuCores. The replica total (engine + 0.5 Gi sidecar) must be exactly 2x the total CPU."
       }
     },
     "minReplicas": {
@@ -489,10 +485,11 @@
           },
           "variables": {
             "jvmHeapMb": {
-              "1.0": "768",
-              "2.0": "1536",
+              "1.5": "1024",
+              "3.5": "2560",
               "4.0": "3072",
-              "8.0": "6144"
+              "5.5": "4096",
+              "7.5": "5632"
             },
             "javaOpts": "[format('-Xmx{0}m -XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch', variables('jvmHeapMb')[parameters('memoryGi')])]",
             "serviceBusScaleRule": {
