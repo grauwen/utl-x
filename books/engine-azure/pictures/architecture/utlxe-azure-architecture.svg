@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1560" height="975" viewBox="0 0 1560 975">
+<defs>
+<marker id="a333" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#333"/></marker>
+<marker id="aB8860B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B8860B"/></marker>
+<marker id="aB00020" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#B00020"/></marker>
+<marker id="a1565C0" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1565C0"/></marker>
+</defs>
+<rect width="1560" height="975" fill="#FAFAF8"/>
+<text x="30" y="36" font-family="Helvetica,Arial" font-size="19" fill="#111" font-weight="bold" text-anchor="start">UTLXe on Azure — Marketplace managed application, as shipped in 1.4.4</text>
+<text x="30" y="57" font-family="Helvetica,Arial" font-size="12" fill="#555" font-weight="normal" text-anchor="start">Solid = works today   ·   Amber dashed = exists but not reachable   ·   Red dotted = absent, proposed in EF25</text>
+<rect x="30" y="86" width="320" height="112" rx="7" fill="#ffffff" stroke="#333333" stroke-width="1.6" />
+<text x="42" y="108" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Caller</text>
+<text x="42" y="125" font-family="Helvetica,Arial" font-size="11.5" fill="#666">browser, or any application</text>
+<text x="42" y="146" font-family="Menlo,Consolas,monospace" font-size="11.5" fill="#222" font-weight="normal" text-anchor="start">X-Admin-Key  → admin API + Web UI</text>
+<text x="42" y="165" font-family="Menlo,Consolas,monospace" font-size="11.5" fill="#222" font-weight="normal" text-anchor="start">X-Api-Key    → data path only</text>
+<text x="42" y="184" font-family="Menlo,Consolas,monospace" font-size="11.5" fill="#777" font-weight="normal" text-anchor="start">(no key)     → /health, /metrics</text>
+<rect x="30" y="222" width="1130" height="690" rx="7" fill="#F4F7FB" stroke="#333333" stroke-width="1.6" />
+<text x="42" y="244" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Azure subscription</text>
+<text x="42" y="261" font-family="Helvetica,Arial" font-size="11.5" fill="#666">the customer's</text>
+<rect x="50" y="272" width="1090" height="418" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="62" y="294" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Managed resource group — created and owned by the managed application</text>
+<text x="62" y="311" font-family="Helvetica,Arial" font-size="11.5" fill="#666">the deployment principal has Owner here, and NOWHERE else</text>
+<rect x="70" y="334" width="1050" height="338" rx="7" fill="#F7F9F4" stroke="#333333" stroke-width="1.6" />
+<text x="82" y="356" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Managed Environment  (Consumption profile, no workload profiles)</text>
+<text x="82" y="373" font-family="Helvetica,Arial" font-size="11.5" fill="#666">QUOTA: 1 per region on this subscription · caps a replica at 4 vCPU / 8 GiB</text>
+<rect x="90" y="398" width="660" height="286" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="102" y="420" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Container App</text>
+<text x="102" y="437" font-family="Helvetica,Arial" font-size="11.5" fill="#666">ONE ingress · external · targetPort 8088 · transport http</text>
+<text x="102" y="458" font-family="Menlo,Consolas,monospace" font-size="11" fill="#B8860B" font-weight="normal" text-anchor="start">maxReplicas pinned to 1 (1.4.4) · minReplicas 0–1</text>
+<rect x="104" y="470" width="632" height="172" rx="7" fill="#FBFBF7" stroke="#333333" stroke-width="1.6" />
+<text x="116" y="487" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#333333">Replica</text>
+<text x="116" y="504" font-family="Helvetica,Arial" font-size="11.5" fill="#666">containers share one network namespace → 127.0.0.1</text>
+<rect x="116" y="512" width="196" height="118" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="128" y="527" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">utlxe-ui</text>
+<text x="128" y="544" font-family="Helvetica,Arial" font-size="11.5" fill="#666">nginx · 0.25 vCPU</text>
+<text x="126" y="560" font-family="Menlo,Consolas,monospace" font-size="10.5" fill="#1565C0" font-weight="bold" text-anchor="start">:8088  PUBLISHED</text>
+<text x="126" y="575" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">/             static</text>
+<text x="126" y="588" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">/admin/     → 8081</text>
+<text x="126" y="601" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">/health     → 8081</text>
+<text x="126" y="614" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">/metrics    → 8081</text>
+<text x="126" y="627" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">…/{id}/run  → 8085</text>
+<rect x="326" y="512" width="212" height="118" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="338" y="527" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">utlxe</text>
+<text x="338" y="544" font-family="Helvetica,Arial" font-size="11.5" fill="#666">temurin:21-jre · JVM</text>
+<text x="336" y="560" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">:8081 admin+health+metrics</text>
+<text x="336" y="575" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">:8085 data plane</text>
+<text x="336" y="590" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#B8860B" font-weight="normal" text-anchor="start">:9090 gRPC — NOT STARTED</text>
+<text x="336" y="607" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#666" font-weight="normal" text-anchor="start">registry: in-memory</text>
+<text x="336" y="621" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#666" font-weight="normal" text-anchor="start">UTLXE_ADMIN_KEY (secret)</text>
+<rect x="552" y="512" width="172" height="118" rx="7" fill="#FFFDF5" stroke="#B8860B" stroke-width="1.6" stroke-dasharray="7,5" />
+<text x="564" y="527" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#B8860B">daprd</text>
+<text x="564" y="544" font-family="Helvetica,Arial" font-size="11.5" fill="#666">INJECTED</text>
+<text x="562" y="560" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#B8860B" font-weight="normal" text-anchor="start">only when mode</text>
+<text x="562" y="573" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#B8860B" font-weight="normal" text-anchor="start">= servicebus</text>
+<text x="562" y="590" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">:3500 sidecar</text>
+<text x="562" y="604" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#333" font-weight="normal" text-anchor="start">appPort 8085</text>
+<text x="562" y="621" font-family="Menlo,Consolas,monospace" font-size="9.6" fill="#666" font-weight="normal" text-anchor="start">one per REPLICA</text>
+<path d="M 312 566 L 322 566" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#a333)"/>
+<path d="M 552 566 L 542 566" fill="none" stroke="#B8860B" stroke-width="1.8" marker-end="url(#aB8860B)"/>
+<rect x="766" y="398" width="338" height="258" rx="7" fill="#FFFDF5" stroke="#333333" stroke-width="1.6" />
+<text x="778" y="416" font-family="Helvetica,Arial" font-size="13" font-weight="bold" fill="#333333">Dapr components</text>
+<text x="778" y="433" font-family="Helvetica,Arial" font-size="11.5" fill="#666">ARM resources, ENVIRONMENT-scoped</text>
+<text x="778" y="452" font-family="Menlo,Consolas,monospace" font-size="10" fill="#666" font-weight="normal" text-anchor="start">created at deploy time — the engine</text>
+<text x="778" y="465" font-family="Menlo,Consolas,monospace" font-size="10" fill="#666" font-weight="normal" text-anchor="start">cannot create one at runtime</text>
+<rect x="778" y="496" width="314" height="44" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="790" y="512" font-family="Helvetica,Arial" font-size="11" font-weight="bold" fill="#333333">servicebus-input</text>
+<text x="790" y="529" font-family="Helvetica,Arial" font-size="11.5" fill="#666">bindings.azure.servicebus.queues</text>
+<rect x="778" y="544" width="314" height="44" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="790" y="560" font-family="Helvetica,Arial" font-size="11" font-weight="bold" fill="#333333">servicebus-output</text>
+<text x="790" y="577" font-family="Helvetica,Arial" font-size="11.5" fill="#666">bindings.azure.servicebus.topics</text>
+<rect x="778" y="592" width="314" height="44" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="790" y="608" font-family="Helvetica,Arial" font-size="11" font-weight="bold" fill="#333333">eventhub-output</text>
+<text x="790" y="625" font-family="Helvetica,Arial" font-size="11.5" fill="#666">bindings.azure.eventhubs  (1.4.4)</text>
+<rect x="778" y="640" width="314" height="24" rx="7" fill="#FFF8E1" stroke="#B8860B" stroke-width="1.6" stroke-dasharray="7,5" />
+<text x="790" y="656" font-family="Helvetica,Arial" font-size="10.5" font-weight="bold" fill="#B8860B">utlxe-servicebus — NOT CREATED</text>
+<rect x="70" y="700" width="320" height="62" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="82" y="718" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">Azure Files  utlxe-data</text>
+<text x="82" y="735" font-family="Helvetica,Arial" font-size="11.5" fill="#666">100 GiB · /utlxe/data · read ONCE at startup</text>
+<rect x="404" y="700" width="300" height="62" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="416" y="718" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">Log Analytics workspace</text>
+<text x="416" y="735" font-family="Helvetica,Arial" font-size="11.5" fill="#666">appLogsConfiguration · 30 days</text>
+<rect x="718" y="700" width="402" height="62" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="730" y="718" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">Container App secrets</text>
+<text x="730" y="735" font-family="Helvetica,Arial" font-size="11.5" fill="#666">admin-key · data-plane-key · servicebus-connection</text>
+<path d="M 420 642 L 420 700" fill="none" stroke="#333" stroke-width="1.8" marker-end="url(#a333)"/>
+<text x="428" y="676" font-family="Menlo,Consolas,monospace" font-size="10" fill="#666" font-weight="normal" text-anchor="start">/utlxe/data</text>
+<rect x="50" y="790" width="1090" height="108" rx="7" fill="#F9F4F4" stroke="#333333" stroke-width="1.6" />
+<text x="62" y="812" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">The customer's OWN resources — outside the managed resource group</text>
+<text x="62" y="829" font-family="Helvetica,Arial" font-size="11.5" fill="#666">the managed app cannot create role assignments here (confirmed)</text>
+<rect x="70" y="830" width="240" height="54" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="82" y="847" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">Service Bus namespace</text>
+<text x="82" y="864" font-family="Helvetica,Arial" font-size="11.5" fill="#666">queue in · topic out</text>
+<rect x="326" y="830" width="196" height="54" rx="7" fill="#FFFFFF" stroke="#333333" stroke-width="1.6" />
+<text x="338" y="847" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#333333">Event Hub</text>
+<text x="338" y="864" font-family="Helvetica,Arial" font-size="11.5" fill="#666">output only in 1.4.4</text>
+<rect x="538" y="830" width="264" height="54" rx="7" fill="#FFF5F5" stroke="#B00020" stroke-width="1.6" stroke-dasharray="2,4" />
+<text x="550" y="847" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#B00020">Azure Key Vault</text>
+<text x="550" y="864" font-family="Helvetica,Arial" font-size="11.5" fill="#666">ABSENT — EF25 Part 2</text>
+<rect x="818" y="830" width="302" height="54" rx="7" fill="#FFF5F5" stroke="#B00020" stroke-width="1.6" stroke-dasharray="2,4" />
+<text x="830" y="847" font-family="Helvetica,Arial" font-size="12" font-weight="bold" fill="#B00020">User-assigned managed identity</text>
+<text x="830" y="864" font-family="Helvetica,Arial" font-size="11.5" fill="#666">ABSENT — EF25 Part 1</text>
+<path d="M 1104 518 L 1150 518 L 1150 898 L 190 898 L 190 884" fill="none" stroke="#B8860B" stroke-width="1.8" marker-end="url(#aB8860B)"/>
+<path d="M 1104 614 L 1142 614 L 1142 892 L 424 892 L 424 884" fill="none" stroke="#B8860B" stroke-width="1.8" marker-end="url(#aB8860B)"/>
+<text x="778" y="478" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">credentials: a connection string,</text>
+<text x="778" y="491" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">from a Container App secret</text>
+<path d="M 190 198 L 190 214 L 620 214 L 620 470" fill="none" stroke="#1565C0" stroke-width="1.8" marker-end="url(#a1565C0)"/>
+<text x="630" y="330" font-family="Menlo,Consolas,monospace" font-size="11" fill="#1565C0" font-weight="normal" text-anchor="start">HTTPS  ingress → :8088</text>
+<rect x="1190" y="222" width="340" height="118" rx="7" fill="#FFFDF5" stroke="#B8860B" stroke-width="1.6" stroke-dasharray="7,5" />
+<text x="1202" y="244" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#B8860B">Application Insights</text>
+<text x="1202" y="261" font-family="Helvetica,Arial" font-size="11.5" fill="#666">agent baked into the engine image</text>
+<text x="1202" y="282" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">-javaagent is added ONLY when</text>
+<text x="1202" y="296" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">APPLICATIONINSIGHTS_CONNECTION_</text>
+<text x="1202" y="310" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">STRING is set. No wizard field for</text>
+<text x="1202" y="324" font-family="Menlo,Consolas,monospace" font-size="10" fill="#B8860B" font-weight="normal" text-anchor="start">it, so unused by default.</text>
+<rect x="1190" y="362" width="340" height="500" rx="7" fill="#FFF8F8" stroke="#333333" stroke-width="1.6" />
+<text x="1202" y="384" font-family="Helvetica,Arial" font-size="15" font-weight="bold" fill="#333333">Known gaps</text>
+<text x="1202" y="401" font-family="Helvetica,Arial" font-size="11.5" fill="#666">what this picture does not do</text>
+<text x="1202" y="420" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B00020" font-weight="normal" text-anchor="start">utlxe:1.4.4 and utlxe-ui:1.4.4 do</text>
+<text x="1202" y="435.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B00020" font-weight="normal" text-anchor="start">not exist on ghcr — every 1.4.4</text>
+<text x="1202" y="451.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B00020" font-weight="normal" text-anchor="start">deployment fails on image pull.</text>
+<text x="1202" y="482.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">Service Bus path NEVER tested:</text>
+<text x="1202" y="497.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">0 assertions, enableDapr never</text>
+<text x="1202" y="513.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">true in any test deployment.</text>
+<text x="1202" y="544.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">A queue message routes to the</text>
+<text x="1202" y="559.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">transformation NAMED after the</text>
+<text x="1202" y="575.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">component — 'servicebus-input'.</text>
+<text x="1202" y="590.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">One queue per deployment.</text>
+<text x="1202" y="621.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">utlxe-servicebus pub/sub is hard-</text>
+<text x="1202" y="637.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">coded in the engine (5x) and</text>
+<text x="1202" y="652.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">created nowhere → path is dead.</text>
+<text x="1202" y="683.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">:9090 gRPC not started; one</text>
+<text x="1202" y="699.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">ingress cannot publish it beside</text>
+<text x="1202" y="714.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B8860B" font-weight="normal" text-anchor="start">HTTP. Needs a second app.</text>
+<text x="1202" y="745.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B00020" font-weight="normal" text-anchor="start">No Key Vault, no managed identity.</text>
+<text x="1202" y="761.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#B00020" font-weight="normal" text-anchor="start">Secrets are plaintext in the wizard.</text>
+<text x="1202" y="792.0" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#666" font-weight="normal" text-anchor="start">Event Hubs INPUT needs a check-</text>
+<text x="1202" y="807.5" font-family="Menlo,Consolas,monospace" font-size="10.2" fill="#666" font-weight="normal" text-anchor="start">point store + its own KEDA trigger.</text>
+<text x="30" y="949" font-family="Menlo,Consolas,monospace" font-size="11" fill="#555" font-weight="normal" text-anchor="start">Ports: 8088 nginx (the only published one) · 8081 engine admin/health/metrics · 8085 engine data plane · 9090 gRPC (off) · 3500 daprd</text>
+<text x="30" y="965" font-family="Helvetica,Arial" font-size="10" fill="#888" font-weight="normal" text-anchor="start">Generated 2026-11-20 from mainTemplate.json, createUiDefinition.json, nginx.conf, Dockerfile.engine and the engine sources.</text>
+</svg>
