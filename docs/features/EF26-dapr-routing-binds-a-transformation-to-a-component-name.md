@@ -138,8 +138,8 @@ rest is not all in one place:
 |---|---|---|---|
 | 1 | several queue components from one deployment | `deploy/azure-marketplace/*/mainTemplate.json` (an ARM `copy` loop) + both `createUiDefinition.json` | Azure config only |
 | 2a | create the `pubsub.azure.servicebus.topics` component | the same two `mainTemplate.json` files | Azure config only |
-| 2b | **stop hardcoding the component name** | `modules/engine` — `HttpTransport.kt:473, 695, 924` and `DaprIntegration.kt:231, 370` | **UTLXe code** |
-| 2c | assert the template creates every component the engine addresses | `deploy/azure-marketplace/build-zips.sh` | build guard |
+| 2b | **stop hardcoding the component name** — *done 2026-11-21* | `modules/engine/config/TransformConfig.kt` (`DaprComponents`) | **UTLXe code** |
+| 2c | check the engine and the templates agree on component names — *done 2026-11-21* | `deploy/azure-marketplace/build-zips.sh` | build guard |
 | 3 | Service Bus assertions | `deploy/azure-marketplace/utlxe-acceptance.sh` | test script + a real namespace |
 | 4 | document how a message finds its transformation | `books/engine-azure` ch05 | documentation |
 
@@ -159,23 +159,47 @@ wrong.
 that declares `input.topic`, each routed to `/pubsub/{transformation name}` — one component, many
 topics, no naming coupling at all. That is the design this whole report is about, already written.
 
-*What blocks it in Azure is one component that nobody creates* — and the name the engine insists on
-is **hardcoded in five places** as `utlxe-servicebus`, with no environment variable and no
-parameter:
+*What blocks it in Azure is one component that nobody creates.* The name the engine insisted on
+was hardcoded in five places across two files, with no environment variable and no parameter.
 
-```
-HttpTransport.kt:473    "pubsubname" to "utlxe-servicebus"
-HttpTransport.kt:695    /v1.0/publish/utlxe-servicebus/{binding}
-HttpTransport.kt:924    /v1.0/publish/utlxe-servicebus/{binding}
-DaprIntegration.kt:231  if (ep.isPubSub) "utlxe-servicebus" else …
-DaprIntegration.kt:370  val componentName = "utlxe-servicebus"
+**Fixed 2026-11-21 (2b).** One object now owns it:
+
+```kotlin
+object DaprComponents {
+    const val DEFAULT_PUBSUB_NAME = "utlxe-servicebus"
+    val pubsubName: String =
+        System.getenv("UTLXE_PUBSUB_NAME")?.takeIf { it.isNotBlank() } ?: DEFAULT_PUBSUB_NAME
+}
 ```
 
-So wiring pub/sub up needs three separate changes: the template creates the component (Azure),
-the engine reads the name from `UTLXE_PUBSUB_NAME` defaulting to today's value so nothing existing
-breaks (**UTLXe code**), and `build-zips.sh` asserts the two agree (build guard). That third one is
-the real lesson — two hardcoded names on opposite sides of a boundary, with nothing checking they
-match, is how an entire code path stayed dead without anyone noticing.
+All five call sites read it — three in `HttpTransport`, two in `DaprIntegration` — so a deployment
+can name the component whatever its templates do, and the default is the historical value, so
+nothing that works today changes. Two tests pin it: one asserts `/dapr/subscribe` names
+`DaprComponents.pubsubName` rather than a literal, and one asserts the default is still
+`utlxe-servicebus`, because changing it would silently orphan any deployment that had already
+created a component by the old name.
+
+**And the guard that would have caught the original mismatch (2c), also 2026-11-21.**
+`build-zips.sh` now compares the component names the templates *create* against the names anything
+*addresses*:
+
+- **Fails** on an orphan — a component the templates create that nothing points at. Verified by
+  adding one: `ERROR: starter creates Dapr component(s) nothing addresses: orphan-output`.
+- **Notes** the reverse, because `utlxe-servicebus` is a known gap rather than a regression:
+  `NOTE: starter creates no 'utlxe-servicebus' component, so the engine's pub/sub path is
+  unreachable there (EF26 item 2a).` That note now prints on every build, which is the point —
+  the gap was invisible for as long as nothing looked for it. Promote it to a failure when 2a
+  lands.
+
+The guard's first version was wrong in the dangerous direction: its regex stopped at the first
+`)` inside `parameters(...)`, so it missed
+`if(parameters('enableEventHubs'), 'eventhub-output', 'servicebus-output')` and reported both
+outputs as orphans. It now matches against the nested templates' `variables` blob instead of
+parsing ARM expressions. A guard that cries wolf gets deleted, so this one had to be proven in
+both directions before it was kept.
+
+What still remains for pub/sub is **2a**: the template creating a
+`pubsub.azure.servicebus.topics` component with that name.
 
 ### 2d — a transformation should declare its component AND its resource
 

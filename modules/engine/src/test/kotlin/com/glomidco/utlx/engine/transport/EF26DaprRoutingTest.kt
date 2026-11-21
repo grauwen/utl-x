@@ -95,6 +95,14 @@ class EF26DaprRoutingTest {
         }
     }
 
+    private fun declareTopic(name: String, topic: String) {
+        val i = engine.registry.get(name)!!
+        engine.registry.register(name, TransformationInstance(
+            name = i.name, source = i.source, strategy = i.strategy,
+            config = i.config.copy(input = MessagingEndpoint(topic = topic, subscription = "utlxe")),
+            loadedAt = i.loadedAt, executionCount = i.executionCount, errorCount = i.errorCount))
+    }
+
     private fun post(path: String, body: String, ct: String,
                      headers: Map<String, String> = emptyMap()): Pair<Int, String> {
         val c = URL("http://localhost:$port$path").openConnection() as HttpURLConnection
@@ -174,6 +182,44 @@ class EF26DaprRoutingTest {
             mapOf("metadata.X-UTLXe-Transform" to "chosen"))
         assertEquals(200, code, body)
         assertTrue(body.contains("\"success\":true"), body)
+    }
+
+    // ── the pub/sub contract: one component, many topics, routed by transformation name ──
+
+    @Test
+    fun `dapr subscribe names the configured component and routes by transformation name`() {
+        // This is the path that makes one component serve many topics. It is also the path that
+        // is DEAD in Azure, because no template creates the component it names — so the contract
+        // is worth pinning before it is wired up rather than after.
+        load("orders");   declareTopic("orders", "orders-in")
+        load("invoices"); declareTopic("invoices", "invoices-in")
+
+        val c = URL("http://localhost:$port/dapr/subscribe").openConnection() as HttpURLConnection
+        c.connectTimeout = 5000; c.readTimeout = 10000
+        assertEquals(200, c.responseCode)
+        val body = c.inputStream.readBytes().toString(Charsets.UTF_8)
+
+        // The component name must come from the single constant, not from a literal. If someone
+        // re-hardcodes a different string anywhere, this fails.
+        val expected = com.glomidco.utlx.engine.config.DaprComponents.pubsubName
+        assertTrue(body.contains("\"pubsubname\":\"$expected\""),
+            "subscriptions must name the configured component '$expected'; got: $body")
+
+        // One component, two topics — the property that removes the one-queue-per-deployment cap.
+        assertTrue(body.contains("orders-in") && body.contains("invoices-in"),
+            "both declared topics must be subscribed: $body")
+
+        // Routed by TRANSFORMATION name, which is what frees the name from the component's.
+        assertTrue(body.contains("/pubsub/orders") && body.contains("/pubsub/invoices"),
+            "each subscription must route to its own transformation: $body")
+    }
+
+    @Test
+    fun `the default component name is unchanged`() {
+        // Changing the default would silently break any deployment that already created a
+        // component by the old name. It may only change deliberately, with this test.
+        assertEquals("utlxe-servicebus",
+            com.glomidco.utlx.engine.config.DaprComponents.DEFAULT_PUBSUB_NAME)
     }
 
     @Test

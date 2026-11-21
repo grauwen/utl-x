@@ -480,7 +480,7 @@ class HttpTransport(
                         .filter { it.config.input?.topic != null }
                         .map { tx ->
                             mapOf(
-                                "pubsubname" to "utlxe-servicebus",
+                                "pubsubname" to com.glomidco.utlx.engine.config.DaprComponents.pubsubName,
                                 "topic" to tx.config.input!!.topic!!,
                                 "route" to "/pubsub/${tx.name}"
                             )
@@ -702,7 +702,7 @@ class HttpTransport(
             try {
                 // EF10: Use different Dapr endpoint for pub/sub vs binding
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:$daprPort/v1.0/publish/utlxe-servicebus/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/publish/${com.glomidco.utlx.engine.config.DaprComponents.pubsubName}/$outputBinding"
                 } else {
                     "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
                 }
@@ -931,7 +931,7 @@ class HttpTransport(
         if (outputBinding != null) {
             try {
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:$daprPort/v1.0/publish/utlxe-servicebus/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/publish/${com.glomidco.utlx.engine.config.DaprComponents.pubsubName}/$outputBinding"
                 } else {
                     "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
                 }

@@ -64,6 +64,26 @@ fun parseSizeToBytes(size: String?): Long? {
  * EF10: Messaging endpoint declaration.
  * Exactly one of queue/topic/eventhub should be set. The field name IS the discriminator.
  */
+/**
+ * EF26: the name of the Dapr pub/sub component UTLXe publishes through and subscribes with.
+ *
+ * It was written as the literal "utlxe-servicebus" in five places across two files, with no way
+ * to change it — while the Azure templates create components called `servicebus-input` and
+ * `servicebus-output` and no `utlxe-servicebus` at all. Two hardcoded names on opposite sides of
+ * a boundary, nothing checking they agree, and the result was that the engine's entire pub/sub
+ * path addressed a component that exists in no deployment.
+ *
+ * Read from the environment so a deployment can name the component whatever its templates do;
+ * the default is the historical value, so nothing that works today changes.
+ */
+object DaprComponents {
+    const val DEFAULT_PUBSUB_NAME = "utlxe-servicebus"
+
+    /** The pub/sub component name for this process. */
+    val pubsubName: String =
+        System.getenv("UTLXE_PUBSUB_NAME")?.takeIf { it.isNotBlank() } ?: DEFAULT_PUBSUB_NAME
+}
+
 data class MessagingEndpoint(
     val queue: String? = null,              // Service Bus queue → bindings.azure.servicebusqueues
     val topic: String? = null,              // Service Bus topic → pubsub.azure.servicebus.topics

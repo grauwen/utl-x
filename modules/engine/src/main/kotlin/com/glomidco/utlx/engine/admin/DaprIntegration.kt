@@ -228,7 +228,7 @@ class DaprIntegration(
                         }
                     }
                     outputEndpoint?.let { ep ->
-                        val componentName = if (ep.isPubSub) "utlxe-servicebus" else ep.resourceName ?: return@let
+                        val componentName = if (ep.isPubSub) com.glomidco.utlx.engine.config.DaprComponents.pubsubName else ep.resourceName ?: return@let
                         val found = loadedComponents.any { it.name == componentName }
                         if (found) {
                             actions.add(SyncAction("validated", componentName, ep.daprComponentType ?: ""))
@@ -367,7 +367,7 @@ class DaprIntegration(
         dir: Path, transformationName: String, role: String, endpoint: MessagingEndpoint
     ): SyncAction {
         // Pub/sub: one shared component per namespace
-        val componentName = "utlxe-servicebus"
+        val componentName = com.glomidco.utlx.engine.config.DaprComponents.pubsubName
         val filename = "pubsub-$componentName.yaml"
         val filePath = dir.resolve(filename)
         val existed = Files.exists(filePath)
