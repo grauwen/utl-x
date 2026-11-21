@@ -56,7 +56,7 @@ execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
 nothing about two of them:
 
 ```bash
-./gradlew :modules:engine:test       # 1029 tests, incl. ConformanceStrategyParityTest (417)
+./gradlew :modules:engine:test       # 1054 tests, incl. ConformanceStrategyParityTest (416)
 ```
 
 **Five bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
@@ -77,6 +77,24 @@ reason about whether the compiled path is affected — run it.
 The good news: `ConformanceStrategyParityTest` auto-discovers the conformance corpus
 and runs every fixture through all three strategies. Adding a fixture buys
 cross-strategy coverage for free; no hand-written parity test needed.
+
+### The Dapr path is not covered by any of the above
+
+```bash
+./scripts/dapr-local-test.sh         # 9 assertions against a real daprd
+```
+
+Dapr messaging — subscriptions, binding and pub/sub delivery, component naming, output publishing
+— is exercised by none of the suites above, and was exercised by nothing at all until 2026-11-21.
+The harness runs a real `daprd` against the engine using `pubsub.in-memory` and `bindings.cron`,
+so it needs no cloud account, no credentials and no Docker daemon. It needs the Dapr CLI
+(`dapr init --slim` is enough).
+
+Two bugs had been reachable for the life of that integration precisely because nothing ran it:
+the engine's whole pub/sub path addressed a component no Azure template created
+([EF26](docs/features/EF26-dapr-routing-binds-a-transformation-to-a-component-name.md)), and a
+failed output publish is still acknowledged to Dapr as success
+([EB22](docs/bugs-fixed/EB22-a-failed-dapr-output-is-acknowledged-as-success.md)).
 
 ### Writing conformance fixtures
 
