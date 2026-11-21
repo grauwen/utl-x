@@ -12,8 +12,10 @@ eye on disk space and memory during tests. Java heap size is not total RSS.
 
 Only `127.0.0.1:18090` is published. The gateway exposes health, transformation
 loading and individual transformation execution for trusted local testing.
-The runtime Docker network is internal. Do not add this service to the public
-website proxy. This is a test deployment, not an authenticated production API.
+The engine's Docker network is internal. The gateway also joins a normal bridge
+network so Docker can publish its localhost port. Only the gateway has outbound
+network access. Do not add this service to the public website proxy. This is a
+test deployment, not an authenticated production API.
 
 ## Deploy from GitHub in PuTTY
 
@@ -94,3 +96,28 @@ docker compose -f examples/xlsx/docker/compose.yaml down
 
 This stops only the `utlx-xlsx-test` Compose project and retains its scratch
 volume. There are no changes to My Bottle Collection or its deployment files.
+
+## Recover an internal-only gateway deployment
+
+The initial configuration connected the gateway only to an internal network.
+Docker could start both containers while omitting the requested host port.
+The corrected configuration attaches only the gateway to an additional normal
+bridge network. Its port remains bound to `127.0.0.1`.
+
+After checking out the networking correction from GitHub, recreate the gateway
+with the existing engine image:
+
+```sh
+sudo docker compose -f examples/xlsx/docker/compose.yaml config --quiet
+sudo docker compose -f examples/xlsx/docker/compose.yaml up -d --no-build --no-deps --force-recreate --wait gateway
+sudo docker compose -f examples/xlsx/docker/compose.yaml port gateway 8080
+curl --fail --silent --show-error http://127.0.0.1:18090/api/health
+```
+
+The port command should report `127.0.0.1:18090`. If access still fails, collect
+container status and logs without restarting Docker or changing host firewall rules:
+
+```sh
+sudo docker compose -f examples/xlsx/docker/compose.yaml ps -a
+sudo docker compose -f examples/xlsx/docker/compose.yaml logs --tail=80 gateway engine
+```

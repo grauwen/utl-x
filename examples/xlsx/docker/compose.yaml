@@ -44,7 +44,15 @@ services:
     tmpfs: ["/tmp:rw,noexec,nosuid,size=16m,mode=1777"]
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
-    networks: [test]
+    # Docker publishes ports through a non-internal gateway network.
+    # The engine remains connected only to the internal test network.
+    networks: [test, access]
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, http://127.0.0.1:8080/api/health]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 5s
     logging:
       options:
         max-size: 10m
@@ -56,3 +64,4 @@ volumes:
 networks:
   test:
     internal: true
+  access: {}
