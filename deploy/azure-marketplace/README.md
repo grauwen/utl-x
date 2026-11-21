@@ -9,6 +9,7 @@ themselves: the wizard provisions a Container App, and the Container App pulls f
 | Offer id | `44ab35db-fe99-48ef-b182-ffe9d0c919e3` |
 | Publisher id | `glomidcobv1777133923122` |
 | Plans | `starter` (2.0 vCPU / 4 GiB), `professional` (4.0 vCPU / 8 GiB) — see **Concurrency** below |
+| Listing text | [`offer-listing.md`](offer-listing.md) — the description, with the basis for every claim |
 | Engine image | `ghcr.io/utlx-lang/utlxe` |
 | Admin UI image | `ghcr.io/utlx-lang/utlxe-ui` |
 
@@ -393,8 +394,8 @@ possible to say exactly which bytes Microsoft received.
 | `utlxe-professional-1.4.2.zip` | `23dc175915e14a90…` | `utlxe:1.4.2` | `utlxe-ui:1.4.2` | **2026-11-18 — rejected, stale apiVersions** | yes |
 | `utlxe-starter-1.4.3.zip` | `cf6f6a47d416e506…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
 | `utlxe-professional-1.4.3.zip` | `65e051638b1cb14b…` | `utlxe:1.4.3` | `utlxe-ui:1.4.3` | **2026-11-18 — published** | yes |
-| `utlxe-starter-1.4.4.zip` | `f3022c1819213ba3…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
-| `utlxe-professional-1.4.4.zip` | `1900a3120bca5908…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
+| `utlxe-starter-1.4.4.zip` | `66c790a59861959a…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
+| `utlxe-professional-1.4.4.zip` | `fbb094caa5456da6…` | `utlxe:1.4.4` | `utlxe-ui:1.4.4` | *pending — single-instance* | yes |
 
 Full digests:
 
@@ -411,8 +412,8 @@ a8bb00865df6ce7693101d3e30260c8615b7239e8d8c671817d0b1dfd40ea2a7  utlxe-professi
 23dc175915e14a90ee57690d4dc6f7f3c64276702268a3161e975e22273976bf  utlxe-professional-1.4.2.zip
 cf6f6a47d416e506cad6382e88faff771fd9ad6f0e8e1d3e4b8d4eb4cbc144e1  utlxe-starter-1.4.3.zip
 65e051638b1cb14b61677f7c41567dc96313c2fcdf4ac06d4c80bde1462b1b4d  utlxe-professional-1.4.3.zip
-f3022c1819213ba38966f9141674a328377e4b00a98e931e9193194544df0cfe  utlxe-starter-1.4.4.zip
-1900a3120bca590869232f77bc801a33434c5bc772bb1e79f1435ff65635f480  utlxe-professional-1.4.4.zip
+66c790a59861959a434053f36713559c95bbc50d52a5164a02b5929810115329  utlxe-starter-1.4.4.zip
+fbb094caa5456da6292919360fa435a0ce85f007c06efeea0ddf3635598fd2a0  utlxe-professional-1.4.4.zip
 ```
 
 Verify with `shasum -a 256 zips/<file>`.
@@ -589,3 +590,57 @@ yet been submitted it is still cheap to fix.
 The deployment shapes, the Dapr sidecar topology and a proposed `deploymentMode` parameter are
 written up in `devdocs/azure/utlxe-deployment-modes.md` (§6.3 for this finding). `devdocs/` is
 not merged to `main`, so that is a path rather than a link.
+
+---
+
+## The two keys
+
+Since 1.4.4 the offering issues **two** credentials, and they must not be the same value.
+
+| key | parameter | header | reaches |
+|---|---|---|---|
+| admin | `adminKey` | `X-Admin-Key` | everything on `/admin/*` — deploy, delete, pause, list, bundles, config, logs |
+| data path | `dataPlaneKey` | `X-Api-Key` | **only** `POST /api/transformations/{id}/run` |
+
+Both are `secureString` parameters with **no `defaultValue`**, so a deployment must supply them.
+That is deliberate: there is no code path to an empty key, and an empty data path key would
+otherwise publish an unauthenticated remote execution path.
+
+The data path key is held by **nginx in the `utlxe-ui` container**, as the `DATA_PLANE_KEY`
+environment variable backed by the `data-plane-key` Container App secret. The engine never sees
+it — nginx clears the header before proxying — and the engine authenticates nothing on its data
+plane. Authentication is a gateway concern; see EF24.
+
+Three properties the templates rely on, each with a test behind it:
+
+- **nginx publishes exactly one data path.** An anchored regex,
+  `location ~ ^/api/transformations/[A-Za-z0-9._-]+/run$`, not a prefix. Everything else on port
+  8085 — `/api/load`, `/api/transformations`, `DELETE /api/transform/{id}` which unloads — stays
+  unreachable from outside the replica.
+- **An unset key closes the route, it does not open it.** `envsubst` renders an unset
+  `DATA_PLANE_KEY` as an empty string, and `$http_x_api_key != ""` is *false* for a request that
+  sends no header at all. The template therefore checks `$dp_key = ""` first and answers 503.
+- **Inner-scoped nested templates declare every parameter they reference.**
+  `expressionEvaluationOptions.scope: "inner"` means a nested template sees only its own
+  parameters. A `parameters('x')` inside one that it does not declare is not a syntax error, arm-ttk
+  does not report it, and it fails at *deployment* — after the resource group and the environment
+  exist. `build-zips.sh` now checks both directions: nothing referenced-but-undeclared, nothing
+  declared-but-unpassed. It was added because the 1.4.4 Dapr `scopes` fix broke exactly this and
+  nothing else caught it; EB18 was the same class of bug one template earlier.
+- **The engine and the templates agree on Dapr component names.** Component names are a contract
+  between the app and its sidecar config, not Azure resource names, and nothing checked that the
+  two sides related. They did not: the engine addressed a pub/sub component called
+  `utlxe-servicebus` that no template created, so its whole pub/sub path was unreachable in Azure
+  and stayed that way unnoticed. `build-zips.sh` now **fails** on a component the templates create
+  that nothing addresses, and **notes** one the engine addresses that the templates do not. Both
+  directions are verified by deliberately breaking them.
+- **The two keys are genuinely separate.** `utlxe-acceptance.sh` asserts that the *admin* key is
+  **rejected** with 401 on the data path. If the two were ever wired to the same secret, every
+  other assertion in the suite would still pass — so that one must never be skipped.
+
+### Running the acceptance suite after 1.4.4
+
+`dataPlaneKey` has no default, so a deployment that does not pass it is rejected by ARM before
+anything is created. `utlxe-acceptance.sh` generates a second UUID and passes it automatically,
+and refuses to run if the two keys come out identical. Both are printed in the `--keep` summary,
+along with a ready-to-paste `curl` for the data path.

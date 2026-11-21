@@ -124,6 +124,9 @@ ENV_WAIT_TIMEOUT="${ENV_WAIT_TIMEOUT:-1500}" # wait for the one-per-region envir
 # PERSISTENCE GAP in run_suite().
 P_APP_NAME="${P_APP_NAME:-namePrefix}"
 P_ADMIN_KEY="${P_ADMIN_KEY:-adminKey}"
+# EF24: the data-path key. It has NO defaultValue in the template -- deliberately, so there is no
+# route to an empty key -- which means every deployment must pass it or ARM rejects the template.
+P_DATA_PLANE_KEY="${P_DATA_PLANE_KEY:-dataPlaneKey}"
 
 # Only used by the --image fallback. Ingress targets 8088 (the utlxe-ui nginx
 # container), whose nginx.conf proxies /health, /metrics and /admin/ through to
@@ -133,7 +136,7 @@ ADMIN_KEY_ENV="${ADMIN_KEY_ENV:-UTLXE_ADMIN_KEY}"
 
 # ── internals ────────────────────────────────────────────────────────────────
 TEMPLATE="" ; IMAGE="" ; KEEP=0 ; TEARDOWN=0 ; DRY_RUN=0 ; STATUS=0 ; declare -a EXTRA_PARAMS=()
-CURRENT_RG="" ; KEEP_FQDN="" ; KEEP_KEY="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
+CURRENT_RG="" ; KEEP_FQDN="" ; KEEP_KEY="" ; KEEP_DP_KEY="" ; PASS=0 ; FAIL=0 ; SKIPPED=0 ; WARNED=0 ; declare -a RESULTS=()
 
 C_OK=$'\033[0;32m' ; C_BAD=$'\033[0;31m' ; C_WARN=$'\033[0;33m'
 C_DIM=$'\033[0;90m' ; C_OFF=$'\033[0m'
@@ -187,6 +190,8 @@ cleanup() {
       printf '\n%s── kept deployment ──%s\n' "$C_DIM" "$C_OFF"
       [[ -n "$KEEP_FQDN" ]] && printf '  Web UI     https://%s\n' "$KEEP_FQDN"
       printf '  admin key  %s\n' "$KEEP_KEY"
+      [[ -n "$KEEP_DP_KEY" ]] && printf '  data key   %s  %s(X-Api-Key, data path only)%s\n' \
+        "$KEEP_DP_KEY" "$C_DIM" "$C_OFF"
       printf '  resource g %s\n' "$CURRENT_RG"
       printf '  delete it  ./utlxe-acceptance.sh --teardown\n'
       printf '  check it   ./utlxe-acceptance.sh --status\n'
@@ -272,7 +277,7 @@ preflight() {
   if [[ -n "$TEMPLATE" ]]; then
     local declared missing=""
     declared=$(jq -r '.parameters | keys[]' "$TEMPLATE" 2>/dev/null || echo "")
-    for p in "$P_APP_NAME" "$P_ADMIN_KEY"; do
+    for p in "$P_APP_NAME" "$P_ADMIN_KEY" "$P_DATA_PLANE_KEY"; do
       grep -qx "$p" <<<"$declared" || missing="${missing} ${p}"
     done
     [[ -z "$missing" ]] || die "template does not declare:${missing}
@@ -283,14 +288,15 @@ preflight() {
 
 # ── deploy ───────────────────────────────────────────────────────────────────
 deploy() {
-  local app="$1" key="$2"
+  local app="$1" key="$2" dpkey="$3"
   if [[ -n "$TEMPLATE" ]]; then
     log "deploying marketplace template"
     az deployment group create \
       --resource-group "$CURRENT_RG" \
       --name "$DEPLOYMENT_NAME" \
       --template-file "$TEMPLATE" \
-      --parameters "$P_APP_NAME=$app" "$P_ADMIN_KEY=$key" ${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"} \
+      --parameters "$P_APP_NAME=$app" "$P_ADMIN_KEY=$key" "$P_DATA_PLANE_KEY=$dpkey" \
+                   ${EXTRA_PARAMS[@]+"${EXTRA_PARAMS[@]}"} \
       --only-show-errors -o none
   else
     log "deploying container image directly"
@@ -459,6 +465,11 @@ run_suite() {
   app=""                           # discovered after deployment — see below
   key=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)
   KEEP_KEY="$key"
+  # EF24: a DISTINCT data-path key. Generating one value and using it for both would make the
+  # key-separation assertion below pass while proving nothing.
+  dpkey=$(cat /proc/sys/kernel/random/uuid 2>/dev/null || uuidgen)
+  [[ "$dpkey" != "$key" ]] || die "the two keys came out identical — refusing to run a test that cannot fail"
+  KEEP_DP_KEY="$dpkey"
   CURRENT_RG="${RG_PREFIX}-${stamp}"
 
   printf '\n%s── acceptance suite ──%s\n' "$C_DIM" "$C_OFF"
@@ -468,7 +479,7 @@ run_suite() {
     --tags purpose=utlxe-acceptance ttl=ephemeral --only-show-errors -o none
 
   local t0=$SECONDS
-  deploy "$prefix" "$key"
+  deploy "$prefix" "$key" "$dpkey"
   note "deploy duration" "$((SECONDS - t0))s"
 
   if [[ -n "$TEMPLATE" ]]; then
@@ -512,7 +523,10 @@ run_suite() {
   printf '\n%s── reachable now (until teardown) ──%s\n' "$C_DIM" "$C_OFF"
   printf '  Web UI     https://%s\n' "$fqdn"
   printf '  admin key  %s\n' "$key"
+  printf '  data key   %s\n' "$dpkey"
   printf '  probe      curl -s -o /dev/null -w "%%{http_code}\\n" https://%s/health\n' "$fqdn"
+  printf '  data path  curl -s -X POST -H "X-Api-Key: %s" -H "Content-Type: application/json" \\\n' "$dpkey"
+  printf '               -d %s{"name":"you"}%s https://%s/api/transformations/hello/run\n' "'" "'" "$fqdn"
   printf '  deeper     ./utlxe-admin-tests.sh --url https://%s --key %s\n\n' "$fqdn" "$key"
 
   if ! wait_for_health "$fqdn"; then
@@ -580,6 +594,78 @@ UTLX
   assert_eq "transformation output is correct" \
     "$(jq -r '.greeting // "none"' <<<"$tx_out" 2>/dev/null || echo "unparseable")" "Hello, acceptance!"
   note "transform latency" "$(jq -r '.duration_ms // "?"' <<<"$res") ms"
+
+  # ---- EF24: the published data path --------------------------------------
+  # Template-only. The --image fallback builds a container app by hand with no utlxe-ui sidecar
+  # and therefore no nginx, so there is no data path to test -- and a failure there would be an
+  # artefact of the harness, not the offering.
+  if [[ -z "$TEMPLATE" ]]; then
+    skip "data path assertions" "--image mode has no nginx sidecar"
+  else
+  # POST /api/transformations/{id}/run is the only path nginx publishes to the engine's data
+  # plane, and it is fronted by a key that is NOT the admin key. Three things get asserted: the
+  # path works, the keys are genuinely separate, and the routing is narrow.
+  local dp_url="https://${fqdn}/api/transformations/hello/run"
+  local dp_code dp_body
+
+  # Raw body, no JSON envelope around the payload, Content-Type doing the work.
+  dp_body=$(curl -s --max-time 20 -w '\n%{http_code}' -X POST \
+        -H "X-Api-Key: ${dpkey}" -H "Content-Type: application/json" \
+        -d '{"name": "data-path"}' "$dp_url" 2>/dev/null)
+  dp_code="${dp_body##*$'\n'}"; dp_body="${dp_body%$'\n'*}"
+  assert_eq "data path accepts a raw body with its own key" "${dp_code:-000}" "200"
+  # The response is the OUTPUT itself, not a JSON envelope with the output nested as a string.
+  assert_eq "data path returns the output directly" \
+    "$(jq -r '.greeting // "none"' <<<"$dp_body" 2>/dev/null || echo "unparseable")" \
+    "Hello, data-path!"
+
+  # THE assertion that must never be skipped. If the two keys are ever wired to the same secret,
+  # every other check in this suite still passes and the separation is silently gone.
+  dp_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+        -H "X-Api-Key: ${key}" -H "Content-Type: application/json" \
+        -d '{"name": "x"}' "$dp_url" 2>/dev/null)
+  assert_eq "ADMIN key is REJECTED on the data path" "${dp_code:-000}" "401"
+
+  dp_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 -X POST \
+        -H "Content-Type: application/json" -d '{"name": "x"}' "$dp_url" 2>/dev/null)
+  assert_eq "no key is rejected on the data path" "${dp_code:-000}" "401"
+
+  # Narrow routing. These engine paths must not be reachable through the public ingress even
+  # WITH the data-path key. Asserted on CONTENT rather than status: an unmatched path falls to
+  # nginx's static handler, which may answer 200 with index.html or 405 -- either way the engine
+  # never sees it, and what proves that is the absence of an engine response.
+  local leak
+  for ep in "api/load" "api/transformations" "api/execute/hello"; do
+    leak=$(curl -s --max-time 15 -X POST -H "X-Api-Key: ${dpkey}" \
+           -H "Content-Type: application/json" -d '{}' \
+           "https://${fqdn}/${ep}" 2>/dev/null | head -c 400)
+    if grep -qE '"success"|"transformations"|"error_code"' <<<"$leak"; then
+      FAIL=$((FAIL+1)); RESULTS+=("FAIL|/${ep} is not published|engine answered: $(head -c 120 <<<"$leak")")
+      printf '  %s✗%s /%s is not published %s(engine answered)%s\n' "$C_BAD" "$C_OFF" "$ep" "$C_DIM" "$C_OFF"
+    else
+      PASS=$((PASS+1)); RESULTS+=("PASS|/${ep} is not published|")
+      printf '  %s✓%s /%s is not published\n' "$C_OK" "$C_OFF" "$ep"
+    fi
+  done
+
+  # The unauthenticated unload on the data plane, specifically. If this ever became reachable a
+  # caller could delete transformations with no credential at all.
+  dp_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 15 -X DELETE \
+        "https://${fqdn}/api/transform/hello" 2>/dev/null)
+  if [[ "$dp_code" == "200" ]]; then
+    FAIL=$((FAIL+1)); RESULTS+=("FAIL|DELETE /api/transform/{id} is not published|answered 200")
+    printf '  %s✗%s DELETE /api/transform/{id} is not published %s(answered 200)%s\n' \
+      "$C_BAD" "$C_OFF" "$C_DIM" "$C_OFF"
+  else
+    PASS=$((PASS+1)); RESULTS+=("PASS|DELETE /api/transform/{id} is not published|")
+    printf '  %s✓%s DELETE /api/transform/{id} is not published %s(HTTP %s)%s\n' \
+      "$C_OK" "$C_OFF" "$C_DIM" "${dp_code:-000}" "$C_OFF"
+  fi
+
+  # Still loaded? The narrow-routing probes above must not have unloaded anything.
+  assert_eq "transformation survived the routing probes" \
+    "$(curl -fsS "https://${fqdn}/health" | jq -r '.engine.transformations // "missing"')" "1"
+  fi
 
   # ---- loaded state --------------------------------------------------------
   health=$(curl -fsS "https://${fqdn}/health")

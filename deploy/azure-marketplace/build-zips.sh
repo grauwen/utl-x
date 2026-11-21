@@ -59,6 +59,108 @@ $stale"
     fail "$plan/mainTemplate.json pins $(tag_of "$plan"), not ${VERSION}"
 done
 
+# ── inner-scoped nested templates must declare every parameter they reference ──
+# `expressionEvaluationOptions.scope: "inner"` means a nested template sees ONLY its own
+# parameters. A `parameters('x')` inside it that the nested template does not declare is not a
+# syntax error and arm-ttk does not report it -- it fails at DEPLOYMENT, after the resource group
+# and the environment have been created. That is the most expensive moment to find it.
+#
+# This has already happened once: the 1.4.4 fix that made the Dapr component `scopes` follow
+# `namePrefix` referenced it inside the inner-scoped dapr-components template, which did not
+# declare it. arm-ttk passed, the packages built, and nothing would have surfaced it before a
+# deployment failed. EB18 was the same class of bug one template earlier.
+python3 - "${PLANS[@]}" <<'PY1'
+import json, re, sys
+
+bad = False
+for plan in sys.argv[1:]:
+    d = json.load(open(f"{plan}/mainTemplate.json"))
+    for res in d.get("resources", []):
+        pr = res.get("properties", {})
+        if pr.get("expressionEvaluationOptions", {}).get("scope") != "inner":
+            continue
+        tpl = pr.get("template", {})
+        declared = set(tpl.get("parameters", {}).keys())
+        passed = set(pr.get("parameters", {}).keys())
+        refs = set(re.findall(r"parameters\('([A-Za-z0-9_]+)'\)", json.dumps(tpl)))
+
+        undeclared = sorted(refs - declared)
+        if undeclared:
+            print(f"ERROR: {plan} nested template '{res.get('name')}' is inner-scoped and "
+                  f"references undeclared parameter(s): {', '.join(undeclared)}", file=sys.stderr)
+            bad = True
+
+        unpassed = sorted(declared - passed)
+        if unpassed:
+            print(f"ERROR: {plan} nested template '{res.get('name')}' declares "
+                  f"{', '.join(unpassed)} but the parent passes no value", file=sys.stderr)
+            bad = True
+
+sys.exit(1 if bad else 0)
+PY1
+
+# ── the engine and the templates must agree on Dapr component names ──
+# Dapr component names are a CONTRACT between the app and its sidecar config, not Azure resource
+# names. The engine addresses components by name; the templates create them by name; nothing
+# checked that the two sets relate. They did not: the engine's pub/sub path addresses
+# "utlxe-servicebus" (EF26) and no template has ever created it, so that whole path is unreachable
+# in Azure and stayed that way unnoticed.
+#
+# Fails on an ORPHAN — a component the templates create that the engine never addresses, which is
+# money spent on nothing and a sign of a rename gone half-done. Only NOTES the reverse, because
+# the pub/sub component is a known gap rather than a regression; promote it to a failure when
+# EF26 item 2a lands.
+python3 - "${PLANS[@]}" <<'PY2A'
+import json, re, sys, pathlib
+
+root = pathlib.Path("../..")
+engine_src = list((root / "modules/engine/src/main/kotlin").rglob("*.kt")) + \
+             list((root / "modules/core/src/main/kotlin").rglob("*.kt"))
+blob = "\n".join(p.read_text(errors="ignore") for p in engine_src)
+
+# names the engine addresses: the pub/sub constant, plus any output-binding env mapping the
+# templates set (UTLXE_OUTPUT_BINDING_<INPUT> = <output component>).
+m = re.search(r'DEFAULT_PUBSUB_NAME\s*=\s*"([^"]+)"', blob)
+engine_pubsub = m.group(1) if m else None
+
+bad = False
+for plan in sys.argv[1:]:
+    d = json.loads(pathlib.Path(f"{plan}/mainTemplate.json").read_text())
+    created, addressed = set(), set()
+    for res in d["resources"]:
+        for r in res.get("properties", {}).get("template", {}).get("resources", []):
+            if r.get("type", "").endswith("daprComponents"):
+                nm = r["name"]
+                created.add(nm.split("'")[-2] if "'" in nm else nm)
+    # A component is addressed if the engine is pointed at it. Two ways that happens:
+    #   - the template names it in a nested template's `variables` (containerEnv builds the
+    #     UTLXE_OUTPUT_BINDING_* env var from it);
+    #   - it is an INPUT component, which Dapr delivers to directly without the engine naming it.
+    # Matching on the variables blob rather than parsing ARM expressions: the first version of
+    # this guard used a regex that stopped at the first ')' inside parameters(...), so it missed
+    # `if(parameters('enableEventHubs'), 'eventhub-output', 'servicebus-output')` and reported
+    # both outputs as orphans. A guard that cries wolf gets deleted.
+    variables_blob = json.dumps([res.get("properties", {}).get("template", {}).get("variables", {})
+                                 for res in d["resources"]])
+    addressed.update(n for n in created if n in variables_blob)
+    addressed.update(n for n in created if n.endswith("-input"))
+    # the pub/sub component is addressed by the engine through DaprComponents.pubsubName, not by
+    # anything in the template, so match it against the constant read out of the engine source
+    if engine_pubsub:
+        addressed.add(engine_pubsub)
+
+    orphans = sorted(created - addressed)
+    if orphans:
+        print(f"ERROR: {plan} creates Dapr component(s) nothing addresses: {', '.join(orphans)}",
+              file=sys.stderr)
+        bad = True
+    if engine_pubsub and engine_pubsub not in created:
+        print(f"  NOTE: {plan} creates no '{engine_pubsub}' component, so the engine's pub/sub "
+              f"path is unreachable there (EF26 item 2a).")
+
+sys.exit(1 if bad else 0)
+PY2A
+
 # ── guards for two traps removed in 1.4.4 ──
 # Both were invisible for several releases, and both are one careless edit away from returning.
 python3 - "${PLANS[@]}" <<'PY0'
