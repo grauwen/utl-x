@@ -137,7 +137,7 @@ rest is not all in one place:
 | # | item | lives in | kind |
 |---|---|---|---|
 | 1 | several queue components from one deployment | `deploy/azure-marketplace/*/mainTemplate.json` (an ARM `copy` loop) + both `createUiDefinition.json` | Azure config only |
-| 2a | create the `pubsub.azure.servicebus.topics` component | the same two `mainTemplate.json` files | Azure config only |
+| 2a | create the `pubsub.azure.servicebus.topics` component — *done 2026-11-21* | both `mainTemplate.json` files | Azure config only |
 | 2b | **stop hardcoding the component name** — *done 2026-11-21* | `modules/engine/config/TransformConfig.kt` (`DaprComponents`) | **UTLXe code** |
 | 2c | check the engine and the templates agree on component names — *done 2026-11-21* | `deploy/azure-marketplace/build-zips.sh` | build guard |
 | 3 | Service Bus assertions | `deploy/azure-marketplace/utlxe-acceptance.sh` | test script + a real namespace |
@@ -198,8 +198,39 @@ outputs as orphans. It now matches against the nested templates' `variables` blo
 parsing ARM expressions. A guard that cries wolf gets deleted, so this one had to be proven in
 both directions before it was kept.
 
-What still remains for pub/sub is **2a**: the template creating a
-`pubsub.azure.servicebus.topics` component with that name.
+**2a — the component itself, done 2026-11-21.** Both templates now create it alongside the two
+bindings, on the same `enableServiceBus` condition:
+
+```
+utlxe-servicebus   pubsub.azure.servicebus.topics     ← new
+servicebus-input   bindings.azure.servicebus.queues
+servicebus-output  bindings.azure.servicebus.topics
+eventhub-output    bindings.azure.eventhubs
+```
+
+`consumerID` is set to the app id, which is the Service Bus **subscription** Dapr consumes from.
+Dapr creates it on first use when the connection string carries Manage rights; otherwise it has
+to exist already. That is a prerequisite worth stating in ch05 rather than discovering.
+
+The guard from 2c confirms the contract now holds — the NOTE it printed on every build is gone —
+and it still catches a break in both directions. Renaming the component in the template alone
+produces, correctly, two complaints at once:
+
+```
+ERROR: starter creates Dapr component(s) nothing addresses: utlxe-pubsub-renamed
+ NOTE: starter creates no 'utlxe-servicebus' component, so the engine's pub/sub path
+       is unreachable there (EF26 item 2a).
+```
+
+**What this does and does not buy.** A transformation that declares `input.topic` in its
+`transform.yaml` is now subscribed and routed by its own name, so one deployment can serve as many
+topics as it has transformations — the cap this report opened with. It is **not** verified: nothing
+has been deployed, Dapr has never been enabled in any test run, and adding a transformation needs a
+revision restart because Dapr asks `/dapr/subscribe` once at sidecar startup. Until item 3 exists,
+this is correct-by-construction, not correct-by-observation.
+
+It is also deliberately **not** claimed in the Marketplace listing yet. `offer-listing.md` still
+says queue in, topic out, because that is what has been tested — see item 3.
 
 ### 2d — a transformation should declare its component AND its resource
 
@@ -261,7 +292,90 @@ The wider audit was clean: no literal ports in the main sources of `:cli`, `:cor
 One test violated the rule — `HttpTransportTest` pinned `18085`, which `AGENTS.md` forbids — and
 now takes a free port from `ServerSocket(0)`.
 
-### 3 — test coverage: a script change and a decision
+### Verified against a real Dapr sidecar (2026-11-21)
+
+Everything above was argued from reading the code. It has now been run against **daprd 1.17.6**
+locally — no Azure, no Service Bus namespace, and no Docker daemon, using component types that
+need no infrastructure at all:
+
+```
+components/pubsub.yaml   pubsub.in-memory     named utlxe-servicebus
+components/cron.yaml     bindings.cron        named orders-in-queue
+```
+
+**The pub/sub contract holds.** daprd read `/dapr/subscribe` and acted on it:
+
+```
+Component loaded: utlxe-servicebus (pubsub.in-memory/v1)
+app is subscribed to the following topics: [[orders-in]] through pubsub=utlxe-servicebus
+```
+
+and a published message was delivered, unwrapped and transformed:
+
+```
+[orders] PubSub MessageId=2d4d4996-… ceSource=utlxe-app ceType=com.dapr.event.sent payload=13B
+[orders] PubSub MessageId=2d4d4996-… → OutputMessageId=01a1feb3-… in 235718us
+```
+
+So the component-name contract (2b/2c), the subscription shape, routing by transformation name,
+and CloudEvents unwrapping are all confirmed by an actual sidecar rather than inferred.
+
+**Rule 3 holds, which is the fix this report exists for.** A cron input binding named
+`orders-in-queue` delivered to a transformation called `invoices`, which merely *declared* that
+queue in its `transform.yaml`:
+
+```
+[invoices] MessageId=01a1feb4-… binding=orders-in-queue
+```
+
+Before the change that was a 503. The transformation's name is genuinely free of the component's
+name, proven end to end. (The parse error that follows is expected: cron posts an empty body and
+the transformation declares `input json`. Routing was the subject.)
+
+**Still not verified: rule 1.** `bindings.cron` cannot carry arbitrary message properties, so
+whether Dapr surfaces a Service Bus application property as a `metadata.X-UTLXe-Transform` header
+remains an inference from the correlation reads in the same function. That one needs a broker that
+supports message metadata.
+
+**Nothing Azure-specific is verified by this** — not the ARM components, not Service Bus lock
+renewal, dead-lettering or the connection-string path. A local sidecar proves the engine's half of
+the contract; it says nothing about the template's half.
+
+### 3 — test coverage: smaller than it looked
+
+The standing assumption here, including in the first draft of this report, was that Service Bus
+coverage was blocked on having a Service Bus namespace. The run above shows that is wrong for the
+part that matters most: **the routing logic is broker-agnostic**, and `pubsub.in-memory` plus
+`bindings.cron` exercise it with no infrastructure, no cloud account and no Docker.
+
+So the work splits:
+
+- **Automated, locally — `scripts/dapr-local-test.sh`, added 2026-11-21.** Builds the jar if
+  needed, starts the engine on free ports, starts a real `daprd` against an in-memory pub/sub
+  component and two cron input bindings, asserts, and tears everything down. Eight assertions,
+  no cloud account, no credentials, no Docker. Run it with `--keep` to leave both processes up.
+
+  It reads `DEFAULT_PUBSUB_NAME` out of the engine source rather than repeating the string, so the
+  harness cannot drift from what the engine addresses — the same contract `build-zips.sh` checks
+  from the template side.
+
+  Proven load-bearing: reverting the EF26 routing and rebuilding turns it red on exactly the right
+  assertion, *binding routed by declared input*, while the seven that test pre-existing behaviour
+  stay green.
+
+  Two things it got wrong first, both worth keeping in the file as comments. It asserted rules 3
+  and 4 against a **single** component, which can never pass — the exact-name match is
+  deliberately more specific, so a transformation named after the component always wins and the
+  declared-input path is unreachable. It now uses one component per rule. And it scans logs
+  through a Python helper that strips ANSI codes, because `grep` reported `Binary file matches`
+  and silently found nothing: the exact trap `AGENTS.md` documents.
+- **Still needs a real namespace:** Service Bus semantics (lock renewal, retry, DLQ), the
+  connection-string and identity paths, and `metadata.*` property forwarding.
+
+That reframes item 3 from "we need test infrastructure" to "most of it needs nothing, and the rest
+is a smaller ask".
+
+### 3 — test coverage: the remainder
 
 `utlxe-acceptance.sh` has **zero** Service Bus assertions and `enableDapr` has never been true in
 any deployment we have made. Until that changes, the next release has the same blind spot. Writing
