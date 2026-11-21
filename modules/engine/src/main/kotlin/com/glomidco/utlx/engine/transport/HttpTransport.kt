@@ -41,7 +41,15 @@ class HttpTransport(
     private val engine: UtlxEngine,
     private val port: Int = DEFAULT_PORT,
     private val host: String = "0.0.0.0",
-    private val maxRequestBodyBytes: Long = MAX_REQUEST_BODY_BYTES
+    private val maxRequestBodyBytes: Long = MAX_REQUEST_BODY_BYTES,
+    /**
+     * The Dapr sidecar's HTTP API port. Dapr publishes it to the app as DAPR_HTTP_PORT, so read
+     * that first and fall back to Dapr's documented default — the port was previously written as
+     * a literal at four call sites, which made it unconfigurable in any deployment that moves it.
+     * `DaprIntegration` already took it as a parameter; this class simply had not followed suit.
+     */
+    private val daprPort: Int =
+        System.getenv("DAPR_HTTP_PORT")?.toIntOrNull() ?: DEFAULT_DAPR_PORT
 ) : TransportServer {
 
     private val logger = LoggerFactory.getLogger(HttpTransport::class.java)
@@ -57,6 +65,8 @@ class HttpTransport(
 
     companion object {
         const val DEFAULT_PORT = 8085
+        /** Dapr's documented default sidecar HTTP port, used when DAPR_HTTP_PORT is absent. */
+        const val DEFAULT_DAPR_PORT = 3500
         // Default 10MB — protects against oversized payloads that would exhaust heap.
         // XML expands 10-50× in UDM; a 10MB XML payload could use 100-500MB of heap.
         const val MAX_REQUEST_BODY_BYTES = 10L * 1024 * 1024
@@ -506,6 +516,27 @@ class HttpTransport(
      * propagates traceparent/tracestate to output binding (EF04),
      * forwards messaging triad and custom properties to output (EF04).
      */
+    /**
+     * EF26: find a transformation whose own `transform.yaml` claims this queue or topic as its
+     * input. Only consulted when no per-message selector was sent and no transformation is named
+     * after the component, so it costs nothing on the paths that already worked.
+     */
+    private fun resolveByDeclaredInput(registry: TransformationRegistry, bindingName: String): String? {
+        val matches = registry.list()
+            .filter { it.config.input?.queue == bindingName || it.config.input?.topic == bindingName }
+            .sortedBy { it.name }
+        if (matches.isEmpty()) return null
+        if (matches.size > 1) {
+            // Ambiguous configuration, not a routing decision. Sorted so the choice is at least
+            // deterministic, and logged so it is fixable.
+            logger.warn("Dapr binding '{}' — {} transformations declare it as their input ({}). " +
+                "Using '{}'. Give them distinct queues, or route per message with " +
+                "metadata.X-UTLXe-Transform.",
+                bindingName, matches.size, matches.joinToString { it.name }, matches.first().name)
+        }
+        return matches.first().name
+    }
+
     private suspend fun handleDaprInput(call: ApplicationCall, registry: TransformationRegistry) {
         // Heap backpressure — reject before processing to prevent OOM
         if (engine.isHeapPressure()) {
@@ -519,12 +550,45 @@ class HttpTransport(
         }
 
         val bindingName = call.parameters["bindingName"] ?: "default"
-        val transformId = call.request.header("X-UTLXe-Transform") ?: bindingName
+
+        // EF26: decide WHICH transformation handles this message, most specific first.
+        //
+        // Dapr delivers an input binding to POST /{component-name}, so `bindingName` is the Dapr
+        // COMPONENT's name -- not a transformation's. Treating it directly as a transformation id,
+        // which is all this used to do, forced the two to be identical: with the Marketplace
+        // template's component called "servicebus-input", a customer had to name their
+        // transformation "servicebus-input" or every message got a 503. Nothing documented that,
+        // and it also capped a deployment at one queue.
+        //
+        //   1. metadata.X-UTLXe-Transform -- a PER-MESSAGE selector. Dapr forwards Service Bus
+        //      application properties as metadata.* headers; the correlation reads further down
+        //      depend on exactly that. So one queue can feed many transformations, chosen by the
+        //      sender.
+        //   2. X-UTLXe-Transform -- the unprefixed form, for a caller posting directly.
+        //   3. a transformation whose own transform.yaml declares this queue or topic as its
+        //      input. This makes the transformation's config authoritative and frees its name.
+        //   4. failing all that, a transformation named after the component -- the historical
+        //      behaviour, kept so nothing that works today stops working.
+        val selector = call.request.header("metadata.X-UTLXe-Transform")
+            ?: call.request.header("X-UTLXe-Transform")
+
+        // Order matters for cost as well as for precedence. The exact-name lookup is a
+        // ConcurrentHashMap hit; scanning the registry for a declared input is O(n) plus a sort,
+        // and this runs on every delivered message. So try the cheap path first and scan only
+        // when it misses. That also makes this change strictly ADDITIVE: whenever the old
+        // one-line resolution found a transformation, it still finds the same one by the same
+        // route, and the new behaviour applies only where the old code answered 503.
+        val transformId = selector
+            ?: registry.get(bindingName)?.name
+            ?: resolveByDeclaredInput(registry, bindingName)
+            ?: bindingName
 
         // EF05: Return 503 if transformation not loaded (not 500 — it's "not ready yet")
         val instance = registry.get(transformId)
         if (instance == null) {
-            logger.warn("Dapr binding '{}' — no transformation '{}' loaded. Upload via Admin API.", bindingName, transformId)
+            logger.warn("Dapr binding '{}' — no transformation '{}' loaded. Name a transformation " +
+                "after the binding, declare the binding as its input in transform.yaml, or set " +
+                "the metadata.X-UTLXe-Transform message property.", bindingName, transformId)
             call.respond(HttpStatusCode.ServiceUnavailable, mapOf(
                 "success" to false,
                 "error" to "No transformation loaded for binding '$transformId'",
@@ -638,9 +702,9 @@ class HttpTransport(
             try {
                 // EF10: Use different Dapr endpoint for pub/sub vs binding
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:3500/v1.0/publish/utlxe-servicebus/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/publish/utlxe-servicebus/$outputBinding"
                 } else {
-                    "http://localhost:3500/v1.0/bindings/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
                 }
 
                 // Build output metadata including messaging triad
@@ -867,9 +931,9 @@ class HttpTransport(
         if (outputBinding != null) {
             try {
                 val daprUrl = if (outputIsPubSub) {
-                    "http://localhost:3500/v1.0/publish/utlxe-servicebus/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/publish/utlxe-servicebus/$outputBinding"
                 } else {
-                    "http://localhost:3500/v1.0/bindings/$outputBinding"
+                    "http://localhost:$daprPort/v1.0/bindings/$outputBinding"
                 }
 
                 val outputMetadata = mutableMapOf(

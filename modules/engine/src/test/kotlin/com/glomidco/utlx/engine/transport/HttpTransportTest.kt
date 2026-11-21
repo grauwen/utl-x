@@ -24,7 +24,9 @@ class HttpTransportTest {
     private lateinit var engine: UtlxEngine
     private lateinit var transport: HttpTransport
     private var serverThread: Thread? = null
-    private val port = 18085 // test port to avoid conflicts
+    // AGENTS.md: never hardcode a port in a test. A fixed 18085 collides with a parallel
+    // run or anything else on the box, and fails as a confusing connection error.
+    private val port = java.net.ServerSocket(0).use { it.localPort }
 
     @BeforeEach
     fun setup() {
@@ -44,8 +46,16 @@ class HttpTransportTest {
             it.start()
         }
 
-        // Wait for server to start
-        Thread.sleep(1000)
+        // Poll rather than sleep: a fixed wait passes in isolation and loses the race under
+        // full-suite load, surfacing as an intermittent "Connection refused".
+        val until = System.currentTimeMillis() + 20_000
+        while (System.currentTimeMillis() < until) {
+            try {
+                val c = URL("http://localhost:$port/api/health").openConnection() as HttpURLConnection
+                c.connectTimeout = 500; c.readTimeout = 1000; c.responseCode; c.disconnect()
+                break
+            } catch (e: Exception) { Thread.sleep(100) }
+        }
     }
 
     @AfterEach
