@@ -698,6 +698,9 @@ class HttpTransport(
         val output = execResp.output.toStringUtf8()
 
         // EF04/EF10: Forward transformed result to Dapr (binding or pub/sub) with messaging triad
+        // EB22: did the output actually land? Tracked so the summary line below cannot
+        // report a round trip that did not happen.
+        var outputFailed = false
         if (outputBinding != null) {
             try {
                 // EF10: Use different Dapr endpoint for pub/sub vs binding
@@ -783,9 +786,17 @@ class HttpTransport(
             }
         }
 
-        logger.info("[{}] MessageId={} → OutputMessageId={} CorrelationId={} in {}us",
-            transformId, incomingMessageId, outputMessageId, incomingCorrelationId,
-            execResp.metrics?.executeDurationUs ?: 0)
+        // EB22: previously unconditional, so a dropped result logged identically to a
+        // delivered one — the single thing that made this invisible.
+        if (outputFailed) {
+            logger.warn("[{}] MessageId={} transformed OK but the OUTPUT WAS LOST (see above) " +
+                "CorrelationId={} in {}us", transformId, incomingMessageId, incomingCorrelationId,
+                execResp.metrics?.executeDurationUs ?: 0)
+        } else {
+            logger.info("[{}] MessageId={} → OutputMessageId={} CorrelationId={} in {}us",
+                transformId, incomingMessageId, outputMessageId, incomingCorrelationId,
+                execResp.metrics?.executeDurationUs ?: 0)
+        }
 
         // Return success to Dapr (acknowledges the message)
         call.respond(HttpStatusCode.OK, mapOf(
@@ -935,6 +946,9 @@ class HttpTransport(
         val outputBinding = messagingOutput?.resourceName ?: instance.config.outputBinding
         val outputIsPubSub = messagingOutput?.isPubSub == true
 
+        // EB22: did the output actually land? Tracked so the summary line below cannot
+        // report a round trip that did not happen.
+        var outputFailed = false
         if (outputBinding != null) {
             try {
                 // EF26 2d: the COMPONENT and the RESOURCE are separate things to Dapr, and a
@@ -989,8 +1003,14 @@ class HttpTransport(
             }
         }
 
-        logger.info("[{}] PubSub MessageId={} → OutputMessageId={} in {}us",
+        if (outputFailed) {
+            logger.warn("[{}] PubSub MessageId={} transformed OK but the OUTPUT WAS LOST "
+                + "(see above) in {}us", transformName, incomingMessageId,
+                execResp.metrics?.executeDurationUs ?: 0)
+        } else {
+    logger.info("[{}] PubSub MessageId={} → OutputMessageId={} in {}us",
             transformName, incomingMessageId, outputMessageId, execResp.metrics?.executeDurationUs ?: 0)
+        }
 
         // Return success to Dapr (acknowledges the pub/sub message)
         call.respond(HttpStatusCode.OK, mapOf("success" to true))

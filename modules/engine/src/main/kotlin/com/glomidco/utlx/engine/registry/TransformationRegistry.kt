@@ -95,7 +95,14 @@ data class TransformationInstance(
     /** EF21: Current number of in-flight executions for this transformation. */
     val inFlight: AtomicInteger = AtomicInteger(0),
     /** EF21: Concurrency rejections counter. */
-    val concurrencyRejections: AtomicLong = AtomicLong(0)
+    val concurrencyRejections: AtomicLong = AtomicLong(0),
+    /**
+     * EB22: results this transformation produced that could NOT be published to its Dapr output.
+     * The message was still acknowledged, so the result is gone; this counter is the only durable
+     * trace that it happened. Separate from errorCount, which counts transformations that FAILED —
+     * these succeeded and were then thrown away.
+     */
+    val outputFailures: AtomicLong = AtomicLong(0)
 ) {
     companion object {
         const val MAX_ERROR_RING_SIZE = 100

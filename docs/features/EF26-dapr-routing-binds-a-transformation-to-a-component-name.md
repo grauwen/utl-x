@@ -295,13 +295,28 @@ Both output call sites now use it — `/v1.0/publish/<component ?: pubsubName>/<
 `/v1.0/bindings/<component ?: resourceName>` — so the historical inference survives untouched when
 the field is absent.
 
-Verified against a real sidecar, with a deliberately discriminating case: point `component` at
-something that does not exist and the publish must fail, because if the field were ignored the
-engine would publish to the real pub/sub component and get a 204.
+**Verification is incomplete, and the gap is worth stating.** A one-off manual run did show the
+discriminating case — point `component` at something that does not exist, and the publish must
+fail, because if the field were ignored the engine would reach the real pub/sub component and get
+a 204:
 
 ```
 WARN  Dapr output topic 'results-out' returned 404
 ```
+
+The same sequence inside `scripts/dapr-local-test.sh` did **not** reproduce it. With DEBUG
+enabled the handler's own `Output → <url>` line did not appear at all, which points at the
+pub/sub output block not being entered rather than at the override being ignored — a different
+problem from the one under test, and one I do not yet understand.
+
+Storage and parsing are confirmed: `GET …/messaging` returns `"component":"X"` after the field is
+set, including when messaging is configured twice. So the field is read, stored and reported. What
+is not confirmed is that it reaches the Dapr URL on the pub/sub path, every time.
+
+No assertion was added to the harness for it. Asserting a behaviour I cannot explain would make
+the suite lie in whichever direction it happened to land. **Next step: work out why the pub/sub
+output block is skipped in that scenario** — it may well be an unrelated bug, and if so it is a
+more serious one than 2d.
 
 Two things that first run got wrong, both worth recording because both would have produced a
 false pass:

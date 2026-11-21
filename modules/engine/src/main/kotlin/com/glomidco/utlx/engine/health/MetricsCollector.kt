@@ -57,6 +57,16 @@ object MetricsCollector {
                 sb.appendLine("utlxe_transformation_errors_total{transformation=\"${escape(tx.name)}\",strategy=\"${tx.strategy.name}\"} ${tx.errorCount.get()}")
             }
             sb.appendLine()
+
+            // EB22: results that were produced and then could not be published. Distinct from
+            // errors — the transformation SUCCEEDED and the output was thrown away. The message
+            // is acknowledged either way, so this counter is the only durable trace.
+            sb.appendLine("# HELP utlxe_transformation_output_failures_total Results lost because the Dapr output publish failed")
+            sb.appendLine("# TYPE utlxe_transformation_output_failures_total counter")
+            for (tx in transforms) {
+                sb.appendLine("utlxe_transformation_output_failures_total{transformation=\"${escape(tx.name)}\",strategy=\"${tx.strategy.name}\"} ${tx.outputFailures.get()}")
+            }
+            sb.appendLine()
         }
 
         // ── JVM metrics (free, useful for production debugging) ──

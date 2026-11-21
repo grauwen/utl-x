@@ -109,6 +109,7 @@ fun configureAdmin(
                         "errors" to tx.errorCount.get(),
                         "inFlight" to tx.inFlight.get(),
                         "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get(),
                         "sync_status" to syncState.status,
                         "messaging" to messaging
                     )
@@ -139,7 +140,8 @@ fun configureAdmin(
                     "messages_processed" to tx.executionCount.get(),
                     "errors" to tx.errorCount.get(),
                     "inFlight" to tx.inFlight.get(),
-                    "concurrencyRejections" to tx.concurrencyRejections.get()
+                    "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get()
                 ))
             }
 
@@ -817,6 +819,7 @@ fun configureAdmin(
                     "maxConcurrent" to tx.config.maxConcurrent,
                     "inFlight" to tx.inFlight.get(),
                     "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get(),
                     "maxInputSize" to tx.config.maxInputSize,
                     "inputs" to tx.config.inputs.map { mapOf("name" to it.name, "schema" to it.schema) },
                     "output_schema" to tx.config.output.schema
