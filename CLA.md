@@ -405,10 +405,8 @@ For legal advice about whether you should sign this CLA, please consult your own
 - Commercial licensing: licensing@glomidco.com
 - Technical questions: dev@glomidco.com
 
-**Glomidco B.V.**  
-[Your Address]  
-Netherlands  
-KVK Number: [Your KVK Number]
+**GLOMIDCO B.V.**  
+Netherlands
 
 ---
 
