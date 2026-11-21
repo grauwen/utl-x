@@ -274,7 +274,11 @@ fun configureAdmin(
                 if (execResp.success) {
                     call.respond(HttpStatusCode.OK, mapOf(
                         "status" to "ok",
-                        "output" to execResp.output.toStringUtf8(),
+                        "output" to com.glomidco.utlx.engine.transport.encodeResponseOutput(
+                            execResp.output, execResp.outputContentType),
+                        "outputContentType" to execResp.outputContentType,
+                        "outputEncoding" to com.glomidco.utlx.engine.transport.responseOutputEncoding(
+                            execResp.outputContentType),
                         "duration_ms" to (execResp.metrics?.executeDurationUs ?: 0) / 1000
                     ))
                 } else {

@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.udm.PayloadBytes
 import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.core.interpreter.Interpreter
 import com.glomidco.utlx.core.lexer.Lexer
@@ -93,7 +94,13 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
         }
     }
 
-    override fun execute(input: String): ExecutionResult {
+    override fun execute(input: String): ExecutionResult = executeInput(input)
+
+    override fun execute(input: PayloadBytes): ExecutionResult =
+        if (compiledProgram.acceptsWorkbookBytes(input)) executeInput("", input)
+        else execute(input.decodeToString())
+
+    private fun executeInput(input: String, payload: PayloadBytes? = null): ExecutionResult {
         val declaredInputs = compiledProgram.header.inputs
 
         if (declaredInputs.size > 1) {
@@ -109,27 +116,28 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
         // every field lookup came back null and the divergence looked like a transformation bug.
         val declaredOptions = declaredInputs.firstOrNull()?.second?.options ?: emptyMap()
 
-        // Parse input to UDM
-        val inputUDM = transformationService.parseInputPublic(
-            input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile)
-
         if (transformFunction != null && !usingFallback) {
+            // Parse input to UDM
+            val inputUDM = if (payload != null) {
+                transformationService.parseInputPublic(
+                    payload.bytes, declaredFormat ?: "json", declaredOptions, parseProfile, payload.detectedCharset
+                )
+            } else {
+                transformationService.parseInputPublic(
+                    input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile
+                )
+            }
             // ── Compiled path: direct method invocation ──
             val outputUDM = transformFunction!!.execute(mapOf(inputName to inputUDM))
 
-            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
-            val outputData = transformationService.serializeOutputPublic(
-                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
-            )
-            return ExecutionResult(
-                output = outputData,
-                // EF23: decide here — this is where the output still exists as a UDM.
-                verdict = VerdictCheck.of(outputUDM),
-            )
+            return transformationService.executionResult(outputUDM, compiledProgram.header.outputFormat)
         } else {
             // ── Fallback: interpreter (same as TEMPLATE) ──
             val inputs = mapOf(
-                inputName to TransformationService.InputData(content = input, format = declaredFormat)
+                inputName to TransformationService.InputData(
+                    content = input, format = declaredFormat,
+                    bytes = payload?.bytes, charset = payload?.detectedCharset
+                )
             )
             // EB14: the fallback must decide too. The verdict was computed only on the compiled
             // branch, so a validation mapping that failed to compile silently produced no verdict
@@ -140,6 +148,7 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             return ExecutionResult(
                 output = outcome.output,
                 verdict = VerdictCheck.of(outcome.outputUDM),
+                outputBytes = outcome.outputBytes,
             )
         }
     }
@@ -148,15 +157,25 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
      * Multi-input: payload is a JSON envelope where each key maps to a declared input name.
      * Non-JSON values are stored as JSON strings in the envelope and extracted as raw text.
      */
-    private fun executeMultiInput(input: String): ExecutionResult {
+    override fun executeNamed(inputs: Map<String, PayloadBytes>): ExecutionResult =
+        executeMultiInput("", inputs)
+
+    private fun executeMultiInput(input: String, payloads: Map<String, PayloadBytes>? = null): ExecutionResult {
         val declaredInputs = compiledProgram.header.inputs
         val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-        val envelope = mapper.readTree(input)
+        val envelope = if (payloads == null) mapper.readTree(input) else null
 
         if (transformFunction != null && !usingFallback) {
             // ── Compiled path: parse each input per declared format, call compiled function ──
             val inputUDMs = declaredInputs.associate { (name, formatSpec) ->
-                val node = envelope.get(name)
+                if (payloads != null) {
+                    val payload = requireNotNull(payloads[name]) { "Missing required input '$name'." }
+                    return@associate name to transformationService.parseInputPublic(
+                        payload.bytes, formatSpec.type.name.lowercase(), formatSpec.options,
+                        parseProfile, payload.detectedCharset
+                    )
+                }
+                val node = envelope!!.get(name)
                     ?: throw IllegalArgumentException(
                         "Envelope missing required input '$name'. " +
                         "Expected keys: ${declaredInputs.map { it.first }}"
@@ -175,19 +194,12 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             logger.debug("Envelope split into {} named inputs: {}", inputUDMs.size, inputUDMs.keys)
             val outputUDM = transformFunction!!.execute(inputUDMs)
 
-            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
-            val outputData = transformationService.serializeOutputPublic(
-                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
-            )
-            return ExecutionResult(
-                output = outputData,
-                // EF23: decide here — this is where the output still exists as a UDM.
-                verdict = VerdictCheck.of(outputUDM),
-            )
+            return transformationService.executionResult(outputUDM, compiledProgram.header.outputFormat)
         } else {
             // ── Fallback: interpreter via TransformationService.transform() ──
-            val inputs = declaredInputs.associate { (name, formatSpec) ->
-                val node = envelope.get(name)
+            val inputs = if (payloads != null) namedInputData(payloads, declaredInputs)
+            else declaredInputs.associate { (name, formatSpec) ->
+                val node = envelope!!.get(name)
                     ?: throw IllegalArgumentException(
                         "Envelope missing required input '$name'. " +
                         "Expected keys: ${declaredInputs.map { it.first }}"
@@ -208,6 +220,7 @@ class CompiledStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
             return ExecutionResult(
                 output = outcome.output,
                 verdict = VerdictCheck.of(outcome.outputUDM),
+                outputBytes = outcome.outputBytes,
             )
         }
     }

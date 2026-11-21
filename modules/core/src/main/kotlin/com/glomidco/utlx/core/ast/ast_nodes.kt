@@ -87,7 +87,8 @@ enum class FormatType {
     PROTO, // Protocol Buffers Schema (Proto3)
     ODATA, // OData JSON (OData v4)
     OSCH,  // OData Schema / EDMX Metadata (OData v4)
-    TSCH   // Frictionless Table Schema
+    TSCH,  // Frictionless Table Schema
+    XLSX   // Excel workbook input
 }
 
 /**

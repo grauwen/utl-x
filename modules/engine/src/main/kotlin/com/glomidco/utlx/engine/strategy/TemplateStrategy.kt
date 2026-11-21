@@ -2,6 +2,7 @@ package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.core.udm.PayloadBytes
 import com.glomidco.utlx.core.format.ParseProfile
 import com.glomidco.utlx.core.interpreter.Interpreter
 import com.glomidco.utlx.core.lexer.Lexer
@@ -50,7 +51,13 @@ class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
         logger.info("Transformation compiled successfully")
     }
 
-    override fun execute(input: String): ExecutionResult {
+    override fun execute(input: String): ExecutionResult = executeInput(input)
+
+    override fun execute(input: PayloadBytes): ExecutionResult =
+        if (compiledProgram.acceptsWorkbookBytes(input)) executeInput("", input)
+        else execute(input.decodeToString())
+
+    private fun executeInput(input: String, payload: PayloadBytes? = null): ExecutionResult {
         val declaredInputs = compiledProgram.header.inputs
         val inputs: Map<String, TransformationService.InputData>
 
@@ -61,7 +68,10 @@ class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
                 ?: "input"
             val declaredFormat = declaredInputs.firstOrNull()?.second?.type?.name?.lowercase()
             inputs = mapOf(
-                inputName to TransformationService.InputData(content = input, format = declaredFormat)
+                inputName to TransformationService.InputData(
+                    content = input, format = declaredFormat,
+                    bytes = payload?.bytes, charset = payload?.detectedCharset
+                )
             )
         } else {
             // Multi-input: payload is a JSON envelope where each key
@@ -95,11 +105,19 @@ class TemplateStrategy(private val parseProfile: ParseProfile = ParseProfile.STA
         // EB14: inspect the output UDM for a verdict, as the compiled paths do. TEMPLATE produced
         // none at all before, so a validation mapping run on the interpreter — which is what the
         // CLI runs — had no verdict for a routing policy to act on.
+        return executeInputs(inputs)
+    }
+
+    override fun executeNamed(inputs: Map<String, PayloadBytes>): ExecutionResult =
+        executeInputs(namedInputData(inputs, compiledProgram.header.inputs))
+
+    private fun executeInputs(inputs: Map<String, TransformationService.InputData>): ExecutionResult {
         val outcome = transformationService.transformWithUdm(utlxSource, inputs,
             TransformationService.TransformOptions(parseProfile = parseProfile))
         return ExecutionResult(
             output = outcome.output,
             verdict = VerdictCheck.of(outcome.outputUDM),
+            outputBytes = outcome.outputBytes,
         )
     }
 

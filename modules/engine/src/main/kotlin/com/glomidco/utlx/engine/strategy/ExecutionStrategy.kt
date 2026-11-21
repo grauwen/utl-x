@@ -1,7 +1,14 @@
 package com.glomidco.utlx.engine.strategy
 
 import com.glomidco.utlx.core.udm.PayloadBytes
+import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.core.ast.FormatSpec
+import com.glomidco.utlx.core.ast.FormatType
+import com.glomidco.utlx.core.ast.Program
+import com.glomidco.utlx.formats.xlsx.XlsxSerializer
+import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.engine.config.TransformConfig
+import com.glomidco.utlx.engine.routing.VerdictCheck
 
 interface ExecutionStrategy {
     fun initialize(source: String, config: TransformConfig)
@@ -20,8 +27,32 @@ interface ExecutionStrategy {
      */
     fun execute(input: PayloadBytes): ExecutionResult = execute(input.decodeToString())
 
+    fun executeNamed(inputs: Map<String, PayloadBytes>): ExecutionResult =
+        throw UnsupportedOperationException("This strategy does not support named binary inputs.")
+
     /** EB01: Batch execute with raw bytes. */
     fun executeBatchBytes(inputs: List<PayloadBytes>): List<ExecutionResult> = inputs.map { execute(it) }
+}
+
+internal fun namedInputData(
+    inputs: Map<String, PayloadBytes>,
+    declarations: List<Pair<String, FormatSpec>>
+): Map<String, TransformationService.InputData> =
+    declarations.associate { (name, spec) ->
+        val payload = requireNotNull(inputs[name]) { "Missing required input '$name'." }
+        val data = if (spec.type != FormatType.XLSX && payload.detectedCharset != null) {
+            TransformationService.InputData(payload.decodeToString(), spec.type.name.lowercase())
+        } else {
+            TransformationService.InputData("", spec.type.name.lowercase(), payload.bytes, payload.detectedCharset)
+        }
+        name to data
+    }
+
+internal fun Program.acceptsWorkbookBytes(payload: PayloadBytes): Boolean {
+    val type = header.inputFormat.type
+    return header.inputs.size <= 1 && (type == FormatType.XLSX ||
+        (type == FormatType.AUTO && payload.contentType.substringBefore(';').trim()
+            .equals(XlsxSerializer.CONTENT_TYPE, ignoreCase = true)))
 }
 
 /**
@@ -41,7 +72,7 @@ data class InputSchemaRef(
     val schemaRef: String?
 )
 
-data class ExecutionResult(
+data class ExecutionResult @JvmOverloads constructor(
     val output: String,
     val validationErrors: List<ValidationError> = emptyList(),
     val metadata: Map<String, Any> = emptyMap(),
@@ -52,7 +83,22 @@ data class ExecutionResult(
      */
     val verdict: com.glomidco.utlx.engine.routing.VerdictCheck =
         com.glomidco.utlx.engine.routing.VerdictCheck.NotInspected,
+    val outputBytes: ByteArray? = null,
 )
+
+/** Keep binary output out of the text serializers shared by the execution strategies. */
+internal fun TransformationService.executionResult(
+    udm: UDM,
+    format: FormatSpec
+): ExecutionResult {
+    val name = format.type.name.lowercase()
+    val verdict = VerdictCheck.of(udm)
+    return if (name == "xlsx") {
+        ExecutionResult("", verdict = verdict, outputBytes = serializeOutputToBytes(udm, name, format, true))
+    } else {
+        ExecutionResult(serializeOutputPublic(udm, name, format, true), verdict = verdict)
+    }
+}
 
 data class ValidationError(
     val message: String,

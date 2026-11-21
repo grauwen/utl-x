@@ -87,6 +87,7 @@ class GrpcTransport(
         logger.info("Building gRPC TCP server on {}:{}", host, port)
         return NettyServerBuilder
             .forAddress(InetSocketAddress(host, port))
+            .maxInboundMessageSize(129 * 1024 * 1024)
             .addService(service)
             .build()
     }
@@ -123,6 +124,7 @@ class GrpcTransport(
             logger.info("Building gRPC UDS server on {} ({})", path, if (os.contains("linux")) "epoll" else "kqueue")
             NettyServerBuilder
                 .forAddress(socketAddress)
+                .maxInboundMessageSize(129 * 1024 * 1024)
                 .channelType(channelType)
                 .bossEventLoopGroup(bossGroup)
                 .workerEventLoopGroup(workerGroup)

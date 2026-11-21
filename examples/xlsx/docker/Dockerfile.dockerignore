@@ -1,0 +1,13 @@
+**/.git
+**/.gradle
+**/build
+**/bin
+**/obj
+**/node_modules
+**/__pycache__
+**/*.xlsx
+theia-extension
+wrappers
+.github
+docs
+conformance-suite

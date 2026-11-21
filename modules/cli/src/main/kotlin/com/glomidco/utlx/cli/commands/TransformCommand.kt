@@ -7,9 +7,13 @@ import com.glomidco.utlx.cli.CommandResult
 import com.glomidco.utlx.core.debug.DebugConfig
 import com.glomidco.utlx.core.format.ParseProfile
 import java.io.File
+import java.nio.file.AtomicMoveNotSupportedException
+import java.nio.file.Files
+import java.nio.file.StandardCopyOption
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.validate.ValidationRoutingPolicy
 import com.glomidco.utlx.formats.json.JSONSerializer
+import com.glomidco.utlx.formats.xlsx.XlsxParser
 
 /**
  * Transform command - CLI wrapper for TransformationService
@@ -346,20 +350,25 @@ object TransformCommand {
 
         if (options.verbose) {
             if (options.expression != null) {
-                println("UTL-X Expression Mode")
-                println("Expression: ${options.expression}")
+                System.err.println("UTL-X Expression Mode")
+                System.err.println("Expression: ${options.expression}")
             } else if (options.identityMode) {
-                println("UTL-X Identity Transform (passthrough with format conversion)")
+                System.err.println("UTL-X Identity Transform (passthrough with format conversion)")
             } else {
-                println("UTL-X Transform")
-                println("Script: ${options.scriptFile!!.absolutePath}")
+                System.err.println("UTL-X Transform")
+                System.err.println("Script: ${options.scriptFile!!.absolutePath}")
             }
-            options.inputFile?.let { println("Input: ${it.absolutePath}") }
-            options.outputFile?.let { println("Output: ${it.absolutePath}") }
+            options.inputFile?.let { System.err.println("Input: ${it.absolutePath}") }
+            options.outputFile?.let { System.err.println("Output: ${it.absolutePath}") }
         }
 
         // Track execution time for capture
         val startTime = System.currentTimeMillis()
+        val hasXlsxInput = options.inputFormat.equals("xlsx", ignoreCase = true) ||
+            (options.inputFormat == null && options.namedInputs.values.any {
+                it.extension.equals("xlsx", ignoreCase = true)
+            })
+        var temporaryWorkbook: File? = null
         // Removed in 1.4.0: `var captureSuccess = false` and `var captureOutputData = ""`, both
         // from the Auto-Test-Capture work (c4bb6be7). They were written on the success path and
         // never read: both TestCaptureService.captureExecution() call sites pass their own locals
@@ -384,16 +393,23 @@ object TransformCommand {
                 // Named inputs from --input flags
                 options.namedInputs.mapValues { (name, file) ->
                     val inputFormat = options.inputFormat
+                        ?: "xlsx".takeIf { file.extension.equals(it, ignoreCase = true) }
                     val charsetHint = options.charset?.let {
                         try { java.nio.charset.Charset.forName(it) } catch (_: Exception) { null }
                     }
 
                     if (options.verbose && inputFormat != null) {
-                        println("Input '$name' format: $inputFormat (from CLI option)")
+                        System.err.println("Input '$name' format: $inputFormat (from CLI option)")
                     }
 
                     // B20: read raw bytes when charset is specified (non-UTF-8 safe)
-                    if (charsetHint != null) {
+                    if (inputFormat.equals("xlsx", ignoreCase = true)) {
+                        TransformationService.InputData(
+                            content = "",
+                            format = "xlsx",
+                            xlsxFile = file
+                        )
+                    } else if (charsetHint != null) {
                         TransformationService.InputData(
                             content = file.readText(charsetHint),  // String fallback for backward compat
                             format = inputFormat,
@@ -430,11 +446,19 @@ object TransformCommand {
                 }
 
                 if (options.verbose && inputFormat != null) {
-                    println("Input format: $inputFormat (from CLI option)")
+                    System.err.println("Input format: $inputFormat (from CLI option)")
                 }
 
                 // B20: read raw bytes from stdin when --charset is set (non-UTF-8 safe)
-                if (charsetHint != null) {
+                if (inputFormat.equals("xlsx", ignoreCase = true)) {
+                    val workbook = XlsxParser.spool(System.`in`)
+                    temporaryWorkbook = workbook
+                    mapOf("input" to TransformationService.InputData(
+                        content = "",
+                        format = "xlsx",
+                        xlsxFile = workbook
+                    ))
+                } else if (charsetHint != null) {
                     val stdinBytes = System.`in`.readBytes()
                     mapOf("input" to TransformationService.InputData(
                         content = String(stdinBytes, charsetHint),
@@ -539,12 +563,12 @@ $argBindings$body"""
                 }
 
                 if (options.verbose) {
-                    println("Expression (expanded): $expandedExpression")
+                    System.err.println("Expression (expanded): $expandedExpression")
                     if (usedWiderRule) {
-                        println("  (the conservative dot expansion did not parse; used the wider " +
+                        System.err.println("  (the conservative dot expansion did not parse; used the wider " +
                             "rule — CB04)")
                     }
-                    println("Output format: $effectiveOutputFormat" +
+                    System.err.println("Output format: $effectiveOutputFormat" +
                         if (options.outputFormat != null) " (explicit)" else " (default json)")
                 }
 
@@ -552,7 +576,7 @@ $argBindings$body"""
             } else if (options.identityMode) {
                 // Identity mode: synthesize a passthrough script with smart format flip
                 val primaryInput = inputs.values.first()
-                val detectedInputFormat = options.inputFormat
+                val detectedInputFormat = primaryInput.format
                     ?: detectFormatFromContent(primaryInput.content)
 
                 // User-specified output format wins; otherwise smart flip
@@ -560,8 +584,8 @@ $argBindings$body"""
                     ?: inferOutputFormat(detectedInputFormat)
 
                 if (options.verbose) {
-                    println("Detected input format: $detectedInputFormat")
-                    println("Output format: $effectiveOutputFormat" +
+                    System.err.println("Detected input format: $detectedInputFormat")
+                    System.err.println("Output format: $effectiveOutputFormat" +
                         if (options.outputFormat != null) " (explicit)" else " (smart flip)")
                 }
 
@@ -598,7 +622,7 @@ ${"$"}input"""
                     "Invalid --parse-profile '${options.parseProfile}' (expected: strict | standard | lenient)")
             }
             if (options.verbose && options.parseProfile != null) {
-                println("Parse profile: ${resolvedProfile.name.lowercase()} (from CLI option)")
+                System.err.println("Parse profile: ${resolvedProfile.name.lowercase()} (from CLI option)")
             }
             // F21: resolve the engine language mode (default = latest). "utlxe"/"utlxs" are the deployment
             // vocabulary for the 1.0-only / 1.1 modes; "1.0"/"1.1" are accepted directly.
@@ -610,7 +634,7 @@ ${"$"}input"""
                     "Invalid --language-mode '${options.languageMode}' (expected: 1.0 | 1.1 | utlxe | utlxs)")
             }
             if (options.verbose && options.languageMode != null) {
-                println("Language mode: %utlx $resolvedLanguageMode (from CLI option)")
+                System.err.println("Language mode: %utlx $resolvedLanguageMode (from CLI option)")
             }
             val serviceOptions = TransformationService.TransformOptions(
                 verbose = options.verbose,
@@ -629,29 +653,41 @@ ${"$"}input"""
             val outputFormat = outcome.outputFormat
 
             if (options.verbose) {
-                println("Output format: $outputFormat")
+                System.err.println("Output format: $outputFormat")
             }
 
-            // Write output (apply raw mode if requested)
-            val finalOutput = if (options.rawOutput) {
-                renderRaw(outcome.outputUDM, outputData)
-            } else {
-                outputData
-            }
-
-            val outputFilePath = options.outputFile
-            if (outputFilePath != null) {
-                outputFilePath.writeText(finalOutput)
-                if (options.verbose) {
-                    println("✓ Transformation complete: ${outputFilePath.absolutePath}")
+            val binaryOutput = outcome.outputBytes
+            if (binaryOutput != null) {
+                val outputFile = options.outputFile
+                if (outputFile != null) writeWorkbook(outputFile, binaryOutput)
+                else {
+                    System.out.write(binaryOutput)
+                    System.out.flush()
                 }
             } else {
-                println(finalOutput)
+                // Write output (apply raw mode if requested)
+                val finalOutput = if (options.rawOutput) {
+                    renderRaw(outcome.outputUDM, outputData)
+                } else {
+                    outputData
+                }
+
+                val outputFilePath = options.outputFile
+                if (outputFilePath != null) {
+                    outputFilePath.writeText(finalOutput)
+                    if (options.verbose) {
+                        System.err.println("✓ Transformation complete: ${outputFilePath.absolutePath}")
+                    }
+                } else {
+                    println(finalOutput)
+                }
             }
 
             // Step 4: Capture successful execution (for single input only, skip identity/expression mode)
             val durationMs = System.currentTimeMillis() - startTime
-            if (!options.hasMultipleInputs && !options.identityMode && options.expression == null && options.scriptFile != null) {
+            if (binaryOutput == null && !hasXlsxInput && !options.hasMultipleInputs && !options.identityMode &&
+                options.expression == null && options.scriptFile != null
+            ) {
                 val primaryInputData = inputs.values.firstOrNull()
                 val captureInputFormat = primaryInputData?.format ?: "json"
 
@@ -710,7 +746,7 @@ ${"$"}input"""
             val durationMs = System.currentTimeMillis() - startTime
 
             // Try to capture the failure (only for single input, skip identity mode)
-            if (!options.hasMultipleInputs && !options.identityMode && options.scriptFile != null) {
+            if (!hasXlsxInput && !options.hasMultipleInputs && !options.identityMode && options.scriptFile != null) {
                 try {
                     val scriptContent = options.scriptFile.readText()
                     val inputFilePath = options.inputFile
@@ -743,9 +779,27 @@ ${"$"}input"""
 
             // Return failure with error message
             return CommandResult.Failure(e.message ?: "Transformation failed", 1)
+        } finally {
+            temporaryWorkbook?.delete()
         }
     }
     
+    /** Build the complete workbook before replacing a caller's existing output file. */
+    private fun writeWorkbook(file: File, bytes: ByteArray) {
+        val target = file.absoluteFile.toPath()
+        val temporary = Files.createTempFile(target.parent, ".utlx-", ".xlsx")
+        try {
+            Files.write(temporary, bytes)
+            try {
+                Files.move(temporary, target, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING)
+            } catch (_: AtomicMoveNotSupportedException) {
+                Files.move(temporary, target, StandardCopyOption.REPLACE_EXISTING)
+            }
+        } finally {
+            Files.deleteIfExists(temporary)
+        }
+    }
+
     private fun detectFormat(data: String, extension: String?): String {
         // Try extension first
         extension?.lowercase()?.let {
@@ -1141,9 +1195,9 @@ ${"$"}input"""
             |                              -e, which here already means --expression). Output is
             |                              written either way; only the exit code changes.
             |  --charset NAME              Force the input character set (default: auto-detect)
-            |  --input-format FORMAT       Force input format (xml, json, csv, yaml, odata, osch)
+            |  --input-format FORMAT       Force input format (xml, json, csv, xlsx, yaml, odata, osch)
             |  --from FORMAT               Alias for --input-format
-            |  --output-format FORMAT      Force output format (xml, json, csv, yaml, odata, osch)
+            |  --output-format FORMAT      Force output format (xml, json, csv, xlsx, yaml, odata, osch)
             |  --to FORMAT                 Alias for --output-format
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing

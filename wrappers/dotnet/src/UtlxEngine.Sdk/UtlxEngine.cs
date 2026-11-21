@@ -119,11 +119,8 @@ public sealed class UtlxEngine : IUtlxEngine
         activity?.SetTag("utlxe.transformation_id", transformationId);
         activity?.SetTag("utlxe.input_count", namedInputs.Count);
 
-        // Build JSON envelope from named inputs
-        var envelope = BuildEnvelope(namedInputs);
-
-        var resp = await _client!.ExecuteAsync(
-            transformationId, envelope, contentType, correlationId, ct);
+        var resp = await _client!.ExecuteNamedAsync(
+            transformationId, namedInputs, correlationId, ct);
 
         var result = MapResult(resp);
 
@@ -190,31 +187,6 @@ public sealed class UtlxEngine : IUtlxEngine
         }
 
         return result;
-    }
-
-    private static byte[] BuildEnvelope(IDictionary<string, byte[]> namedInputs)
-    {
-        // Build a JSON envelope: {"name1": <json>, "name2": "<xml-string>", ...}
-        using var ms = new MemoryStream();
-        using var writer = new System.Text.Json.Utf8JsonWriter(ms);
-        writer.WriteStartObject();
-        foreach (var (name, data) in namedInputs)
-        {
-            writer.WritePropertyName(name);
-            // Try to write as raw JSON; if it fails, write as string (XML/CSV/YAML)
-            try
-            {
-                using var doc = System.Text.Json.JsonDocument.Parse(data);
-                doc.RootElement.WriteTo(writer);
-            }
-            catch
-            {
-                writer.WriteStringValue(System.Text.Encoding.UTF8.GetString(data));
-            }
-        }
-        writer.WriteEndObject();
-        writer.Flush();
-        return ms.ToArray();
     }
 
     private void EnsureStarted()

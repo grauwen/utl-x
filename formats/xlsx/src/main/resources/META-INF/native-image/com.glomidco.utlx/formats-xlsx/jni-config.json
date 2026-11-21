@@ -1,0 +1,96 @@
+[
+{
+  "name":"java.awt.Font",
+  "fields":[{"name":"name"}, {"name":"pData"}, {"name":"size"}, {"name":"style"}],
+  "methods":[{"name":"getFont","parameterTypes":["java.lang.String"] }, {"name":"getFontPeer","parameterTypes":[] }]
+},
+{
+  "name":"java.awt.Insets",
+  "fields":[{"name":"bottom"}, {"name":"left"}, {"name":"right"}, {"name":"top"}],
+  "methods":[{"name":"<init>","parameterTypes":["int","int","int","int"] }]
+},
+{
+  "name":"java.awt.Toolkit",
+  "methods":[{"name":"getDefaultToolkit","parameterTypes":[] }, {"name":"getFontMetrics","parameterTypes":["java.awt.Font"] }]
+},
+{
+  "name":"java.awt.geom.GeneralPath",
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["int","byte[]","int","float[]","int"] }]
+},
+{
+  "name":"java.awt.geom.Point2D$Float",
+  "fields":[{"name":"x"}, {"name":"y"}],
+  "methods":[{"name":"<init>","parameterTypes":["float","float"] }]
+},
+{
+  "name":"java.awt.geom.Rectangle2D$Float",
+  "fields":[{"name":"height"}, {"name":"width"}, {"name":"x"}, {"name":"y"}],
+  "methods":[{"name":"<init>","parameterTypes":[] }, {"name":"<init>","parameterTypes":["float","float","float","float"] }]
+},
+{
+  "name":"java.lang.Boolean",
+  "methods":[{"name":"getBoolean","parameterTypes":["java.lang.String"] }]
+},
+{
+  "name":"java.lang.String",
+  "methods":[{"name":"toLowerCase","parameterTypes":["java.util.Locale"] }]
+},
+{
+  "name":"java.util.ArrayList",
+  "methods":[{"name":"<init>","parameterTypes":["int"] }, {"name":"add","parameterTypes":["java.lang.Object"] }]
+},
+{
+  "name":"java.util.HashMap",
+  "methods":[{"name":"containsKey","parameterTypes":["java.lang.Object"] }, {"name":"put","parameterTypes":["java.lang.Object","java.lang.Object"] }]
+},
+{
+  "name":"sun.font.CharToGlyphMapper",
+  "methods":[{"name":"charToGlyph","parameterTypes":["int"] }]
+},
+{
+  "name":"sun.font.Font2D",
+  "methods":[{"name":"canDisplay","parameterTypes":["char"] }, {"name":"charToGlyph","parameterTypes":["int"] }, {"name":"charToVariationGlyph","parameterTypes":["int","int"] }, {"name":"getMapper","parameterTypes":[] }, {"name":"getTableBytes","parameterTypes":["int"] }]
+},
+{
+  "name":"sun.font.FontStrike",
+  "methods":[{"name":"getGlyphMetrics","parameterTypes":["int"] }]
+},
+{
+  "name":"sun.font.FontUtilities",
+  "methods":[{"name":"debugFonts","parameterTypes":[] }]
+},
+{
+  "name":"sun.font.FreetypeFontScaler",
+  "methods":[{"name":"invalidateScaler","parameterTypes":[] }]
+},
+{
+  "name":"sun.font.GlyphLayout$GVData",
+  "fields":[{"name":"_count"}, {"name":"_flags"}, {"name":"_glyphs"}, {"name":"_indices"}, {"name":"_positions"}],
+  "methods":[{"name":"grow","parameterTypes":[] }]
+},
+{
+  "name":"sun.font.GlyphList",
+  "fields":[{"name":"gposx"}, {"name":"gposy"}, {"name":"images"}, {"name":"lcdRGBOrder"}, {"name":"lcdSubPixPos"}, {"name":"len"}, {"name":"positions"}, {"name":"usePositions"}]
+},
+{
+  "name":"sun.font.PhysicalStrike",
+  "fields":[{"name":"pScalerContext"}],
+  "methods":[{"name":"adjustPoint","parameterTypes":["java.awt.geom.Point2D$Float"] }, {"name":"getGlyphPoint","parameterTypes":["int","int"] }]
+},
+{
+  "name":"sun.font.StrikeMetrics",
+  "methods":[{"name":"<init>","parameterTypes":["float","float","float","float","float","float","float","float","float","float"] }]
+},
+{
+  "name":"sun.font.TrueTypeFont",
+  "methods":[{"name":"readBlock","parameterTypes":["java.nio.ByteBuffer","int","int"] }, {"name":"readBytes","parameterTypes":["int","int"] }]
+},
+{
+  "name":"sun.font.Type1Font",
+  "methods":[{"name":"readFile","parameterTypes":["java.nio.ByteBuffer"] }]
+},
+{
+  "name":"sun.java2d.Disposer",
+  "methods":[{"name":"addRecord","parameterTypes":["java.lang.Object","long","long"] }]
+}
+]

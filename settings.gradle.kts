@@ -43,6 +43,7 @@ include("modules:bundle")  // Shared file-level Bundle Management layer (IF19) â
 include("formats:xml")
 include("formats:json")
 include("formats:csv")
+include("formats:xlsx")
 include("formats:yaml")
 include("formats:xsd")
 include("formats:jsch")

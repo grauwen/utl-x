@@ -93,8 +93,8 @@ object ValidationOrchestrator {
         }
 
         // ── TRANSFORMATION ──
-        val output = try {
-            instance.strategy.execute(input).output
+        val execution = try {
+            instance.strategy.execute(input)
         } catch (e: Exception) {
             return ValidationResult(
                 success = false,
@@ -104,10 +104,12 @@ object ValidationOrchestrator {
             )
         }
 
+        val output = execution.output
+
         // ── POST-VALIDATION ──
         if (instance.outputValidator != null && effectivePolicy != "OFF" && effectivePolicy != "SKIP") {
             val outputErrors = instance.outputValidator.validate(
-                output.toByteArray(Charsets.UTF_8),
+                (execution.outputBytes ?: output.toByteArray(Charsets.UTF_8)),
                 "application/octet-stream"
             )
             if (outputErrors.isNotEmpty()) {
@@ -115,6 +117,7 @@ object ValidationOrchestrator {
                     "STRICT" -> return ValidationResult(
                         success = false,
                         output = output,   // include the output — customer may want to inspect it
+                        outputBytes = execution.outputBytes,
                         phase = ErrorPhase.POST_VALIDATION,
                         validationErrors = allWarnings + outputErrors, // pre-warnings + post-errors
                         error = "Output validation failed: ${outputErrors.size} error(s)"
@@ -130,6 +133,7 @@ object ValidationOrchestrator {
         return ValidationResult(
             success = true,
             output = output,
+            outputBytes = execution.outputBytes,
             validationErrors = allWarnings
         )
     }
@@ -141,7 +145,8 @@ object ValidationOrchestrator {
     fun execute(
         instance: TransformationInstance,
         input: PayloadBytes,
-        policyOverride: String? = null
+        policyOverride: String? = null,
+        namedInputs: Map<String, PayloadBytes> = emptyMap()
     ): ValidationResult {
         val allWarnings = mutableListOf<SchemaValidationError>()
         val effectivePolicy = (policyOverride ?: instance.config.validationPolicy).uppercase()
@@ -149,7 +154,9 @@ object ValidationOrchestrator {
         // ── PRE-VALIDATION (uses original bytes — no re-encoding) ──
         if (effectivePolicy != "OFF" && effectivePolicy != "SKIP") {
             if (instance.inputValidator != null) {
-                val errors = instance.inputValidator.validate(input.bytes, input.contentType)
+                val primaryName = instance.strategy.getHeaderSchemaInfo()?.allInputSchemas?.keys?.firstOrNull()
+                val primary = namedInputs[primaryName] ?: input
+                val errors = instance.inputValidator.validate(primary.bytes, primary.contentType)
                 if (errors.isNotEmpty()) {
                     when (effectivePolicy) {
                         "STRICT" -> return ValidationResult(
@@ -162,11 +169,27 @@ object ValidationOrchestrator {
                     }
                 }
             }
+            val namedErrors = instance.inputValidators.flatMap { (name, validator) ->
+                val payload = namedInputs[name] ?: return@flatMap emptyList()
+                validator.validate(payload.bytes, payload.contentType).map {
+                    SchemaValidationError("$name: ${it.message}", it.path, it.severity)
+                }
+            }
+            if (namedErrors.isNotEmpty()) {
+                if (effectivePolicy == "STRICT") return ValidationResult(
+                    success = false,
+                    phase = ErrorPhase.PRE_VALIDATION,
+                    validationErrors = namedErrors,
+                    error = "Named input validation failed: ${namedErrors.size} error(s)"
+                )
+                if (effectivePolicy == "WARN") allWarnings.addAll(namedErrors)
+            }
         }
 
         // ── TRANSFORMATION (raw bytes to strategy) ──
-        val output = try {
-            instance.strategy.execute(input).output
+        val execution = try {
+            if (namedInputs.isNotEmpty()) instance.strategy.executeNamed(namedInputs)
+            else instance.strategy.execute(input)
         } catch (e: Exception) {
             return ValidationResult(
                 success = false,
@@ -176,10 +199,12 @@ object ValidationOrchestrator {
             )
         }
 
+        val output = execution.output
+
         // ── POST-VALIDATION ──
         if (instance.outputValidator != null && effectivePolicy != "OFF" && effectivePolicy != "SKIP") {
             val outputErrors = instance.outputValidator.validate(
-                output.toByteArray(Charsets.UTF_8),
+                (execution.outputBytes ?: output.toByteArray(Charsets.UTF_8)),
                 "application/octet-stream"
             )
             if (outputErrors.isNotEmpty()) {
@@ -187,6 +212,7 @@ object ValidationOrchestrator {
                     "STRICT" -> return ValidationResult(
                         success = false,
                         output = output,
+                        outputBytes = execution.outputBytes,
                         phase = ErrorPhase.POST_VALIDATION,
                         validationErrors = allWarnings + outputErrors,
                         error = "Output validation failed: ${outputErrors.size} error(s)"
@@ -199,18 +225,22 @@ object ValidationOrchestrator {
         return ValidationResult(
             success = true,
             output = output,
+            outputBytes = execution.outputBytes,
             validationErrors = allWarnings
         )
     }
 }
 
-data class ValidationResult(
+data class ValidationResult @JvmOverloads constructor(
     val success: Boolean,
     val output: String? = null,
     val phase: ErrorPhase = ErrorPhase.UNSPECIFIED,
     val validationErrors: List<SchemaValidationError> = emptyList(),
-    val error: String? = null
-)
+    val error: String? = null,
+    val outputBytes: ByteArray? = null
+) {
+    val payloadBytes: ByteArray? get() = outputBytes ?: output?.toByteArray(Charsets.UTF_8)
+}
 
 enum class ErrorPhase {
     UNSPECIFIED,

@@ -36,3 +36,10 @@ Jackson components used:
 - jackson-dataformat-csv (CSV support)
 
 See THIRD-PARTY-LICENSES/Jackson-LICENSE.txt for full license text.
+
+## Apache POI
+
+- Copyright The Apache Software Foundation
+- License: [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+- Source: https://poi.apache.org/
+- Used in: formats/xlsx module

@@ -139,6 +139,36 @@ public sealed class UtlxeClient : IAsyncDisposable, IDisposable
     }
 
     /// <summary>
+    /// Execute a mapping with named payloads. Workbook bytes are passed directly to the engine.
+    /// </summary>
+    public async Task<ExecuteResponse> ExecuteNamedAsync(
+        string transformationId,
+        IDictionary<string, byte[]> namedInputs,
+        string? correlationId = null,
+        CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(namedInputs);
+        if (namedInputs.Count == 0)
+            throw new ArgumentException("At least one named input is required.", nameof(namedInputs));
+        var requestId = GenerateRequestId();
+        var request = new ExecuteRequest
+        {
+            TransformationId = transformationId,
+            CorrelationId = correlationId ?? "",
+            RequestId = requestId
+        };
+        foreach (var (name, bytes) in namedInputs)
+        {
+            ArgumentNullException.ThrowIfNull(bytes);
+            request.NamedInputs.Add(name, ByteString.CopyFrom(bytes));
+        }
+
+        var response = await SendCorrelatedAsync(
+            MessageType.ExecuteRequest, request, requestId, ct);
+        return ExecuteResponse.Parser.ParseFrom(response.Payload);
+    }
+
+    /// <summary>
     /// Execute a pre-loaded transformation against multiple payloads in one call.
     /// The entire batch is a single request/response — no correlation ID matching needed.
     /// </summary>

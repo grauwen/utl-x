@@ -249,9 +249,26 @@ wrappers/dotnet/
 │   ├── UtlxeProcess.cs       # JVM subprocess management
 │   ├── VarintCodec.cs        # Protobuf varint framing
 │   └── UtlxeException.cs     # Typed exceptions
-├── tests/UtlxClient.Tests/   # xUnit tests (19 tests)
+├── tests/UtlxClient.Tests/   # xUnit tests (36 tests)
 ├── samples/
 │   ├── Demo/                 # Console demo (5 transformation patterns)
 │   └── AzureFunctionSample/  # Azure Function HTTP endpoint
 └── README.md
 ```
+
+## XLSX payloads
+
+The process client accepts workbook bytes through `ExecuteAsync` and returns
+XLSX bytes in `ExecuteResponse.Output`. Set the input content type to
+`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet` and declare
+`input xlsx` in the transformation. Use `output xlsx` to write a workbook.
+Check `Success` before saving the returned bytes.
+
+For multiple named inputs, use `ExecuteNamedAsync` with a dictionary of byte
+arrays. The engine parses each entry according to the corresponding input
+declaration, so a workbook can be combined with JSON or other formats without
+encoding its ZIP contents as text. `UtlxEngine.TransformMultiAsync` uses this
+same path.
+
+See [the XLSX examples](../../examples/xlsx/README.md) for transformation
+scripts, output options and a complete client example.
