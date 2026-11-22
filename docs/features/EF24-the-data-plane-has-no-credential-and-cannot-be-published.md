@@ -487,13 +487,21 @@ secret, everything else here still passes.
 
 ## Sequencing, and what not to bundle
 
-| order | step | why first |
+| order | step | status |
 |---|---|---|
-| 1 | engine route + tests | nothing else can be verified without it |
-| 2 | nginx + Dockerfile | needs a `utlxe-ui` image rebuild, so it sets the version |
-| 3 | template + wizards | needs the image tag from step 2 |
-| 4 | acceptance assertions | needs a deployment to run against |
-| 5 | book and README | last, so it describes what shipped |
+| 1 | engine route + tests | **done** — `POST /api/transformations/{id}/run`, `EF24RawBodyRouteTest` (9 tests) |
+| 2 | nginx + Dockerfile | **done** — anchored regex location, `DATA_PORT`, `DATA_PLANE_KEY` defaulting to empty |
+| 3 | template + wizards | **done** — `dataPlaneKey` secureString, `data-plane-key` secret, `dataPlaneUrl` output, PasswordBox in both wizards; arm-ttk clean |
+| 4 | acceptance assertions | **done** — 8 new assertions incl. admin-key-rejected and three narrow-routing probes |
+| 5 | book and README | **done** — ch02 data-path section + `dataPlaneUrl`, ch11 "Two Keys, Two Jobs", README "The two keys" |
+
+**Not yet done, and the reason the above is not finished work:** nothing has been deployed. The
+nginx config has never been parsed by nginx — the Docker daemon was not running locally, so
+`nginx -t` could not be run; the template substitution was verified by rendering it, which checks
+that `$http_x_api_key` and `$dp_key` survive `envsubst` and that braces balance, but not that
+nginx accepts the directives. A `utlxe-ui:1.4.4` image must be built and both plans deployed
+before any of this can be called verified. A malformed nginx config means the container fails to
+start, which the acceptance suite would catch immediately — but it has to be run.
 
 Three things to keep out of this change:
 

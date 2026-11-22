@@ -70,12 +70,33 @@ class EB21PayloadCharsetTest {
         serverThread = Thread { transport.start(engine.registry) }.also {
             it.isDaemon = true; it.start()
         }
-        Thread.sleep(1200)
+        awaitServer()
 
         // Register through the transport's own load route, as the other transport tests do.
         val load = """{"transformationId":"echo","utlxSource":${jsonString(script)},"strategy":"TEMPLATE"}"""
         val (code, body) = postBytes("/api/load", load.toByteArray(Charsets.UTF_8), "application/json")
         require(code == 200 && body.contains("\"success\":true")) { "load failed: $code $body" }
+    }
+
+
+    /**
+     * Wait for the transport to accept connections instead of sleeping a fixed time.
+     * A fixed sleep passes when the class runs alone and loses the race under full-suite load,
+     * which surfaced as an intermittent "Connection refused" rather than as a real failure.
+     */
+    private fun awaitServer(deadlineMs: Long = 20_000) {
+        val until = System.currentTimeMillis() + deadlineMs
+        var last: Exception? = null
+        while (System.currentTimeMillis() < until) {
+            try {
+                val c = URL("http://localhost:$port/api/health").openConnection() as HttpURLConnection
+                c.connectTimeout = 500; c.readTimeout = 1000
+                c.responseCode
+                c.disconnect()
+                return
+            } catch (e: Exception) { last = e; Thread.sleep(100) }
+        }
+        throw IllegalStateException("transport did not start on port $port", last)
     }
 
     @AfterEach

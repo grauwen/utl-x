@@ -25,28 +25,26 @@
     },
     "cpuCores": {
       "type": "string",
-      "defaultValue": "4.0",
+      "defaultValue": "3.75",
       "allowedValues": [
-        "0.5",
-        "1.0",
-        "2.0",
-        "4.0"
+        "1.75",
+        "2.75",
+        "3.75"
       ],
       "metadata": {
-        "description": "CPU cores per instance (0.25, 0.5, 1.0, 2.0, 4.0)"
+        "description": "vCPU for the ENGINE container. The replica also runs the 0.25 vCPU admin-UI sidecar, and Azure requires the TOTAL to be one of its allowed CPU/memory pairs (memory is always exactly 2x CPU). Only values whose total is legal are offered \u2014 pick cpuCores and memoryGi from the same position in their lists."
       }
     },
     "memoryGi": {
       "type": "string",
-      "defaultValue": "8.0",
+      "defaultValue": "7.5",
       "allowedValues": [
-        "1.0",
-        "2.0",
-        "4.0",
-        "8.0"
+        "3.5",
+        "5.5",
+        "7.5"
       ],
       "metadata": {
-        "description": "Memory per instance in Gi (0.5, 1.0, 2.0, 4.0, 8.0)"
+        "description": "Memory in Gi for the ENGINE container, paired with cpuCores. The replica total (engine + 0.5 Gi sidecar) must be exactly 2x the total CPU."
       }
     },
     "minReplicas": {
@@ -102,6 +100,27 @@
         "description": "Output topic name for Service Bus"
       }
     },
+    "outputEventHub": {
+      "type": "string",
+      "defaultValue": "utlx-output",
+      "metadata": {
+        "description": "Event Hub (entity) name that transformed messages are published to."
+      }
+    },
+    "eventHubConnection": {
+      "type": "securestring",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Event Hubs namespace connection string with Send rights. Required when enableEventHubs is true."
+      }
+    },
+    "enableEventHubs": {
+      "type": "bool",
+      "defaultValue": false,
+      "metadata": {
+        "description": "EF25: publish transformed messages to an Azure Event Hub instead of the Service Bus topic. Output only in this release -- consuming FROM an Event Hub needs a Dapr checkpoint store (storage account + container) and an Event Hubs KEDA trigger, which are not wired yet."
+      }
+    },
     "scalingMode": {
       "type": "string",
       "defaultValue": "http",
@@ -118,6 +137,12 @@
       "type": "secureString",
       "metadata": {
         "description": "Admin API key for the Web UI and REST API. Required to manage transformations."
+      }
+    },
+    "dataPlaneKey": {
+      "type": "secureString",
+      "metadata": {
+        "description": "EF24: key for the published data path, POST /api/transformations/{id}/run. DISTINCT from the admin key on purpose \u2014 a message sender must not be able to deploy, unload, or list transformations. Held by the nginx container, never by the engine."
       }
     },
     "enablePersistentStorage": {
@@ -322,8 +347,14 @@
           "scalingMode": {
             "value": "[parameters('scalingMode')]"
           },
+          "enableEventHubs": {
+            "value": "[parameters('enableEventHubs')]"
+          },
           "adminKey": {
             "value": "[parameters('adminKey')]"
+          },
+          "dataPlaneKey": {
+            "value": "[parameters('dataPlaneKey')]"
           },
           "enablePersistentStorage": {
             "value": "[parameters('enablePersistentStorage')]"
@@ -363,6 +394,12 @@
               "type": "secureString",
               "metadata": {
                 "description": "Admin API key, forwarded to the engine as UTLXE_ADMIN_KEY."
+              }
+            },
+            "dataPlaneKey": {
+              "type": "secureString",
+              "metadata": {
+                "description": "EF24: data-plane key, forwarded to the UI container as DATA_PLANE_KEY for nginx."
               }
             },
             "cpuCores": {
@@ -437,16 +474,24 @@
                 "description": "Scaling mode: http, servicebus, or both"
               }
             },
+            "enableEventHubs": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "EF25: route the Dapr output binding to the Event Hub."
+              }
+            },
             "enablePersistentStorage": {
               "type": "bool"
             }
           },
           "variables": {
             "jvmHeapMb": {
-              "1.0": "768",
-              "2.0": "1536",
+              "1.5": "1024",
+              "3.5": "2560",
               "4.0": "3072",
-              "8.0": "6144"
+              "5.5": "4096",
+              "7.5": "5632"
             },
             "javaOpts": "[format('-Xmx{0}m -XX:+UseZGC -XX:+ZGenerational -XX:+UseContainerSupport -XX:+AlwaysPreTouch', variables('jvmHeapMb')[parameters('memoryGi')])]",
             "serviceBusScaleRule": {
@@ -485,7 +530,7 @@
                 "secretRef": "admin-key"
               }
             ],
-            "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', 'servicebus-output'))), variables('baseEnv'))]",
+            "containerEnv": "[if(parameters('enableDapr'), concat(variables('baseEnv'), createArray(createObject('name', 'UTLXE_OUTPUT_BINDING_SERVICEBUS_INPUT', 'value', if(parameters('enableEventHubs'), 'eventhub-output', 'servicebus-output')))), variables('baseEnv'))]",
             "appVolumes": "[if(parameters('enablePersistentStorage'), createArray(createObject('name', 'utlxe-data', 'storageType', 'AzureFile', 'storageName', 'utlxe-data')), createArray())]",
             "engineVolumeMounts": "[if(parameters('enablePersistentStorage'), createArray(createObject('volumeName', 'utlxe-data', 'mountPath', '/utlxe/data')), createArray())]",
             "engineArgs": "[if(parameters('enablePersistentStorage'), createArray('--mode','http','--data-dir','/utlxe/data'), createArray('--mode','http'))]"
@@ -506,7 +551,7 @@
                     "transport": "http",
                     "allowInsecure": false
                   },
-                  "secrets": "[concat(createArray(createObject('name', 'admin-key', 'value', parameters('adminKey'))), if(and(parameters('enableDapr'), not(empty(parameters('serviceBusConnection')))), createArray(createObject('name', 'servicebus-connection', 'value', parameters('serviceBusConnection'))), createArray()))]"
+                  "secrets": "[concat(createArray(createObject('name', 'admin-key', 'value', parameters('adminKey')), createObject('name', 'data-plane-key', 'value', parameters('dataPlaneKey'))), if(and(parameters('enableDapr'), not(empty(parameters('serviceBusConnection')))), createArray(createObject('name', 'servicebus-connection', 'value', parameters('serviceBusConnection'))), createArray()))]"
                 },
                 "template": {
                   "containers": [
@@ -568,6 +613,14 @@
                         {
                           "name": "ADMIN_PORT",
                           "value": "8081"
+                        },
+                        {
+                          "name": "DATA_PORT",
+                          "value": "8085"
+                        },
+                        {
+                          "name": "DATA_PLANE_KEY",
+                          "secretRef": "data-plane-key"
                         }
                       ]
                     }
@@ -623,6 +676,18 @@
           },
           "enableServiceBus": {
             "value": "[and(parameters('enableDapr'), not(equals(parameters('scalingMode'), 'http')))]"
+          },
+          "namePrefix": {
+            "value": "[parameters('namePrefix')]"
+          },
+          "eventHubConnection": {
+            "value": "[parameters('eventHubConnection')]"
+          },
+          "outputEventHub": {
+            "value": "[parameters('outputEventHub')]"
+          },
+          "enableEventHubsOut": {
+            "value": "[and(parameters('enableDapr'), parameters('enableEventHubs'))]"
           }
         },
         "template": {
@@ -669,9 +734,65 @@
               "metadata": {
                 "description": "Enable Service Bus bindings"
               }
+            },
+            "namePrefix": {
+              "type": "string",
+              "metadata": {
+                "description": "Resource name prefix. Needed here because the Dapr component `scopes` must name the container app's appId, which is derived from it. The nested template is inner-scoped, so it cannot see the parent's parameters."
+              }
+            },
+            "eventHubConnection": {
+              "type": "securestring",
+              "defaultValue": "",
+              "metadata": {
+                "description": "Event Hubs connection string with Send rights."
+              }
+            },
+            "outputEventHub": {
+              "type": "string",
+              "defaultValue": "utlx-output",
+              "metadata": {
+                "description": "Event Hub entity name for transformed output."
+              }
+            },
+            "enableEventHubsOut": {
+              "type": "bool",
+              "defaultValue": false,
+              "metadata": {
+                "description": "Create the Event Hubs output binding component."
+              }
             }
           },
           "resources": [
+            {
+              "condition": "[parameters('enableServiceBus')]",
+              "type": "Microsoft.App/managedEnvironments/daprComponents",
+              "apiVersion": "2026-07-01",
+              "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'utlxe-servicebus')]",
+              "properties": {
+                "componentType": "pubsub.azure.servicebus.topics",
+                "version": "v1",
+                "metadata": [
+                  {
+                    "name": "connectionString",
+                    "secretRef": "servicebus-pubsub-connection"
+                  },
+                  {
+                    "name": "consumerID",
+                    "value": "[format('{0}-app', parameters('namePrefix'))]"
+                  }
+                ],
+                "secrets": [
+                  {
+                    "name": "servicebus-pubsub-connection",
+                    "value": "[parameters('serviceBusConnection')]"
+                  }
+                ],
+                "scopes": [
+                  "[format('{0}-app', parameters('namePrefix'))]"
+                ]
+              }
+            },
             {
               "condition": "[parameters('enableServiceBus')]",
               "type": "Microsoft.App/managedEnvironments/daprComponents",
@@ -741,6 +862,39 @@
                   "[format('{0}-app', parameters('namePrefix'))]"
                 ]
               }
+            },
+            {
+              "condition": "[parameters('enableEventHubsOut')]",
+              "type": "Microsoft.App/managedEnvironments/daprComponents",
+              "apiVersion": "2026-07-01",
+              "name": "[format('{0}/{1}', last(split(parameters('environmentId'), '/')), 'eventhub-output')]",
+              "properties": {
+                "componentType": "bindings.azure.eventhubs",
+                "version": "v1",
+                "metadata": [
+                  {
+                    "name": "connectionString",
+                    "secretRef": "eventhub-connection"
+                  },
+                  {
+                    "name": "eventHub",
+                    "value": "[parameters('outputEventHub')]"
+                  },
+                  {
+                    "name": "direction",
+                    "value": "output"
+                  }
+                ],
+                "secrets": [
+                  {
+                    "name": "eventhub-connection",
+                    "value": "[parameters('eventHubConnection')]"
+                  }
+                ],
+                "scopes": [
+                  "[format('{0}-app', parameters('namePrefix'))]"
+                ]
+              }
             }
           ]
         }
@@ -784,6 +938,13 @@
         "description": "Health check URL (proxied to the engine by the Web UI container)"
       },
       "value": "[uri(reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value, 'health')]"
+    },
+    "dataPlaneUrl": {
+      "type": "string",
+      "metadata": {
+        "description": "EF24 data path. POST a document to <this>{transformationId}/run with header X-Api-Key: <data-plane key> and Content-Type set to the input format."
+      },
+      "value": "[uri(reference(resourceId('Microsoft.Resources/deployments', 'container-app'), '2026-06-01').outputs.containerAppAddress.value, 'api/transformations/')]"
     },
     "metricsNote": {
       "type": "string",

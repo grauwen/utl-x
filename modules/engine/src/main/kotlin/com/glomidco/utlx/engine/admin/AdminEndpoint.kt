@@ -109,6 +109,7 @@ fun configureAdmin(
                         "errors" to tx.errorCount.get(),
                         "inFlight" to tx.inFlight.get(),
                         "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get(),
                         "sync_status" to syncState.status,
                         "messaging" to messaging
                     )
@@ -139,7 +140,8 @@ fun configureAdmin(
                     "messages_processed" to tx.executionCount.get(),
                     "errors" to tx.errorCount.get(),
                     "inFlight" to tx.inFlight.get(),
-                    "concurrencyRejections" to tx.concurrencyRejections.get()
+                    "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get()
                 ))
             }
 
@@ -821,6 +823,7 @@ fun configureAdmin(
                     "maxConcurrent" to tx.config.maxConcurrent,
                     "inFlight" to tx.inFlight.get(),
                     "concurrencyRejections" to tx.concurrencyRejections.get(),
+                        "outputFailures" to tx.outputFailures.get(),
                     "maxInputSize" to tx.config.maxInputSize,
                     "inputs" to tx.config.inputs.map { mapOf("name" to it.name, "schema" to it.schema) },
                     "output_schema" to tx.config.output.schema
@@ -1314,15 +1317,18 @@ private fun parseMessagingEndpoint(node: com.fasterxml.jackson.databind.JsonNode
     val eventhub = node.get("eventhub")?.asText()
     val subscription = node.get("subscription")?.asText()
     val consumerGroup = node.get("consumerGroup")?.asText()
+    // EF26 2d: the Dapr component, when it is not named after the resource.
+    val component = node.get("component")?.asText()
     if (queue == null && topic == null && eventhub == null) return null
     return com.glomidco.utlx.engine.config.MessagingEndpoint(
         queue = queue, topic = topic, eventhub = eventhub,
-        subscription = subscription, consumerGroup = consumerGroup
+        subscription = subscription, consumerGroup = consumerGroup, component = component
     )
 }
 
 private fun endpointToMap(ep: com.glomidco.utlx.engine.config.MessagingEndpoint, daprStatus: String): Map<String, Any?> {
     val map = mutableMapOf<String, Any?>()
+    ep.component?.let { map["component"] = it }   // EF26 2d
     ep.queue?.let { map["queue"] = it }
     ep.topic?.let { map["topic"] = it }
     ep.eventhub?.let { map["eventhub"] = it }

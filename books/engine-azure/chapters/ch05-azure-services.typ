@@ -137,7 +137,7 @@ scopes:
 
 === Step 6: Upload the Transformation
 
-Create `orders-in.utlx` --- the transformation name must match the Dapr input component name (`orders-in`):
+Create `orders-in.utlx`. Naming the transformation after the Dapr input component is the simplest option, and the one this walkthrough uses --- but since UTL-X 1.5 it is no longer the only one. See *How a Message Finds Its Transformation* below, which matters especially on a Marketplace deployment, where the component name is fixed by the template and you cannot choose it.
 
 ```
 %utlx 1.0
@@ -342,6 +342,60 @@ A complete end-to-end flow for European e-invoicing:
 + A *Peppol Access Point* subscribes to the topic and delivers the invoice via AS4.
 
 The transformation, Dapr components, and Service Bus resources are configured following the same steps shown in this chapter. The only difference is the `.utlx` content --- which maps D365 fields to UBL elements.
+
+== How a Message Finds Its Transformation
+
+When Dapr delivers a message, something has to decide which of your transformations handles it.
+Dapr posts an input binding to `POST /{component-name}`, so the URL names the *Dapr component* ---
+not a transformation. UTLXe bridges that gap in three ways, tried in this order.
+
+#table(
+  columns: (auto, auto, 1fr),
+  [*Order*], [*How*], [*When to use it*],
+  [1], [a message property `X-UTLXe-Transform`], [One queue feeding several transformations. The *sender* decides, per message.],
+  [2], [the transformation declares the queue or topic in its `transform.yaml`], [The normal case. Your transformation owns its source, and its name is free.],
+  [3], [the transformation is *named* after the component], [The simplest case, and what this walkthrough does. Nothing to configure.],
+)
+
+=== Why this matters on a Marketplace deployment
+
+The walkthrough above creates the Dapr component yourself, so you can call it `orders-in` and name
+your transformation to match. *A Marketplace deployment does not work that way.* The template
+creates the component for you and calls it `servicebus-input`, and that name is not a parameter.
+
+So option 3 would force you to call your transformation `servicebus-input` --- which is a poor name
+for anything, and caps the deployment at one. Use option 2 instead: give the transformation any
+name you like and declare the queue in its configuration.
+
+```bash
+curl -X POST "https://<your-app>/admin/transformations/orders/messaging" \
+  -H "X-Admin-Key: $ADMIN_KEY" -H "Content-Type: application/json" \
+  -d '{"input": {"queue": "servicebus-input"}}'
+```
+
+The transformation is now called `orders`, and messages arriving on that component reach it.
+
+=== Several transformations on one queue
+
+Option 1 is the one to reach for when a single queue carries different kinds of message. The sender
+sets a Service Bus *application property* and UTLXe routes on it:
+
+```
+X-UTLXe-Transform: invoices
+```
+
+Dapr forwards application properties to the app as `metadata.*` headers, so UTLXe reads both
+`metadata.X-UTLXe-Transform` and the bare header. An unknown name is rejected rather than falling
+back to another transformation --- a mis-routed message fails loudly instead of being quietly
+processed by the wrong script.
+
+=== Topics route by transformation name
+
+The pub/sub path has none of this ambiguity. A transformation that declares `input.topic` is
+registered with Dapr at startup and given its own delivery route, `/pubsub/{transformation name}`,
+so one Dapr component serves as many topics as you have transformations and no naming rule
+applies at all. Note that Dapr asks UTLXe for its subscriptions *once*, when the sidecar starts ---
+a transformation uploaded afterwards is not subscribed until the revision restarts.
 
 == Bindings vs. Pub/Sub: Which Pattern to Use
 

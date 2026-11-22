@@ -62,6 +62,33 @@
             "visible": true
           },
           {
+            "name": "dataPlaneKey",
+            "type": "Microsoft.Common.PasswordBox",
+            "label": {
+              "password": "Data Path API Key",
+              "confirmPassword": "Confirm Data Path Key"
+            },
+            "toolTip": "Protects the HTTP data path that applications post messages to. A SEPARATE key from the admin key on purpose: an application holding this one can run your transformations but cannot deploy, delete, or list them. Minimum 12 characters. Save it securely \u2014 it cannot be retrieved after deployment.",
+            "constraints": {
+              "required": true,
+              "regex": "^.{12,}$",
+              "validationMessage": "The data path key must be at least 12 characters."
+            },
+            "options": {
+              "hideConfirmation": false
+            },
+            "visible": true
+          },
+          {
+            "name": "dataPlaneKeyInfo",
+            "type": "Microsoft.Common.InfoBox",
+            "visible": true,
+            "options": {
+              "icon": "Info",
+              "text": "Two keys, two jobs. The *admin* key manages transformations through the Web UI and Admin API. The *data path* key lets an application POST a message to /api/transformations/{id}/run and get the transformed result back \u2014 nothing else. Use different values: whichever one leaks, the other still holds."
+            }
+          },
+          {
             "name": "adminKeyWarning",
             "type": "Microsoft.Common.InfoBox",
             "visible": true,
@@ -80,50 +107,21 @@
             }
           },
           {
-            "name": "cpuCores",
+            "name": "instanceSize",
             "type": "Microsoft.Common.DropDown",
-            "label": "CPU Cores per instance",
-            "toolTip": "CPU allocation per container instance. Higher values support more concurrent transformations.",
-            "defaultValue": "1.0 core (standard)",
+            "label": "Instance size",
+            "defaultValue": "2 vCPU / 4 GB \u2014 standard (recommended)",
+            "toolTip": "Total CPU and memory for the instance. Azure allows only fixed CPU/memory pairs, so these are chosen together rather than separately. The figure shown is the whole instance; the admin UI sidecar takes 0.25 vCPU and 0.5 GB of it.",
             "constraints": {
               "required": true,
               "allowedValues": [
                 {
-                  "label": "0.5 cores (dev/test)",
-                  "value": "0.5"
+                  "label": "1 vCPU / 2 GB \u2014 development and light loads",
+                  "value": "0.75"
                 },
                 {
-                  "label": "1.0 core (standard)",
-                  "value": "1.0"
-                },
-                {
-                  "label": "2.0 cores (production)",
-                  "value": "2.0"
-                }
-              ]
-            },
-            "visible": true
-          },
-          {
-            "name": "memoryGi",
-            "type": "Microsoft.Common.DropDown",
-            "label": "Memory per instance",
-            "toolTip": "Memory allocation per container instance. XML/JSON transformation expands messages 10-50x in memory. Choose based on your largest message size.",
-            "defaultValue": "2 GB \u2014 messages up to 200 KB (standard)",
-            "constraints": {
-              "required": true,
-              "allowedValues": [
-                {
-                  "label": "1 GB \u2014 messages up to 50 KB (dev/test)",
-                  "value": "1.0"
-                },
-                {
-                  "label": "2 GB \u2014 messages up to 200 KB (standard)",
-                  "value": "2.0"
-                },
-                {
-                  "label": "4 GB \u2014 messages up to 500 KB (production)",
-                  "value": "4.0"
+                  "label": "2 vCPU / 4 GB \u2014 standard (recommended)",
+                  "value": "1.75"
                 }
               ]
             },
@@ -206,20 +204,20 @@
                 "visible": true,
                 "options": {
                   "icon": "Info",
-                  "text": "UTLXe receives messages from Azure Service Bus: it consumes from a queue you own and publishes results to a topic you own, with auto-scaling driven by queue depth.\n\nChoosing 'Admin API only' deploys the engine with no message source. You can upload transformations and run them from the Web UI's test page, which is enough to evaluate the engine \u2014 but applications cannot post messages to it over HTTP. A public HTTP endpoint for application traffic is not available in this release."
+                  "text": "Two ways in, and they are not exclusive.\n\nHTTP: applications POST a document to /api/transformations/{id}/run with the data path key and receive the transformed result in the response. The body is the document itself \u2014 XML, JSON, CSV, YAML \u2014 with Content-Type saying which. This path is always available.\n\nAzure Service Bus: UTLXe also consumes from a queue you own and publishes results to a topic you own, with auto-scaling driven by queue depth. Choose it here to have the deployment wire that up for you."
                 }
               },
               {
                 "name": "messagingMode",
                 "type": "Microsoft.Common.DropDown",
                 "label": "How messages reach UTLXe",
-                "toolTip": "Admin API only: no message source \u2014 upload and test transformations from the Web UI, but applications cannot post messages over HTTP. Azure Service Bus: the engine consumes from a queue you own and publishes results to a topic you own.",
-                "defaultValue": "Admin API only \u2014 evaluate now, add a message source later",
+                "toolTip": "HTTP: applications POST a document to the published data path with the data path key and receive the transformed result in the response. Azure Service Bus: the engine consumes from a queue you own and publishes results to a topic you own. Service Bus deployments keep the HTTP data path as well \u2014 this choice decides whether a Service Bus source is wired up, not whether HTTP works.",
+                "defaultValue": "HTTP \u2014 applications POST a document, get the result back",
                 "constraints": {
                   "required": true,
                   "allowedValues": [
                     {
-                      "label": "Admin API only \u2014 evaluate now, add a message source later",
+                      "label": "HTTP \u2014 applications POST a document, get the result back",
                       "value": "http"
                     },
                     {
@@ -282,6 +280,75 @@
               }
             ],
             "visible": true
+          },
+          {
+            "name": "eventHubsSection",
+            "type": "Microsoft.Common.Section",
+            "label": "Event Hubs output (optional)",
+            "elements": [
+              {
+                "name": "eventHubsInfo",
+                "type": "Microsoft.Common.InfoBox",
+                "visible": true,
+                "options": {
+                  "icon": "Info",
+                  "text": "Publish transformed messages to an Azure Event Hub instead of the Service Bus topic. Output only: consuming FROM an Event Hub needs a Dapr checkpoint store and an Event Hubs scaling trigger, which this release does not configure. Requires a message source to be selected above."
+                }
+              },
+              {
+                "name": "enableEventHubs",
+                "type": "Microsoft.Common.OptionsGroup",
+                "label": "Publish results to an Event Hub",
+                "defaultValue": "Disabled",
+                "toolTip": "When enabled, transformed messages go to the Event Hub below rather than the Service Bus topic.",
+                "constraints": {
+                  "required": true,
+                  "allowedValues": [
+                    {
+                      "label": "Disabled",
+                      "value": false
+                    },
+                    {
+                      "label": "Enabled",
+                      "value": true
+                    }
+                  ]
+                },
+                "visible": true
+              },
+              {
+                "name": "eventHubConnection",
+                "type": "Microsoft.Common.PasswordBox",
+                "label": {
+                  "password": "Event Hubs connection string",
+                  "confirmPassword": "Confirm connection string"
+                },
+                "toolTip": "Namespace-level connection string with Send rights, from Shared access policies on your Event Hubs namespace.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^Endpoint=sb://.{12,}$",
+                  "validationMessage": "Paste the Event Hubs namespace connection string; it starts with Endpoint=sb://"
+                },
+                "options": {
+                  "hideConfirmation": false
+                },
+                "visible": "[equals(steps('engineConfig').eventHubsSection.enableEventHubs, true)]"
+              },
+              {
+                "name": "outputEventHub",
+                "type": "Microsoft.Common.TextBox",
+                "label": "Output Event Hub name",
+                "defaultValue": "utlx-output",
+                "toolTip": "The Event Hub (entity) inside the namespace that results are published to.",
+                "constraints": {
+                  "required": false,
+                  "regex": "^[A-Za-z0-9][A-Za-z0-9._-]{0,49}$",
+                  "validationMessage": "1-50 characters: letters, digits, dot, dash, underscore."
+                },
+                "visible": "[equals(steps('engineConfig').eventHubsSection.enableEventHubs, true)]"
+              }
+            ],
+            "visible": true
           }
         ]
       }
@@ -289,8 +356,9 @@
     "outputs": {
       "location": "[location()]",
       "adminKey": "[steps('engineConfig').adminKey]",
-      "cpuCores": "[steps('engineConfig').cpuCores]",
-      "memoryGi": "[steps('engineConfig').memoryGi]",
+      "dataPlaneKey": "[steps('engineConfig').dataPlaneKey]",
+      "cpuCores": "[steps('engineConfig').instanceSize]",
+      "memoryGi": "[if(equals(steps('engineConfig').instanceSize,'0.75'),'1.5','3.5')]",
       "minReplicas": "[steps('engineConfig').scalingSection.minReplicas]",
       "maxReplicas": 1,
       "containerImage": "ghcr.io/utlx-lang/utlxe:1.4.4",
@@ -300,7 +368,10 @@
       "serviceBusConnection": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.serviceBusConnection, '')]",
       "inputQueueName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.inputQueueName, 'utlx-input')]",
       "outputTopicName": "[if(equals(steps('engineConfig').messagingSection.messagingMode, 'servicebus'), steps('engineConfig').messagingSection.outputTopicName, 'utlx-output')]",
-      "enablePersistentStorage": "[steps('engineConfig').storageSection.enablePersistentStorage]"
+      "enablePersistentStorage": "[steps('engineConfig').storageSection.enablePersistentStorage]",
+      "enableEventHubs": "[steps('engineConfig').eventHubsSection.enableEventHubs]",
+      "eventHubConnection": "[if(equals(steps('engineConfig').eventHubsSection.enableEventHubs, true), steps('engineConfig').eventHubsSection.eventHubConnection, '')]",
+      "outputEventHub": "[if(equals(steps('engineConfig').eventHubsSection.enableEventHubs, true), steps('engineConfig').eventHubsSection.outputEventHub, 'utlx-output')]"
     }
   }
 }

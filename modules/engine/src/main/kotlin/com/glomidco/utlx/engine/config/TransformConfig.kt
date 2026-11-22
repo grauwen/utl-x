@@ -64,12 +64,43 @@ fun parseSizeToBytes(size: String?): Long? {
  * EF10: Messaging endpoint declaration.
  * Exactly one of queue/topic/eventhub should be set. The field name IS the discriminator.
  */
+/**
+ * EF26: the name of the Dapr pub/sub component UTLXe publishes through and subscribes with.
+ *
+ * It was written as the literal "utlxe-servicebus" in five places across two files, with no way
+ * to change it — while the Azure templates create components called `servicebus-input` and
+ * `servicebus-output` and no `utlxe-servicebus` at all. Two hardcoded names on opposite sides of
+ * a boundary, nothing checking they agree, and the result was that the engine's entire pub/sub
+ * path addressed a component that exists in no deployment.
+ *
+ * Read from the environment so a deployment can name the component whatever its templates do;
+ * the default is the historical value, so nothing that works today changes.
+ */
+object DaprComponents {
+    const val DEFAULT_PUBSUB_NAME = "utlxe-servicebus"
+
+    /** The pub/sub component name for this process. */
+    val pubsubName: String =
+        System.getenv("UTLXE_PUBSUB_NAME")?.takeIf { it.isNotBlank() } ?: DEFAULT_PUBSUB_NAME
+}
+
 data class MessagingEndpoint(
     val queue: String? = null,              // Service Bus queue → bindings.azure.servicebusqueues
     val topic: String? = null,              // Service Bus topic → pubsub.azure.servicebus.topics
     val eventhub: String? = null,           // Event Hub → bindings.azure.eventhubs (or pubsub if consumerGroup set)
     val subscription: String? = null,       // Required for topic input (Service Bus subscription name)
-    val consumerGroup: String? = null       // Optional for eventhub input (triggers pub/sub mode)
+    val consumerGroup: String? = null,      // Optional for eventhub input (triggers pub/sub mode)
+    // EF26 2d: the Dapr COMPONENT to go through, when it is not named after the resource.
+    //
+    // Dapr keeps these separate — `/v1.0/publish/<component>/<topic>` and
+    // `/v1.0/bindings/<component>` — while UTLXe inferred the component from `resourceName`.
+    // That holds only under UTLXe's own convention, where a component is named after its queue
+    // (which is what DaprIntegration generates for self-hosted). Azure Container Apps names
+    // components after their ROLE — `servicebus-output` — so the inference breaks, and the gap
+    // was papered over with a UTLXE_OUTPUT_BINDING_* environment variable per deployment.
+    //
+    // Null keeps the inference, so every existing transform.yaml behaves exactly as before.
+    val component: String? = null
 ) {
     /** The resource name (queue name, topic name, or eventhub name). */
     val resourceName: String?

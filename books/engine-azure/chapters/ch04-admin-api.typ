@@ -8,14 +8,20 @@ UTLXe exposes two HTTP servers on separate ports:
 
 #table(
   columns: (auto, auto, 1fr),
-  [*Port*], [*Purpose*], [*Access*],
-  [8081], [Admin API + health + metrics], [Internal to VNet --- not exposed via ingress],
-  [8085], [Data plane (message processing)], [Exposed via Container App ingress],
+  [*Port*], [*Purpose*], [*Reachable from outside the replica?*],
+  [8081], [Admin API + health + metrics], [*Yes*, in the Marketplace offering --- nginx proxies `/admin/*`, `/health` and `/metrics` to it through the public ingress. Protected by the admin key.],
+  [8085], [Data plane (message processing)], [*One path only.* nginx publishes `/api/transformations/{id}/run`, protected by a separate data path key. Everything else on 8085 is loopback-only.],
+  [9090], [gRPC], [*No* --- not started by the Marketplace templates, and a Container App publishes one port with one protocol.],
 )
 
-This separation allows network isolation. The data plane is accessible to client applications and Dapr sidecars. The admin port is restricted to operators and CI/CD pipelines within the VNet.
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *Earlier editions of this table had these two the wrong way round*, describing 8081 as
+  VNet-internal and 8085 as ingress-exposed. The opposite was true: the admin port has always
+  been the publicly proxied one, and the data plane had no public path at all until 1.4.4. If you
+  built a network design on the old description, check it.
+]
 
-Both ports are always active. There is no mode switch --- you can upload transformations while the data plane processes messages.
+Both ports are always active. There is no mode switch --- you can upload transformations while the data plane processes messages. In a *custom* deployment you choose what to publish; the table above describes the Marketplace offering, where nginx is the only front door.
 
 == The Admin Web UI (Optional)
 
@@ -402,11 +408,24 @@ This is useful for version control, backup, or migrating transformations to anot
 
 == Data Plane Discovery
 
-Client applications can discover available transformations without an admin key. This endpoint runs on the data plane port (8085):
+The engine serves an unauthenticated listing of what is loaded, on the data plane port:
 
 ```bash
-curl http://<ingress>:8085/api/transformations
+# from INSIDE the replica only -- see the warning below
+curl http://127.0.0.1:8085/api/transformations
 ```
+
+#block(fill: luma(240), inset: 8pt, radius: 4pt, width: 100%)[
+  *This is not reachable from outside the replica in the Marketplace offering, and that is
+  deliberate.* nginx publishes one data-plane path --- `/api/transformations/{id}/run` --- and
+  this listing is not it. An unauthenticated endpoint that enumerates what an engine runs is
+  information disclosure, so `utlxe-acceptance.sh` asserts that it stays unreachable through the
+  public address.
+
+  Earlier editions showed this as `curl http://<ingress>:8085/api/transformations`, which was
+  never correct: 8085 has never been an ingress port, and the scheme at the ingress is HTTPS. To
+  list transformations from outside, use `GET /admin/transformations` with the admin key.
+]
 
 ```json
 {

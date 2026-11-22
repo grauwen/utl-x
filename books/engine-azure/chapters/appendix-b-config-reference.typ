@@ -36,8 +36,8 @@ The engine configuration file is optional. If present in the bundle, it override
 #table(
   columns: (auto, auto, auto, 1fr),
   [*Port*], [*Container*], [*Default*], [*Purpose*],
-  [8081], [utlxe], [configurable], [Admin API + health + metrics (internal to VNet)],
-  [8085], [utlxe], [configurable], [Data plane --- Dapr bindings + direct HTTP],
+  [8081], [utlxe], [configurable], [Admin API + health + metrics. In the Marketplace offering nginx proxies `/admin/*`, `/health` and `/metrics` to it through the public ingress --- it is *not* VNet-internal there.],
+  [8085], [utlxe], [configurable], [Data plane --- Dapr bindings, plus the one published HTTP path `/api/transformations/{id}/run`. The rest of 8085 is loopback-only in the Marketplace offering.],
   [9090], [utlxe], [configurable], [gRPC (optional, `--also-grpc`)],
   [8088], [utlxe-ui], [configurable via `UI_PORT`], [Admin Web UI (browser access)],
   [3500], [dapr], [fixed], [Dapr sidecar HTTP API (localhost only)],

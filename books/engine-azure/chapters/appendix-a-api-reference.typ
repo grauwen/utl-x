@@ -147,15 +147,22 @@ Per-transformation configuration: strategy, validation, schemas, message size li
 
 == Data Plane Port (8085)
 
+The *Published* column says whether the Marketplace offering's nginx routes the path from the public ingress. Exactly one data-plane path is published; the rest are reachable only from inside the replica.
+
 #table(
-  columns: (auto, auto, 1fr),
-  [*Method*], [*Path*], [*Description*],
-  [`GET`], [`/api/transformations`], [List available transformations (discovery). No authentication.],
-  [`POST`], [`/api/execute/{id}`], [Execute a transformation. Body: `{"payload":"...","contentType":"application/json"}`.],
-  [`OPTIONS`], [`/{bindingName}`], [Dapr binding probe. Always returns 200.],
-  [`POST`], [`/{bindingName}`], [Dapr input binding delivery. Routes to transformation by binding name.],
-  [`GET`], [`/dapr/subscribe`], [Dapr pub/sub subscription list. Derived from loaded transformations with topic config.],
-  [`POST`], [`/pubsub/{name}`], [Dapr pub/sub delivery. Accepts CloudEvents (structured or binary mode).],
+  columns: (auto, auto, auto, 1fr),
+  [*Method*], [*Path*], [*Published*], [*Description*],
+  [`POST`], [`/api/transformations/{id}/run`], [*yes*, `X-Api-Key`], [*The data path.* Body is the document itself --- no envelope --- with `Content-Type` naming its format. The response is the output in the transformation's own output format. `404` unknown id, `422` transformation failure, `503` transient.],
+  [`GET`], [`/api/transformations`], [no], [List loaded transformations. No authentication, so deliberately not published: use `GET /admin/transformations` from outside.],
+  [`POST`], [`/api/execute/{id}`], [no], [Execute with a JSON envelope: `{"payload":"...","contentType":"..."}`. Superseded by `/run` --- a JSON string cannot carry arbitrary bytes, so Avro and Protobuf are inexpressible here.],
+  [`POST`], [`/api/transform`], [no], [Load *and* execute. Carries `utlxSource`, so the caller supplies the script --- never publishable.],
+  [`DELETE`], [`/api/transform/{id}`], [no], [Unloads a transformation from the running engine. Unauthenticated on this port; it does not touch the data volume, so the transformation returns on the next restart.],
+  [`POST`], [`/api/execute-batch/{id}`], [no], [Several payloads in one request. Keeps the envelope, by design.],
+  [`POST`], [`/api/execute-pipeline`], [no], [A chain of transformation ids over one payload.],
+  [`OPTIONS`], [`/{bindingName}`], [no], [Dapr binding probe. Always returns 200.],
+  [`POST`], [`/{bindingName}`], [no], [Dapr input binding delivery. Routes to transformation by binding name.],
+  [`GET`], [`/dapr/subscribe`], [no], [Dapr pub/sub subscription list, derived from loaded transformations with topic config.],
+  [`POST`], [`/pubsub/{name}`], [no], [Dapr pub/sub delivery. Accepts CloudEvents, structured or binary mode.],
 )
 
 == Production Locked Mode (EF09)
