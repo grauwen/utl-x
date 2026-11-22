@@ -45,7 +45,7 @@ class YAMLParser {
             isAllowDuplicateKeys = options.allowDuplicateKeys
             nestingDepthLimit = options.maxDepth   // §4.1: raise SnakeYAML's default (50) to the profile depth
         }
-        return Yaml(ExactFloatConstructor(loaderOptions))
+        return Yaml(ExactFloatConstructor(loaderOptions, options.preserveNumericLexeme))
     }
 
     /**
@@ -60,7 +60,10 @@ class YAMLParser {
      * falls through to its own construct, which is well tested and which this fix has no reason to
      * reimplement.
      */
-    private class ExactFloatConstructor(loaderOptions: LoaderOptions) : Constructor(loaderOptions) {
+    private class ExactFloatConstructor(
+        loaderOptions: LoaderOptions,
+        preserveNumericLexeme: Boolean = false,
+    ) : Constructor(loaderOptions) {
         init {
             val floatDelegate = yamlConstructors[Tag.FLOAT]!!
             yamlConstructors[Tag.FLOAT] = object : AbstractConstruct() {
@@ -69,6 +72,8 @@ class YAMLParser {
                     if (raw != null) {
                         // B40: a zero-padded decimal is an identifier, not a number.
                         if (ExactNumber.isZeroPadded(raw)) return raw
+                        // F31: negative zero and exponent notation keep their text when asked.
+                        if (preserveNumericLexeme && ExactNumber.isLexicallyLossy(raw)) return raw
                         ExactNumber.plainDecimalOrNull(raw)?.let { return it }
                     }
                     return floatDelegate.construct(node)
@@ -84,6 +89,8 @@ class YAMLParser {
                 override fun construct(node: Node): Any? {
                     val raw = (node as? ScalarNode)?.value
                     if (raw != null && ExactNumber.isZeroPadded(raw)) return raw
+                    // F31: `-0` is an INT to SnakeYAML, and Long cannot hold a negative zero.
+                    if (raw != null && preserveNumericLexeme && ExactNumber.isLexicallyLossy(raw)) return raw
                     return intDelegate.construct(node)
                 }
             }
@@ -98,7 +105,8 @@ class YAMLParser {
         val preserveOrder: Boolean = true,
         val parseTimestamps: Boolean = true,
         val allowDuplicateKeys: Boolean = false,
-        val maxDepth: Int = 256   // §4.1: mapped to SnakeYAML nestingDepthLimit (raises its default 50)
+        val maxDepth: Int = 256,  // §4.1: mapped to SnakeYAML nestingDepthLimit (raises its default 50)
+        val preserveNumericLexeme: Boolean = false   // F31: lexical fidelity, orthogonal to the profile ladder
     ) {
         companion object {
             /** Map the shared parser profile onto YAML reader options (the policy fields it governs:
@@ -106,6 +114,7 @@ class YAMLParser {
             fun fromProfile(p: CoreParseOptions) = ParseOptions(
                 allowDuplicateKeys = p.allowDuplicateKeys,
                 maxDepth = p.maxDepth,
+                preserveNumericLexeme = p.preserveNumericLexeme,
             )
         }
     }

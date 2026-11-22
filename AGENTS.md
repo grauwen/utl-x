@@ -43,7 +43,7 @@ code change is invisible to it until you rebuild that jar.
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
 ```
 
-**583 tests** (2026-11-19). Must run from `conformance-suite/`; the runner uses
+**584 tests** (2026-11-22). Must run from `conformance-suite/`; the runner uses
 relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 `language/selectors`.
 
@@ -52,11 +52,11 @@ relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
 execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
-`ASTCompiler`, and what the UTLXe engine runs by default). A green 583/583 says
+`ASTCompiler`, and what the UTLXe engine runs by default). A green 584/584 says
 nothing about two of them:
 
 ```bash
-./gradlew :modules:engine:test       # 1054 tests, incl. ConformanceStrategyParityTest (416)
+./gradlew :modules:engine:test       # 1055 tests, incl. ConformanceStrategyParityTest (417)
 ```
 
 **Five bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
@@ -153,7 +153,9 @@ silently. Main accumulated 22 broken links before this rule existed. The linter 
 fails on broken-link count rising above a ratcheting baseline, on de-link markers
 stranded inside `devdocs/`, and on stubs in `docs/` whose target is back in `docs/`.
 
-Bug and feature reports live in `docs/bugs-fixed/` and `docs/features/` with prefixes:
+Bug and feature reports live in `docs/bugs-fixed/` and `docs/features/`, and **permanent
+boundaries in `docs/limitations/`** — same prefixes, shared number line, the directory carries the
+kind (see `docs/limitations/README.md`). Prefixes:
 **B** core/formats/stdlib · **EB** engine · **CB** cli · **VB** `validate.*` ·
 **WB** wrappers · **IB** IDE/daemon · and **F**/**EF**/**IF** for features.
 IB and IF stay in `devdocs/` — the IDE and daemon do not ship on `main`.

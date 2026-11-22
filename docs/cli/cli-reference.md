@@ -276,6 +276,45 @@ level, and nesting beyond 256 is refused by `standard` and `lenient` alike.
 Note the asymmetry worth knowing: depth is a **resource bound**, not a grammar rule, so `lenient`
 does not relax it beyond `standard`. Only `strict` is tighter.
 
+### Lexical fidelity (`--preserve-numeric-lexeme`)
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--preserve-numeric-lexeme` | Keep a numeric value whose written form the numeric model cannot reproduce | off |
+
+Numbers are read exactly, so `100.10` keeps its scale and `9007199254740993` survives (B35). Three
+written forms still cannot be rebuilt, because the loss is notation rather than precision and no
+numeric type can hold it:
+
+| written | rebuilt by default | with the flag |
+|---|---|---|
+| `-0`, `-0.00` | `0`, `0.00` | `-0`, `-0.00` |
+| `1e3`, `1.5e2` | `1000`, `150` | `1e3`, `1.5e2` |
+| `+2` *(YAML only)* | `2` | `+2` |
+
+```bash
+# a canonical rebuild that must match the bytes it received
+utlx transform --preserve-numeric-lexeme canon.utlx order.xml
+```
+
+Use it where the **written form is itself the information** — canonicalisation, a signature over
+rebuilt output, a guard comparing what it emitted against what it received. Three things to know
+before turning it on:
+
+- **A preserved value is a string.** Arithmetic on one needs `toNumber()`, exactly as it already
+  does for a zero-padded `007`. That is why the flag is off by default.
+- **It is independent of `--parse-profile`.** Strictness and fidelity are separate axes, so
+  `--parse-profile strict --preserve-numeric-lexeme` is a sensible combination and no profile turns
+  fidelity on by itself.
+- **XML, CSV and YAML only.** JSON's grammar has already typed the token, so preserving the lexeme
+  there would emit `"1e3"` *with quotes* — a changed type rather than a preserved form. A JSON
+  round-trip of `1e3` is still `1000`. See
+  [B65](../limitations/B65-numeric-and-lexical-fidelity-on-a-round-trip.md) for the full boundary
+  and [F31](../features/F31-lexical-fidelity-for-numeric-values.md) for the design.
+
+Unlike `--parse-profile`, this flag takes no value, so it works either before or after the file
+arguments.
+
 **Where else it can be set.** The engine reads it from `EngineConfig`; the daemon from the
 `UTLX_PARSE_PROFILE` environment variable or `-Dutlx.parse.profile` (IB08), so a deployment that
 must swallow malformed input can select it once rather than per call.

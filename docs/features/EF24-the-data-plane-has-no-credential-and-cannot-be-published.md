@@ -495,7 +495,30 @@ secret, everything else here still passes.
 | 4 | acceptance assertions | **done** — 8 new assertions incl. admin-key-rejected and three narrow-routing probes |
 | 5 | book and README | **done** — ch02 data-path section + `dataPlaneUrl`, ch11 "Two Keys, Two Jobs", README "The two keys" |
 
-**Not yet done, and the reason the above is not finished work:** nothing has been deployed. The
+**VERIFIED IN AZURE 2026-11-21.** A professional deployment passed 22 assertions, 0 failures,
+including every claim this report rests on:
+
+```
+✓ data path accepts a raw body with its own key
+✓ data path returns the output directly
+✓ ADMIN key is REJECTED on the data path      ← the separation this design exists for
+✓ no key is rejected on the data path
+✓ /api/load is not published
+✓ /api/transformations is not published
+✓ /api/execute/hello is not published
+✓ DELETE /api/transform/{id} is not published (HTTP 405)
+✓ transformation survived the routing probes
+```
+
+The nginx config was never parsed by nginx before this run, and the credential separation had only
+ever been argued. Both hold. Persistence reported `disk` and survived a revision restart; the
+engine reported 1.4.4; deployment took 1011s.
+
+What remains unverified is the Dapr half: the suite runs with `enableDapr: false` (the template
+default, which the script does not override), so Service Bus has still never been exercised in
+Azure. See EF26 item 3.
+
+**Superseded note — what follows described the state before that deployment:** nothing had been deployed. The
 nginx config has never been parsed by nginx — the Docker daemon was not running locally, so
 `nginx -t` could not be run; the template substitution was verified by rendering it, which checks
 that `$http_x_api_key` and `$dp_key` survive `envsubst` and that braces balance, but not that

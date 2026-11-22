@@ -18,6 +18,13 @@ were misfiled as `B` in one sitting before anyone noticed — so the rule is wri
 Features use the parallel set in [`../features`](../features): **F** (language), **EF** (engine),
 **IF** (IDE).
 
+**Limitations keep these same prefixes** and live in [`../limitations`](../limitations) — the
+prefix still names the component, the *directory* says "permanent boundary". The number line is
+shared with this folder, so `B64` (a fix) and `B65` (a limitation) are one sequence and a reader
+grepping an ID never has to know the kind first. The admission test is strict: *changing this
+requires changing a decision, not writing code.* Anything merely unbuilt is backlog and belongs in
+`../features`.
+
 **How to choose.** Look at the `Component:` line you are about to write. If it says
 `modules/engine`, the prefix is `EB` — even when the symptom first appeared somewhere else, and even
 when the fix turns out to be shared. A header that says "B = core bug" above a `Component:` of

@@ -667,16 +667,25 @@ deployment is unable to keep.
 
 ## 13. Open questions
 
-1. **Does a `professional` replica fit under the Consumption ceiling?** It declares
-   `4.25 vCPU / 8.5 GiB` of containers (engine 4.0/8.0 plus the 0.25/0.5 UI sidecar). The
-   question is about the platform limit, not about whether anyone has tried: the offer is
-   published and has been deployed from the portal, so a successful `professional`
-   provisioning settles it in the affirmative and also answers §6.6. Recorded here because
-   nothing in this repository captures which plan a given deployment used — the acceptance
-   script takes `--template <path>` and does not log the plan, so deployment history lives
-   only in the subscription. **An earlier revision of this document inferred from the
-   script's worked examples that `professional` had never been deployed. That was an
-   unfounded claim from absent evidence and has been removed.**
+1. **Does a `professional` replica fit under the Consumption ceiling?** **ANSWERED 2026-11-21, by
+   deploying: no, and it never did.** Engine 4.0 + the 0.25 sidecar = 4.25 vCPU, which Azure
+   rejects outright:
+
+   ```
+   ContainerAppInvalidResourceTotal: total requested (CPU: 4.25, memory: 8.5) is invalid
+   ```
+
+   The professional plan had never been deployable. Worse, the allowed list shows every legal pair
+   has memory exactly 2x CPU, while the wizard offered CPU and memory as *independent* dropdowns —
+   so professional's default was merely the first invalid combination a customer could reach.
+
+   Fixed: sizes are chosen as a pair from one dropdown, with replica totals of 2.0/4.0 (starter)
+   and 4.0/8.0 (professional); the engine gets the total minus the sidecar. `build-zips.sh` now
+   checks every offered size, not just the default. **Professional then deployed clean: 22
+   assertions, 0 failures.** It also settles §6.6 — the `daprd` sidecar is not counted against the
+   replica ceiling, since 4.0/8.0 was accepted while Dapr was disabled and the arithmetic leaves
+   no room for it.
+
 2. **Should `production` default to `minReplicas: 2` or `3`?** Two survives a node
    loss; during a revision update it can briefly be one.
 3. **Is `custom` worth exposing in the Marketplace wizard**, or should it stay
