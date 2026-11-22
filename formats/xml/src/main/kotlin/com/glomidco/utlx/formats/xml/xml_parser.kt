@@ -234,6 +234,14 @@ class XMLParser(
             } else if (peek() == '<') {
                 if (peek(4) == "<!--") {
                     skipComment()
+                } else if (peek(2) == "<?") {
+                    // B64: a processing instruction is legal ANYWHERE in content, not only in the
+                    // prolog and epilog. B27 taught the parser about PIs but only wired skipMisc
+                    // into those two places, so `<order><?pi data?>…` still reached parseName and
+                    // threw "Invalid name start: ?". Tested after "<!--" so the two <-prefixed
+                    // forms stay distinct; skipMisc itself is not reused here because DOCTYPE,
+                    // which it also handles, is illegal inside an element.
+                    skipProcessingInstruction()
                 } else if (peek(9) == "<![CDATA[") {
                     // B41: everything inside CDATA is literal character data, trim must not reach it
                     textContent.append(parseCDATA(), escaped = true)

@@ -1,0 +1,47 @@
+name: "processing_instruction_in_content"
+category: "formats/xml"
+description: "B64: a processing instruction inside an element is skipped, not treated as a child element"
+tags: ["xml", "parser", "processing-instruction", "B64"]
+
+input:
+  format: xml
+  data: |
+    <?xml version="1.0"?>
+    <?prolog-pi before-root?>
+    <order>
+      <?pi right-after-open-tag?>
+      <!-- a comment, which already worked -->
+      <orderId>A-1</orderId>
+      <?pi between-children?>
+      <customer>Acme</customer>
+      <?pi before-close-tag?>
+    </order>
+    <?epilog-pi after-root?>
+
+transformation: |
+  %utlx 1.0
+  input xml
+  output json
+  ---
+  {
+    id: $input.order.orderId,
+    customer: $input.order.customer,
+    childCount: count($input.order.*)
+  }
+
+expected:
+  format: json
+  data: {
+    "id": "A-1",
+    "customer": "Acme",
+    "childCount": 2
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B64-processing-instruction-inside-an-element-crashes-the-parser.md"]
+  notes:
+    - "B27 taught the parser about processing instructions but wired skipMisc into the prolog and epilog only. Inside element content the dispatch handled <!-- --> and <![CDATA[ and nothing else, so a PI fell through to parseName and threw 'Invalid name start: ?'."
+    - "Three positions, because they reach different points in the content loop: straight after the open tag, between two children, and immediately before the close tag."
+    - "childCount is the assertion that matters. A PI must be SKIPPED, not parsed as a child — were it treated as an element the count would be 5, not 2, and every other assertion here would still pass."
+    - "The prolog and epilog PIs are the B27 regression guard: that fix must keep working."
