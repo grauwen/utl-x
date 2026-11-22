@@ -93,6 +93,48 @@ object ExactNumber {
      */
     fun isZeroPadded(text: String): Boolean = ZERO_PADDED.matches(text.trim())
 
+    /** Negative zero, in any plain spelling: `-0`, `-00`, `-0.`, `-0.0`, `-0.00`. */
+    private val NEGATIVE_ZERO = Regex("-0+(\\.0*)?")
+
+    /** Exponent notation: a plain mantissa, then `e`/`E`, then an integer exponent. */
+    private val EXPONENT_FORM = Regex("[+-]?(\\d+(\\.\\d*)?|\\.\\d+)[eE][+-]?\\d+")
+
+    /** An explicitly **signed positive** number: the `+` is not recoverable from the value. */
+    private val LEADING_PLUS = Regex("\\+(\\d+(\\.\\d*)?|\\.\\d+)([eE][+-]?\\d+)?")
+
+    /**
+     * F31: would reading [text] as a number **lose its written form**?
+     *
+     * The table above preserves *precision*. Three shapes survive the numeric model with their value
+     * intact and their spelling gone, because no numeric type can hold the distinction:
+     *
+     * | lexeme | reads as | renders as | what is lost |
+     * |---|---|---|---|
+     * | `-0`, `-0.00` | `0L` / `BigDecimal("-0.00")` | `0`, `0.00` | the **sign** — `BigDecimal` has no negative zero and `Long` cannot hold one |
+     * | `1e3`, `1.5e2` | `Double` | `1000`, `150` | the **notation** — `Double` cannot record that an exponent was written |
+     * | `+2`, `+1.5` | `2L` / `BigDecimal` | `2`, `1.5` | the **explicit plus** — no numeric type records that a sign was written |
+     *
+     * Note what is *not* lost and so is absent here: `100.10` keeps its scale ([plainDecimalOrNull]),
+     * and `007` keeps its padding by staying a string ([isZeroPadded]).
+     *
+     * None of the three is a precision defect — `-0 == 0`, `1e3 == 1000` and `+2 == 2` numerically,
+     * so no value changes. It is a **fidelity** question, and it only has a wrong answer where the written form
+     * is itself the information: canonicalisation, a signature over rebuilt output, a content guard
+     * comparing what it emitted against what it received.
+     *
+     * So this predicate is a policy input, not a correctness rule. It is consulted only under
+     * [com.glomidco.utlx.core.format.ParseOptions.preserveNumericLexeme], and only by the readers
+     * that must *guess* whether free text is numeric — XML, CSV and YAML's plain scalars, the
+     * [inferredOrNull] domain. **JSON is deliberately excluded**: its grammar has already decided
+     * the token is a number, and keeping the lexeme there would mean emitting `"1e3"` *with quotes*
+     * — trading a lost notation for a changed type, which is not an improvement. See
+     * `docs/limitations/B65-numeric-and-lexical-fidelity-on-a-round-trip.md`.
+     */
+    fun isLexicallyLossy(text: String): Boolean {
+        val s = text.trim()
+        return NEGATIVE_ZERO.matches(s) || EXPONENT_FORM.matches(s) || LEADING_PLUS.matches(s)
+    }
+
     /**
      * B39: should this free **text** be read as a number at all?
      *

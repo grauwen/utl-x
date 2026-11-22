@@ -38,7 +38,7 @@ class CSVParser(
     // object keys, no DOCTYPE/entities). Accepted for *uniform* profile threading across readers so the
     // engine dispatch has no CSV special-case; intentionally inert. Grammar is governed by `dialect`,
     // resource limits by the always-on bounds (both orthogonal to the leniency profile). See F23.
-    @Suppress("unused") private val options: ParseOptions = ParseOptions.standard()
+    private val options: ParseOptions = ParseOptions.standard()
 ) {
     private var current = 0
     private var line = 1
@@ -211,8 +211,12 @@ class CSVParser(
         // Try number — B35: exact representation (CSV previously routed every numeric value
         // through Double, so it corrupted int64 that JSON preserved). Same accept/reject as before.
         // B39: infer from free text, so a leading-zero identifier stays a string.
-        ExactNumber.inferredOrNull(trimmed)?.let {
-            return UDM.Scalar.number(it)
+        // F31: …and under preserveNumericLexeme so does a shape the numeric model cannot spell
+        // back — negative zero, exponent notation — by falling through to the string return below.
+        if (!(options.preserveNumericLexeme && ExactNumber.isLexicallyLossy(trimmed))) {
+            ExactNumber.inferredOrNull(trimmed)?.let {
+                return UDM.Scalar.number(it)
+            }
         }
         
         // Default to string

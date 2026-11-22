@@ -109,6 +109,11 @@ tightens them uniformly. **Protobuf is the one exception** — see the deferred 
   reused on the output path (architecture doc §6.1). Not built here.
 - **Not** schema validation (`validate.*`), **not** the always-on resource bounds (`bounds.yaml`) — those
   are orthogonal axes that compose with the profile.
+- **Not** lexical fidelity. [F31](F31-lexical-fidelity-for-numeric-values.md) added
+  `ParseOptions.preserveNumericLexeme` as a **third** such axis: no profile sets it, because a
+  content guard wants STRICT *and* maximum fidelity and the ladder must not force a choice between
+  them. One consequence is open — `ParseProfilePolicy.resolve` locks a *profile*, not individual
+  fields, so a deployment cannot pin fidelity the way it pins strictness (F31 §Remaining).
 - **Not** language syntax — never in the `%utlx` header, never data-reachable (§5).
 
 ## Relation to the bugs it closes

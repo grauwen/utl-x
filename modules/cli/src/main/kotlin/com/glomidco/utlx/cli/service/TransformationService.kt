@@ -130,7 +130,10 @@ class TransformationService {
         val parseProfile: ParseProfile = ParseProfile.STANDARD,
         // F21: the engine language mode — the highest %utlx version this run will accept. Default is the
         // latest the build understands (1.1); a 1.0-only ("UTLXe") deployment sets this to "1.0".
-        val maxLanguageVersion: String = com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
+        val maxLanguageVersion: String = com.glomidco.utlx.core.semantic.LanguageVersions.LATEST,
+        // F31: lexical fidelity. A numeric shape the model cannot spell back (negative zero,
+        // exponent notation) stays a string. APPENDED, per the @JvmOverloads note above.
+        val preserveNumericLexeme: Boolean = false
     )
 
     /**
@@ -167,7 +170,7 @@ class TransformationService {
 
         // Step 2: Parse inputs using format from header if not specified
         // F23 Phase 2: resolve the parse profile once; every reader receives it (uniform policy).
-        val parseOpts = ParseOptions.of(options.parseProfile)
+        val parseOpts = ParseOptions.of(options.parseProfile, options.preserveNumericLexeme)
         val inputUDMs = inputs.mapValues { (name, inputData) ->
             // Priority: explicit format > header format > auto-detect
             val format = inputData.format

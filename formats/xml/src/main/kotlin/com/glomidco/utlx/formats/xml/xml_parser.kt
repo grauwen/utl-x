@@ -631,6 +631,11 @@ class XMLParser(
      * Whether text counts as numeric is decided exactly as before.
      */
     private fun tryParseNumber(str: String): UDM.Scalar? {
+        // F31: under preserveNumericLexeme a shape the numeric model cannot spell back — negative
+        // zero, exponent notation — declines to be a number, and the caller's `?:` keeps the text
+        // exactly as written. Returning null rather than a string Scalar is deliberate: the caller
+        // already builds the string, so the original content passes through untouched.
+        if (options.preserveNumericLexeme && ExactNumber.isLexicallyLossy(str)) return null
         // B39: infer from free text, so a leading-zero identifier stays a string.
         return ExactNumber.inferredOrNull(str)?.let { UDM.Scalar.number(it) }
     }

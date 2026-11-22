@@ -91,6 +91,23 @@ data class ParseOptions(
     val allowDoctype: Boolean = true,
     /** false → an undefined entity reference is a well-formedness error; true → keep it as literal text. */
     val allowUndefinedEntities: Boolean = false,
+
+    // ── lexical fidelity (F31) ──
+    /**
+     * true → a numeric lexeme whose **written form** the numeric model cannot hold stays a string,
+     * instead of being read as a number and rendered in normalised form
+     * ([ExactNumber.isLexicallyLossy] names the two shapes: negative zero and exponent notation).
+     *
+     * A **third axis**, deliberately not on the strict/standard/lenient ladder and so not set by any
+     * of the three factories below. Strictness and fidelity are independent: a content guard wants
+     * STRICT *and* maximum fidelity, and folding them together would force a choice between the two
+     * that nothing in the problem requires.
+     *
+     * Off by default — it changes a value's **type** (a number becomes a string), so a transformation
+     * that does arithmetic on one of these shapes must call `toNumber()`, exactly as it already must
+     * for a zero-padded `007` (B39/B40). That cost is why it is opt-in rather than the default.
+     */
+    val preserveNumericLexeme: Boolean = false,
 ) {
     companion object {
         fun strict() = ParseOptions(
@@ -126,11 +143,16 @@ data class ParseOptions(
             allowUndefinedEntities = true,   // keep as literal
         )
 
-        fun of(profile: ParseProfile): ParseOptions = when (profile) {
-            ParseProfile.STRICT -> strict()
-            ParseProfile.STANDARD -> standard()
-            ParseProfile.LENIENT -> lenient()
-        }
+        /**
+         * The options for [profile], with the orthogonal fidelity axis applied on top
+         * ([preserveNumericLexeme] — F31; independent of the ladder, hence a separate argument).
+         */
+        fun of(profile: ParseProfile, preserveNumericLexeme: Boolean = false): ParseOptions =
+            when (profile) {
+                ParseProfile.STRICT -> strict()
+                ParseProfile.STANDARD -> standard()
+                ParseProfile.LENIENT -> lenient()
+            }.copy(preserveNumericLexeme = preserveNumericLexeme)
 
         /** The pragmatic default when no deployment policy is set. */
         val DEFAULT = standard()

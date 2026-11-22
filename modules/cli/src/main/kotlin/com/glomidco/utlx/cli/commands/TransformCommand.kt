@@ -50,7 +50,8 @@ object TransformCommand {
         val identityMode: Boolean = false,  // true = no script, passthrough with smart format flip
         val charset: String? = null,  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
         val parseProfile: String? = null,  // F23: parser strictness profile (strict|standard|lenient); null = standard
-        val languageMode: String? = null  // F21: engine language mode (1.0|1.1|utlxe|utlxs); null = latest (1.1)
+        val languageMode: String? = null,  // F21: engine language mode (1.0|1.1|utlxe|utlxs); null = latest (1.1)
+        val preserveNumericLexeme: Boolean = false  // F31: keep a numeric lexeme the model cannot spell back
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -618,7 +619,8 @@ ${"$"}input"""
                 strictTypes = options.strictTypes,
                 overrideOutputFormat = effectiveOutputFormat,
                 parseProfile = resolvedProfile,
-                maxLanguageVersion = resolvedLanguageMode
+                maxLanguageVersion = resolvedLanguageMode,
+                preserveNumericLexeme = options.preserveNumericLexeme
             )
 
             // F27: -r needs to know whether the result is a scalar or a sequence, which the
@@ -814,6 +816,7 @@ ${"$"}input"""
         var charset: String? = null
         var parseProfile: String? = null
         var languageMode: String? = null
+        var preserveNumericLexeme = false
 
         var i = 0
         while (i < args.size) {
@@ -912,6 +915,9 @@ ${"$"}input"""
                 "--language-mode" -> {
                     languageMode = args[++i]
                 }
+                "--preserve-numeric-lexeme" -> {
+                    preserveNumericLexeme = true
+                }
                 "--strict-types" -> {
                     strictTypes = true
                 }
@@ -995,7 +1001,8 @@ ${"$"}input"""
                 strictTypes = strictTypes,
                 charset = charset,
                 parseProfile = parseProfile,
-                languageMode = languageMode
+                languageMode = languageMode,
+                preserveNumericLexeme = preserveNumericLexeme
             )
         }
 
@@ -1031,7 +1038,8 @@ ${"$"}input"""
                     charset = charset,
                     identityMode = true,
                     parseProfile = parseProfile,
-                    languageMode = languageMode
+                    languageMode = languageMode,
+                    preserveNumericLexeme = preserveNumericLexeme
                 )
             }
             // B26: single output channel — printUsage() for context, Main.kt prints the error once.
@@ -1072,7 +1080,8 @@ ${"$"}input"""
             strictTypes = strictTypes,
             charset = charset,
             parseProfile = parseProfile,
-            languageMode = languageMode
+            languageMode = languageMode,
+            preserveNumericLexeme = preserveNumericLexeme
         )
     }
 
@@ -1152,6 +1161,12 @@ ${"$"}input"""
             |                              standard and strict REJECT malformed input (duplicate keys,
             |                              excessive nesting); lenient ACCEPTS it — last value wins on a
             |                              duplicate — for feeds you do not control.
+            |  --preserve-numeric-lexeme   Keep a numeric value whose written form the numeric model
+            |                              cannot reproduce — negative zero (-0, -0.00) and exponent
+            |                              notation (1e3) — as a STRING, so a round-trip rebuilds it
+            |                              verbatim. Off by default: it changes the value's type, so
+            |                              arithmetic on one needs toNumber(). Applies to XML, CSV and
+            |                              YAML free text, not to JSON (its grammar already typed it).
             |  --language-mode MODE        Engine language mode: 1.0 | 1.1 | utlxe | utlxs (default latest/1.1).
             |                              1.0 (utlxe) rejects %utlx 1.1 scripts (e.g. validate.*)
             |  --capture                   Force enable test capture (overrides config)
