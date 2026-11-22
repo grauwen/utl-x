@@ -11,6 +11,12 @@ model, which this does not alter), and `devdocs/azure/utlxe-deployment-modes.md`
 components are wired today. (`devdocs/` is not merged to `main`, so that is a path rather than a
 link.)
 
+> **Note added 2026-11-21.** The sizing question this report inherited is settled: professional
+> could not deploy at all (engine 4.0 + 0.25 sidecar = 4.25 vCPU, rejected with
+> `ContainerAppInvalidResourceTotal`). Sizes are now chosen as a pair and professional deploys
+> clean. Nothing in EF25 changes as a result — it is recorded here because this report referenced
+> the open question.
+
 ## Why this exists
 
 The Marketplace offer listing currently promises, verbatim:
