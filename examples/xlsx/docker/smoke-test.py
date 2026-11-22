@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify the Linux UTLXe test deployment without contacting My Bottle Collection."""
+"""Verify the Linux UTLXe test deployment with generated inventory records."""
 
 import argparse
 from concurrent.futures import ThreadPoolExecutor

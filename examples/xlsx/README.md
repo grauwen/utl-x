@@ -1,16 +1,15 @@
 # XLSX input and output
 
 For an isolated Linux UTLXe deployment built from GitHub, see the
-[Docker test instructions](docker/README.md). This test setup leaves My Bottle
-Collection and its deployment unchanged.
+[Docker test instructions](docker/README.md).
 
 Run this from the UTL-X checkout after building the CLI:
 
 ```powershell
-.\utlx.bat transform examples/xlsx/bottle-collection-preview.utlx collection.xlsx -o preview.json
+.\utlx.bat transform examples/xlsx/inventory-preview.utlx collection.xlsx -o preview.json
 ```
 
-The example selects the `Collection` worksheet from a My Bottle Collection export.
+The example selects the `Collection` worksheet from an inventory workbook.
 For an inventory from another workbook, change `sheet` to that workbook's inventory
 sheet. When omitted, `sheet` defaults to the first visible sheet.
 
@@ -20,7 +19,7 @@ types, and date-formatted cells use ISO strings. Formulas use saved results. Set
 `rowNumbers: true` to add the original one-based Excel row number as `_rowNumber`.
 
 The JSON is suitable for reviewing and mapping inventory rows before import.
-Quantity expansion, duplicate checks and saving bottles belong to the app's import
+Quantity expansion, duplicate checks and saving records belong to the importing application's
 workflow. A workbook may contain other sheets and embedded photos. This example
 reads only the selected sheet's cells.
 

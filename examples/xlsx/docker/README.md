@@ -1,8 +1,7 @@
 # Isolated Linux engine test deployment
 
 This setup builds UTLXe from the checked-out GitHub revision. It uses Java 17 on
-Linux; it does not build a GraalVM native engine. It does not mount or contact
-My Bottle Collection, its database, or its existing containers.
+Linux; it does not build a GraalVM native engine.
 
 The engine container has a 2 GiB memory limit, no swap allowance and a 1,408 MiB
 Java heap. The gateway has a separate 64 MiB limit. A server-wide NGINX counter
@@ -88,14 +87,14 @@ HTTP 429 under a sustained three-client load before relying on admission limits.
 The test containers are ephemeral: restart the HTTP smoke test after restarting
 the engine to load its transformations again.
 
-## Stop without affecting the website
+## Stop the test deployment
 
 ```sh
 docker compose -f examples/xlsx/docker/compose.yaml down
 ```
 
 This stops only the `utlx-xlsx-test` Compose project and retains its scratch
-volume. There are no changes to My Bottle Collection or its deployment files.
+volume.
 
 ## Recover an internal-only gateway deployment
 
