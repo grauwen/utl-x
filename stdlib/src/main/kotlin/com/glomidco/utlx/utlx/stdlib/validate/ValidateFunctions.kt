@@ -98,9 +98,10 @@ object ValidateFunctions {
      * nested it under `payload`, where a top-level `valid: true` could then hide a real failure and
      * the engine would forward the payload. Fail-open, from the most natural-looking composition.
      *
-     * Validators do not compose by piping. Each takes the message; results are combined by hand
-     * (counts with `+`, issues with `flatten([...])`) until a `validate.all(results)` combinator
-     * lands. See `examples/utlx/advanced/validation-guard-named-validators.utlx`.
+     * Validators do not compose by piping. Each takes the message, and results are merged with
+     * [all] — `$msg |> validate.all([ … ])` — which recomputes the counts over the merged issues so
+     * they cannot disagree with them. See
+     * `examples/utlx/advanced/validation-guard-named-validators.utlx`.
      *
      * **Public on purpose: this is the single definition of the verdict shape.** It sits beside
      * [validationResult], the function that produces that shape, so the producer and every
@@ -146,6 +147,8 @@ object ValidateFunctions {
             "required" -> (spec as? UDM.Array)?.let { required(listOf(payload, it)) }
             "mutuallyExclusive" -> (spec as? UDM.Array)?.let { mutuallyExclusive(listOf(payload, it)) }
             "atLeastOne" -> (spec as? UDM.Array)?.let { atLeastOne(listOf(payload, it)) }
+            "onlyFields" -> (spec as? UDM.Array)?.let { onlyFields(listOf(payload, it)) }
+            "absent" -> (spec as? UDM.Array)?.let { absent(listOf(payload, it)) }
             // object-shaped kinds: named arguments, so a rule reads as a sentence
             "inRange" -> {
                 val f = obj("field"); val lo = obj("min"); val hi = obj("max")
@@ -173,7 +176,7 @@ object ValidateFunctions {
 
     /** The argument shape each object-shaped kind expects, for the malformed-rule message. */
     private fun kindShape(kind: String): String = when (kind) {
-        "required", "mutuallyExclusive", "atLeastOne" -> "an array of field names"
+        "required", "mutuallyExclusive", "atLeastOne", "onlyFields", "absent" -> "an array of field names"
         "inRange" -> "{ field, min, max }"
         "oneOf" -> "{ field, values }"
         "matches" -> "{ field, pattern }"
@@ -608,5 +611,78 @@ object ValidateFunctions {
         val issues = if (fields.any { isSet(props(payload)[it]) }) emptyList()
             else listOf(ValidationIssue(null, "At least one of $fields must be set"))
         return validationResult(payload, issues, totalChecks = 1)
+    }
+
+    // ────────────────────────────────────────────────────────────────────────────────────────────
+    // F32 — the guard rule library's FIELD ALLOW-LIST (category 3 of the seven).
+    //
+    // Promoted out of the guard rule library into the core set: the *mechanism* (compare a key set
+    // against a list) is generic and belongs with the other validators; the *policy* (which fields,
+    // which contracts, which classifications) stays guard-owned. Same split `oneOf` already has.
+    //
+    // Why these two and not `noAdditionalProperties`: that one's reference set IS the approved
+    // contract — the rule library writes it as a bare `validate.noAdditionalProperties($msg)`
+    // directly after `validate.conformsTo($msg, "contracts/approved/…")`. With no contract
+    // resolution there is nothing to compare against, so it waits for `conformsTo` rather than
+    // being given an invented signature.
+    // ────────────────────────────────────────────────────────────────────────────────────────────
+
+    @UTLXFunction(
+        description = "Assert that ONLY the named fields are present on this node — the field " +
+            "allow-list. Each unexpected field is one issue, named in `field`.",
+        minArgs = 2, maxArgs = 2, category = "Validation",
+        parameters = ["payload (piped in)", "fields: string[] of permitted field names"],
+        returns = "ValidationResult",
+        example = "\$current |> validate.onlyFields([\"orderId\", \"qty\", \"ccy\"])",
+        since = "1.1",
+    )
+    fun onlyFields(args: List<UDM>): UDM {
+        val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "onlyFields", chainedPayloadReason())
+        arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "onlyFields", it) }
+        val fields = arrayArg(args, 1)?.let { fieldNames(it) }
+            ?: return malformedRule(payload, "onlyFields", "fields must be an array of field-name strings")
+        // VB04 applied to an allow-list, and the most important place to apply it: `props()` is
+        // empty for a scalar or an array, so without this guard a rule pointed at the wrong node
+        // would run ZERO checks and report valid — silently disabling the one rule that keeps an
+        // unexpected field from crossing.
+        if (payload !is UDM.Object) return malformedRule(payload, "onlyFields",
+            "payload is not an object, so its field set cannot be checked")
+        val permitted = fields.toSet()
+        val present = payload.properties.keys
+        val issues = present.filterNot { it in permitted }
+            .map { ValidationIssue(it, "Field '$it' is not permitted; allowed: $fields") }
+        // One check per field actually PRESENT: the question asked of the message is "is this key
+        // allowed?", once per key. An empty object asks nothing, so it passes with zero checks —
+        // nothing crossed, which is the correct verdict for an allow-list.
+        return validationResult(payload, issues, totalChecks = present.size)
+    }
+
+    @UTLXFunction(
+        description = "Assert that none of the named fields is set — the negative field allow-list.",
+        minArgs = 2, maxArgs = 2, category = "Validation",
+        parameters = ["payload (piped in)", "fields: string[] of field names that must not be set"],
+        returns = "ValidationResult",
+        example = "\$current |> validate.absent([\"trace\", \"internalRoutingTag\"])",
+        since = "1.1",
+    )
+    fun absent(args: List<UDM>): UDM {
+        val payload = payloadOf(args)
+        // VB06: a chained validator would inspect the previous result, not the message.
+        if (looksLikeValidationResult(payload)) return malformedRule(payload, "absent", chainedPayloadReason())
+        arityReason(args, 2, "payload, fields[]")?.let { return malformedRule(payload, "absent", it) }
+        val fields = arrayArg(args, 1)?.let { fieldNames(it) }
+            ?: return malformedRule(payload, "absent", "fields must be an array of field-name strings")
+        // `isSet` is the exact mirror of [required]: a present-but-null field counts as NOT set, so
+        // `{"trace": null}` passes `absent(["trace"])` just as it fails `required(["trace"])`. One
+        // notion of presence across the namespace matters more than either reading on its own.
+        //
+        // When the policy is "this key must not appear AT ALL, whatever its value", that is a
+        // key-set question, not a value question — use [onlyFields], which never looks at values.
+        val p = props(payload)
+        val issues = fields.filter { isSet(p[it]) }
+            .map { ValidationIssue(it, "Field '$it' must not be present") }
+        return validationResult(payload, issues, totalChecks = fields.size)
     }
 }

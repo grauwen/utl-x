@@ -5,11 +5,18 @@
 // The named validators are null/type-aware, so they degrade gracefully on missing or mistyped
 // data rather than merely avoiding a crash. Prefer them wherever one expresses your constraint.
 //
-// The catch: there is no Tier-1 combinator yet (`validate.all(results)` is a planned guard-profile
-// addition), and validators must NOT be chained with |> — each call takes the MESSAGE, never the
-// previous result. So a multi-rule guard binds one result per rule and merges them by hand:
+// The catch: validators must NOT be chained with |> — each call takes the MESSAGE, never the
+// previous result. So a multi-rule guard binds one result per rule and merges them.
+//
+// This file keeps the BY-HAND merge deliberately, because it shows what the counts mean:
 //   - counts  with +
 //   - issues  with flatten([...])   (+ does not concatenate arrays)
+//
+// `validate.all([...])` now does exactly this and recomputes the counts over the merged issues.
+// But note what it cannot restore: a bare named validator has no rule id, so every merged issue
+// comes back with `rule: null` (conformance all_combinator.yaml). Where attribution matters — an
+// audit record, a failed-rule table — use `validate.assert` with declarative rule kinds instead;
+// see validation-guard-allow-list.utlx.
 //
 // Run:
 //   utlx transform validation-guard-named-validators.utlx --input validation-guard-passthrough.input.json

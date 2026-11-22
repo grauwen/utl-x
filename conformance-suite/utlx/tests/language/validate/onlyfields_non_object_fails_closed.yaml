@@ -1,0 +1,37 @@
+name: "validate_onlyfields_non_object_fails_closed"
+category: "language/validate"
+description: "F32/VB04: an allow-list aimed at a node that is not an object must report a malformed rule — never run zero checks and pass"
+tags: ["validate", "1.1", "allow-list", "fail-closed", "F32", "VB04"]
+
+input:
+  format: json
+  data: |
+    {"orderId":"A1","qty":5,"ccy":"EUR","trace":"internal-7","isAdmin":true}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input.orderId |> validate.onlyFields(["orderId"])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 0,
+    "failed": 1,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": null, "field": null, "message": "validate.onlyFields: malformed rule — payload is not an object, so its field set cannot be checked", "severity": "error"}
+    ],
+    "payload": "A1"
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F32-field-allow-list-validators.md", "docs/bugs-fixed/VB04-named-validators-fail-open-on-malformed-arguments.md"]
+  notes:
+    - "VB04's failure mode in the place it costs most. A scalar or array payload yields an empty property map, so without the guard this rule would run zero checks and report valid:true — silently disabling the one rule that keeps an unexpected field from crossing. On a fail-closed guard (maxErrors = 0) valid:true FORWARDS the payload."
+    - "Distinguish from the legitimate empty-object case: onlyFields on {} also runs zero checks, but it passes, because nothing crossed. The difference is that an object genuinely has no disallowed keys, while a scalar has no key set to check at all."

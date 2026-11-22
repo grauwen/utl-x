@@ -103,7 +103,32 @@ anti-bomb posture and have no equivalent in the base spec, so they keep their ow
 ## 6. Open questions
 
 - Should the guard rule library eventually be promoted into the base spec as an optional module, or
-  stay guard-owned in `guard-rule-library.md`? (Kept guard-owned for now.)
+  stay guard-owned in `guard-rule-library.md`? **Partly settled, 2026-11-22**: the field allow-list
+  — `onlyFields` and `absent` — was promoted into the core set and ships in `utl-x`
+  (`docs/features/F32-field-allow-list-validators.md`). The reasoning, for the rest of the library:
+
+  - What moves is the **mechanism** (compare a key set against a list). What stays guard-owned is
+    the **policy** — which fields, which contracts, which classifications. Same split
+    `validate.oneOf` already has: a public mechanism over private value lists, so this sets no new
+    precedent.
+  - `conformsTo` and `noAdditionalProperties` stay on merit, not secrecy: their reference set *is*
+    the approved contract, so they need USDL contract resolution and Message Contract mode as a
+    gate. `noAdditionalProperties` in particular has no field list of its own — it is written as a
+    bare call after `conformsTo` — so it cannot be implemented ahead of it without inventing a
+    signature.
+  - The structural caps overlap what the parse profile already enforces during read (depth is
+    bounded at 64 under `strict`), so as UDM rules they are defence in depth rather than the only
+    line.
+  - Releasability and dirty-word need private policy data (classification lists, keyword packs) and
+    `^` metadata semantics that are not settled.
+
+- **`validate.all` does not carry rule ids.** It preserves an id when the results it merges have
+  one, but a bare named validator has none, so `validate.all([$msg |> validate.required([…]), …])`
+  returns `rule: null` on every issue (conformance `all_combinator.yaml`). The §9 composing example
+  in `guard-rule-library.md` is written in exactly that shape, so as written it produces a correct
+  verdict with **no attribution** — nothing to map onto a failed-rule bitmask. A policy whose ids
+  matter must use `validate.assert` with declarative rule kinds; `validate.all` is for merging
+  results that already carry ids, one `assert` per node. Worth correcting in §9.
 - A schema-ref variant of `validate.oneOf` (list sourced from a contract enum rather than inline) —
   tracked in `utlx-1_1-semantic-validation.md` §11.
 - Conformance: one behaviour suite that both the engine (core set) and the guard edition (core set

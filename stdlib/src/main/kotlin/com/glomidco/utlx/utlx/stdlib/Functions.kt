@@ -204,6 +204,9 @@ object StandardLibrary {
         register("validate.assert", ValidateFunctions::assert)
         register("validate.all", ValidateFunctions::all)
         register("validate.required", ValidateFunctions::required)
+        // F32: the guard rule library's field allow-list, promoted into the core set.
+        register("validate.onlyFields", ValidateFunctions::onlyFields)
+        register("validate.absent", ValidateFunctions::absent)
         register("validate.inRange", ValidateFunctions::inRange)
         register("validate.oneOf", ValidateFunctions::oneOf)
         register("validate.matches", ValidateFunctions::matches)
