@@ -1,0 +1,45 @@
+name: "validate_value_rules_on_xml_input"
+category: "language/validate"
+description: "VB08: the value rule kinds (inRange, oneOf, matches) must read a field THROUGH the XML text-node wrapper — one rule set, any format, is the premise of the namespace"
+tags: ["validate", "1.1", "assert", "rule-kinds", "xml", "VB08"]
+
+input:
+  format: xml
+  data: |
+    <order><orderId>A-1</orderId><qty>500</qty><ccy>XXX</ccy><when>not-a-date</when></order>
+
+transformation: |
+  %utlx 1.1
+  input xml
+  output json
+  ---
+  $input.order |> validate.assert([
+    { rule: "qty-in-range", inRange: { field: "qty", min: 1, max: 100 } },
+    { rule: "ccy-allowed",  oneOf: { field: "ccy", values: ["EUR", "USD"] } },
+    { rule: "id-pattern",   matches: { field: "orderId", pattern: "^[A-Z]-[0-9]+$" } }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 1,
+    "failed": 2,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "qty-in-range", "field": "qty", "message": "Field 'qty' (500.0) is above maximum 100.0", "severity": "error"},
+      {"rule": "ccy-allowed",  "field": "ccy", "message": "Field 'ccy' value 'XXX' is not one of [EUR, USD]", "severity": "error"}
+    ],
+    "payload": {"orderId": "A-1", "qty": 500, "ccy": "XXX", "when": "not-a-date"}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/VB08-value-rule-kinds-cannot-read-an-xml-field.md"]
+  notes:
+    - "An XML leaf is UDM.Object({_text: Scalar(500)}), not Scalar(500) — xml_parser wraps every text-only element. Member access unwraps it, so $input.order.qty is a number to the interpreter, but the validators read properties[\"qty\"] directly and saw the wrapper."
+    - "Before the fix every one of these reported a TYPE failure rather than a value failure: inRange said \"Field 'qty' is not a number\" for <qty>500</qty>. The verdict happened to be invalid either way, which is why this hid — the MESSAGE was wrong, and a correct message is the whole value of a rule id."
+    - "The load-bearing assertions are the two messages: '(500.0) is above maximum 100.0' and \"value 'XXX' is not one of\". Both prove the value was READ, not merely rejected. Asserting only valid:false would pass against the bug."
+    - "id-pattern PASSES (passed:1) — the third proof that reading works, since a matches rule that could not read the field would fail, not pass."
+    - "Key-based rules (required, onlyFields, absent) were never affected: they ask about keys, not values. That asymmetry is why the gap survived until a value rule met an XML message."

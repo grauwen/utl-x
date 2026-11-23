@@ -26,9 +26,29 @@ object ValidateFunctions {
     // ── argument helpers ──
     private fun payloadOf(args: List<UDM>): UDM = args.firstOrNull() ?: UDM.Scalar.nullValue()
     private fun props(payload: UDM): Map<String, UDM> = (payload as? UDM.Object)?.properties ?: emptyMap()
-    private fun asString(udm: UDM?): String? = (udm as? UDM.Scalar)?.value?.toString()
-    private fun asNumber(udm: UDM?): Double? = ((udm as? UDM.Scalar)?.value as? Number)?.toDouble()
-    private fun scalarValue(udm: UDM?): Any? = (udm as? UDM.Scalar)?.value
+    /**
+     * VB08: read a field's scalar value **through** the XML text-node wrapper.
+     *
+     * An XML leaf is `UDM.Object(mapOf("_text" to Scalar(5)))`, not `Scalar(5)` — `xml_parser`
+     * wraps every text-only element "for consistent structure". Member access unwraps it, so
+     * `$input.order.qty` is a number to the interpreter and `isNumber` agrees; these helpers read
+     * `properties["qty"]` directly and saw the wrapper, so **every value-reading rule kind
+     * silently failed on XML input**: `inRange` reported "not a number" for `<qty>5</qty>`, and
+     * `oneOf`, `matches` and `isoDate` the equivalent.
+     *
+     * That broke the claim the whole namespace exists for — one rule set over the UDM, applied to
+     * any format, "because the rules run on UDM, not on the wire format". The rules ran on UDM;
+     * they just read one shape of it. Key-based rules (`required`, `onlyFields`, `absent`) were
+     * unaffected, which is why the gap was invisible until a value rule met an XML message.
+     *
+     * `UDM.unwrapXmlTextNode()` is `:core`'s existing definition of that unwrapping — the same one
+     * member access uses — so the validators now share it rather than keeping a second opinion.
+     */
+    private fun unwrapped(udm: UDM?): UDM? = udm?.unwrapXmlTextNode()
+
+    private fun asString(udm: UDM?): String? = (unwrapped(udm) as? UDM.Scalar)?.value?.toString()
+    private fun asNumber(udm: UDM?): Double? = ((unwrapped(udm) as? UDM.Scalar)?.value as? Number)?.toDouble()
+    private fun scalarValue(udm: UDM?): Any? = (unwrapped(udm) as? UDM.Scalar)?.value
     private fun isSet(udm: UDM?): Boolean = udm != null && !(udm is UDM.Scalar && udm.value == null)
 
     /**

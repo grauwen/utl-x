@@ -182,11 +182,18 @@ python3 runners/cli-runner/simple-runner.py --utlx-cli <cli> --max-language-vers
 
 - The `--max-language-version X.Y` filter skips (and reports) any test whose declared `%utlx` exceeds
   `X.Y`. A test with no header defaults to `1.0`.
-- **1.0-conformance = 527 tests; full/1.1 = 530.** The 3 skipped tests are the `validate.*` feature tests
-  under `tests/language/validate/` (`%utlx 1.1`).
-- Note the one subtlety: `validate_version_gate` is itself a **`%utlx 1.0`** script asserting that a 1.0
-  program *rejects* `validate.*` — so it correctly **runs in the 1.0 set** (it is a 1.0 guarantee about a
-  1.1 feature). This cross-version test is exactly why the suites are not physically split.
+- **1.0-conformance = 565 tests; full/1.1 = 587** (measured 2026-11-23). The 22 skipped tests are the
+  `validate.*` feature tests under `tests/language/validate/` (`%utlx 1.1`) — 21 fixture files, one of
+  which carries two cases.
+- Note the one subtlety: the three `version_gate*` fixtures are themselves **`%utlx 1.0`** scripts
+  asserting that a 1.0 program *rejects* `validate.*` — so they correctly **run in the 1.0 set** (a 1.0
+  guarantee about a 1.1 feature). These cross-version tests are exactly why the suites are not
+  physically split: either side of a split would be the wrong home for them.
+
+**Nothing runs the filter.** No workflow under `.github/workflows/` runs this suite at all — not the
+full corpus and not `--max-language-version 1.0` — so the 1.0-only (UTLXe) posture is documented as
+supported and verified only when someone remembers to type it locally. The filter is the right
+mechanism; it is not yet a gate.
 
 ---
 
