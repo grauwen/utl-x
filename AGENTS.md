@@ -49,13 +49,16 @@ relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 
 `--show-failures` does **not** run anything — it replays the previous run's results.
 
-**CI runs this, as of 2026-11-23** — `.github/workflows/jvm-and-conformance.yml`, on push and PR
-touching `modules/`, `formats/`, `stdlib/`, `schema/` or `conformance-suite/`. It runs the four
-module test suites *and* the corpus at **both** language levels (full, and
-`--max-language-version 1.0` for the 1.0-only "UTLXe" posture). Before that nothing gated the
-Kotlin side at all: `cli-ci.yml` and `native-build.yml` are `workflow_dispatch` only, so
-`wrappers/dotnet` and `wrappers/go` ran on every push while the language did not. Don't take a
-green CI as covering the native image — `nativeCompile` is still manual.
+**There is a workflow for this, and it is MANUAL** —
+`.github/workflows/jvm-and-conformance.yml`, `workflow_dispatch` with a `scope` input
+(`all` | `jvm` | `conformance`). It runs the four module test suites and the corpus at **both**
+language levels (full, and `--max-language-version 1.0` for the 1.0-only "UTLXe" posture, which
+nothing else runs). Manual on purpose — the corpus takes ~10 minutes.
+
+**So no push gates the Kotlin side.** `cli-ci.yml` and `native-build.yml` are `workflow_dispatch`
+too, which means `wrappers/dotnet` and `wrappers/go` run on every push while `modules/`,
+`formats/` and `stdlib/` do not. **An agent must therefore run the tests itself** — a green
+GitHub Actions page says nothing about a change under `modules/`.
 
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
