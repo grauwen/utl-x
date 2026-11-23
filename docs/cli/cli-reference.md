@@ -276,6 +276,44 @@ level, and nesting beyond 256 is refused by `standard` and `lenient` alike.
 Note the asymmetry worth knowing: depth is a **resource bound**, not a grammar rule, so `lenient`
 does not relax it beyond `standard`. Only `strict` is tighter.
 
+### Presentation (`--format`)
+
+| Flag | Description | Default |
+|------|-------------|---------|
+| `--format PRESENTATION` | How to **show** the output. Currently: `table` | the serialized data |
+
+Two different questions, two different flags:
+
+```
+--from / --input-format     what is being READ      json, xml, csv, yaml …
+--to   / --output-format    what the data IS        parseable, round-trippable
+--format                    how it is SHOWN         for a human, read once
+```
+
+```bash
+$ utlx transform report.utlx order.json --format table
+rule         | field     | severity
+-----------------------------------
+qty-in-range | qty       | error
+ccy-allowed  | ccy       | error
+```
+
+Works with a script, with `-e`, and in identity mode (`cat data.json | utlx --format table`). It renders
+the data directly, so `--to` is not used alongside it — pass both and `utlx` says so rather than
+quietly picking one.
+
+`--to table` is **not** a thing, and the error says why:
+
+```
+$ utlx transform report.utlx order.json --to table
+Error: 'table' is a presentation, not a data format — use --format table (or --format table).
+        --to selects what the data IS (json, xml, csv, …).
+```
+
+Same flag `lint`, `validate` and `functions` use for presentation. **Selecting** which fields to
+show is the language's job, not this flag's — `v.issues |> map(i => i.message)` with `-r` prints one
+message per line and needs no `grep`.
+
 ### Lexical fidelity (`--preserve-numeric-lexeme`)
 
 | Flag | Description | Default |
