@@ -1,0 +1,116 @@
+# .github/workflows/jvm-and-conformance.yml
+#
+# The gate the Kotlin side did not have. Before this, `wrappers/dotnet` and `wrappers/go` ran on
+# every push while `modules/`, `formats/` and `stdlib/` ran only when someone remembered —
+# `cli-ci.yml` and `native-build.yml` are both `workflow_dispatch` only. The client libraries were
+# gated and the language was not.
+#
+# Two things run here, and the second is the one that is easy to leave out:
+#
+#   1. the JVM module tests — and `:modules:engine:test` in particular, because it carries
+#      ConformanceStrategyParityTest. The conformance suite below shells out to the CLI and so
+#      exercises the INTERPRETED path only; five bugs (B34, B35, EB03, B48, B63) came from a fix
+#      that passed it while COPY or COMPILED silently diverged. A green conformance run says
+#      nothing about two of the three strategies.
+#
+#   2. the conformance corpus at BOTH language levels. `--max-language-version 1.0` is the
+#      1.0-only ("UTLXe") posture, and it is the only thing that catches a `%utlx 1.1` construct
+#      leaking into a fixture that is supposed to run on a 1.0 engine. The filter existed and was
+#      documented for months; nothing ran it.
+#
+# The two conformance levels are a matrix so they run in parallel — the corpus takes ~10 minutes,
+# and running the levels in sequence would double the wall clock for no benefit.
+
+name: JVM and Conformance
+
+on:
+  push:
+    paths:
+      - 'modules/**'
+      - 'formats/**'
+      - 'stdlib/**'
+      - 'schema/**'
+      - 'conformance-suite/**'
+      - '*.gradle.kts'
+      - 'gradle/**'
+      - '.github/workflows/jvm-and-conformance.yml'
+  pull_request:
+    paths:
+      - 'modules/**'
+      - 'formats/**'
+      - 'stdlib/**'
+      - 'schema/**'
+      - 'conformance-suite/**'
+      - '*.gradle.kts'
+      - 'gradle/**'
+  workflow_dispatch:
+
+jobs:
+  jvm-tests:
+    name: JVM module tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - run: chmod +x gradlew
+
+      # :modules:engine:test last and never omitted — semantics live in both the interpreter and
+      # the ASTCompiler, so a core change is unverified until the compiled path runs.
+      - name: Run module tests
+        run: ./gradlew :modules:core:test :stdlib:test :modules:cli:test :modules:engine:test
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: jvm-test-reports
+          path: |
+            modules/*/build/reports/tests/test/
+            stdlib/build/reports/tests/test/
+
+  conformance:
+    name: Conformance (${{ matrix.level }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - level: 'full / 1.1'
+            args: ''
+          - level: '1.0 only (UTLXe posture)'
+            args: '--max-language-version 1.0'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'gradle'
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
+
+      - name: Install runner dependencies
+        run: pip install pyyaml
+
+      - run: chmod +x gradlew
+
+      # The runner defaults to the repo-root ./utlx wrapper, which runs
+      # modules/cli/build/libs/cli-<version>.jar — so a code change is invisible to it until this
+      # jar is rebuilt. That has caught people out locally; in CI it must simply always run.
+      - name: Build the CLI jar the wrapper runs
+        run: ./gradlew :modules:cli:jar
+
+      # Must run from conformance-suite/: the runner resolves fixtures by relative path.
+      - name: Run the conformance corpus
+        run: |
+          cd conformance-suite
+          python3 utlx/runners/cli-runner/simple-runner.py ${{ matrix.args }}

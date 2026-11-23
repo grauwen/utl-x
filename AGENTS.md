@@ -49,6 +49,14 @@ relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 
 `--show-failures` does **not** run anything — it replays the previous run's results.
 
+**CI runs this, as of 2026-11-23** — `.github/workflows/jvm-and-conformance.yml`, on push and PR
+touching `modules/`, `formats/`, `stdlib/`, `schema/` or `conformance-suite/`. It runs the four
+module test suites *and* the corpus at **both** language levels (full, and
+`--max-language-version 1.0` for the 1.0-only "UTLXe" posture). Before that nothing gated the
+Kotlin side at all: `cli-ci.yml` and `native-build.yml` are `workflow_dispatch` only, so
+`wrappers/dotnet` and `wrappers/go` ran on every push while the language did not. Don't take a
+green CI as covering the native image — `nativeCompile` is still manual.
+
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
 execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
