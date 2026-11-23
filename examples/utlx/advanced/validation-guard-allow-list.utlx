@@ -1,0 +1,53 @@
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+// Validation guard — the FIELD ALLOW-LIST, and why the rule id is the point (F32).
+//
+// `onlyFields` and `absent` are declarative rule kinds, so an unexpected field becomes a NAMED
+// rule failure. The same rejection written as a host expression —
+//     count(difference(keys($input), allowed)) == 0
+// — produces the right verdict and an EMPTY issues[], so there is nothing to attribute, nothing
+// to put in an audit record, and nothing to prove a hardware failed-rule bitmask against.
+//
+// Note what carries the id: `validate.assert` rules do, bare named validators do not. Composing
+// `validate.all([$input |> validate.required([...]), ...])` over bare validators gives
+// `rule: null` on every issue (see conformance all_combinator.yaml) — correct verdict, no
+// attribution. `validate.all` PRESERVES ids when the results it merges already have them, which
+// is what makes the per-node pattern at the bottom work.
+//
+// Run:
+//   utlx transform validation-guard-allow-list.utlx --input validation-guard-allow-list.input.json
+//   utlx transform validation-guard-allow-list.utlx --input validation-guard-allow-list.reject.json
+// ─────────────────────────────────────────────────────────────────────────────────────────────
+%utlx 1.1
+input json
+output json
+---
+// One assert over one node: every rule applies to the same payload and carries its own id.
+let v = $input |> validate.assert([
+
+  // The message must be an expected shape…
+  { rule: "order-fields-present", required: ["orderId", "qty", "ccy"] },
+
+  // …and ONLY that shape. The default for an unknown field is reject: this is the allow-list,
+  // and the single rule that stops a smuggled `isAdmin` from crossing. One issue per offending
+  // field, each naming the field, so a failed-rule table can list them.
+  { rule: "no-unknown-fields",    onlyFields: ["orderId", "qty", "ccy", "trace"] },
+
+  // `absent` is the negative form: a field that may appear in the contract but must not cross.
+  // It is a VALUE question and treats present-but-null as not set, mirroring `required`. When the
+  // policy is "this key must not appear at all, whatever its value", leave it off `onlyFields`
+  // instead — that never looks at values.
+  { rule: "no-internal-tags",     absent: ["trace", "internalRoutingTag"] },
+
+  { rule: "qty-in-range",         inRange: { field: "qty", min: 1, max: 100 } },
+  { rule: "ccy-allowed",          oneOf: { field: "ccy", values: ["EUR", "USD"] } }
+])
+
+in if (v.valid)
+     // A guard rebuilds from approved data rather than passing the original through: the output
+     // names the permitted fields, so anything else is gone by construction.
+     { orderId: $input.orderId, qty: $input.qty, ccy: $input.ccy }
+   else
+     { verdict: "REJECT",
+       failed: v.failed,
+       // Every issue carries `rule` — the author's id, stable, one per bit of a failed-rule table.
+       issues: v.issues }

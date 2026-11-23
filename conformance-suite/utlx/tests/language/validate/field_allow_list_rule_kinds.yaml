@@ -1,0 +1,45 @@
+name: "validate_field_allow_list_rule_kinds"
+category: "language/validate"
+description: "F32: onlyFields and absent are declarative rule kinds, so an unexpected field is a NAMED rule failure carrying the author's rule id — not a bare boolean"
+tags: ["validate", "1.1", "assert", "rule-kinds", "allow-list", "F32"]
+
+input:
+  format: json
+  data: |
+    {"orderId":"A1","qty":5,"ccy":"EUR","trace":"internal-7","isAdmin":true}
+
+transformation: |
+  %utlx 1.1
+  input json
+  output json
+  ---
+  $input |> validate.assert([
+    { rule: "no-unknown-fields", onlyFields: ["orderId", "qty", "ccy"] },
+    { rule: "no-internal-tags",  absent: ["trace", "debugFlag"] }
+  ])
+
+expected:
+  format: json
+  data: {
+    "valid": false,
+    "passed": 4,
+    "failed": 3,
+    "warnings": 0,
+    "notices": 0,
+    "issues": [
+      {"rule": "no-unknown-fields", "field": "trace",   "message": "Field 'trace' is not permitted; allowed: [orderId, qty, ccy]", "severity": "error"},
+      {"rule": "no-unknown-fields", "field": "isAdmin", "message": "Field 'isAdmin' is not permitted; allowed: [orderId, qty, ccy]", "severity": "error"},
+      {"rule": "no-internal-tags",  "field": "trace",   "message": "Field 'trace' must not be present", "severity": "error"}
+    ],
+    "payload": {"orderId": "A1", "qty": 5, "ccy": "EUR", "trace": "internal-7", "isAdmin": true}
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/features/F32-field-allow-list-validators.md"]
+  notes:
+    - "The load-bearing assertion is `rule` on every issue. The same rejection written as a host expression — count(difference(keys($input), allowed)) == 0 — gives the right verdict and an EMPTY issues[], so there is no rule id to prove a hardware failed-rule bitmask against."
+    - "onlyFields reports ONE ISSUE PER unexpected field (trace, isAdmin), so a failed-rule table can name each. Its check count is the number of keys PRESENT (5), not the length of the allow-list."
+    - "passed:4 = 7 checks - 3 issues. onlyFields contributes 5 (keys present), absent contributes 2 (fields named) — a declarative kind contributes the validator's own check count, as in assert_declarative_rule_kinds.yaml."
+    - "trace fails BOTH rules and appears twice, under different rule ids. assert does not short-circuit, so every applicable rule reports independently (hardware evaluates them in parallel)."
+    - "onlyFields is a key-set question and never looks at values; absent is a value question and treats present-but-null as not set, mirroring required. debugFlag is absent and passes."

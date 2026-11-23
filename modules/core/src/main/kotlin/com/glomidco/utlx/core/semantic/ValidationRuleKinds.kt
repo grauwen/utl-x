@@ -19,6 +19,8 @@ object ValidationRuleKinds {
     val DECLARATIVE: List<String> = listOf(
         "required", "inRange", "oneOf", "matches", "isoDate", "unique",
         "mutuallyExclusive", "atLeastOne",
+        // F32: the field allow-list, promoted from the guard rule library.
+        "onlyFields", "absent",
     )
 
     /** The lambda escape hatch (VB01), plus every declarative kind. */
