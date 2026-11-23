@@ -46,17 +46,44 @@ pick_utlx() {
   printf 'utlx'
 }
 UTLX="$(pick_utlx)"
+UTLX_STALE=""
+
+# A stale NATIVE build is the trap this guards. `nativeCompile` takes ~3 minutes and does not
+# track source changes, so the binary silently lags behind the jar — and a demo then fails on a
+# flag or function that exists in the source. (It has happened twice: once missing a validator,
+# once missing a flag, each time reporting something plausible instead of "out of date".) The jar
+# wrapper has no such problem: it picks the newest cli-*.jar every run.
+case "$UTLX" in
+  */nativeCompile/utlx)
+    for r in "${UTLX_REPOS[@]}"; do
+      [ -n "$r" ] || continue
+      newest_jar="$(ls -t "$r"/modules/cli/build/libs/cli-*.jar 2>/dev/null | head -n 1)"
+      # Collected, not printed: `clear` below would wipe it. Shown with the binary line.
+      [ -n "$newest_jar" ] && [ "$newest_jar" -nt "$UTLX" ] && UTLX_STALE="$r"
+      break
+    done
+    ;;
+esac
 
 # ── presentation helpers ─────────────────────────────────────────────────────
 c_say='\033[1;36m'; c_cmd='\033[1;32m'; c_dim='\033[2m'; c_off='\033[0m'
 say()  { printf "\n${c_say}# %s${c_off}\n" "$1"; sleep "$SAY_PAUSE"; }
-run()  { printf "${c_cmd}\$ ${c_off}%s\n" "$1"; sleep "$TYPE_PAUSE"; eval "$1"; sleep "$READ_PAUSE"; }
+# Echo the command as a human would TYPE it: the resolved binary may be a 70-character absolute
+# path, which is correct to execute and unreadable on a slide. Executed verbatim, displayed short.
+run()  { printf "${c_cmd}\$ ${c_off}%s\n" "${1//$UTLX/utlx}"; sleep "$TYPE_PAUSE"; eval "$1"; sleep "$READ_PAUSE"; }
 banner(){ printf "\n${c_dim}── %s ──${c_off}\n" "$1"; }
+# awk, not sed: a file with no trailing newline would otherwise run into the next line printed.
+show()  { local r="${2:-}"; printf "${c_dim}# %s%s${c_off}\n" "${r:+$r  ·  }" "$(basename "$1")"
+          awk '{print "    " $0}' "$1"; sleep "$SAY_PAUSE"; }
 
 clear 2>/dev/null || true
 printf "${c_say}UTL-X — one transformation language for XML, JSON, CSV, YAML & more.\n"
 printf "Write your logic ONCE; run it against any format.${c_off}\n"
 printf "${c_dim}binary: %s${c_off}\n" "$UTLX"
+[ -n "$UTLX_STALE" ] && {
+  printf "${c_dim}note: this native build is OLDER than the jar and may lack recent changes.${c_off}\n"
+  printf "${c_dim}      rebuild: ./gradlew :modules:cli:nativeCompile   or run with UTLX=%s/utlx${c_off}\n" "$UTLX_STALE"
+}
 sleep "$READ_PAUSE"
 
 banner "1. What it is"
@@ -102,19 +129,33 @@ run "echo '$IN' | $UTLX --to yaml -e '$T'"
 
 banner "9. A real script: order → invoice"
 say "A transformation file: compute each line's total and the grand total with map + sum."
-cat > /tmp/order-to-invoice.utlx <<'EOF'
+W=/tmp/utlx-cli-demo; mkdir -p "$W"; cd "$W"
+cat > order-to-invoice.utlx <<'EOF'
 %utlx 1.0
 input json
 output json
 ---
 {
   invoice: "INV-" + $input.order.id,
-  lines: $input.order.lines |> map(l => { sku: l.sku, total: round(l.qty * l.price, 2) }),
-  grandTotal: round(sum($input.order.lines |> map(l => l.qty * l.price)), 2)
+  lines: $input.order.lines |> map(l => { sku: l.sku, total: l.qty * l.price }),
+  grandTotal: sum($input.order.lines |> map(l => l.qty * l.price))
 }
 EOF
-printf "${c_dim}# /tmp/order-to-invoice.utlx${c_off}\n"; sed 's/^/    /' /tmp/order-to-invoice.utlx; sleep "$SAY_PAUSE"
-run "echo '{\"order\":{\"id\":\"A-9\",\"lines\":[{\"sku\":\"X\",\"qty\":2,\"price\":10},{\"sku\":\"Y\",\"qty\":1,\"price\":29.99}]}}' | $UTLX transform /tmp/order-to-invoice.utlx"
+cat > order.json <<'EOF'
+{"order": {"id": "A-9", "lines": [
+  {"sku": "X", "qty": 2, "price": 10.00},
+  {"sku": "Y", "qty": 1, "price": 29.99}
+]}}
+EOF
+show order-to-invoice.utlx "THE TRANSFORMATION"
+say "The input Data"
+show order.json            "THE INPUT DATA"
+say "Both totals keep two decimals — the arithmetic is exact, not rounded and reformatted."
+# No "THE OUTPUT" label: run() prints the command and then evaluates it, so a label would land
+# ABOVE the `$` line and read as if it described the command. The `$` already tells a viewer that
+# what follows is the result — that convention holds in every other step, so leave it alone. The
+# two blocks ABOVE needed labels because nothing else distinguishes a transformation from its data.
+run "$UTLX transform order-to-invoice.utlx order.json"
 
 banner "10. The library goes deep (optional flourish)"
 say "Crypto, dates, encoding, financial… e.g. a SHA-256 hash:"
