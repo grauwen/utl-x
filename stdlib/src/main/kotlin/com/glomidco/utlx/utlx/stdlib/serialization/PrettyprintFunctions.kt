@@ -768,8 +768,29 @@ object PrettyPrintFunctions {
             return lines.joinToString("\n") { it.trim() }
         }
         
-        val rows = lines.map { line ->
-            line.split(delimiter).map { it.trim() }
+        // B66: split with the real CSV reader, not on the delimiter.
+        //
+        // `line.split(delimiter)` has no notion of quoting, so a comma inside a quoted value became
+        // a column break and the quotes survived into the output:
+        //
+        //     in    ccy-allowed,"Field 'ccy' value 'GBP' is not one of [EUR, USD]"
+        //     out   ccy-allowed | "Field 'ccy' value 'GBP' is not one of [EUR | USD]"
+        //
+        // A two-column header over a three-field row — rendered, aligned, and quietly wrong, which
+        // is worse than a refusal for a function anyone would use to produce a report. Escaped
+        // quotes (`""`) and embedded newlines were equally unhandled.
+        //
+        // `CSVParser.parseRows()` resolves all three, and is the same reader every other CSV path
+        // uses, so there is one definition of CSV rather than two.
+        val rows = runCatching {
+            com.glomidco.utlx.formats.csv.CSVParser(
+                csvString.trim(),
+                com.glomidco.utlx.formats.csv.CSVDialect(delimiter = delimiter.firstOrNull() ?: ',')
+            ).parseRows().map { row -> row.map { it.trim() } }
+        }.getOrElse {
+            // Unparseable as CSV: fall back to the naive split rather than throwing, since this is
+            // a formatter and showing something is better than failing a report.
+            lines.map { line -> line.split(delimiter).map { it.trim() } }
         }
         
         val columnWidths = mutableListOf<Int>()
