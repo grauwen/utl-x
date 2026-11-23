@@ -11,13 +11,41 @@
 # runs it, and pauses so the audience can read the result.
 #
 # Pacing knobs (env): SAY_PAUSE (after explanation), TYPE_PAUSE (before running), READ_PAUSE (after
-# output). Binary: set UTLX=... (defaults to `utlx` on PATH; e.g. UTLX=./utlx for the JVM wrapper).
+# output). Binary: set UTLX=... to force one; otherwise resolved below (PATH, then the repo's
+# native build, then its jar wrapper) and printed before step 1.
 #
 set -u
-UTLX="${UTLX:-utlx}"
 SAY_PAUSE="${SAY_PAUSE:-1.2}"
 TYPE_PAUSE="${TYPE_PAUSE:-0.8}"
 READ_PAUSE="${READ_PAUSE:-2.5}"
+
+# ── which binary? ────────────────────────────────────────────────────────────
+# PATH first (that is the normal install), then the repo builds. A demo must never fail with
+# "command not found" in front of an audience, and it must never silently run a STALE binary: an
+# older build lacks the whole validate.* namespace, and one merely predating F32 reports the SAME
+# verdict for a different reason. So the chosen binary is printed before anything runs.
+#
+# The repo is resolved TWO ways on purpose: relative to this script (correct in the repo) and by
+# absolute path (correct for a copy kept elsewhere — e.g. the Theia workspace, where the relative
+# walk lands outside the repo and would silently fall through to a missing `utlx`). The absolute
+# path mirrors DEMO_DIR in utlx-frontend-contribution.ts, which already hardcodes it.
+UTLX_REPOS=(
+  "$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." 2>/dev/null && pwd)"
+  "/Users/magr/data/mapping/github-git/utl-x"
+)
+pick_utlx() {
+  [ -n "${UTLX:-}" ] && { printf '%s' "$UTLX"; return; }
+  command -v utlx >/dev/null 2>&1 && { printf 'utlx'; return; }
+  local r
+  for r in "${UTLX_REPOS[@]}"; do
+    [ -n "$r" ] || continue
+    [ -x "$r/modules/cli/build/native/nativeCompile/utlx" ] \
+      && { printf '%s' "$r/modules/cli/build/native/nativeCompile/utlx"; return; }
+    [ -x "$r/utlx" ] && { printf '%s' "$r/utlx"; return; }
+  done
+  printf 'utlx'
+}
+UTLX="$(pick_utlx)"
 
 # ── presentation helpers ─────────────────────────────────────────────────────
 c_say='\033[1;36m'; c_cmd='\033[1;32m'; c_dim='\033[2m'; c_off='\033[0m'
@@ -28,6 +56,7 @@ banner(){ printf "\n${c_dim}── %s ──${c_off}\n" "$1"; }
 clear 2>/dev/null || true
 printf "${c_say}UTL-X — one transformation language for XML, JSON, CSV, YAML & more.\n"
 printf "Write your logic ONCE; run it against any format.${c_off}\n"
+printf "${c_dim}binary: %s${c_off}\n" "$UTLX"
 sleep "$READ_PAUSE"
 
 banner "1. What it is"
