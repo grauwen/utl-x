@@ -293,13 +293,18 @@ numeric type can hold it:
 | `+2` *(YAML only)* | `2` | `+2` |
 
 ```bash
-# a canonical rebuild that must match the bytes it received
+# re-emit a received document exactly as written, for signature verification
 utlx transform --preserve-numeric-lexeme canon.utlx order.xml
 ```
 
-Use it where the **written form is itself the information** — canonicalisation, a signature over
-rebuilt output, a guard comparing what it emitted against what it received. Three things to know
-before turning it on:
+Use it where the **written form is itself the information** — a signature or digest taken over the
+original lexeme, or an integration that must echo back exactly what it received.
+
+It is **not** the right tool for a content guard or any canonicalising gateway. Those deliberately
+emit one normal form, because a single canonical form is what defeats parser-differential
+smuggling; preserving the original lexeme would reopen that channel.
+
+Three things to know before turning it on:
 
 - **A preserved value is a string.** Arithmetic on one needs `toNumber()`, exactly as it already
   does for a zero-padded `007`. That is why the flag is off by default.

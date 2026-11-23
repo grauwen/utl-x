@@ -99,9 +99,10 @@ data class ParseOptions(
      * ([ExactNumber.isLexicallyLossy] names the two shapes: negative zero and exponent notation).
      *
      * A **third axis**, deliberately not on the strict/standard/lenient ladder and so not set by any
-     * of the three factories below. Strictness and fidelity are independent: a content guard wants
-     * STRICT *and* maximum fidelity, and folding them together would force a choice between the two
-     * that nothing in the problem requires.
+     * of the three factories below. Strictness and fidelity are independent: a pipeline verifying a
+     * signature over a received document wants STRICT *and* maximum fidelity — it must refuse
+     * malformed input *and* still reproduce the bytes the signature was taken over — so folding the
+     * two together would force a choice between them that nothing in the problem requires.
      *
      * Off by default — it changes a value's **type** (a number becomes a string), so a transformation
      * that does arithmetic on one of these shapes must call `toNumber()`, exactly as it already must
