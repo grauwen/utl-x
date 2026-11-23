@@ -122,7 +122,7 @@ expected:
             "salary": 52000,
             "hire_date": "2021-11-08",
             "is_active": false,
-            "years_employed": 3,
+            "years_employed": 3.0,
             "salary_grade": "Junior"
           }
         },
@@ -169,7 +169,7 @@ expected:
         "active_employees": 4,
         "departments": ["Engineering", "Marketing", "Sales", "HR"],
         "salary_stats": {
-          "average": 67000,
+          "average": 67000.00,
           "minimum": 52000,
           "maximum": 82000,
           "total_payroll": 335000
@@ -178,25 +178,25 @@ expected:
           {
             "department": "Engineering",
             "count": 2,
-            "avg_salary": 78500,
+            "avg_salary": 78500.00,
             "active_count": 2
           },
           {
             "department": "Marketing",
             "count": 1,
-            "avg_salary": 68000,
+            "avg_salary": 68000.00,
             "active_count": 1
           },
           {
             "department": "Sales",
             "count": 1,
-            "avg_salary": 52000,
+            "avg_salary": 52000.00,
             "active_count": 0
           },
           {
             "department": "HR",
             "count": 1,
-            "avg_salary": 58000,
+            "avg_salary": 58000.00,
             "active_count": 1
           }
         ]

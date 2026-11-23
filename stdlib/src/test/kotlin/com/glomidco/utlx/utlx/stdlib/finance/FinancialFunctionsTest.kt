@@ -118,6 +118,14 @@ class FinancialFunctionsTest {
     }
 
     // ==================== Rounding Tests ====================
+    //
+    // B67: these read `value as Number` rather than `as Double`. The rounding functions now return
+    // a BigDecimal, because `.toDouble()` was discarding the scale setScale had just computed —
+    // roundToCents(20) came back `20` instead of `20.00`. Every assertion below is on the VALUE,
+    // with a tolerance, so none of them changes; they were pinning the representation only
+    // incidentally. `roundToDecimalPlaces` also moved from HALF_EVEN to HALF_UP to agree with
+    // `roundToCents` and `round` — no asserted value here is an exact half at the rounding digit,
+    // so that is invisible to these tests and is covered in B67RoundExactScaleTest instead.
     
     @Test
     fun `test roundToDecimalPlaces - 2 places`() {
@@ -125,7 +133,7 @@ class FinancialFunctionsTest {
         val places = UDM.Scalar(2)
         
         val result = FinancialFunctions.roundToDecimalPlaces(listOf(amount, places))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(123.46, rounded, 0.001)
     }
@@ -136,7 +144,7 @@ class FinancialFunctionsTest {
         val places = UDM.Scalar(0)
         
         val result = FinancialFunctions.roundToDecimalPlaces(listOf(amount, places))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(124.0, rounded, 0.001)
     }
@@ -147,7 +155,7 @@ class FinancialFunctionsTest {
         val places = UDM.Scalar(4)
         
         val result = FinancialFunctions.roundToDecimalPlaces(listOf(amount, places))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(3.1416, rounded, 0.00001)
     }
@@ -157,7 +165,7 @@ class FinancialFunctionsTest {
         val amount = UDM.Scalar(12.345)
         
         val result = FinancialFunctions.roundToCents(listOf(amount))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(12.35, rounded, 0.001)
     }
@@ -167,7 +175,7 @@ class FinancialFunctionsTest {
         val amount = UDM.Scalar(10.555)
         
         val result = FinancialFunctions.roundToCents(listOf(amount))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(10.56, rounded, 0.001, "Should round half-cent up")
     }
@@ -592,7 +600,7 @@ class FinancialFunctionsTest {
     @Test
     fun `test edge case - very small amounts`() {
         val result = FinancialFunctions.roundToCents(listOf(UDM.Scalar(0.001)))
-        val rounded = (result as UDM.Scalar).value as Double
+        val rounded = ((result as UDM.Scalar).value as Number).toDouble()
         
         assertEquals(0.00, rounded, 0.001, "Sub-cent amounts should round to 0")
     }

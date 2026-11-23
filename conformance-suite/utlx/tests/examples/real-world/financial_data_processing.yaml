@@ -206,7 +206,7 @@ expected:
             "category": "rent",
             "total_spent": 1200,
             "transaction_count": 1,
-            "avg_transaction": 1200
+            "avg_transaction": 1200.00
           }
         ],
         
