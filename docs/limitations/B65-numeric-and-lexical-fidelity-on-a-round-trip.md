@@ -92,6 +92,15 @@ It does not remove the limitation, it relocates the cost: the value's **type** c
 arithmetic on one of these needs `toNumber()`. And it is confined to the readers that must *guess*
 whether free text is numeric — XML, CSV, YAML's plain scalars.
 
+### Where the limitation is not a limitation
+
+On a **content guard** — the context this was found in — `-0 → 0` and `1e3 → 1000` are the
+*intended* behaviour, not a defect to work around. A guard's egress rebuilds the message in one
+normal form on purpose, because a single canonical form is what defeats parser-differential
+smuggling. Turning F31 on there would reopen that channel. The flag is for a pipeline that must
+**reproduce** what it received; a guard must deliberately not. See
+[F31 §Where this does not apply](../features/F31-lexical-fidelity-for-numeric-values.md).
+
 ### What is still limited with the flag on
 
 - **JSON is excluded by design.** Its grammar has already decided the token is a number. Keeping

@@ -118,9 +118,15 @@ object ExactNumber {
      * and `007` keeps its padding by staying a string ([isZeroPadded]).
      *
      * None of the three is a precision defect — `-0 == 0`, `1e3 == 1000` and `+2 == 2` numerically,
-     * so no value changes. It is a **fidelity** question, and it only has a wrong answer where the written form
-     * is itself the information: canonicalisation, a signature over rebuilt output, a content guard
-     * comparing what it emitted against what it received.
+     * so no value changes. It is a **fidelity** question, and it only has a wrong answer where the
+     * written form is itself the information: a signature or digest defined over the ORIGINAL
+     * lexeme (c14n of a signed document), or an integration required to echo back what it received
+     * unchanged.
+     *
+     * Note what is *not* such a case, despite being the obvious guess: a **content guard**. A guard
+     * canonicalises on egress on purpose — one normal form, rebuilt from approved data — because a
+     * single canonical form is what defeats parser-differential smuggling. Preserving the original
+     * lexeme there would reopen the channel the canonical serializer exists to close.
      *
      * So this predicate is a policy input, not a correctness rule. It is consulted only under
      * [com.glomidco.utlx.core.format.ParseOptions.preserveNumericLexeme], and only by the readers

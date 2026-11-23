@@ -22,8 +22,9 @@ notation rather than precision and a numeric type has nowhere to hold it — `-0
 and in YAML alone `+2 → 2`. B65 has the mechanism.
 
 For most work that is invisible and correct. It has a wrong answer wherever the **written form is
-itself the information**: canonicalisation, a signature taken over rebuilt output, a content guard
-comparing what it emitted against what it received.
+itself the information**: a signature or digest defined over the original lexeme (c14n of a signed
+document), or an integration required to echo back what it received unchanged. See
+*Where this does not apply* below for the case it is **not** for.
 
 ## What it does
 
@@ -53,9 +54,11 @@ as a number lose its written form?"*, and nothing else consults it:
 **A third axis, not a rung on the ladder.** The switch is
 `ParseOptions.preserveNumericLexeme`, and no profile sets it —
 `ParseOptions.of(STRICT).preserveNumericLexeme` is `false`, asserted in the test. Strictness and
-fidelity are independent: a content guard wants STRICT **and** maximum fidelity, and folding them
-together would force a choice between the two that nothing in the problem requires. `ParseOptions`
-already keeps resource bounds and grammar leniency as separate axes; this is the third.
+fidelity are independent: a pipeline verifying a signature over a received document wants STRICT
+**and** maximum fidelity — it must refuse malformed input *and* reproduce the bytes the signature
+was taken over — so folding them together would force a choice nothing in the problem requires.
+`ParseOptions` already keeps resource bounds and grammar leniency as separate axes; this is the
+third.
 
 **Off by default**, because it changes a value's **type**. Under the flag, arithmetic on a
 preserved value needs `toNumber()` — exactly as it already does for `007`. That cost is the whole
@@ -82,6 +85,24 @@ smuggling vector. JSON numeric fidelity is a canonicalisation property, not a se
 normalised it to `2`. That is the cross-format divergence B35 was written to end, in a shape B35 did
 not cover. Under the flag all three agree. The default is deliberately left alone — changing it
 would be a silent type change for every YAML user.
+
+## Where this does not apply
+
+**A content guard, or any canonicalising gateway.** This was the first rationale written into this
+report and it was wrong, so it is recorded rather than quietly removed.
+
+A guard's egress serializer rebuilds the message from UDM in **one normal form** — sorted keys,
+canonical numbers, no comments, no metadata — and drops anything the policy did not approve. That
+is the point: a single canonical form is what defeats parser-differential smuggling ("works on my
+parser"), and the receiving side re-parses something strict and predictable. In that design fidelity
+is not a goal but a hazard, so `--preserve-numeric-lexeme` on a guard egress path would **reopen the
+channel the canonical serializer exists to close**.
+
+Nor is it needed on a guard's ingress: the audit record's input hash is taken over the bytes as
+received, not over a rebuilt form, so no reader option affects it.
+
+The distinction worth carrying: this flag serves a pipeline that must **reproduce** what it
+received. A guard is a pipeline that must deliberately **not**.
 
 ## Verification
 
