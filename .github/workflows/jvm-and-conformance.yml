@@ -1,9 +1,12 @@
 # .github/workflows/jvm-and-conformance.yml
 #
-# The gate the Kotlin side did not have. Before this, `wrappers/dotnet` and `wrappers/go` ran on
-# every push while `modules/`, `formats/` and `stdlib/` ran only when someone remembered —
-# `cli-ci.yml` and `native-build.yml` are both `workflow_dispatch` only. The client libraries were
-# gated and the language was not.
+# Manual trigger only, deliberately: the corpus takes ~10 minutes and this is not meant to sit in
+# the way of day-to-day work. Run it before a merge, a tag, or a hand-off.
+#
+# `push`/`pull_request` are kept below, commented out, with their path list intact — flipping this
+# into a real gate is one edit. Note what that would change: `wrappers/dotnet` and `wrappers/go`
+# are gated on every push while `modules/`, `formats/` and `stdlib/` are not, so today the client
+# libraries have a gate and the language does not.
 #
 # Two things run here, and the second is the one that is easy to leave out:
 #
@@ -24,30 +27,37 @@
 name: JVM and Conformance
 
 on:
-  push:
-    paths:
-      - 'modules/**'
-      - 'formats/**'
-      - 'stdlib/**'
-      - 'schema/**'
-      - 'conformance-suite/**'
-      - '*.gradle.kts'
-      - 'gradle/**'
-      - '.github/workflows/jvm-and-conformance.yml'
-  pull_request:
-    paths:
-      - 'modules/**'
-      - 'formats/**'
-      - 'stdlib/**'
-      - 'schema/**'
-      - 'conformance-suite/**'
-      - '*.gradle.kts'
-      - 'gradle/**'
-  workflow_dispatch:
+  workflow_dispatch:   # Manual trigger only
+    inputs:
+      scope:
+        description: 'What to run'
+        type: choice
+        default: all
+        options: [all, jvm, conformance]
+  # push:
+  #   paths:
+  #     - 'modules/**'
+  #     - 'formats/**'
+  #     - 'stdlib/**'
+  #     - 'schema/**'
+  #     - 'conformance-suite/**'
+  #     - '*.gradle.kts'
+  #     - 'gradle/**'
+  #     - '.github/workflows/jvm-and-conformance.yml'
+  # pull_request:
+  #   paths:
+  #     - 'modules/**'
+  #     - 'formats/**'
+  #     - 'stdlib/**'
+  #     - 'schema/**'
+  #     - 'conformance-suite/**'
+  #     - '*.gradle.kts'
+  #     - 'gradle/**'
 
 jobs:
   jvm-tests:
     name: JVM module tests
+    if: ${{ inputs.scope == 'all' || inputs.scope == 'jvm' || inputs.scope == '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -76,6 +86,7 @@ jobs:
 
   conformance:
     name: Conformance (${{ matrix.level }})
+    if: ${{ inputs.scope == 'all' || inputs.scope == 'conformance' || inputs.scope == '' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
