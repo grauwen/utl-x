@@ -204,6 +204,7 @@ CRITICAL: Primary function for URL decomposition""",
     }
     
     @UTLXFunction(
+        name = "getURLPath",
         description = "Get path from URL",
         minArgs = 1,
         maxArgs = 1,

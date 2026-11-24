@@ -179,12 +179,18 @@ drifts and the drift *is* the bug. Of 728 registered names, 718 are identifier-s
 other 10 are the `validate.*` namespace), and **717 of those validate without a false
 "Undefined function"**.
 
-The one exception is pinned exactly rather than tolerated: **`if` is registered as a function
+The one exception was pinned exactly rather than tolerated: **`if` is registered as a function
 but cannot be called**, because it is a reserved word, so `{ r: if() }` is a parse error. A
 pre-existing wart, unrelated to B52, recorded here because the test's skip branch is what
 could otherwise hollow the sweep out — if a change made many names unparseable the sweep
 would pass while checking almost nothing, so the skipped set is asserted to be exactly
 `["if"]`.
+
+> **Fixed 2026-11-24 — [B70](B70-the-catalogue-advertised-if-which-the-parser-can-never-reach.md).**
+> The conditional is registered as `conditional`, which parses, so the skipped set is now empty
+> and the sweep covers every registered name. Worth noting how long this sat here: the wart was
+> correctly measured, correctly described, and ratcheted — and a ratcheted exception is a parked
+> bug. It took someone *asking* whether `if` should be a function to get it fixed.
 
 ## Why there is no conformance fixture for the warning
 
@@ -226,4 +232,4 @@ wrong for as long as they sat there.
 - the three function registries remain unreconciled (dispatch ~764, analysis types, core
   types 15); a name-only check stops the false positives but does not give `--strict` real
   signatures. Same shape as [B50](B50-join-is-the-string-join-innerjoin-is-relational.md).
-- `if` is registered but uncallable (above).
+- ~~`if` is registered but uncallable~~ — fixed, [B70](B70-the-catalogue-advertised-if-which-the-parser-can-never-reach.md).

@@ -11,6 +11,20 @@ package com.glomidco.utlx.stdlib.annotations
 @Retention(AnnotationRetention.RUNTIME)
 annotation class UTLXFunction(
     /**
+     * B68: the name UTL-X scripts call this function by, when it differs from the Kotlin method
+     * name. Empty means "same as the method", which is the normal case.
+     *
+     * The exporter used the **method** name unconditionally, so wherever the two differed the
+     * catalogue advertised a name that does not exist: `utlx functions info createQName` answered
+     * with a signature, and calling it gave *"Undefined function: createQName"* — the callable
+     * spelling is `createQname`. Eight functions were in that state, the mirror image of the 40
+     * that were callable but unadvertised.
+     *
+     * The registered name is the truth, so it is what the catalogue must show.
+     */
+    val name: String = "",
+
+    /**
      * Human-readable description of what the function does
      */
     val description: String,

@@ -140,7 +140,13 @@ utlx functions info join / joinBy / innerJoin       -> all three present and cor
   parity via `ConformanceStrategyParityTest`
 - documentation updated in 10 files plus `TestCategorizer`
 
-## Still open — the underlying drift
+## The underlying drift — now closed
+
+> **Closed 2026-11-24** by [B68](B68-working-functions-are-absent-from-the-catalogue.md), which
+> added the cross-check this section asked for, in both directions and mutation-proven. The
+> "meaning different things" case below is tracked separately as
+> [B69](B69-one-name-several-signatures-in-the-catalogue.md), and the unreachable `ifThenElse`/`if`
+> entry as [B70](B70-the-catalogue-advertised-if-which-the-parser-can-never-reach.md).
 
 Nothing cross-checks the generated catalogue against the dispatch registry. The measurement
 that found this bug also found **83 callable but undocumented** names and **8 documented but

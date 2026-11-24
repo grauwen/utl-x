@@ -207,7 +207,7 @@ Utility functions
 | `getLogs` | 1 | Retrieves all log entries |  |
 | `hasEnv` | 2 | Check if environment variable exists |  |
 | `homeDir` | 1 | Get user home directory |  |
-| `ifThenElse` | 1 | Inline if-then-else conditional |  |
+| `conditional` | 3 | Selects one of two values according to a condition (was `if`, never callable — B70) |  |
 | `info` | 1 | Logs with INFO level |  |
 | `isDebugMode` | 1 | Check if running in debug mode |  |
 | `isEmpty` | 1 | Checks if a value is empty |  |

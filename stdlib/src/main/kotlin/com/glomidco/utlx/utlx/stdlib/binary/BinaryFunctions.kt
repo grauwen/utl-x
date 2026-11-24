@@ -1172,6 +1172,7 @@ object BinaryFunctions {
     // ============================================
     
     @UTLXFunction(
+        name = "equalsBinary",
         description = "Compares two binaries for equality",
         minArgs = 2,
         maxArgs = 2,

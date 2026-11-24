@@ -11,27 +11,35 @@ import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 object CoreFunctions {
     
     @UTLXFunction(
-        description = "Inline if-then-else conditional",
-        minArgs = 1,
-        maxArgs = 1,
+        description = "Selects one of two values according to a condition",
+        minArgs = 3,
+        maxArgs = 3,
         category = "Core",
         parameters = [
-            "array: Input array to process"
+            "condition: Value tested for truthiness",
+            "whenTrue: Returned when the condition holds",
+            "whenFalse: Returned when it does not"
         ],
-        returns = "Result of the operation",
-        example = "if(price > 100, \"expensive\", \"affordable\")",
-        notes = "This is CRITICAL for concise transformations",
+        returns = "whenTrue or whenFalse",
+        example = "conditional(price > 100, \"expensive\", \"affordable\")",
+        notes = "Selects between two VALUES; it is not the conditional statement. Both branches " +
+                "are arguments, so both are evaluated before the call: " +
+                "`conditional(d != 0, 1 / d, -1)` fails on d = 0, where the `if (c) a else b` " +
+                "syntax yields -1 because it evaluates only the branch it takes. Use the syntax " +
+                "whenever a branch must not run. (Registered as `if` until 1.4.5, where it was " +
+                "unreachable - the parser owns that keyword. See B70.)",
         tags = ["core"],
         since = "1.0"
     )
     /**
-     * Inline if-then-else conditional
-     * Usage: if(price > 100, "expensive", "affordable")
-     * 
-     * This is CRITICAL for concise transformations
+     * Selects one of two values according to a condition.
+     * Usage: conditional(price > 100, "expensive", "affordable")
+     *
+     * Eager: both branches are arguments and are evaluated before this is called. The `if (c) a else b`
+     * syntax short-circuits; this does not.
      */
-    fun ifThenElse(args: List<UDM>): UDM {
-        requireArgs(args, 3, "if")
+    fun conditional(args: List<UDM>): UDM {
+        requireArgs(args, 3, "conditional")
         
         val condition = args[0].asBoolean()
         return if (condition) args[1] else args[2]

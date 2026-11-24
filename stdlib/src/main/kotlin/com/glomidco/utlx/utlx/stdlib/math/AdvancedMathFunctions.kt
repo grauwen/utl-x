@@ -433,6 +433,7 @@ object AdvancedMathFunctions {
     }
     
     @UTLXFunction(
+        name = "logBase",
         description = "If no base is provided, uses natural logarithm (base e).",
         minArgs = 1,
         maxArgs = 1,

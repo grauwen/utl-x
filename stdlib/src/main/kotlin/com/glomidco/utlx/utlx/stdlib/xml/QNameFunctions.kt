@@ -204,7 +204,7 @@ object QNameFunctions {
     }
     
     @UTLXFunction(
-        description = "Resolve QName string to full qualified name with namespace",
+            description = "Resolve QName string to full qualified name with namespace",
         minArgs = 2,
         maxArgs = 2,
         category = "XML",
@@ -213,7 +213,7 @@ object QNameFunctions {
         "context: Context value"
         ],
         returns = "Result of the operation",
-        example = "resolveQname(\"soap:Envelope\", context)",
+        example = "resolveQName(\"soap:Envelope\", context)",
         notes = """=> { localName: "Envelope", prefix: "soap", uri: "http://..." }
 Context provides namespace bindings.""",
         tags = ["xml"],
@@ -221,13 +221,13 @@ Context provides namespace bindings.""",
     )
     /**
      * Resolve QName string to full qualified name with namespace
-     * Usage: resolveQname("soap:Envelope", context)
+     * Usage: resolveQName("soap:Envelope", context)
      *        => { localName: "Envelope", prefix: "soap", uri: "http://..." }
      * 
      * Context provides namespace bindings.
      */
     fun resolveQName(args: List<UDM>): UDM {
-        requireArgs(args, 2, "resolveQname")
+        requireArgs(args, 2, "resolveQName")
         val qnameStr = args[0].asString()
         val context = args[1]
 
@@ -262,7 +262,7 @@ Context provides namespace bindings.""",
     }
     
     @UTLXFunction(
-        description = "Create QName string from local name and namespace URI",
+            description = "Create QName string from local name and namespace URI",
         minArgs = 2,
         maxArgs = 2,
         category = "XML",
@@ -271,18 +271,18 @@ Context provides namespace bindings.""",
         "namespaceUri: Namespaceuri value"
         ],
         returns = "Result of the operation",
-        example = "createQname(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
+        example = "createQName(\"Envelope\", \"http://schemas.xmlsoap.org/soap/envelope/\", \"soap\")",
         notes = "=> \"soap:Envelope\"",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Create QName string from local name and namespace URI
-     * Usage: createQname("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
+     * Usage: createQName("Envelope", "http://schemas.xmlsoap.org/soap/envelope/", "soap")
      *        => "soap:Envelope"
      */
     fun createQName(args: List<UDM>): UDM {
-        requireArgs(args, 2..3, "createQname")
+        requireArgs(args, 2..3, "createQName")
         val localName = args[0].asString()
         val namespaceUri = args[1].asString()
         val prefix = if (args.size > 2) args[2].asString() else ""
@@ -426,7 +426,7 @@ Context provides namespace bindings.""",
     }
     
     @UTLXFunction(
-        description = "Match element by qualified name",
+            description = "Match element by qualified name",
         minArgs = 1,
         maxArgs = 1,
         category = "XML",
@@ -435,16 +435,16 @@ Context provides namespace bindings.""",
         "qnamePattern: Qnamepattern value"
         ],
         returns = "Result of the operation",
-        example = "matchesQname(element, \"soap:Envelope\") => true",
+        example = "matchesQName(element, \"soap:Envelope\") => true",
         tags = ["xml"],
         since = "1.0"
     )
     /**
      * Match element by qualified name
-     * Usage: matchesQname(element, "soap:Envelope") => true
+     * Usage: matchesQName(element, "soap:Envelope") => true
      */
     fun matchesQName(args: List<UDM>): UDM {
-        requireArgs(args, 2, "matchesQname")
+        requireArgs(args, 2, "matchesQName")
         val element = args[0]
         val qnamePattern = args[1]
 

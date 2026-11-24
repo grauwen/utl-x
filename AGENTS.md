@@ -43,7 +43,7 @@ code change is invisible to it until you rebuild that jar.
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
 ```
 
-**587 tests** (2026-11-23). Must run from `conformance-suite/`; the runner uses
+**588 tests** (2026-11-24). Must run from `conformance-suite/`; the runner uses
 relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 `language/selectors`.
 
@@ -63,11 +63,11 @@ GitHub Actions page says nothing about a change under `modules/`.
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
 execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
-`ASTCompiler`, and what the UTLXe engine runs by default). A green 587/587 says
+`ASTCompiler`, and what the UTLXe engine runs by default). A green 588/588 says
 nothing about two of them:
 
 ```bash
-./gradlew :modules:engine:test       # 1058 tests, incl. ConformanceStrategyParityTest (420)
+./gradlew :modules:engine:test       # 1059 tests, incl. ConformanceStrategyParityTest (421)
 ```
 
 **Five bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
@@ -134,7 +134,8 @@ modules/engine      UTLXe — execution strategies, the production runtime
 modules/bundle      file-level bundle management  (engine DEPENDS on this)
 modules/daemon      utlxd — LSP + REST
 formats/            xml json csv yaml xsd jsch avro protobuf odata osch tsch
-stdlib/             692 functions (705 catalogue entries, 12 of them aliases)
+stdlib/             697 functions + 26 aliases = 723 callable names; 733 catalogue entries
+                    (10 are duplicates — B69). Plus 12 version-gated validate.* (%utlx 1.1)
 schema/             USDL, schema serializers
 wrappers/           .NET and Go clients driving the engine over stdio protobuf
 conformance-suite/  the Python-driven corpus

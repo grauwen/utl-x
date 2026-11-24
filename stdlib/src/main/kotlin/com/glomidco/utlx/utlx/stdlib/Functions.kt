@@ -55,6 +55,21 @@ object StandardLibrary {
     init {
         registerAllFunctions()
     }
+
+    /**
+     * The names UTL-X itself ships, snapshotted once registration finishes.
+     *
+     * `registerFunction` lets a host add functions to this singleton at runtime, so `functions`
+     * is not a constant: anything added later is indistinguishable from a built-in by inspection
+     * alone. The build-time catalogue, by contrast, only ever contains built-ins — so comparing
+     * the two (B68's invariant) is only meaningful against this snapshot. Declared AFTER the
+     * init block on purpose: Kotlin initialises in declaration order, so this sees the finished
+     * registration.
+     */
+    private val builtInNames: Set<String> = functions.keys.toSet()
+
+    /** Names UTL-X ships, excluding anything a host registered at runtime. */
+    fun getBuiltInFunctionNames(): Set<String> = builtInNames
     
     fun getFunction(name: String): UTLXFunction? = functions[name]
     fun hasFunction(name: String): Boolean = functions.containsKey(name)
@@ -219,63 +234,63 @@ object StandardLibrary {
     private fun registerAdvancedRegexFunctions() {
         // Core regex analysis
         register("analyzeString", AdvancedRegexFunctions::analyzeString)
-        // register("analyze-string", AdvancedRegexFunctions::analyzeString) // XSLT compatibility
+        // registerAlias("analyze-string", "analyzeString", "XPath/XSLT-style spelling") // XSLT compatibility
         
         // Group extraction
         register("regexGroups", AdvancedRegexFunctions::regexGroups)
-        // register("regex-groups", AdvancedRegexFunctions::regexGroups)
+        // registerAlias("regex-groups", "regexGroups", "XPath/XSLT-style spelling")
         register("regexNamedGroups", AdvancedRegexFunctions::regexNamedGroups)
-        // register("regex-named-groups", AdvancedRegexFunctions::regexNamedGroups)
+        // registerAlias("regex-named-groups", "regexNamedGroups", "XPath/XSLT-style spelling")
         
         // Advanced matching
         register("findAllMatches", AdvancedRegexFunctions::findAllMatches)
-        // register("find-all-matches", AdvancedRegexFunctions::findAllMatches)
+        // registerAlias("find-all-matches", "findAllMatches", "XPath/XSLT-style spelling")
         register("splitWithMatches", AdvancedRegexFunctions::splitWithMatches)
-        // register("split-with-matches", AdvancedRegexFunctions::splitWithMatches)
+        // registerAlias("split-with-matches", "splitWithMatches", "XPath/XSLT-style spelling")
         
         // Validation and replacement
         register("matchesWhole", AdvancedRegexFunctions::matchesWhole)
-        // register("matches-whole", AdvancedRegexFunctions::matchesWhole)
+        // registerAlias("matches-whole", "matchesWhole", "XPath/XSLT-style spelling")
         register("replaceWithFunction", AdvancedRegexFunctions::replaceWithFunction)
-        //register("replace-with-function", AdvancedRegexFunctions::replaceWithFunction)
+        //registerAlias("replace-with-function", "replaceWithFunction", "XPath/XSLT-style spelling")
     }
     
     private fun registerGeospatialFunctions() {
         // Distance calculations
         register("distance", GeospatialFunctions::distance)
-        register("geoDistance", GeospatialFunctions::distance) // Alias
-        // register("geo-distance", GeospatialFunctions::distance)
+        registerAlias("geoDistance", "distance", "geo-prefixed spelling") // Alias
+        // registerAlias("geo-distance", "distance", "XPath/XSLT-style spelling")
         
         register("bearing", GeospatialFunctions::bearing)
-        register("geoBearing", GeospatialFunctions::bearing)
-        // register("geo-bearing", GeospatialFunctions::bearing)
+        registerAlias("geoBearing", "bearing", "geo-prefixed spelling")
+        // registerAlias("geo-bearing", "bearing", "XPath/XSLT-style spelling")
         
         // Geofencing
         register("isPointInCircle", GeospatialFunctions::isPointInCircle)
-        // register("is-point-in-circle", GeospatialFunctions::isPointInCircle)
-        register("inCircle", GeospatialFunctions::isPointInCircle) // Short alias
+        // registerAlias("is-point-in-circle", "isPointInCircle", "XPath/XSLT-style spelling")
+        registerAlias("inCircle", "isPointInCircle", "short form") // Short alias
         
         register("isPointInPolygon", GeospatialFunctions::isPointInPolygon)
-        // register("is-point-in-polygon", GeospatialFunctions::isPointInPolygon)
-        register("inPolygon", GeospatialFunctions::isPointInPolygon) // Short alias
+        // registerAlias("is-point-in-polygon", "isPointInPolygon", "XPath/XSLT-style spelling")
+        registerAlias("inPolygon", "isPointInPolygon", "short form") // Short alias
         
         // Utilities
         register("midpoint", GeospatialFunctions::midpoint)
-        register("geoMidpoint", GeospatialFunctions::midpoint)
-        // register("geo-midpoint", GeospatialFunctions::midpoint)
+        registerAlias("geoMidpoint", "midpoint", "geo-prefixed spelling")
+        // registerAlias("geo-midpoint", "midpoint", "XPath/XSLT-style spelling")
         
         register("destinationPoint", GeospatialFunctions::destinationPoint)
-        // register("destination-point", GeospatialFunctions::destinationPoint)
-        register("geoDestination", GeospatialFunctions::destinationPoint)
+        // registerAlias("destination-point", "destinationPoint", "XPath/XSLT-style spelling")
+        registerAlias("geoDestination", "destinationPoint", "geo-prefixed spelling")
         
         register("boundingBox", GeospatialFunctions::boundingBox)
-        // register("bounding-box", GeospatialFunctions::boundingBox)
-        register("geoBounds", GeospatialFunctions::boundingBox)
+        // registerAlias("bounding-box", "boundingBox", "XPath/XSLT-style spelling")
+        registerAlias("geoBounds", "boundingBox", "geo-prefixed spelling")
         
         // Validation
         register("isValidCoordinates", GeospatialFunctions::isValidCoordinates)
-        // register("is-valid-coordinates", GeospatialFunctions::isValidCoordinates)
-        register("validCoords", GeospatialFunctions::isValidCoordinates) // Short alias
+        // registerAlias("is-valid-coordinates", "isValidCoordinates", "XPath/XSLT-style spelling")
+        registerAlias("validCoords", "isValidCoordinates", "short form") // Short alias
     }
 
     private fun registerRegionalFunctions() {
@@ -298,7 +313,12 @@ object StandardLibrary {
 
     private fun registerCoreFunctions() {
         // CoreFunctions already use List<UDM> signature, so these work directly
-        register("if", CoreFunctions::ifThenElse)
+        // Registered as `if` until 1.4.5, which was never reachable: `if` is a lexer keyword
+        // (token_types.kt) whose if-expression rule the parser claims first, so `if(c, a, b)` dies
+        // with "Expected ')' after condition" (B70). `conditional` says what it does - it selects
+        // between two VALUES, and unlike the syntax it evaluates both. The Kotlin method carries
+        // the same name, so nothing has to be mapped (F34).
+        register("conditional", CoreFunctions::conditional)
         register("coalesce", CoreFunctions::coalesce)
         // generateUuid moved to registerUUIDFunctions (was duplicate of generateUuidV4)
         register("default", CoreFunctions::default)
@@ -450,7 +470,7 @@ object StandardLibrary {
         register("sort", ArrayFunctions::sort)
         register("sortBy", ArrayFunctions::sortBy)
         register("first", ArrayFunctions::first)
-        register("head", ArrayFunctions::first) //alias for first
+        registerAlias("head", "first", "Legacy naming - use first") //alias for first
         register("last", ArrayFunctions::last)
         register("take", ArrayFunctions::take)
         register("drop", ArrayFunctions::drop)
@@ -716,11 +736,19 @@ object StandardLibrary {
         register("namespaceUri", QNameFunctions::namespaceUri)
         register("qualifiedName", QNameFunctions::qualifiedName)
         register("namespacePrefix", QNameFunctions::namespacePrefix)
-        register("resolveQname", QNameFunctions::resolveQName)
-        register("createQname", QNameFunctions::createQName)
+        // QName = *qualified* name, so the N is capital — the spelling TIBCO BusinessWorks uses,
+        // the one the Kotlin methods already had, and the one docs/stdlib/stdlib-complete-reference.md
+        // already documents. Only `register` said "Qname", which made the documented name
+        // uncallable (B68). The old spelling stays callable as an alias: scripts written against
+        // it must keep working.
+        register("resolveQName", QNameFunctions::resolveQName)
+        register("createQName", QNameFunctions::createQName)
         register("hasNamespace", QNameFunctions::hasNamespace)
         register("getNamespaces", QNameFunctions::getNamespaces)
-        register("matchesQname", QNameFunctions::matchesQName)
+        register("matchesQName", QNameFunctions::matchesQName)
+        registerAlias("resolveQname", "resolveQName", "pre-1.4.5 spelling - use resolveQName")
+        registerAlias("createQname", "createQName", "pre-1.4.5 spelling - use createQName")
+        registerAlias("matchesQname", "matchesQName", "pre-1.4.5 spelling - use matchesQName")
         
         // XML utility functions
         register("nodeType", XmlUtilityFunctions::nodeType)
@@ -1031,8 +1059,8 @@ object StandardLibrary {
         register("validateJsonPatch", com.glomidco.utlx.stdlib.json.JsonPatchFunctions::validateJsonPatch)
 
         // Aliases for compatibility with Tibco BW\
-        register("tibco_parse", SerializationFunctions::parse)
-        register("tibco_render", SerializationFunctions::render)
+        registerAlias("tibco_parse", "parse", "TIBCO compatibility")
+        registerAlias("tibco_render", "render", "TIBCO compatibility")
 
         // Schema Serialization functions (Tier 2)
         register("parseAvroSchema", SchemaSerializationFunctions::parseAvroSchema)
@@ -1492,7 +1520,11 @@ object StandardLibrary {
                     .firstOrNull()
 
                 if (annotation != null) {
-                    allFunctions.add(convertAnnotationToFunctionInfo(member.name, annotation))
+                    // B68: an explicit `name` wins over the Kotlin method name. Where the two
+                    // differ the method name is an implementation detail (`isLeapYearFunc`,
+                    // `ifThenElse`) and advertising it gave users a name they cannot call.
+                    allFunctions.add(convertAnnotationToFunctionInfo(
+                        annotation.name.ifEmpty { member.name }, annotation))
                 }
             }
         }

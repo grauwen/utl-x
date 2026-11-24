@@ -109,6 +109,7 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
     }
     
     @UTLXFunction(
+        name = "reverseString",
         description = "Reverse a string",
         minArgs = 1,
         maxArgs = 1,
