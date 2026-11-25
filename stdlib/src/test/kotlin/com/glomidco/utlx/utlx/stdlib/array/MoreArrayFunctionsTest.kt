@@ -299,7 +299,7 @@ class MoreArrayFunctionsTest {
     @Test
     fun testConcat() {
         // Test basic concatenation
-        val result1 = MoreArrayFunctions.concat(listOf(
+        val result1 = MoreArrayFunctions.arrayConcat(listOf(
             UDM.Array(listOf(UDM.Scalar(1.0), UDM.Scalar(2.0))),
             UDM.Array(listOf(UDM.Scalar(3.0), UDM.Scalar(4.0))),
             UDM.Array(listOf(UDM.Scalar(5.0)))
@@ -312,7 +312,7 @@ class MoreArrayFunctionsTest {
         assertEquals(5.0, ((result1 as UDM.Array).elements[4] as UDM.Scalar).value)
 
         // Test with empty arrays
-        val result2 = MoreArrayFunctions.concat(listOf(
+        val result2 = MoreArrayFunctions.arrayConcat(listOf(
             UDM.Array(listOf(UDM.Scalar(1.0))),
             UDM.Array(emptyList()),
             UDM.Array(listOf(UDM.Scalar(2.0)))
@@ -322,11 +322,11 @@ class MoreArrayFunctionsTest {
         assertEquals(2.0, ((result2 as UDM.Array).elements[1] as UDM.Scalar).value)
 
         // Test no arguments
-        val result3 = MoreArrayFunctions.concat(emptyList())
+        val result3 = MoreArrayFunctions.arrayConcat(emptyList())
         assertEquals(0, (result3 as UDM.Array).elements.size)
 
         // Test single array
-        val result4 = MoreArrayFunctions.concat(listOf(
+        val result4 = MoreArrayFunctions.arrayConcat(listOf(
             UDM.Array(listOf(UDM.Scalar("a"), UDM.Scalar("b")))
         ))
         assertEquals(2, (result4 as UDM.Array).elements.size)
@@ -338,7 +338,7 @@ class MoreArrayFunctionsTest {
     fun testConcatEdgeCases() {
         // Test non-array argument
         assertThrows<FunctionArgumentException> {
-            MoreArrayFunctions.concat(listOf(
+            MoreArrayFunctions.arrayConcat(listOf(
                 UDM.Array(listOf(UDM.Scalar(1))),
                 UDM.Scalar("not array")
             ))

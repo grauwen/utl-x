@@ -51,7 +51,7 @@ transformation: |
     ),
 
     allHosts: reduceEntries($datacontract.servers, (acc, name, cfg) =>
-      concat(acc, [cfg.host]), []
+      arrayConcat(acc, [cfg.host]), []
     )
   }
 

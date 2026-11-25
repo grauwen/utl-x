@@ -484,6 +484,9 @@ object StandardLibrary {
         register("distinct", ArrayFunctions::distinct)
         register("distinctBy", ArrayFunctions::distinctBy)
         register("union", ArrayFunctions::union)
+        // B71: array concatenation used to be reachable only through the type-dispatching
+        // `concat`. Distinct from `union` directly above, which de-duplicates.
+        register("arrayConcat", MoreArrayFunctions::arrayConcat)
         register("intersect", ArrayFunctions::intersect)
         register("difference", ArrayFunctions::difference)
         register("symmetricDifference", ArrayFunctions::symmetricDifference)

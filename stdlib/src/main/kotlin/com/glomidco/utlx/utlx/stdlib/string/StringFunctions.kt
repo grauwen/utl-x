@@ -137,24 +137,14 @@ object StringFunctions {
         //return UDM.Scalar(str.substring(start, end)) <--- BUG 
     }
     
-    @UTLXFunction(
-        description = "Concatenate strings",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "array: Input array to process",
-        "delimiter: Delimiter value",
-        "replacement: Replacement value"
-        ],
-        returns = "Result of the operation",
-        example = "concat(\"hello\", \" \", \"world\") => \"hello world\"",
-        tags = ["string"],
-        since = "1.0"
-    )
     /**
      * Concatenate strings
      * Usage: concat("hello", " ", "world") => "hello world"
+     *
+     * B69: deliberately NOT annotated. This is never registered - `CoreFunctions::concat` is the
+     * `concat` UTL-X calls - so an @UTLXFunction here only added a second `concat` to the
+     * catalogue, advertising a signature that nothing dispatches to. Kept because it is
+     * unit-tested and harmless; annotate it only if it is also registered, under a free name.
      */
     fun concat(args: List<UDM>): UDM {
         if (args.isEmpty()) return UDM.Scalar("")

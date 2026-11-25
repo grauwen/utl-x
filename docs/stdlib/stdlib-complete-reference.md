@@ -39,11 +39,11 @@ Functional operations, filtering, mapping, and array manipulation
 
 | Function | Args | Description | Example |
 |----------|------|-------------|----------|
+| `arrayConcat` | -1 | Concatenates multiple arrays into one, keeping duplicates (unlike `union`) |  |
 | `avg` | -1 | Calculate the average (mean) of all numeric elements in an array |  |
 | `avgBy` | 2 | Calculates the average value using a mapping function. |  |
 | `chunk` | 1 | Chunks array into arrays of specified size |  |
 | `compact` | 1 | Remove null, undefined, and empty values from array |  |
-| `concat` | 1 | Concatenate multiple arrays |  |
 | `count` | -1 | Count the number of elements in an array |  |
 | `countBy` | 2 | Counts the number of elements in an array that match a predicate. |  |
 | `crossJoin` | 2 | Cross join - Cartesian product of both arrays |  |
@@ -191,7 +191,7 @@ Utility functions
 | `availableProcessors` | 1 | Get number of available CPU cores/processors |  |
 | `clearLogs` | 1 | Clears all log entries |  |
 | `coalesce` | 1 | Coalesce - return first non-null value |  |
-| `concat` | 1 | Concatenates values of the same type |  |
+| `concat` | -1 | Concatenates values into a single string (strings only — see `arrayConcat`, `merge`, `sum`) |  |
 | `contains` | 2 | Checks if a value contains an element, substring, or key |  |
 | `currentDir` | 1 | Get current working directory |  |
 | `debug` | 1 | Logs with DEBUG level |  |
@@ -569,7 +569,7 @@ Text processing, case conversion, and string manipulation
 | `capitalize` | 1 | Capitalize first letter of string |  |
 | `charAt` | 1 | Get character at index |  |
 | `charCodeAt` | 1 | Get character code (Unicode code point) at index |  |
-| `concat` | 1 | Concatenate strings |  |
+| `concat` | -1 | Concatenates values into a single string |  |
 | `constantCase` | 1 | Convert string to CONSTANT_CASE |  |
 | `contains` | 1 | Check if string contains substring |  |
 | `dotCase` | 1 | Convert string to dot.case |  |

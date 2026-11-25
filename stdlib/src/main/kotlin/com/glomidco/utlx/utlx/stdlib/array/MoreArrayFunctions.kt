@@ -242,30 +242,39 @@ object MoreArrayFunctions {
     }
     
     @UTLXFunction(
-        description = "Concatenate multiple arrays",
+        description = "Concatenates multiple arrays into one, keeping duplicates",
         minArgs = 1,
         maxArgs = 1,
         category = "Array",
         parameters = [
-            "array: Input array to process"
+            "array: First array",
+            "more...: Further arrays, appended in order (variadic)"
         ],
-        returns = "Result of the operation",
-        example = "concat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]",
+        returns = "A single array",
+        example = "arrayConcat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]",
+        notes = "Keeps duplicates, so this is not `union`: arrayConcat([1,2],[2,3]) is " +
+                "[1,2,2,3] where union([1,2],[2,3]) is [1,2,3]. Named for `binaryConcat`, the " +
+                "same operation on binary. Was reachable only as the type-dispatching `concat` " +
+                "until 1.4.5 (B71).",
         tags = ["array"],
         since = "1.0"
     )
     /**
-     * Concatenate multiple arrays
-     * Usage: concat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]
+     * Concatenates multiple arrays into one, keeping duplicates.
+     * Usage: arrayConcat([1, 2], [3, 4], [5]) => [1, 2, 3, 4, 5]
+     *
+     * B71: this implementation existed and was correct, but was never registered - the
+     * type-dispatching `concat` covered arrays, so nothing reached it and its annotation only
+     * added a second `concat` entry to the catalogue (B69).
      */
-    fun concat(args: List<UDM>): UDM {
+    fun arrayConcat(args: List<UDM>): UDM {
         if (args.isEmpty()) {
             return UDM.Array(emptyList())
         }
         
         val result = mutableListOf<UDM>()
         for (arg in args) {
-            val array = arg.asArray() ?: throw FunctionArgumentException("concat: all arguments must be arrays")
+            val array = arg.asArray() ?: throw FunctionArgumentException("arrayConcat: all arguments must be arrays")
             result.addAll(array.elements)
         }
         
