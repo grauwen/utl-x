@@ -571,7 +571,6 @@ Text processing, case conversion, and string manipulation
 | `charCodeAt` | 1 | Get character code (Unicode code point) at index |  |
 | `concat` | -1 | Concatenates values into a single string |  |
 | `constantCase` | 1 | Convert string to CONSTANT_CASE |  |
-| `contains` | 1 | Check if string contains substring |  |
 | `dotCase` | 1 | Convert string to dot.case |  |
 | `endsWith` | 1 | Check if string ends with suffix |  |
 | `extractBetween` | 3 | Extract substring between two delimiters |  |

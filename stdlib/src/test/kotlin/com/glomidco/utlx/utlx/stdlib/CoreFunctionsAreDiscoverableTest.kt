@@ -122,7 +122,8 @@ class CoreFunctionsAreDiscoverableTest {
         // behaviour. Ratcheted here so the number cannot grow in the meantime.
         // `concat` left this set in 1.4.5 (B71): it was three entries for one polymorphic
         // function, and splitting it gave the array form its own name, `arrayConcat`.
-        val known = setOf("contains", "distinctBy", "findIndex", "hasKey",
+        // `contains` left it next: the `StringFunctions` copy was dead code, so it was deleted.
+        val known = setOf("distinctBy", "findIndex", "hasKey",
                           "isEmpty", "parseDate", "parseInt", "titleCase")
         val duplicated = catalogue.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
         assertEquals(known, duplicated,

@@ -270,4 +270,23 @@ class CoreFunctionsTest {
         ))
         assertEquals("falsy", (nullResult as UDM.Scalar).value)
     }
+
+    @Test
+    fun testContains() {
+        // B69: this is the `contains` that is registered. Its string case used to be tested only
+        // against the unregistered `StringFunctions.contains`, which no script could reach.
+        fun contains(a: UDM, b: UDM) = (CoreFunctions.contains(listOf(a, b)) as UDM.Scalar).value
+
+        assertEquals(true, contains(UDM.Scalar("hello world"), UDM.Scalar("world")))
+        assertEquals(false, contains(UDM.Scalar("hello world"), UDM.Scalar("universe")))
+
+        val numbers = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3)))
+        assertEquals(true, contains(numbers, UDM.Scalar(2)))
+        assertEquals(false, contains(numbers, UDM.Scalar(5)))
+
+        // Objects: keys only, never values
+        val person = UDM.Object(mapOf("name" to UDM.Scalar("John")))
+        assertEquals(true, contains(person, UDM.Scalar("name")))
+        assertEquals(false, contains(person, UDM.Scalar("John")))
+    }
 }

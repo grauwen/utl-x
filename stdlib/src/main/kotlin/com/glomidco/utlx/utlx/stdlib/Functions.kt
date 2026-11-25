@@ -383,7 +383,6 @@ object StandardLibrary {
         // scripts — and anyone arriving from DataWeave — keeps working.
         registerAlias("joinBy", "join", "Legacy name; also DataWeave's name for the string join")
         register("replace", StringFunctions::replace)
-        //register("contains", StringFunctions::contains)//contains function moved to UDM layer so now it can work with Strings and Arrays, with convention: objects check keys only
         register("startsWith", StringFunctions::startsWith)
         register("endsWith", StringFunctions::endsWith)
         register("length", StringFunctions::length)

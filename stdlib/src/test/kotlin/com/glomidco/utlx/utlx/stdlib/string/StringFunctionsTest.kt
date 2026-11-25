@@ -271,16 +271,6 @@ class StringFunctionsTest {
     }
 
     @Test
-    fun testContains() {
-        val result = StringFunctions.contains(listOf(UDM.Scalar("hello world"), UDM.Scalar("world")))
-        assertTrue(result is UDM.Scalar)
-        assertEquals(true, (result as UDM.Scalar).value)
-        
-        val falseResult = StringFunctions.contains(listOf(UDM.Scalar("hello world"), UDM.Scalar("universe")))
-        assertEquals(false, (falseResult as UDM.Scalar).value)
-    }
-
-    @Test
     fun testStartsWith() {
         val result = StringFunctions.startsWith(listOf(UDM.Scalar("hello world"), UDM.Scalar("hello")))
         assertTrue(result is UDM.Scalar)

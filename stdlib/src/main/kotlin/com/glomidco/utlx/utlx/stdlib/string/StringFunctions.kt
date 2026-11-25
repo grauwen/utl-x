@@ -309,31 +309,11 @@ object StringFunctions {
         }
     }
     
-    @UTLXFunction(
-        description = "Check if string contains substring",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "str: Str value",
-        "search: Search value"
-        ],
-        returns = "Result of the operation",
-        example = "contains(\"hello world\", \"world\") => true",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Check if string contains substring
-     * Usage: contains("hello world", "world") => true
-     */
-    fun contains(args: List<UDM>): UDM {
-        requireArgs(args, 2, "contains")
-        val str = args[0].asString()
-        val search = args[1].asString()
-        return UDM.Scalar(str.contains(search))
-    }
-    
+    // B69: `contains` lived here as a string-only implementation until it moved to
+    // `CoreFunctions::contains`, which also handles arrays, object keys and binary. It was never
+    // registered again, but its @UTLXFunction stayed and put a second, wrong (`maxArgs = 1`)
+    // `contains` into the catalogue. Removed rather than kept: nothing called it but its own test.
+
     @UTLXFunction(
         description = "Check if string starts with prefix",
         minArgs = 1,

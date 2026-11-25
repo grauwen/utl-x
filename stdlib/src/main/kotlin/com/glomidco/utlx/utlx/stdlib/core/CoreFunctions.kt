@@ -224,8 +224,8 @@ object CoreFunctions {
         "element: Element value"
         ],
         returns = "Result of the operation",
-        example = "contains(...) => result",
-        notes = "Works with:\n- Strings: checks if string contains substring\n- Arrays: checks if array contains element\n- Objects: checks if object contains key (key existence only, not value)\nExamples:\n```\ncontains(\"hello world\", \"world\") // true\ncontains(\"hello\", \"xyz\") // false\ncontains([1, 2, 3], 2) // true\ncontains([1, 2, 3], 5) // false\ncontains({\"name\": \"John\", \"age\": 30}, \"name\") // true (key exists)\ncontains({\"name\": \"John\"}, \"email\") // false (key doesn't exist)\n```",
+        example = "contains(\"hello world\", \"world\") => true",
+        notes = "Works with:\n- Strings: checks if string contains substring\n- Arrays: checks if array contains element\n- Objects: checks if object contains key (key existence only, not value)\nRules:\n- null finds nothing: contains(\"abc\", null) and contains(null, \"a\") are false\n- in a string or an object's keys, the value searched for must be a single value; a list or object is an error\n- numbers are compared as text: contains(12345, \"23\") is true\nExamples:\n```\ncontains(\"hello world\", \"world\") // true\ncontains(\"hello\", \"xyz\") // false\ncontains([1, 2, 3], 2) // true\ncontains([1, 2, 3], 5) // false\ncontains({\"name\": \"John\", \"age\": 30}, \"name\") // true (key exists)\ncontains({\"name\": \"John\"}, \"email\") // false (key doesn't exist)\n```",
         tags = ["core"],
         since = "1.0"
     )
@@ -261,13 +261,31 @@ object CoreFunctions {
         
         val collection = args[0]
         val element = args[1]
-        
+
+        // B72: substring and key lookups need a single value to look for. Both branches used to
+        // read it as `(element as? UDM.Scalar)?.value?.toString() ?: ""`, so a null or a
+        // non-scalar became "" — and every string contains "". contains("TX,OK,NM,AZ", $state)
+        // was therefore TRUE for a missing state. Now: null finds nothing, a list or object is a
+        // script error. (Arrays are unaffected: they compare elements, and a list may hold lists.)
+        fun searchText(lookingIn: String): String? = when {
+            element is UDM.Scalar && element.value == null -> null
+            element is UDM.Scalar -> element.value.toString()
+            else -> throw FunctionArgumentException(
+                "contains cannot search $lookingIn for ${element.javaClass.simpleName.lowercase()}: " +
+                "the second argument must be a single value. " +
+                "Hint: to test list membership, put the list first - contains(list, value)"
+            )
+        }
+
         val result = when (collection) {
             is UDM.Scalar -> {
-                // String contains substring
-                val str = collection.value?.toString() ?: ""
-                val searchStr = (element as? UDM.Scalar)?.value?.toString() ?: ""
-                str.contains(searchStr)
+                // String contains substring. Numbers are compared as text, on purpose:
+                // contains(12345, "23") is true, so digits read from XML/CSV (text) and from
+                // JSON (numbers) give the same answer.
+                // B72: a null value contains nothing, and nothing is found in it.
+                val search = searchText("text")
+                if (collection.value == null || search == null) false
+                else collection.value.toString().contains(search)
             }
             is UDM.Array -> {
                 // Array contains element
@@ -275,8 +293,8 @@ object CoreFunctions {
             }
             is UDM.Object -> {
                 // Object contains key (convention: check keys only)
-                val key = (element as? UDM.Scalar)?.value?.toString() ?: ""
-                collection.properties.containsKey(key)
+                val key = searchText("an object's keys")
+                key != null && collection.properties.containsKey(key)
             }
             is UDM.Binary -> {
                 // Binary data - check if contains byte sequence
