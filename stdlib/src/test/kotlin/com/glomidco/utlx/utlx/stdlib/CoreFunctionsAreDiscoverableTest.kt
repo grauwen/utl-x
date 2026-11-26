@@ -123,8 +123,13 @@ class CoreFunctionsAreDiscoverableTest {
         // `concat` left this set in 1.4.5 (B71): it was three entries for one polymorphic
         // function, and splitting it gave the array form its own name, `arrayConcat`.
         // `contains` left it next: the `StringFunctions` copy was dead code, so it was deleted.
-        val known = setOf("distinctBy", "findIndex", "hasKey",
-                          "isEmpty", "parseDate", "parseInt", "titleCase")
+        // Down from nine to one. Every resolved case was the same defect: a function deliberately
+        // superseded, its registration commented out *with the reason beside it*, and only the
+        // @UTLXFunction left behind to advertise a signature nothing dispatches to.
+        //
+        // `hasKey` is the one genuinely different case - a registerAlias whose alias collides with
+        // an annotated method - so it is ratcheted rather than lumped in with the others.
+        val known = setOf("hasKey")
         val duplicated = catalogue.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
         assertEquals(known, duplicated,
             "the set of ambiguous catalogue entries changed. New ones are a regression; if you " +

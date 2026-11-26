@@ -370,7 +370,6 @@ object StandardLibrary {
         register("toTitleCase", StringFunctions::toTitleCase)
         register("trim", StringFunctions::trim)
         register("substring", StringFunctions::substring)
-        //register("concat", StringFunctions::concat) // concat now resides in coreFunctions to handel concat of string, array, obejct, binary etc
         register("split", StringFunctions::split)
         // B50: `join(array, delimiter)` is the STRING join — a deliberate deviation from
         // DataWeave (which uses Strings::joinBy for this and Arrays::join for the relational
@@ -408,13 +407,11 @@ object StandardLibrary {
         register("rightTrim", MoreStringFunctions::rightTrim)
         register("translate", MoreStringFunctions::translate)
         register("reverseString", MoreStringFunctions::reverse) // Renamed to avoid conflict with array reverse
-        //register("isEmpty", MoreStringFunctions::isEmpty)// now generic UDM isEmpty check for all types: strings, arrays, objects, binary, numbers, datetime
         register("isBlank", MoreStringFunctions::isBlank)
         register("charAt", MoreStringFunctions::charAt)
         register("charCodeAt", MoreStringFunctions::charCodeAt)
         register("fromCharCode", MoreStringFunctions::fromCharCode)
         register("capitalize", MoreStringFunctions::capitalize)
-        // register("titleCase", MoreStringFunctions::titleCase) // DUPLICATE: titleCase already registered in CaseFunctions
 
         // Case conversion functions (to various formats)
         register("camelCase", CaseFunctions::camelCase)
@@ -520,7 +517,6 @@ object StandardLibrary {
 
         // Critical array utilities
         register("compact", CriticalArrayFunctions::compact)
-        // register("findIndex", CriticalArrayFunctions::findIndex) // DUPLICATE: findIndex already registered in ArrayFunctions
         register("findLastIndex", CriticalArrayFunctions::findLastIndex)
  
        // Advanced functional operations
@@ -1277,7 +1273,6 @@ object StandardLibrary {
         register("sumBy", EnhancedArrayFunctions::sumBy)
         register("maxBy", EnhancedArrayFunctions::maxBy)
         register("minBy", EnhancedArrayFunctions::minBy)
-        // register("distinctBy", EnhancedArrayFunctions::distinctBy) // DUPLICATE: distinctBy already registered in ArrayFunctions
         register("avgBy", EnhancedArrayFunctions::avgBy)
     }
 

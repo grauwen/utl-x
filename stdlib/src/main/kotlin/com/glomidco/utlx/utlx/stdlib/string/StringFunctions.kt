@@ -137,20 +137,6 @@ object StringFunctions {
         //return UDM.Scalar(str.substring(start, end)) <--- BUG 
     }
     
-    /**
-     * Concatenate strings
-     * Usage: concat("hello", " ", "world") => "hello world"
-     *
-     * B69: deliberately NOT annotated. This is never registered - `CoreFunctions::concat` is the
-     * `concat` UTL-X calls - so an @UTLXFunction here only added a second `concat` to the
-     * catalogue, advertising a signature that nothing dispatches to. Kept because it is
-     * unit-tested and harmless; annotate it only if it is also registered, under a free name.
-     */
-    fun concat(args: List<UDM>): UDM {
-        if (args.isEmpty()) return UDM.Scalar("")
-        val result = args.joinToString("") { it.asString() }
-        return UDM.Scalar(result)
-    }
     
     @UTLXFunction(
         description = "Split string by delimiter",

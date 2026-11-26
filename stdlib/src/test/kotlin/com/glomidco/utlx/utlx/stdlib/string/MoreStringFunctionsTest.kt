@@ -134,28 +134,6 @@ class MoreStringFunctionsTest {
         assertEquals("éfac", (result8 as UDM.Scalar).value)
     }
 
-    @Test
-    fun testIsEmpty() {
-        // Test empty string
-        val result1 = MoreStringFunctions.isEmpty(listOf(UDM.Scalar("")))
-        assertTrue((result1 as UDM.Scalar).value as Boolean)
-
-        // Test non-empty string
-        val result2 = MoreStringFunctions.isEmpty(listOf(UDM.Scalar("hello")))
-        assertFalse((result2 as UDM.Scalar).value as Boolean)
-
-        // Test whitespace string (not empty)
-        val result3 = MoreStringFunctions.isEmpty(listOf(UDM.Scalar("   ")))
-        assertFalse((result3 as UDM.Scalar).value as Boolean)
-
-        // Test single character
-        val result4 = MoreStringFunctions.isEmpty(listOf(UDM.Scalar("a")))
-        assertFalse((result4 as UDM.Scalar).value as Boolean)
-
-        // Test null converted to string
-        val result5 = MoreStringFunctions.isEmpty(listOf(UDM.Scalar(null)))
-        assertTrue((result5 as UDM.Scalar).value as Boolean) // asString() converts null to ""
-    }
 
     @Test
     fun testIsBlank() {
@@ -355,36 +333,6 @@ class MoreStringFunctionsTest {
         assertEquals("!hello", (result7 as UDM.Scalar).value)
     }
 
-    @Test
-    fun testTitleCase() {
-        // Test basic title case
-        val result1 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("hello world")))
-        assertEquals("Hello World", (result1 as UDM.Scalar).value)
-
-        // Test multiple words
-        val result2 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("the quick brown fox")))
-        assertEquals("The Quick Brown Fox", (result2 as UDM.Scalar).value)
-
-        // Test already title case
-        val result3 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("Hello World")))
-        assertEquals("Hello World", (result3 as UDM.Scalar).value)
-
-        // Test single word
-        val result4 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("hello")))
-        assertEquals("Hello", (result4 as UDM.Scalar).value)
-
-        // Test empty string
-        val result5 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("")))
-        assertEquals("", (result5 as UDM.Scalar).value)
-
-        // Test with extra spaces
-        val result6 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("hello  world")))
-        assertEquals("Hello  World", (result6 as UDM.Scalar).value)
-
-        // Test with mixed case
-        val result7 = MoreStringFunctions.titleCase(listOf(UDM.Scalar("hELLo WoRLd")))
-        assertEquals("HELLo WoRLd", (result7 as UDM.Scalar).value)
-    }
 
     @Test
     fun testArgumentValidation() {
@@ -454,7 +402,9 @@ class MoreStringFunctionsTest {
         val capitalized = MoreStringFunctions.capitalize(listOf(UDM.Scalar(unicode)))
         assertEquals("Café 🌍 naïve", (capitalized as UDM.Scalar).value)
         
-        val isEmpty = MoreStringFunctions.isEmpty(listOf(UDM.Scalar(unicode)))
+        // B69: `isEmpty` lives in CoreFunctions - that is the one registered, and the only one
+        // a script can reach. The string-only copy here was deleted with its annotation.
+        val isEmpty = com.glomidco.utlx.stdlib.core.CoreFunctions.isEmpty(listOf(UDM.Scalar(unicode)))
         assertFalse((isEmpty as UDM.Scalar).value as Boolean)
         
         val isBlank = MoreStringFunctions.isBlank(listOf(UDM.Scalar(unicode)))

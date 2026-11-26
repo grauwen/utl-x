@@ -211,7 +211,7 @@ Utility functions
 | `info` | 1 | Logs with INFO level |  |
 | `isDebugMode` | 1 | Check if running in debug mode |  |
 | `isEmpty` | 1 | Checks if a value is empty |  |
-| `isNotEmpty` | 2 | Checks if a value is not empty (inverse of isEmpty) |  |
+| `isNotEmpty` | 1 | Checks if a value is not empty (inverse of isEmpty) |  |
 | `javaVersion` | 1 | Get Java/JVM version |  |
 | `log` | 1 | Logs a value with optional message (passthrough) |  |
 | `logCount` | 1 | Example: |  |
@@ -591,7 +591,6 @@ Text processing, case conversion, and string manipulation
 | `isAlphanumeric` | 1 | Combines isAlpha and isNumeric: characters must be A-Z, a-z, 0-9, or Unicode letters. |  |
 | `isAscii` | 1 | ASCII includes standard English letters, digits, and punctuation. |  |
 | `isBlank` | 1 | Check if string is blank (empty or only whitespace) |  |
-| `isEmpty` | 1 | Check if string is empty (length 0) |  |
 | `isHexadecimal` | 1 | Example: |  |
 | `isLowerCase` | 1 | Non-alphabetic characters (digits, spaces, etc.) are ignored. |  |
 | `isNumeric` | 1 | Only recognizes 0-9 as numeric digits. |  |
@@ -635,7 +634,6 @@ Text processing, case conversion, and string manipulation
 | `substringAfterLast` | 1 | Substring after last occurrence |  |
 | `substringBefore` | 1 | Substring before first occurrence |  |
 | `substringBeforeLast` | 1 | Substring before last occurrence |  |
-| `titleCase` | 1 | Capitalize first letter of each word |  |
 | `titleCase` | 1 | Convert string to Title Case |  |
 | `toTitleCase` | 1 | Convert string to title case (capitalize first letter of each word) |  |
 | `translate` | 1 | Translate characters in string (character mapping) |  |

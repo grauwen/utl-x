@@ -115,16 +115,6 @@ class StringFunctionsTest {
             "When start > end after clamping, should return empty string")
     }
 
-    @Test
-    fun testConcat() {
-        val result = StringFunctions.concat(listOf(UDM.Scalar("hello"), UDM.Scalar(" "), UDM.Scalar("world")))
-        assertTrue(result is UDM.Scalar)
-        assertEquals("hello world", (result as UDM.Scalar).value)
-        
-        // Test with numbers
-        val numResult = StringFunctions.concat(listOf(UDM.Scalar("number: "), UDM.Scalar(42)))
-        assertEquals("number: 42", (numResult as UDM.Scalar).value)
-    }
 
     @Test
     fun testSplit() {

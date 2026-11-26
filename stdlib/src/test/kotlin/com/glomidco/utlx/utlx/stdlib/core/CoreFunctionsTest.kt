@@ -11,7 +11,7 @@ import kotlin.test.assertNotEquals
 class CoreFunctionsTest {
 
     @Test
-    fun testIfThenElse() {
+    fun testConditional() {
         // Test true condition
         val result1 = CoreFunctions.conditional(listOf(
             UDM.Scalar(true),
@@ -288,5 +288,35 @@ class CoreFunctionsTest {
         val person = UDM.Object(mapOf("name" to UDM.Scalar("John")))
         assertEquals(true, contains(person, UDM.Scalar("name")))
         assertEquals(false, contains(person, UDM.Scalar("John")))
+    }
+    @Test
+    fun testIsEmpty() {
+        // B69: these string assertions used to run against the unregistered
+        // `MoreStringFunctions.isEmpty`, which no script could reach. This is the registered one,
+        // and it agrees on every string case - it is wider, not different.
+        fun isEmpty(v: Any?) = (CoreFunctions.isEmpty(listOf(UDM.Scalar(v))) as UDM.Scalar).value
+
+        assertEquals(true, isEmpty(""))
+        assertEquals(false, isEmpty("hello"))
+        assertEquals(false, isEmpty("   "))      // whitespace is not empty - isBlank covers that
+        assertEquals(false, isEmpty("a"))
+        assertEquals(true, isEmpty(null))
+
+        // The part the string-only copy could not express, and the reason it was retired.
+        assertEquals(true, (CoreFunctions.isEmpty(listOf(UDM.Array(emptyList()))) as UDM.Scalar).value)
+        assertEquals(false, (CoreFunctions.isEmpty(listOf(UDM.Array(listOf(UDM.Scalar(1))))) as UDM.Scalar).value)
+        assertEquals(true, (CoreFunctions.isEmpty(listOf(UDM.Object(emptyMap()))) as UDM.Scalar).value)
+        assertEquals(false, isEmpty(0))          // numbers are never empty
+        assertEquals(false, isEmpty(false))      // nor booleans
+    }
+
+    @Test
+    fun testConcat() {
+        // B69/B71: likewise, these ran against the unregistered `StringFunctions.concat`.
+        fun concat(vararg v: Any?) =
+            (CoreFunctions.concat(v.map { UDM.Scalar(it) }) as UDM.Scalar).value
+
+        assertEquals("hello world", concat("hello", " ", "world"))
+        assertEquals("number: 42", concat("number: ", 42))
     }
 }

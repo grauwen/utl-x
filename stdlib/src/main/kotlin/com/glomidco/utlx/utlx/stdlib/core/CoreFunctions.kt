@@ -120,11 +120,10 @@ object CoreFunctions {
         maxArgs = 1,
         category = "Core",
         parameters = [
-            "array: Input array to process",
-        "predicate: Function to test each element (element) => boolean"
+            "value: The value to test - string, array, object, binary or null"
         ],
-        returns = "Boolean indicating the result",
-        example = "isEmpty(...) => result",
+        returns = "true when the value is empty",
+        example = "isEmpty(\"\") => true",
         notes = "Works with strings, arrays, objects\nExamples:\n```\nisEmpty(\"\") // true\nisEmpty(\"hello\") // false\nisEmpty([]) // true\nisEmpty([1, 2]) // false\nisEmpty({}) // true\nisEmpty({\"name\": \"John\"}) // false\nisEmpty(null) // true\n```",
         tags = ["cleanup", "core", "null-handling"],
         since = "1.0"
@@ -174,15 +173,14 @@ object CoreFunctions {
     
     @UTLXFunction(
         description = "Checks if a value is not empty (inverse of isEmpty)",
-        minArgs = 2,
-        maxArgs = 2,
+        minArgs = 1,
+        maxArgs = 1,
         category = "Core",
         parameters = [
-            "array: Input array to process",
-        "element: Element value"
+            "value: The value to test - string, array, object, binary or null"
         ],
-        returns = "Boolean indicating the result",
-        example = "isNotEmpty(...) => result",
+        returns = "true when the value is not empty",
+        example = "isNotEmpty(\"hello\") => true",
         notes = "Works with strings, arrays, objects, and null values\nExamples:\n```\nisNotEmpty(\"\") // false\nisNotEmpty(\"hello\") // true\nisNotEmpty([]) // false\nisNotEmpty([1, 2]) // true\nisNotEmpty({}) // false\nisNotEmpty({\"name\": \"John\"}) // true\nisNotEmpty(null) // false\nisNotEmpty(42) // true (numbers are never empty)\nisNotEmpty(true) // true (booleans are never empty)\n```",
         tags = ["cleanup", "core", "null-handling"],
         since = "1.0"

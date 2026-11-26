@@ -133,29 +133,6 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
         return UDM.Scalar(str.reversed())
     }
     
-    @UTLXFunction(
-        description = "Check if string is empty (length 0)",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "str: Str value",
-        "index: Index value"
-        ],
-        returns = "Boolean indicating the result",
-        example = "isEmpty(\"\") => true",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Check if string is empty (length 0)
-     * Usage: isEmpty("") => true
-     */
-    fun isEmpty(args: List<UDM>): UDM {
-        requireArgs(args, 1, "isEmpty")
-        val str = args[0].asString()
-        return UDM.Scalar(str.isEmpty())
-    }
     
     @UTLXFunction(
         description = "Check if string is blank (empty or only whitespace)",
@@ -163,8 +140,7 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
         maxArgs = 1,
         category = "String",
         parameters = [
-            "str: Str value",
-        "index: Index value"
+            "str: The string to test"
         ],
         returns = "Boolean indicating the result",
         example = "isBlank(\"   \") => true",
@@ -299,31 +275,6 @@ in replaceChars. If replaceChars is shorter, characters are deleted.""",
         return UDM.Scalar(str.replaceFirstChar { it.uppercase() })
     }
     
-    @UTLXFunction(
-        description = "Capitalize first letter of each word",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "str: Str value"
-        ],
-        returns = "Result of the operation",
-        example = "titleCase(\"hello world\") => \"Hello World\"",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Capitalize first letter of each word
-     * Usage: titleCase("hello world") => "Hello World"
-     */
-    fun titleCase(args: List<UDM>): UDM {
-        requireArgs(args, 1, "titleCase")
-        val str = args[0].asString()
-        val result = str.split(" ").joinToString(" ") { word ->
-            word.replaceFirstChar { it.uppercase() }
-        }
-        return UDM.Scalar(result)
-    }
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {
         if (args.size != expected) {

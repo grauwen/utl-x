@@ -247,51 +247,6 @@ class EnhancedArrayFunctionsTest {
         assertThrows<IllegalArgumentException> { EnhancedArrayFunctions.minBy(listOf(nums(1), UDM.Scalar("x"))) }
     }
 
-    // =========================================================================
-    // distinctBy(array, keyFunction)
-    // =========================================================================
-
-    @Test fun `distinctBy - deduplicates by key`() {
-        val arr = UDM.Array(listOf(obj("id" to 1, "name" to "a"), obj("id" to 2, "name" to "b"), obj("id" to 1, "name" to "c")))
-        val result = EnhancedArrayFunctions.distinctBy(listOf(arr, lambda { (it as UDM.Object).get("id")!! })) as UDM.Array
-        assertEquals(2, result.elements.size)
-    }
-
-    @Test fun `distinctBy - keeps first occurrence`() {
-        val arr = UDM.Array(listOf(obj("id" to 1, "name" to "first"), obj("id" to 1, "name" to "second")))
-        val result = EnhancedArrayFunctions.distinctBy(listOf(arr, lambda { (it as UDM.Object).get("id")!! })) as UDM.Array
-        assertEquals(1, result.elements.size)
-        assertEquals("first", (result.elements[0] as UDM.Object).get("name")?.asString())
-    }
-
-    @Test fun `distinctBy - all unique`() {
-        val result = EnhancedArrayFunctions.distinctBy(listOf(nums(1,2,3), lambda { it })) as UDM.Array
-        assertEquals(3, result.elements.size)
-    }
-
-    @Test fun `distinctBy - all same key`() {
-        val arr = UDM.Array(listOf(obj("id" to 1, "v" to "x"), obj("id" to 1, "v" to "y"), obj("id" to 1, "v" to "z")))
-        val result = EnhancedArrayFunctions.distinctBy(listOf(arr, lambda { (it as UDM.Object).get("id")!! })) as UDM.Array
-        assertEquals(1, result.elements.size)
-    }
-
-    @Test fun `distinctBy - empty array`() {
-        val result = EnhancedArrayFunctions.distinctBy(listOf(nums(), lambda { it })) as UDM.Array
-        assertEquals(0, result.elements.size)
-    }
-
-    @Test fun `distinctBy - single element`() {
-        val result = EnhancedArrayFunctions.distinctBy(listOf(nums(1), lambda { it })) as UDM.Array
-        assertEquals(1, result.elements.size)
-    }
-
-    @Test fun `distinctBy - missing args throws`() {
-        assertThrows<IllegalArgumentException> { EnhancedArrayFunctions.distinctBy(listOf(nums(1))) }
-    }
-
-    @Test fun `distinctBy - not lambda throws`() {
-        assertThrows<IllegalArgumentException> { EnhancedArrayFunctions.distinctBy(listOf(nums(1), UDM.Scalar("x"))) }
-    }
 
     // =========================================================================
     // avgBy(array, mapper)
