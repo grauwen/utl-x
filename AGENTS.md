@@ -43,7 +43,7 @@ code change is invisible to it until you rebuild that jar.
 cd conformance-suite && python3 utlx/runners/cli-runner/simple-runner.py
 ```
 
-**588 tests** (2026-11-24). Must run from `conformance-suite/`; the runner uses
+**591 tests** (2026-11-26). Must run from `conformance-suite/`; the runner uses
 relative paths. Append a category to narrow: `stdlib/array`, `formats/xml`,
 `language/selectors`.
 
@@ -63,16 +63,17 @@ GitHub Actions page says nothing about a change under `modules/`.
 **This suite only exercises the INTERPRETED path.** It shells out to the CLI, which
 runs `Interpreter`, and the transform command has no strategy flag. UTL-X has three
 execution strategies — TEMPLATE (the interpreter), COPY, and COMPILED (the
-`ASTCompiler`, and what the UTLXe engine runs by default). A green 588/588 says
+`ASTCompiler`, and what the UTLXe engine runs by default). A green 591/591 says
 nothing about two of them:
 
 ```bash
-./gradlew :modules:engine:test       # 1059 tests, incl. ConformanceStrategyParityTest (421)
+./gradlew :modules:engine:test       # 1063 tests, incl. ConformanceStrategyParityTest (423)
 ```
 
-**Five bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
+**Six bugs have come from this gap** — B34 (`&&`/`||`), B35 (exact numerics),
 EB03 (`"5" == 5`), B48 (path steps projecting over a sequence), B63 (a document
-`null` vs the `null` literal) — each a case where the two paths disagreed. Four were
+`null` vs the `null` literal), B73 (`findIndex` with no match) — each a case where the
+two paths disagreed. Four were
 fixed in the interpreter while the compiled path silently diverged; **B63 ran the
 other way** — the compiled path was right and the interpreter was wrong, so a script
 tested with the CLI misbehaved only in the engine. Do not assume the CLI is the
@@ -80,6 +81,18 @@ reference. B48 is the clearest warning:
 the interpreter-only fix passed core, stdlib, CLI *and* all 571 conformance tests,
 and still returned `null` on COPY and COMPILED where TEMPLATE returned the right
 answer. It turned a loud consistent error into a silent strategy-dependent one.
+
+**B73 is the one to read if you are about to re-implement a stdlib function in
+`modules/core`.** Its cause was not a one-sided fix but a *second implementation that
+exists on purpose*: core cannot depend on `:stdlib` (the dependency runs the other way),
+so the interpreter owns `map`, `filter`, `find`, `findIndex`, `reduce`, `first` and
+`last` to evaluate a script standalone. The compiled path has no such copies and uses
+stdlib, so those seven are permanently two implementations of one language function.
+They had drifted: `findIndex` with no match answered `-1` from the CLI and `null` from
+the engine. Deleting the copies is *not* the fix — it breaks a bare `Interpreter`, which
+is a supported configuration — so the control is
+`modules/engine/.../strategy/B73InterpreterAndStdlibAgreeTest.kt`, which holds the two
+to the same answer. **Touch any of those seven and run that test.**
 
 So: **any change under `modules/core` touching member access, comparison, numerics
 or evaluation order is not verified until `:modules:engine:test` passes.** Do not
@@ -134,8 +147,8 @@ modules/engine      UTLXe — execution strategies, the production runtime
 modules/bundle      file-level bundle management  (engine DEPENDS on this)
 modules/daemon      utlxd — LSP + REST
 formats/            xml json csv yaml xsd jsch avro protobuf odata osch tsch
-stdlib/             697 functions + 26 aliases = 723 callable names; 733 catalogue entries
-                    (10 are duplicates — B69). Plus 12 version-gated validate.* (%utlx 1.1)
+stdlib/             698 functions + 26 aliases = 724 callable names; 725 catalogue entries
+                    (1 duplicate left, `hasKey` — B69). Plus 12 version-gated validate.* (%utlx 1.1)
 schema/             USDL, schema serializers
 wrappers/           .NET and Go clients driving the engine over stdio protobuf
 conformance-suite/  the Python-driven corpus
