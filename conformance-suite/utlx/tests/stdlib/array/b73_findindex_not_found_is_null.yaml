@@ -1,0 +1,48 @@
+name: "b73_findindex_not_found_is_null"
+category: "stdlib/array"
+description: "B73: findIndex/findLastIndex answer null when nothing matches, on every strategy"
+tags: ["findIndex", "findLastIndex", "B73", "parity", "null-handling"]
+
+input:
+  format: json
+  data: |
+    {"a": [1, 2, 3], "empty": []}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    found: findIndex($input.a, x => x > 1),
+    notFound: findIndex($input.a, x => x > 100),
+    emptyArray: findIndex($input.empty, x => true),
+    lastFound: findLastIndex($input.a, x => x < 3),
+    lastNotFound: findLastIndex($input.a, x => x > 100),
+    recovered: findIndex($input.a, x => x > 100) ?? -1,
+    siblingsAgree: indexOf($input.a, 99)
+  }
+
+expected:
+  format: json
+  data: |
+    {
+      "found": 1,
+      "notFound": null,
+      "emptyArray": null,
+      "lastFound": 1,
+      "lastNotFound": null,
+      "recovered": -1,
+      "siblingsAgree": null
+    }
+
+metadata:
+  author: "UTL-X Team"
+  notes:
+    - "B73: findIndex returned -1 from the interpreter and null from stdlib, so the CLI and the"
+    - "engine answered differently for the same script. Nothing caught it because no fixture"
+    - "called findIndex with no match — 421 parity tests and that path was never travelled."
+    - "ConformanceStrategyParityTest auto-discovers this file, so it now runs on TEMPLATE, COPY"
+    - "and COMPILED: the divergence cannot come back silently."
+    - "null is the house convention: indexOf, lastIndexOf and find all answer null, and `?? -1`"
+    - "recovers the pre-B73 value, while the reverse needs a comparison and searches twice."

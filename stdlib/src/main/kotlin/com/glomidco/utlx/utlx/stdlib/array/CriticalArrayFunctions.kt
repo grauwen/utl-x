@@ -111,7 +111,11 @@ Complement to findIndex - searches from the end""",
             predicate.apply(listOf(element)).asBoolean()
         }
 
-        return UDM.Scalar(index.toDouble())
+        // B73: null, not -1, when nothing matches. `indexOf`, `lastIndexOf` and `find` all answer
+        // null, so -1 was the outlier - borrowed from JavaScript's Array.prototype. null also
+        // composes: `findLastIndex(...) ?? -1` recovers the old value, while the reverse needs a
+        // comparison and evaluates the search twice.
+        return UDM.Scalar(if (index >= 0) index.toDouble() else null)
     }
     
     @UTLXFunction(

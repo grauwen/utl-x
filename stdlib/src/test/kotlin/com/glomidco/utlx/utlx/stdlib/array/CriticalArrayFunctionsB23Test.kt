@@ -27,14 +27,19 @@ class CriticalArrayFunctionsB23Test {
         assertEquals(3.0, (result as UDM.Scalar).value)  // last 2 is at index 3
     }
 
-    @Test fun `findLastIndex - no match returns -1`() {
+    // B73: these two asserted -1 until 2026-11-26. The value changed deliberately, as part of
+    // settling what "not found" means across the whole library: `indexOf`, `lastIndexOf`, `find`
+    // and (after B73) `findIndex` all answer null, so -1 was the outlier here. The old value stays
+    // reachable at the call site - `findLastIndex(...) ?? -1` - whereas recovering null from -1
+    // needs a comparison and evaluates the search twice.
+    @Test fun `findLastIndex - no match returns null`() {
         val result = CriticalArrayFunctions.findLastIndex(listOf(nums(1, 2, 3), lambda { UDM.Scalar(it.asNumber() > 100) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
+        assertEquals(null, (result as UDM.Scalar).value)
     }
 
-    @Test fun `findLastIndex - empty array returns -1`() {
+    @Test fun `findLastIndex - empty array returns null`() {
         val result = CriticalArrayFunctions.findLastIndex(listOf(nums(), lambda { UDM.Scalar(true) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
+        assertEquals(null, (result as UDM.Scalar).value)
     }
 
     @Test fun `findLastIndex - single element matches`() {
