@@ -5,10 +5,12 @@
 > [B68](B68-working-functions-are-absent-from-the-catalogue.md). (Filed as CB12 at first; see B68's
 > header for why that prefix was wrong.)
 
-**Status:** Open — found 2026-11-23. **`concat` resolved 2026-11-24**
-([B71](B71-concat-was-four-operations-behind-one-name.md)); **`contains` and `isEmpty` resolved
-2026-11-25**, and `titleCase`, `distinctBy`, `findIndex`, `parseDate` and `parseInt` with them.
-**One remains: `hasKey`.**
+**Status:** **Fixed — 2026-11-26.** All nine resolved: `concat`
+([B71](B71-concat-was-four-operations-behind-one-name.md)), `contains`
+([B72](B72-contains-searched-for-empty-text-when-given-null.md)), then `isEmpty`, `titleCase`,
+`distinctBy`, `findIndex`, `parseDate`, `parseInt` and finally `hasKey`. The catalogue now holds
+**724 entries for 724 distinct names** — no name is listed twice, and the test that used to ratchet
+a tolerated list now asserts that absolutely.
 **Priority:** Low. An earlier version of this report rated four of the nine Medium, on the grounds
 that they were registered twice and file order decided the winner. **That was wrong** — see
 *Correction* below. Every one of the eight resolved cases was a documentation defect with no
@@ -20,8 +22,9 @@ behaviour at stake.
 
 ## Symptom
 
-The catalogue holds **725 entries for 724 distinct names**. One name appears twice (nine when this
-was filed), so a lookup returns several different answers and does not say which one runs:
+The catalogue held **733 entries for 724 distinct names** when this was filed: nine names appeared
+more than once, so a lookup returned several different answers without saying which one ran. It now
+holds 724 for 724.
 
 ```
 $ utlx functions info concat
@@ -32,8 +35,10 @@ concat(…)   Array   — concatenates arrays
 
 All three are documented. Exactly one executes.
 
+Originally:
+
 ```
-hasKey
+concat  contains  distinctBy  findIndex  hasKey  isEmpty  parseDate  parseInt  titleCase
 ```
 
 `concat` was the ninth and is **fixed** — see
@@ -250,9 +255,39 @@ included. If the keep-inner-capitals behaviour is ever wanted it needs its **own
 since it is a different function and not a duplicate; the comparison above is preserved here for
 whoever wants it, and the implementation is six lines in git history.
 
-## Interim guard, already in place
+## Resolved: `hasKey` — the last one, and the one that justified the duplicate check
 
-`CoreFunctionsAreDiscoverableTest.no new ambiguous catalogue entries` asserts the duplicate set
-equals exactly `hasKey`. A new collision fails the build; fixing one requires removing it from the
-list here and in the test, so the two cannot drift — eight names leaving that set, one at a time,
-is what the mechanism looks like in use.
+`hasKey` is callable, and always was, through
+
+```kotlin
+register("containsKey", ObjectFunctions::containsKey)
+registerAlias("hasKey", "containsKey", "Common object method name")
+```
+
+`registerAlias` makes the name callable **and** catalogues it against the implementation that runs,
+which is correct and wanted. The defect sat beside it: `ObjectFunctions` also contained a
+`fun hasKey` carrying an `@UTLXFunction`, never registered — and **byte-for-byte identical** to
+`containsKey`, same body, same argument checks, differing only in the function name inside its
+error strings. A copy-paste that was annotated and then forgotten.
+
+So the catalogue carried two `hasKey` entries: the alias, pointing at `containsKey`, and the copy,
+describing code nothing dispatches to. The copy had no callers anywhere — not even a test.
+
+Deleted. The alias stands, `hasKey({"a":1}, "a")` still answers `true`, and nothing else changed.
+
+**This case is why the duplicate check is not redundant with the phantom check.** A duplicate can
+hide behind a name that *is* callable: `hasKey` worked, so `every catalogued function is callable`
+passed, and `every callable function appears in the catalogue` passed too. Only counting entries
+per name found it. The mutation test shows exactly that — re-introducing the copy fails
+`no name is catalogued twice` with `{hasKey=2}` while the other four invariants stay green.
+
+`containsKey`'s annotation also advertised an `array` parameter for a function that takes an object.
+Corrected — and the alias inherits its metadata, so both entries now show `(object, key)`.
+
+## The guard, now absolute
+
+`CoreFunctionsAreDiscoverableTest.no name is catalogued twice` began as a ratchet over nine
+tolerated names. With all nine resolved it is now an **absolute** invariant: the catalogue may not
+list any name twice. That is the better end state — a ratchet records a debt, an invariant forbids
+it — and the nine leaving the set one at a time is what the mechanism looked like while the debt
+was being paid.

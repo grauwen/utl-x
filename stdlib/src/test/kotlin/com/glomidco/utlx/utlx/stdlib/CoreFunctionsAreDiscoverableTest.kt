@@ -111,28 +111,24 @@ class CoreFunctionsAreDiscoverableTest {
     }
 
     @Test
-    fun `no new ambiguous catalogue entries`() {
-        // B69: nine names are catalogued more than once, because two objects annotate the same
-        // method name while only one of them is registered under it (plus `hasKey`, where a
-        // registerAlias collides with an annotated method). `utlx functions info concat` therefore
-        // returns three different signatures, only one of which describes what actually runs.
+    fun `no name is catalogued twice`() {
+        // Was a ratchet of nine tolerated names (B69); it is now an absolute invariant, because
+        // all nine are resolved and the catalogue has no duplicates left at all.
         //
-        // Fixing those is B69, not B68: four of them (findIndex, parseDate, parseInt, distinctBy)
-        // are registered TWICE from different objects, so the choice of which to keep changes
-        // behaviour. Ratcheted here so the number cannot grow in the meantime.
-        // `concat` left this set in 1.4.5 (B71): it was three entries for one polymorphic
-        // function, and splitting it gave the array form its own name, `arrayConcat`.
-        // `contains` left it next: the `StringFunctions` copy was dead code, so it was deleted.
-        // Down from nine to one. Every resolved case was the same defect: a function deliberately
-        // superseded, its registration commented out *with the reason beside it*, and only the
-        // @UTLXFunction left behind to advertise a signature nothing dispatches to.
+        // Every one of the nine was the same defect: a function deliberately superseded, its
+        // registration commented out *with the reason written beside it*, and only the
+        // @UTLXFunction left behind to advertise a signature nothing dispatches to. `concat` (B71)
+        // and `contains` (B72) needed real decisions; the rest were deletions.
         //
-        // `hasKey` is the one genuinely different case - a registerAlias whose alias collides with
-        // an annotated method - so it is ratcheted rather than lumped in with the others.
-        val known = setOf("hasKey")
-        val duplicated = catalogue.groupingBy { it }.eachCount().filterValues { it > 1 }.keys
-        assertEquals(known, duplicated,
-            "the set of ambiguous catalogue entries changed. New ones are a regression; if you " +
-            "FIXED one, remove it from `known` here and from B69.")
+        // Why this check is not redundant with `every catalogued function is callable`: a
+        // duplicate can hide behind a name that IS callable. `hasKey` was the clearest case — the
+        // name worked through `registerAlias("hasKey", "containsKey", …)`, so the phantom check
+        // passed, while a byte-for-byte copy of `containsKey` sat beside it contributing a second
+        // entry. Only counting entries per name finds that.
+        val duplicated = catalogue.groupingBy { it }.eachCount().filterValues { it > 1 }
+        assertEquals(emptyMap(), duplicated,
+            "these names are catalogued more than once, so `utlx functions info <name>` answers " +
+            "with several signatures and does not say which one runs. Usually a second object " +
+            "annotates the same method name without registering it: $duplicated")
     }
 }
