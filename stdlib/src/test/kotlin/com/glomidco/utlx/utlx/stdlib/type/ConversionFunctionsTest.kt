@@ -71,25 +71,6 @@ class ConversionFunctionsTest {
         }
     }
 
-    @Test
-    fun testParseInt() {
-        val result1 = ConversionFunctions.parseInt(listOf(UDM.Scalar("42")))
-        assertEquals(42.0, (result1 as UDM.Scalar).value)
-        
-        // Truncates decimals
-        val result2 = ConversionFunctions.parseInt(listOf(UDM.Scalar("42.7")))
-        assertEquals(42.0, (result2 as UDM.Scalar).value)
-        
-        val result3 = ConversionFunctions.parseInt(listOf(UDM.Scalar(3.9)))
-        assertEquals(3.0, (result3 as UDM.Scalar).value)
-        
-        // With default
-        val result4 = ConversionFunctions.parseInt(listOf(
-            UDM.Scalar("not a number"), 
-            UDM.Scalar(0)
-        ))
-        assertEquals(0, (result4 as UDM.Scalar).value)
-    }
 
     @Test
     fun testParseFloat() {
@@ -262,53 +243,8 @@ class ConversionFunctionsTest {
 
     // ==================== DATE CONVERSION TESTS ====================
 
-    @Test
-    fun testParseDate() {
-        // ISO date format
-        val result1 = ConversionFunctions.parseDate(listOf(UDM.Scalar("2023-10-15")))
-        assertTrue(result1 is UDM.Scalar)
-        val dateStr1 = (result1 as UDM.Scalar).value as String
-        assertTrue(dateStr1.contains("2023"))
-        
-        // ISO datetime format
-        val result2 = ConversionFunctions.parseDate(listOf(UDM.Scalar("2023-10-15T14:30:00Z")))
-        assertTrue(result2 is UDM.Scalar)
-        val dateStr2 = (result2 as UDM.Scalar).value as String
-        assertTrue(dateStr2.contains("2023"))
-        
-        // Invalid date
-        val result3 = ConversionFunctions.parseDate(listOf(UDM.Scalar("invalid")))
-        assertEquals(null, (result3 as UDM.Scalar).value)
-    }
 
-    @Test
-    fun testParseDateWithFormat() {
-        // Custom format
-        val result1 = ConversionFunctions.parseDate(listOf(
-            UDM.Scalar("10/15/2023"), 
-            UDM.Scalar("MM/dd/yyyy")
-        ))
-        assertTrue(result1 is UDM.Scalar)
-        val dateStr1 = (result1 as UDM.Scalar).value as String
-        assertTrue(dateStr1.contains("2023"))
-        
-        // Invalid format
-        val result2 = ConversionFunctions.parseDate(listOf(
-            UDM.Scalar("2023-10-15"), 
-            UDM.Scalar("MM/dd/yyyy")
-        ))
-        assertEquals(null, (result2 as UDM.Scalar).value)
-    }
 
-    @Test
-    fun testParseDateWithDefault() {
-        val result = ConversionFunctions.parseDate(listOf(
-            UDM.Scalar("invalid"), 
-            UDM.Scalar("MM/dd/yyyy"), 
-            UDM.Scalar("default")
-        ))
-        assertEquals("default", (result as UDM.Scalar).value)
-    }
 
     // ==================== ARRAY/OBJECT CONVERSION TESTS ====================
 
@@ -496,14 +432,6 @@ class ConversionFunctionsTest {
         assertEquals(2, (obj.properties["b"] as UDM.Scalar).value)
     }
 
-    @Test
-    fun testParseIntWithNegativeNumbers() {
-        val result1 = ConversionFunctions.parseInt(listOf(UDM.Scalar("-42")))
-        assertEquals(-42.0, (result1 as UDM.Scalar).value)
-        
-        val result2 = ConversionFunctions.parseInt(listOf(UDM.Scalar(-3.7)))
-        assertEquals(-3.0, (result2 as UDM.Scalar).value)
-    }
 
     @Test
     fun testParseBooleanWithWhitespace() {

@@ -542,6 +542,10 @@ object StandardLibrary {
         // Extended math
         register("formatNumber", ExtendedMathFunctions::formatNumber)
         register("parseInt", ExtendedMathFunctions::parseInt)
+        // B69: the fallback-on-failure capability, which had been sitting unregistered in
+        // ConversionFunctions. Exposed as its own name because `parseInt` throws and a thrown
+        // error cannot be caught in UTL-X.
+        register("parseIntOr", ExtendedMathFunctions::parseIntOr)
         // parseFloat is registered in registerConversionFunctions() alongside parseNumber/parseDouble.
 
         // Statistical functions
@@ -563,6 +567,8 @@ object StandardLibrary {
         register("fromEpochMillis", DateFunctions::fromEpochMillis)
         register("fromEpochMicros", DateFunctions::fromEpochMicros)
         register("parseDate", DateFunctions::parseDate)
+        // B69: as parseIntOr. The fallback is argument two - parseDate's third is the locale.
+        register("parseDateOr", DateFunctions::parseDateOr)
         register("toDate", DateFunctions::toDate)  // Conversion alias
         register("formatDate", DateFunctions::formatDate)
         register("addDays", DateFunctions::addDays)
@@ -853,7 +859,6 @@ object StandardLibrary {
     // CRITICAL: Number parsing (used in examples!)
          register("parseNumber", ConversionFunctions::parseNumber)
          register("toNumber", ConversionFunctions::toNumber)
-         // register("parseInt", ConversionFunctions::parseInt) // DUPLICATE: parseInt already registered in ExtendedMathFunctions
          // B25: parseFloat lives here with its conversion siblings; delegates to parseNumber so it
          // strips grouping/currency separators ("1,234.56"). (Was previously registered from
          // ExtendedMathFunctions with a plain toDouble() that failed on commas.)
@@ -868,7 +873,6 @@ object StandardLibrary {
          register("toBoolean", ConversionFunctions::toBoolean)
        
          // Date conversion
-         // register("parseDate", ConversionFunctions::parseDate) // DUPLICATE: parseDate already registered in DateFunctions
        
          // Collection conversion
          register("toArray", ConversionFunctions::toArray)

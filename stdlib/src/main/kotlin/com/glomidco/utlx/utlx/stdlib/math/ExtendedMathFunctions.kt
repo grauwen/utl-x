@@ -76,6 +76,43 @@ object ExtendedMathFunctions {
             )
         }
     }
+
+    @UTLXFunction(
+        name = "parseIntOr",
+        description = "Parses an integer, returning a fallback instead of failing",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Math",
+        parameters = [
+            "text: The string to parse",
+            "fallback: Returned when the text is not an integer"
+        ],
+        returns = "The parsed integer, or the fallback",
+        example = "parseIntOr(\"N/A\", 0) => 0",
+        notes = "For data that is mostly numeric with the occasional \"N/A\" or empty cell, which " +
+                "is the normal case in CSV and spreadsheet exports. `parseInt` throws on bad " +
+                "input, and a thrown error cannot be caught in UTL-X - `parseInt(x) ?? 0` and " +
+                "`coalesce(parseInt(x), 0)` both fail - so the fallback has to be part of the " +
+                "call. Delegates to `parseInt`, so a valid number parses identically.",
+        tags = ["math", "type", "null-handling"],
+        since = "1.4.5"
+    )
+    /**
+     * Parses an integer, returning `fallback` instead of throwing.
+     *
+     * B69: the capability existed in an unregistered `ConversionFunctions::parseInt` and was
+     * unreachable. Exposed here as a *delegating* wrapper rather than by registering that copy,
+     * because the copy had drifted - it returned a Double and coerced through `parseNumber`. A
+     * wrapper cannot drift: whatever `parseInt` accepts, this accepts identically.
+     */
+    fun parseIntOr(args: List<UDM>): UDM {
+        requireArgs(args, 2, "parseIntOr")
+        return try {
+            parseInt(listOf(args[0]))
+        } catch (e: FunctionArgumentException) {
+            args[1]
+        }
+    }
     
     // `parseFloat` lived here until B25 moved it to ConversionFunctions, where it sits with its
     // conversion siblings and delegates to `parseNumber`:
