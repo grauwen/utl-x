@@ -37,7 +37,12 @@ import java.nio.file.Paths
  *   - Persistent session (variables remain defined)
  */
 object ReplCommand {
-    private const val VERSION = "1.0.0"
+    // CB14: the REPL banner said "v1.0.0" while running a 1.4.4 build. CB08 fixed exactly this
+    // for the main CLI banner but did not reach here, and nothing checked — which is why
+    // `scripts/check-no-pinned-versions.py` now sweeps for any version-shaped literal rather
+    // than for the current release number.
+    private val VERSION: String =
+        ReplCommand::class.java.`package`?.implementationVersion ?: "dev"
     private var env = Environment()
     private var stdlib = StandardLibraryImpl()
 

@@ -177,10 +177,17 @@ tasks.register("createScripts") {
         File(scriptsDir, "utlx").writeText("""
             #!/bin/bash
             SCRIPT_DIR="${'$'}( cd "${'$'}( dirname "${'$'}{BASH_SOURCE[0]}" )" && pwd )"
-            JAR="${'$'}SCRIPT_DIR/../build/libs/cli-${project.version}.jar"
-            
-            if [ ! -f "${'$'}JAR" ]; then
-                echo "Error: JAR not found at ${'$'}JAR"
+            LIB_DIR="${'$'}SCRIPT_DIR/../build/libs"
+
+            # CB14: resolve the most recently built cli-*.jar rather than naming a version. The
+            # version used to be interpolated here at generation time, so the committed script
+            # pinned whichever release was current when `createScripts` last ran - and after a
+            # bump it silently kept launching the PREVIOUS jar, which is still sitting in
+            # build/libs. Generated output must not carry a version; the manifest has it.
+            JAR="${'$'}(ls -t "${'$'}LIB_DIR"/cli-*.jar 2>/dev/null | head -n 1)"
+
+            if [ -z "${'$'}JAR" ]; then
+                echo "Error: no cli JAR found in ${'$'}LIB_DIR"
                 echo "Run './gradlew :modules:cli:jar' first"
                 exit 1
             fi
@@ -194,10 +201,16 @@ tasks.register("createScripts") {
         File(scriptsDir, "utlx.bat").writeText("""
             @echo off
             set SCRIPT_DIR=%~dp0
-            set JAR=%SCRIPT_DIR%..\build\libs\cli-${project.version}.jar
-            
-            if not exist "%JAR%" (
-                echo Error: JAR not found at %JAR%
+            set LIB_DIR=%SCRIPT_DIR%..\build\libs
+
+            REM CB14: newest jar, not a pinned version - see the shell script above.
+            set "JAR="
+            for /f "delims=" %%F in ('dir /b /o-d "%LIB_DIR%\cli-*.jar" 2^^>nul') do (
+                if not defined JAR set "JAR=%LIB_DIR%\%%F"
+            )
+
+            if not defined JAR (
+                echo Error: no cli JAR found in %LIB_DIR%
                 echo Run 'gradlew :modules:cli:jar' first
                 exit /b 1
             )

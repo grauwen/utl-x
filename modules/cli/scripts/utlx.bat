@@ -1,9 +1,15 @@
 @echo off
 set SCRIPT_DIR=%~dp0
-set JAR=%SCRIPT_DIR%..\build\libs\cli-1.4.4.jar
+set LIB_DIR=%SCRIPT_DIR%..\build\libs
 
-if not exist "%JAR%" (
-    echo Error: JAR not found at %JAR%
+REM CB14: newest jar, not a pinned version - see the shell script above.
+set "JAR="
+for /f "delims=" %%F in ('dir /b /o-d "%LIB_DIR%\cli-*.jar" 2^^>nul') do (
+    if not defined JAR set "JAR=%LIB_DIR%\%%F"
+)
+
+if not defined JAR (
+    echo Error: no cli JAR found in %LIB_DIR%
     echo Run 'gradlew :modules:cli:jar' first
     exit /b 1
 )
