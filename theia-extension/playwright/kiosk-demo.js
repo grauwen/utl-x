@@ -100,6 +100,35 @@ const MOD = process.platform === 'darwin' ? 'Meta' : 'Control';
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 function narrate(msg) { console.log(`\n▶ ${msg}`); }
 
+// Fail fast, and say which selector drifted. Checks the live DOM rather than grepping the bundle,
+// so it is accurate about what the running IDE actually renders.
+async function preflight(page) {
+  const required = {
+    executeBtn:         CONFIG.sel.executeBtn,
+    monacoContainer:    CONFIG.sel.monacoContainer,
+    editorClearBtn:     CONFIG.sel.editorClearBtn,
+    editorLoadBtn:      CONFIG.sel.editorLoadBtn,
+    inputLoadBtn:       CONFIG.sel.inputLoadBtn,
+    outputFormatSelect: CONFIG.sel.outputFormatSelect,
+  };
+  const missing = [];
+  for (const [name, sel] of Object.entries(required)) {
+    if (!sel) { missing.push(`${name} (undefined in selectors.js)`); continue; }
+    const n = await page.locator(sel).count().catch(() => 0);
+    if (n === 0) missing.push(`${name} → ${sel}`);
+  }
+  if (missing.length) {
+    console.error('\n✗ preflight failed — the IDE does not render these selectors:');
+    for (const m of missing) console.error(`    ${m}`);
+    console.error('\n  Either the extension needs rebuilding (../rebuild-and-start-mcp.sh), or a');
+    console.error('  data-testid was renamed and playwright/selectors.js has not caught up.');
+    console.error('  Confirm against what is served:');
+    console.error('    grep -o "utlx-pb-[a-z-]*" ../browser-app/lib/frontend/bundle.js | sort -u\n');
+    throw new Error(`preflight: ${missing.length} selector(s) missing`);
+  }
+  console.log('✓ preflight: all demo selectors present');
+}
+
 async function setOutputFormat(page, fmt) {
   await page.locator(CONFIG.sel.outputFormatSelect).first().selectOption(fmt);
 }
@@ -427,7 +456,15 @@ async function runOnce(page, inputJson) {
   const page = await context.newPage();
   await page.goto(CONFIG.baseURL, { waitUntil: 'domcontentloaded' });
   // Let Theia's shell + the UTL-X panels mount.
-  await page.locator(CONFIG.sel.executeBtn).first().waitFor({ state: 'visible', timeout: 60000 });
+  await page.locator(CONFIG.sel.executeBtn).first().waitFor({ state: 'visible', timeout: 60000 })
+    .catch(async () => { await preflight(page); throw new Error('Execute button never appeared'); });
+
+  // Everything the demo depends on, checked before the first narration line. A selector that has
+  // been renamed in the IDE used to cost a silent 60s stall on the line above and then a bare
+  // throw, which is indistinguishable from a hang — `execute` was 'utlx-execute' long after the
+  // IDE had renamed it 'utlx-pb-execute'. Two seconds and a list of names beats a minute of
+  // nothing.
+  await preflight(page);
 
   let n = 0;
   do {
