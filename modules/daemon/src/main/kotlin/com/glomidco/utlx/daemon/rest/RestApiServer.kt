@@ -68,6 +68,9 @@ import java.util.UUID
  * REST API server for UTL-X daemon
  * Provides HTTP endpoints for MCP server integration
  */
+private val SERVER_VERSION: String =
+    RestApiServer::class.java.`package`?.implementationVersion ?: "dev"
+
 class RestApiServer(
     private val port: Int = 7779,
     private val host: String = "0.0.0.0",
@@ -249,7 +252,10 @@ class RestApiServer(
                     call.respond(
                         HealthResponse(
                             status = "ok",
-                            version = "1.4.0",
+                            // CB08 pattern: from the jar manifest, not a literal. This reported
+                            // "1.4.0" while serving 1.4.4 code, which made a stale-daemon
+                            // diagnosis look correct when the daemon was in fact current.
+                            version = SERVER_VERSION,
                             uptime = System.currentTimeMillis() - startTime
                         )
                     )
