@@ -75,10 +75,11 @@ internal sealed class UtlxeProcess : IAsyncDisposable, IDisposable
 
     private string ResolveJava()
     {
+        var executable = OperatingSystem.IsWindows() ? "java.exe" : "java";
         // 1. Explicit JavaHome
         if (_javaHome != null)
         {
-            var path = Path.Combine(_javaHome, "bin", "java");
+            var path = Path.Combine(_javaHome, "bin", executable);
             if (File.Exists(path)) return path;
         }
 
@@ -86,7 +87,7 @@ internal sealed class UtlxeProcess : IAsyncDisposable, IDisposable
         var javaHome = Environment.GetEnvironmentVariable("JAVA_HOME");
         if (javaHome != null)
         {
-            var path = Path.Combine(javaHome, "bin", "java");
+            var path = Path.Combine(javaHome, "bin", executable);
             if (File.Exists(path)) return path;
         }
 

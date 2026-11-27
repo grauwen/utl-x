@@ -299,22 +299,13 @@ class Parser(
             val currentToken = peek()
 
             // Check if this is a format keyword
-            val isFormatKeyword = currentToken.type in listOf(
-                TokenType.XML, TokenType.JSON, TokenType.CSV, TokenType.YAML,
-                TokenType.AUTO, TokenType.XSD, TokenType.JSCH, TokenType.AVRO, TokenType.PROTO, TokenType.ODATA, TokenType.OSCH, TokenType.TSCH
-            )
+            val isFormatKeyword = isFormat(currentToken) && (!isXlsx(currentToken) || !isFollowedByFormat())
 
             // If it's a format keyword, check if it's followed by a hyphen
             // If yes, it's part of the name (e.g., "input-auto-data")
             // If no, it's the actual format
             if (isFormatKeyword) {
-                val nextTokenIndex = current + 1
-                val isFollowedByHyphen = nextTokenIndex < separatorIndex && (
-                    tokens[nextTokenIndex].type == TokenType.MINUS ||
-                    (tokens[nextTokenIndex].type == TokenType.NUMBER && tokens[nextTokenIndex].lexeme.startsWith("-"))
-                )
-
-                if (!isFollowedByHyphen) {
+                if (!isFollowedByHyphen(separatorIndex)) {
                     // This is the format, stop here
                     break
                 }
@@ -389,7 +380,8 @@ class Parser(
 
             // Check if there's an optional name before the format
             val name = when {
-                check(TokenType.IDENTIFIER) -> {
+                check(TokenType.IDENTIFIER) &&
+                    (!isXlsx(peek()) || isFollowedByFormat() || isFollowedByHyphen(separatorIndex)) -> {
                     // Has a custom name: "input myname json" or "input my-name json"
                     parseHeaderNameWithHyphens(separatorIndex)
                 }
@@ -418,10 +410,16 @@ class Parser(
      * Check if current position is followed by a format keyword
      * Used to disambiguate "input output json" (output is name) from "output json" (output is keyword)
      */
-    private fun isFollowedByFormat(): Boolean {
-        if (current + 1 >= tokens.size) return false
-        val nextToken = tokens[current + 1]
-        return nextToken.type in listOf(
+    private fun isFollowedByFormat(): Boolean = tokens.getOrNull(current + 1)?.let(::isFormat) == true
+
+    private fun isFollowedByHyphen(separatorIndex: Int): Boolean {
+        if (current + 1 >= separatorIndex) return false
+        val next = tokens[current + 1]
+        return next.type == TokenType.MINUS || (next.type == TokenType.NUMBER && next.lexeme.startsWith("-"))
+    }
+
+    private fun isFormat(token: Token): Boolean =
+        isXlsx(token) || token.type in listOf(
             TokenType.XML,
             TokenType.JSON,
             TokenType.CSV,
@@ -435,7 +433,9 @@ class Parser(
             TokenType.OSCH,
             TokenType.TSCH
         )
-    }
+    // XLSX is contextual so scripts can continue using xlsx as an identifier.
+    private fun isXlsx(token: Token): Boolean =
+        token.type == TokenType.IDENTIFIER && token.lexeme.equals("xlsx", ignoreCase = true)
 
     private fun parseHeader(): Header {
         val startToken = peek()
@@ -520,7 +520,7 @@ class Parser(
             // Check if there's an optional name before the format
             // Name can be IDENTIFIER or keywords (input, output) when used as names
             val name = when {
-                check(TokenType.IDENTIFIER) -> {
+                check(TokenType.IDENTIFIER) && (!isXlsx(peek()) || isFollowedByFormat()) -> {
                     // Has a custom name: "input myname json"
                     advance().lexeme
                 }
@@ -553,6 +553,10 @@ class Parser(
             match(TokenType.XML) -> FormatType.XML
             match(TokenType.JSON) -> FormatType.JSON
             match(TokenType.CSV) -> FormatType.CSV
+            isXlsx(peek()) -> {
+                advance()
+                FormatType.XLSX
+            }
             match(TokenType.YAML) -> FormatType.YAML
             match(TokenType.XSD) -> FormatType.XSD
             match(TokenType.JSCH) -> FormatType.JSCH
@@ -563,7 +567,9 @@ class Parser(
             match(TokenType.TSCH) -> FormatType.TSCH
             // Was: { error(...); FormatType.AUTO } -- AUTO was an unreachable placeholder, not a
             // fallback: error() throws, so no format was ever defaulted here.
-            else -> error("Expected format type (auto, xml, json, csv, yaml, odata, osch, tsch, xsd, jsch, avro, proto)")
+            else -> error(
+                "Expected format type (auto, xml, json, csv, xlsx, yaml, odata, osch, tsch, xsd, jsch, avro, proto)"
+            )
         }
 
         // Optional dialect: %usdl 1.0

@@ -169,7 +169,7 @@ object Main {
             |
             |Commands:
             |  transform (t)  Transform data using a UTL-X script
-            |  convert   (conv) Quick format conversion, no script (xml/json/yaml/csv)
+            |  convert   (conv) Quick format conversion, no script (xml/json/yaml/csv/xlsx)
             |  repl      (r)  Start interactive REPL session
             |  design    (d)  Design-time analysis (typecheck, generate schemas, IDE support)
             |  capture        Manage test capture settings (enable/disable/status)

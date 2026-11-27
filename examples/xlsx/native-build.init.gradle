@@ -1,0 +1,12 @@
+// Keep the project's Java 17 compilation toolchain while using GRAALVM_HOME for native-image.
+// The heap setting limits the build process, not the resulting application's runtime heap.
+allprojects {
+    afterEvaluate {
+        if (plugins.hasPlugin('org.graalvm.buildtools.native')) {
+            graalvmNative.toolchainDetection = false
+            graalvmNative.binaries.named('main') {
+                buildArgs.add('-J-Xmx8g')
+            }
+        }
+    }
+}

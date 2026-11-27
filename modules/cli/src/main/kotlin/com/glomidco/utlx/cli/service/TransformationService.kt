@@ -33,10 +33,13 @@ import com.glomidco.utlx.formats.odata.ODataJSONSerializer
 import com.glomidco.utlx.formats.protobuf.ProtobufSchemaSerializer
 import com.glomidco.utlx.formats.xml.XMLParser
 import com.glomidco.utlx.formats.xml.XMLSerializer
+import com.glomidco.utlx.formats.xlsx.XlsxParser
+import com.glomidco.utlx.formats.xlsx.XlsxSerializer
 import com.glomidco.utlx.formats.xsd.XSDParser
 import com.glomidco.utlx.formats.xsd.XSDSerializer
 import com.glomidco.utlx.formats.yaml.YAMLParser
 import com.glomidco.utlx.formats.yaml.YAMLSerializer
+import java.io.File
 
 /**
  * Core transformation service - single source of truth for all UTLX transformations
@@ -94,13 +97,14 @@ class TransformationService {
     }
 
     /**
-     * Input data (just content and format - no file I/O here)
+     * Text, bytes, or a file-backed XLSX input supplied by the caller.
      */
-    data class InputData(
+    data class InputData @JvmOverloads constructor(
         val content: String,
         val format: String?,  // null = auto-detect from header
         val bytes: ByteArray? = null,  // B20: raw bytes (when available, preferred over content for non-UTF-8)
-        val charset: java.nio.charset.Charset? = null  // B20: explicit charset hint (from Content-Type or caller)
+        val charset: java.nio.charset.Charset? = null,  // B20: explicit charset hint (from Content-Type or caller)
+        val xlsxFile: File? = null
     )
 
     /**
@@ -152,10 +156,11 @@ class TransformationService {
      * text is not a substitute: a round trip is not guaranteed faithful (see B38/B39/B43), and it
      * would make the inspection depend on the output format.
      */
-    data class TransformOutcome(
+    data class TransformOutcome @JvmOverloads constructor(
         val output: String,
         val outputFormat: String,
         val outputUDM: UDM,
+        val outputBytes: ByteArray? = null,
     )
 
     /**
@@ -186,11 +191,14 @@ class TransformationService {
             val formatOptions = inputSpec?.options ?: emptyMap()
 
             if (options.verbose) {
-                println("[TransformationService] Parsing input '$name' as $format")
+                System.err.println("[TransformationService] Parsing input '$name' as $format")
             }
 
             // B20: prefer raw bytes (non-UTF-8 safe) over pre-decoded String
-            if (inputData.bytes != null) {
+            if (inputData.xlsxFile != null) {
+                val (sheet, rowNumbers) = xlsxOptions(formatOptions)
+                XlsxParser.parse(inputData.xlsxFile, sheet, rowNumbers)
+            } else if (inputData.bytes != null) {
                 parseInputBytes(inputData.bytes, format, inputData.charset, formatOptions, parseOpts)
             } else {
                 parseInput(inputData.content, format, formatOptions, parseOpts)
@@ -214,7 +222,12 @@ class TransformationService {
             ?: program.header.outputFormat.type.name.lowercase()
 
         if (options.verbose) {
-            println("[TransformationService] Output format: $outputFormat")
+            System.err.println("[TransformationService] Output format: $outputFormat")
+        }
+
+        if (options.presentation == null && outputFormat.equals("xlsx", ignoreCase = true)) {
+            val bytes = serializeOutputToBytes(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
+            return TransformOutcome("", outputFormat, outputUDM, bytes)
         }
 
         // Step 5: Serialize output using format + format spec from header — unless a presentation
@@ -237,6 +250,7 @@ class TransformationService {
         options: TransformOptions = TransformOptions()
     ): Pair<String, String> {  // Returns (output, outputFormat)
         val outcome = transformWithUdm(utlxSource, inputs, options)
+        require(outcome.outputBytes == null) { "XLSX output is binary. Use transformWithUdm().outputBytes." }
         return Pair(outcome.output, outcome.outputFormat)
     }
 
@@ -244,17 +258,17 @@ class TransformationService {
      * Compile script - extracted from CLI's compileScript
      */
     private fun compileScript(source: String, options: TransformOptions): Program {
-        if (options.verbose) println("[TransformationService] Lexing...")
+        if (options.verbose) System.err.println("[TransformationService] Lexing...")
         val lexer = Lexer(source)
         val tokens = lexer.tokenize()
 
-        if (options.verbose) println("[TransformationService] Parsing...")
+        if (options.verbose) System.err.println("[TransformationService] Parsing...")
         val parser = Parser(tokens, source)
         val parseResult = parser.parse()
 
         val program = when (parseResult) {
             is ParseResult.Success -> {
-                if (options.verbose) println("[TransformationService] ✓ Parsing successful")
+                if (options.verbose) System.err.println("[TransformationService] ✓ Parsing successful")
                 parseResult.program
             }
             is ParseResult.Failure -> {
@@ -268,7 +282,7 @@ class TransformationService {
         }
 
         // Type checking
-        if (options.verbose) println("[TransformationService] Type checking...")
+        if (options.verbose) System.err.println("[TransformationService] Type checking...")
         val stdlib = StandardLibrary()
         val typeChecker = TypeChecker(stdlib)
         val typeResult = typeChecker.check(program)
@@ -276,7 +290,7 @@ class TransformationService {
         when (typeResult) {
             is TypeCheckResult.Success -> {
                 if (options.verbose) {
-                    println("[TransformationService] ✓ Type checking successful (type: ${typeResult.type})")
+                    System.err.println("[TransformationService] ✓ Type checking successful (type: ${typeResult.type})")
                 }
             }
             is TypeCheckResult.Failure -> {
@@ -291,9 +305,9 @@ class TransformationService {
                     }
                     throw IllegalStateException("Type checking failed")
                 } else if (options.verbose) {
-                    println("[TransformationService] Type warnings:")
+                    System.err.println("[TransformationService] Type warnings:")
                     typeResult.errors.forEach { error ->
-                        println("  ${error.message} at ${error.location}")
+                        System.err.println("  ${error.message} at ${error.location}")
                     }
                 }
             }
@@ -308,6 +322,19 @@ class TransformationService {
     fun parseInputPublic(data: String, format: String, options: Map<String, Any> = emptyMap(),
                          parseProfile: ParseProfile = ParseProfile.STANDARD): UDM {
         return parseInput(data, format, options, ParseOptions.of(parseProfile))
+    }
+
+    /** Parse a binary workbook or encoding-aware text payload without an intermediate String. */
+    fun parseInputPublic(
+        data: ByteArray,
+        format: String,
+        options: Map<String, Any> = emptyMap(),
+        parseProfile: ParseProfile = ParseProfile.STANDARD,
+        charset: java.nio.charset.Charset? = null
+    ): UDM = if (charset != null && !format.equals("xlsx", ignoreCase = true)) {
+        parseInput(String(data, charset), format, options, ParseOptions.of(parseProfile))
+    } else {
+        parseInputBytes(data, format, charset, options, ParseOptions.of(parseProfile))
     }
 
     /**
@@ -329,6 +356,11 @@ class TransformationService {
                            parseOpts: ParseOptions = ParseOptions.standard()): UDM {
         return try {
             when (format.lowercase()) {
+                // A binary slot in a named-input JSON envelope is represented as base64.
+                "xlsx" -> {
+                    val (sheet, rowNumbers) = xlsxOptions(options)
+                    XlsxParser.parse(java.util.Base64.getDecoder().decode(data), sheet, rowNumbers)
+                }
                 "auto" -> {
                     // Auto-detect format from input data
                     val trimmed = data.trim()
@@ -460,6 +492,14 @@ class TransformationService {
             "parse profile. Re-run with --parse-profile lenient to accept it ($relief)."
     }
 
+    private fun xlsxOptions(options: Map<String, Any>): Pair<String?, Boolean> {
+        val sheet = options["sheet"]
+        val rowNumbers = options["rowNumbers"]
+        require(sheet == null || sheet is String && sheet.isNotBlank()) { "XLSX sheet must be a non-empty string." }
+        require(rowNumbers == null || rowNumbers is Boolean) { "XLSX rowNumbers must be true or false." }
+        return (sheet as String?) to (rowNumbers as Boolean? ?: false)
+    }
+
     /**
      * B20: Parse input from raw bytes. Uses format-specific encoding detection.
      * Falls back to String-based parsing if ByteArray constructor is not available for the format.
@@ -467,6 +507,16 @@ class TransformationService {
     private fun parseInputBytes(bytes: ByteArray, format: String, charset: java.nio.charset.Charset? = null, options: Map<String, Any> = emptyMap(),
                                 parseOpts: ParseOptions = ParseOptions.standard()): UDM {
         return when (format.lowercase()) {
+            "auto" -> {
+                val workbook = bytes.size >= 4 && bytes[0] == 0x50.toByte() &&
+                    bytes[1] == 0x4b.toByte() && bytes[2] == 3.toByte() && bytes[3] == 4.toByte()
+                if (workbook) parseInputBytes(bytes, "xlsx", charset, options, parseOpts)
+                else parseInput(String(bytes, charset ?: Charsets.UTF_8), "auto", options, parseOpts)
+            }
+            "xlsx" -> {
+                val (sheet, rowNumbers) = xlsxOptions(options)
+                XlsxParser.parse(bytes, sheet, rowNumbers)
+            }
             "xml" -> {
                 val arrayHints = (options["arrays"] as? List<*>)?.mapNotNull { it as? String }?.toSet() ?: emptySet()
                 XMLParser(bytes, arrayHints, options = parseOpts).parse()
@@ -706,6 +756,21 @@ class TransformationService {
      */
     fun serializeOutputToBytes(udm: UDM, format: String, formatSpec: com.glomidco.utlx.core.ast.FormatSpec, pretty: Boolean): ByteArray {
         return when (format.lowercase()) {
+            "xlsx" -> {
+                val sheet = formatSpec.options["sheet"]
+                val columns = formatSpec.options["columns"]
+                require(sheet == null || sheet is String && sheet.isNotBlank()) {
+                    "XLSX sheet must be a non-empty string."
+                }
+                require(columns == null || columns is List<*> && columns.all { it is String }) {
+                    "XLSX columns must be an array of strings."
+                }
+                XlsxSerializer.serialize(
+                    udm,
+                    sheet as String? ?: "Sheet1",
+                    (columns as List<*>?)?.map { it as String }
+                )
+            }
             "xml" -> {
                 val encoding = formatSpec.options["encoding"] as? String
                 XMLSerializer(prettyPrint = pretty, outputEncoding = encoding).serializeToBytes(udm)

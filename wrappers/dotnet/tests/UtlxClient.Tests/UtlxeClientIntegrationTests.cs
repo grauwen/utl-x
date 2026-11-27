@@ -27,7 +27,7 @@ public class UtlxeClientIntegrationTests : IAsyncLifetime
         _client = new UtlxeClient(new UtlxeClientOptions
         {
             JarPath = jarPath,
-            Workers = 1
+            Workers = 2
         });
         await _client.StartAsync();
     }
@@ -180,6 +180,111 @@ public class UtlxeClientIntegrationTests : IAsyncLifetime
     // =========================================================================
     // Helpers
     // =========================================================================
+
+    [Theory]
+    [InlineData("TEMPLATE")]
+    [InlineData("COPY")]
+    [InlineData("COMPILED")]
+    public async Task Xlsx_RoundTripPreservesTypedValuesAndUnicode(string strategy)
+    {
+        const string write = """
+            %utlx 1.0
+            input json
+            output xlsx {sheet: "Collection"}
+            ---
+            $input
+            """;
+        const string read = """
+            %utlx 1.0
+            input xlsx {sheet: "Collection", rowNumbers: true}
+            output json
+            ---
+            $input
+            """;
+        var writeId = $"xlsx-write-{strategy}";
+        var readId = $"xlsx-read-{strategy}";
+        Assert.True((await _client.LoadTransformationAsync(writeId, write, strategy)).Success);
+        Assert.True((await _client.LoadTransformationAsync(readId, read, strategy)).Success);
+
+        var input = Encoding.UTF8.GetBytes("""
+            [{"Name":"Réserve 🥃","Remaining":0,"Approximate":false,"Unknown":null}]
+            """);
+        var outputs = await Task.WhenAll(
+            _client.ExecuteAsync(writeId, input, correlationId: "xlsx-1"),
+            _client.ExecuteAsync(writeId, input, correlationId: "xlsx-2"));
+        Assert.Equal(new[] { "xlsx-1", "xlsx-2" }, outputs.Select(result => result.CorrelationId));
+
+        foreach (var written in outputs)
+        {
+            Assert.True(written.Success, written.Error);
+            Assert.Equal("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                written.OutputContentType);
+            Assert.Equal((byte)'P', written.Output[0]);
+            Assert.Equal((byte)'K', written.Output[1]);
+            using var workbook = new System.IO.Compression.ZipArchive(
+                new MemoryStream(written.Output.ToByteArray()), System.IO.Compression.ZipArchiveMode.Read);
+            Assert.NotNull(workbook.GetEntry("xl/worksheets/sheet1.xml"));
+
+            var result = await _client.ExecuteAsync(readId, written.Output.ToByteArray(), written.OutputContentType);
+            Assert.True(result.Success, result.Error);
+            Assert.Equal("application/json", result.OutputContentType);
+            using var document = System.Text.Json.JsonDocument.Parse(result.Output.ToByteArray());
+            var row = document.RootElement[0];
+            Assert.Equal("Réserve 🥃", row.GetProperty("Name").GetString());
+            Assert.Equal(0m, row.GetProperty("Remaining").GetDecimal());
+            Assert.False(row.GetProperty("Approximate").GetBoolean());
+            Assert.Equal(System.Text.Json.JsonValueKind.Null, row.GetProperty("Unknown").ValueKind);
+            Assert.Equal(2, row.GetProperty("_rowNumber").GetInt32());
+        }
+    }
+
+    [Fact]
+    public async Task Xlsx_NamedInputsAndBatchReturnBinaryWorkbooks()
+    {
+        const string write = "%utlx 1.0\ninput json\noutput xlsx\n---\n$input";
+        const string combine = """
+            %utlx 1.0
+            input: inventory xlsx, pricing json
+            output json
+            ---
+            {name: first($inventory).Name, price: $pricing.price}
+            """;
+        Assert.True((await _client.LoadTransformationAsync("xlsx-batch", write)).Success);
+        Assert.True((await _client.LoadTransformationAsync("xlsx-combine", combine, "COMPILED")).Success);
+        var input = Encoding.UTF8.GetBytes("""[{"Name":"Reserve"}]""");
+        var items = new[] { (input, "application/json", "batch-1"), (input, "application/json", "batch-2") };
+        var batch = await _client.ExecuteBatchAsync("xlsx-batch", items);
+        Assert.Equal(2, batch.Results.Count);
+        foreach (var result in batch.Results)
+        {
+            Assert.True(result.Success, result.Error);
+            Assert.Equal((byte)'P', result.Output[0]);
+            Assert.Equal((byte)'K', result.Output[1]);
+        }
+
+        var combined = await _client.ExecuteNamedAsync("xlsx-combine", new Dictionary<string, byte[]>
+        {
+            ["inventory"] = batch.Results[0].Output.ToByteArray(),
+            ["pricing"] = Encoding.UTF8.GetBytes("""{"price":17.5}""")
+        });
+        Assert.True(combined.Success, combined.Error);
+        using var document = System.Text.Json.JsonDocument.Parse(combined.Output.ToByteArray());
+        Assert.Equal("Reserve", document.RootElement.GetProperty("name").GetString());
+        Assert.Equal(17.5m, document.RootElement.GetProperty("price").GetDecimal());
+    }
+
+    [Fact]
+    public async Task Xlsx_InvalidWorkbookReturnsAnErrorAndLeavesTheClientUsable()
+    {
+        const string read = "%utlx 1.0\ninput xlsx\noutput json\n---\n$input";
+        Assert.True((await _client.LoadTransformationAsync("invalid-workbook", read)).Success);
+        var result = await _client.ExecuteAsync(
+            "invalid-workbook", new byte[] { 0, 255, 1 },
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        Assert.False(result.Success);
+        Assert.NotEmpty(result.Error);
+        Assert.NotEmpty((await _client.HealthAsync()).State);
+    }
 
     private static string? FindJarPath()
     {

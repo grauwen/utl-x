@@ -9,6 +9,8 @@ import com.glomidco.utlx.engine.config.TransformConfig
 import com.glomidco.utlx.engine.proto.*
 import com.glomidco.utlx.engine.registry.TransformationInstance
 import com.glomidco.utlx.engine.registry.TransformationRegistry
+import com.glomidco.utlx.engine.strategy.ExecutionStrategy
+import com.glomidco.utlx.formats.xlsx.XlsxSerializer
 import com.glomidco.utlx.engine.validation.SchemaValidatorFactory
 import com.glomidco.utlx.engine.validation.ValidationOrchestrator
 import com.glomidco.utlx.engine.validation.ErrorPhase as VErrorPhase
@@ -204,11 +206,15 @@ object TransportHandlers {
 
         // EF03: Per-transformation maxInputSize check (use byte length, not char length)
         val maxInputBytes = com.glomidco.utlx.engine.config.parseSizeToBytes(instance.config.maxInputSize)
-        if (maxInputBytes != null && rawBytes.size > maxInputBytes) {
+        val inputSize = rawBytes.size.toLong() + req.namedInputsMap.values.sumOf { it.size().toLong() }
+        if (maxInputBytes != null && inputSize > maxInputBytes) {
             instance.recordError()
             return ExecuteResponse.newBuilder()
                 .setSuccess(false)
-                .setError("Input too large for '${req.transformationId}': ${rawBytes.size} bytes (max: ${instance.config.maxInputSize})")
+                .setError(
+                    "Input too large for '${req.transformationId}': $inputSize bytes " +
+                        "(max: ${instance.config.maxInputSize})"
+                )
                 .setErrorClass(ErrorClass.PERMANENT)
                 .setErrorPhase(ErrorPhase.PRE_VALIDATION)
                 .setCorrelationId(req.correlationId)
@@ -218,7 +224,7 @@ object TransportHandlers {
 
         // EF14: Add UTLXe-specific attributes to the current span (created by the OTel agent)
         com.glomidco.utlx.engine.telemetry.Tracing.addTransformAttributes(
-            req.transformationId, instance.strategy.name, rawBytes.size,
+            req.transformationId, instance.strategy.name, inputSize.coerceAtMost(Int.MAX_VALUE.toLong()).toInt(),
             req.messageId, req.correlationId
         )
 
@@ -226,12 +232,13 @@ object TransportHandlers {
         val policyOverride = engine.validationOverrides.get(req.transformationId)?.policy
 
         // EB01: Use PayloadBytes overload — passes raw bytes to strategy + validators
-        val result = ValidationOrchestrator.execute(instance, payloadBytes, policyOverride)
+        val named = namedPayloads(req.namedInputsMap.mapValues { it.value.toByteArray() }, instance.strategy)
+        val result = ValidationOrchestrator.execute(instance, payloadBytes, policyOverride, named)
         val durationUs = (System.nanoTime() - startTime) / 1000
 
         // EF14: Record result attributes on the agent-created span
         com.glomidco.utlx.engine.telemetry.Tracing.recordResult(
-            result.output?.length, durationUs, if (result.success) null else result.error
+            result.outputBytes?.size ?: result.output?.length, durationUs, if (result.success) null else result.error
         )
 
         if (!result.success) {
@@ -249,8 +256,9 @@ object TransportHandlers {
             )
 
         // Include output when available — even on POST_VALIDATION failure (for debugging)
-        if (result.output != null) {
-            builder.setOutput(ByteString.copyFromUtf8(result.output))
+        result.payloadBytes?.let {
+            builder.setOutput(ByteString.copyFrom(it))
+            builder.setOutputContentType(outputContentType(instance.strategy))
         }
 
         if (result.error != null) {
@@ -337,7 +345,8 @@ object TransportHandlers {
             val itemCharset = parseCharsetFromContentType(itemContentType)
             val itemPayload = PayloadBytes(itemBytes, itemCharset, itemContentType)
 
-            val result = ValidationOrchestrator.execute(instance, itemPayload, batchOverride)
+            val named = namedPayloads(item.namedInputsMap.mapValues { it.value.toByteArray() }, instance.strategy)
+            val result = ValidationOrchestrator.execute(instance, itemPayload, batchOverride, named)
             val durationUs = (System.nanoTime() - startTime) / 1000
 
             if (!result.success) {
@@ -354,8 +363,9 @@ object TransportHandlers {
                         .build()
                 )
 
-            if (result.success && result.output != null) {
-                respBuilder.setOutput(ByteString.copyFromUtf8(result.output))
+            if (result.success) result.payloadBytes?.let {
+                respBuilder.setOutput(ByteString.copyFrom(it))
+                respBuilder.setOutputContentType(outputContentType(instance.strategy))
             }
             if (result.error != null) {
                 respBuilder.setError(result.error)
@@ -393,7 +403,7 @@ object TransportHandlers {
         val initialBytes = req.payload.toByteArray()
         val pipeContentType = req.contentType.ifEmpty { "application/json" }
         val pipeCharset = parseCharsetFromContentType(pipeContentType)
-        var currentPayload = PayloadBytes(initialBytes, pipeCharset, pipeContentType).decodeToString()
+        var currentPayload = PayloadBytes(initialBytes, pipeCharset, pipeContentType)
         var stagesCompleted = 0
         val allWarnings = mutableListOf<ValidationError>()
 
@@ -454,30 +464,20 @@ object TransportHandlers {
 
             // EF01: If this stage has additional inputs, construct a multi-input envelope
             val stageInputs = req.stageInputsMap[transformId]
-            val effectivePayload = if (stageInputs != null && stageInputs.additionalInputsCount > 0) {
-                val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-                val envelope = mapper.createObjectNode()
-                envelope.set<com.fasterxml.jackson.databind.JsonNode>(
-                    "input", mapper.readTree(currentPayload)
-                )
-                stageInputs.additionalInputsMap.forEach { (name, stageBytes) ->
-                    val content = String(stageBytes.toByteArray(), pipeCharset ?: Charsets.UTF_8)
-                    try {
-                        envelope.set<com.fasterxml.jackson.databind.JsonNode>(name, mapper.readTree(content))
-                    } catch (_: Exception) {
-                        envelope.put(name, content)
-                    }
-                }
+            val stageNamedInputs = if (stageInputs != null && stageInputs.additionalInputsCount > 0) {
+                val primaryName = instance.strategy.getHeaderSchemaInfo()?.allInputSchemas?.keys?.firstOrNull()
+                    ?: "input"
+                val named = stageInputs.additionalInputsMap.mapValues { it.value.toByteArray() }
                 logger.debug("Pipeline stage '{}' with additional inputs: {}", transformId,
                     stageInputs.additionalInputsMap.keys)
-                envelope.toString()
+                namedPayloads(named + (primaryName to currentPayload.bytes), instance.strategy)
             } else {
-                currentPayload
+                emptyMap()
             }
 
             // EF02: Resolve effective validation policy per stage
             val stageOverride = engine.validationOverrides.get(transformId)?.policy
-            val result = ValidationOrchestrator.execute(instance, effectivePayload, stageOverride)
+            val result = ValidationOrchestrator.execute(instance, currentPayload, stageOverride, stageNamedInputs)
 
             if (!result.success) {
                 instance.recordError()
@@ -513,7 +513,10 @@ object TransportHandlers {
                 )
             }
 
-            currentPayload = result.output ?: ""
+            currentPayload = PayloadBytes(
+                result.payloadBytes ?: byteArrayOf(),
+                contentType = outputContentType(instance.strategy)
+            )
             stagesCompleted++
 
             } finally {
@@ -525,7 +528,8 @@ object TransportHandlers {
 
         val builder = ExecutePipelineResponse.newBuilder()
             .setSuccess(true)
-            .setOutput(ByteString.copyFromUtf8(currentPayload))
+            .setOutput(ByteString.copyFrom(currentPayload.bytes))
+            .setOutputContentType(currentPayload.contentType)
             .setCorrelationId(req.correlationId)
             .setRequestId(req.requestId)
             .setStagesCompleted(stagesCompleted)
@@ -565,6 +569,31 @@ object TransportHandlers {
             .setTotalExecutions(totalExecutions)
             .setTotalErrors(totalErrors)
             .build()
+    }
+
+    private fun outputContentType(strategy: ExecutionStrategy): String =
+        when (strategy.getHeaderSchemaInfo()?.outputFormat?.lowercase()) {
+            "xlsx" -> XlsxSerializer.CONTENT_TYPE
+            "json", "odata" -> "application/json"
+            "xml", "xsd", "osch" -> "application/xml"
+            "csv" -> "text/csv"
+            "yaml" -> "application/yaml"
+            "jsch" -> "application/schema+json"
+            "avro" -> "application/avro"
+            "proto", "protobuf" -> "application/x-protobuf"
+            else -> "application/octet-stream"
+        }
+
+    private fun namedPayloads(
+        inputs: Map<String, ByteArray>,
+        strategy: ExecutionStrategy
+    ): Map<String, PayloadBytes> {
+        val formats = strategy.getHeaderSchemaInfo()?.allInputSchemas.orEmpty()
+        return inputs.mapValues { (name, bytes) ->
+            val contentType = if (formats[name]?.format == "xlsx") XlsxSerializer.CONTENT_TYPE
+                else "application/octet-stream"
+            PayloadBytes(bytes, contentType = contentType)
+        }
     }
 
     private fun mapErrorPhase(phase: VErrorPhase): ErrorPhase {

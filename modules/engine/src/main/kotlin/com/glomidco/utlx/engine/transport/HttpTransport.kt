@@ -109,6 +109,7 @@ class HttpTransport(
      * conventions differ, the media type does not.
      */
     private fun contentTypeFor(outputFormat: String?): io.ktor.http.ContentType = when (outputFormat?.lowercase()) {
+        "xlsx" -> io.ktor.http.ContentType.parse(com.glomidco.utlx.formats.xlsx.XlsxSerializer.CONTENT_TYPE)
         "json"                -> io.ktor.http.ContentType.Application.Json
         "odata"               -> io.ktor.http.ContentType.Application.Json
         "jsch"                -> io.ktor.http.ContentType("application", "schema+json")
@@ -124,7 +125,17 @@ class HttpTransport(
         else                  -> io.ktor.http.ContentType.Application.OctetStream
     }
 
-    private fun encodeDeclared(text: String, contentType: String): ByteString {
+    private fun encodeDeclared(text: String, contentType: String, encoding: String = "text"): ByteString {
+        if (encoding == "base64") {
+            return try {
+                ByteString.copyFrom(java.util.Base64.getDecoder().decode(text))
+            } catch (error: IllegalArgumentException) {
+                throw io.ktor.server.plugins.BadRequestException("The payload is not valid base64.", error)
+            }
+        }
+        if (encoding != "text") throw io.ktor.server.plugins.BadRequestException(
+            "payloadEncoding must be text or base64."
+        )
         val charset = TransportHandlers.parseCharsetFromContentType(contentType) ?: Charsets.UTF_8
         return ByteString.copyFrom(text.toByteArray(charset))
     }
@@ -176,7 +187,7 @@ class HttpTransport(
                     // Execute
                     val execProto = ExecuteRequest.newBuilder()
                         .setTransformationId(req.transformationId)
-                        .setPayload(encodeDeclared(req.payload, req.contentType))
+                        .setPayload(encodeDeclared(req.payload, req.contentType, req.payloadEncoding))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -185,7 +196,11 @@ class HttpTransport(
                     val status = if (execResp.success) HttpStatusCode.OK else HttpStatusCode.UnprocessableEntity
                     call.respond(status, TransformResponse(
                         success = execResp.success,
-                        output = if (execResp.success) execResp.output.toStringUtf8() else null,
+                        output = if (execResp.success) {
+                            encodeResponseOutput(execResp.output, execResp.outputContentType)
+                        } else null,
+                        outputContentType = execResp.outputContentType,
+                        outputEncoding = responseOutputEncoding(execResp.outputContentType),
                         error = if (!execResp.success) execResp.error else null,
                         durationUs = execResp.metrics?.executeDurationUs ?: 0,
                         correlationId = req.correlationId
@@ -232,7 +247,7 @@ class HttpTransport(
 
                     val proto = ExecuteRequest.newBuilder()
                         .setTransformationId(id)
-                        .setPayload(encodeDeclared(req.payload, req.contentType))
+                        .setPayload(encodeDeclared(req.payload, req.contentType, req.payloadEncoding))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -245,7 +260,9 @@ class HttpTransport(
                     }
                     call.respond(status, ExecuteResponseBody(
                         success = resp.success,
-                        output = if (resp.success) resp.output.toStringUtf8() else null,
+                        output = if (resp.success) encodeResponseOutput(resp.output, resp.outputContentType) else null,
+                        outputContentType = resp.outputContentType,
+                        outputEncoding = responseOutputEncoding(resp.outputContentType),
                         error = if (!resp.success) resp.error else null,
                         errorPhase = if (!resp.success && resp.errorPhase != ErrorPhase.ERROR_PHASE_UNSPECIFIED) resp.errorPhase.name else null,
                         durationUs = resp.metrics?.executeDurationUs ?: 0,
@@ -355,7 +372,7 @@ class HttpTransport(
                         .setTransformationId(id)
                     req.items.forEach { item ->
                         proto.addItems(BatchItem.newBuilder()
-                            .setPayload(encodeDeclared(item.payload, item.contentType))
+                            .setPayload(encodeDeclared(item.payload, item.contentType, item.payloadEncoding))
                             .setContentType(item.contentType)
                             .setCorrelationId(item.correlationId ?: "")
                             .build())
@@ -366,7 +383,9 @@ class HttpTransport(
                         results = resp.resultsList.map { r ->
                             ExecuteResponseBody(
                                 success = r.success,
-                                output = if (r.success) r.output.toStringUtf8() else null,
+                                output = if (r.success) encodeResponseOutput(r.output, r.outputContentType) else null,
+                                outputContentType = r.outputContentType,
+                                outputEncoding = responseOutputEncoding(r.outputContentType),
                                 error = if (!r.success) r.error else null,
                                 durationUs = r.metrics?.executeDurationUs ?: 0,
                                 correlationId = r.correlationId
@@ -389,7 +408,7 @@ class HttpTransport(
 
                     val proto = ExecutePipelineRequest.newBuilder()
                         .addAllTransformationIds(req.transformationIds)
-                        .setPayload(encodeDeclared(req.payload, req.contentType))
+                        .setPayload(encodeDeclared(req.payload, req.contentType, req.payloadEncoding))
                         .setContentType(req.contentType)
                         .setCorrelationId(req.correlationId ?: "")
                         .build()
@@ -402,7 +421,9 @@ class HttpTransport(
                     }
                     call.respond(status, PipelineResponse(
                         success = resp.success,
-                        output = if (resp.success) resp.output.toStringUtf8() else null,
+                        output = if (resp.success) encodeResponseOutput(resp.output, resp.outputContentType) else null,
+                        outputContentType = resp.outputContentType,
+                        outputEncoding = responseOutputEncoding(resp.outputContentType),
                         error = if (!resp.success) resp.error else null,
                         stagesCompleted = resp.stagesCompleted,
                         totalDurationUs = resp.totalDurationUs,
@@ -695,6 +716,12 @@ class HttpTransport(
             return
         }
 
+        if (execResp.outputContentType == com.glomidco.utlx.formats.xlsx.XlsxSerializer.CONTENT_TYPE) {
+            call.respond(HttpStatusCode.UnprocessableEntity, mapOf(
+                "error" to "XLSX output requires the binary HTTP run route, gRPC or stdio-proto."
+            ))
+            return
+        }
         val output = execResp.output.toStringUtf8()
 
         // EF04/EF10: Forward transformed result to Dapr (binding or pub/sub) with messaging triad
@@ -939,6 +966,12 @@ class HttpTransport(
             return
         }
 
+        if (execResp.outputContentType == com.glomidco.utlx.formats.xlsx.XlsxSerializer.CONTENT_TYPE) {
+            call.respond(HttpStatusCode.UnprocessableEntity, mapOf(
+                "error" to "XLSX output requires the binary HTTP run route, gRPC or stdio-proto."
+            ))
+            return
+        }
         val output = execResp.output.toStringUtf8()
 
         // Output routing (reuses same logic as bindings — outputMessaging handles pub/sub)

@@ -19,6 +19,7 @@ dependencies {
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
+    implementation(project(":formats:xlsx"))
     implementation(project(":formats:yaml"))
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))

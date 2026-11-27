@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/UtlxClient/UtlxClient.csproj" />
+    <ProjectReference Include="../../src/UtlxEngine.Sdk/UtlxEngine.Sdk.csproj" />
   </ItemGroup>
 
 </Project>

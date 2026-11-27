@@ -16,6 +16,7 @@ dependencies {
     implementation(project(":formats:xml"))
     implementation(project(":formats:json"))
     implementation(project(":formats:csv"))
+    implementation(project(":formats:xlsx"))
     implementation(project(":formats:yaml"))
     implementation(project(":formats:xsd"))
     implementation(project(":formats:jsch"))
@@ -42,6 +43,7 @@ dependencies {
 
     // Logging - suppress DEBUG messages during transformations
     implementation("ch.qos.logback:logback-classic:1.4.14")
+    runtimeOnly("org.apache.logging.log4j:log4j-to-slf4j:2.26.1")
 
     // Testing
     testImplementation(kotlin("test"))

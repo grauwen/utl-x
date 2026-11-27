@@ -1,5 +1,7 @@
 package com.glomidco.utlx.engine.strategy
 
+import com.glomidco.utlx.core.udm.PayloadBytes
+
 import com.glomidco.utlx.cli.service.TransformationService
 import com.glomidco.utlx.core.ast.Program
 import com.glomidco.utlx.core.format.ParseProfile
@@ -195,7 +197,11 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
         }
     }
 
-    private fun executeSingleInput(input: String): ExecutionResult {
+    override fun execute(input: PayloadBytes): ExecutionResult =
+        if (compiledProgram.acceptsWorkbookBytes(input)) executeSingleInput("", input)
+        else execute(input.decodeToString())
+
+    private fun executeSingleInput(input: String, payload: PayloadBytes? = null): ExecutionResult {
         val inputName = transformConfig.inputs.firstOrNull()?.name
             ?: compiledProgram.header.inputs.firstOrNull()?.first
             ?: "input"
@@ -210,8 +216,15 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
 
         try {
             // Parse input data
-            val inputUDM = transformationService.parseInputPublic(
-                input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile)
+            val inputUDM = if (payload != null) {
+                transformationService.parseInputPublic(
+                    payload.bytes, declaredFormat ?: "json", declaredOptions, parseProfile, payload.detectedCharset
+                )
+            } else {
+                transformationService.parseInputPublic(
+                    input, declaredFormat ?: "json", declaredOptions, parseProfile = parseProfile
+                )
+            }
 
             // Merge input data into the skeleton structure
             val filledUDM = mergeDataIntoSkeleton(skeleton, inputUDM)
@@ -225,43 +238,36 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             }
 
             // Serialize output
-            val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
-            val outputData = transformationService.serializeOutputPublic(
-                outputUDM, outputFormat, compiledProgram.header.outputFormat, true
-            )
-
-            return ExecutionResult(
-                output = outputData,
-                // EF23: decide here — this is where the output still exists as a UDM.
-                verdict = VerdictCheck.of(outputUDM),
-            )
+            return transformationService.executionResult(outputUDM, compiledProgram.header.outputFormat)
         } finally {
             returnSkeleton(skeleton)
         }
     }
 
-    private fun executeMultiInput(input: String): ExecutionResult {
+    override fun executeNamed(inputs: Map<String, PayloadBytes>): ExecutionResult =
+        executeMultiInput("", inputs)
+
+    private fun executeMultiInput(input: String, payloads: Map<String, PayloadBytes>? = null): ExecutionResult {
         val declaredInputs = compiledProgram.header.inputs
         val mapper = com.fasterxml.jackson.databind.ObjectMapper()
-        val envelope = mapper.readTree(input)
+        val envelope = if (payloads == null) mapper.readTree(input) else null
 
         val inputUDMs = declaredInputs.associate { (name, formatSpec) ->
-            val node = envelope.get(name)
-                ?: throw IllegalArgumentException(
-                    "Envelope missing required input '$name'. " +
-                    "Expected keys: ${declaredInputs.map { it.first }}"
-                )
             val declaredFormat = formatSpec.type.name.lowercase()
-            val content = if (declaredFormat != "json" && node.isTextual) {
-                node.asText()
+            val parsed = if (payloads != null) {
+                val payload = requireNotNull(payloads[name]) { "Missing required input '$name'." }
+                transformationService.parseInputPublic(
+                    payload.bytes, declaredFormat, formatSpec.options, parseProfile, payload.detectedCharset
+                )
             } else {
-                mapper.writeValueAsString(node)
+                val node = envelope!!.get(name)
+                    ?: throw IllegalArgumentException("Envelope missing required input '$name'.")
+                val content = if (declaredFormat != "json" && node.isTextual) node.asText()
+                    else mapper.writeValueAsString(node)
+                transformationService.parseInputPublic(
+                    content, declaredFormat, formatSpec.options, parseProfile = parseProfile
+                )
             }
-
-            // Parse and merge into skeleton
-            // EB10: the per-slot options travel with the per-slot format.
-            val parsed = transformationService.parseInputPublic(
-                content, declaredFormat, formatSpec.options, parseProfile = parseProfile)
             val skeleton = inputSkeletons[name]
             val filled = if (skeleton != null) {
                 mergeDataIntoSkeleton(deepClone(skeleton), parsed)
@@ -279,16 +285,7 @@ class CopyStrategy(private val parseProfile: ParseProfile = ParseProfile.STANDAR
             interpreter.execute(compiledProgram, inputUDMs).toUDM()
         }
 
-        val outputFormat = compiledProgram.header.outputFormat.type.name.lowercase()
-        val outputData = transformationService.serializeOutputPublic(
-            outputUDM, outputFormat, compiledProgram.header.outputFormat, true
-        )
-
-        return ExecutionResult(
-            output = outputData,
-            // EF23: decide here — this is where the output still exists as a UDM.
-            verdict = VerdictCheck.of(outputUDM),
-        )
+        return transformationService.executionResult(outputUDM, compiledProgram.header.outputFormat)
     }
 
     override fun shutdown() {

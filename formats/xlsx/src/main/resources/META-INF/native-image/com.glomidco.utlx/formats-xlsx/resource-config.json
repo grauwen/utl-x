@@ -1,0 +1,12 @@
+{
+    "resources": {
+        "includes": [
+            {"pattern": "org/apache/poi/schemas/ooxml/.*\\.xsb"},
+            {"pattern": "org/apache/xmlbeans/metadata/.*\\.xsb"}
+        ]
+    },
+    "bundles": [
+        {"name": "org.apache.xmlbeans.impl.regex.message"},
+        {"name": "sun.awt.resources.awt"}
+    ]
+}

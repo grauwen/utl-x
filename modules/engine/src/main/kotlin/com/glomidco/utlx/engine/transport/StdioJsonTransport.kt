@@ -44,6 +44,7 @@ class StdioJsonTransport : TransportServer {
                 val result = transformation.strategy.execute(
                     String(message.payload, Charsets.UTF_8)
                 )
+                require(result.outputBytes == null) { "Binary XLSX output requires stdio-proto, gRPC or HTTP." }
                 val outputMessage = Message(
                     correlationId = message.correlationId,
                     payload = result.output.toByteArray(Charsets.UTF_8),
