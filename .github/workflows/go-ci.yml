@@ -50,10 +50,23 @@ jobs:
 
       # The step that matters. `go build` passing proves nothing about a generated
       # descriptor — WB02's panic was in init(), after a clean build and vet.
+      # WB02 again, by a different route: this pointed at utlxe-1.4.0.jar while the step above
+      # builds utlxe-<project.version>.jar. Once the version moved past 1.4.0 the path stopped
+      # existing, and the integration tests SKIP when the jar is absent — so the suite this
+      # workflow exists to run went back to not running, in green. Resolve the jar that was
+      # actually built, and fail loudly if there is none.
+      - name: Locate the engine JAR
+        run: |
+          jar="$(ls -t modules/engine/build/libs/utlxe-*.jar 2>/dev/null | head -n 1)"
+          if [ -z "$jar" ]; then
+            echo "::error::no utlxe-*.jar in modules/engine/build/libs — the build step did not produce one"
+            exit 1
+          fi
+          echo "Using $jar"
+          echo "UTLXE_JAR_PATH=${GITHUB_WORKSPACE}/${jar}" >> "$GITHUB_ENV"
+
       - name: Test
         working-directory: wrappers/go/utlxclient
-        env:
-          UTLXE_JAR_PATH: ${{ github.workspace }}/modules/engine/build/libs/utlxe-1.4.0.jar
         run: go test -v ./...
 
       # Generated bindings must match the .proto they claim to come from. WB02 was caused by a

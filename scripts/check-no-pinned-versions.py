@@ -8,6 +8,9 @@ This defect has now been fixed three times in this repository:
   CB14  four wrapper scripts pinned cli-1.4.4.jar / utlxd-1.4.4.jar, so a bump would silently
         keep launching the previous build; and the daemon and engine restated "1.4.0" in five
         more places, including /api/health and the LSP initialize handshake
+  CB15  six CI steps pinned a jar by version, including the UTLXE_JAR_PATH both wrapper suites
+        read — and those suites SKIP when the jar is missing, so they had quietly stopped
+        running while CI reported success
 
 Each fix was correct and none prevented the next, because nothing checked. The information is
 never missing: every jar manifest carries Implementation-Version, stamped from project.version.
@@ -42,6 +45,23 @@ def scan() -> list[str]:
                         f"(`X::class.java.`package`?.implementationVersion ?: \"dev\"`)\n"
                         f"    {line.strip()[:110]}"
                     )
+
+    # CI is the place this mattered most and the place the first version of this check missed.
+    # `.github/workflows/go-ci.yml` and `dotnet-ci.yml` set UTLXE_JAR_PATH to utlxe-1.4.0.jar one
+    # step after building utlxe-<project.version>.jar. The wrapper integration tests **skip** when
+    # the jar is absent, so both suites silently stopped running while CI stayed green — and the
+    # Go workflow exists precisely because "nothing ran the Go tests" (WB02). A pinned jar in a
+    # workflow is therefore worse than one in a launcher: it turns a test suite into a no-op.
+    for workflow in sorted(Path(".github/workflows").glob("*.yml")):
+        for lineno, line in enumerate(workflow.read_text(errors="replace").split("\n"), 1):
+            if line.lstrip().startswith("#"):
+                continue
+            if PINNED_JAR.search(line):
+                problems.append(
+                    f"{workflow}:{lineno}: pins a jar by version — resolve the built jar instead "
+                    f"(`ls -t …/utlxe-*.jar | head -n 1`), and fail if there is none\n"
+                    f"    {line.strip()[:110]}"
+                )
 
     for scripts_dir in sorted(Path("modules").glob("*/scripts")):
         for path in sorted(scripts_dir.iterdir()):

@@ -6,6 +6,19 @@ Replace `PREV` with the previous version (e.g., `1.0.1`).
 
 ---
 
+## Version ceiling: 1.4.x
+
+**The next number is 1.4.5. Do not go above 1.4.x while `main` is on 1.3.x** (2026-11-27:
+`development` 1.4.4, `main` 1.3.1).
+
+1.4.5 carries two breaking changes — `findIndex`/`findLastIndex` answer `null` instead of `-1`, and
+`concat` is strings-only — which semver would make a 1.5.0. The ceiling wins anyway: the published
+Marketplace offer tracks this line, and a 1.5 line opened while `main` sits two minor versions back
+means three live lines to reconcile rather than two. The breaking changes are called out at the top
+of the release notes instead.
+
+Lift the ceiling only after `main` has caught up.
+
 ## Pre-release Checklist
 
 Before starting, verify:
