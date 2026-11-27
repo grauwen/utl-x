@@ -10,7 +10,14 @@ import kotlin.system.exitProcess
  * Long-running server providing LSP and REST API for IDE integration and MCP server.
  */
 object Main {
-    private const val VERSION = "1.4.0"
+    // CB08's fix, applied here too: read the version from the jar manifest instead of restating
+    // it. This constant said "1.4.0" while `build.gradle.kts` declared 1.4.4, so `utlxd --version` reported a
+    // version two releases stale - which cost real debugging time when the IDE's function list
+    // looked wrong and the daemon appeared to be an old build. The jar has always known the answer:
+    // `modules/daemon/build.gradle.kts` writes "Implementation-Version" to project.version. The fallback covers running
+    // from classes rather than a jar (tests, IDE), where there is no manifest to read.
+    private val VERSION: String =
+        Main::class.java.`package`?.implementationVersion ?: "dev"
 
     @JvmStatic
     fun main(args: Array<String>) {

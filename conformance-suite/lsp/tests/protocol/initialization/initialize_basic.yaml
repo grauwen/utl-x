@@ -22,4 +22,9 @@ sequence:
           hoverProvider: true
         serverInfo:
           name: "UTL-X Language Server"
-          version: "1.4.0"
+          # CB15: was pinned to "1.4.0", which made this fixture a per-release chore — and it was
+          # left behind, so it asserted a version the daemon had not reported since 1.4.0. The
+          # handshake's contract is that a version IS reported, not which one; the daemon now reads
+          # it from the jar manifest, so pinning it here would just reintroduce the drift.
+          version:
+            contains: ["1."]

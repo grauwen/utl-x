@@ -6,6 +6,8 @@
  */
 
 import { spawn, ChildProcess } from 'child_process';
+import * as fs from 'fs';
+import * as path from 'path';
 import { EventEmitter } from 'events';
 import { injectable } from 'inversify';
 import * as http from 'http';
@@ -49,6 +51,64 @@ export interface DaemonClientEvents {
     stderr: (message: string) => void;
 }
 
+/**
+ * Resolve the utlxd jar to run.
+ *
+ * Previously a single hardcoded literal: an absolute path under one developer's home directory,
+ * pinned to `utlxd-1.4.0.jar`. Both halves were defects. The absolute path meant the extension
+ * could only ever spawn a daemon on that one machine, and the pinned version meant that after a
+ * release bump it silently kept launching the *previous* build — which is how the IDE came to show
+ * a 705-entry function catalogue while the repository had 724, with `createQname` missing from the
+ * list but callable in scripts.
+ *
+ * Resolution order, matching how the demo scripts and the `./utlx` wrapper already behave:
+ *   1. `UTLXD_JAR`            — explicit override, same spirit as UTLXD_LSP_PORT / UTLXD_REST_PORT
+ *   2. newest `utlxd-*.jar`   — walking up from this file to find the repo, so a version bump
+ *                               needs no code change
+ *   3. `UTLX_REPO`            — an explicit repo root, for a packaged extension outside the tree
+ *
+ * Returns '' when nothing is found; `start()` then reports that rather than spawning `java -jar ''`.
+ */
+function resolveDaemonJar(): string {
+    const fromEnv = process.env.UTLXD_JAR;
+    if (fromEnv && fs.existsSync(fromEnv)) {
+        return fromEnv;
+    }
+
+    const newestJarIn = (libDir: string): string | undefined => {
+        try {
+            const jars = fs.readdirSync(libDir)
+                .filter(f => /^utlxd-.*\.jar$/.test(f))
+                .map(f => ({ f, mtime: fs.statSync(path.join(libDir, f)).mtimeMs }))
+                .sort((a, b) => b.mtime - a.mtime);
+            return jars.length > 0 ? path.join(libDir, jars[0].f) : undefined;
+        } catch {
+            return undefined;
+        }
+    };
+
+    const candidates: string[] = [];
+    // Walk up from this file: works in the repo regardless of where it is checked out.
+    let dir = __dirname;
+    for (let i = 0; i < 8; i++) {
+        candidates.push(path.join(dir, 'modules', 'daemon', 'build', 'libs'));
+        const parent = path.dirname(dir);
+        if (parent === dir) { break; }
+        dir = parent;
+    }
+    if (process.env.UTLX_REPO) {
+        candidates.push(path.join(process.env.UTLX_REPO, 'modules', 'daemon', 'build', 'libs'));
+    }
+
+    for (const libDir of candidates) {
+        const jar = newestJarIn(libDir);
+        if (jar) {
+            return jar;
+        }
+    }
+    return '';
+}
+
 @injectable()
 export class UTLXDaemonClient extends EventEmitter {
     private process: ChildProcess | null = null;
@@ -62,7 +122,7 @@ export class UTLXDaemonClient extends EventEmitter {
         // Use default options - no parameters needed for DI
         const options: DaemonClientOptions = {};
         this.options = {
-            daemonJarPath: options.daemonJarPath || '/Users/magr/data/mapping/github-git/utl-x/modules/daemon/build/libs/utlxd-1.4.0.jar',
+            daemonJarPath: options.daemonJarPath || resolveDaemonJar(),
             lspPort: options.lspPort || parseInt(process.env.UTLXD_LSP_PORT || '7777', 10),
             apiPort: options.apiPort || parseInt(process.env.UTLXD_REST_PORT || '7779', 10),
             requestTimeout: options.requestTimeout || 30000,
@@ -88,6 +148,18 @@ export class UTLXDaemonClient extends EventEmitter {
             }, this.options.startupTimeout);
 
             try {
+                // A missing jar must say so. Spawning `java -jar ''` fails with a message about
+                // java, not about the daemon, and the old hardcoded path made that failure mode
+                // reachable on any machine but one.
+                if (!this.options.daemonJarPath) {
+                    clearTimeout(timeout);
+                    reject(new Error(
+                        'No utlxd jar found. Build it with "./gradlew :modules:daemon:jar", ' +
+                        'or point UTLXD_JAR at one (UTLX_REPO also works for a repo outside the tree).'
+                    ));
+                    return;
+                }
+
                 console.log('[DaemonClient] Starting daemon with LSP on port', this.options.lspPort, 'and API on port', this.options.apiPort);
                 console.log('[DaemonClient] Using JAR:', this.options.daemonJarPath);
 

@@ -658,7 +658,10 @@ def main():
                        help='Test name pattern to filter')
     parser.add_argument('-v', '--verbose', action='store_true',
                        help='Verbose output (show JSON-RPC messages)')
-    parser.add_argument('--server-jar', default='../../../../modules/daemon/build/libs/utlxd-1.4.0.jar',
+    # CB15: the default was pinned to utlxd-1.4.0.jar, a path that stops existing at every bump.
+    _libs = Path(__file__).resolve().parents[4] / "modules" / "daemon" / "build" / "libs"
+    _newest = max(_libs.glob("utlxd-*.jar"), key=lambda p: p.stat().st_mtime, default=None)
+    parser.add_argument('--server-jar', default=str(_newest) if _newest else None,
                        help='Path to server JAR (daemon is now in server module)')
 
     args = parser.parse_args()

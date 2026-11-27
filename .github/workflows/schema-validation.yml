@@ -43,6 +43,19 @@ jobs:
         run: |
           ./gradlew :modules:cli:build
           ./gradlew :modules:analysis:build
+
+      # CB14: these steps invoked cli-1.4.0.jar by name, a path that stopped existing when the
+      # version moved on — so every `java -jar` here failed on a file that was not there. Resolve
+      # the jar that was just built, and fail loudly rather than part-way through a schema check.
+      - name: Locate the CLI JAR
+        run: |
+          jar="$(ls -t modules/cli/build/libs/cli-*.jar 2>/dev/null | head -n 1)"
+          if [ -z "$jar" ]; then
+            echo "::error::no cli-*.jar in modules/cli/build/libs"
+            exit 1
+          fi
+          echo "Using $jar"
+          echo "UTLX_CLI_JAR=${GITHUB_WORKSPACE}/${jar}" >> "$GITHUB_ENV"
       
       - name: List transformations
         id: list-transforms
@@ -80,7 +93,7 @@ jobs:
             fi
             
             # Validate transformation
-            if java -jar modules/cli/build/libs/cli-1.4.0.jar schema validate \
+            if java -jar "$UTLX_CLI_JAR" schema validate \
                 --input-schema "$input_schema" \
                 --transform "$transform" \
                 $([ -f "$expected_output" ] && echo "--expected-output $expected_output") \
@@ -126,7 +139,7 @@ jobs:
             if [ -f "$input_schema" ]; then
               echo "Generating schema for: $transform_name"
               
-              if java -jar modules/cli/build/libs/cli-1.4.0.jar schema generate \
+              if java -jar "$UTLX_CLI_JAR" schema generate \
                   --input-schema "$input_schema" \
                   --transform "$transform" \
                   --output-format json-schema \
@@ -250,7 +263,7 @@ jobs:
               if [ -f "$base_schema" ]; then
                 echo "Comparing: $schema_name"
                 
-                if java -jar modules/cli/build/libs/cli-1.4.0.jar schema diff \
+                if java -jar "$UTLX_CLI_JAR" schema diff \
                     --old-schema "$base_schema" \
                     --new-schema "$schema" \
                     --output "diff-$schema_name.txt"; then
@@ -321,7 +334,7 @@ jobs:
               echo "Generating OpenAPI spec for: $transform_name"
               
               # Generate spec (command to be implemented)
-              java -jar modules/cli/build/libs/cli-1.4.0.jar schema document \
+              java -jar "$UTLX_CLI_JAR" schema document \
                 --input-schema "$input_schema" \
                 --transform "$transform" \
                 --output-format openapi \

@@ -154,14 +154,42 @@ returns `-1` for `findIndex` with no match, which the registered function cannot
 `modules/core`'s interpreter carries a **third** implementation that shadows the registry. So this
 cleanup did not create that divergence — it exposed one that had been there all along.
 
-**Kept** — `ConversionFunctions::parseDate` and `::parseInt`. These are not variants of the same
-operation: they take an extra argument used as a **fallback when parsing fails**, where the
-registered versions throw. Nothing reaches that behaviour today — not `parseInt("nope", 0)`, not
-`parseInt("nope") ?? 0`, not `coalesce(parseInt("nope"), 0)`, because a thrown error is not a value
-to defend against. And the capability cannot be added to the existing signature: the registered
-`parseDate`'s third argument is already **locale** (`"pattern: yyyy, locale: N/A"` in its error
-proves it), so exposing it needs its own name. They are candidate features, not duplicates, and
-remain un-annotated so the catalogue does not advertise them.
+**Exposed, then deleted** — `ConversionFunctions::parseDate` and `::parseInt`. These were not
+variants of the same operation: they took an extra argument used as a **fallback when parsing
+fails**, where the registered versions throw. Nothing reached that behaviour — not
+`parseInt("nope", 0)`, not `parseInt("nope") ?? 0`, not `coalesce(parseInt("nope"), 0)`, because a
+thrown error is not a value to defend against. For a CSV column that is mostly numeric with the odd
+`"N/A"`, there was no way to say "default it to 0" without pre-validating every field.
+
+That was worth having, so it is now registered as **`parseIntOr`** and **`parseDateOr`**
+(2026-11-26):
+
+```
+parseIntOr("42", 0)            => 42
+parseIntOr("N/A", 0)           => 0
+parseDateOr("2020-03-15", null) => a typed date
+parseDateOr("junk", null)      => null
+```
+
+Two decisions worth recording:
+
+- **Separate names, not an extra parameter.** The capability could not extend `parseDate`, whose
+  third argument is already **locale** — its own error proves it: `"pattern: yyyy, locale: N/A"`.
+  So `parseDateOr` takes the fallback as argument *two*, with the pattern third.
+- **Delegating wrappers, not the old copies.** Registering those copies would have shipped their
+  drift: `ConversionFunctions::parseInt` returned a Double via `parseNumber`, and its `parseDate`
+  returned `UDM.Scalar(date.toString())` — a string rather than a typed date, with a comment
+  admitting "you may need to adjust based on your UDM date representation". The wrappers call the
+  registered functions and catch failure, so whatever `parseInt` accepts, `parseIntOr` accepts
+  identically, and `parseDateOr` yields a real `UDM.Date`. A wrapper cannot drift from what it
+  calls — which is the lesson of [B73](B73-the-interpreter-reimplements-seven-stdlib-functions-and-findindex-disagrees.md),
+  where two implementations of one function disagreed for months.
+
+With the capability properly homed, the copies were unreachable duplicates like the rest, and were
+deleted with their commented-out registrations and the five test methods that exercised them.
+Tests for the new functions are in `B69FallbackParseTest` — including the one asymmetry worth
+pinning: a successful parse returns a number, while the fallback is returned **verbatim**, so a
+`null` or textual fallback survives unchanged.
 
 `hasKey` (mechanism 3) remains: `registerAlias("hasKey", "containsKey", …)` catalogues the alias
 while `ObjectFunctions::hasKey` is annotated but never registered, so what runs is `containsKey`'s

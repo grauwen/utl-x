@@ -112,35 +112,6 @@ object ConversionFunctions {
         return result
     }
     
-    /**
-     * B69: NOT annotated and NOT registered - "DUPLICATE: parseInt already registered in
-     * ExtendedMathFunctions". Kept for the same reason as `parseDate` above: its second argument is
-     * a fallback for unparseable input, where the registered `parseInt` throws. A candidate
-     * feature, not a duplicate.
-     */
-    /**
-     * Parse integer from string
-     * 
-     * Usage: parseInt("42") => 42
-     * Usage: parseInt("42.7") => 42  (truncates)
-     * Usage: parseInt("not a number") => null
-     */
-    fun parseInt(args: List<UDM>): UDM {
-        if (args.size !in 1..2) {
-            throw IllegalArgumentException("parseInt expects 1-2 arguments, got ${args.size}")
-        }
-        
-        val numberResult = parseNumber(listOf(args[0]))
-        
-        return when (numberResult) {
-            is UDM.Scalar -> when (val v = numberResult.value) {
-                is Number -> UDM.Scalar(v.toInt().toDouble())
-                null -> if (args.size == 2) args[1] else UDM.Scalar(null)
-                else -> if (args.size == 2) args[1] else UDM.Scalar(null)
-            }
-            else -> if (args.size == 2) args[1] else UDM.Scalar(null)
-        }
-    }
     
     @UTLXFunction(
         description = "Parse float/decimal from string (alias for parseNumber)",
@@ -360,70 +331,6 @@ object ConversionFunctions {
     
     // ==================== DATE CONVERSIONS ====================
     
-    /**
-     * B69: NOT annotated and NOT registered - `Functions.kt` says "DUPLICATE: parseDate already
-     * registered in DateFunctions", and has said so since 2025-10-18. Only the annotation was left
-     * behind, advertising a signature no script can reach.
-     *
-     * Kept, for a concrete reason rather than caution: this one takes a THIRD argument used as a
-     * fallback when parsing fails, where the registered `DateFunctions::parseDate` throws. That
-     * capability is reachable nowhere today - not even via `??`, since a thrown error is not a null
-     * - so it is a candidate feature needing its own name, not a duplicate. It also returns a
-     * string rather than a typed `UDM.Date`, which is the weaker behaviour and would have to change.
-     */
-    /**
-     * Parse date from string with optional format
-     * 
-     * Usage: parseDate("2025-10-15") => Date
-     * Usage: parseDate("10/15/2025", "MM/dd/yyyy") => Date
-     * Usage: parseDate("2025-10-15T14:30:00Z") => DateTime
-     * Usage: parseDate("invalid") => null
-     */
-    fun parseDate(args: List<UDM>): UDM {
-        if (args.size !in 1..3) {
-            throw IllegalArgumentException("parseDate expects 1-3 arguments, got ${args.size}")
-        }
-        
-        val value = args[0]
-        if (value !is UDM.Scalar || value.value !is String) {
-            return if (args.size == 3) args[2] else UDM.Scalar(null)
-        }
-        
-        val dateStr = value.value as String
-        
-        // If format provided, use it
-        if (args.size >= 2) {
-            val format = args[1]
-            if (format !is UDM.Scalar || format.value !is String) {
-                throw IllegalArgumentException("parseDate format must be a string")
-            }
-            
-            return try {
-                val formatter = DateTimeFormatter.ofPattern(format.value as String)
-                val date = LocalDate.parse(dateStr, formatter)
-                // Convert to UDM - you may need to adjust based on your UDM date representation
-                UDM.Scalar(date.toString())
-            } catch (e: DateTimeParseException) {
-                if (args.size == 3) args[2] else UDM.Scalar(null)
-            }
-        }
-        
-        // Try common ISO formats
-        return try {
-            // Try ISO instant format (with time)
-            val instant = try {
-                Instant.parse(dateStr)
-            } catch (e: DateTimeParseException) {
-                // Try local date format
-                val localDate = LocalDate.parse(dateStr)
-                localDate.atStartOfDay().atZone(java.time.ZoneId.systemDefault()).toInstant()
-            }
-            
-            UDM.Scalar(instant.toString())
-        } catch (e: DateTimeParseException) {
-            if (args.size == 3) args[2] else UDM.Scalar(null)
-        }
-    }
     
     // ==================== ARRAY/OBJECT CONVERSIONS ====================
     

@@ -3,16 +3,22 @@
 
 set -e
 
-DAEMON_JAR="../modules/server/build/libs/utlxd-1.3.0.jar"
+# Resolve the newest utlxd jar rather than naming one. This line read
+#   ../modules/server/build/libs/utlxd-1.3.0.jar
+# which could never work: there is no `modules/server` (the module is `modules/daemon`), and
+# 1.3.0 was two releases stale. Wrong directory AND wrong version, so the script always exited
+# with "UTLXD daemon not found". UTLXD_JAR overrides, matching the Theia extension.
+LIB_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../modules/daemon/build/libs" 2>/dev/null && pwd)"
+DAEMON_JAR="${UTLXD_JAR:-$(ls -t "$LIB_DIR"/utlxd-*.jar 2>/dev/null | head -n 1)}"
 DAEMON_LOG="/tmp/utlxd.log"
 DAEMON_PID="/tmp/utlxd.pid"
 
 echo "🚀 Starting UTLXD Daemon..."
 
 # Check if daemon JAR exists
-if [ ! -f "$DAEMON_JAR" ]; then
+if [ -z "$DAEMON_JAR" ] || [ ! -f "$DAEMON_JAR" ]; then
     echo "❌ UTLXD daemon not found at: $DAEMON_JAR"
-    echo "   Please build it first: ./gradlew :modules:server:build"
+    echo "   Please build it first: ./gradlew :modules:daemon:jar"
     exit 1
 fi
 

@@ -274,6 +274,50 @@ object DateFunctions {
     }
 
     @UTLXFunction(
+        name = "parseDateOr",
+        description = "Parses a date, returning a fallback instead of failing",
+        minArgs = 2,
+        maxArgs = 3,
+        category = "Date",
+        parameters = [
+            "text: The string to parse",
+            "fallback: Returned when the text is not a date",
+            "pattern: Optional format, as parseDate takes"
+        ],
+        returns = "A typed date, or the fallback",
+        example = "parseDateOr(\"not a date\", null) => null",
+        notes = "`parseDate` throws on unparseable input, and a thrown error cannot be caught in " +
+                "UTL-X, so the fallback has to be part of the call. Delegates to `parseDate`, so " +
+                "a valid date yields the same TYPED value (UDM.Date / UDM.DateTime), not a " +
+                "string. Note the argument order: the fallback comes second, because " +
+                "`parseDate`'s own third argument is the locale.",
+        tags = ["date", "null-handling"],
+        since = "1.4.5"
+    )
+    /**
+     * Parses a date, returning `fallback` instead of throwing.
+     *
+     * B69: the capability sat in an unregistered `ConversionFunctions::parseDate`. That copy was
+     * not merely unreachable but weaker - it returned `UDM.Scalar(date.toString())`, a string
+     * rather than a typed date, and its own comment admitted "you may need to adjust based on your
+     * UDM date representation". Delegating to the registered `parseDate` keeps the typing correct
+     * and makes divergence impossible.
+     *
+     * The fallback is argument TWO, not three: `parseDate(text, pattern, locale)` already uses the
+     * third slot for a locale, so the capability could not be added to that signature - which is
+     * why this is a separate name rather than an extra parameter.
+     */
+    fun parseDateOr(args: List<UDM>): UDM {
+        requireArgs(args, 2..3, "parseDateOr")
+        val delegated = if (args.size > 2) listOf(args[0], args[2]) else listOf(args[0])
+        return try {
+            parseDate(delegated)
+        } catch (e: Exception) {
+            args[1]
+        }
+    }
+
+    @UTLXFunction(
         description = "Convert string to date (alias for parseDate, simpler for single argument)",
         minArgs = 1,
         maxArgs = 1,

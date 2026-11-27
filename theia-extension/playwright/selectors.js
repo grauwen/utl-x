@@ -58,8 +58,12 @@ const PRECONDITION = {
 const TID = {
   // Toolbar
   modeToggle: 'utlx-mode-toggle',
-  aiAssist:   'utlx-ai-assist',
-  execute:    'utlx-execute',          // label is "Execute" / "Validate" by mode
+  // Renamed in the IDE to the `utlx-pb-*` (project bar) family. The old names were
+  // 'utlx-ai-assist' and 'utlx-execute'; neither exists in the served bundle any more, and
+  // `execute` is the FIRST thing the demo waits on — so the drift cost a silent 60s stall before
+  // any narration line, which reads exactly like a hang. See preflight() in kiosk-demo.js.
+  aiAssist:   'utlx-pb-aiassist',
+  execute:    'utlx-pb-execute',       // label is "Execute" / "Validate" by mode
 
   // Input pane
   inputTextarea:   'utlx-input',

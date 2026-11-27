@@ -24,6 +24,20 @@ sees the source format.
 Dual-licensed **AGPL-3.0 / commercial**, owned by GLOMIDCO BV. Contributions are
 AGPL and need a CLA — see `CONTRIBUTING.md`.
 
+## Versioning: stay on 1.4.x
+
+**Do not propose or apply a version above 1.4.x while `main` is on 1.3.x.** As of 2026-11-27
+`development` is 1.4.4 and `main` is 1.3.1; the next release is **1.4.5**, not 1.5.0.
+
+This holds even when a release carries breaking changes — 1.4.5 changes `findIndex` from `-1` to
+`null` and narrows `concat` to strings, which semver would call a minor bump. The decision is
+deliberate: the published Azure Marketplace offer tracks this line, and opening a 1.5 line while
+`main` is two minor versions behind would leave three live version lines to reconcile instead of
+two. Breaking changes are therefore documented loudly in the release notes rather than signalled
+by the number.
+
+Revisit only once `main` has caught up — not before.
+
 ## Build and test
 
 ```bash
@@ -147,8 +161,8 @@ modules/engine      UTLXe — execution strategies, the production runtime
 modules/bundle      file-level bundle management  (engine DEPENDS on this)
 modules/daemon      utlxd — LSP + REST
 formats/            xml json csv yaml xsd jsch avro protobuf odata osch tsch
-stdlib/             698 functions + 26 aliases = 724 callable names; 725 catalogue entries
-                    (1 duplicate left, `hasKey` — B69). Plus 12 version-gated validate.* (%utlx 1.1)
+stdlib/             700 functions + 26 aliases = 726 callable names, 726 catalogue entries
+                    (no duplicates — B69 closed). Plus 12 version-gated validate.* (%utlx 1.1)
 schema/             USDL, schema serializers
 wrappers/           .NET and Go clients driving the engine over stdio protobuf
 conformance-suite/  the Python-driven corpus

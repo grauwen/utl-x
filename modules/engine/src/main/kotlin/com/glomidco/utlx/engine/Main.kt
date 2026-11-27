@@ -11,7 +11,19 @@ import java.nio.file.Paths
 import kotlin.system.exitProcess
 
 private val logger = LoggerFactory.getLogger("com.glomidco.utlx.engine.Main")
-private const val VERSION = "1.4.0"
+/**
+ * Anchor for reading this jar's manifest. A top-level `val` has no class of its own to reflect
+ * over, so one is named explicitly rather than reaching for `object {}`.
+ */
+private object VersionAnchor
+
+// CB08's fix, applied to the engine too: read the version from the jar manifest instead of
+// restating it. This said "1.4.0" while `build.gradle.kts` declared 1.4.4, so `utlxe --version`
+// reported a build two releases stale. `modules/engine/build.gradle.kts:111` already writes
+// "Implementation-Version" to project.version, so the jar always knew. The fallback covers running
+// from classes rather than a jar (tests, IDE), where there is no manifest.
+private val VERSION: String =
+    VersionAnchor::class.java.`package`?.implementationVersion ?: "dev"
 
 fun main(args: Array<String>) {
     if (args.isEmpty()) {

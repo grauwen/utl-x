@@ -38,6 +38,9 @@ import org.slf4j.LoggerFactory
  * - When LSP uses socket: daemon transport = SOCKET (for LSP)
  * - REST API always uses separate HTTP server on socket (port 7779)
  */
+private val LSP_SERVER_VERSION: String =
+    UTLXDaemon::class.java.`package`?.implementationVersion ?: "dev"
+
 class UTLXDaemon(
     private val transportType: TransportType = TransportType.STDIO,
     private val port: Int = 7777,
@@ -176,7 +179,10 @@ class UTLXDaemon(
             ),
             "serverInfo" to mapOf(
                 "name" to "UTL-X Language Server",
-                "version" to "1.4.0"
+                // CB08 pattern: from the jar manifest. This is what the IDE is told during the
+                // LSP initialize handshake, so a stale literal here misreports the language
+                // server's version to every editor that connects.
+                "version" to LSP_SERVER_VERSION
             )
         )
 
