@@ -147,8 +147,8 @@ modules/engine      UTLXe — execution strategies, the production runtime
 modules/bundle      file-level bundle management  (engine DEPENDS on this)
 modules/daemon      utlxd — LSP + REST
 formats/            xml json csv yaml xsd jsch avro protobuf odata osch tsch
-stdlib/             698 functions + 26 aliases = 724 callable names; 725 catalogue entries
-                    (1 duplicate left, `hasKey` — B69). Plus 12 version-gated validate.* (%utlx 1.1)
+stdlib/             700 functions + 26 aliases = 726 callable names, 726 catalogue entries
+                    (no duplicates — B69 closed). Plus 12 version-gated validate.* (%utlx 1.1)
 schema/             USDL, schema serializers
 wrappers/           .NET and Go clients driving the engine over stdio protobuf
 conformance-suite/  the Python-driven corpus
