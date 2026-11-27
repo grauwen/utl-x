@@ -63,54 +63,6 @@ Keeps: 0, false (they're valid values), Empty arrays/objects (they're valid stru
         return UDM.Array(filtered)
     }
     
-    @UTLXFunction(
-        description = "Find the index of the first element matching predicate",
-        minArgs = 2,
-        maxArgs = 2,
-        category = "Array",
-        parameters = [
-            "array: Input array to process",
-        "predicate: Function to test each element (element) => boolean"
-        ],
-        returns = "-1 if no match found",
-        example = "findIndex([{id: 1}, {id: 2}, {id: 3}], item => item.id == 2) => 1",
-        additionalExamples = [
-            "findIndex([1, 2, 3, 4], n => n > 2) => 2  (index of 3)"
-        ],
-        notes = """Returns -1 if no match found
-This complements `find` which returns the element itself""",
-        tags = ["array", "index", "search"],
-        since = "1.0"
-    )
-    /**
-     * Find the index of the first element matching predicate
-     * 
-     * Usage: findIndex([{id: 1}, {id: 2}, {id: 3}], item => item.id == 2) => 1
-     * Usage: findIndex([1, 2, 3, 4], n => n > 2) => 2  (index of 3)
-     * 
-     * Returns -1 if no match found
-     * 
-     * This complements `find` which returns the element itself
-     */
-    fun findIndex(args: List<UDM>): UDM {
-        if (args.size != 2) {
-            throw IllegalArgumentException("findIndex expects 2 arguments (array, predicate), got ${args.size}")
-        }
-        
-        val array = args[0]
-        if (array !is UDM.Array) {
-            throw IllegalArgumentException("findIndex expects array as first argument")
-        }
-        
-        val predicate = args[1] as? UDM.Lambda
-            ?: throw IllegalArgumentException("findIndex() second argument must be a function")
-
-        val index = array.elements.indexOfFirst { element ->
-            predicate.apply(listOf(element)).asBoolean()
-        }
-
-        return UDM.Scalar(index.toDouble())
-    }
     
     @UTLXFunction(
         description = "Find the index of the last element matching predicate",
@@ -159,7 +111,11 @@ Complement to findIndex - searches from the end""",
             predicate.apply(listOf(element)).asBoolean()
         }
 
-        return UDM.Scalar(index.toDouble())
+        // B73: null, not -1, when nothing matches. `indexOf`, `lastIndexOf` and `find` all answer
+        // null, so -1 was the outlier - borrowed from JavaScript's Array.prototype. null also
+        // composes: `findLastIndex(...) ?? -1` recovers the old value, while the reverse needs a
+        // comparison and evaluates the search twice.
+        return UDM.Scalar(if (index >= 0) index.toDouble() else null)
     }
     
     @UTLXFunction(

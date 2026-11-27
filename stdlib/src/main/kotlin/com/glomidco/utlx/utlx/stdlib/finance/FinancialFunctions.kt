@@ -235,23 +235,33 @@ object FinancialFunctions {
             throw IllegalArgumentException("Decimal places must be non-negative, got: $places")
         }
         
+        // B67: these two lines already rounded correctly — and then `.toDouble()` threw the scale
+        // away, so roundToDecimalPlaces(20, 2) returned `20` rather than `20.00`. Returning the
+        // BigDecimal keeps what setScale computed.
+        //
+        // HALF_EVEN became HALF_UP: `roundToCents` next door already used HALF_UP, and so does
+        // `round()`, so one money value could round two ways depending on which function a script
+        // reached for. HALF_UP is the one money conventionally expects, and now all three agree.
         val bd = BigDecimal.valueOf(number)
-        val rounded = bd.setScale(places, RoundingMode.HALF_EVEN)
-        
-        return UDM.Scalar(rounded.toDouble())
+        // B67: carries the requested scale, like `round(x, n)` — roundToDecimalPlaces(20, 2) is
+        // 20.00. These two must agree; they are the same operation under two names.
+        return UDM.Scalar(bd.setScale(places, RoundingMode.HALF_UP))
     }
     
     @UTLXFunction(
-        description = "Rounds up to the nearest cent (2 decimal places).",
-        minArgs = 2,
-        maxArgs = 2,
+        // B67: the declared arity was 2 and the implementation takes 1 — it throws
+        // "requires 1 argument" — so the catalogue advertised a function that cannot be called
+        // that way, and `parameters` carried a "rate" copied from a neighbouring function.
+        // "Rounds UP" also read as ceiling; it is HALF_UP, so roundToCents(1.231) is 1.23.
+        description = "Rounds to the nearest cent (2 decimal places), half-up.",
+        minArgs = 1,
+        maxArgs = 1,
         category = "Financial",
         parameters = [
-            "amount: Amount value",
-        "rate: Rate value"
+            "amount: the monetary amount to round"
         ],
-        returns = "Result of the operation",
-        example = "roundToCents(...) => result",
+        returns = "The amount at 2 decimal places (cents)",
+        example = "roundToCents(9.999) => 10.00",
         notes = "Common in pricing to avoid fractions of a cent.\nExample:\n```\nroundToCents(1.234) → 1.23\nroundToCents(1.235) → 1.24\nroundToCents(9.999) → 10.00\n```",
         tags = ["financial"],
         since = "1.0"
@@ -278,10 +288,18 @@ object FinancialFunctions {
         }
 
         val number = args[0].asNumber()
+        // B67: this one DOES carry its scale, unlike `round` and `roundToDecimalPlaces`.
+        //
+        // The difference is parametric versus definitional. `round(x, n)` is told how many places
+        // by the caller and returns a number, so `round(20, 2)` is `20` — `20` and `20.00` are the
+        // same number, and two decimals on screen is `formatNumber`'s job. Here the scale IS the
+        // function's meaning: cents are two decimals, which is why it takes no places argument.
+        //
+        // Its own documentation already committed to this — `roundToCents(9.999) → 10.00` — and the
+        // code returned `10`. So this is a contract violation, not a design choice. Every caller in
+        // `examples/json/` is an invoice, payroll or billing figure, where a bare `10` is wrong.
         val bd = BigDecimal.valueOf(number)
-        val rounded = bd.setScale(2, RoundingMode.HALF_UP)
-
-        return UDM.Scalar(rounded.toDouble())
+        return UDM.Scalar(bd.setScale(2, RoundingMode.HALF_UP))
     }
     
     // ============================================

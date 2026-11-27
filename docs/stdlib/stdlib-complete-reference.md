@@ -39,11 +39,11 @@ Functional operations, filtering, mapping, and array manipulation
 
 | Function | Args | Description | Example |
 |----------|------|-------------|----------|
+| `arrayConcat` | -1 | Concatenates multiple arrays into one, keeping duplicates (unlike `union`) |  |
 | `avg` | -1 | Calculate the average (mean) of all numeric elements in an array |  |
 | `avgBy` | 2 | Calculates the average value using a mapping function. |  |
 | `chunk` | 1 | Chunks array into arrays of specified size |  |
 | `compact` | 1 | Remove null, undefined, and empty values from array |  |
-| `concat` | 1 | Concatenate multiple arrays |  |
 | `count` | -1 | Count the number of elements in an array |  |
 | `countBy` | 2 | Counts the number of elements in an array that match a predicate. |  |
 | `crossJoin` | 2 | Cross join - Cartesian product of both arrays |  |
@@ -191,7 +191,7 @@ Utility functions
 | `availableProcessors` | 1 | Get number of available CPU cores/processors |  |
 | `clearLogs` | 1 | Clears all log entries |  |
 | `coalesce` | 1 | Coalesce - return first non-null value |  |
-| `concat` | 1 | Concatenates values of the same type |  |
+| `concat` | -1 | Concatenates values into a single string (strings only — see `arrayConcat`, `merge`, `sum`) |  |
 | `contains` | 2 | Checks if a value contains an element, substring, or key |  |
 | `currentDir` | 1 | Get current working directory |  |
 | `debug` | 1 | Logs with DEBUG level |  |
@@ -207,11 +207,11 @@ Utility functions
 | `getLogs` | 1 | Retrieves all log entries |  |
 | `hasEnv` | 2 | Check if environment variable exists |  |
 | `homeDir` | 1 | Get user home directory |  |
-| `ifThenElse` | 1 | Inline if-then-else conditional |  |
+| `conditional` | 3 | Selects one of two values according to a condition (was `if`, never callable — B70) |  |
 | `info` | 1 | Logs with INFO level |  |
 | `isDebugMode` | 1 | Check if running in debug mode |  |
 | `isEmpty` | 1 | Checks if a value is empty |  |
-| `isNotEmpty` | 2 | Checks if a value is not empty (inverse of isEmpty) |  |
+| `isNotEmpty` | 1 | Checks if a value is not empty (inverse of isEmpty) |  |
 | `javaVersion` | 1 | Get Java/JVM version |  |
 | `log` | 1 | Logs a value with optional message (passthrough) |  |
 | `logCount` | 1 | Example: |  |
@@ -569,9 +569,8 @@ Text processing, case conversion, and string manipulation
 | `capitalize` | 1 | Capitalize first letter of string |  |
 | `charAt` | 1 | Get character at index |  |
 | `charCodeAt` | 1 | Get character code (Unicode code point) at index |  |
-| `concat` | 1 | Concatenate strings |  |
+| `concat` | -1 | Concatenates values into a single string |  |
 | `constantCase` | 1 | Convert string to CONSTANT_CASE |  |
-| `contains` | 1 | Check if string contains substring |  |
 | `dotCase` | 1 | Convert string to dot.case |  |
 | `endsWith` | 1 | Check if string ends with suffix |  |
 | `extractBetween` | 3 | Extract substring between two delimiters |  |
@@ -592,7 +591,6 @@ Text processing, case conversion, and string manipulation
 | `isAlphanumeric` | 1 | Combines isAlpha and isNumeric: characters must be A-Z, a-z, 0-9, or Unicode letters. |  |
 | `isAscii` | 1 | ASCII includes standard English letters, digits, and punctuation. |  |
 | `isBlank` | 1 | Check if string is blank (empty or only whitespace) |  |
-| `isEmpty` | 1 | Check if string is empty (length 0) |  |
 | `isHexadecimal` | 1 | Example: |  |
 | `isLowerCase` | 1 | Non-alphabetic characters (digits, spaces, etc.) are ignored. |  |
 | `isNumeric` | 1 | Only recognizes 0-9 as numeric digits. |  |
@@ -636,7 +634,6 @@ Text processing, case conversion, and string manipulation
 | `substringAfterLast` | 1 | Substring after last occurrence |  |
 | `substringBefore` | 1 | Substring before first occurrence |  |
 | `substringBeforeLast` | 1 | Substring before last occurrence |  |
-| `titleCase` | 1 | Capitalize first letter of each word |  |
 | `titleCase` | 1 | Convert string to Title Case |  |
 | `toTitleCase` | 1 | Convert string to title case (capitalize first letter of each word) |  |
 | `translate` | 1 | Translate characters in string (character mapping) |  |

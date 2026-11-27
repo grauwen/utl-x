@@ -23,8 +23,12 @@ class FunctionsTest {
         assertTrue(functionNames.isNotEmpty())
         assertTrue(functionNames.size >= 100) // Should have many functions
         
-        // Test some core functions are present
-        assertTrue(functionNames.contains("if"))
+        // Test some core functions are present.
+        // B70: this asserted "if" until 1.4.5. `if` was registered and NEVER callable — a lexer
+        // keyword whose if-expression rule the parser claims — so this line was protecting the
+        // bug: it proved registration, which is not reachability. The conditional is
+        // `conditional` now.
+        assertTrue(functionNames.contains("conditional"))
         assertTrue(functionNames.contains("map"))
         assertTrue(functionNames.contains("filter"))
         assertTrue(functionNames.contains("reduce"))
@@ -37,8 +41,8 @@ class FunctionsTest {
 
     @Test
     fun testHasFunction() {
-        // Test core functions
-        assertTrue(StandardLibrary.hasFunction("if"))
+        // Test core functions  (B70: was "if", registered but unreachable)
+        assertTrue(StandardLibrary.hasFunction("conditional"))
         assertTrue(StandardLibrary.hasFunction("coalesce"))
         assertTrue(StandardLibrary.hasFunction("isEmpty"))
         assertTrue(StandardLibrary.hasFunction("contains"))
@@ -118,7 +122,8 @@ class FunctionsTest {
     @Test
     fun testCoreFunctions() {
         // Test that all core control flow functions are registered
-        assertTrue(StandardLibrary.hasFunction("if"))
+        // (B70: was "if", which the parser owns and no script could ever call)
+        assertTrue(StandardLibrary.hasFunction("conditional"))
         assertTrue(StandardLibrary.hasFunction("coalesce"))
         assertTrue(StandardLibrary.hasFunction("generateUuid"))
         assertTrue(StandardLibrary.hasFunction("default"))
@@ -249,8 +254,15 @@ class FunctionsTest {
     fun testXMLFunctions() {
         val xmlFunctions = listOf(
             "localName", "namespaceUri", "qualifiedName", "namespacePrefix",
-            "resolveQname", "createQname", "hasNamespace", "getNamespaces",
-            "matchesQname", "nodeType", "textContent", "attributes", "attribute",
+            // B68: QName is a *qualified* name, so the N is capital — TIBCO BusinessWorks'
+            // spelling, and the one our own reference doc always documented. `register` used to
+            // say "Qname", which made the documented name uncallable. Both spellings are asserted
+            // on purpose: the capital-N ones are canonical, and the lower-case ones must keep
+            // working as deprecated aliases, because scripts were written against them.
+            "resolveQName", "createQName", "matchesQName",
+            "resolveQname", "createQname", "matchesQname",
+            "hasNamespace", "getNamespaces",
+            "nodeType", "textContent", "attributes", "attribute",
             "hasAttribute", "childCount", "childNames", "elementPath",
             "isEmptyElement", "xmlEscape", "xmlUnescape", "createCDATA", "isCDATA",
             "extractCDATA", "unwrapCDATA", "c14n", "c14nWithComments", "excC14n",

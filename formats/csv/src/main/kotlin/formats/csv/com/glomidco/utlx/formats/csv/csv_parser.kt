@@ -65,19 +65,23 @@ class CSVParser(
         this(InputStreamReader(java.io.ByteArrayInputStream(bytes), charset ?: Charsets.UTF_8), dialect, options)
     
     /**
-     * Parse CSV to UDM
+     * B66: the rows as **cells**, with quoting, escaped quotes and embedded delimiters already
+     * resolved — the same list [parse] shapes into UDM, exposed for callers that want the grid
+     * rather than the model.
+     *
+     * Added for `prettyPrintCSV`, which aligns a CSV string into columns and was splitting on the
+     * delimiter itself, with no notion of quoting: a comma inside a quoted value became a column
+     * break and the quotes survived into the output. The fix is to share this one reader rather
+     * than grow a second, weaker one — the same reason `ScalarCanonical` and
+     * `looksLikeValidationResult` each have a single definition.
      */
-    fun parse(hasHeaders: Boolean = true): UDM {
+    fun parseRows(): List<List<String>> {
         val rows = mutableListOf<List<String>>()
-        
-        // Parse all rows
         while (!isAtEnd()) {
             val row = parseRow()
             if (row.isNotEmpty()) {
                 rows.add(row)
             }
-            
-            // Skip to next line
             while (!isAtEnd() && (peek() == '\n' || peek() == '\r')) {
                 if (advance() == '\n') {
                     line++
@@ -85,7 +89,15 @@ class CSVParser(
                 }
             }
         }
-        
+        return rows
+    }
+
+    /**
+     * Parse CSV to UDM
+     */
+    fun parse(hasHeaders: Boolean = true): UDM {
+        val rows = parseRows()
+
         if (rows.isEmpty()) {
             return UDM.Array.empty()
         }

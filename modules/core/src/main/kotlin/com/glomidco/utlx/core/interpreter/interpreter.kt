@@ -2170,10 +2170,18 @@ class StandardLibraryImpl {
                 result.isTruthy()
             }
 
+            // B73: null, not -1. This copy exists because `modules/core` cannot depend on
+            // `:stdlib` (the dependency runs the other way), so the interpreter owns an
+            // implementation of the higher-order functions for standalone use. That makes it a
+            // SECOND implementation of a language function, and it silently disagreed with
+            // `ArrayFunctions::findIndex`, which returns null: the CLI answered -1 while the
+            // engine's compiled path answered null for the same script. `indexOf`, `lastIndexOf`
+            // and `find` all answer null, so -1 was the outlier; `?? -1` recovers it at the call
+            // site, while the reverse needs a comparison and searches twice.
             if (index >= 0) {
                 RuntimeValue.NumberValue(index.toDouble())
             } else {
-                RuntimeValue.NumberValue(-1.0)
+                RuntimeValue.NullValue
             }
         }
 

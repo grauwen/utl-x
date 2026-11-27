@@ -52,15 +52,6 @@ class CriticalArrayFunctionsTest {
         assertTrue(filtered[1] is UDM.Object)
     }
 
-    @Test
-    fun testFindIndex() {
-        val array = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3), UDM.Scalar(4)))
-        val predicate = UDM.Lambda { args -> UDM.Scalar(args[0].asNumber() > 2) }
-
-        val result = CriticalArrayFunctions.findIndex(listOf(array, predicate))
-        assertTrue(result is UDM.Scalar)
-        assertEquals(2.0, (result as UDM.Scalar).value) // index of 3 (first > 2)
-    }
 
     @Test
     fun testFindLastIndex() {
@@ -204,16 +195,6 @@ class CriticalArrayFunctionsTest {
         }
     }
 
-    @Test
-    fun testFindIndexInvalidArguments() {
-        assertThrows<IllegalArgumentException> {
-            CriticalArrayFunctions.findIndex(listOf(UDM.Array(emptyList())))
-        }
-        
-        assertThrows<IllegalArgumentException> {
-            CriticalArrayFunctions.findIndex(listOf(UDM.Scalar("not-array"), UDM.Scalar("predicate")))
-        }
-    }
 
     @Test
     fun testWindowedInvalidArguments() {

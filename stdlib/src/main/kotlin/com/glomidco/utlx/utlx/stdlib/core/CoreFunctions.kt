@@ -11,27 +11,35 @@ import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 object CoreFunctions {
     
     @UTLXFunction(
-        description = "Inline if-then-else conditional",
-        minArgs = 1,
-        maxArgs = 1,
+        description = "Selects one of two values according to a condition",
+        minArgs = 3,
+        maxArgs = 3,
         category = "Core",
         parameters = [
-            "array: Input array to process"
+            "condition: Value tested for truthiness",
+            "whenTrue: Returned when the condition holds",
+            "whenFalse: Returned when it does not"
         ],
-        returns = "Result of the operation",
-        example = "if(price > 100, \"expensive\", \"affordable\")",
-        notes = "This is CRITICAL for concise transformations",
+        returns = "whenTrue or whenFalse",
+        example = "conditional(price > 100, \"expensive\", \"affordable\")",
+        notes = "Selects between two VALUES; it is not the conditional statement. Both branches " +
+                "are arguments, so both are evaluated before the call: " +
+                "`conditional(d != 0, 1 / d, -1)` fails on d = 0, where the `if (c) a else b` " +
+                "syntax yields -1 because it evaluates only the branch it takes. Use the syntax " +
+                "whenever a branch must not run. (Registered as `if` until 1.4.5, where it was " +
+                "unreachable - the parser owns that keyword. See B70.)",
         tags = ["core"],
         since = "1.0"
     )
     /**
-     * Inline if-then-else conditional
-     * Usage: if(price > 100, "expensive", "affordable")
-     * 
-     * This is CRITICAL for concise transformations
+     * Selects one of two values according to a condition.
+     * Usage: conditional(price > 100, "expensive", "affordable")
+     *
+     * Eager: both branches are arguments and are evaluated before this is called. The `if (c) a else b`
+     * syntax short-circuits; this does not.
      */
-    fun ifThenElse(args: List<UDM>): UDM {
-        requireArgs(args, 3, "if")
+    fun conditional(args: List<UDM>): UDM {
+        requireArgs(args, 3, "conditional")
         
         val condition = args[0].asBoolean()
         return if (condition) args[1] else args[2]
@@ -112,11 +120,10 @@ object CoreFunctions {
         maxArgs = 1,
         category = "Core",
         parameters = [
-            "array: Input array to process",
-        "predicate: Function to test each element (element) => boolean"
+            "value: The value to test - string, array, object, binary or null"
         ],
-        returns = "Boolean indicating the result",
-        example = "isEmpty(...) => result",
+        returns = "true when the value is empty",
+        example = "isEmpty(\"\") => true",
         notes = "Works with strings, arrays, objects\nExamples:\n```\nisEmpty(\"\") // true\nisEmpty(\"hello\") // false\nisEmpty([]) // true\nisEmpty([1, 2]) // false\nisEmpty({}) // true\nisEmpty({\"name\": \"John\"}) // false\nisEmpty(null) // true\n```",
         tags = ["cleanup", "core", "null-handling"],
         since = "1.0"
@@ -166,15 +173,14 @@ object CoreFunctions {
     
     @UTLXFunction(
         description = "Checks if a value is not empty (inverse of isEmpty)",
-        minArgs = 2,
-        maxArgs = 2,
+        minArgs = 1,
+        maxArgs = 1,
         category = "Core",
         parameters = [
-            "array: Input array to process",
-        "element: Element value"
+            "value: The value to test - string, array, object, binary or null"
         ],
-        returns = "Boolean indicating the result",
-        example = "isNotEmpty(...) => result",
+        returns = "true when the value is not empty",
+        example = "isNotEmpty(\"hello\") => true",
         notes = "Works with strings, arrays, objects, and null values\nExamples:\n```\nisNotEmpty(\"\") // false\nisNotEmpty(\"hello\") // true\nisNotEmpty([]) // false\nisNotEmpty([1, 2]) // true\nisNotEmpty({}) // false\nisNotEmpty({\"name\": \"John\"}) // true\nisNotEmpty(null) // false\nisNotEmpty(42) // true (numbers are never empty)\nisNotEmpty(true) // true (booleans are never empty)\n```",
         tags = ["cleanup", "core", "null-handling"],
         since = "1.0"
@@ -216,8 +222,8 @@ object CoreFunctions {
         "element: Element value"
         ],
         returns = "Result of the operation",
-        example = "contains(...) => result",
-        notes = "Works with:\n- Strings: checks if string contains substring\n- Arrays: checks if array contains element\n- Objects: checks if object contains key (key existence only, not value)\nExamples:\n```\ncontains(\"hello world\", \"world\") // true\ncontains(\"hello\", \"xyz\") // false\ncontains([1, 2, 3], 2) // true\ncontains([1, 2, 3], 5) // false\ncontains({\"name\": \"John\", \"age\": 30}, \"name\") // true (key exists)\ncontains({\"name\": \"John\"}, \"email\") // false (key doesn't exist)\n```",
+        example = "contains(\"hello world\", \"world\") => true",
+        notes = "Works with:\n- Strings: checks if string contains substring\n- Arrays: checks if array contains element\n- Objects: checks if object contains key (key existence only, not value)\nRules:\n- null finds nothing: contains(\"abc\", null) and contains(null, \"a\") are false\n- in a string or an object's keys, the value searched for must be a single value; a list or object is an error\n- numbers are compared as text: contains(12345, \"23\") is true\nExamples:\n```\ncontains(\"hello world\", \"world\") // true\ncontains(\"hello\", \"xyz\") // false\ncontains([1, 2, 3], 2) // true\ncontains([1, 2, 3], 5) // false\ncontains({\"name\": \"John\", \"age\": 30}, \"name\") // true (key exists)\ncontains({\"name\": \"John\"}, \"email\") // false (key doesn't exist)\n```",
         tags = ["core"],
         since = "1.0"
     )
@@ -253,13 +259,31 @@ object CoreFunctions {
         
         val collection = args[0]
         val element = args[1]
-        
+
+        // B72: substring and key lookups need a single value to look for. Both branches used to
+        // read it as `(element as? UDM.Scalar)?.value?.toString() ?: ""`, so a null or a
+        // non-scalar became "" — and every string contains "". contains("TX,OK,NM,AZ", $state)
+        // was therefore TRUE for a missing state. Now: null finds nothing, a list or object is a
+        // script error. (Arrays are unaffected: they compare elements, and a list may hold lists.)
+        fun searchText(lookingIn: String): String? = when {
+            element is UDM.Scalar && element.value == null -> null
+            element is UDM.Scalar -> element.value.toString()
+            else -> throw FunctionArgumentException(
+                "contains cannot search $lookingIn for ${element.javaClass.simpleName.lowercase()}: " +
+                "the second argument must be a single value. " +
+                "Hint: to test list membership, put the list first - contains(list, value)"
+            )
+        }
+
         val result = when (collection) {
             is UDM.Scalar -> {
-                // String contains substring
-                val str = collection.value?.toString() ?: ""
-                val searchStr = (element as? UDM.Scalar)?.value?.toString() ?: ""
-                str.contains(searchStr)
+                // String contains substring. Numbers are compared as text, on purpose:
+                // contains(12345, "23") is true, so digits read from XML/CSV (text) and from
+                // JSON (numbers) give the same answer.
+                // B72: a null value contains nothing, and nothing is found in it.
+                val search = searchText("text")
+                if (collection.value == null || search == null) false
+                else collection.value.toString().contains(search)
             }
             is UDM.Array -> {
                 // Array contains element
@@ -267,8 +291,8 @@ object CoreFunctions {
             }
             is UDM.Object -> {
                 // Object contains key (convention: check keys only)
-                val key = (element as? UDM.Scalar)?.value?.toString() ?: ""
-                collection.properties.containsKey(key)
+                val key = searchText("an object's keys")
+                key != null && collection.properties.containsKey(key)
             }
             is UDM.Binary -> {
                 // Binary data - check if contains byte sequence
@@ -306,194 +330,63 @@ object CoreFunctions {
     }
     
     @UTLXFunction(
-        description = "Concatenates values of the same type",
+        description = "Concatenates values into a single string",
         minArgs = 1,
-        maxArgs = 1,
+        maxArgs = 4,
         category = "Core",
         parameters = [
-            "firstArg: Firstarg value"
+            "value: First value, rendered as text",
+            "more...: Further values, appended in order (variadic)"
         ],
-        returns = "Result of the operation",
-        example = "concat(...) => result",
-        notes = "- Strings: Combines into single string\n- Arrays: Combines into single array (preserves duplicates)\n- Objects: Merges properties (right overwrites left)\nExamples:\n```\nconcat(\"Hello\", \" \", \"World\") // \"Hello World\"\nconcat([1, 2], [3, 4], [5]) // [1, 2, 3, 4, 5]\nconcat({\"a\": 1}, {\"b\": 2}, {\"a\": 3}) // {\"a\": 3, \"b\": 2} (right overwrites)\nconcat(42, 58) // 100 (numbers are added)\n```",
-        tags = ["core"],
+        returns = "A string",
+        example = "concat(\"Hello\", \" \", \"World\") => \"Hello World\"",
+        notes = "Strings only, as in XPath/XSLT: every argument is rendered as text and joined, " +
+                "so concat(\"ORD-\", 42) is \"ORD-42\". For other types use the function that " +
+                "says so - arrayConcat for arrays, merge for objects, binaryConcat for binary, " +
+                "sum to add numbers. Until 1.4.5 this one function did all four, dispatching on " +
+                "the first argument's type, which made concat(42, 58) return 100 rather than " +
+                "\"4258\" (B71).",
+        tags = ["core", "string"],
         since = "1.0"
     )
     /**
-     * Concatenates values of the same type
-     * - Strings: Combines into single string
-     * - Arrays: Combines into single array (preserves duplicates)
-     * - Objects: Merges properties (right overwrites left)
-     * 
-     * @param values Values to concatenate (must be same type)
-     * @return Concatenated result
-     * 
-     * Examples:
-     * ```
-     * concat("Hello", " ", "World") // "Hello World"
-     * concat([1, 2], [3, 4], [5]) // [1, 2, 3, 4, 5]
-     * concat({"a": 1}, {"b": 2}, {"a": 3}) // {"a": 3, "b": 2} (right overwrites)
-     * concat(42, 58) // 100 (numbers are added)
-     * ```
+     * Concatenates values into a single string.
+     * Usage: concat("Hello", " ", "World") => "Hello World"
+     *
+     * B71: strings only. This used to dispatch on the first argument's type and so served as
+     * string-concat, array-concat, object-merge AND number-addition - four unrelated operations
+     * behind one name, three of which already had a proper name (`arrayConcat`, `merge`, `sum`).
+     * Every call site in the repository - all 70 - used the string form.
+     *
+     * Rendering goes through `asString()`, which is the same path `+` uses, so B35's exact
+     * numerics survive: `concat("x", 100.10)` is "x100.10", not "x100.1".
      */
     fun concat(args: List<UDM>): UDM {
         if (args.isEmpty()) {
             throw FunctionArgumentException(
                 "concat expects at least 1 argument, got 0. " +
-                "Hint: Provide values to concatenate - e.g., concat(\"Hello\", \" \", \"World\") or concat([1,2], [3,4])"
+                "Hint: Provide values to concatenate - e.g., concat(\"Hello\", \" \", \"World\")"
             )
         }
-        
-        if (args.size == 1) {
-            return args[0]
-        }
-        
-        // Determine the type from the first argument
-        val firstArg = args[0]
-        
-        return when (firstArg) {
-            is UDM.Scalar -> {
-                when (val firstValue = firstArg.value) {
-                    is String -> {
-                        // String concatenation
-                        val result = args.joinToString("") { arg ->
-                            when (arg) {
-                                is UDM.Scalar -> arg.value?.toString() ?: ""
-                                else -> throw FunctionArgumentException(
-                                    "concat requires all arguments to be strings when concatenating strings, but got ${getTypeDescription(arg)}. " +
-                                    "Hint: Convert non-string values using toString() before concatenating."
-                                )
-                            }
-                        }
-                        UDM.Scalar(result)
-                    }
-                    is Number -> {
-                        // Number addition (sum)
-                        var sum = firstValue.toDouble()
-                        for (i in 1 until args.size) {
-                            val arg = args[i]
-                            if (arg is UDM.Scalar) {
-                                val argValue = arg.value
-                                if (argValue is Number) {
-                                    sum += argValue.toDouble()
-                                } else {
-                                    throw FunctionArgumentException(
-                                        "concat requires all arguments to be numbers when concatenating numbers, but got ${getTypeDescription(arg)}. " +
-                                        "Hint: Use toNumber() to convert string values to numbers before concatenating."
-                                    )
-                                }
-                            } else {
-                                throw FunctionArgumentException(
-                                    "concat requires all arguments to be numbers when concatenating numbers, but got ${getTypeDescription(arg)}. " +
-                                    "Hint: Use toNumber() to convert string values to numbers before concatenating."
-                                )
-                            }
-                        }
-                        UDM.Scalar(sum)
-                    }
-                    is Boolean -> {
-                        // Boolean logical OR
-                        var result: Boolean = firstValue
-                        for (i in 1 until args.size) {
-                            val arg = args[i]
-                            if (arg is UDM.Scalar) {
-                                val argValue = arg.value
-                                if (argValue is Boolean) {
-                                    result = result || argValue
-                                } else {
-                                    throw FunctionArgumentException(
-                                        "concat requires all arguments to be booleans when concatenating booleans, but got ${getTypeDescription(arg)}. " +
-                                        "Hint: Boolean concatenation uses logical OR. Ensure all values are true/false."
-                                    )
-                                }
-                            } else {
-                                throw FunctionArgumentException(
-                                    "concat requires all arguments to be booleans when concatenating booleans, but got ${getTypeDescription(arg)}. " +
-                                    "Hint: Boolean concatenation uses logical OR. Ensure all values are true/false."
-                                )
-                            }
-                        }
-                        UDM.Scalar(result)
-                    }
-                    null -> {
-                        // Return first non-null value, or null if all are null
-                        for (arg in args) {
-                            if (arg is UDM.Scalar && arg.value != null) {
-                                return arg
-                            }
-                        }
-                        UDM.Scalar(null)
-                    }
-                    else -> {
-                        // Other scalar types - convert to strings and concatenate
-                        val result = args.joinToString("") { arg ->
-                            when (arg) {
-                                is UDM.Scalar -> arg.value?.toString() ?: ""
-                                else -> throw FunctionArgumentException(
-                                    "concat requires all arguments to be scalars when concatenating scalar values, but got ${getTypeDescription(arg)}. " +
-                                    "Hint: Cannot mix scalar values with arrays or objects in concat()."
-                                )
-                            }
-                        }
-                        UDM.Scalar(result)
-                    }
-                }
-            }
-            is UDM.Array -> {
-                // Array concatenation
-                val allElements = mutableListOf<UDM>()
-                for (arg in args) {
-                    if (arg is UDM.Array) {
-                        allElements.addAll(arg.elements)
-                    } else {
-                        throw FunctionArgumentException(
-                            "concat requires all arguments to be arrays when concatenating arrays, but got ${getTypeDescription(arg)}. " +
-                            "Hint: Use [element] to wrap single values in an array, or ensure all arguments are arrays."
-                        )
-                    }
-                }
-                UDM.Array(allElements)
-            }
-            is UDM.Object -> {
-                // Object merging (right overwrites left)
-                val mergedProps = mutableMapOf<String, UDM>()
-                val mergedAttrs = mutableMapOf<String, String>()
 
-                for (arg in args) {
-                    if (arg is UDM.Object) {
-                        mergedProps.putAll(arg.properties)
-                        mergedAttrs.putAll(arg.attributes)
-                    } else {
-                        throw FunctionArgumentException(
-                            "concat requires all arguments to be objects when concatenating objects, but got ${getTypeDescription(arg)}. " +
-                            "Hint: Object concatenation merges properties (right overwrites left). Ensure all arguments are objects."
-                        )
-                    }
-                }
-                UDM.Object(mergedProps, mergedAttrs)
+        // A structured argument is almost always someone reaching for the operation this
+        // function used to perform, so name the one that does it rather than just refusing.
+        for (arg in args) {
+            val alternative = when (arg) {
+                is UDM.Array -> "arrayConcat(...) joins arrays; joinBy(array, separator) makes a string from one"
+                is UDM.Object -> "merge(...) combines objects"
+                is UDM.Binary -> "binaryConcat(...) joins binary data"
+                is UDM.Lambda -> "a function has no text form"
+                else -> null
             }
-            is UDM.Binary -> {
-                // Binary data concatenation
-                val allBytes = mutableListOf<Byte>()
-                for (arg in args) {
-                    if (arg is UDM.Binary) {
-                        allBytes.addAll(arg.data.toList())
-                    } else {
-                        throw FunctionArgumentException(
-                            "concat requires all arguments to be binary data when concatenating binary values, but got ${getTypeDescription(arg)}. " +
-                            "Hint: Binary concatenation joins byte arrays. Ensure all arguments are binary data."
-                        )
-                    }
-                }
-                UDM.Binary(allBytes.toByteArray())
-            }
-            else -> {
+            if (alternative != null) {
                 throw FunctionArgumentException(
-                    "concat does not support concatenation of ${getTypeDescription(firstArg)} type. " +
-                    "Hint: concat() supports strings, numbers, booleans, arrays, objects, and binary data."
+                    "concat builds a string, but got ${getTypeDescription(arg)}. Hint: $alternative."
                 )
             }
         }
+
+        return UDM.Scalar(args.joinToString("") { it.asString() })
     }
     
     private fun requireArgs(args: List<UDM>, expected: Int, functionName: String) {

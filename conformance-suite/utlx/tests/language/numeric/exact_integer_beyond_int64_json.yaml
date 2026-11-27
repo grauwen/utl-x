@@ -1,0 +1,44 @@
+name: "exact_integer_beyond_int64_json"
+category: "language/numeric"
+description: "B35: a JSON integer WIDER than Long keeps every digit through a read and toString — 24 digits cannot survive a Double, and Long holds only 19"
+tags: ["json", "numbers", "B35", "exact", "toString", "bigint"]
+
+input:
+  format: json
+  data: |
+    {"receipt_barcode_18": 123456789012345678,
+     "receipt_barcode_24": 123456789012345678901234,
+     "workstation_id": 4711,
+     "operator_id": 987654321}
+
+transformation: |
+  %utlx 1.0
+  input json
+  output json
+  ---
+  {
+    str18: toString($input.receipt_barcode_18),
+    str24: toString($input.receipt_barcode_24),
+    len24: length(toString($input.receipt_barcode_24)),
+    station: toString($input.workstation_id),
+    operator: toString($input.operator_id)
+  }
+
+expected:
+  format: json
+  data: {
+    "str18": "123456789012345678",
+    "str24": "123456789012345678901234",
+    "len24": 24,
+    "station": "4711",
+    "operator": "987654321"
+  }
+
+metadata:
+  author: "UTL-X Team"
+  references: ["docs/bugs-fixed/B35-double-based-numeric-model-corrupts-decimals-and-large-integers.md"]
+  notes:
+    - "Asked by an integration reading POS receipts into Delta STRING columns: are 18- and 24-digit barcodes read without losing digits, and is that true OUTSIDE the interpreter?"
+    - "Complements exact_int64_xml and exact_int64_csv, which cover values that still FIT in a Long. 24 digits does not: Long holds 19, so this value is a BigInteger. Double is worse still — it is exact only to ~15-16 significant digits, so even the 18-digit barcode would already be corrupted by it."
+    - "The expectations are STRINGS on purpose. `format: json` is compared by parsed value, so asserting the bare number would be weaker — both sides could parse to the same thing while digits were lost. toString pins the digits and len24 pins the count independently of it."
+    - "Being a fixture, ConformanceStrategyParityTest runs it on TEMPLATE, COPY and COMPILED. That is the point: the CLI-driven suite alone exercises only the interpreted path, and the question was explicitly about the other two."

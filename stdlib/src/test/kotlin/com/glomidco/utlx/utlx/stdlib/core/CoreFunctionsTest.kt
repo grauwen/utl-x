@@ -11,9 +11,9 @@ import kotlin.test.assertNotEquals
 class CoreFunctionsTest {
 
     @Test
-    fun testIfThenElse() {
+    fun testConditional() {
         // Test true condition
-        val result1 = CoreFunctions.ifThenElse(listOf(
+        val result1 = CoreFunctions.conditional(listOf(
             UDM.Scalar(true),
             UDM.Scalar("expensive"),
             UDM.Scalar("affordable")
@@ -23,7 +23,7 @@ class CoreFunctionsTest {
         assertEquals("expensive", (result1 as UDM.Scalar).value)
         
         // Test false condition
-        val result2 = CoreFunctions.ifThenElse(listOf(
+        val result2 = CoreFunctions.conditional(listOf(
             UDM.Scalar(false),
             UDM.Scalar("expensive"),
             UDM.Scalar("affordable")
@@ -33,7 +33,7 @@ class CoreFunctionsTest {
         assertEquals("affordable", (result2 as UDM.Scalar).value)
         
         // Test with numeric condition (non-zero is true)
-        val result3 = CoreFunctions.ifThenElse(listOf(
+        val result3 = CoreFunctions.conditional(listOf(
             UDM.Scalar(100),
             UDM.Scalar("positive"),
             UDM.Scalar("zero or negative")
@@ -43,7 +43,7 @@ class CoreFunctionsTest {
         assertEquals("positive", (result3 as UDM.Scalar).value)
         
         // Test with zero (false)
-        val result4 = CoreFunctions.ifThenElse(listOf(
+        val result4 = CoreFunctions.conditional(listOf(
             UDM.Scalar(0),
             UDM.Scalar("positive"),
             UDM.Scalar("zero or negative")
@@ -171,17 +171,17 @@ class CoreFunctionsTest {
 
     @Test
     fun testInvalidArguments() {
-        // Test ifThenElse with wrong number of arguments
+        // Test conditional with wrong number of arguments
         assertThrows<FunctionArgumentException> {
-            CoreFunctions.ifThenElse(listOf(UDM.Scalar(true), UDM.Scalar("then")))
+            CoreFunctions.conditional(listOf(UDM.Scalar(true), UDM.Scalar("then")))
         }
         
         assertThrows<FunctionArgumentException> {
-            CoreFunctions.ifThenElse(listOf())
+            CoreFunctions.conditional(listOf())
         }
         
         assertThrows<FunctionArgumentException> {
-            CoreFunctions.ifThenElse(listOf(UDM.Scalar(true), UDM.Scalar("then"), UDM.Scalar("else"), UDM.Scalar("extra")))
+            CoreFunctions.conditional(listOf(UDM.Scalar(true), UDM.Scalar("then"), UDM.Scalar("else"), UDM.Scalar("extra")))
         }
         
         // Test default with wrong number of arguments
@@ -208,8 +208,8 @@ class CoreFunctionsTest {
 
     @Test
     fun testEdgeCases() {
-        // Test ifThenElse with different types
-        val objectResult = CoreFunctions.ifThenElse(listOf(
+        // Test conditional with different types
+        val objectResult = CoreFunctions.conditional(listOf(
             UDM.Scalar(true),
             UDM.Object(mapOf("success" to UDM.Scalar(true))),
             UDM.Array(listOf(UDM.Scalar("error")))
@@ -244,10 +244,10 @@ class CoreFunctionsTest {
 
     @Test
     fun testBooleanConversions() {
-        // Test ifThenElse with various boolean conversions
+        // Test conditional with various boolean conversions
         
         // String "false" is falsy (only "true"/"yes"/"1" are truthy for strings)
-        val stringFalseResult = CoreFunctions.ifThenElse(listOf(
+        val stringFalseResult = CoreFunctions.conditional(listOf(
             UDM.Scalar("false"),
             UDM.Scalar("truthy"),
             UDM.Scalar("falsy")
@@ -255,7 +255,7 @@ class CoreFunctionsTest {
         assertEquals("falsy", (stringFalseResult as UDM.Scalar).value)
         
         // Empty string should be false
-        val emptyStringResult = CoreFunctions.ifThenElse(listOf(
+        val emptyStringResult = CoreFunctions.conditional(listOf(
             UDM.Scalar(""),
             UDM.Scalar("truthy"),
             UDM.Scalar("falsy")
@@ -263,11 +263,60 @@ class CoreFunctionsTest {
         assertEquals("falsy", (emptyStringResult as UDM.Scalar).value)
         
         // Null should be false
-        val nullResult = CoreFunctions.ifThenElse(listOf(
+        val nullResult = CoreFunctions.conditional(listOf(
             UDM.Scalar(null),
             UDM.Scalar("truthy"),
             UDM.Scalar("falsy")
         ))
         assertEquals("falsy", (nullResult as UDM.Scalar).value)
+    }
+
+    @Test
+    fun testContains() {
+        // B69: this is the `contains` that is registered. Its string case used to be tested only
+        // against the unregistered `StringFunctions.contains`, which no script could reach.
+        fun contains(a: UDM, b: UDM) = (CoreFunctions.contains(listOf(a, b)) as UDM.Scalar).value
+
+        assertEquals(true, contains(UDM.Scalar("hello world"), UDM.Scalar("world")))
+        assertEquals(false, contains(UDM.Scalar("hello world"), UDM.Scalar("universe")))
+
+        val numbers = UDM.Array(listOf(UDM.Scalar(1), UDM.Scalar(2), UDM.Scalar(3)))
+        assertEquals(true, contains(numbers, UDM.Scalar(2)))
+        assertEquals(false, contains(numbers, UDM.Scalar(5)))
+
+        // Objects: keys only, never values
+        val person = UDM.Object(mapOf("name" to UDM.Scalar("John")))
+        assertEquals(true, contains(person, UDM.Scalar("name")))
+        assertEquals(false, contains(person, UDM.Scalar("John")))
+    }
+    @Test
+    fun testIsEmpty() {
+        // B69: these string assertions used to run against the unregistered
+        // `MoreStringFunctions.isEmpty`, which no script could reach. This is the registered one,
+        // and it agrees on every string case - it is wider, not different.
+        fun isEmpty(v: Any?) = (CoreFunctions.isEmpty(listOf(UDM.Scalar(v))) as UDM.Scalar).value
+
+        assertEquals(true, isEmpty(""))
+        assertEquals(false, isEmpty("hello"))
+        assertEquals(false, isEmpty("   "))      // whitespace is not empty - isBlank covers that
+        assertEquals(false, isEmpty("a"))
+        assertEquals(true, isEmpty(null))
+
+        // The part the string-only copy could not express, and the reason it was retired.
+        assertEquals(true, (CoreFunctions.isEmpty(listOf(UDM.Array(emptyList()))) as UDM.Scalar).value)
+        assertEquals(false, (CoreFunctions.isEmpty(listOf(UDM.Array(listOf(UDM.Scalar(1))))) as UDM.Scalar).value)
+        assertEquals(true, (CoreFunctions.isEmpty(listOf(UDM.Object(emptyMap()))) as UDM.Scalar).value)
+        assertEquals(false, isEmpty(0))          // numbers are never empty
+        assertEquals(false, isEmpty(false))      // nor booleans
+    }
+
+    @Test
+    fun testConcat() {
+        // B69/B71: likewise, these ran against the unregistered `StringFunctions.concat`.
+        fun concat(vararg v: Any?) =
+            (CoreFunctions.concat(v.map { UDM.Scalar(it) }) as UDM.Scalar).value
+
+        assertEquals("hello world", concat("hello", " ", "world"))
+        assertEquals("number: 42", concat("number: ", 42))
     }
 }

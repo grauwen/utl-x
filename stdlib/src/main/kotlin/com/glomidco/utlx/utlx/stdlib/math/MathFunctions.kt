@@ -4,6 +4,9 @@ package com.glomidco.utlx.stdlib.math
 import com.glomidco.utlx.core.udm.UDM
 import com.glomidco.utlx.stdlib.FunctionArgumentException
 import kotlin.math.*
+import java.math.BigDecimal
+import java.math.BigInteger
+import java.math.RoundingMode
 import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 
 object MathFunctions {
@@ -54,16 +57,66 @@ object MathFunctions {
                 "Usage: round(x) or round(x, decimals)."
             )
         }
-        val num = args[0].asNumber()
         if (args.size == 1) {
-            return UDM.Scalar(round(num))
+            return UDM.Scalar(round(args[0].asNumber()))
         }
         val places = args[1].asNumber().toInt()
-        if (places <= 0) {
-            return UDM.Scalar(round(num))
+
+        // B67: round on BigDecimal, not by scaling a Double.
+        //
+        // The old implementation was `round(num * factor) / factor` over `asNumber()`, which had
+        // two consequences from one line. It discarded scale — `round(20.00, 2)` gave `20`, undoing
+        // B35 at the one place a money value is most likely to pass through — and, worse, it
+        // returned WRONG NUMBERS: `1.015` is `1.01499…` as a Double, so `× 100` rounds down to
+        // `101` and `round(1.015, 2)` came back `1.01` instead of `1.02`.
+        //
+        // `setScale` answers both: it rounds correctly and the result carries the scale it rounded
+        // to. HALF_UP is stated rather than inherited — it matches the documented example
+        // (`round(3.14159, 2) => 3.14`) and what money conventionally expects, and unlike
+        // `Math.round` it is symmetric about zero.
+        //
+        // Negative `places` keeps the old integral path: BigDecimal would read it as rounding to
+        // tens, which is not what this function has ever meant.
+        if (places < 0) {
+            return UDM.Scalar(round(args[0].asNumber()))
         }
-        val factor = 10.0.pow(places)
-        return UDM.Scalar(round(num * factor) / factor)
+        val exact = exactOrNull(args[0])
+            ?: return UDM.Scalar(round(args[0].asNumber()))   // NaN / Infinity: unchanged
+        // The result CARRIES the requested scale: round(20, 2) is 20.00, not 20.
+        //
+        // Asking for two decimals and not getting two decimals is the odd behaviour, and UTL-X can
+        // do better than the float languages here — B35 made a plain decimal a BigDecimal, so the
+        // scale is representable. Of the languages that have the choice, SQL keeps the scale
+        // (`ROUND(20.00, 2)` is `20.00` for NUMERIC); Python, R and PHP drop it only because a
+        // float cannot hold it. SQL is the closer analogue for a transformation language.
+        //
+        // No stripTrailingZeros: that was the earlier, more conservative call, kept only because
+        // four conformance fixtures were written against the float convention. Those fixtures
+        // record an earlier choice, not a truth, and have been updated. See B67.
+        return UDM.Scalar(exact.setScale(places, RoundingMode.HALF_UP))
+    }
+
+    /**
+     * B67: the exact [BigDecimal] behind a scalar, or null when there is none (a non-finite
+     * `Double`, or a value that is not a number at all).
+     *
+     * A `BigDecimal` or integral type is used **as it is** — narrowing it to `Double` first is what
+     * B67 was: `asNumber()` discarded the scale before any rounding happened. A `Double` is read
+     * through `toString()`, which gives its shortest representation (`0.1`), not the binary
+     * expansion `BigDecimal(0.1)` would produce (`0.1000000000000000055511151231257827`).
+     */
+    private fun exactOrNull(udm: UDM): BigDecimal? {
+        val raw = (udm as? UDM.Scalar)?.value ?: return null
+        return when (raw) {
+            is BigDecimal -> raw
+            is BigInteger -> BigDecimal(raw)
+            is Long -> BigDecimal.valueOf(raw)
+            is Int -> BigDecimal.valueOf(raw.toLong())
+            is Short, is Byte -> BigDecimal.valueOf((raw as Number).toLong())
+            is Double -> if (raw.isFinite()) BigDecimal(raw.toString()) else null
+            is Float -> if (raw.isFinite()) BigDecimal(raw.toString()) else null
+            else -> null
+        }
     }
 
     @UTLXFunction(

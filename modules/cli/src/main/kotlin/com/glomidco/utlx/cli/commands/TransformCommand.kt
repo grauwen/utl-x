@@ -55,7 +55,8 @@ object TransformCommand {
         val charset: String? = null,  // B20: explicit input charset override (e.g., "UTF-16", "ISO-8859-1")
         val parseProfile: String? = null,  // F23: parser strictness profile (strict|standard|lenient); null = standard
         val languageMode: String? = null,  // F21: engine language mode (1.0|1.1|utlxe|utlxs); null = latest (1.1)
-        val preserveNumericLexeme: Boolean = false  // F31: keep a numeric lexeme the model cannot spell back
+        val preserveNumericLexeme: Boolean = false,  // F31: keep a numeric lexeme the model cannot spell back
+        val presentation: String? = null  // F33: --format — how to SHOW the output, not what it is
     ) {
         // Backward compatibility properties
         val inputFile: File? get() = namedInputs["input"] ?: namedInputs.values.firstOrNull()
@@ -492,6 +493,22 @@ object TransformCommand {
                 }
             }
 
+            // CB09: resolved BEFORE script synthesis, because a synthesized script has to declare
+            // a version and the only honest one is the mode this run accepts. It used to be a
+            // literal `%utlx 1.0` below, which made the whole 1.1 namespace — `validate.*`, the
+            // one the Guard is built on — unreachable from a one-liner, while the error blamed a
+            // declaration the user never wrote. One definition of the mapping, used twice.
+            val resolvedLanguageMode = when (options.languageMode?.lowercase()) {
+                null -> com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
+                "1.0", "utlxe" -> "1.0"
+                "1.1", "utlxs" -> "1.1"
+                else -> throw IllegalArgumentException(
+                    "Invalid --language-mode '${options.languageMode}' (expected: 1.0 | 1.1 | utlxe | utlxs)")
+            }
+            if (options.verbose && options.languageMode != null) {
+                System.err.println("Language mode: %utlx $resolvedLanguageMode (from CLI option)")
+            }
+
             // Step 1: Determine script content (file, expression, or identity)
             val scriptContent: String
             val effectiveOutputFormat: String?
@@ -513,7 +530,7 @@ object TransformCommand {
                 val argBindings = options.args.entries.joinToString("") { (name, value) ->
                     "let $name = \"${escapeUtlxString(value)}\"\n"
                 }
-                fun wrap(body: String) = """%utlx 1.0
+                fun wrap(body: String) = """%utlx $resolvedLanguageMode
 input auto
 output $effectiveOutputFormat
 ---
@@ -590,7 +607,7 @@ $argBindings$body"""
                         if (options.outputFormat != null) " (explicit)" else " (smart flip)")
                 }
 
-                scriptContent = """%utlx 1.0
+                scriptContent = """%utlx $resolvedLanguageMode
 input auto
 output $effectiveOutputFormat
 ---
@@ -625,17 +642,11 @@ ${"$"}input"""
             if (options.verbose && options.parseProfile != null) {
                 System.err.println("Parse profile: ${resolvedProfile.name.lowercase()} (from CLI option)")
             }
-            // F21: resolve the engine language mode (default = latest). "utlxe"/"utlxs" are the deployment
-            // vocabulary for the 1.0-only / 1.1 modes; "1.0"/"1.1" are accepted directly.
-            val resolvedLanguageMode = when (options.languageMode?.lowercase()) {
-                null -> com.glomidco.utlx.core.semantic.LanguageVersions.LATEST
-                "1.0", "utlxe" -> "1.0"
-                "1.1", "utlxs" -> "1.1"
-                else -> throw IllegalArgumentException(
-                    "Invalid --language-mode '${options.languageMode}' (expected: 1.0 | 1.1 | utlxe | utlxs)")
-            }
-            if (options.verbose && options.languageMode != null) {
-                System.err.println("Language mode: %utlx $resolvedLanguageMode (from CLI option)")
+            // F21/CB09: resolved above, before synthesis — see the comment there.
+            // F33: the two axes are easy to mix up, so say which one the user wanted.
+            if (options.presentation != null && options.outputFormat != null) {
+                System.err.println("Warning: --format ${options.presentation} renders the data directly, " +
+                    "so --to ${options.outputFormat} is not used.")
             }
             val serviceOptions = TransformationService.TransformOptions(
                 verbose = options.verbose,
@@ -644,7 +655,8 @@ ${"$"}input"""
                 overrideOutputFormat = effectiveOutputFormat,
                 parseProfile = resolvedProfile,
                 maxLanguageVersion = resolvedLanguageMode,
-                preserveNumericLexeme = options.preserveNumericLexeme
+                preserveNumericLexeme = options.preserveNumericLexeme,
+                presentation = options.presentation
             )
 
             // F27: -r needs to know whether the result is a scalar or a sequence, which the
@@ -871,6 +883,7 @@ ${"$"}input"""
         var parseProfile: String? = null
         var languageMode: String? = null
         var preserveNumericLexeme = false
+        var presentation: String? = null
 
         var i = 0
         while (i < args.size) {
@@ -953,6 +966,14 @@ ${"$"}input"""
                 }
                 "--output-format", "--to" -> {
                     outputFormat = args[++i]
+                    // F33: the two axes are easy to confuse, and `--to table` is the natural wrong
+                    // guess. Answer it here with the fix, rather than letting the serializer say
+                    // "Unsupported output format: table" and leave the user to work it out.
+                    if (outputFormat.equals("table", ignoreCase = true)) {
+                        throw IllegalArgumentException(
+                            "'table' is a presentation, not a data format — use --format table. " +
+                            "--to selects what the data IS (json, xml, csv, …).")
+                    }
                 }
                 "-v", "--verbose" -> {
                     verbose = true
@@ -971,6 +992,30 @@ ${"$"}input"""
                 }
                 "--preserve-numeric-lexeme" -> {
                     preserveNumericLexeme = true
+                }
+                // F33: PRESENTATION. `--format` is what lint, validate, functions and udm already
+                // call this, and what docker and git call it. Deliberately NOT --to: that is the
+                // data axis (what the output IS), while this is how it is shown. And not -o, which
+                // here means the output FILE.
+                //
+                // **No `-f` short form on THIS command, deliberately.** `-f` means *file* across
+                // the ecosystem — jq (--from-file), kubectl (--filename), tar, make, grep,
+                // `docker build` — and docker, whose `--format` this follows, spends no short flag
+                // on it at all. On `transform` the collision is live rather than theoretical,
+                // because the script is a positional argument:
+                //
+                //     utlx transform -f report.utlx bad.json
+                //     Error: Expected '---' separator after header (not found in script)
+                //
+                // `report.utlx` is eaten as the format value and `bad.json` becomes the script, so
+                // the error describes something unrelated. `lint` and `validate` keep their
+                // pre-existing `-f` because neither takes a script positionally; that difference
+                // is the reason, not an oversight, and should not be "fixed".
+                "--format" -> {
+                    if (i + 1 >= args.size) {
+                        throw IllegalArgumentException("--format requires a presentation (table)")
+                    }
+                    presentation = args[++i]
                 }
                 "--strict-types" -> {
                     strictTypes = true
@@ -1031,8 +1076,32 @@ ${"$"}input"""
             if (expression.isBlank()) {
                 throw IllegalArgumentException("Expression cannot be empty. Usage: utlx -e '<expression>'")
             }
+            // CB10: with `-e` there IS no script — the expression is the script — so a single
+            // positional can only be the input. It was classified as a script by the arg loop
+            // (first positional wins, and flag order is not fixed, so the loop cannot know), and
+            // the user then got "Cannot use -e with a script file" about a conflict they never
+            // created. The CLI's own usage line documents the intended shape:
+            //
+            //     utlx transform -e '<expression>' [input-file] [options]
+            //
+            // so the parser was out of step with the documentation. A `.utlx` positional is still
+            // refused, because that IS the real conflict.
             if (scriptFile != null) {
-                throw IllegalArgumentException("Cannot use -e/--expression with a script file. Use one or the other.")
+                val looksLikeScript = scriptFile.name.endsWith(".utlx", ignoreCase = true)
+                if (!looksLikeScript && namedInputs.isEmpty()) {
+                    namedInputs["input"] = scriptFile
+                    scriptFile = null
+                } else if (looksLikeScript) {
+                    throw IllegalArgumentException(
+                        "Cannot use -e/--expression with a script file (${scriptFile.name}). " +
+                        "Use one or the other; pass input with -i or as the only positional file.")
+                } else {
+                    // Two positionals and no script: neither can be one, so say THAT rather than
+                    // calling the first a script — the misleading-error habit this fix is about.
+                    throw IllegalArgumentException(
+                        "With -e/--expression, only one positional file is allowed (the input); " +
+                        "got '${scriptFile.name}' and '${namedInputs.values.first().name}'.")
+                }
             }
             return TransformOptions(
                 namedInputs = namedInputs,
@@ -1056,7 +1125,8 @@ ${"$"}input"""
                 charset = charset,
                 parseProfile = parseProfile,
                 languageMode = languageMode,
-                preserveNumericLexeme = preserveNumericLexeme
+                preserveNumericLexeme = preserveNumericLexeme,
+                presentation = presentation,
             )
         }
 
@@ -1093,7 +1163,8 @@ ${"$"}input"""
                     identityMode = true,
                     parseProfile = parseProfile,
                     languageMode = languageMode,
-                    preserveNumericLexeme = preserveNumericLexeme
+                    preserveNumericLexeme = preserveNumericLexeme,
+                    presentation = presentation,
                 )
             }
             // B26: single output channel — printUsage() for context, Main.kt prints the error once.
@@ -1135,7 +1206,8 @@ ${"$"}input"""
             charset = charset,
             parseProfile = parseProfile,
             languageMode = languageMode,
-            preserveNumericLexeme = preserveNumericLexeme
+            preserveNumericLexeme = preserveNumericLexeme,
+            presentation = presentation,
         )
     }
 
@@ -1208,6 +1280,12 @@ ${"$"}input"""
             |  --from FORMAT               Alias for --input-format
             |  --output-format FORMAT      Force output format (xml, json, csv, xlsx, yaml, odata, osch)
             |  --to FORMAT                 Alias for --output-format
+            |  --format PRESENTATION       How to SHOW the output, not what it is. Currently: table
+            |                              (column-aligned, for reading in a terminal). Renders the
+            |                              data directly, so --to is not used with it. Same flag as
+            |                              `lint`, `validate` and `functions` use for presentation.
+            |                              No -f short form here: -f means a FILE in jq, kubectl,
+            |                              tar and make, and this command takes files positionally.
             |  -v, --verbose               Enable verbose output
             |  --no-pretty                 Disable pretty-printing
             |  --strict-types              Enforce type checking (fail on type errors)

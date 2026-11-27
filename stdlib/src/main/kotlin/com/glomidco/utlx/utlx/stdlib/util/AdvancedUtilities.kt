@@ -1,6 +1,7 @@
 package com.glomidco.utlx.stdlib.util
 
 import com.glomidco.utlx.core.udm.UDM
+import com.glomidco.utlx.stdlib.annotations.UTLXFunction
 import java.util.*
 
 /**
@@ -28,6 +29,21 @@ object ValueFunctions {
      * 
      * Updates nested value, creating intermediate structures if needed.
      */
+    @UTLXFunction(
+        description = "Update the value at a path inside a structure, creating intermediate objects as needed.",
+        minArgs = 3,
+        maxArgs = 3,
+        category = "Object",
+        parameters = [
+            "target: the object or array to update",
+            "path: array of keys/indices to walk",
+            "value: the new value"
+        ],
+        returns = "The updated structure",
+        example = "update(obj, [\"user\", \"name\"], \"New Name\")",
+        tags = ["object"],
+        since = "1.0"
+    )
     fun update(args: List<UDM>): UDM {
         if (args.size != 3) {
             throw IllegalArgumentException("update expects 3 arguments (structure, path, value), got ${args.size}")
@@ -99,6 +115,21 @@ object ValueFunctions {
      * 
      * Useful for logging/debugging without exposing sensitive data.
      */
+    @UTLXFunction(
+        description = "Replace the named fields with \"***\" throughout a structure — for logging without exposing secrets.",
+        minArgs = 2,
+        maxArgs = 3,
+        category = "Object",
+        parameters = [
+            "target: the structure to mask",
+            "fields: array of field names to mask",
+            "maskWith: (optional) replacement, default \"***\""
+        ],
+        returns = "The structure with those fields masked",
+        example = "mask(obj, [\"password\", \"ssn\", \"creditCard\"])",
+        tags = ["object"],
+        since = "1.0"
+    )
     fun mask(args: List<UDM>): UDM {
         if (args.size !in 2..3) {
             throw IllegalArgumentException("mask expects 2-3 arguments, got ${args.size}")
@@ -212,6 +243,20 @@ object ValueFunctions {
      * 
      * Usage: defaultValue(input.optional, "default")
      */
+    @UTLXFunction(
+        description = "Return a fallback when a value is null or absent.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Core",
+        parameters = [
+            "value: the value to test",
+            "fallback: returned when value is null"
+        ],
+        returns = "value, or fallback when value is null",
+        example = "defaultValue(\$input.optional, \"default\")",
+        tags = ["core"],
+        since = "1.0"
+    )
     fun defaultValue(args: List<UDM>): UDM {
         if (args.size != 2) {
             throw IllegalArgumentException("defaultValue expects 2 arguments, got ${args.size}")
@@ -246,6 +291,20 @@ object DiffFunctions {
      *   changed: [...]
      * }
      */
+    @UTLXFunction(
+        description = "Compare two structures and report what was added, removed and changed.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Object",
+        parameters = [
+            "left: the original structure",
+            "right: the structure to compare against"
+        ],
+        returns = "An object with added, removed and changed entries",
+        example = "diff(obj1, obj2)",
+        tags = ["object"],
+        since = "1.0"
+    )
     fun diff(args: List<UDM>): UDM {
         if (args.size != 2) {
             throw IllegalArgumentException("diff expects 2 arguments (old, new), got ${args.size}")
@@ -338,6 +397,20 @@ object DiffFunctions {
      * 
      * Usage: deepEquals(obj1, obj2) => true/false
      */
+    @UTLXFunction(
+        description = "Deep structural equality — compares nested objects and arrays by value.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Object",
+        parameters = [
+            "left: first value",
+            "right: second value"
+        ],
+        returns = "true when the two are structurally equal",
+        example = "deepEquals(obj1, obj2)",
+        tags = ["object"],
+        since = "1.0"
+    )
     fun deepEquals(args: List<UDM>): UDM {
         if (args.size != 2) {
             throw IllegalArgumentException("deepEquals expects 2 arguments, got ${args.size}")
@@ -353,6 +426,20 @@ object DiffFunctions {
      * 
      * Applies changes from diff to create new structure.
      */
+    @UTLXFunction(
+        description = "Apply a diff to a structure, producing the patched result.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Object",
+        parameters = [
+            "target: the structure to patch",
+            "diff: a diff object as produced by diff()"
+        ],
+        returns = "The patched structure",
+        example = "patch(originalObj, diffObj)",
+        tags = ["object"],
+        since = "1.0"
+    )
     fun patch(args: List<UDM>): UDM {
         if (args.size != 2) {
             throw IllegalArgumentException("patch expects 2 arguments (structure, diff), got ${args.size}")
@@ -520,6 +607,19 @@ object MimeFunctions {
      * Usage: getMimeType("document.pdf") => "application/pdf"
      * Usage: getMimeType("json") => "application/json"
      */
+    @UTLXFunction(
+        description = "Look up the MIME type for a filename or bare extension.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "nameOrExtension: a filename or an extension"
+        ],
+        returns = "The MIME type",
+        example = "getMimeType(\"document.pdf\") => \"application/pdf\"",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun getMimeType(args: List<UDM>): UDM {
         if (args.size != 1) {
             throw IllegalArgumentException("getMimeType expects 1 argument, got ${args.size}")
@@ -547,6 +647,19 @@ object MimeFunctions {
      * 
      * Usage: getExtension("application/json") => "json"
      */
+    @UTLXFunction(
+        description = "Look up the conventional file extension for a MIME type.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "mimeType: the MIME type"
+        ],
+        returns = "The extension, without a dot",
+        example = "getExtension(\"application/json\") => \"json\"",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun getExtension(args: List<UDM>): UDM {
         if (args.size != 1) {
             throw IllegalArgumentException("getExtension expects 1 argument, got ${args.size}")
@@ -569,6 +682,19 @@ object MimeFunctions {
      * Usage: parseContentType("application/json; charset=utf-8")
      * Result: {mimeType: "application/json", charset: "utf-8"}
      */
+    @UTLXFunction(
+        description = "Parse a Content-Type header into its MIME type and parameters.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "header: the Content-Type header value"
+        ],
+        returns = "An object with mimeType and any parameters such as charset",
+        example = "parseContentType(\"application/json; charset=utf-8\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun parseContentType(args: List<UDM>): UDM {
         if (args.size != 1) {
             throw IllegalArgumentException("parseContentType expects 1 argument, got ${args.size}")
@@ -601,6 +727,19 @@ object MimeFunctions {
      * Usage: buildContentType({mimeType: "application/json", charset: "utf-8"})
      * Result: "application/json; charset=utf-8"
      */
+    @UTLXFunction(
+        description = "Build a Content-Type header from a MIME type and parameters.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "spec: object with mimeType and optional parameters"
+        ],
+        returns = "The header value",
+        example = "buildContentType({mimeType: \"application/json\", charset: \"utf-8\"})",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun buildContentType(args: List<UDM>): UDM {
         if (args.size != 1) {
             throw IllegalArgumentException("buildContentType expects 1 argument, got ${args.size}")
@@ -644,6 +783,19 @@ object MultipartFunctions {
      * Usage: parseBoundary("multipart/form-data; boundary=----WebKitFormBoundary")
      * Result: "----WebKitFormBoundary"
      */
+    @UTLXFunction(
+        description = "Extract the multipart boundary from a Content-Type header.",
+        minArgs = 1,
+        maxArgs = 1,
+        category = "Encoding",
+        parameters = [
+            "header: a multipart Content-Type header"
+        ],
+        returns = "The boundary string",
+        example = "parseBoundary(\"multipart/form-data; boundary=----WebKitFormBoundary\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun parseBoundary(args: List<UDM>): UDM {
         if (args.size != 1) {
             throw IllegalArgumentException("parseBoundary expects 1 argument, got ${args.size}")
@@ -677,6 +829,20 @@ object MultipartFunctions {
      * 
      * Creates multipart/form-data body string.
      */
+    @UTLXFunction(
+        description = "Build a multipart/form-data body from an array of parts.",
+        minArgs = 2,
+        maxArgs = 2,
+        category = "Encoding",
+        parameters = [
+            "parts: array of part objects, as built by createPart",
+            "boundary: the boundary string"
+        ],
+        returns = "The multipart body",
+        example = "buildMultipart(parts, generateBoundary())",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun buildMultipart(args: List<UDM>): UDM {
         if (args.size != 2) {
             throw IllegalArgumentException("buildMultipart expects 2 arguments (parts, boundary), got ${args.size}")
@@ -732,6 +898,17 @@ object MultipartFunctions {
      * Usage: generateBoundary()
      * Result: "----WebKitFormBoundary7MA4YWxkTrZu0gW"
      */
+    @UTLXFunction(
+        description = "Generate a random multipart boundary string.",
+        minArgs = 0,
+        maxArgs = 0,
+        category = "Encoding",
+        parameters = [],
+        returns = "A boundary suitable for buildMultipart",
+        example = "generateBoundary()",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun generateBoundary(args: List<UDM>): UDM {
         if (args.isNotEmpty()) {
             throw IllegalArgumentException("generateBoundary expects no arguments, got ${args.size}")
@@ -748,6 +925,22 @@ object MultipartFunctions {
      * 
      * Usage: createPart("fieldName", "value", "text/plain")
      */
+    @UTLXFunction(
+        description = "Create one part for a multipart body.",
+        minArgs = 2,
+        maxArgs = 4,
+        category = "Encoding",
+        parameters = [
+            "name: the field name",
+            "value: the part content",
+            "contentType: (optional) the part Content-Type",
+            "filename: (optional) for a file part"
+        ],
+        returns = "A part object for buildMultipart",
+        example = "createPart(\"fieldName\", \"value\", \"text/plain\")",
+        tags = ["encoding"],
+        since = "1.0"
+    )
     fun createPart(args: List<UDM>): UDM {
         if (args.size !in 2..4) {
             throw IllegalArgumentException("createPart expects 2-4 arguments, got ${args.size}")

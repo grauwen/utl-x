@@ -112,23 +112,12 @@ object ConversionFunctions {
         return result
     }
     
-    @UTLXFunction(
-        description = "Parse integer from string",
-        minArgs = 2,
-        maxArgs = 2,
-        category = "Type",
-        parameters = [
-            "value: Value value"
-        ],
-        returns = "Result of the operation",
-        example = "parseInt(\"42\") => 42",
-        additionalExamples = [
-            "parseInt(\"42.7\") => 42  (truncates)",
-            "parseInt(\"not a number\") => null"
-        ],
-        tags = ["type"],
-        since = "1.0"
-    )
+    /**
+     * B69: NOT annotated and NOT registered - "DUPLICATE: parseInt already registered in
+     * ExtendedMathFunctions". Kept for the same reason as `parseDate` above: its second argument is
+     * a fallback for unparseable input, where the registered `parseInt` throws. A candidate
+     * feature, not a duplicate.
+     */
     /**
      * Parse integer from string
      * 
@@ -371,25 +360,17 @@ object ConversionFunctions {
     
     // ==================== DATE CONVERSIONS ====================
     
-    @UTLXFunction(
-        description = "Parse date from string with optional format",
-        minArgs = 3,
-        maxArgs = 3,
-        category = "Type",
-        parameters = [
-            "array: Input array to process",
-        "format: Format value"
-        ],
-        returns = "Result of the operation",
-        example = "parseDate(\"2025-10-15\") => Date",
-        additionalExamples = [
-            "parseDate(\"10/15/2025\", \"MM/dd/yyyy\") => Date",
-            "parseDate(\"2025-10-15T14:30:00Z\") => DateTime",
-            "parseDate(\"invalid\") => null"
-        ],
-        tags = ["type"],
-        since = "1.0"
-    )
+    /**
+     * B69: NOT annotated and NOT registered - `Functions.kt` says "DUPLICATE: parseDate already
+     * registered in DateFunctions", and has said so since 2025-10-18. Only the annotation was left
+     * behind, advertising a signature no script can reach.
+     *
+     * Kept, for a concrete reason rather than caution: this one takes a THIRD argument used as a
+     * fallback when parsing fails, where the registered `DateFunctions::parseDate` throws. That
+     * capability is reachable nowhere today - not even via `??`, since a thrown error is not a null
+     * - so it is a candidate feature needing its own name, not a duplicate. It also returns a
+     * string rather than a typed `UDM.Date`, which is the weaker behaviour and would have to change.
+     */
     /**
      * Parse date from string with optional format
      * 

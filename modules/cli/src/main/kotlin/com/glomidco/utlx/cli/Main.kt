@@ -124,6 +124,12 @@ object Main {
                     }
                     // Check if first arg is a flag for identity mode (--to, --from, etc.)
                     else if (command in listOf("--to", "--from", "--output-format", "--input-format",
+                                               // F33: presentation drives identity mode too —
+                                               // `cat x.json | utlx --format table` works exactly
+                                               // as `cat x.csv | utlx --to yaml` does. No `-f`
+                                               // short form: it means *file* everywhere else
+                                               // (jq, kubectl, tar, make, grep, docker build).
+                                               "--format",
                                                "--no-pretty", "--verbose", "-v", "-r", "--raw-output", "--charset")) {
                         TransformCommand.execute(args, identityMode = true)
                     }

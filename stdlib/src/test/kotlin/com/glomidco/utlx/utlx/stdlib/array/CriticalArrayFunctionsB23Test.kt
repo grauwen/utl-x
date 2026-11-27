@@ -17,51 +17,6 @@ class CriticalArrayFunctionsB23Test {
     private fun lambda2(fn: (UDM, UDM) -> UDM): UDM.Lambda = UDM.Lambda { args -> fn(args[0], args[1]) }
     private fun nums(vararg values: Int) = UDM.Array(values.map { UDM.Scalar(it) })
 
-    // =========================================================================
-    // findIndex(array, predicate)
-    // =========================================================================
-
-    @Test fun `findIndex - finds first match`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(10, 20, 30, 40), lambda { UDM.Scalar(it.asNumber() > 25) }))
-        assertEquals(2.0, (result as UDM.Scalar).value)  // index of 30
-    }
-
-    @Test fun `findIndex - returns first not last`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(1, 2, 3, 2, 1), lambda { UDM.Scalar(it.asNumber() == 2.0) }))
-        assertEquals(1.0, (result as UDM.Scalar).value)  // first 2 is at index 1
-    }
-
-    @Test fun `findIndex - no match returns -1`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(1, 2, 3), lambda { UDM.Scalar(it.asNumber() > 100) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
-    }
-
-    @Test fun `findIndex - empty array returns -1`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(), lambda { UDM.Scalar(true) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
-    }
-
-    @Test fun `findIndex - single element matches`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(42), lambda { UDM.Scalar(it.asNumber() == 42.0) }))
-        assertEquals(0.0, (result as UDM.Scalar).value)
-    }
-
-    @Test fun `findIndex - single element no match`() {
-        val result = CriticalArrayFunctions.findIndex(listOf(nums(42), lambda { UDM.Scalar(it.asNumber() == 99.0) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
-    }
-
-    @Test fun `findIndex - wrong arg count throws`() {
-        assertThrows<IllegalArgumentException> { CriticalArrayFunctions.findIndex(listOf(nums(1))) }
-    }
-
-    @Test fun `findIndex - not array throws`() {
-        assertThrows<IllegalArgumentException> { CriticalArrayFunctions.findIndex(listOf(UDM.Scalar(1), lambda { UDM.Scalar(true) })) }
-    }
-
-    @Test fun `findIndex - not lambda throws`() {
-        assertThrows<IllegalArgumentException> { CriticalArrayFunctions.findIndex(listOf(nums(1), UDM.Scalar("x"))) }
-    }
 
     // =========================================================================
     // findLastIndex(array, predicate)
@@ -72,14 +27,19 @@ class CriticalArrayFunctionsB23Test {
         assertEquals(3.0, (result as UDM.Scalar).value)  // last 2 is at index 3
     }
 
-    @Test fun `findLastIndex - no match returns -1`() {
+    // B73: these two asserted -1 until 2026-11-26. The value changed deliberately, as part of
+    // settling what "not found" means across the whole library: `indexOf`, `lastIndexOf`, `find`
+    // and (after B73) `findIndex` all answer null, so -1 was the outlier here. The old value stays
+    // reachable at the call site - `findLastIndex(...) ?? -1` - whereas recovering null from -1
+    // needs a comparison and evaluates the search twice.
+    @Test fun `findLastIndex - no match returns null`() {
         val result = CriticalArrayFunctions.findLastIndex(listOf(nums(1, 2, 3), lambda { UDM.Scalar(it.asNumber() > 100) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
+        assertEquals(null, (result as UDM.Scalar).value)
     }
 
-    @Test fun `findLastIndex - empty array returns -1`() {
+    @Test fun `findLastIndex - empty array returns null`() {
         val result = CriticalArrayFunctions.findLastIndex(listOf(nums(), lambda { UDM.Scalar(true) }))
-        assertEquals(-1.0, (result as UDM.Scalar).value)
+        assertEquals(null, (result as UDM.Scalar).value)
     }
 
     @Test fun `findLastIndex - single element matches`() {

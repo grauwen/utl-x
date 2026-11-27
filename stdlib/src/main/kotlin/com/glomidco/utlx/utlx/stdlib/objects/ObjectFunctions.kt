@@ -180,8 +180,8 @@ object ObjectFunctions {
         maxArgs = 1,
         category = "Other",
         parameters = [
-            "array: Input array to process",
-        "key: Key value"
+            "object: The object to inspect",
+            "key: The key to look for"
         ],
         returns = "Result of the operation",
         example = "containsKey(...) => result",
@@ -253,34 +253,11 @@ object ObjectFunctions {
         return UDM.Scalar(obj.properties.containsValue(value))
     }
 
-    @UTLXFunction(
-        description = "Check if object has a specific key/property",
-        minArgs = 2,
-        maxArgs = 2,
-        category = "Other",
-        parameters = [
-            "object: Object to check",
-            "key: Property key to look for"
-        ],
-        returns = "Boolean indicating whether the key exists",
-        example = "hasKey({name: \"John\", age: 30}, \"name\") => true",
-        tags = ["other", "objects"],
-        since = "1.0"
-    )
-    /**
-     * Check if object has a specific key/property
-     * Usage: hasKey({name: "John", age: 30}, "name") => true
-     */
-    fun hasKey(args: List<UDM>): UDM {
-        requireArgs(args, 2, "hasKey")
-        val obj = args[0].asObject() ?: throw FunctionArgumentException(
-            "hasKey requires an object as first argument, but got ${getTypeDescription(args[0])}. " +
-            "Hint: Check if your input is an object."
-        )
-        val key = args[1].asString()
-
-        return UDM.Scalar(obj.properties.containsKey(key))
-    }
+    // B69: `hasKey` lived here as a byte-for-byte copy of `containsKey` above - same body, same
+    // checks, only the function name in the error strings differed - and was never registered.
+    // `registerAlias("hasKey", "containsKey", …)` already makes the name callable AND catalogues
+    // it against the implementation that runs, so the copy's only effect was a second `hasKey`
+    // entry in the catalogue describing code nothing dispatches to. Deleted; the alias stands.
 
     @UTLXFunction(
         description = "Create object from array of [key, value] pairs (inverse of entries)",

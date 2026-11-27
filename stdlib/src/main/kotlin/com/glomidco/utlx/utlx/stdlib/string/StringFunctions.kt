@@ -137,30 +137,6 @@ object StringFunctions {
         //return UDM.Scalar(str.substring(start, end)) <--- BUG 
     }
     
-    @UTLXFunction(
-        description = "Concatenate strings",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "array: Input array to process",
-        "delimiter: Delimiter value",
-        "replacement: Replacement value"
-        ],
-        returns = "Result of the operation",
-        example = "concat(\"hello\", \" \", \"world\") => \"hello world\"",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Concatenate strings
-     * Usage: concat("hello", " ", "world") => "hello world"
-     */
-    fun concat(args: List<UDM>): UDM {
-        if (args.isEmpty()) return UDM.Scalar("")
-        val result = args.joinToString("") { it.asString() }
-        return UDM.Scalar(result)
-    }
     
     @UTLXFunction(
         description = "Split string by delimiter",
@@ -319,31 +295,11 @@ object StringFunctions {
         }
     }
     
-    @UTLXFunction(
-        description = "Check if string contains substring",
-        minArgs = 1,
-        maxArgs = 1,
-        category = "String",
-        parameters = [
-            "str: Str value",
-        "search: Search value"
-        ],
-        returns = "Result of the operation",
-        example = "contains(\"hello world\", \"world\") => true",
-        tags = ["string"],
-        since = "1.0"
-    )
-    /**
-     * Check if string contains substring
-     * Usage: contains("hello world", "world") => true
-     */
-    fun contains(args: List<UDM>): UDM {
-        requireArgs(args, 2, "contains")
-        val str = args[0].asString()
-        val search = args[1].asString()
-        return UDM.Scalar(str.contains(search))
-    }
-    
+    // B69: `contains` lived here as a string-only implementation until it moved to
+    // `CoreFunctions::contains`, which also handles arrays, object keys and binary. It was never
+    // registered again, but its @UTLXFunction stayed and put a second, wrong (`maxArgs = 1`)
+    // `contains` into the catalogue. Removed rather than kept: nothing called it but its own test.
+
     @UTLXFunction(
         description = "Check if string starts with prefix",
         minArgs = 1,

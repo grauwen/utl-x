@@ -115,9 +115,13 @@ class B52ValidateFunctionNamesTest {
 
         // Pinned exactly, because the skip branch is what could hollow this test out: if a change
         // made many names unparseable, the sweep above would pass by checking almost nothing.
-        // `if` is registered yet uncallable as `if(...)` — a reserved word. That is a separate,
-        // pre-existing wart, recorded in the B52 report; it is not what this test is guarding.
-        assertEquals(listOf("if"), unparseable.sorted(),
+        //
+        // This held `if` until 1.4.5 — registered yet uncallable as `if(...)`, because the parser
+        // owns the keyword. It was recorded here as a pre-existing wart for months, and that is
+        // the whole lesson of B70: a *ratcheted* exception is a parked bug, and this one was
+        // parked in plain sight. The conditional is now registered as `conditional`, which parses,
+        // so the skip branch skips nothing and every registered name is genuinely swept.
+        assertEquals(emptyList(), unparseable.sorted(),
             "the set of registered-but-uncallable names changed — if a name was added here, " +
             "the sweep above silently stopped covering it")
     }

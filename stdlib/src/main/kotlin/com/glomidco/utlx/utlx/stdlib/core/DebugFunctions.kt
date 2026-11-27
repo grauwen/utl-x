@@ -552,6 +552,7 @@ object DebugFunctions {
     }
     
     @UTLXFunction(
+        name = "startDebugTimer",
         description = "Logs execution time of a block",
         minArgs = 1,
         maxArgs = 1,
@@ -593,6 +594,7 @@ object DebugFunctions {
     }
     
     @UTLXFunction(
+        name = "endDebugTimer",
         description = "Logs elapsed time since startDebugTimer()",
         minArgs = 1,
         maxArgs = 1,

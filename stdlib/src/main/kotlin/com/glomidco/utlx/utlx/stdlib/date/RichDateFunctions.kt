@@ -570,6 +570,7 @@ object RichDateFunctions {
     }
     
     @UTLXFunction(
+        name = "isLeapYear",
         description = "Check if leap year",
         minArgs = 1,
         maxArgs = 1,

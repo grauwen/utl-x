@@ -137,7 +137,11 @@ class TransformationService {
         val maxLanguageVersion: String = com.glomidco.utlx.core.semantic.LanguageVersions.LATEST,
         // F31: lexical fidelity. A numeric shape the model cannot spell back (negative zero,
         // exponent notation) stays a string. APPENDED, per the @JvmOverloads note above.
-        val preserveNumericLexeme: Boolean = false
+        val preserveNumericLexeme: Boolean = false,
+        // F33: PRESENTATION, not format. null = emit the serialized data (the normal path);
+        // "table" = render it for human reading instead. Distinct from overrideOutputFormat, which
+        // chooses what the data IS. APPENDED.
+        val presentation: String? = null
     )
 
     /**
@@ -221,12 +225,22 @@ class TransformationService {
             System.err.println("[TransformationService] Output format: $outputFormat")
         }
 
-        // Step 5: Serialize output using format + format spec from header
-        if (outputFormat.equals("xlsx", ignoreCase = true)) {
+        if (options.presentation == null && outputFormat.equals("xlsx", ignoreCase = true)) {
             val bytes = serializeOutputToBytes(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
             return TransformOutcome("", outputFormat, outputUDM, bytes)
         }
-        val outputData = serializeOutput(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
+
+        // Step 5: Serialize output using format + format spec from header — unless a presentation
+        // was asked for (F33), which renders the UDM for reading rather than emitting data.
+        val outputData = when (options.presentation?.lowercase()) {
+            null -> serializeOutput(outputUDM, outputFormat, program.header.outputFormat, options.pretty)
+            // The clash warning lives in TransformCommand, where an EXPLICIT --to is
+            // distinguishable from one that identity/expression mode computed for itself.
+            "table" -> renderTable(outputUDM)
+            else -> throw IllegalArgumentException(
+                "Unknown --format '${options.presentation}' (expected: table)")
+        }
+
         return TransformOutcome(outputData, outputFormat, outputUDM)
     }
 
@@ -522,6 +536,97 @@ class TransformationService {
                 parseInput(text, format, options, parseOpts)
             }
         }
+    }
+
+    /**
+     * F33 — `--format table`: a column-aligned view of records, for reading in a
+     * terminal.
+     *
+     * **This is a PRESENTATION, not a format**, and the distinction is the whole design:
+     *
+     *     --to / --output-format    what the data IS      json, xml, csv — parseable, round-trippable
+     *     --format                  how it is SHOWN       table — for a human, read once, never parsed
+     *
+     * `--format` is what `lint`, `validate`, `functions` and `udm` already call this (and what
+     * docker and git call it); `-o` was unavailable, meaning the output FILE here.
+     *
+     * **No `-f` short form on `transform`.** `-f` means *file* across the ecosystem — jq, kubectl,
+     * tar, make, grep, `docker build` — and docker spends no short flag on `--format` at all. Here
+     * the collision is live, because the script is positional: `-f report.utlx data.json` eats the
+     * script as a format value and makes the DATA the script, failing with "Expected '---'
+     * separator". `lint` and `validate` keep their pre-existing `-f` because neither takes a script
+     * positionally — a reason, not an oversight.
+     *
+     * The first implementation put `table` in `--to` and it needed two special cases to survive:
+     * a refusal in [parseInput], because every other `--to` value is also a valid `--from` value,
+     * and a substitution in the `-e` header synthesis, because `output table` is not in the `%utlx`
+     * grammar. Both are **gone** rather than rewritten — a non-format in the format slot is what
+     * created them, and that is the clearest evidence the axis was wrong. Nothing here is a
+     * reserved word; a later `-f wide` or `-f summary` costs no grammar at all.
+     *
+     * Rendered from the UDM directly, NOT by serializing to CSV and aligning the result. That was
+     * tried first and is broken, because `prettyPrintCSV` splits on the delimiter without
+     * honouring CSV quoting:
+     *
+     *     csv    ccy-allowed,"Field 'ccy' value 'GBP' is not one of [EUR, USD]"
+     *     table  ccy-allowed | "Field 'ccy' value 'GBP' is not one of [EUR | USD]"
+     *
+     * The comma inside a quoted value became a column break and the quotes survived into the
+     * output, so any message, address or list in a cell was mangled. That is a defect in
+     * `prettyPrintCSV` itself, not an unlucky composition, and is reported separately.
+     *
+     * Shape rules, chosen so this never fails on real data:
+     *  - an **array of objects** is the normal case: columns are the union of keys in first-seen
+     *    order, so a row missing a key leaves that cell blank instead of shifting the row;
+     *  - a **single object** is one row;
+     *  - anything else becomes a **one-column** table;
+     *  - a **nested value** renders as compact JSON — bounded and informative, never the Kotlin
+     *    `toString()` dump the CSV route produced;
+     *  - **numbers go through `ExactNumber.renderScalarText`**, the same path as every other output,
+     *    so a BigDecimal keeps the scale it was written with (B35);
+     *  - **no rows** renders as empty output, not a bare header — nothing to read is nothing to show.
+     */
+    private fun renderTable(udm: UDM): String {
+        fun cell(v: UDM?): String = when (v) {
+            null -> ""
+            is UDM.Scalar -> when (val raw = v.value) {
+                null -> ""
+                is Number -> com.glomidco.utlx.core.format.ExactNumber.renderScalarText(raw)
+                else -> raw.toString()
+            }
+            else -> JSONSerializer(prettyPrint = false).serialize(v)
+        }
+
+        val asRecords: List<UDM.Object>? = when (udm) {
+            is UDM.Object -> listOf(udm)
+            is UDM.Array -> udm.elements.filterIsInstance<UDM.Object>()
+                .takeIf { it.size == udm.elements.size && it.isNotEmpty() }
+            else -> null
+        }
+
+        val columns: List<String>
+        val rows: List<List<String>>
+        if (asRecords != null) {
+            columns = asRecords.flatMap { it.properties.keys }.distinct()
+            rows = asRecords.map { o -> columns.map { c -> cell(o.properties[c]) } }
+        } else {
+            columns = listOf("value")
+            rows = when (udm) {
+                is UDM.Array -> udm.elements.map { listOf(cell(it)) }
+                else -> listOf(listOf(cell(udm)))
+            }
+        }
+        if (rows.isEmpty() || columns.isEmpty()) return ""
+
+        val widths = columns.indices.map { i ->
+            maxOf(columns[i].length, rows.maxOf { it.getOrElse(i) { "" }.length })
+        }
+        fun line(cells: List<String>) = cells.indices
+            .joinToString(" | ") { cells[it].padEnd(widths[it]) }
+            .trimEnd()
+
+        val header = line(columns)
+        return (listOf(header, "-".repeat(header.length)) + rows.map { line(it) }).joinToString("\n")
     }
 
     /**

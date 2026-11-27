@@ -120,7 +120,7 @@ transformation: |
   def GenerateAlerts(transactions) {
     let alerts = [] in
     let largeTransactions = filter(transactions, txn => abs(txn.amount) > 1000) in
-    if (count(largeTransactions) > 0) concat(alerts, [{ type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) }]) else alerts
+    if (count(largeTransactions) > 0) arrayConcat(alerts, [{ type: "LARGE_TRANSACTION", message: "Large transactions detected", transactions: map(largeTransactions, txn => txn.id) }]) else alerts
   }
   
   def ValidateTransactions(transactions) {
@@ -206,7 +206,7 @@ expected:
             "category": "rent",
             "total_spent": 1200,
             "transaction_count": 1,
-            "avg_transaction": 1200
+            "avg_transaction": 1200.00
           }
         ],
         
