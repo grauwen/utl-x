@@ -63,7 +63,7 @@ const TOGGLE_NAME_ON_LOAD_MODE_COMMAND = 'utlx.toggleNameOnLoadMode';
 /**
  * Where the Help → Demo scripts live: the **version-controlled repo** `playwright/` dir — NOT the
  * Theia workspace (which holds the user's `.utlx` work and shouldn't carry tooling). This is the
- * single source of truth (`cli-demo.sh`, `run-demo.sh`). The path is resolved on the BACKEND host
+ * single source of truth (`cli-demo.sh`, `run-demo.sh`, `validate-demo.sh`). Resolved on the BACKEND host
  * (where the integrated terminal's shell runs). Promote to a preference later if it needs to vary
  * per machine. The Demo IDE kiosk can only live here anyway (it needs node_modules + Chromium).
  */
@@ -329,6 +329,10 @@ export class UTLXFrontendContribution implements
             { id: 'utlx.demo.ide', label: 'UTL-X: Demo IDE (walkthrough)' },
             { execute: () => this.runInTerminal('UTL-X IDE Demo', `bash "${DEMO_DIR}/run-demo.sh" --once`) }
         );
+        commands.registerCommand(
+            { id: 'utlx.demo.validate', label: 'UTL-X: Demo Validate (terminal)' },
+            { execute: () => this.runInTerminal('UTL-X Validate Demo', `bash "${DEMO_DIR}/validate-demo.sh"`) }
+        );
 
         // ── "UTLX IDE" app-menu commands (the first top-level menu, à la macOS/Arduino app menu) ──
         commands.registerCommand(
@@ -372,8 +376,9 @@ export class UTLXFrontendContribution implements
     }
 
     /** Run a shell command in a fresh integrated terminal (Help → Demo commands). The scripts live in
-     *  the repo's playwright/ dir (DEMO_DIR), not the workspace: cli-demo.sh (self-narrating CLI demo)
-     *  and run-demo.sh (Playwright IDE walkthrough; --once = one pass then close). */
+     *  the repo's playwright/ dir (DEMO_DIR), not the workspace: cli-demo.sh (self-narrating CLI demo),
+     *  run-demo.sh (Playwright IDE walkthrough; --once = one pass then close) and validate-demo.sh
+     *  (the %utlx 1.1 validate.* namespace — same shape and pacing as cli-demo.sh). */
     private async runInTerminal(title: string, command: string): Promise<void> {
         try {
             const terminal = await this.terminalService.newTerminal({ title });
@@ -540,6 +545,11 @@ export class UTLXFrontendContribution implements
             commandId: 'utlx.demo.ide',
             label: 'Demo IDE',
             order: 'z2'
+        });
+        menus.registerMenuAction(CommonMenus.HELP, {
+            commandId: 'utlx.demo.validate',
+            label: 'Demo Validate',
+            order: 'z3'
         });
 
         // Add UTL-X menu
