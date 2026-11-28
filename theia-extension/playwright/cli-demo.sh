@@ -36,12 +36,29 @@ UTLX_REPOS=(
 pick_utlx() {
   [ -n "${UTLX:-}" ] && { printf '%s' "$UTLX"; return; }
   command -v utlx >/dev/null 2>&1 && { printf 'utlx'; return; }
-  local r
+  local r native jar newest_jar
   for r in "${UTLX_REPOS[@]}"; do
     [ -n "$r" ] || continue
-    [ -x "$r/modules/cli/build/native/nativeCompile/utlx" ] \
-      && { printf '%s' "$r/modules/cli/build/native/nativeCompile/utlx"; return; }
-    [ -x "$r/utlx" ] && { printf '%s' "$r/utlx"; return; }
+    native="$r/modules/cli/build/native/nativeCompile/utlx"
+    jar="$r/utlx"
+
+    # Prefer whichever is NEWER, rather than always the native binary. `nativeCompile` takes ~3.5
+    # minutes and does not track source changes, so the native build lags by days in normal use --
+    # on 2026-11-28 it was five days old and carried a 705-entry function catalogue against the
+    # jar's 726, missing arrayConcat entirely and still advertising the phantom createQName that
+    # B68 removed. The old order picked that binary and merely PRINTED a warning, which is not a
+    # control: a warning nobody reads is how a demo ends up showing a plausible wrong answer. The
+    # jar wrapper always resolves the newest cli-*.jar, so preferring the fresher of the two is
+    # both safe and automatic. Set UTLX=... to force either.
+    if [ -x "$native" ] && [ -x "$jar" ]; then
+      newest_jar="$(ls -t "$r"/modules/cli/build/libs/cli-*.jar 2>/dev/null | head -n 1)"
+      if [ -n "$newest_jar" ] && [ "$newest_jar" -nt "$native" ]; then
+        printf '%s' "$jar"; return
+      fi
+      printf '%s' "$native"; return
+    fi
+    [ -x "$native" ] && { printf '%s' "$native"; return; }
+    [ -x "$jar" ] && { printf '%s' "$jar"; return; }
   done
   printf 'utlx'
 }

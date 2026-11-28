@@ -41,12 +41,29 @@ UTLX_REPOS=(
 pick_utlx() {
   [ -n "${UTLX:-}" ] && { printf '%s' "$UTLX"; return; }
   command -v utlx >/dev/null 2>&1 && { printf 'utlx'; return; }
-  local r
+  local r native jar newest_jar
   for r in "${UTLX_REPOS[@]}"; do
     [ -n "$r" ] || continue
-    [ -x "$r/modules/cli/build/native/nativeCompile/utlx" ] \
-      && { printf '%s' "$r/modules/cli/build/native/nativeCompile/utlx"; return; }
-    [ -x "$r/utlx" ] && { printf '%s' "$r/utlx"; return; }
+    native="$r/modules/cli/build/native/nativeCompile/utlx"
+    jar="$r/utlx"
+
+    # Prefer whichever is NEWER, rather than always the native binary. `nativeCompile` takes ~3.5
+    # minutes and does not track source changes, so the native build lags by days in normal use --
+    # on 2026-11-28 it was five days old and carried a 705-entry function catalogue against the
+    # jar's 726, missing arrayConcat entirely and still advertising the phantom createQName that
+    # B68 removed. The old order picked that binary and merely PRINTED a warning, which is not a
+    # control: a warning nobody reads is how a demo ends up showing a plausible wrong answer. The
+    # jar wrapper always resolves the newest cli-*.jar, so preferring the fresher of the two is
+    # both safe and automatic. Set UTLX=... to force either.
+    if [ -x "$native" ] && [ -x "$jar" ]; then
+      newest_jar="$(ls -t "$r"/modules/cli/build/libs/cli-*.jar 2>/dev/null | head -n 1)"
+      if [ -n "$newest_jar" ] && [ "$newest_jar" -nt "$native" ]; then
+        printf '%s' "$jar"; return
+      fi
+      printf '%s' "$native"; return
+    fi
+    [ -x "$native" ] && { printf '%s' "$native"; return; }
+    [ -x "$jar" ] && { printf '%s' "$jar"; return; }
   done
   printf 'utlx'
 }
@@ -80,7 +97,11 @@ banner(){ printf "\n${c_dim}── %s ──${c_off}\n" "$1"; }
 # awk, not sed: these fixtures are written with printf and have no trailing newline, and sed
 # passes an unterminated last line straight through — so the next line printed (run()'s "$ ...",
 # which has no leading newline) ran onto the end of the data. awk terminates every record.
-show()  { printf "${c_dim}# %s${c_off}\n" "$(basename "$1")"; awk '{print "    " $0}' "$1"; sleep "$SAY_PAUSE"; }
+# Second argument is the file's ROLE, and it is not optional in practice: a bare filename leaves
+# the viewer asking whether what follows is the rules, the input or the output. `bad.xml` appearing
+# between two runs was the case that made it obvious. Same helper and same labels as cli-demo.sh.
+show()  { local r="${2:-}"; printf "${c_dim}# %s%s${c_off}\n" "${r:+$r  ·  }" "$(basename "$1")"
+          awk '{print "    " $0}' "$1"; sleep "$SAY_PAUSE"; }
 
 W=/tmp/utlx-validate-demo; mkdir -p "$W"
 # Work from there, so every command on screen reads "policy.utlx" not "/tmp/…/policy.utlx".
@@ -101,7 +122,10 @@ say "validate.* arrived in %utlx 1.1, so the version matters more than usual her
 run "$UTLX --version"
 
 banner "2. One rule list, one verdict"
-say "Rules are DATA — a list of objects, each with an id. Not scattered if/else. Here are five."
+# The header line is the point, not decoration: `%utlx 1.1` is what makes validate.* available at
+# all. Step 1 says the namespace arrived in 1.1, but a viewer seeing the file for the first time
+# will not connect the first line of the script to that claim unless it is said here.
+say "Look at the first line: %utlx 1.1. That version is what unlocks the validate.* namespace — rules are a LANGUAGE feature, not a library bolted on. And they are DATA: a list of objects, each with an id. Not scattered if/else. Here are five."
 cat > "policy.utlx" <<'EOF'
 %utlx 1.1
 input json
@@ -115,22 +139,29 @@ $input |> validate.assert([
   { rule: "legacy-field",         absent: ["legacyRef"], severity: "warning" }
 ])
 EOF
-show "policy.utlx"
+show "policy.utlx"     "THE RULES"
 printf '{"orderId":"A-1","qty":5,"ccy":"EUR"}' > "clean.json"
 say "A clean order. Note the shape that comes back: a verdict, counts, and the payload."
-show "clean.json"
+show "clean.json"      "THE INPUT DATA"
 run "$UTLX transform policy.utlx clean.json"
 
 banner "3. A bad order — and WHICH rule rejected it"
 printf '{"orderId":"bad id","qty":500,"ccy":"GBP","legacyRef":"OLD-7"}' > "bad.json"
-show "bad.json"
+# A data file must never appear unannounced. This section used to open straight onto bad.json, so
+# the last thing the viewer had read was about clean.json and a NEW file arrived unexplained.
+# House order throughout: narration, then the thing it describes, then the command.
+say "Same policy.utlx, unchanged. What changes is the order — here is a new one, bad.json, with real problems:"
+show "bad.json"        "THE INPUT DATA"
 say "Three rules fail and one warns. Every issue carries 'rule' — the id YOU wrote."
 run "$UTLX transform policy.utlx bad.json"
 say "That is the whole point. 'failed: 3' is a number; 'ccy-allowed' is an answer."
 
 banner "4. A warning does not make it invalid"
 say "legacy-field is severity warning: counted separately, reported, but 'valid' ignores it. Three severities: error, warning, notice."
-run "$UTLX transform policy.utlx bad.json | grep -E '\"valid\"|\"failed\"|\"warnings\"'"
+# The verdict is DATA, so UTL-X can narrow it — no grep. `grep '"valid"'` would also match the
+# nested "valid" inside issues/payload, and it cannot tell a missing field from a false one: it
+# just prints nothing, which looks identical. Projecting by name asks the structure instead.
+run "$UTLX transform policy.utlx bad.json | $UTLX -e '{valid: \$input.valid, failed: \$input.failed, warnings: \$input.warnings}'"
 
 banner "5. Rules that only apply sometimes"
 say "A 'when' guard makes a rule conditional. A guard that is false counts as PASSED — the rule simply did not apply."
@@ -144,15 +175,15 @@ $input |> validate.assert([
     when: (p) => p.channel == "WHOLESALE" }
 ])
 EOF
-show "when.utlx"
+show "when.utlx"       "THE RULES"
 printf '{"channel":"RETAIL","qty":5}' > "retail.json"
 printf '{"channel":"WHOLESALE","qty":5}' > "wholesale.json"
-show "retail.json"
-say "RETAIL: the rule does not apply, so it passes."
-run "$UTLX transform when.utlx retail.json | grep -E '\"valid\"|\"passed\"'"
-show "wholesale.json"
-say "The SAME order marked WHOLESALE: now it applies, and 5 is below the minimum."
-run "$UTLX transform when.utlx wholesale.json | grep -E '\"valid\"|\"failed\"'"
+say "First a RETAIL order. The guard is false, so the rule never applies — and that counts as PASSED:"
+show "retail.json"     "THE INPUT DATA"
+run "$UTLX transform when.utlx retail.json | $UTLX -e '{valid: \$input.valid, passed: \$input.passed}'"
+say "The SAME order marked WHOLESALE. Now the guard is true, the rule applies, and 5 is below the minimum:"
+show "wholesale.json"  "THE INPUT DATA"
+run "$UTLX transform when.utlx wholesale.json | $UTLX -e '{valid: \$input.valid, failed: \$input.failed}'"
 
 banner "6. The field allow-list — only what is expected may pass"
 say "onlyFields says which fields are permitted; anything else is an error, named individually."
@@ -165,14 +196,17 @@ $input |> validate.assert([
   { rule: "no-unknown-fields", onlyFields: ["orderId", "qty", "ccy"] }
 ])
 EOF
-show "allow.utlx"
+show "allow.utlx"      "THE RULES"
 printf '{"orderId":"A-1","qty":5,"ccy":"EUR","isAdmin":true,"debug":"x"}' > "smuggled.json"
-show "smuggled.json"
-say "Two fields nobody asked for. Each gets its own issue, naming the field."
+say "Now an order carrying two fields nobody asked for. Each will get its own issue, naming the field:"
+show "smuggled.json"   "THE INPUT DATA"
 run "$UTLX transform allow.utlx smuggled.json"
 
 banner "7. THE point: one rule set, any format"
-say "The rules run on the Universal Data Model, not on the wire format. Same five rules — XML in."
+# Narration must land ON the thing it describes. This line used to promise "XML in" and was then
+# followed by another say and two JSON steps before any XML appeared — so the viewer was told to
+# look for something that was not there yet, twice over.
+say "The rules run on the Universal Data Model, not on the wire format — so one rule list covers every format. To compare two formats we first need the issues in a shape you can read at a glance."
 # Selecting from a verdict is the LANGUAGE's job, not the shell's. This report carries the same
 # five rules plus two lines that project the issues and ask for csv, so the comparison below needs
 # no grep, no sed and no pipe — and it shows the verdict is data you can re-serialize.
@@ -194,12 +228,11 @@ sed 's/^input json$/input xml/; s/^let v = \$input |>/let v = $input.order |>/' 
 # Must carry the SAME fields as bad.json, legacyRef included — otherwise the two tables differ by
 # one row and the "identical" claim is visibly false.
 printf '<order><orderId>bad id</orderId><qty>500</qty><ccy>GBP</ccy><legacyRef>OLD-7</legacyRef></order>' > "bad.xml"
-say "The same five rules, plus two lines that project the issues. Then --format table to SHOW it."
-show "report.utlx"
-say "Run it on the JSON order from step 3:"
+show "report.utlx"     "THE RULES"
+say "The same five rules as step 2, plus two lines projecting each issue. Run it on the JSON order from step 3, with --format table to show it:"
 run "$UTLX transform report.utlx bad.json --format table"
-show "bad.xml"
-say "Now the SAME order written as XML, through the same rules:"
+show "bad.xml"         "THE SAME INPUT DATA, AS XML"
+say "NOW the XML — the same order on the wire differently. Only the header and the XML root differ; the five rules are untouched:"
 run "$UTLX transform report-xml.utlx bad.xml --format table"
 say "Identical table. And the messages prove the VALUES were read, not just the field names:"
 cat > "messages-xml.utlx" <<'EOF'
@@ -225,9 +258,9 @@ output json
 ---
 $input |> validate.required("orderId")
 EOF
-show "broken.utlx"
+show "broken.utlx"     "THE RULES  (deliberately malformed)"
 say "Note it says MALFORMED RULE and is invalid — it does not report success."
-run "$UTLX transform broken.utlx clean.json | grep -E '\"valid\"|message'"
+run "$UTLX transform broken.utlx clean.json | $UTLX -e '{valid: \$input.valid, messages: \$input.issues |> map(i => i.message)}'"
 
 printf "\n${c_say}Rules as data. Every failure attributable. Any format.${c_off}\n"
 printf "${c_dim}scratch files: %s${c_off}\n\n" "$W"
